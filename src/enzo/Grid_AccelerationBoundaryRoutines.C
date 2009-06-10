@@ -16,7 +16,7 @@
 #include "TopGridData.h"
 #include "LevelHierarchy.h"
 
-#ifdef SIB2
+#ifdef FAST_SIB
 int SetBoundaryConditions(HierarchyEntry *Grids[], int NumberOfGrids,
 			  SiblingGridList SiblingList[],
 			  int level, TopGridData *MetaData,
@@ -108,7 +108,7 @@ int grid::DetachAcceleration(){
   return SUCCESS;
 }
 
-#ifdef SIB2
+#ifdef FAST_SIB
 int SetAccelerationBoundary(HierarchyEntry *Grids[], int NumberOfGrids,
 			    SiblingGridList SiblingList[],
 			    int level, TopGridData *MetaData,
@@ -144,7 +144,7 @@ int SetAccelerationBoundary(HierarchyEntry *Grids[], int NumberOfGrids,
 
   }
 
-#ifdef SIB2
+#ifdef FAST_SIB
   if (SetBoundaryConditions(Grids, NumberOfGrids, SiblingList, level, MetaData,
 			    NULL, NULL) == FAIL)
     ENZO_FAIL("");
