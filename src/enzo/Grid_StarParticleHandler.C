@@ -178,7 +178,7 @@ extern "C" void FORTRAN_NAME(cluster_maker)
    float *mp, float *tdp, float *tcp, float *metalf, 
    int *type, int *ctype, float *justburn, int *iradtrans);
 
-extern "C" int sink_maker(int *nx, int *ny, int *nz, int *size,
+int sink_maker(int *nx, int *ny, int *nz, int *size,
              float *d, float *u, float *v, float *w,
              float *dt, float *r, float *dx, FLOAT *t, float *z, 
              int *procnum,
@@ -343,7 +343,7 @@ int grid::StarParticleHandler(int level)
   if (GetUnits(&DensityUnits, &LengthUnits, &TemperatureUnits,
 	       &TimeUnits, &VelocityUnits, &MassUnits, Time) == FAIL) {
     fprintf(stderr, "Error in GetUnits.\n");
-    ENZO_FAIL("");    
+    ENZO_FAIL("");
   }
  
   float CellWidthTemp = float(CellWidth[0][0]);
@@ -568,7 +568,7 @@ int grid::StarParticleHandler(int level)
 		      ParticleAttribute[1], ParticleType, &SinkParticleType, 
 		      &JeansLengthRefinement, temperature) == FAIL) {
 	fprintf(stderr, "Error in star_maker3\n");
-	ENZO_FAIL("");
+    ENZO_FAIL("");
       }
 
       /* Delete any merged particles (Mass == FLOAT_UNDEFINED) */
