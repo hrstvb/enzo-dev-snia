@@ -149,24 +149,10 @@ int UpdateFromFinerGrids(int level, HierarchyEntry *Grids[], int NumberOfGrids,
  
 int RadiationFieldUpdate(LevelHierarchyEntry *LevelArray[], int level,
 			 TopGridData *MetaData);
-int WriteStreamData(HierarchyEntry *Grids[], int NumberOfGrids, 
-		    TopGridData *MetaData, int CycleCount, int EndStep = FALSE);
-int WriteMovieData(char *basename, int filenumber,
-		   LevelHierarchyEntry *LevelArray[], TopGridData *MetaData,
-		   FLOAT WriteTime);
-int WriteTracerParticleData(char *basename, int filenumber,
-		   LevelHierarchyEntry *LevelArray[], TopGridData *MetaData,
-		   FLOAT WriteTime);
 
-#ifdef USE_HDF5_GROUPS
-int Group_WriteAllData(char *basename, int filenumber, HierarchyEntry *TopGrid,
-		 TopGridData &MetaData, ExternalBoundary *Exterior,
-		 FLOAT WriteTime = -1);
-#else
-int WriteAllData(char *basename, int filenumber, HierarchyEntry *TopGrid,
-		 TopGridData &MetaData, ExternalBoundary *Exterior,
-		 FLOAT WriteTime = -1);
-#endif
+
+OutputFromEvolveLevel(LevelHierarchyEntry *LevelArray[],TopGridData *MetaData,
+		      int level, ExternalBoundary *Exterior);
  
 int ComputeRandomForcingNormalization(LevelHierarchyEntry *LevelArray[],
                                       int level, TopGridData *MetaData,
@@ -751,6 +737,7 @@ int EvolveLevel(TopGridData *MetaData, LevelHierarchyEntry *LevelArray[],
     StarParticleFinalize(Grids, MetaData, NumberOfGrids, LevelArray,
 			     level, AllStars);
     JBPERF_STOP("evolve-level-22"); // StarParticleFinalize()
+<<<<<<< local
 
     /* Check for movie output (only check if this is bottom of hierarchy). */
  
@@ -792,6 +779,8 @@ int EvolveLevel(TopGridData *MetaData, LevelHierarchyEntry *LevelArray[],
  
     JBPERF_STOP("evolve-level-24"); // WriteTracerParticleData()
 
+=======
+>>>>>>> other
     /* If cosmology, then compute grav. potential for output if needed. */
  
     JBPERF_START("evolve-level-25"); // PrepareDensityField()
@@ -836,10 +825,8 @@ int EvolveLevel(TopGridData *MetaData, LevelHierarchyEntry *LevelArray[],
  
     JBPERF_STOP("evolve-level-25"); // PrepareDensityField()
 
-    /* Check for new level output (only if this is bottom of hierarchy). */
- 
-    JBPERF_START("evolve-level-26"); // WriteAllData()
 
+<<<<<<< local
     if (MetaData->OutputFirstTimeAtLevel > 0 &&
 	level >= MetaData->OutputFirstTimeAtLevel &&
 	LevelArray[level+1] == NULL) {
@@ -1040,6 +1027,8 @@ int EvolveLevel(TopGridData *MetaData, LevelHierarchyEntry *LevelArray[],
       my_exit(EXIT_SUCCESS);
     }
  
+=======
+>>>>>>> other
     /* For each grid, delete the GravitatingMassFieldParticles. */
  
     JBPERF_START("evolve-level-27"); // DeleteGravitatingMassFieldParticles()
@@ -1048,12 +1037,6 @@ int EvolveLevel(TopGridData *MetaData, LevelHierarchyEntry *LevelArray[],
       Grids[grid1]->GridData->DeleteGravitatingMassFieldParticles();
  
     JBPERF_STOP("evolve-level-27"); // DeleteGravitatingMassFieldParticles()
-
-    /* Update SubcycleNumber if this is the bottom of the hierarchy --
-       Note that this not unique based on which level is the highest,
-       it just keeps going */
-
-    if (LevelArray[level+1] == NULL) MetaData->SubcycleNumber += 1;  
 
     /* ----------------------------------------- */
     /* Evolve the next level down (recursively). */
@@ -1071,8 +1054,8 @@ int EvolveLevel(TopGridData *MetaData, LevelHierarchyEntry *LevelArray[],
     jbPerf.attribute ("level",&jb_level,JB_INT);
 #endif
 
-    // Streaming movie output (only run if everything is evolved)
 
+<<<<<<< local
     if (MovieSkipTimestep != INT_UNDEFINED) {
       if (WriteStreamData(Grids, NumberOfGrids, MetaData, 
 			  LevelCycleCount[level]) == FAIL) {
@@ -1080,6 +1063,15 @@ int EvolveLevel(TopGridData *MetaData, LevelHierarchyEntry *LevelArray[],
 	ENZO_FAIL("");
       }
     }
+=======
+    OutputFromEvolveLevel(LevelArray,MetaData,level,Exterior);
+    /* Update SubcycleNumber if this is the bottom of the hierarchy --
+       Note that this not unique based on which level is the highest,
+       it just keeps going */
+
+    if (LevelArray[level+1] == NULL) MetaData->SubcycleNumber += 1;  
+
+>>>>>>> other
 
     if (dbx) fprintf(stderr, "EL Level %"ISYM" returns from Level %"ISYM"\n", level, level+1);
 
