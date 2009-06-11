@@ -24,8 +24,10 @@
 #include <string.h>
 #include <unistd.h>
  
+#include "ErrorExceptions.h"
 #include "svn_version.def"
 #include "performance.h"
+#include "ErrorExceptions.h"
 #include "macros_and_parameters.h"
 #include "typedefs.h"
 #define DEFINE_STORAGE
@@ -42,6 +44,7 @@
 #include "CosmologyParameters.h"
 #include "StarParticleData.h"
 #include "communication.h"
+#include "CommunicationUtilities.h"
 #ifdef TRANSFER
 #include "PhotonCommunication.h"
 #endif
@@ -98,7 +101,10 @@ void AddLevel(LevelHierarchyEntry *Array[], HierarchyEntry *Grid, int level);
 int SetDefaultGlobalValues(TopGridData &MetaData);
 int CommunicationInitialize(Eint32 *argc, char **argv[]);
 int CommunicationFinalize();
+
 int CommunicationPartitionGrid(HierarchyEntry *Grid, int gridnum);
+
+void CommunicationAbort(int);
 int ENZO_OptionsinEffect(void);
 
 #ifdef TASKMAP
@@ -437,11 +443,11 @@ Eint32 main(Eint32 argc, char *argv[])
     }
  
 #ifdef USE_MPI
-    MPI_Barrier(MPI_COMM_WORLD);
+    CommunicationBarrier();
     t_init1 = MPI_Wtime();
     if (MyProcessorNumber == ROOT_PROCESSOR)
       fprintf(stderr, "INITIALIZATION TIME = %16.8e\n", (t_init1-t_init0));
-    MPI_Barrier(MPI_COMM_WORLD);
+    CommunicationBarrier();
 #endif /* USE_MPI */
 
   }
@@ -480,6 +486,7 @@ Eint32 main(Eint32 argc, char *argv[])
  
   // Call the main evolution routine
  
+  try {
   if (EvolveHierarchy(TopGrid, MetaData, &Exterior, LevelArray, Initialdt) == FAIL) {
     if (MyProcessorNumber == ROOT_PROCESSOR) {
       fprintf(stderr, "Error in EvolveHierarchy.\n");
@@ -491,6 +498,11 @@ Eint32 main(Eint32 argc, char *argv[])
     if (MyProcessorNumber == ROOT_PROCESSOR) {
       fprintf(stderr, "Successful run, exiting.\n");
     }
+  }
+  } catch(EnzoFatalException&) {
+    fprintf(stderr, "Failure reported on processor %"ISYM"\n",
+                MyProcessorNumber);
+    CommunicationAbort(EXIT_FAILURE);
   }
 
  
@@ -570,11 +582,34 @@ Eint32 main(Eint32 argc, char *argv[])
  
 }
  
- 
- 
- 
 void my_exit(int status)
 {
-  CommunicationFinalize();
-  exit(status);
+  // Exit gracefully if successful; abort on error
+
+  if (status == EXIT_SUCCESS) {
+
+    if (MyProcessorNumber==0) {
+      fprintf (stdout,"%s:%d Exiting.\n", __FILE__,__LINE__);
+    }
+
+    CommunicationFinalize();
+
+    exit(status);
+
+  } else if (status == EXIT_FAILURE) {
+
+    fprintf (stderr,"%s:%d %"ISYM" ABORT ON EXIT_FAILURE!\n",
+	     __FILE__,__LINE__,MyProcessorNumber);
+
+    CommunicationAbort(status);
+
+  } else {
+
+    fprintf (stderr,"%s:%d %"ISYM" ABORT ON UNKNOWN EXIT VALUE %"ISYM"!\n",
+	     __FILE__,__LINE__,MyProcessorNumber,status);
+
+    CommunicationAbort(status);
+
+  }
 }
+
