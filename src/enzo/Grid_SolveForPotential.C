@@ -15,6 +15,7 @@
 #include <stdio.h>
 #include <math.h>
 #include "ErrorExceptions.h"
+#include "performance.h"
 #include "macros_and_parameters.h"
 #include "typedefs.h"
 #include "global_data.h"
@@ -47,6 +48,8 @@ int grid::SolveForPotential(int level, FLOAT PotentialTime)
  
   if (MyProcessorNumber != ProcessorNumber)
     return SUCCESS;
+
+  JBPERF_START("grid_SolveForPotential");
  
   /* declarations */
  
@@ -146,6 +149,7 @@ int grid::SolveForPotential(int level, FLOAT PotentialTime)
  
   delete [] rhs;
  
+  JBPERF_STOP("grid_SolveForPotential");
   return SUCCESS;
 }
  
