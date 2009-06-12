@@ -71,8 +71,10 @@ int CommunicationTransferParticles(grid *GridPointer[], int NumberOfGrids)
     fprintf(stderr, "Error in Enzo_Dims_create.\n");
     ENZO_FAIL("");
   }
-  for (dim = 0; dim < MAX_DIMENSION; dim++)
-    Layout[MAX_DIMENSION-1-dim] = LayoutTemp[dim];
+  for (dim = 0; dim < Rank; dim++)
+    Layout[Rank-1-dim] = LayoutTemp[dim];
+  for (dim = Rank; dim < MAX_DIMENSION; dim++)
+    Layout[Rank-1-dim] = 0;
 
   for (grid = 0; grid < NumberOfGrids; grid++) {
     GridPointer[grid]->ReturnGridInfo(&Rank, Dims, Left, Right);
@@ -101,9 +103,6 @@ int CommunicationTransferParticles(grid *GridPointer[], int NumberOfGrids)
  
   /* Generate the list of particle moves. */
 
-  if (MyProcessorNumber == ROOT_PROCESSOR)
-    printf("CTP: Before COPY_OUT for %"ISYM" grids.\n", NumberOfGrids);
-
   int Zero = 0;
   for (grid = 0; grid < NumberOfGrids; grid++)
     if (GridPointer[grid]->
@@ -117,10 +116,6 @@ int CommunicationTransferParticles(grid *GridPointer[], int NumberOfGrids)
   int TotalNumberToMove = 0;
   for (proc = 0; proc < NumberOfProcessors; proc++)
     TotalNumberToMove += NumberToMove[proc];
-
-  if (MyProcessorNumber == ROOT_PROCESSOR)
-    printf("CTP: After COPY_OUT for %"ISYM" grids. Counted %"ISYM" particles.\n", 
-	   NumberOfGrids, TotalNumberToMove);
 
   int NumberOfReceives = 0;
 #ifdef KEEP_PARTICLES_LOCAL
@@ -146,9 +141,6 @@ int CommunicationTransferParticles(grid *GridPointer[], int NumberOfGrids)
 
 #endif
 
-  if (MyProcessorNumber == ROOT_PROCESSOR)
-    printf("CTP: sorted particle list.\n");
-
   /* Copy particles back to grids */
 
   jstart = 0;
@@ -170,9 +162,6 @@ int CommunicationTransferParticles(grid *GridPointer[], int NumberOfGrids)
       jstart = jend;
     } // ENDFOR grids
   } // ENDIF NumberOfRecieves > 0
-
-  if (MyProcessorNumber == ROOT_PROCESSOR)
-    printf("CTP: after COPY_IN.\n");
 
   /* Even if we have no receives, we still have to remove the sent
      particles. */
@@ -202,10 +191,6 @@ int CommunicationTransferParticles(grid *GridPointer[], int NumberOfGrids)
 	ENZO_FAIL("");
       }
 
-  if (MyProcessorNumber == ROOT_PROCESSOR && NumberOfReceives > 0)
-    printf("CTP: cleaned up particles in grids %"ISYM"->%"ISYM"\n",
-	   SharedList[NumberOfReceives-1].grid, NumberOfGrids-1);
-    
 #endif /* KEEP_PARTICLES_LOCAL */
  
   /* Set number of particles so everybody agrees. */
