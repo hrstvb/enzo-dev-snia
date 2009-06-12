@@ -855,6 +855,7 @@ class grid
 /* Gravity: Delete AccelerationField. */
 
    void DeleteAccelerationField() {
+     if (!((SelfGravity || UniformGravity || PointSourceGravity))) return;
      for (int dim = 0; dim < GridRank; dim++) {
        delete [] AccelerationField[dim];
        AccelerationField[dim] = NULL;
@@ -930,6 +931,7 @@ class grid
 /* Particles: delete accleration fields. */
 
    void DeleteParticleAcceleration() {
+     if (!((SelfGravity || UniformGravity || PointSourceGravity))) return;
      for (int dim = 0; dim < GridRank+ComputePotential; dim++) {
        delete [] ParticleAcceleration[dim];
        ParticleAcceleration[dim] = NULL;
@@ -1499,7 +1501,7 @@ int CollapseTestInitializeGrid(int NumberOfSpheres,
 
 /* Star Particle handler routine. */
 
-  int StarParticleHandler(int level);
+  int StarParticleHandler(HierarchyEntry* SubgridPointer, int level);
 
 /* Apply a time-action to a grid. */
 
