@@ -27,9 +27,8 @@
 #include "Hierarchy.h"
 #include "TopGridData.h"
 #include "LevelHierarchy.h"
+#include "CommunicationUtilities.h"
 
-int WriteStreamData(HierarchyEntry *Grids[], int NumberOfGrids, 
-		    TopGridData *MetaData, int CycleCount, int EndStep = FALSE);
 int WriteTracerParticleData(char *basename, int filenumber,
 		   LevelHierarchyEntry *LevelArray[], TopGridData *MetaData,
 		   FLOAT WriteTime);
@@ -46,13 +45,14 @@ void my_exit(int status);
 int GenerateGridArray(LevelHierarchyEntry *LevelArray[], int level,
 		      HierarchyEntry **Grids[]);
 
+#define TIME_MESSAGING 
+
 EXTERN int LevelCycleCount[MAX_DEPTH_OF_HIERARCHY];
 
 int OutputFromEvolveLevel(LevelHierarchyEntry *LevelArray[],TopGridData *MetaData,
 			  int level, ExternalBoundary *Exterior){
 
   int Write = FALSE, ExitEnzo = FALSE, NumberOfGrids;
-  HierarchyEntry **Grids;    
 
   //Do all "bottom of hierarchy" checks
   if (LevelArray[level+1] == NULL){
@@ -90,9 +90,7 @@ int OutputFromEvolveLevel(LevelHierarchyEntry *LevelArray[],TopGridData *MetaDat
     int outputNow = -1, stopNow = -1, subcycleCount=-1;
     if( FileDirectedOutput == TRUE){
       
-#ifdef USE_MPI
-      MPI_Barrier(MPI_COMM_WORLD);
-#endif
+      CommunicationBarrier();
       outputNow = access("outputNow", F_OK);
       subcycleCount = access("subcycleCount", F_OK);
       stopNow = access("stopNow", F_OK) ;
@@ -131,9 +129,7 @@ int OutputFromEvolveLevel(LevelHierarchyEntry *LevelArray[],TopGridData *MetaDat
       }
       
       
-#ifdef USE_MPI
-      MPI_Barrier(MPI_COMM_WORLD);
-#endif
+      CommunicationBarrier();
       if (MyProcessorNumber == ROOT_PROCESSOR){
 	if( outputNow != -1 )
 	  if (unlink("outputNow")) {
@@ -151,9 +147,7 @@ int OutputFromEvolveLevel(LevelHierarchyEntry *LevelArray[],TopGridData *MetaDat
 	  } 
       } 
       
-#ifdef USE_MPI
-      MPI_Barrier(MPI_COMM_WORLD);
-#endif
+      CommunicationBarrier();
       
     }//File Directed Output
     
@@ -177,31 +171,11 @@ int OutputFromEvolveLevel(LevelHierarchyEntry *LevelArray[],TopGridData *MetaDat
     }
   }//Finest Level
 
-  // Streaming movie output (only run if everything is evolved)
-  NumberOfGrids = GenerateGridArray(LevelArray, level, &Grids);
-  if (MovieSkipTimestep != INT_UNDEFINED) {
-    if (WriteStreamData(Grids, NumberOfGrids, MetaData, 
-			LevelCycleCount[level]) == FAIL) {
-      fprintf(stderr, "Error in WriteStreamData.\n");
-      return FAIL;
-    }
-  }
-
-  delete []Grids;
   if( ExitEnzo == TRUE ){
-    // Write movie data in all grids if necessary
-    if (MovieSkipTimestep != INT_UNDEFINED)
-      for (int mlevel = 0; mlevel < MAX_DEPTH_OF_HIERARCHY; mlevel++) {
-	if (LevelArray[mlevel] == NULL) break;
-	delete []Grids;
-	NumberOfGrids = GenerateGridArray(LevelArray, mlevel, &Grids);
-	if (WriteStreamData(Grids, NumberOfGrids, MetaData,
-			    LevelCycleCount[mlevel], TRUE) == FAIL) {
-	  fprintf(stderr, "Error in WriteStreamData.\n");
-	  return FAIL;
-	}
-      }
-    delete []Grids;    
+    if (MovieSkipTimestep != INT_UNDEFINED) {
+      fprintf(stderr, "Closing movie file.\n");
+      MetaData->AmiraGrid.AMRHDF5Close();
+    }
     fprintf(stderr, "Stopping due to request on level %"ISYM"\n", level);
     my_exit(EXIT_SUCCESS);
   }
@@ -227,6 +201,8 @@ int OutputFromEvolveLevel(LevelHierarchyEntry *LevelArray[],TopGridData *MetaDat
     }
 #endif
   }//Write == TRUE
+
+  
   
   return SUCCESS;
 }
