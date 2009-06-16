@@ -38,7 +38,7 @@ int GetUnits(float *DensityUnits, float *LengthUnits,
 	     float *TemperatureUnits, float *TimeUnits,
 	     float *VelocityUnits, float *MassUnits, FLOAT Time);
 int EvolvePhotons(TopGridData *MetaData, LevelHierarchyEntry *LevelArray[],
-		  Star *AllStars);
+		  Star *AllStars, FLOAT GridTime, int level, int LoopTime = TRUE);
 
 int RestartPhotons(TopGridData *MetaData, LevelHierarchyEntry *LevelArray[],
 		   Star *AllStars)
@@ -87,13 +87,11 @@ int RestartPhotons(TopGridData *MetaData, LevelHierarchyEntry *LevelArray[],
 
   while ((dtPhoton > 0.) && RadiativeTransfer && 
 	 (MetaData->Time >= PhotonTime))  {
+
     if (debug) 
       printf("EvolvePhotons[restart]: dt = %"GSYM", Time = %"FSYM", ", 
 	     dtPhoton, PhotonTime);
-    if (EvolvePhotons(MetaData, LevelArray, AllStars) == FAIL) {
-      fprintf(stderr, "Error in EvolvePhotons.\n");
-      ENZO_FAIL("");
-    }
+    EvolvePhotons(MetaData, LevelArray, AllStars, MetaData->Time, 0, FALSE);
 
     PhotonCount = 0;
     for (level = 0; level < MAX_DEPTH_OF_HIERARCHY; level++) {

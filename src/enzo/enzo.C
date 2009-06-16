@@ -27,7 +27,6 @@
 #include "ErrorExceptions.h"
 #include "svn_version.def"
 #include "performance.h"
-#include "ErrorExceptions.h"
 #include "macros_and_parameters.h"
 #include "typedefs.h"
 #define DEFINE_STORAGE
@@ -49,11 +48,15 @@
 #include "PhotonCommunication.h"
 #endif
 #undef DEFINE_STORAGE
+#ifdef USE_PYTHON
+int InitializePythonInterface(int argc, char **argv);
+#endif
  
 // Function prototypes
  
 int InitializeNew(  char *filename, HierarchyEntry &TopGrid, TopGridData &tgd,
 		    ExternalBoundary &Exterior, float *Initialdt);
+int InitializeMovieFile(TopGridData &MetaData, HierarchyEntry &TopGrid);
 
 int InitializeLocal(int restart, HierarchyEntry &TopGrid, 
 		    TopGridData &MetaData);
@@ -103,7 +106,6 @@ int CommunicationInitialize(Eint32 *argc, char **argv[]);
 int CommunicationFinalize();
 
 int CommunicationPartitionGrid(HierarchyEntry *Grid, int gridnum);
-
 void CommunicationAbort(int);
 int ENZO_OptionsinEffect(void);
 
@@ -115,6 +117,10 @@ int GetNodeFreeMemory(void);
 int RadiativeTransferInitialize(char *ParameterFile, TopGridData &MetaData,
 				ExternalBoundary &Exterior, 
 				LevelHierarchyEntry *LevelArray[]);
+#endif
+
+#ifdef USE_JBPERF
+void jbPerfInitialize (int max_level);
 #endif
 
 void my_exit(int status);
@@ -176,7 +182,7 @@ Eint32 main(Eint32 argc, char *argv[])
 
     // Initialize jbPerf performance collecting
 
-    jbPerfInitialize(MaximumRefinementLevel);
+  jbPerfInitialize(MaximumRefinementLevel);
 
 #endif
 
@@ -375,6 +381,9 @@ Eint32 main(Eint32 argc, char *argv[])
     }
  
     AddLevel(LevelArray, &TopGrid, 0);    // recursively add levels
+
+    // Initialize streaming files if necessary
+    InitializeMovieFile(MetaData, TopGrid);
  
   }
 
@@ -481,6 +490,11 @@ Eint32 main(Eint32 argc, char *argv[])
   fprintf(memtracePtr, "Call evolve hierarchy %8"ISYM"  %16"ISYM" \n", MetaData.CycleNumber, MemInUse);
 #endif
 
+#ifdef USE_PYTHON
+  // We initialize our Python interface now
+  if(debug)fprintf(stdout, "Initializing Python interface\n");
+  InitializePythonInterface(argc, argv);
+#endif 
 
 
  
@@ -490,6 +504,11 @@ Eint32 main(Eint32 argc, char *argv[])
   if (EvolveHierarchy(TopGrid, MetaData, &Exterior, LevelArray, Initialdt) == FAIL) {
     if (MyProcessorNumber == ROOT_PROCESSOR) {
       fprintf(stderr, "Error in EvolveHierarchy.\n");
+    }
+    // Close the streaming files
+    if (MovieSkipTimestep != INT_UNDEFINED) {
+      fprintf(stderr, "Closing movie file.\n");
+      MetaData.AmiraGrid.AMRHDF5Close();
     }
     my_exit(EXIT_FAILURE);
   }
