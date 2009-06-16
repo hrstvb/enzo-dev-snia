@@ -34,7 +34,6 @@ char DefaultRestartName[] = "restart";
 char DefaultDataName[] = "data";
 char DefaultHistoryName[] = "history";
 char DefaultRedshiftName[] = "RedshiftOutput";
-char DefaultMovieName[] = "MovieOutput";
 char DefaultNewMovieName[] = "MoviePack";
 char DefaultTracerParticleName[] = "TracerOutput";
  
@@ -42,7 +41,6 @@ char DefaultRestartDir[] = "RS";
 char DefaultDataDir[] = "DD";
 char DefaultHistoryDir[] = "HD";
 char DefaultRedshiftDir[] = "RD";
-char DefaultMovieDir[] = "MD";
 char DefaultTracerParticleDir[] = "TD";
  
  
@@ -76,8 +74,6 @@ int SetDefaultGlobalValues(TopGridData &MetaData)
   MetaData.dtDataDump          = 0.0;
   MetaData.TimeLastHistoryDump = FLOAT_UNDEFINED;
   MetaData.dtHistoryDump       = 0.0;
-  MetaData.TimeLastMovieDump   = FLOAT_UNDEFINED;
-  MetaData.dtMovieDump         = 0.0;
   MetaData.TimeLastTracerParticleDump = FLOAT_UNDEFINED;
   MetaData.dtTracerParticleDump       = 0.0;
  
@@ -103,9 +99,6 @@ int SetDefaultGlobalValues(TopGridData &MetaData)
   MetaData.HistoryDumpNumber   = 0;
   MetaData.HistoryDumpName     = DefaultHistoryName;
   MetaData.HistoryDumpDir      = DefaultHistoryDir;
-  MetaData.MovieDumpNumber     = 0;
-  MetaData.MovieDumpName       = DefaultMovieName;
-  MetaData.MovieDumpDir        = DefaultMovieDir;
   MetaData.TracerParticleDumpNumber = 0;
   MetaData.TracerParticleDumpName   = DefaultTracerParticleName;
   MetaData.TracerParticleDumpDir    = DefaultTracerParticleDir;
@@ -189,8 +182,6 @@ int SetDefaultGlobalValues(TopGridData &MetaData)
     RefineRegionLeftEdge[dim]       = FLOAT_UNDEFINED;
     RefineRegionRightEdge[dim]      = FLOAT_UNDEFINED;
     RefineRegionAutoAdjust          = FALSE;
-    MetaData.MovieRegionLeftEdge[dim]  = FLOAT_UNDEFINED;
-    MetaData.MovieRegionRightEdge[dim] = FLOAT_UNDEFINED;
     MetaData.NewMovieLeftEdge[dim]  = 0.0;
     MetaData.NewMovieRightEdge[dim] = 1.0;
     PointSourceGravityPosition[dim] = 0.0;
@@ -323,15 +314,86 @@ int SetDefaultGlobalValues(TopGridData &MetaData)
   MovieSkipTimestep = INT_UNDEFINED;
   NewMovieName = DefaultNewMovieName;
   NewMovieDumpNumber = 0;
-  NewMovieEntries = 0;
-  MovieEntriesPP = new long[NumberOfProcessors];
-  MaxMovieFilenum = 0;
-  for (i = 0; i<NumberOfProcessors; i++)
-    MovieEntriesPP[i] = 0;
   NewMovieParticleOn = FALSE;
+  Movie3DVolumes  = FALSE;
+  MovieVertexCentered = FALSE;
+  MetaData.TimestepCounter      = 0;
 
   ran1_init = 0;
 
+  SinkMergeDistance                = 1e16;
+  SinkMergeMass                    = 0.1;
+  TotalSinkMass                    = 0.0;
+  StellarWindFeedback              = 0;
+  StellarWindTurnOnMass            = 0.1;
+
+  Coordinate = Cartesian;
+  NSpecies = 0;
+  NColor   = 0;
+  Theta_Limiter = 1.5;
+  RKOrder = 2;
+  UsePhysicalUnit = 0;
+  NEQ_HYDRO = 5;
+  NEQ_MHD   = 9;
+  SmallRho = 1e-30;
+  SmallP   = 1e-35;
+  SmallEint = 1e-30;
+  SmallT   = 1e-10;
+  RiemannSolver = HLL;
+  ReconstructionMethod = PLM;
+  EOSType = 0;
+  EOSSoundSpeed = 2.65e4;
+  EOSCriticalDensity = 1e-13;
+  EOSGamma = 1.667;
+  Mu = 1.22;
+  CoolingCutOffDensity1 = 0;
+  CoolingCutOffDensity2 = 1e10;
+  CoolingCutOffTemperature = 0.0;
+  CoolingPowerCutOffDensity1 = 0;
+  CoolingPowerCutOffDensity2 = 1e10;
+  UseH2OnDust = 0;
+  PhotoelectricHeating = 0;
+  UseFloor = 0;
+  UseViscosity = 0;
+  UseAmbipolarDiffusion = 0;
+  UseResistivity = 0;
+  UseHydro = 1;
+
+  StringKick = 0;
+
+  iden = 0;
+  ivx = 1;
+  ivy = 2;
+  ivz = 3;
+  ietot = 4;
+  ieint = 0;
+  iBx = 5;
+  iBy = 6;
+  iBz = 7;
+  iPhi = 8;
+  iD = 0;
+  iS1 = 1;
+  iS2 = 2;
+  iS3 = 3;
+  iEtot = 4;
+  iEint = 0;
+
+  EOSType = 0;
+  UsePhysicalUnit = 0;
+
+  UseDivergenceCleaning = 0;
+  DivergenceCleaningThreshold = 0.001;
+  PoissonApproximationThreshold = 0.001;
+
+  UseDrivingField = 0;
+  DrivingEfficiency = 1.0;
+
+#ifdef ECUDA
+  UseCUDA = 0;
+#endif
+
+
+  /* End of Stanford Hydro additions */
 
   /* test problem values */
   TestProblemData.HydrogenFractionByMass = 0.76;
@@ -367,6 +429,15 @@ int SetDefaultGlobalValues(TopGridData &MetaData)
   MetalCooling = FALSE;
   MetalCoolingTable = (char*) "metal_cool.dat";
 
+#ifdef USE_PYTHON
+  fprintf(stderr, "Setting up the python stuff\n");
+  NumberOfPythonCalls = 0;
+  grid_dictionary = PyDict_New();
+  old_grid_dictionary = PyDict_New();
+  hierarchy_information = PyDict_New();
+  yt_parameter_file = PyDict_New();
+  conversion_factors = PyDict_New();
+#endif
 
   /* Shearing Boundary Conditions variables */
 
