@@ -104,7 +104,7 @@ include Make.config.objects
 #-----------------------------------------------------------------------
 
 all: $(EXE).exe
-lib: $(EXE).so
+lib: $(EXE)_p$(ASSEMBLE_PARTICLE_NUMBER)_b$(ASSEMBLE_PRECISION_NUMBER).so
 
 #-----------------------------------------------------------------------
 # MAIN AN EXECUTABLE
@@ -124,10 +124,10 @@ lib: $(EXE).so
 	   echo "Failed! See $(OUTPUT) for error messages"; \
 	fi)
 
-%.so: $(MODULES) autogen dep %.o $(OBJS_LIB)
+%.so: $(MODULES) autogen dep enzo.o $(OBJS_LIB)
 	@rm -f $@
 	@echo "Linking"
-	-@$(LD) $(LDFLAGS) $(SHARED_OPT) -o $*.so $*.o $(OBJS_LIB) $(LIBS) >& $(OUTPUT)
+	-@$(LD) $(LDFLAGS) $(SHARED_OPT) -o $*.so enzo.o $(OBJS_LIB) $(LIBS) >& $(OUTPUT)
 	@(if [ -e $@ ]; then \
 	   echo "Success!"; \
 	else \
@@ -333,7 +333,7 @@ help:
 #-----------------------------------------------------------------------
 
 clean:
-	-@rm -f *.o *.mod *.f *.f90 DEPEND.bak *~ $(OUTPUT) *.exe \
+	-@rm -f *.so *.o *.mod *.f *.f90 DEPEND.bak *~ $(OUTPUT) *.exe \
           auto_show*.C svn_version.def hydro_rk/*.o
 
 #-----------------------------------------------------------------------
