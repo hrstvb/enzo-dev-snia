@@ -35,6 +35,7 @@
  
 #include <stdio.h>
 #include <math.h>
+#include "ErrorExceptions.h"
 #include "macros_and_parameters.h"
 #include "typedefs.h"
 #include "global_data.h"
@@ -45,8 +46,8 @@
  
 /* function prototypes */
  
-//int FindField(int f, int farray[], int n);
-//int CosmologyComputeExpansionFactor(FLOAT time, FLOAT *a, FLOAT *dadt);
+int FindField(int f, int farray[], int n);
+int CosmologyComputeExpansionFactor(FLOAT time, FLOAT *a, FLOAT *dadt);
  
 int grid::CorrectForRefinedFluxes(fluxes *InitialFluxes,
 				  fluxes *RefinedFluxes,
@@ -92,8 +93,7 @@ int grid::CorrectForRefinedFluxes(fluxes *InitialFluxes,
     int DensNum, GENum, Vel1Num, Vel2Num, Vel3Num, TENum, B1Num, B2Num, B3Num;
     if (this->IdentifyPhysicalQuantities(DensNum, GENum, Vel1Num, Vel2Num, 
 					 Vel3Num, TENum, B1Num, B2Num, B3Num) == FAIL) {
-      fprintf(stderr, "Error in grid->IdentifyPhysicalQuantities.\n");
-      return FAIL;
+            ENZO_FAIL("Error in grid->IdentifyPhysicalQuantities.");
     }
 
     //dcc kludge:  Just remove a(t)? 09/06/05 
@@ -105,7 +105,7 @@ int grid::CorrectForRefinedFluxes(fluxes *InitialFluxes,
     //    if (ComovingCoordinates)
     //      if (CosmologyComputeExpansionFactor(Time, &a, &dadt) == FAIL) {
     //        fprintf(stderr, "Error in CosmologyComputeExpansionFactors.\n");
-    //        return FAIL;
+    //        ENZO_FAIL("");
     //      }
  
  
@@ -124,13 +124,7 @@ int grid::CorrectForRefinedFluxes(fluxes *InitialFluxes,
 		(InitialFluxes->LeftFluxEndGlobalIndex[dim][j] !=
 		 RefinedFluxes->LeftFluxEndGlobalIndex[dim][j])) {
 	      fprintf(stderr,"InitialFluxes & RefinedFluxes are different.\n");
-	      fprintf(stderr,"%i:   %i %i  %i %i \n", j, 
-		      InitialFluxes->LeftFluxStartGlobalIndex[dim][j],
-		      InitialFluxes->LeftFluxEndGlobalIndex[dim][j],
-		      RefinedFluxes->LeftFluxStartGlobalIndex[dim][j] , 
-		      RefinedFluxes->LeftFluxEndGlobalIndex[dim][j]);
-
-	      return FAIL;
+	      ENZO_FAIL("");
 	    }
 	  /* Error check Fluxes to make sure they all exist. */
 	  for (field = 0; field < NumberOfBaryonFields; field++)
@@ -257,7 +251,7 @@ int grid::CorrectForRefinedFluxes(fluxes *InitialFluxes,
 	      fprintf(stderr, "%"GOUTSYM" %"GOUTSYM" %lld\n",
 		      CellLeftEdge[i][0], CellWidth[i][0],
 		      InitialFluxes->LeftFluxStartGlobalIndex[dim][i]);
-	      return FAIL;
+	      ENZO_FAIL("");
 	    }
 	  }
 	
@@ -484,10 +478,10 @@ int grid::CorrectForRefinedFluxes(fluxes *InitialFluxes,
 			     InitialFluxes->LeftFluxes[ffield][dim][FluxIndex];
 
 		
-		      fprintf(stderr,"WARNING: CorrectForRefinedFluxes causing problems.\n");
+		      fprintf(stderr,"ERROR: CorrectForRefinedFluxes causing problems.\n");
 		      fprintf(stderr,"      Density or Energy is negative.\n");
 		      fprintf(stderr,"      Please contact your Enzo service professional.\n");
-		      //		      return FAIL;
+		      ENZO_FAIL("");
 		    }
 		  }// for (i = Start[0]; i <= End[0]; i++) {
 		} // for (j = Start[1]; j <= End[1]; j++){
@@ -665,13 +659,13 @@ int grid::CorrectForRefinedFluxes(fluxes *InitialFluxes,
 		  }
 
 		  if (HydroMethod == MHD_RK) {
-		    B2 = pow(BaryonField[B1Num][i1],2) + 
-		      pow(BaryonField[B2Num][i1],2) +
-		      pow(BaryonField[B3Num][i1],2);
+		    B2 = POW(BaryonField[B1Num][i1],2) + 
+		      POW(BaryonField[B2Num][i1],2) +
+		      POW(BaryonField[B3Num][i1],2);
 		    BaryonField[TENum][i1] += 0.5 * B2 / BaryonField[DensNum][i1];
-		    B2 = pow(BaryonField[B1Num][i2],2) + 
-		      pow(BaryonField[B2Num][i2],2) +
-		      pow(BaryonField[B3Num][i2],2);
+		    B2 = POW(BaryonField[B1Num][i2],2) + 
+		      POW(BaryonField[B2Num][i2],2) +
+		      POW(BaryonField[B3Num][i2],2);
 		    BaryonField[TENum][i2] += 0.5 * B2 / BaryonField[DensNum][i2];
 		}
 

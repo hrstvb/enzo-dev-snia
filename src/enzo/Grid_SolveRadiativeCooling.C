@@ -15,6 +15,7 @@
  
 #include <stdio.h>
 #include <math.h>
+#include "ErrorExceptions.h"
 #include "macros_and_parameters.h"
 #include "typedefs.h"
 #include "global_data.h"
@@ -61,6 +62,7 @@ extern "C" void FORTRAN_NAME(multi_cool)(
 	float *hyd01ka, float *h2k01a, float *vibha, float *rotha,
 	   float *rotla,
 	float *gpldl, float *gphdl, float *HDltea, float *HDlowa,
+	float *gaHIa, float *gaH2a, float *gaHea, float *gaHpa, float *gaela,
 	float *metala, int *n_xe, float *xe_start, float *xe_end,
 	float *inutot, int *iradtype, int *nfreq, int *imetalregen,
 	int *iradshield, float *avgsighp, float *avgsighep, float *avgsighe2p,
@@ -108,7 +110,7 @@ int grid::SolveRadiativeCooling()
   if (this->IdentifyPhysicalQuantities(DensNum, GENum, Vel1Num, Vel2Num,
 				       Vel3Num, TENum, B1Num, B2Num, B3Num ) == FAIL) {
     fprintf(stderr, "Error in IdentifyPhysicalQuantities.\n");
-    return FAIL;
+    ENZO_FAIL("");
   }
  
   /* Find Multi-species fields. */
@@ -117,7 +119,7 @@ int grid::SolveRadiativeCooling()
     if (IdentifySpeciesFields(DeNum, HINum, HIINum, HeINum, HeIINum, HeIIINum,
                       HMNum, H2INum, H2IINum, DINum, DIINum, HDINum) == FAIL) {
       fprintf(stderr, "Error in grid->IdentifySpeciesFields.\n");
-      return FAIL;
+      ENZO_FAIL("");
     }
  
   /* Find photo-ionization fields */
@@ -128,18 +130,18 @@ int grid::SolveRadiativeCooling()
 				      gammaHeINum, kphHeIINum, gammaHeIINum, 
 				      kdissH2INum) == FAIL) {
     fprintf(stderr, "Error in grid->IdentifyRadiativeTransferFields.\n");
-    return FAIL;
+    ENZO_FAIL("");
   }
 
   /* Get easy to handle pointers for each variable. */
  
   float *density     = BaryonField[DensNum];
+  float *totalenergy = BaryonField[TENum];
   float *gasenergy   = BaryonField[GENum];
   float *velocity1   = BaryonField[Vel1Num];
   float *velocity2   = BaryonField[Vel2Num];
   float *velocity3   = BaryonField[Vel3Num];
  
-  float *totalenergy = BaryonField[TENum];
   /* Compute total gas energy if using MHD */
   if (HydroMethod == MHD_RK) {
     totalenergy = new float[size];
@@ -153,7 +155,6 @@ int grid::SolveRadiativeCooling()
     totalenergy = BaryonField[TENum];
   }
 
-
   /* If using cosmology, compute the expansion factor and get units. */
  
   float TemperatureUnits = 1, DensityUnits = 1, LengthUnits = 1,
@@ -162,7 +163,7 @@ int grid::SolveRadiativeCooling()
   if (GetUnits(&DensityUnits, &LengthUnits, &TemperatureUnits,
 	       &TimeUnits, &VelocityUnits, &MassUnits, Time) == FAIL) {
     fprintf(stderr, "Error in GetUnits.\n");
-    return FAIL;
+    ENZO_FAIL("");
   }
 
   if (ComovingCoordinates) {
@@ -170,7 +171,7 @@ int grid::SolveRadiativeCooling()
     if (CosmologyComputeExpansionFactor(Time+0.5*dtFixed, &a, &dadt)
 	== FAIL) {
       fprintf(stderr, "Error in CosmologyComputeExpansionFactors.\n");
-      return FAIL;
+      ENZO_FAIL("");
     }
  
     aUnits = 1.0/(1.0 + InitialRedshift);
@@ -206,7 +207,7 @@ int grid::SolveRadiativeCooling()
 
   if (RadiationFieldCalculateRates(Time+0.5*dtFixed) == FAIL) {
     fprintf(stderr, "Error in RadiationFieldCalculateRates.\n");
-    return FAIL;
+    ENZO_FAIL("");
   }
  
   /* Set up information for rates which depend on the radiation field. */
@@ -256,6 +257,8 @@ int grid::SolveRadiativeCooling()
           CoolData.roth, CoolData.rotl,
        CoolData.GP99LowDensityLimit, CoolData.GP99HighDensityLimit,
           CoolData.HDlte, CoolData.HDlow,
+       CoolData.GAHI, CoolData.GAH2, CoolData.GAHe, CoolData.GAHp,
+          CoolData.GAel,
           CoolData.metals, &CoolData.NumberOfElectronFracBins, 
           &CoolData.ElectronFracStart, &CoolData.ElectronFracEnd,
        RadiationData.Spectrum[0], &RadiationFieldType,
