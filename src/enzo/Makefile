@@ -104,7 +104,7 @@ include Make.config.objects
 #-----------------------------------------------------------------------
 
 all: $(EXE).exe
-lib: $(EXE)_p$(ASSEMBLE_PARTICLE_NUMBER)_b$(ASSEMBLE_PRECISION_NUMBER).so
+lib: lib$(EXE)_p$(ASSEMBLE_PARTICLE_NUMBER)_b$(ASSEMBLE_PRECISION_NUMBER).so
 
 #-----------------------------------------------------------------------
 # MAIN AN EXECUTABLE
@@ -124,10 +124,10 @@ lib: $(EXE)_p$(ASSEMBLE_PARTICLE_NUMBER)_b$(ASSEMBLE_PRECISION_NUMBER).so
 	   echo "Failed! See $(OUTPUT) for error messages"; \
 	fi)
 
-%.so: $(MODULES) autogen dep enzo.o $(OBJS_LIB)
+lib%.so: $(MODULES) autogen dep enzo.o $(OBJS_LIB)
 	@rm -f $@
 	@echo "Linking"
-	-@$(LD) $(LDFLAGS) $(SHARED_OPT) -o $*.so enzo.o $(OBJS_LIB) $(LIBS) >& $(OUTPUT)
+	-@$(LD) $(LDFLAGS) $(SHARED_OPT) -o $@ enzo.o $(OBJS_LIB) $(LIBS) >& $(OUTPUT)
 	@(if [ -e $@ ]; then \
 	   echo "Success!"; \
 	else \
