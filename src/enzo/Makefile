@@ -47,7 +47,7 @@ MODULES  =
 
 SVN      = svn
 
-SHARED_OPT = -shared
+SHARED_OPT = -fPIC -shared
 
 #-----------------------------------------------------------------------
 # Make.config.settings is used for setting default values to all compile-time 
