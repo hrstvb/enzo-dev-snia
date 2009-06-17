@@ -15,6 +15,7 @@
 #endif
 #include <stdlib.h>
 #include <stdio.h>
+#include "ErrorExceptions.h"
 #include "macros_and_parameters.h"
 #include "typedefs.h"
 #include "global_data.h"
@@ -36,7 +37,8 @@ void DeleteStar(Star * &Node);
 
   /* Check for any stellar deaths */
 
-int StarParticleDeath(LevelHierarchyEntry *LevelArray[], Star *&AllStars)
+int StarParticleDeath(LevelHierarchyEntry *LevelArray[], int level,
+		      Star *&AllStars)
 {
 
   int death;
@@ -47,6 +49,7 @@ int StarParticleDeath(LevelHierarchyEntry *LevelArray[], Star *&AllStars)
   AllStars = NULL;
   while (ThisStar) {
     TimeNow = LevelArray[ThisStar->ReturnLevel()]->GridData->ReturnTime();
+    //TimeNow = LevelArray[level]->GridData->ReturnTime();
     death = ThisStar->HitEndpoint(TimeNow);
     MoveStar = PopStar(ThisStar);
     if (death == KILL_STAR) {

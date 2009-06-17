@@ -11,9 +11,14 @@
 /           Stepping outward by a cell width.
 /
 ************************************************************************/
+#ifdef USE_MPI
+#include "mpi.h"
+#endif /* USE_MPI */
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
+#include "ErrorExceptions.h"
 #include "macros_and_parameters.h"
 #include "typedefs.h"
 #include "global_data.h"
@@ -25,8 +30,7 @@
 #include "TopGridData.h"
 #include "LevelHierarchy.h"
 #include "StarParticleData.h"
-
-int CommunicationAllSumValues(float *Values, int Number);
+#include "CommunicationUtilities.h"
 
 int Star::FindFeedbackSphere(LevelHierarchyEntry *LevelArray[], int level,
 			     float &Radius, double &EjectaDensity, 
@@ -57,7 +61,7 @@ int Star::FindFeedbackSphere(LevelHierarchyEntry *LevelArray[], int level,
 
   SphereContained = TRUE;
   SkipMassRemoval = FALSE;
-  StarType = abs(this->type);
+  StarType = ABS(this->type);
   for (dim = 0; dim < MAX_DIMENSION; dim++)
     AvgVelocity[dim] = 0.0;
 
@@ -110,7 +114,7 @@ int Star::FindFeedbackSphere(LevelHierarchyEntry *LevelArray[], int level,
 					    Metallicity, ColdGasMass, 
 					    AvgVelocity) == FAIL) {
 	  fprintf(stderr, "Error in GetEnclosedMass.\n");
-	  return FAIL;
+	  ENZO_FAIL("");
 	}
 
 	Temp = Temp->NextGridThisLevel;
@@ -173,7 +177,7 @@ int Star::FindFeedbackSphere(LevelHierarchyEntry *LevelArray[], int level,
 
   /* Don't allow the sphere to be too large (2x leeway) */
 
-  float epsMass = 2.0;
+  float epsMass = 9.0;
   float eps_tdyn = sqrt(1.0+epsMass) * StarClusterMinDynamicalTime/(TimeUnits/yr);
   if (FeedbackFlag == FORMATION) {
     // single Pop III star

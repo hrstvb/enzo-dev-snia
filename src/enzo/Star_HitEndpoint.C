@@ -9,6 +9,7 @@
 ************************************************************************/
 #include <stdlib.h>
 #include <stdio.h>
+#include "ErrorExceptions.h"
 #include "macros_and_parameters.h"
 #include "typedefs.h"
 #include "global_data.h"
@@ -36,6 +37,8 @@ int Star::HitEndpoint(FLOAT Time)
   int result = NO_DEATH;
   if (Time > this->BirthTime + this->LifeTime)
     result = KILL_ALL;
+  else
+    return result;
 
   switch (this->type) {
 

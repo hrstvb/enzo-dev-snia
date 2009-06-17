@@ -65,16 +65,19 @@ float CommunicationMaxValue(float Value);
 int CommunicationBarrier();
 int GenerateGridArray(LevelHierarchyEntry *LevelArray[], int level,
 		      HierarchyEntry **Grids[]);
+#ifdef FAST_SIB
 int PrepareDensityField(LevelHierarchyEntry *LevelArray[],
-                        SiblingGridList SiblingList[],
-                        int level, TopGridData *MetaData);
+			SiblingGridList SiblingList[],
+			int level, TopGridData *MetaData, FLOAT When);
+#else  // !FAST_SIB
 int PrepareDensityField(LevelHierarchyEntry *LevelArray[],
-                        int level, TopGridData *MetaData);
+                        int level, TopGridData *MetaData, FLOAT When);
+#endif  // end FAST_SIB
 int SetBoundaryConditions(HierarchyEntry *Grids[], int NumberOfGrids,
 			  SiblingGridList SiblingList[],
 			  int level, TopGridData *MetaData, 
 			  ExternalBoundary *Exterior);
-#ifdef SIB2
+#ifdef FAST_SIB
 int SetBoundaryConditions(HierarchyEntry *Grids[], int NumberOfGrids,
 			  SiblingGridList SiblingList[],
 			  int level, TopGridData *MetaData,
@@ -289,7 +292,7 @@ int EvolveLevel_RK2(TopGridData *MetaData, LevelHierarchyEntry *LevelArray[],
 			      Exterior) == FAIL) {
     return FAIL;
     }*/
-#ifdef SIB2
+#ifdef FAST_SIB
   if (SetBoundaryConditions(Grids, NumberOfGrids, SiblingList,
 			    level, MetaData, Exterior, LevelArray[level]) == FAIL)
     return FAIL;
@@ -473,20 +476,20 @@ int EvolveLevel_RK2(TopGridData *MetaData, LevelHierarchyEntry *LevelArray[],
 
     When = 0.5;
 
-#ifdef SIB3
+#ifdef FAST_SIB
     if (SelfGravity)
-      if ((LevelArray, SiblingList,
+      if (PrepareDensityField(LevelArray, SiblingList,
 			      level, MetaData, When) == FAIL) {
 	fprintf(stderr, "Error in PrepareDensityField.\n");
 	return FAIL;
       }
-#else   // !SIB3
+#else   // !FAST_SIB
     if (SelfGravity)
       if (PrepareDensityField(LevelArray, level, MetaData, When) == FAIL) {
         fprintf(stderr, "Error in PrepareDensityField.\n");
         return FAIL;
       }
-#endif  // end SIB3
+#endif  // end FAST_SIB
 
 
     /* Compute particle-particle acceleration */
@@ -506,7 +509,7 @@ int EvolveLevel_RK2(TopGridData *MetaData, LevelHierarchyEntry *LevelArray[],
 	int Dummy;
 	if (level <= MaximumGravityRefinementLevel) {
 	  if (level > 0) {
-	    if (Grids[grid]->GridData->SolveForPotential(Dummy, level) 
+	    if (Grids[grid]->GridData->SolveForPotential(level) 
 		== FAIL) {
 	      fprintf(stderr, "Error in grid->SolveForPotential.\n");
 	      return FAIL;
@@ -577,7 +580,7 @@ int EvolveLevel_RK2(TopGridData *MetaData, LevelHierarchyEntry *LevelArray[],
       Exterior) == FAIL) {
       return FAIL;
       }*/
-#ifdef SIB2
+#ifdef FAST_SIB
   if (SetBoundaryConditions(Grids, NumberOfGrids, SiblingList,
 			    level, MetaData, Exterior, LevelArray[level]) == FAIL)
     return FAIL;
@@ -714,10 +717,9 @@ int EvolveLevel_RK2(TopGridData *MetaData, LevelHierarchyEntry *LevelArray[],
 
 	/* Do star particle creation and feedback */
 
-	if (Grids[grid]->GridData->StarParticleHandler(level) == FAIL) {
-	  fprintf(stderr, "Error in grid->StarParticleHandler.\n");
-	  return FAIL;
-	}
+
+      Grids[grid]->GridData->StarParticleHandler
+	(Grids[grid]->NextGridNextLevel, level);
       }
 
       if ((SelfGravity || UniformGravity || PointSourceGravity || ExternalGravity) 
@@ -762,7 +764,7 @@ int EvolveLevel_RK2(TopGridData *MetaData, LevelHierarchyEntry *LevelArray[],
 				Exterior) == FAIL) {
       return FAIL;
       }*/
-#ifdef SIB2
+#ifdef FAST_SIB
   if (SetBoundaryConditions(Grids, NumberOfGrids, SiblingList,
 			    level, MetaData, Exterior, LevelArray[level]) == FAIL)
     return FAIL;

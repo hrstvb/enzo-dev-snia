@@ -10,6 +10,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
+#include "ErrorExceptions.h"
 #include "macros_and_parameters.h"
 #include "typedefs.h"
 #include "global_data.h"
@@ -33,9 +34,12 @@ int Star::CalculateMassAccretion(void)
     return SUCCESS;
 
   const double PI = 3.14159, G = 6.673e-8, k_b = 1.38e-16, m_h = 1.673e-24;
-  const double Msun = 1.989e33;
+  const double Msun = 1.989e33, yr = 3.1557e7;
   const int AccretionType = LOCAL_ACCRETION;
-  const FLOAT time = CurrentGrid->Time;
+  FLOAT time = CurrentGrid->OldTime;
+
+  if (time <= 0)
+    time = CurrentGrid->Time - CurrentGrid->dtFixed;
 
   float DensityUnits, LengthUnits, TemperatureUnits, TimeUnits,
     VelocityUnits, MassUnits;
@@ -51,7 +55,7 @@ int Star::CalculateMassAccretion(void)
   if (CurrentGrid->IdentifyPhysicalQuantities(DensNum, GENum, Vel1Num, Vel2Num, 
 					      Vel3Num, TENum) == FAIL) {
     fprintf(stderr, "Error in IdentifyPhysicalQuantities.\n");
-    return FAIL;
+    ENZO_FAIL("");
   }
 
   /* Find Multi-species fields. */
@@ -62,7 +66,7 @@ int Star::CalculateMassAccretion(void)
 			      HMNum, H2INum, H2IINum, DINum, DIINum, HDINum) 
 	== FAIL) {
       fprintf(stderr, "Error in grid->IdentifySpeciesFields.\n");
-      return FAIL;
+      ENZO_FAIL("");
     }
 
   int igrid[MAX_DIMENSION], dim, index, size = 1;
@@ -75,10 +79,15 @@ int Star::CalculateMassAccretion(void)
       CurrentGrid->CellWidth[0][0];
   }
 
+  temperature = new float[size];
   if (CurrentGrid->ComputeTemperatureField(temperature) == FAIL) {
     fprintf(stderr, "Error in ComputeTemperatureField.\n");
-    return FAIL;
+    ENZO_FAIL("");
   }
+
+  /* Reset the accretion rate (DeltaMass) */
+
+  this->ResetAccretion();
 
   if (AccretionType == LOCAL_ACCRETION) {
 
@@ -137,7 +146,7 @@ int Star::CalculateMassAccretion(void)
 
     fprintf(stdout, "BH Accretion[%"ISYM"]: time = %"FSYM", mdot = %"GSYM" Msun/yr, "
 	    "M_BH = %"GSYM" Msun, rho = %"GSYM" g/cm3, T = %"GSYM" K, v_rel = %"GSYM" cm/s\n",
-	    Identifier, time, mdot, Mass, density*DensityUnits,
+	    Identifier, time, mdot*yr, Mass, density*DensityUnits,
 	    temperature[index], v_rel);
 
   } // ENDIF LOCAL_ACCRETION  
@@ -146,7 +155,7 @@ int Star::CalculateMassAccretion(void)
       AccretionType == RADIAL_ACCRETION) {
     fprintf(stderr, "AccretionType = %"ISYM" not implemented yet.\n", 
 	    AccretionType);
-    return FAIL;
+    ENZO_FAIL("");
   }
 
   delete [] temperature;
