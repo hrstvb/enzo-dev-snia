@@ -252,7 +252,7 @@ int grid::StarParticleHandler(HierarchyEntry* SubgridPointer, int level)
   /* initialize */
  
   int dim, i, j, k, index, size, field, GhostZones = DEFAULT_GHOST_ZONES;
-  int DensNum, GENum, TENum, Vel1Num, Vel2Num, Vel3Num, H2INum, H2IINum;
+  int DensNum, GENum, TENum, Vel1Num, Vel2Num, Vel3Num, B1Num, B2Num, B3Num,H2INum, H2IINum;
  
   /* If only star cluster formation, check now if we're restricting
      formation in a region. */
@@ -275,11 +275,29 @@ int grid::StarParticleHandler(HierarchyEntry* SubgridPointer, int level)
  
   this->DebugCheck("StarParticleHandler");
   if (this->IdentifyPhysicalQuantities(DensNum, GENum, Vel1Num, Vel2Num,
-				       Vel3Num, TENum) == FAIL) {
-    fprintf(stderr, "Error in IdentifyPhysicalQuantities.\n");
-    ENZO_FAIL("");
+				       Vel3Num, TENum, B1Num, B2Num, B3Num) == FAIL) {
+        ENZO_FAIL("Error in IdentifyPhysicalQuantities.");
   }
  
+  /* If using MHD, subtract magnetic energy from total energy because 
+     density may be modified in star_maker3. */
+  
+  float *Bfieldx = NULL, *Bfieldy = NULL, *Bfieldz = NULL;
+  if (HydroMethod == MHD_RK) {
+    Bfieldx = BaryonField[B1Num];
+    Bfieldy = BaryonField[B2Num];
+    Bfieldz = BaryonField[B3Num];
+    for (int n = 0; n < size; n++) {
+      float den = BaryonField[DensNum][n];
+      float Bx  = BaryonField[B1Num  ][n];
+      float By  = BaryonField[B2Num  ][n];
+      float Bz  = BaryonField[B3Num  ][n];
+      float B2 = Bx*Bx + By*By + Bz*Bz;
+      BaryonField[TENum][n] -= 0.5*B2/den;
+    }
+  }
+
+
   if (MultiSpecies > 1) {
     H2INum   = FindField(H2IDensity, FieldType, NumberOfBaryonFields);
     H2IINum  = FindField(H2IIDensity, FieldType, NumberOfBaryonFields);
@@ -382,8 +400,7 @@ int grid::StarParticleHandler(HierarchyEntry* SubgridPointer, int level)
     TimeUnits = 1, VelocityUnits = 1, MassUnits = 1;
   if (GetUnits(&DensityUnits, &LengthUnits, &TemperatureUnits,
 	       &TimeUnits, &VelocityUnits, &MassUnits, Time) == FAIL) {
-    fprintf(stderr, "Error in GetUnits.\n");
-    ENZO_FAIL("");
+        ENZO_FAIL("Error in GetUnits.");
   }
  
   float CellWidthTemp = float(CellWidth[0][0]);
@@ -465,6 +482,9 @@ int grid::StarParticleHandler(HierarchyEntry* SubgridPointer, int level)
           tg->ParticleVelocity[2],
        tg->ParticleMass, tg->ParticleAttribute[1], tg->ParticleAttribute[0],
           tg->ParticleAttribute[2]);
+
+      for (i = 0; i < NumberOfNewParticles; i++)
+          tg->ParticleType[i] = NormalStarType;
     } 
 
     if (STARMAKE_METHOD(UNIGRID_STAR)) {
@@ -490,6 +510,9 @@ int grid::StarParticleHandler(HierarchyEntry* SubgridPointer, int level)
           tg->ParticleVelocity[2],
        tg->ParticleMass, tg->ParticleAttribute[1], tg->ParticleAttribute[0],
           tg->ParticleAttribute[2]);
+
+      for (i = 0; i < NumberOfNewParticles; i++)
+          tg->ParticleType[i] = NormalStarType;
     }
 
     if (STARMAKE_METHOD(KRAVTSOV_STAR)) {
@@ -514,6 +537,9 @@ int grid::StarParticleHandler(HierarchyEntry* SubgridPointer, int level)
           tg->ParticleVelocity[2], 
        tg->ParticleMass, tg->ParticleAttribute[1], tg->ParticleAttribute[0],
           tg->ParticleAttribute[2]);
+
+      for (i = 0; i < NumberOfNewParticles; i++)
+          tg->ParticleType[i] = NormalStarType;
     }
 
     if (STARMAKE_METHOD(POP3_STAR)) {
@@ -607,8 +633,7 @@ int grid::StarParticleHandler(HierarchyEntry* SubgridPointer, int level)
 		      ParticleVelocity[2], ParticleMass, ParticleAttribute[0], 
 		      ParticleAttribute[1], ParticleType, &SinkParticleType, 
 		      &JeansLengthRefinement, temperature) == FAIL) {
-	fprintf(stderr, "Error in star_maker3\n");
-    ENZO_FAIL("");
+	    ENZO_FAIL("Error in star_maker3");
       }
 
     if (STARMAKE_METHOD(INSTANT_STAR)) {
@@ -653,7 +678,19 @@ int grid::StarParticleHandler(HierarchyEntry* SubgridPointer, int level)
 	tg->ParticleAttribute[2][i] = 0.0;
  
     delete [] cooling_time;
+
+      /* Add magnetic energy to total energy with the new density field */
+    if (HydroMethod == MHD_RK)
+      for (int n = 0; n < size; n++) {
+	float den = BaryonField[DensNum][n];
+	float Bx  = BaryonField[B1Num  ][n];
+	float By  = BaryonField[B2Num  ][n];
+	float Bz  = BaryonField[B3Num  ][n];
+	float B2 = Bx*Bx + By*By + Bz*Bz;
+	BaryonField[TENum][n] += 0.5*B2/den;
+      }
  
+
     /* Move any new particles into their new homes. */
  
     if (NumberOfNewParticles > 0) {

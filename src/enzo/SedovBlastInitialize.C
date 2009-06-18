@@ -49,6 +49,7 @@ int SedovBlastInitialize(FILE *fptr, FILE *Outfptr, HierarchyEntry &TopGrid,
 {
   char *DensName = "Density";
   char *TEName   = "TotalEnergy";
+  char *GEName   = "GasEnergy";
   char *Vel1Name = "x-velocity";
   char *Vel2Name = "y-velocity";
   char *Vel3Name = "z-velocity";
@@ -83,6 +84,7 @@ int SedovBlastInitialize(FILE *fptr, FILE *Outfptr, HierarchyEntry &TopGrid,
   float Pi                      = 3.14159;
   SedovBlastFullBox             = 0;                 // full box or one quadrant
   float SedovBlastVelocity[3]   = {0.0, 0.0, 0.0};   // gas initally (t=0) at rest
+  float SedovBlastBField[3]   = {0.0, 0.0, 0.0};   // gas initally (t=0) at rest
   FLOAT SedovBlastInitialTime   = 0.0;
   float SedovBlastPressure      = 1e-5;              // can be arbitrarily small
   SedovBlastDensity             = 1.0;
@@ -174,9 +176,9 @@ int SedovBlastInitialize(FILE *fptr, FILE *Outfptr, HierarchyEntry &TopGrid,
   if (TopGrid.GridData->InitializeUniformGrid(SedovBlastDensity, 
 					      SedovBlastTotalEnergy,
 					      SedovBlastTotalEnergy,
-					      SedovBlastVelocity) == FAIL) {
-    fprintf(stderr, "Error in InitializeUniformGrid.\n");
-    ENZO_FAIL("");
+					      SedovBlastVelocity,
+					      SedovBlastBField) == FAIL) {
+        ENZO_FAIL("Error in InitializeUniformGrid.");
   }
 
   /* Create as many subgrids as there are refinement levels 
@@ -238,9 +240,9 @@ int SedovBlastInitialize(FILE *fptr, FILE *Outfptr, HierarchyEntry &TopGrid,
       if (Subgrid[lev]->GridData->InitializeUniformGrid(SedovBlastDensity,
 						   SedovBlastTotalEnergy,
 						   SedovBlastTotalEnergy,
-					        SedovBlastVelocity) == FAIL) {
-	fprintf(stderr, "Error in InitializeUniformGrid (subgrid).\n");
-	ENZO_FAIL("");
+							SedovBlastVelocity,
+							SedovBlastBField) == FAIL) {
+		ENZO_FAIL("Error in InitializeUniformGrid (subgrid).");
       }
 
       /* set up the initial explosion area on the finest resolution subgrid */
@@ -250,15 +252,13 @@ int SedovBlastInitialize(FILE *fptr, FILE *Outfptr, HierarchyEntry &TopGrid,
 	  if (Subgrid[lev]->GridData->SedovBlastInitializeGrid(dr,
 							       SedovBlastInnerTotalEnergy) 
 	      == FAIL) {
-	    fprintf(stderr, "Error in SedovBlastInitialize[Sub]Grid.\n");
-	    ENZO_FAIL("");
+	    	    ENZO_FAIL("Error in SedovBlastInitialize[Sub]Grid.");
 	  }
 	}
 	else
 	  if (Subgrid[lev]->GridData->SedovBlastInitializeGrid3D("sedov.in") 
 	      == FAIL) {
-	    fprintf(stderr, "Error in SedovBlastInitialize3D[Sub]Grid.\n");
-	    ENZO_FAIL("");
+	    	    ENZO_FAIL("Error in SedovBlastInitialize3D[Sub]Grid.");
 	  }
     }
     else
@@ -271,8 +271,7 @@ int SedovBlastInitialize(FILE *fptr, FILE *Outfptr, HierarchyEntry &TopGrid,
     if (Subgrid[lev]->GridData->ProjectSolutionToParentGrid(
 				       *(Subgrid[lev-1]->GridData))
 	== FAIL) {
-      fprintf(stderr, "Error in ProjectSolutionToParentGrid.\n");
-      ENZO_FAIL("");
+            ENZO_FAIL("Error in ProjectSolutionToParentGrid.");
     }
   
   /* set up the root grid */
@@ -284,38 +283,34 @@ int SedovBlastInitialize(FILE *fptr, FILE *Outfptr, HierarchyEntry &TopGrid,
   if (MaximumRefinementLevel > 0) {
     if (Subgrid[0]->GridData->ProjectSolutionToParentGrid(*(TopGrid.GridData))
 	== FAIL) {
-      fprintf(stderr, "Error in ProjectSolutionToParentGrid.\n");
-      ENZO_FAIL("");
+            ENZO_FAIL("Error in ProjectSolutionToParentGrid.");
     }
   }
   else
     if (SedovBlastInitialTime == 0.0) {
       if (TopGrid.GridData->SedovBlastInitializeGrid(dr,
 						     SedovBlastInnerTotalEnergy) == FAIL) {
-	fprintf(stderr, "Error in SedovBlastInitializeGrid.\n");
-	ENZO_FAIL("");
+		ENZO_FAIL("Error in SedovBlastInitializeGrid.");
       }
     }
     else
       if (TopGrid.GridData->SedovBlastInitializeGrid3D("sedov.in") == FAIL) {
-	fprintf(stderr, "Error in SedovBlastInitializeGrid3D.\n");
-	ENZO_FAIL("");
+		ENZO_FAIL("Error in SedovBlastInitializeGrid3D.");
       }
   
 
   /* set up field names and units */
+  int i = 0;
+  DataLabel[i++] = DensName;
+  DataLabel[i++] = TEName;
+  if (DualEnergyFormalism)
+    DataLabel[i++] = GEName;
+  DataLabel[i++] = Vel1Name;
+  DataLabel[i++] = Vel2Name;
+  DataLabel[i++] = Vel3Name;
 
-  DataLabel[0] = DensName;
-  DataLabel[1] = TEName;
-  DataLabel[2] = Vel1Name;
-  DataLabel[3] = Vel2Name;
-  DataLabel[4] = Vel3Name;
-
-  DataUnits[0] = NULL;
-  DataUnits[1] = NULL;
-  DataUnits[2] = NULL;
-  DataUnits[3] = NULL;
-  DataUnits[4] = NULL;
+  for (int j=0; j< i; j++) 
+    DataUnits[j] = NULL;
 
   /* Write parameters to parameter output file */
 
