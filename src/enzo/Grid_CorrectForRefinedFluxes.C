@@ -50,7 +50,7 @@ int grid::CorrectForRefinedFluxes(fluxes *InitialFluxes,
 {
   /* Return if this doesn't concern us. */
  
-  if (ProcessorNumber != MyProcessorNumber)
+  if (ProcessorNumber != MyProcessorNumber || !UseHydro)
     return SUCCESS;
  
   /* declarations */
