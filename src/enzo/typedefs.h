@@ -108,7 +108,8 @@ const field_type
   AccelerationField2         = 59, 
   AccelerationField3         = 60,
 
-  FieldUndefined  = 61;
+  ForbiddenRefinement = 61,
+  FieldUndefined  = 62;
    
 /*
 enum field_type {Density, TotalEnergy, InternalEnergy, Pressure,
@@ -183,7 +184,8 @@ enum {FluxReconstruction, HLL, Marquina, LLF, HLLC};
 const star_type
   PopIII = PARTICLE_TYPE_SINGLE_STAR,
   PopII = PARTICLE_TYPE_CLUSTER,
-  BlackHole = PARTICLE_TYPE_BLACK_HOLE;
+  BlackHole = PARTICLE_TYPE_BLACK_HOLE,
+  PopIII_CF = PARTICLE_TYPE_COLOR_STAR; // Non-radiating PopIII
 
 /* Define a float/int union. */
 

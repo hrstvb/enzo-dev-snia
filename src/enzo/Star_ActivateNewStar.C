@@ -43,6 +43,10 @@ void Star::ActivateNewStar(FLOAT Time)
 	BirthTime = Time;
       }
       break;
+    case PopIII_CF:
+      type = StarType;
+      BirthTime = Time;
+      break;
     case BlackHole:
       // nothing to do
       break;

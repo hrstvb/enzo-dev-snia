@@ -43,14 +43,14 @@ int RemoveParticles(LevelHierarchyEntry *LevelArray[], int level, int ID);
 
 int StarParticleAddFeedback(TopGridData *MetaData, 
 			    LevelHierarchyEntry *LevelArray[], int level, 
-			    Star *&AllStars)
+			    Star *&AllStars, bool* &AddedFeedback)
 {
 
   const double pc = 3.086e18, Msun = 1.989e33, pMass = 1.673e-24, 
     gravConst = 6.673e-8, yr = 3.1557e7, Myr = 3.1557e13;
 
   Star *cstar;
-  int i, l, dim, temp_int, SkipMassRemoval, SphereContained;
+  int i, l, dim, temp_int, SkipMassRemoval, SphereContained, count;
   float influenceRadius, RootCellWidth, SNe_dt;
   double EjectaThermalEnergy, EjectaDensity, EjectaMetalDensity;
   FLOAT Time;
@@ -77,7 +77,18 @@ int StarParticleAddFeedback(TopGridData *MetaData,
   GetUnits(&DensityUnits, &LengthUnits, &TemperatureUnits,
 	   &TimeUnits, &VelocityUnits, &MassUnits, Time);
 
-  for (cstar = AllStars; cstar; cstar = cstar->NextStar) {
+  /* Initialize the AddedFeedback flag array */
+  
+  int TotalNumberOfStars = 0;
+  for (cstar = AllStars; cstar; cstar = cstar->NextStar)
+    TotalNumberOfStars++;
+  if (TotalNumberOfStars > 0)
+    AddedFeedback = new bool[TotalNumberOfStars];
+
+  count = 0;
+  for (cstar = AllStars; cstar; cstar = cstar->NextStar, count++) {
+
+    AddedFeedback[count] = false;
 
     if (!cstar->ApplyFeedbackTrue(SNe_dt))
       continue;
@@ -96,8 +107,7 @@ int StarParticleAddFeedback(TopGridData *MetaData,
 	       EjectaDensity, SphereContained, SkipMassRemoval,	DensityUnits, 
 	       LengthUnits, TemperatureUnits, TimeUnits, 
 	       VelocityUnits) == FAIL) {
-      fprintf(stderr, "Error in star::FindFeedbackSphere\n");
-      ENZO_FAIL("");
+            ENZO_FAIL("Error in star::FindFeedbackSphere");
     }
 
     if (SphereContained == FALSE)
@@ -117,14 +127,18 @@ int StarParticleAddFeedback(TopGridData *MetaData,
 				TemperatureUnits, EjectaDensity, 
 				EjectaMetalDensity, EjectaThermalEnergy, 
 				CellsModified) == FAIL) {
-	    fprintf(stderr, "Error in AddFeedbackSphere.\n");
-	    ENZO_FAIL("");
+	    	    ENZO_FAIL("Error in AddFeedbackSphere.");
 	  }
 
     /* Only kill a Pop III star after it has gone SN */
 
     if (cstar->ReturnFeedbackFlag() == SUPERNOVA)
       cstar->SetFeedbackFlag(DEATH);
+
+    /* We only color the fields once */
+
+
+    AddedFeedback[count] = true;
 
 #ifdef UNUSED
     temp_int = CellsModified;
