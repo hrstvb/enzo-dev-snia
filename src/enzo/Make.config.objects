@@ -257,6 +257,7 @@ OBJS_CONFIG_LIB = \
 	Grid_FindNewStarParticles.o \
 	Grid_FinishFFT.o \
 	Grid_FlagBufferZones.o \
+	Grid_FlagCellsToAvoidRefinement.o \
 	Grid_FlagCellsToBeRefinedByCoolingTime.o \
 	Grid_FlagCellsToBeRefinedByJeansLength.o \
 	Grid_FlagCellsToBeRefinedByMass.o \
@@ -435,6 +436,7 @@ OBJS_CONFIG_LIB = \
 	performance.o \
         pgas2d_dual.o \
         pgas2d.o \
+	pop3_color_maker.o \
 	pop3_maker.o \
 	pop3_properties.o \
 	power_of_2.o \
