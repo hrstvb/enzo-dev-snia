@@ -347,12 +347,13 @@ int ExternalBoundary::ReadExternalBoundary(FILE *fptr, int ReadText, int ReadDat
  
             h5_status = H5Dread(dset_id1, float_type_id, mem_dsp_id, file_dsp_id,  H5P_DEFAULT, (VOIDP) buffer);
 	    if (io_log) fprintf(log_fptr, "H5Dread boundary type: %"ISYM"\n", h5_status);
-	    if( h5_status == h5_error ){
-	      for (int kk; kk<size; kk++) buffer[kk] = 0;
-	      fprintf(stderr,"ExternaBoundary::ReadExternalBoundary Had trouble reading all ExternalBoundary values: field: %i\n", field);
-	      fprintf(stderr,"I'll continue hoping for the best.\n", field);
+
+	    if( h5_status == h5_error ){	      
+	      for (int k=0;k<size;k++) buffer[size] = 0;
+	      fprintf(stderr,"ExternaBoundary::ReadExternalBoundary Had trouble reading ExternalBoudnary values: field: %i\n", field);
+	      fprintf(stderr,"Continue and hope for th best.\n");
 	    }
-	    
+
 #ifdef OOC_BOUNDARY
 
             for (j = 0; j < size; j++)
