@@ -367,6 +367,7 @@ class grid
     (step #21) */
 
    void SetTimeNextTimestep() {Time += dtFixed;};
+   void SetTimePreviousTimestep() {Time -= dtFixed;};
 
 /* set time of this grid (used in setup) */
 
@@ -1456,15 +1457,10 @@ int CollapseTestInitializeGrid(int NumberOfSpheres,
 				 int *NumberOfCellsSet);
 
   /* Cooling test initialization */
+  int CoolingTestInitializeGrid();
 
-  int CoolingTestInitializeGrid(float MinimumDensity,
-				float MaximumDensity,
-				float MinimumTemperature,
-				float MaximumTemperature,
-				float MinimumColour,
-				float MaximumColour,
-				int UseMetals,
-				int UseElectronFraction);
+  /* Reset internal energy to initial values for cooling test. */
+  int CoolingTestResetEnergies();
 
 /* Tricks for Random Forcing. */
 

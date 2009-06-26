@@ -256,6 +256,15 @@ int SetDefaultGlobalValues(TopGridData &MetaData)
   CoolData.f3                 = 1.0e-21;           // radiation normalization
   CoolData.ParameterFilename  = NULL;
 
+  CloudyCoolingData.CloudyCoolingGridRank          = 0;
+  CloudyCoolingData.CloudyCoolingGridFile          = "";
+  CloudyCoolingData.IncludeCloudyHeating           = 0;
+  CloudyCoolingData.IncludeCloudyMMW               = 0;
+  CloudyCoolingData.CMBTemperatureFloor            = 1;         // use CMB floor.
+  CloudyCoolingData.ConstantTemperatureFloor       = 1.0;       // use if higher than T_CMB
+  CloudyCoolingData.CloudyMetallicityNormalization = 0.018477;  // calculated using Cloudy 07.02 abundances
+  CloudyCoolingData.CloudyElectronFractionFactor = 9.153959e-3; // calculated using Cloudy 07.02 abundances
+
   OutputCoolingTime = 0;
   OutputTemperature = 0;
 
@@ -432,6 +441,14 @@ int SetDefaultGlobalValues(TopGridData &MetaData)
   TestProblemData.MultiMetals = 0;
   TestProblemData.MultiMetalsField1_Fraction = tiny_number;
   TestProblemData.MultiMetalsField2_Fraction = tiny_number;
+
+  TestProblemData.MinimumHNumberDensity = 1;
+  TestProblemData.MaximumHNumberDensity = 1e6;
+  TestProblemData.MinimumMetallicity    = 1e-6;
+  TestProblemData.MaximumMetallicity    = 1;
+  TestProblemData.MinimumTemperature    = 10;
+  TestProblemData.MaximumTemperature    = 1e7;
+  TestProblemData.ResetEnergies         = 1;
 
   // This should only be false for analysis.
   // It could also be used (cautiously) for other purposes.
