@@ -51,7 +51,7 @@ int InitializeEquilibriumCoolData(FLOAT Time);
 int InitializeRadiationFieldData(FLOAT Time);
 int GetUnits(float *DensityUnits, float *LengthUnits,
 	     float *TemperatureUnits, float *TimeUnits,
-	     float *VelocityUnits, FLOAT Time);
+	     float *VelocityUnits, double *MassUnits, FLOAT Time);
  
  
 int ReadParameterFile(FILE *fptr, TopGridData &MetaData, float *Initialdt)
@@ -345,6 +345,11 @@ int ReadParameterFile(FILE *fptr, TopGridData &MetaData, float *Initialdt)
     ret += sscanf(line, "OutputCoolingTime = %"ISYM, &OutputCoolingTime);
     ret += sscanf(line, "OutputTemperature = %"ISYM, &OutputTemperature);
 
+    ret += sscanf(line, "OutputSmoothedDarkMatter = %"ISYM, 
+		  &OutputSmoothedDarkMatter);
+    ret += sscanf(line, "SmoothedDarkMatterNeighbors = %"ISYM, 
+		  &SmoothedDarkMatterNeighbors);
+
     ret += sscanf(line, "ZEUSQuadraticArtificialViscosity = %"FSYM,
 		  &ZEUSQuadraticArtificialViscosity);
     ret += sscanf(line, "ZEUSLinearArtificialViscosity = %"FSYM,
@@ -559,6 +564,9 @@ int ReadParameterFile(FILE *fptr, TopGridData &MetaData, float *Initialdt)
     sscanf(line, "GlobalPath = %s\n", GlobalPath);
 #endif
 
+    /* Embedded Python */
+    ret += sscanf(line, "PythonSubcycleSkip = %"ISYM, &PythonSubcycleSkip);
+
     /* Inline halo finder */
 
     ret += sscanf(line, "InlineHaloFinder = %"ISYM, &InlineHaloFinder);
@@ -606,6 +614,7 @@ int ReadParameterFile(FILE *fptr, TopGridData &MetaData, float *Initialdt)
     ret += sscanf(line, "SmallRho = %g", &SmallRho);
     ret += sscanf(line, "SmallP = %g", &SmallP);
     ret += sscanf(line, "SmallT = %g", &SmallT);
+    ret += sscanf(line, "MaximumAlvenSpeed = %g", &MaximumAlvenSpeed);
     ret += sscanf(line, "Coordinate = %"ISYM, &Coordinate);
     ret += sscanf(line, "RiemannSolver = %"ISYM, &RiemannSolver);
     ret += sscanf(line, "ReconstructionMethod = %"ISYM, &ReconstructionMethod);
@@ -711,9 +720,8 @@ int ReadParameterFile(FILE *fptr, TopGridData &MetaData, float *Initialdt)
   double MassUnits = 1.0;
   if (UsePhysicalUnit) {
     GetUnits(&DensityUnits, &LengthUnits, &TemperatureUnits, &TimeUnits, &VelocityUnits, 
-	     MetaData.Time);
+	     &MassUnits, MetaData.Time);
     PressureUnits = DensityUnits*pow(VelocityUnits,2);
-    MassUnits = DensityUnits*pow(LengthUnits,3);
   }
 
   /* Change input physical parameters into code units */
@@ -728,11 +736,12 @@ int ReadParameterFile(FILE *fptr, TopGridData &MetaData, float *Initialdt)
   SmallRho /= DensityUnits;
   SmallP /= PressureUnits;
   SmallT /= TemperatureUnits;
+  MaximumAlvenSpeed /= VelocityUnits;
   float h, cs, dpdrho, dpde;
   EOS(SmallP, SmallRho, SmallEint, h, cs, dpdrho, dpde, EOSType, 1);
   if (debug && (HydroMethod == HD_RK || HydroMethod == MHD_RK))
-    printf("smallrho=%g, smallp=%g, smalleint=%g, PressureUnits=%g\n",
-	   SmallRho, SmallP, SmallEint, PressureUnits);
+    printf("smallrho=%g, smallp=%g, smalleint=%g, PressureUnits=%g, MaximumAlvenSpeed=%g\n",
+	   SmallRho, SmallP, SmallEint, PressureUnits, MaximumAlvenSpeed);
   for (int i = 0; i < MAX_FLAGGING_METHODS; i++) {
     if (MinimumMassForRefinement[i] != FLOAT_UNDEFINED) {
       MinimumMassForRefinement[i] /= MassUnits;

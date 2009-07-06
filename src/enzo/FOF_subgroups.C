@@ -36,9 +36,9 @@ void find_subgroups(FOFData &D)
 
   listofdifferent = ivector(0, D.DesLinkNgb);
 
-  for (i = D.NumInGroup-1, D.AnzNodes = 0, signal = 0; i >= 0; i--) {
+  for (i = D.NumInGroup, D.AnzNodes = 0, signal = 0; i >= 1; i--) {
 
-    ngb_treefind(D, D.P[D.Index[i]].Pos, D.DesLinkNgb, 0, &ngblist, &r2list); 
+    ngb_treefind(D.P, D.P[D.Index[i]].Pos, D.DesLinkNgb, 0, &ngblist, &r2list); 
       
     sort2_flt_int(D.DesLinkNgb, r2list-1, ngblist-1);
 

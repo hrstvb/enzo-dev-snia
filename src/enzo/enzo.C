@@ -106,6 +106,11 @@ int CommunicationInitialize(Eint32 *argc, char **argv[]);
 int CommunicationFinalize();
 
 int CommunicationPartitionGrid(HierarchyEntry *Grid, int gridnum);
+int CommunicationCombineGrids(HierarchyEntry *OldHierarchy,
+			      HierarchyEntry **NewHierarchyPointer,
+			      FLOAT WriteTime);
+void DeleteGridHierarchy(HierarchyEntry *GridEntry);
+
 void CommunicationAbort(int);
 int ENZO_OptionsinEffect(void);
 
@@ -350,7 +355,24 @@ Eint32 main(Eint32 argc, char *argv[])
 #ifdef USE_HDF5_GROUPS
     }
 #endif
- 
+
+    /*
+#if defined(USE_HDF5_GROUPS) && !defined(USE_HDF4)
+    if (Group_ReadAllData(ParameterFile, &TopGrid, MetaData, &Exterior) == FAIL) {
+      if (MyProcessorNumber == ROOT_PROCESSOR)
+	fprintf(stderr, "Error in Group_ReadAllData %s.\n", ParameterFile);
+      my_exit(EXIT_FAILURE);
+    }
+#else 
+    if (ReadAllData(ParameterFile, &TopGrid, MetaData, &Exterior) == FAIL) {
+      if (MyProcessorNumber == ROOT_PROCESSOR)
+	fprintf(stderr, "Error in ReadAllData %s.\n", ParameterFile);
+      my_exit(EXIT_FAILURE);
+    }
+#endif
+    */
+
+
     if (!ParallelRootGridIO && restart && TopGrid.NextGridThisLevel == NULL) {
       CommunicationPartitionGrid(&TopGrid, 0);  // partition top grid if necessary
     }
@@ -427,6 +449,7 @@ Eint32 main(Eint32 argc, char *argv[])
     else {
       if (MyProcessorNumber == ROOT_PROCESSOR)
 	fprintf(stderr, "Successfully read in parameter file %s.\n", ParameterFile);
+      //      Exterior.Prepare(TopGrid.GridData);
       AddLevel(LevelArray, &TopGrid, 0);    // recursively add levels
     }
  
