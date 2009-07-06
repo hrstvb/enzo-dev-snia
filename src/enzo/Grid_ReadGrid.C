@@ -43,12 +43,9 @@ int ReadListOfInts(FILE *fptr, int N, int nums[]);
 // extern int ParticleTypeInFile; // declared and set in ReadParameterFile
  
 #ifdef USE_HDF4
-int ReadField(float *temp, int Dims[], int Rank, char *name, char *field_name);
-int ReadField(float32 *temp, Eint32 Size[], int Rank, int size, Eint32 sd_id, 
-	      int32 &sds_index, char *name);
-int ReadIntField(Eint32 *tempint, Eint32 Size[], int Rank, int size, Eint32 sd_id, 
-	      Eint32 &sds_index, char *name);
-static Eint32 sd_id, sds_index; // HDF4 (SD) handlers                                               
+int ReadField(float *temp, int Dims[], int Rank, char *name,
+	      char *field_name);
+static int32 sd_id, sds_index; // HDF4 (SD) handlers                                               
 #endif 
  
 int grid::ReadGrid(FILE *fptr, int GridID, 
@@ -85,9 +82,9 @@ int grid::ReadGrid(FILE *fptr, int GridID,
                                     "metallicity_fraction", "alpha_fraction"};
 
 #ifdef USE_HDF4
-  Eint32 TempIntArray2[MAX_DIMENSION];
-  Eint32 sds_id, start[] = {0,0,0}, num_type2, attributes, TempInt;  
-  sds_index = 0;
+    int32 TempIntArray2[MAX_DIMENSION];
+    int32 sds_id, num_type2, attributes, TempInt;  
+    sds_index = 0;  // start at first SDS                                                                            
 #endif 
  
 #ifdef IO_LOG
@@ -205,101 +202,44 @@ int grid::ReadGrid(FILE *fptr, int GridID,
       if (fscanf(fptr, "GravityBoundaryType = %"ISYM"\n",&GravityBoundaryType) != 1) {
 		ENZO_FAIL("Error reading GravityBoundaryType.");
       }
+
     // If HierarchyFile has different Ghostzones 
     // (useful in a restart with different hydro/mhd solvers) 
     int ghosts =DEFAULT_GHOST_ZONES;
     if (GridStartIndex[0] != ghosts)  {
-	if (GridID < 2)      fprintf(stderr,"Grid_ReadGrid: Adjusting Ghostzones which in the hierarchy file did not match the selected HydroMethod.\n");
+      if (GridID < 2) fprintf(stderr,"Grid_ReadGrid: Adjusting Ghostzones which in the hierarchy file did not match the selected HydroMethod.\n");
       
       for (dim=0; dim < GridRank; dim++) {
 	GridDimension[dim]  = GridEndIndex[dim]-GridStartIndex[dim]+1+2*ghosts;
 	GridStartIndex[dim] = ghosts;
 	GridEndIndex[dim]   = GridStartIndex[dim]+GridDimension[dim]-1-2*ghosts;
 	if (GridID < 2) fprintf(stderr, "dim: GridStart,GridEnd,GridDim:  %i: %i %i %i\n",
-				 dim, GridStartIndex[dim], GridEndIndex[dim], GridDimension[dim]);
+				dim, GridStartIndex[dim], GridEndIndex[dim], GridDimension[dim]);
       }
     } // end Adjusting Grid Size with different Ghostzones
-  }
+  } /* end if (ReadText) */
 
 
-  /* Compute Flux quantities */
 
   this->PrepareGridDerivedQuantities();
-
-  if (HydroMethod == MHD_RK) {
-
-    int activesize = 1;
-    for (int dim = 0; dim < GridRank; dim++)
-      activesize *= (GridDimension[dim]-2*DEFAULT_GHOST_ZONES);
-    
-    if (divB == NULL) 
-      divB = new float[activesize];
-
-    /* if we restart from a a different solvers output without a Phi Field create here and set to zero */
-    int PhiNum; 
-    if ((PhiNum = FindField(PhiField, FieldType, NumberOfBaryonFields)) < 0) {
-      char *PhiName = "Phi";
-      PhiNum=NumberOfBaryonFields++;
-      FieldType[PhiNum] = PhiField;
-      DataLabel[PhiNum] = PhiName;
-      BaryonField[PhiNum] = new float[size];
-      for (int n = 0; n < size; n++) BaryonField[PhiNum][n] = 0.0;
+ 
+  switch(sizeof(io_type))
+    {
+    case 4: float_type_id = HDF5_R4; break;
+    case 8: float_type_id = HDF5_R8; break;
+    default: float_type_id = HDF5_R4;
     }
 
-    for (int dim = 0; dim < 3; dim++)
-      if (gradPhi[dim] == NULL)
-	gradPhi[dim] = new float[activesize];
-
-    for (int dim = GridRank; dim < 3; dim++)
-      for (int n = 0; n < activesize; n++)
-	gradPhi[dim][n] = 0.0;
-
-  } /* if HydroMethod == MHD */
-
- 
-
-  int ii = sizeof(io_type);
- 
-  switch(ii)
+  switch(sizeof(FLOAT))
     {
- 
-    case 4:
-      float_type_id = HDF5_R4;
-      break;
- 
-    case 8:
-      float_type_id = HDF5_R8;
-      break;
- 
-    default:
-      float_type_id = HDF5_R4;
- 
-    }
- 
-  int jj = sizeof(FLOAT);
- 
-  switch(jj)
-    {
- 
-    case 4:
-      FLOAT_type_id = HDF5_R4;
-      FILE_type_id = HDF5_FILE_R4;
-      break;
- 
-    case 8:
-      FLOAT_type_id = HDF5_R8;
-      FILE_type_id = HDF5_FILE_R8;
-      break;
- 
-    case 16:
-      FLOAT_type_id = HDF5_R16;
+    case 4: FLOAT_type_id = HDF5_R4;
+      FILE_type_id = HDF5_FILE_R4; break;
+    case 8: FLOAT_type_id = HDF5_R8;
+      FILE_type_id = HDF5_FILE_R8; break;
+    case 16: FLOAT_type_id = HDF5_R16;
       FILE_type_id = H5Tcopy(HDF5_FILE_B8);
-      H5Tset_size(FILE_type_id,16);
-      break;
- 
-    default:
-      printf("INCORRECT FLOAT DEFINITION\n");
- 
+      H5Tset_size(FILE_type_id,16); break;
+     default: printf("INCORRECT FLOAT DEFINITION\n");
     }
 
   if (NumberOfBaryonFields > 0 && ReadData ) {
@@ -312,15 +252,6 @@ int grid::ReadGrid(FILE *fptr, int GridID,
  
     if (MyProcessorNumber == ProcessorNumber){
 
-      if(!ReadText){
-	// build filename from grid id
-	char id[MAX_GRID_TAG_SIZE];
-	sprintf(id, "%"GRID_TAG_FORMAT""ISYM, GridID);
-	strcpy(name, PrevParameterFileName);
-	strcat(name, ".grid");
-	strcat(name, id);
-      }
-      
 #ifdef USE_HDF4
       if ((sd_id = SDstart(name, DFACC_RDONLY)) == HDF_FAIL) {
 	fprintf(stderr, "Error opening file %s.\n", name);
@@ -345,6 +276,15 @@ int grid::ReadGrid(FILE *fptr, int GridID,
 	return FAIL;
       }
 #else
+      if(!ReadText){
+	// build filename from grid id
+	char id[MAX_GRID_TAG_SIZE];
+	sprintf(id, "%"GRID_TAG_FORMAT""ISYM, GridID);
+	strcpy(name, PrevParameterFileName);
+	strcat(name, ".grid");
+	strcat(name, id);
+      }
+      
       if (io_log) fprintf(log_fptr,"H5Fopen with Name %s\n",name);
  
       file_id = H5Fopen(name,  H5F_ACC_RDONLY, H5P_DEFAULT);
@@ -376,13 +316,13 @@ int grid::ReadGrid(FILE *fptr, int GridID,
       }
  
       /* allocate temporary space */
-
+ 
 #ifdef USE_HDF4
-      float32 *temp = new float32[active_size];
-#else 
+      float *temp = new float[active_size];
+#else
       io_type *temp = new io_type[active_size];
 #endif
-
+ 
       /* loop over fields, reading each one */
  
       for (field = 0; field < NumberOfBaryonFields; field++) {
@@ -390,7 +330,8 @@ int grid::ReadGrid(FILE *fptr, int GridID,
 	/* get data into temporary array */
 
 #ifdef USE_HDF4
-	if (ReadField(temp, ActiveDim, GridRank, name, DataLabel[field]) == FAIL) {
+	if (ReadField(temp, ActiveDim, GridRank, name, 
+		      DataLabel[field]) == FAIL) {
 	  fprintf(stderr, "Error reading field %d.\n", field);
 	  return FAIL;
 	}
@@ -420,6 +361,7 @@ int grid::ReadGrid(FILE *fptr, int GridID,
 	/* copy active region into whole grid */
  
 	BaryonField[field] = new float[size];
+ 
 	for (i = 0; i < size; i++)
 	  BaryonField[field][i] = 0;
  
@@ -437,6 +379,38 @@ int grid::ReadGrid(FILE *fptr, int GridID,
       delete [] temp;
  
     }  // end: if (MyProcessorNumber == ProcessorNumber)
+
+  if (HydroMethod == MHD_RK) {
+
+    int activesize = 1;
+    for (int dim = 0; dim < GridRank; dim++)
+      activesize *= (GridDimension[dim]-2*DEFAULT_GHOST_ZONES);
+    
+    if (divB == NULL) 
+      divB = new float[activesize];
+
+    /* if we restart from a a different solvers output without a Phi Field create here and set to zero */
+    int PhiNum; 
+    if ((PhiNum = FindField(PhiField, FieldType, NumberOfBaryonFields)) < 0) {
+      fprintf(stderr, "Starting with Dedner MHD method with no Phi field. \n");
+      fprintf(stderr, "Adding it in Grid_ReadGrid.C \n");
+      char *PhiName = "Phi";
+      PhiNum = NumberOfBaryonFields;
+      int PhiToAdd = PhiField;
+      this->AddFields(&PhiToAdd, 1);
+      DataLabel[PhiNum] = PhiName;
+    }
+
+    for (int dim = 0; dim < 3; dim++)
+      if (gradPhi[dim] == NULL)
+	gradPhi[dim] = new float[activesize];
+
+    for (int dim = GridRank; dim < 3; dim++)
+      for (int n = 0; n < activesize; n++)
+	gradPhi[dim][n] = 0.0;
+
+  } /* if HydroMethod == MHD */
+
   }  // end read baryon fields
  
   /* 3) Read particle info */
@@ -486,13 +460,15 @@ int grid::ReadGrid(FILE *fptr, int GridID,
       /* Allocate room for particles. */
  
       this->AllocateNewParticles(NumberOfParticles);
+
+      TempIntArray[0] = NumberOfParticles;
       
 #ifdef USE_HDF4
 
-      TempIntArray2[0] = Eint32(NumberOfParticles);
+      float *temp = new float[active_size];
 
-      Eint32 HDFDataType = (sizeof(FLOAT) == 4) ? DFNT_FLOAT32 : DFNT_FLOAT64;  // DFNT_* are defined by HDF4
-      if (sizeof(FLOAT) == 16) HDFDataType = DFNT_FLOAT128;
+      int32 HDFDataType = (sizeof(Eflt) == 4) ? DFNT_FLOAT32 : DFNT_FLOAT64;
+      if (sizeof(Eflt) == 16) HDFDataType = DFNT_FLOAT128;
 
       /* Read dims.
 	 If Rank != 1, we may have just read some other field SDS.  If so,
@@ -523,18 +499,6 @@ int grid::ReadGrid(FILE *fptr, int GridID,
 	return FAIL;  
       }
 
-      /* Create a temporary buffer (32 bit or twice the size for 64). */
-      
-      float32 *temp = NULL;
-      if (num_type2 != HDFDataType) {
-	if (num_type2 == DFNT_FLOAT64)
-	  temp = new float32[NumberOfParticles*2];
-	if (num_type2 == DFNT_FLOAT128)
-	  temp = new float32[NumberOfParticles*4];
-      }
-      if (temp == NULL)
-	temp = new float32[NumberOfParticles];
-
       /* Read ParticlePosition (use temporary buffer). */ 
       
       for (dim = 0; dim < GridRank; dim++) {
@@ -548,7 +512,7 @@ int grid::ReadGrid(FILE *fptr, int GridID,
 	    fprintf(stderr, "Error reading ParticlePosition %d\n", dim);
 	    return FAIL;
 	  }
-	  
+	
 	} else {
 
 	  /* convert data: Read into temporary buffer and copy. */
@@ -564,15 +528,17 @@ int grid::ReadGrid(FILE *fptr, int GridID,
 	  
 	  if (num_type2 == DFNT_FLOAT32)
 	    for (i = 0; i < NumberOfParticles; i++)
-	      ParticlePosition[dim][i] = FLOAT(temp[i]);
+	      ParticlePosition[dim][i] = Eflt(temp[i]);
 	  if (num_type2 == DFNT_FLOAT64)
 	    for (i = 0; i < NumberOfParticles; i++)
-	      ParticlePosition[dim][i] = FLOAT(temp64[i]);
+	      ParticlePosition[dim][i] = Eflt(temp64[i]);
 	  if (num_type2 == DFNT_FLOAT128)
 	    for (i = 0; i < NumberOfParticles; i++)
-	      ParticlePosition[dim][i] = FLOAT(temp128[i]);
+	      ParticlePosition[dim][i] = Eflt(temp128[i]);
 	}
       } // end: loop over dims
+
+      delete [] temp;
 
       /* Read ParticleVelocity. */
 
@@ -593,13 +559,13 @@ int grid::ReadGrid(FILE *fptr, int GridID,
       /* Read ParticleNumber */
       
       if (ReadField((float *) ParticleNumber, &NumberOfParticles, 1, name,
-		  "particle_index") == FAIL)
+		    "particle_index") == FAIL)
 	return FAIL;
 
       /* Read particle type if present */
       
       if (ParticleTypeInFile == TRUE) {
-
+	
 	if (ReadField((float *) ParticleType, &NumberOfParticles, 1, name,
 		      "particle_type") == FAIL)
 	  return FAIL;
@@ -615,14 +581,7 @@ int grid::ReadGrid(FILE *fptr, int GridID,
 	  }
 #endif
 
-      } else {
-      
-	/* Otherwise create the type. */
-	
-	for (i = 0; i < NumberOfParticles; i++)
-	  ParticleType[i] = ReturnParticleType(i);
-	
-      }
+    }
 
       /* Read ParticleAttributes. */
 
@@ -639,38 +598,27 @@ int grid::ReadGrid(FILE *fptr, int GridID,
 	}
 #endif
       }
+      
+      /* If the particle type is not in the file, then set it according
+	 to the value of the attributes. */
 
-      delete [] temp;
+      if (ParticleTypeInFile != TRUE)
+	for (i = 0; i < NumberOfParticles; i++)
+	  ParticleType[i] = ReturnParticleType(i);
 
 #else /* USE_HDF4 */
-
-      TempIntArray[0] = NumberOfParticles;
 
       /* Create a temporary buffer (32 bit or twice the size for 64). */
       
       io_type *temp = NULL;
-      
-      jj = sizeof(FLOAT);
- 
-      switch(jj)
+
+      switch(sizeof(FLOAT))
 	{
-	  
-	case 4:
-	  temp = new io_type[NumberOfParticles];
-	  break;
- 
-	case 8:
-	  temp = new io_type[NumberOfParticles*2];
-	  break;
- 
-	case 16:
-	  temp = new io_type[NumberOfParticles*4];
-	  break;
- 
-	default:
-	  printf("INCORRECT FLOAT DEFINITION\n");
- 
-	}
+	case 4: temp = new io_type[NumberOfParticles];	  break;
+ 	case 8: temp = new io_type[NumberOfParticles*2];  break;
+ 	case 16:temp = new io_type[NumberOfParticles*4];  break;
+ 	default: printf("INCORRECT FLOAT DEFINITION\n");
+ 	}
  
       if (temp == NULL)
 	temp = new io_type[NumberOfParticles];
@@ -695,19 +643,17 @@ int grid::ReadGrid(FILE *fptr, int GridID,
 	if (sizeof(FLOAT) == 16)
 	  {
  
-	    //                                 NOTE: for 128bits this must be FILE_type_id and NOT FLOAT_type_id!
+	    //NOTE: for 128bits this must be FILE_type_id and NOT FLOAT_type_id!
 	    h5_status = H5Dread(dset_id, FILE_type_id, H5S_ALL, H5S_ALL, H5P_DEFAULT, (VOIDP) ParticlePosition[dim]);
 	    if (io_log) fprintf(log_fptr, "H5Dread: %"ISYM"\n", h5_status);
 	    if( h5_status == h5_error ){my_exit(EXIT_FAILURE);}
  
-	  }
-	else
+	  } else 
 	  {
- 
 	    h5_status = H5Dread(dset_id, FLOAT_type_id, H5S_ALL, H5S_ALL, H5P_DEFAULT, (VOIDP) ParticlePosition[dim]);
 	    if (io_log) fprintf(log_fptr, "H5Dread: %"ISYM"\n", h5_status);
 	    if( h5_status == h5_error ){my_exit(EXIT_FAILURE);}
- 
+	    
 	  }
  
 	h5_status = H5Sclose(file_dsp_id);
@@ -926,28 +872,14 @@ int grid::ReadGrid(FILE *fptr, int GridID,
 }
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 #ifdef USE_HDF4
-/* ----------------------------------------------------------------------
+/* ----------------------------------------------------------------------                                          
    This routine reads one data field from the file using the appropriate
    data model.  Note that it uses file pointers/handlers that are statically
    declared above. */
 
-int ReadField(float *temp, int Dims[], int Rank, char *name, char *field_name)
+int ReadField(float *temp, int Dims[], int Rank, char *name,
+	      char *field_name)
 {
   int dim;
 
@@ -967,7 +899,7 @@ int ReadField(float *temp, int Dims[], int Rank, char *name, char *field_name)
     fprintf(stderr, "error getting info from file %s (filed %s)\n", name, field_name);
     return FAIL;
   }
-
+  
   /* check rank against this grid */
   
   if (TempInt != Rank) {
@@ -993,5 +925,4 @@ int ReadField(float *temp, int Dims[], int Rank, char *name, char *field_name)
   return SUCCESS;
 }
 #endif /* USE_HDF4 */
-
 

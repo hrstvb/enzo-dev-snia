@@ -265,8 +265,11 @@ int SetDefaultGlobalValues(TopGridData &MetaData)
   CloudyCoolingData.CloudyMetallicityNormalization = 0.018477;  // calculated using Cloudy 07.02 abundances
   CloudyCoolingData.CloudyElectronFractionFactor = 9.153959e-3; // calculated using Cloudy 07.02 abundances
 
-  OutputCoolingTime = 0;
-  OutputTemperature = 0;
+  OutputCoolingTime = FALSE;
+  OutputTemperature = FALSE;
+
+  OutputSmoothedDarkMatter = FALSE;
+  SmoothedDarkMatterNeighbors = 32;
 
   ZEUSLinearArtificialViscosity    = 0.0;
   ZEUSQuadraticArtificialViscosity = 2.0;
@@ -294,6 +297,8 @@ int SetDefaultGlobalValues(TopGridData &MetaData)
   MultiMetals                      = FALSE;
   NumberOfParticleAttributes       = INT_UNDEFINED;
   ParticleTypeInFile               = TRUE;
+
+  PythonSubcycleSkip               = 1;
 
   InlineHaloFinder                 = FALSE;
   HaloFinderSubfind                = FALSE;
@@ -360,6 +365,7 @@ int SetDefaultGlobalValues(TopGridData &MetaData)
   SmallP   = 1e-35;
   SmallEint = 1e-30;
   SmallT   = 1e-10;
+  MaximumAlvenSpeed = 1e30;
   RiemannSolver = HLL;
   ReconstructionMethod = PLM;
   EOSType = 0;
@@ -442,6 +448,14 @@ int SetDefaultGlobalValues(TopGridData &MetaData)
   TestProblemData.MultiMetalsField1_Fraction = tiny_number;
   TestProblemData.MultiMetalsField2_Fraction = tiny_number;
 
+  TestProblemData.MinimumHNumberDensity = 1;
+  TestProblemData.MaximumHNumberDensity = 1e6;
+  TestProblemData.MinimumMetallicity    = 1e-6;
+  TestProblemData.MaximumMetallicity    = 1;
+  TestProblemData.MinimumTemperature    = 10;
+  TestProblemData.MaximumTemperature    = 1e7;
+  TestProblemData.ResetEnergies         = 1;
+
   // This should only be false for analysis.
   // It could also be used (cautiously) for other purposes.
   LoadGridDataAtStart = TRUE;
@@ -450,13 +464,13 @@ int SetDefaultGlobalValues(TopGridData &MetaData)
   MetalCoolingTable = (char*) "metal_cool.dat";
 
 #ifdef USE_PYTHON
-  fprintf(stderr, "Setting up the python stuff\n");
   NumberOfPythonCalls = 0;
   grid_dictionary = PyDict_New();
   old_grid_dictionary = PyDict_New();
   hierarchy_information = PyDict_New();
   yt_parameter_file = PyDict_New();
   conversion_factors = PyDict_New();
+  my_processor = PyLong_FromLong((Eint) MyProcessorNumber);
 #endif
 
   return SUCCESS;

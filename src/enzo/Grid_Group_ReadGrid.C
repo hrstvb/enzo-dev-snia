@@ -292,7 +292,7 @@ int grid::Group_ReadGrid(FILE *fptr, int GridID, HDF5_hid_t file_id,
     if (io_log) fprintf(log_fptr, "H5Gopen with Name %s\n", name);
 
     group_id = H5Gopen(file_id, name);
-    if( group_id == h5_error ){my_exit(EXIT_FAILURE);}
+    if( group_id == h5_error ){return FAIL;}
  
     /* fill in ActiveDim for dims up to 3d */
  
@@ -384,16 +384,21 @@ int grid::Group_ReadGrid(FILE *fptr, int GridID, HDF5_hid_t file_id,
 	divB = new float[activesize];
       
       /* if we restart from a different solvers output without a Phi Field create here and set to zero */
-      int PhiNum; 
-      if ((PhiNum = FindField(PhiField, FieldType, NumberOfBaryonFields)) < 0) {
-	char *PhiName = "Phi";
-	PhiNum=NumberOfBaryonFields++;
-	FieldType[PhiNum] = PhiField;
-	DataLabel[PhiNum] = PhiName;
-	BaryonField[PhiNum] = new float[size];
-      for (int n = 0; n < size; n++) BaryonField[PhiNum][n] = 0.0;
-      }
-      
+    int PhiNum; 
+    if ((PhiNum = FindField(PhiField, FieldType, NumberOfBaryonFields)) < 0) {
+      fprintf(stderr, "Starting with Dedner MHD method with no Phi field. \n");
+      fprintf(stderr, "Adding it in Grid_ReadGrid.C \n");
+      char *PhiName = "Phi";
+      PhiNum = NumberOfBaryonFields;
+      int PhiToAdd = PhiField;
+      this->AddFields(&PhiToAdd, 1);
+      DataLabel[PhiNum] = PhiName;
+    } else { 
+      if (0) 
+	for (int n = 0; n < size; n++)
+	  BaryonField[PhiNum][n] = 0.;
+    }
+
       for (int dim = 0; dim < 3; dim++)
 	if (gradPhi[dim] == NULL)
 	  gradPhi[dim] = new float[activesize];
