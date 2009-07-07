@@ -75,7 +75,7 @@ void icol(int *x, int n, int m, FILE *log_fptr);
  
 int GetUnits(float *DensityUnits, float *LengthUnits,
 	     float *TemperatureUnits, float *TimeUnits,
-	     float *VelocityUnits, float *MassUnits, FLOAT Time);
+	     float *VelocityUnits, FLOAT Time);
  
 int CommunicationBroadcastValue(int *Value, int BroadcastProcessor);
 
@@ -147,8 +147,8 @@ int grid::CosmologySimulationInitializeGrid(
   int field_rank_attr;
   int field_dims_attr[3];
  
+  int AA,BB,CC,II,JJ,KK,MM;
   int enzo_layout[3];
-  int A,B,C,I,J,K,M;
 
 //  MPI_Arg NOP,RNK;
 //  MPI_Arg mpi_layout[3];
@@ -267,10 +267,10 @@ int grid::CosmologySimulationInitializeGrid(
   // Get the cosmology units so we can convert temperature later
  
   float DensityUnits=1, LengthUnits=1, TemperatureUnits=1, TimeUnits=1,
-    VelocityUnits=1, MassUnits=1;
+    VelocityUnits=1;
  
   if (GetUnits(&DensityUnits, &LengthUnits, &TemperatureUnits,
-	       &TimeUnits, &VelocityUnits, &MassUnits, 
+	       &TimeUnits, &VelocityUnits,
 	       InitialTimeInCodeUnits) == FAIL) {
     fprintf(stderr, "Error in GetUnits.\n");
     ENZO_FAIL("");
@@ -639,18 +639,18 @@ int grid::CosmologySimulationInitializeGrid(
         fprintf(stderr, "ENZO_layout %"ISYM" x %"ISYM" x %"ISYM"\n", enzo_layout[0], enzo_layout[1], enzo_layout[2]);
       }
 
-      A = enzo_layout[0];
-      B = enzo_layout[1];
-      C = enzo_layout[2];
-      I = nint( GridLeftEdge[0]/((DomainRightEdge[0]-DomainLeftEdge[0])/((float) A)));
-      J = nint( GridLeftEdge[1]/((DomainRightEdge[1]-DomainLeftEdge[1])/((float) B)));
-      K = nint( GridLeftEdge[2]/((DomainRightEdge[2]-DomainLeftEdge[2])/((float) C)));
-//    M = ((I*B*C) + J*C) + K;
-      M = ((K*B*A) + J*A) + I;
+      AA = enzo_layout[0];
+      BB = enzo_layout[1];
+      CC = enzo_layout[2];
+      II = nint( GridLeftEdge[0]/((DomainRightEdge[0]-DomainLeftEdge[0])/((float) AA)));
+      JJ = nint( GridLeftEdge[1]/((DomainRightEdge[1]-DomainLeftEdge[1])/((float) BB)));
+      KK = nint( GridLeftEdge[2]/((DomainRightEdge[2]-DomainLeftEdge[2])/((float) CC)));
+//    MM = ((II*BB*CC) + JJ*CC) + KK;
+      MM = ((KK*BB*AA) + JJ*AA) + II;
  
-//    if (io_log) fprintf(log_fptr, "ABC %"ISYM" %"ISYM" %"ISYM";  IJK %"ISYM" %"ISYM" %"ISYM";  M = %"ISYM"\n", A,B,C,I,J,K,M);
+//    if (io_log) fprintf(log_fptr, "ABC %"ISYM" %"ISYM" %"ISYM";  IJK %"ISYM" %"ISYM" %"ISYM";  M = %"ISYM"\n", AA,BB,CC,II,JJ,KK,MM);
  
-      sprintf(pid, "%"TASK_TAG_FORMAT""ISYM, M);
+      sprintf(pid, "%"TASK_TAG_FORMAT""ISYM, MM);
  
  
   printf("PreSortedParticles - ParallelRootGridIO\n");

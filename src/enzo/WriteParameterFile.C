@@ -39,7 +39,7 @@ int  CosmologyWriteParameters(FILE *fptr, FLOAT StopTime, FLOAT CurrentTime);
 int  WriteUnits(FILE *fptr);
 int  GetUnits(float *DensityUnits, float *LengthUnits,
 	      float *TemperatureUnits, float *TimeUnits,
-	      float *VelocityUnits, float *MassUnits, FLOAT Time);
+	      float *VelocityUnits, double *MAssUnits, FLOAT Time);
 #ifdef TRANSFER
 int RadiativeTransferWriteParameters(FILE *fptr);
 int WritePhotonSources(FILE *fptr, FLOAT CurrentTime);
@@ -53,14 +53,23 @@ int WriteParameterFile(FILE *fptr, TopGridData &MetaData)
   /* Compute Units. */
  
   float DensityUnits = 1, LengthUnits = 1, TemperatureUnits = 1, TimeUnits = 1,
-    VelocityUnits = 1, MassUnits = 1;
- 
+    VelocityUnits = 1;
+  double MassUnits = 1;
   if (GetUnits(&DensityUnits, &LengthUnits, &TemperatureUnits,
-	       &TimeUnits, &VelocityUnits, &MassUnits, MetaData.Time) == FAIL) {
+	       &TimeUnits, &VelocityUnits, &MassUnits,  MetaData.Time) == FAIL) {
     fprintf(stderr, "Error in GetUnits.\n");
     ENZO_FAIL("");
   }
  
+  float rhou = 1.0, lenu = 1.0, tempu = 1.0, tu = 1.0, velu = 1.0, presu = 1.0;
+  double massu = 1.0;
+  if (UsePhysicalUnit) {
+    GetUnits(&rhou, &lenu, &tempu, &tu, &velu, &massu, MetaData.Time);
+    presu = rhou*lenu*lenu/tu/tu;
+  }
+  double mh = 1.6726e-24;
+  double uheat = VelocityUnits*VelocityUnits*2.0*mh/TimeUnits;
+
   /* write data to Parameter output file */
  
   /* write MetaData parameters */
@@ -93,15 +102,15 @@ int WriteParameterFile(FILE *fptr, TopGridData &MetaData)
   WriteListOfFloats(fptr, MetaData.TopGridRank, MetaData.NewMovieLeftEdge);
   fprintf(fptr, "NewMovieRightEdge    = ");
   WriteListOfFloats(fptr, MetaData.TopGridRank, MetaData.NewMovieRightEdge);
-  fprintf(fptr, "MovieSkipTimestep    = %d\n", MovieSkipTimestep);
-  fprintf(fptr, "Movie3DVolumes       = %d\n", Movie3DVolumes);
-  fprintf(fptr, "MovieVertexCentered  = %d\n", MovieVertexCentered);
-  fprintf(fptr, "NewMovieParticleOn   = %d\n", NewMovieParticleOn);
+  fprintf(fptr, "MovieSkipTimestep    = %"ISYM"\n", MovieSkipTimestep);
+  fprintf(fptr, "Movie3DVolumes       = %"ISYM"\n", Movie3DVolumes);
+  fprintf(fptr, "MovieVertexCentered  = %"ISYM"\n", MovieVertexCentered);
+  fprintf(fptr, "NewMovieParticleOn   = %"ISYM"\n", NewMovieParticleOn);
   fprintf(fptr, "MovieDataField       = ");
   WriteListOfInts(fptr, MAX_MOVIE_FIELDS, MovieDataField);
-  fprintf(fptr, "NewMovieDumpNumber   = %d\n", NewMovieDumpNumber);
+  fprintf(fptr, "NewMovieDumpNumber   = %"ISYM"\n", NewMovieDumpNumber);
   fprintf(fptr, "NewMovieName         = %s\n", NewMovieName);
-  fprintf(fptr, "MovieTimestepCounter = %d\n", MetaData.TimestepCounter);
+  fprintf(fptr, "MovieTimestepCounter = %"ISYM"\n", MetaData.TimestepCounter);
   fprintf(fptr, "\n");
 
   fprintf(fptr, "CycleLastRestartDump = %"ISYM"\n", MetaData.CycleLastRestartDump);
@@ -268,6 +277,21 @@ int WriteParameterFile(FILE *fptr, TopGridData &MetaData)
   fprintf(fptr, "WritePotential                 = %"ISYM"\n", WritePotential);
   fprintf(fptr, "BaryonSelfGravityApproximation = %"ISYM"\n\n",
 	  BaryonSelfGravityApproximation);
+
+  fprintf(fptr, "InlineHaloFinder               = %"ISYM"\n", InlineHaloFinder);
+  fprintf(fptr, "HaloFinderSubfind              = %"ISYM"\n", HaloFinderSubfind);
+  fprintf(fptr, "HaloFinderCycleSkip            = %"ISYM"\n", 
+	  HaloFinderCycleSkip);
+  fprintf(fptr, "HaloFinderOutputParticleList   = %"ISYM"\n", 
+	  HaloFinderOutputParticleList);
+  fprintf(fptr, "HaloFinderMinimumSize          = %"ISYM"\n", 
+	  HaloFinderMinimumSize);
+  fprintf(fptr, "HaloFinderLinkingLength        = %"FSYM"\n",
+	  HaloFinderLinkingLength);
+  fprintf(fptr, "HaloFinderTimestep             = %"FSYM"\n",
+	  HaloFinderTimestep);
+  fprintf(fptr, "HaloFinderLastTime             = %"PSYM"\n\n", 
+	  HaloFinderLastTime);
  
   fprintf(fptr, "GreensFunctionMaxNumber     = %"ISYM"\n", GreensFunctionMaxNumber);
   fprintf(fptr, "GreensFunctionMaxSize       = %"ISYM"\n", GreensFunctionMaxSize);
@@ -280,6 +304,13 @@ int WriteParameterFile(FILE *fptr, TopGridData &MetaData)
   fprintf(fptr, "RandomForcingEdot           = %"GSYM"\n", RandomForcingEdot); //AK
   fprintf(fptr, "RadiativeCooling               = %"ISYM"\n", RadiativeCooling);
   fprintf(fptr, "MultiSpecies                   = %"ISYM"\n", MultiSpecies);
+  fprintf(fptr, "CloudyCoolingGridFile          = %s\n", CloudyCoolingData.CloudyCoolingGridFile);
+  fprintf(fptr, "IncludeCloudyHeating           = %"ISYM"\n", CloudyCoolingData.IncludeCloudyHeating);
+  fprintf(fptr, "IncludeCloudyMMW               = %"ISYM"\n", CloudyCoolingData.IncludeCloudyMMW);
+  fprintf(fptr, "CMBTemperatureFloor            = %"ISYM"\n", CloudyCoolingData.CMBTemperatureFloor);
+  fprintf(fptr, "ConstantTemperatureFloor       = %"FSYM"\n", CloudyCoolingData.ConstantTemperatureFloor);
+  fprintf(fptr, "CloudyMetallicityNormalization = %"FSYM"\n", CloudyCoolingData.CloudyMetallicityNormalization);
+  fprintf(fptr, "CloudyElectronFractionFactor   = %"FSYM"\n", CloudyCoolingData.CloudyElectronFractionFactor);
   fprintf(fptr, "MetalCooling                   = %"ISYM"\n", MetalCooling);
   fprintf(fptr, "MetalCoolingTable              = %s\n", MetalCoolingTable);
   fprintf(fptr, "RadiativeTransfer              = %"ISYM"\n", RadiativeTransfer);
@@ -298,6 +329,10 @@ int WriteParameterFile(FILE *fptr, TopGridData &MetaData)
 
   fprintf(fptr, "OutputCoolingTime              = %"ISYM"\n", OutputCoolingTime);
   fprintf(fptr, "OutputTemperature              = %"ISYM"\n", OutputTemperature);
+  fprintf(fptr, "OutputSmoothedDarkMatter       = %"ISYM"\n", 
+	  OutputSmoothedDarkMatter);
+  fprintf(fptr, "SmoothedDarkMatterNeighbors    = %"ISYM"\n", 
+	  SmoothedDarkMatterNeighbors);
  
   fprintf(fptr, "ZEUSLinearArtificialViscosity    = %"GSYM"\n",
 	  ZEUSLinearArtificialViscosity);
@@ -482,6 +517,7 @@ int WriteParameterFile(FILE *fptr, TopGridData &MetaData)
   fprintf(fptr, "PopIIISupernovaUseColour              = %"ISYM"\n\n",
           PopIIISupernovaUseColour);
 
+  /* Most Stanford additions: */
 
   /* Poisson Solver */
 
@@ -514,6 +550,7 @@ int WriteParameterFile(FILE *fptr, TopGridData &MetaData)
     fprintf(fptr, "BoundaryConditionName      = %s\n\n",
 	    MetaData.BoundaryConditionName);
  
+
   /* If appropriate, write Cosmology data. */
  
   if (ComovingCoordinates) {

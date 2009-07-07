@@ -28,6 +28,7 @@
 int GetUnits(float *DensityUnits, float *LengthUnits,
 	     float *TemperatureUnits, float *TimeUnits,
 	     float *VelocityUnits, FLOAT Time);
+int CosmologyComputeExpansionFactor(FLOAT time, FLOAT *a, FLOAT *dadt);
 
 int grid::MHDSourceTerms(float **dU)
 {
@@ -52,6 +53,8 @@ int grid::MHDSourceTerms(float **dU)
     dtdy = (GridRank > 1) ? dtFixed/CellWidth[1][0] : 0.0,
     dtdz = (GridRank > 2) ? dtFixed/CellWidth[2][0] : 0.0;  
   float Bx, By, Bz;
+  float coeff = 1.;
+  //  if (Gamma < 1.01)  coeff = 0.; // turn of adding dissipated B-field to Etot if isothermal
   int n = 0, igrid, igridyp1, igridym1, igridzp1, igridzm1;
   for (int k = GridStartIndex[2]; k <= GridEndIndex[2]; k++) {
     for (int j = GridStartIndex[1]; j <= GridEndIndex[1]; j++) {
@@ -61,20 +64,22 @@ int grid::MHDSourceTerms(float **dU)
 	Bx = BaryonField[B1Num][igrid];
 	By = BaryonField[B2Num][igrid];
 	Bz = BaryonField[B3Num][igrid];
-	/*igridyp1 = i+(j+1+k*GridDimension[1])*GridDimension[0];
+	/*
+	igridyp1 = i+(j+1+k*GridDimension[1])*GridDimension[0];
 	igridym1 = i+(j-1+k*GridDimension[1])*GridDimension[0];
 	igridzp1 = i+(j+(k+1)*GridDimension[1])*GridDimension[0];
 	igridzm1 = i+(j+(k-1)*GridDimension[1])*GridDimension[0];
 	divB[n] = 0.5*(BaryonField[iBx][igrid+1]-BaryonField[iBx][igrid-1])*dtdx +
 	  0.5*(BaryonField[iBy][igridyp1]-BaryonField[iBy][igridym1])*dtdy +
-	  0.5*(BaryonField[iBz][igridzp1]-BaryonField[iBz][igridzm1])*dtdz;
+	  0.5*(BaryonField[iBz][igridzp1]-BaryonField[iBz][igridzm1])*dtdz; 
 	gradPhi[0][n] = 0.5*(BaryonField[iPhi][igrid+1]-BaryonField[iPhi][igrid-1])*dtdx;
 	gradPhi[1][n] = 0.5*(BaryonField[iPhi][igridyp1]-BaryonField[iPhi][igridym1])*dtdy;
-	gradPhi[2][n] = 0.5*(BaryonField[iPhi][igridzp1]-BaryonField[iPhi][igridzm1])*dtdz;*/
+	gradPhi[2][n] = 0.5*(BaryonField[iPhi][igridzp1]-BaryonField[iPhi][igridzm1])*dtdz;
+	*/ 
 	dU[iS1  ][n] -= divB[n]*Bx;
 	dU[iS2  ][n] -= divB[n]*By;
 	dU[iS3  ][n] -= divB[n]*Bz;
-	dU[iEtot][n] -= (Bx*gradPhi[0][n] + By*gradPhi[1][n] + Bz*gradPhi[2][n]);
+	dU[iEtot][n] -= coeff*(Bx*gradPhi[0][n] + By*gradPhi[1][n] + Bz*gradPhi[2][n]);
       }
     }
   }
@@ -204,6 +209,33 @@ int grid::MHDSourceTerms(float **dU)
 	  dU[iS2  ][n] += dtFixed*gy*rho;
 	  dU[iS3  ][n] += dtFixed*gz*rho;
 	  dU[iEtot][n] += dtFixed*rho*(gx*vx + gy*vy + gz*vz);
+	}
+      }
+    }
+  }
+
+  if ((ComovingCoordinates == 1)) { // add cosmological expansion terms here
+
+    int igrid;
+    float rho, coef=0.;
+    FLOAT a, dadt;
+    int n = 0;
+    CosmologyComputeExpansionFactor(0.5*(Time+OldTime), &a, &dadt);
+    coef = -0.5*dadt/a;
+    for (int k = GridStartIndex[2]; k <= GridEndIndex[2]; k++) {
+      for (int j = GridStartIndex[1]; j <= GridEndIndex[1]; j++) {
+	for (int i = GridStartIndex[0]; i <= GridEndIndex[0]; i++, n++) {
+	  igrid = i+(j+k*GridDimension[1])*GridDimension[0];
+	  rho = BaryonField[DensNum][igrid];
+	  
+	  
+	  dU[iBx  ][n] += dtFixed*coef*BaryonField[iBx][n];
+	  dU[iBy  ][n] += dtFixed*coef*BaryonField[iBy][n];
+	  dU[iBz  ][n] += dtFixed*coef*BaryonField[iBz][n];
+	  dU[iEtot][n] -= dtFixed*coef* (BaryonField[iBx][n]*BaryonField[iBx][n]+
+					 BaryonField[iBy][n]*BaryonField[iBy][n]+
+					 BaryonField[iBz][n]*BaryonField[iBz][n]);
+	  dU[iPhi][n] += 0.0; // Add correct Phi term here .....
 	}
       }
     }

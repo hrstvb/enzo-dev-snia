@@ -238,6 +238,10 @@ EXTERN float ParticleCourantSafetyNumber;
 EXTERN int RadiativeCooling;
 EXTERN CoolDataType CoolData;
 
+/* Cloudy cooling parameters and data. */
+
+EXTERN CloudyCoolingDataType CloudyCoolingData;
+
 /* Random Forcing on/off flag and associated data. */ //AK
 
 EXTERN int     RandomForcing;
@@ -275,6 +279,11 @@ EXTERN int OutputCoolingTime;
 
 EXTERN int OutputTemperature;
 
+/* Output smoothed dark matter fields. */
+
+EXTERN int OutputSmoothedDarkMatter;
+EXTERN int SmoothedDarkMatterNeighbors;
+
 /* ZEUS Hydro artificial viscosity parameters (C1, C2 of Stone & Norman). */
 
 EXTERN float ZEUSLinearArtificialViscosity;
@@ -308,6 +317,20 @@ EXTERN int PartitionNestedGrids;
 EXTERN int ExtractFieldsOnly;
 EXTERN int First_Pass;
 EXTERN int UnigridTranspose;
+
+/* Parameter(s) for embedded python execution */
+EXTERN int PythonSubcycleSkip;
+
+/* Parameters to control inline halo finding */
+
+EXTERN int InlineHaloFinder;
+EXTERN int HaloFinderSubfind;
+EXTERN int HaloFinderOutputParticleList;
+EXTERN int HaloFinderMinimumSize;
+EXTERN int HaloFinderCycleSkip;
+EXTERN float HaloFinderLinkingLength;
+EXTERN float HaloFinderTimestep;
+EXTERN FLOAT HaloFinderLastTime;
 
 /************************************************/
 /* Global data for specific problems or methods */
@@ -481,6 +504,7 @@ EXTERN float SmallRho;
 EXTERN float SmallP;
 EXTERN float SmallEint;
 EXTERN float SmallT;
+EXTERN float MaximumAlvenSpeed;
 EXTERN int NEQ_HYDRO;
 EXTERN int NEQ_MHD;
 EXTERN int ReconstructionMethod;
@@ -575,6 +599,7 @@ EXTERN PyObject *old_grid_dictionary;
 EXTERN PyObject *hierarchy_information;
 EXTERN PyObject *yt_parameter_file;
 EXTERN PyObject *conversion_factors;
+EXTERN PyObject *my_processor;
 #endif
 /* Multi-species rate equation flag and associated data. */
 

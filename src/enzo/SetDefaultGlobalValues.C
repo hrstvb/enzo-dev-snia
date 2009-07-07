@@ -258,8 +258,20 @@ int SetDefaultGlobalValues(TopGridData &MetaData)
   CoolData.f3                 = 1.0e-21;           // radiation normalization
   CoolData.ParameterFilename  = NULL;
 
-  OutputCoolingTime = 0;
-  OutputTemperature = 0;
+  CloudyCoolingData.CloudyCoolingGridRank          = 0;
+  CloudyCoolingData.CloudyCoolingGridFile          = "";
+  CloudyCoolingData.IncludeCloudyHeating           = 0;
+  CloudyCoolingData.IncludeCloudyMMW               = 0;
+  CloudyCoolingData.CMBTemperatureFloor            = 1;         // use CMB floor.
+  CloudyCoolingData.ConstantTemperatureFloor       = 1.0;       // use if higher than T_CMB
+  CloudyCoolingData.CloudyMetallicityNormalization = 0.018477;  // calculated using Cloudy 07.02 abundances
+  CloudyCoolingData.CloudyElectronFractionFactor = 9.153959e-3; // calculated using Cloudy 07.02 abundances
+
+  OutputCoolingTime = FALSE;
+  OutputTemperature = FALSE;
+
+  OutputSmoothedDarkMatter = FALSE;
+  SmoothedDarkMatterNeighbors = 32;
 
   ZEUSLinearArtificialViscosity    = 0.0;
   ZEUSQuadraticArtificialViscosity = 2.0;
@@ -288,6 +300,17 @@ int SetDefaultGlobalValues(TopGridData &MetaData)
   MultiMetals                      = FALSE;
   NumberOfParticleAttributes       = INT_UNDEFINED;
   ParticleTypeInFile               = TRUE;
+
+  PythonSubcycleSkip               = 1;
+
+  InlineHaloFinder                 = FALSE;
+  HaloFinderSubfind                = FALSE;
+  HaloFinderOutputParticleList     = FALSE;
+  HaloFinderMinimumSize            = 50;
+  HaloFinderLinkingLength          = 0.1;
+  HaloFinderCycleSkip              = 3;
+  HaloFinderTimestep               = FLOAT_UNDEFINED;
+  HaloFinderLastTime               = 0.0;
 
   StarClusterUseMetalField         = FALSE;
   StarClusterMinDynamicalTime      = 10e6;         // in years
@@ -332,6 +355,7 @@ int SetDefaultGlobalValues(TopGridData &MetaData)
   StellarWindFeedback              = 0;
   StellarWindTurnOnMass            = 0.1;
 
+  UseHydro = 1;
   Coordinate = Cartesian;
   NSpecies = 0;
   NColor   = 0;
@@ -344,6 +368,7 @@ int SetDefaultGlobalValues(TopGridData &MetaData)
   SmallP   = 1e-35;
   SmallEint = 1e-30;
   SmallT   = 1e-10;
+  MaximumAlvenSpeed = 1e30;
   RiemannSolver = HLL;
   ReconstructionMethod = PLM;
   EOSType = 0;
@@ -362,7 +387,6 @@ int SetDefaultGlobalValues(TopGridData &MetaData)
   UseViscosity = 0;
   UseAmbipolarDiffusion = 0;
   UseResistivity = 0;
-  UseHydro = 1;
 
   StringKick = 0;
 
@@ -428,6 +452,14 @@ int SetDefaultGlobalValues(TopGridData &MetaData)
   TestProblemData.MultiMetalsField1_Fraction = tiny_number;
   TestProblemData.MultiMetalsField2_Fraction = tiny_number;
 
+  TestProblemData.MinimumHNumberDensity = 1;
+  TestProblemData.MaximumHNumberDensity = 1e6;
+  TestProblemData.MinimumMetallicity    = 1e-6;
+  TestProblemData.MaximumMetallicity    = 1;
+  TestProblemData.MinimumTemperature    = 10;
+  TestProblemData.MaximumTemperature    = 1e7;
+  TestProblemData.ResetEnergies         = 1;
+
   // This should only be false for analysis.
   // It could also be used (cautiously) for other purposes.
   LoadGridDataAtStart = TRUE;
@@ -436,13 +468,13 @@ int SetDefaultGlobalValues(TopGridData &MetaData)
   MetalCoolingTable = (char*) "metal_cool.dat";
 
 #ifdef USE_PYTHON
-  fprintf(stderr, "Setting up the python stuff\n");
   NumberOfPythonCalls = 0;
   grid_dictionary = PyDict_New();
   old_grid_dictionary = PyDict_New();
   hierarchy_information = PyDict_New();
   yt_parameter_file = PyDict_New();
   conversion_factors = PyDict_New();
+  my_processor = PyLong_FromLong((Eint) MyProcessorNumber);
 #endif
 
   /* Shearing Boundary Conditions variables */

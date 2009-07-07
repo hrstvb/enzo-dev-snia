@@ -16,7 +16,9 @@
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
- 
+#ifdef USE_HDF4
+#include <df.h>
+#endif 
 
 
  
@@ -93,7 +95,6 @@ int ExternalBoundary::ReadExternalBoundary(FILE *fptr, int ReadText, int ReadDat
   int         io_log = 0;
 #endif
  
- 
   int ii = sizeof(float32);
  
   switch(ii)
@@ -120,14 +121,14 @@ int ExternalBoundary::ReadExternalBoundary(FILE *fptr, int ReadText, int ReadDat
  
     if (fscanf(fptr, "BoundaryRank = %"ISYM"\n", &BoundaryRank) != 1) {
       fprintf(stderr, "Error reading BoundaryRank.\n");
-      ENZO_FAIL("");
+      return FAIL;
     }
  
     fscanf(fptr, "BoundaryDimension =");
  
     if (ReadListOfInts(fptr, BoundaryRank, BoundaryDimension) == FAIL) {
       fprintf(stderr, "Error reading BoundaryDimension.\n");
-      ENZO_FAIL("");
+      return FAIL;
     }
  
     /* read baryon field quantities */
@@ -135,14 +136,14 @@ int ExternalBoundary::ReadExternalBoundary(FILE *fptr, int ReadText, int ReadDat
     if (fscanf(fptr, "NumberOfBaryonFields = %"ISYM"\n",
 	       &NumberOfBaryonFields) != 1) {
       fprintf(stderr, "Error reading NumberOfBaryonFields.\n");
-      ENZO_FAIL("");
+      return FAIL;
     }
  
     /* Read particle boundary type. */
  
     if (fscanf(fptr, "ParticleBoundaryType = %"ISYM"\n",&ParticleBoundaryType) != 1) {
       fprintf(stderr, "Error reading ParticleBoundaryType.\n");
-      ENZO_FAIL("");
+      return FAIL;
     }
  
     if (NumberOfBaryonFields > 0) {
@@ -154,14 +155,14 @@ int ExternalBoundary::ReadExternalBoundary(FILE *fptr, int ReadText, int ReadDat
       if (ReadListOfInts(fptr, NumberOfBaryonFields, BoundaryFieldType)
 	  == FAIL) {
 	fprintf(stderr, "Error reading BoundaryFieldType.\n");
-	ENZO_FAIL("");
+	return FAIL;
       }
  
       /* read hdf file name */
  
       if (fscanf(fptr, "BaryonFileName = %s\n", hdfname) != 1) {
 	fprintf(stderr, "Error reading BaryonFileName.\n");
-	ENZO_FAIL("");
+	return FAIL;
       }
  
       /* read BoundaryValue present line */
@@ -170,7 +171,7 @@ int ExternalBoundary::ReadExternalBoundary(FILE *fptr, int ReadText, int ReadDat
  
       if (ReadListOfInts(fptr, BoundaryRank*2, BoundaryValuePresent) == FAIL) {
 	fprintf(stderr, "Error reading BoundaryValuePresent.\n");
-	ENZO_FAIL("");
+	return FAIL;
       }
     }
   }
@@ -197,7 +198,8 @@ int ExternalBoundary::ReadExternalBoundary(FILE *fptr, int ReadText, int ReadDat
  
     file_id = H5Fopen(hdfname, H5F_ACC_RDONLY, H5P_DEFAULT);
     if (io_log) fprintf(log_fptr, "H5Fopen id: %"ISYM"\n", file_id);
-    if( file_id == h5_error ){my_exit(EXIT_FAILURE);}
+    //    if( file_id == h5_error ){return FAIL;}
+    if( file_id == h5_error ){return FAIL;}
  
     /* loop over faces, reading each */
  
@@ -236,29 +238,29 @@ int ExternalBoundary::ReadExternalBoundary(FILE *fptr, int ReadText, int ReadDat
  
         file_dsp_id = H5Screate_simple((Eint32) 1, &file_size, NULL);
 	if (io_log) fprintf(log_fptr, "H5Screate file_dsp_id: %"ISYM"\n", file_dsp_id);
-	if( file_dsp_id == h5_error ){my_exit(EXIT_FAILURE);}
+	if( file_dsp_id == h5_error ){return FAIL;}
  
         if (io_log) fprintf(log_fptr, "H5Dopen with Name = %s\n", dname1);
  
         dset_id1 =  H5Dopen(file_id, dname1);
 	if (io_log) fprintf(log_fptr, "H5Dopen id: %"ISYM"\n", dset_id1);
-	if( dset_id1 == h5_error ){my_exit(EXIT_FAILURE);}
+	if( dset_id1 == h5_error ){return FAIL;}
  
         if (io_log) fprintf(log_fptr, "H5Dopen with Name = %s\n", dname2);
  
         dset_id2 =  H5Dopen(file_id, dname2);
 	if (io_log) fprintf(log_fptr, "H5Dopen id: %"ISYM"\n", dset_id2);
-	if( dset_id2 == h5_error ){my_exit(EXIT_FAILURE);}
+	if( dset_id2 == h5_error ){return FAIL;}
  
         file_offset = 0;
  
         mem_dsp_id = H5Screate_simple((Eint32) 1, &mem_size, NULL);
 	if (io_log) fprintf(log_fptr, "H5Screate mem_dsp_id: %"ISYM"\n", mem_dsp_id);
-	if( mem_dsp_id == h5_error ){my_exit(EXIT_FAILURE);}
+	if( mem_dsp_id == h5_error ){return FAIL;}
  
         file_dsp_id = H5Screate_simple((Eint32) 1, &file_size, NULL);
 	if (io_log) fprintf(log_fptr, "H5Screate file_dsp_id: %"ISYM"\n", file_dsp_id);
-	if( file_dsp_id == h5_error ){my_exit(EXIT_FAILURE);}
+	if( file_dsp_id == h5_error ){return FAIL;}
  
 	/* Read HDF dims */
  
@@ -286,7 +288,7 @@ int ExternalBoundary::ReadExternalBoundary(FILE *fptr, int ReadText, int ReadDat
 	/*
 	  if (TempInt != index) {
 	  fprintf(stderr, "HDF file rank does not match BoundaryRank.\n");
-	  ENZO_FAIL("");
+	  return FAIL;
 	  }
  
 	  for (i = 0; i < index; i++)
@@ -294,7 +296,7 @@ int ExternalBoundary::ReadExternalBoundary(FILE *fptr, int ReadText, int ReadDat
 	  fprintf(stderr, "HDF file dims do not match BoundaryDims.\n");
 	  fprintf(stderr, " Dims[%"ISYM"] = %"ISYM"   HDF Dims[%"ISYM"] = %"ISYM"\n", i, Dims[i],
 	  index-i-1, TempIntArray[index-i-1]);
-	  ENZO_FAIL("");
+	  return FAIL;
 	  }
 	*/
 	/* Allocate temporary space. */
@@ -320,7 +322,7 @@ int ExternalBoundary::ReadExternalBoundary(FILE *fptr, int ReadText, int ReadDat
  
 	for (field = 0; field < NumberOfBaryonFields; field++)
 	  for (i = 0; i < 2; i++) {
- 
+	    
             if (io_log) fprintf(log_fptr, "        dim %"ISYM" : field %"ISYM" : i %"ISYM"\n", dim, field, i);
  
 	    /* read BoundaryType (then convert to int) */
@@ -328,24 +330,29 @@ int ExternalBoundary::ReadExternalBoundary(FILE *fptr, int ReadText, int ReadDat
             mem_offset = 0;
             mem_stride = 1;
             mem_count = size;
- 
+
             h5_status =  H5Sselect_hyperslab(mem_dsp_id,  H5S_SELECT_SET, &mem_offset, &mem_stride, &mem_count, NULL);
 	    if (io_log) fprintf(log_fptr, "H5Sselect mem slab: %"ISYM"\n", h5_status);
-	    if( h5_status == h5_error ){my_exit(EXIT_FAILURE);}
+	    if( h5_status == h5_error ){return FAIL;}
  
             file_stride = 1;
             file_count = size;
  
             h5_status = H5Sselect_hyperslab(file_dsp_id, H5S_SELECT_SET, &file_offset, &file_stride, &file_count, NULL);
 	    if (io_log) fprintf(log_fptr, "H5Sselect file slab: %"ISYM"\n", h5_status);
-	    if( h5_status == h5_error ){my_exit(EXIT_FAILURE);}
+	    if( h5_status == h5_error ){return FAIL;}
  
             file_offset = file_offset + size;
  
             h5_status = H5Dread(dset_id1, float_type_id, mem_dsp_id, file_dsp_id,  H5P_DEFAULT, (VOIDP) buffer);
 	    if (io_log) fprintf(log_fptr, "H5Dread boundary type: %"ISYM"\n", h5_status);
-	    if( h5_status == h5_error ){my_exit(EXIT_FAILURE);}
- 
+
+	    if( h5_status == h5_error ){	      
+	      for (int k=0;k<size;k++) buffer[size] = BoundaryType[0][dim][i][j];
+	      fprintf(stderr,"ExternaBoundary::ReadExternalBoundary Had trouble reading ExternalBoudnary values: field: %i\n", field);
+	      fprintf(stderr,"Continue and hope for the best.\n");
+	    }
+
 #ifdef OOC_BOUNDARY
 
             for (j = 0; j < size; j++)
@@ -375,7 +382,7 @@ int ExternalBoundary::ReadExternalBoundary(FILE *fptr, int ReadText, int ReadDat
 
               h5_status = H5Dread(dset_id2, float_type_id, mem_dsp_id, file_dsp_id,  H5P_DEFAULT, (VOIDP) buffer);
 	      if (io_log) fprintf(log_fptr, "H5Dread boundary value: %"ISYM"\n", h5_status);
-	      if( h5_status == h5_error ){my_exit(EXIT_FAILURE);}
+	      if( h5_status == h5_error ){return FAIL;}
 
               for (j = 0; j < size; j++)
                 bv_buffer[j] = float(buffer[j]);
@@ -395,7 +402,7 @@ int ExternalBoundary::ReadExternalBoundary(FILE *fptr, int ReadText, int ReadDat
 
               h5_status = H5Dread(dset_id2, float_type_id, mem_dsp_id, file_dsp_id,  H5P_DEFAULT, (VOIDP) buffer);
 	      if (io_log) fprintf(log_fptr, "H5Dread boundary value: %"ISYM"\n", h5_status);
-	      if( h5_status == h5_error ){my_exit(EXIT_FAILURE);}
+	      if( h5_status == h5_error ){return FAIL;}
  
 	      for (j = 0; j < size; j++)
 		BoundaryValue[field][dim][i][j] = float(buffer[j]);
@@ -418,25 +425,25 @@ int ExternalBoundary::ReadExternalBoundary(FILE *fptr, int ReadText, int ReadDat
  
         h5_status = H5Dclose(dset_id1);
 	if (io_log) fprintf(log_fptr,"H5Dclose 1: %"ISYM"\n", h5_status);
-	if( h5_status == h5_error ){my_exit(EXIT_FAILURE);}
+	if( h5_status == h5_error ){return FAIL;}
  
         h5_status = H5Dclose(dset_id2);
 	if (io_log) fprintf(log_fptr,"H5Dclose 2: %"ISYM"\n", h5_status);
-	if( h5_status == h5_error ){my_exit(EXIT_FAILURE);}
+	if( h5_status == h5_error ){return FAIL;}
  
         h5_status = H5Sclose(mem_dsp_id);
 	if (io_log) fprintf(log_fptr, "H5Sclose mem_dsp: %"ISYM"\n", h5_status);
-	if( h5_status == h5_error ){my_exit(EXIT_FAILURE);}
+	if( h5_status == h5_error ){return FAIL;}
  
         h5_status = H5Sclose(file_dsp_id);
 	if (io_log) fprintf(log_fptr, "H5Sclose file_dsp: %"ISYM"\n", h5_status);
-	if( h5_status == h5_error ){my_exit(EXIT_FAILURE);}
+	if( h5_status == h5_error ){return FAIL;}
  
       }   // end of loop over dims
  
     h5_status = H5Fclose(file_id);
     if (io_log) fprintf(log_fptr, "H5Fclose: %"ISYM"\n", h5_status);
-    if( h5_status == h5_error ){my_exit(EXIT_FAILURE);}
+    if( h5_status == h5_error ){return FAIL;}
  
     if (io_log) fclose(log_fptr);
  
@@ -445,3 +452,167 @@ int ExternalBoundary::ReadExternalBoundary(FILE *fptr, int ReadText, int ReadDat
   return SUCCESS;
  
 }
+
+
+
+#ifdef USE_HDF4
+int ExternalBoundary::ReadExternalBoundaryHDF4(FILE *fptr)
+{
+
+  /* declarations */
+
+  int Dims[MAX_DIMENSION], index, size, i;
+  int BoundaryValuePresent[2*MAX_DIMENSION];
+  int field, j;
+  intn TempInt2;
+  int32 TempIntArray[MAX_DIMENSION];
+  float32 *buffer;
+  char hdfname[MAX_LINE_LENGTH];
+
+  /* read general class data */
+
+  if (fscanf(fptr, "BoundaryRank = %d\n", &BoundaryRank) != 1) {
+    fprintf(stderr, "Error reading BoundaryRank.\n");
+    return FAIL;
+  }
+
+  fscanf(fptr, "BoundaryDimension =");
+  if (ReadListOfInts(fptr, BoundaryRank, BoundaryDimension) == FAIL) {
+    fprintf(stderr, "Error reading BoundaryDimension.\n");
+    return FAIL;
+  }
+
+  /* read baryon field quantities */
+
+  if (fscanf(fptr, "NumberOfBaryonFields = %d\n", 
+	     &NumberOfBaryonFields) != 1) {
+    fprintf(stderr, "Error reading NumberOfBaryonFields.\n");
+    return FAIL;
+  }
+
+  /* Read particle boundary type. */
+
+  if (fscanf(fptr, "ParticleBoundaryType = %d\n",&ParticleBoundaryType) != 1) {
+    fprintf(stderr, "Error reading ParticleBoundaryType.\n");
+    return FAIL;
+  }
+
+  if (NumberOfBaryonFields > 0) {
+
+    /* read field types */
+
+    fscanf(fptr, "BoundaryFieldType = ");
+    if (ReadListOfInts(fptr, NumberOfBaryonFields, BoundaryFieldType) 
+        == FAIL) {
+      fprintf(stderr, "Error reading BoundaryFieldType.\n");
+      return FAIL;
+    }
+
+    /* read hdf file name */
+
+    if (fscanf(fptr, "BaryonFileName = %s\n", hdfname) != 1) {
+      fprintf(stderr, "Error reading BaryonFileName.\n");
+      return FAIL;
+    }    
+
+    /* read BoundaryValue present line */
+
+    fscanf(fptr, "BoundaryValuePresent = ");
+    if (ReadListOfInts(fptr, BoundaryRank*2, BoundaryValuePresent) == FAIL) {
+      fprintf(stderr, "Error reading BoundaryValuePresent.\n");
+      return FAIL;
+    }
+
+    /* loop over faces, reading each */
+
+    for (int dim = 0; dim < BoundaryRank; dim++)
+      if (BoundaryDimension[dim] > 1) {
+
+	/* calculate size and dims of flux plane */
+	
+	index = 0;
+	size  = 1;
+	Dims[0] = 1;
+	for (i = 0; i < BoundaryRank; i++)
+	  if (i != dim) {
+	    Dims[index++] = BoundaryDimension[i];
+	    size *= BoundaryDimension[i];
+	  }
+	index = max(BoundaryRank-1, 1);   // make index at least 1
+
+	/* Read HDF dims */
+
+	if (DFSDgetdims(hdfname, &TempInt2, TempIntArray, BoundaryRank) 
+	    == HDF_FAIL) {
+	  fprintf(stderr, "Error in DFSDgetdims.\n");
+	  return FAIL;
+	}
+
+	/* Check rank and dimensions (dims are stored backwards for us). */
+
+	if (TempInt2 != index) {
+	  fprintf(stderr, "HDF file rank does not match BoundaryRank.\n");
+	  return FAIL;
+	}
+
+	for (i = 0; i < index; i++)
+	  if (TempIntArray[index-i-1] != Dims[i]) {
+	    fprintf(stderr, "HDF file dims do not match BoundaryDims.\n");
+	    fprintf(stderr, " Dims[%d] = %d   HDF Dims[%d] = %d\n", i, Dims[i],
+		    index-i-1, TempIntArray[index-i-1]);
+	    return FAIL;
+	  }
+
+	/* Allocate temporary space. */
+	
+	buffer = new float32[size];
+
+	/* loop over fields, reading each */
+
+	for (field = 0; field < NumberOfBaryonFields; field++)
+	  for (i = 0; i < 2; i++) {
+
+	    /* allocate room for BoundaryType */
+
+	    BoundaryType[field][dim][i] = new boundary_type[size];
+
+	    /* read BoundaryType (then convert to int) */
+
+	    if (DFSDgetdata(hdfname, TempInt2, TempIntArray, (VOIDP) buffer)
+		== HDF_FAIL) {
+	      fprintf(stderr, "Error in DFSDgetdata(0).\n");
+	      return FAIL;
+	    }
+
+	    for (j = 0; j < size; j++)
+	      BoundaryType[field][dim][i][j] = 
+		                      (boundary_type) nint(buffer[j]);
+
+	    /* read BoundaryValue */
+
+	    if (BoundaryValuePresent[2*dim+i]) {
+	      BoundaryValue[field][dim][i] = new float[size];
+	      if (DFSDgetdata(hdfname, TempInt2, TempIntArray, (VOIDP)
+			      buffer) == HDF_FAIL) {
+		fprintf(stderr, "Error in DFSDgetdata(1).\n");
+		fprintf(stderr, "dim = %d field = %d i = %d\n", dim, field, i);
+		return FAIL;
+	      }
+	      for (j = 0; j < size; j++){
+		BoundaryValue[field][dim][i][j] = float(buffer[j]);
+	        if(i==0&&j==0) fprintf(stderr,"BoundaryValue[%d][%d][0][0]=%f\n", field, dim, BoundaryValue[field][dim][0][0]);
+	      }		
+	    }
+	  }  // end of loop over fields
+
+	delete buffer;
+	
+      }   // end of loop over dims
+
+  }
+
+  return SUCCESS;
+
+}
+#endif
+
