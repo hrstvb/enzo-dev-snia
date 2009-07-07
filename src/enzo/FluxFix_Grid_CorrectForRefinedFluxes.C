@@ -58,7 +58,7 @@ int grid::CorrectForRefinedFluxes(fluxes *InitialFluxes,
  
   // Return if this doesn't concern us.
  
-  if (ProcessorNumber != MyProcessorNumber)
+  if (ProcessorNumber != MyProcessorNumber || !UseHydro)
     return SUCCESS;
  
   // declarations
@@ -695,8 +695,8 @@ int grid::CorrectForRefinedFluxes(fluxes *InitialFluxes,
       /* delete Refined fluxes as they're not needed anymore. */
  
       for (field = 0; field < NumberOfBaryonFields; field++) {
-	delete RefinedFluxes->LeftFluxes[field][dim];
-	delete RefinedFluxes->RightFluxes[field][dim];
+	delete [] RefinedFluxes->LeftFluxes[field][dim];
+	delete [] RefinedFluxes->RightFluxes[field][dim];
 	RefinedFluxes->LeftFluxes[field][dim] = NULL;
 	RefinedFluxes->RightFluxes[field][dim] = NULL;
       }

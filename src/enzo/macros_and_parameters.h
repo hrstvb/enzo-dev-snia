@@ -16,7 +16,11 @@
 
 #include "message.h"
 
+#ifdef CONFIG_THROW_ABORT
+#define ENZO_FAIL(A) raise(SIGABRT);
+#else
 #define ENZO_FAIL(A) throw(EnzoFatalException(A, __FILE__, __LINE__));
+#endif
 
 /* Modifiable Parameters */
 
@@ -303,6 +307,7 @@ typedef int            HDF5_hid_t;
 /* Definitions for grid::CommunicationSend/ReceiveRegion and 
    grid::DepositPositions */
 
+#define INTERPOLATED_FIELDS              -8
 #define PARTICLE_MASS_FLAGGING_FIELD     -7
 #define MASS_FLAGGING_FIELD              -6
 #define ACCELERATION_FIELDS              -5
@@ -366,6 +371,9 @@ typedef int            HDF5_hid_t;
 #define MPI_SENDPMFLAG_TAG 22
 #define MPI_SENDPART_TAG 23
 
+// There are 5 tags related to this (1000-1004)
+#define MPI_SENDPARTFIELD_TAG 1000
+
 /* Definitions for CommunicationBufferedSend. */
 
 #define BUFFER_IN_PLACE -1
@@ -416,6 +424,7 @@ typedef int            HDF5_hid_t;
 
 #define JHW_METAL_COOLING 1
 #define CEN_METAL_COOLING 2
+#define CLOUDY_METAL_COOLING 3
 
 /* Streaming format parameters */
 

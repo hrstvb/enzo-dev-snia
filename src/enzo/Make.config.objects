@@ -40,6 +40,7 @@ OBJS_CONFIG_LIB = \
 	cic_flag.o \
 	cic_interp.o \
 	cicinterp.o \
+	CloudyCoolingInterpolate.o \
 	cluster_maker.o \
 	c_message.o \
 	colh2diss.o \
@@ -76,6 +77,7 @@ OBJS_CONFIG_LIB = \
 	cool_multi_time.o \
 	cool_time.o \
 	CoolingTestInitialize.o \
+	CopyParticlesAcrossPeriodicBoundaries.o \
 	CopyOverlappingParticleMassFields.o \
 	CopyOverlappingZones.o \
 	CosmologyComputeExpansionFactor.o \
@@ -87,8 +89,9 @@ OBJS_CONFIG_LIB = \
 	CosmologyWriteParameters.o \
 	cray_x1_fft64.o \
 	cray_x1_st1_fft64.o \
-	CreateSUBlingList.o \
 	CreateSiblingList.o \
+	CreateSmoothedDarkMatterFields.o \
+	CreateSUBlingList.o \
 	CreateFluxes.o\
 	DeleteFluxes.o \
 	DeleteSUBlingList.o \
@@ -128,25 +131,42 @@ OBJS_CONFIG_LIB = \
 	FastSiblingLocatorFinalize.o \
 	FastSiblingLocatorInitialize.o \
 	FastSiblingLocatorInitializeStaticChainingMesh.o \
-	FinalizeFluxes.o \
-	PrepareGravitatingMassField.o \
-	RebuildHierarchy.o \
         feuler_sweep.o \
-	F_ColumnFormat.o \
 	fft66.o \
 	fft90.o \
 	ffte4X.o \
 	ffte_st1.o \
 	fft_utils.o \
+	FinalizeFluxes.o \
 	FindCube.o \
 	FindField.o \
 	FindSubgrids.o \
 	flow.o \
 	FluxFix_Grid_CorrectForRefinedFluxes.o \
-	f_message.o \
+	FOF.o \
+	FOF_allocate.o \
+	FOF_cmpfunc.o \
+	FOF_density.o \
+	FOF_forcetree.o \
+	FOF_iindexx.o \
+	FOF_indexx.o \
+	FOF_Initialize.o \
+	FOF_ngbtree.o \
+	FOF_nrutil.o \
+	FOF_potential.o \
+	FOF_properties.o \
+	FOF_selectb.o \
+	FOF_sort2_flt_int.o \
+	FOF_sort2_int.o \
+	FOF_sort_int.o \
+	FOF_subfind.o \
+	FOF_subgroups.o \
+	FOF_unbind.o \
 	fortio.o \
 	fourn.o \
 	FreeRealMem.o \
+	F_ColumnFormat.o \
+	f_message.o \
 	GetNodeFreeMemory.o \
 	GetUnits.o \
 	GravityBdryExchange.o \
@@ -156,6 +176,7 @@ OBJS_CONFIG_LIB = \
 	Grid_AddExternalAcceleration.o \
 	Grid_AddFeedbackSphere.o \
 	Grid_AddFieldMassToMassFlaggingField.o \
+	Grid_AddFields.o \
 	Grid_AddOverlappingParticleMassField.o \
 	Grid_AddRandomForcing.o \
 	Grid_AddToBoundaryFluxes.o \
@@ -206,6 +227,7 @@ OBJS_CONFIG_LIB = \
 	Grid_ComputeXrayEmissivity.o \
 	Grid_constructor.o \
 	Grid_ConvertTotalEnergyToGasEnergy.o \
+	Grid_CoolingTestResetEnergies.o \
 	Grid_CoolingTestInitializeGrid.o \
 	Grid_ConvertToNumpy.o \
 	Grid_CopyBaryonFieldToOldBaryonField.o \
@@ -268,6 +290,7 @@ OBJS_CONFIG_LIB = \
 	Grid_InterpolateBoundaryFromParent.o \
 	Grid_InterpolateFieldValues.o \
 	Grid_InterpolateParticlePositions.o \
+	Grid_InterpolateParticlesToGrid.o \
 	Grid_InterpolatePositions.o \
 	Grid_Irecv_CommunicationReceiveRegion.o \
 	Grid_Irecv_CommunicationSendParticles.o \
@@ -277,6 +300,7 @@ OBJS_CONFIG_LIB = \
 	Grid_MirrorStarParticles.o \
 	Grid_MoveAllParticles.o \
 	Grid_MoveAllStars.o \
+	Grid_MoveParticlesFOF.o \
 	Grid_MoveSubgridParticlesFast.o \
 	Grid_MoveSubgridParticles.o \
 	Grid_MoveSubgridStars.o \
@@ -367,6 +391,7 @@ OBJS_CONFIG_LIB = \
 	I_ColumnFormat.o \
 	IdentifyNewSubgridsBySignature.o \
 	ImplosionInitialize.o \
+	InitializeCloudyCooling.o \
 	InitializeEquilibriumCoolData.o \
 	InitializeLocal.o \
 	InitializeMovieFile.o \
@@ -399,6 +424,8 @@ OBJS_CONFIG_LIB = \
 	mg_restrict.o \
 	mkl_st1.o \
 	Mpich_V1_Dims_create.o \
+	multi_CloudyCooling.o \
+	multi_CloudyCooling_time.o \
 	multi_cool.o \
 	MultigridSolver.o \
 	mused.o \
@@ -422,6 +449,7 @@ OBJS_CONFIG_LIB = \
 	pop3_properties.o \
 	power_of_2.o \
 	prefort2.o \
+	PrepareGravitatingMassField.o \
 	PrepareIsolatedGreensFunction.o \
 	PressurelessCollapseInitialize.o \
 	ProcMap.o \
@@ -459,6 +487,7 @@ OBJS_CONFIG_LIB = \
 	ReadRadiationData.o \
 	ReadStarParticleData.o \
 	ReadUnits.o \
+	RebuildHierarchy.o \
 	ReduceFragmentation.o \
         remap.o \
 	ReportMemoryUsage.o \
@@ -480,6 +509,7 @@ OBJS_CONFIG_LIB = \
 	sink_maker.o \
 	smooth_deposit.o \
 	smooth.o \
+	SolveCloudyCooling.o \
 	solve_cool.o \
 	solve_rate.o \
 	solve_rate_cool.o \
@@ -573,7 +603,6 @@ POBJS_CONFIG_LIB = \
 	FindRootGrid.o \
 	FindSuperSource.o \
 	FindSuperSourceByPosition.o \
-	Grid_AddFields.o \
 	Grid_AddH2Dissociation.o \
 	Grid_AddRadiationPressureAcceleration.o \
 	Grid_AllocateInterpolatedRadiation.o \

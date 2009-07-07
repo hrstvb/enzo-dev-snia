@@ -93,6 +93,7 @@ int CommunicationReceiveHandler(fluxes **SubgridFluxesEstimate[] = NULL,
 				TopGridData* MetaData = NULL);
 double ReturnWallTime(void);
 int Enzo_Dims_create(int nnodes, int ndims, int *dims);
+int FOF(TopGridData *MetaData, LevelHierarchyEntry *LevelArray[]);
 #ifdef USE_PYTHON
 int CallPython();
 #endif
@@ -193,7 +194,9 @@ int EvolveHierarchy(HierarchyEntry &TopGrid, TopGridData &MetaData,
   while (Temp != NULL) {
     if (Temp->GridData->SetExternalBoundaryValues(Exterior) == FAIL) {
       fprintf(stderr, "Error in grid->SetExternalBoundaryValues.\n");
-      ENZO_FAIL("");
+      //      ENZO_FAIL("");
+      Exterior->Prepare(Temp->GridData);
+
     }
     if (CopyOverlappingZones(Temp->GridData, &MetaData, LevelArray, 0)
 	== FAIL) {
@@ -405,6 +408,10 @@ int EvolveHierarchy(HierarchyEntry &TopGrid, TopGridData &MetaData,
     }
     //}
  
+    /* Inline halo finder */
+
+    FOF(&MetaData, LevelArray);
+
     /* Evolve the top grid (and hence the entire hierarchy). */
 
 #ifdef USE_MPI 
@@ -424,14 +431,15 @@ int EvolveHierarchy(HierarchyEntry &TopGrid, TopGridData &MetaData,
         return FAIL;
       }
     } else {
-      if (EvolveLevel_RK2(&MetaData, LevelArray, 0, dt, Exterior, dt) == FAIL) {
-        if (NumberOfProcessors == 1) {
-          fprintf(stderr, "Error in EvolveLevel_RK2.\n");
-          fprintf(stderr, "--> Dumping data (output number %d).\n",
-                  MetaData.DataDumpNumber);
-	Group_WriteAllData(MetaData.DataDumpName, MetaData.DataDumpNumber,
-		     &TopGrid, MetaData, Exterior);
-        }
+      if (HydroMethod == HD_RK || HydroMethod == MHD_RK)
+	if (EvolveLevel_RK2(&MetaData, LevelArray, 0, dt, Exterior, dt) == FAIL) {
+	  if (NumberOfProcessors == 1) {
+	    fprintf(stderr, "Error in EvolveLevel_RK2.\n");
+	    fprintf(stderr, "--> Dumping data (output number %d).\n",
+		    MetaData.DataDumpNumber);
+	    Group_WriteAllData(MetaData.DataDumpName, MetaData.DataDumpNumber,
+			       &TopGrid, MetaData, Exterior);
+	  }
         return FAIL;
       }
     }
@@ -493,6 +501,7 @@ int EvolveHierarchy(HierarchyEntry &TopGrid, TopGridData &MetaData,
 	printf("Stopping on CPU time limit.\n");
       Stop = TRUE;
     }
+
  
     /* Check for time-actions. */
  
@@ -514,6 +523,12 @@ int EvolveHierarchy(HierarchyEntry &TopGrid, TopGridData &MetaData,
       fprintf(stderr, "Error in CheckForResubmit.\n");
       ENZO_FAIL("");
     }
+
+    /* If stopping, inline halo finder one more time */
+
+    if (Stop)
+      FOF(&MetaData, LevelArray);
+
 
     /* Try to cut down on memory fragmentation. */
  
@@ -617,19 +632,19 @@ int EvolveHierarchy(HierarchyEntry &TopGrid, TopGridData &MetaData,
  
   if ((MetaData.dtDataDump != 0.0 || MetaData.CycleSkipDataDump != 0) &&
       !WroteData)
-#ifdef USE_HDF5_GROUPS
+    //#ifdef USE_HDF5_GROUPS
     if (Group_WriteAllData(MetaData.DataDumpName, MetaData.DataDumpNumber,
 		     &TopGrid, MetaData, Exterior, -666) == FAIL) {
       fprintf(stderr, "Error in Group_WriteAllData.\n");
       ENZO_FAIL("");
     }
-#else
-    if (WriteAllData(MetaData.DataDumpName, MetaData.DataDumpNumber,
-		     &TopGrid, MetaData, Exterior, -666) == FAIL) {
-      fprintf(stderr, "Error in WriteAllData.\n");
-      ENZO_FAIL("");
-    }
-#endif
+// #else
+//     if (WriteAllData(MetaData.DataDumpName, MetaData.DataDumpNumber,
+// 		     &TopGrid, MetaData, Exterior, -666) == FAIL) {
+//       fprintf(stderr, "Error in WriteAllData.\n");
+//       ENZO_FAIL("");
+//     }
+// #endif
  
   if (NumberOfProcessors > 1)
     printf("Communication: processor %"ISYM" CommunicationTime = %"FSYM"\n",

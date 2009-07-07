@@ -570,7 +570,8 @@ int EvolveLevel(TopGridData *MetaData, LevelHierarchyEntry *LevelArray[],
     /* Rebuild the Grids on the next level down.
        Don't bother on the last cycle, as we'll rebuild this grid soon. */
  
-    if (dtThisLevelSoFar < dtLevelAbove) {
+    if (dtThisLevelSoFar < dtLevelAbove) {   
+      
       RebuildHierarchy(MetaData, LevelArray, level);
     }
 

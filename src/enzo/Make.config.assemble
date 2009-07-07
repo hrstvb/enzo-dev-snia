@@ -564,19 +564,50 @@
     endif
 
 #-----------------------------------------------------------------------
+# DETERMINE RADIATIVE TRANSFER SETTINGS
+#-----------------------------------------------------------------------
+
+    ERROR_PHOTON = 1
+
+    # Settings to turn radiative transfer ON
+
+    ifeq ($(CONFIG_PHOTON),yes)
+        ERROR_PHOTON = 0
+        ASSEMBLE_PHOTON_DEFINES = -DTRANSFER
+	OBJS_PHOTON_LIB = $(POBJS_CONFIG_LIB)
+    endif
+
+    # Settings to turn radiative transfer OFF
+
+    ifeq ($(CONFIG_PHOTON),no)
+        ERROR_PHOTON = 0
+        ASSEMBLE_PHOTON_DEFINES =
+	OBJS_PHOTON_LIB = 
+    endif
+
+    # error if CONFIG_PHOTON is incorrect
+
+    ifeq ($(ERROR_PHOTON),1)
+       .PHONY: error_transfer
+       error_tpvel:
+	$(error Illegal value '$(CONFIG_PHOTON)' for $$(CONFIG_PHOTON))
+    endif
+
+
+#-----------------------------------------------------------------------
 # DETERMINE FAST SIBLING SETTINGS
 #-----------------------------------------------------------------------
 
     ERROR_FAST_SIB = 1
 
-    # Settings to turn radiative transfer ON
+    # Settings to turn fast sibling search ON
 
     ifeq ($(CONFIG_FAST_SIB),yes)
         ERROR_FAST_SIB = 0
         ASSEMBLE_FAST_SIB_DEFINES = -DFAST_SIB
     endif
 
-    # Settings to turn radiative transfer OFF
+    # Settings to turn fast sibling search OFF
 
     ifeq ($(CONFIG_FAST_SIB),no)
         ERROR_FAST_SIB = 0
@@ -589,6 +620,34 @@
        .PHONY: error_fast_sib
        error_fast_sib:
 	$(error Illegal value '$(CONFIG_FAST_SIB)' for $$(CONFIG_FAST_SIB))
+    endif
+
+#-----------------------------------------------------------------------
+# DETERMINE PHOTON (Adaptive Ray Tracing Transfer) Settings
+#-----------------------------------------------------------------------
+
+    ERROR_PHOTON = 1
+
+    # Settings to turn radiative transfer ON
+
+    ifeq ($(CONFIG_PHOTON),yes)
+        ERROR_PHOTON = 0
+	ASSEMBLE_PHOTON_DEFINES = -DTRANSFER
+    endif
+
+    # Settings to turn radiative transfer OFF
+
+    ifeq ($(CONFIG_PHOTON),no)
+        ERROR_PHOTON = 0
+        ASSEMBLE_PHOTON_DEFINES =
+    endif
+
+    # error if CONFIG_FAST_SIBis incorrect
+
+    ifeq ($(ERROR_PHOTON),1)
+       .PHONY: error_photon
+       error_photon:
+	$(error Illegal value '$(CONFIG_PHOTON)' for $$(CONFIG_PHOTON))
     endif
 
 
@@ -620,6 +679,33 @@
 	$(error Illegal value '$(CONFIG_FLUX_FIX)' for $$(CONFIG_FLUX_FIX))
     endif
 
+#=======================================================================
+# DETERMINE HDF4 USAGE
+#=======================================================================
+
+    ERROR_USE_HDF4 = 1
+
+    # compilers and settings if USE_HDF4 is yes
+
+    ifeq ($(CONFIG_USE_HDF4),yes)
+        ERROR_USE_HDF4 = 0
+        ASSEMBLE_HDF4_DEFINES  = -DUSE_HDF4
+    endif
+
+    # compilers and settings if USE_HDF4 is no
+
+    ifeq ($(CONFIG_USE_HDF4),no)
+        ERROR_USE_HDF4 = 0
+        ASSEMBLE_HDF4_DEFINES  =
+    endif
+
+    # error if CONFIG_USE_HDF4 is incorrect
+
+    ifeq ($(ERROR_USE_HDF4),1)
+       .PHONY: error_compilers
+       error_compilers:
+	$(error Illegal value '$(CONFIG_USE_HDF4)' for $$(CONFIG_USE_HDF4))
+    endif
 
 
 #=======================================================================
@@ -669,7 +755,8 @@
               $(ASSEMBLE_TPVEL_DEFINES) \
               $(ASSEMBLE_PHOTON_DEFINES) \
               $(ASSEMBLE_FAST_SIB_DEFINES) \
-              $(ASSEMBLE_FLUX_FIX_DEFINES)
+              $(ASSEMBLE_FLUX_FIX_DEFINES) \
+              $(ASSEMBLE_HDF4_DEFINES)
 
     INCLUDES = $(MACH_INCLUDES) \
     	       $(ASSEMBLE_MPI_INCLUDES) \
