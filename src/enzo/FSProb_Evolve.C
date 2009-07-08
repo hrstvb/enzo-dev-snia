@@ -41,7 +41,7 @@ int GetUnits(float *DensityUnits, float *LengthUnits,
 
 
 
-int FSProb::Evolve(HierarchyEntry *ThisGrid) 
+int FSProb::Evolve(HierarchyEntry *ThisGrid, float deltat) 
 {
 #ifdef USE_JBPERF
   JBPERF_START("fsprob_solve");
@@ -75,7 +75,7 @@ int FSProb::Evolve(HierarchyEntry *ThisGrid)
 #endif
 
   // get information from Grid
-  dt = ThisGrid->GridData->ReturnTimeStep();
+  dt = deltat;
   told = ThisGrid->GridData->ReturnTime();
   tnew = told+dt;
 
@@ -170,6 +170,10 @@ int FSProb::Evolve(HierarchyEntry *ThisGrid)
     printf("      Efs rms = %13.7e (%8.2e), max = %13.7e (%8.2e)\n",
 	   Efs_rms, Efs_rms*EUnits0, Efs_max, Efs_max*EUnits0);
   }
+
+  // check whether solver even needs to be called
+  if ((srcMax == 0.0) && (Efs_rms == Efs_max))
+    return SUCCESS;        // no sources, nothing interesting
 
   // calculate initial guess at time-evolved solution
   if (this->InitialGuess(sol,U0,extsrc) != SUCCESS) 

@@ -43,7 +43,7 @@ class FSProb : public virtual ImplicitProblemABC {
 
   // overall time spent in solver
   float FStime;
-  
+
   // HYPRE Struct-specific data
   Eint32 mattype;                // HYPRE matrix type for solve
   Eint32 stSize;                 // stencil size
@@ -163,7 +163,7 @@ class FSProb : public virtual ImplicitProblemABC {
   int Initialize(HierarchyEntry &TopGrid, TopGridData &MetaData);
   
   // Problem setup/solver
-  int Evolve(HierarchyEntry *ThisGrid);
+  int Evolve(HierarchyEntry *ThisGrid, float deltat);
 
   // Write module parameters to file
   int WriteParameters(FILE *fptr);
