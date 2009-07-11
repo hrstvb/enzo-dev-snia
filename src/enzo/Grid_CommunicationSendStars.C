@@ -61,9 +61,11 @@ int grid::CommunicationSendStars(grid *ToGrid, int ToProcessor)
      StarListToBuffer in the local processor. */
 
   TransferSize = this->NumberOfStars;
+#ifdef USE_MPI
   if (CommunicationDirection == COMMUNICATION_RECEIVE)
     buffer = (StarBuffer*) CommunicationReceiveBuffer[CommunicationReceiveIndex];
   else
+#endif
     buffer = new StarBuffer[TransferSize];
 
   /* If this is the from processor, pack fields and delete stars. */
