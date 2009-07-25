@@ -45,7 +45,6 @@ int grid::RungeKutta2_2ndStep(int CycleNumber, fluxes *SubgridFluxes[],
 
   double time1 = ReturnWallTime();
 
-  float *dU[NEQ_HYDRO+NSpecies+NColor];
   float *Prim[NEQ_HYDRO+NSpecies+NColor];
 
   int size = 1;
@@ -55,13 +54,6 @@ int grid::RungeKutta2_2ndStep(int CycleNumber, fluxes *SubgridFluxes[],
   int activesize = 1;
   for (int dim = 0; dim < GridRank; dim++)
     activesize *= (GridDimension[dim] - 2*DEFAULT_GHOST_ZONES);
-
-
-  for (int field = 0; field < NEQ_HYDRO+NSpecies+NColor; field++) {
-    dU[field] = new float[activesize];
-    for (int i = 0; i < activesize; i++)
-      dU[field][i] = 0.0;
-  }
 
   this->ReturnHydroRKPointers(Prim);
 
@@ -114,9 +106,17 @@ int grid::RungeKutta2_2ndStep(int CycleNumber, fluxes *SubgridFluxes[],
     }
 
     return SUCCESS;
+
   } // if UseCUDA == 1
 #endif /* ECUDA */
 
+  float *dU[NEQ_HYDRO+NSpecies+NColor];
+  for (int field = 0; field < NEQ_HYDRO+NSpecies+NColor; field++) {
+    dU[field] = new float[activesize];
+    for (int i = 0; i < activesize; i++) {
+      dU[field][i] = 0.0;
+    }
+  }
 
   int fallback = 0;
 

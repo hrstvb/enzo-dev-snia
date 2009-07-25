@@ -35,8 +35,8 @@
 
 
 int GetUnits(float *DensityUnits, float *LengthUnits,
-	     float *TemperatureUnits, float *TimeUnits,
-	     float *VelocityUnits, double *MassUnits, FLOAT Time);
+            float *TemperatureUnits, float *TimeUnits,
+            float *VelocityUnits, double *MassUnits, FLOAT Time);
 
 int CosmologyGetUnits(float *DensityUnits, float *LengthUnits,
 		      float *TemperatureUnits, float *TimeUnits,
@@ -335,6 +335,11 @@ float gasvel(FLOAT radius, float DiskDensity, FLOAT ExpansionFactor, float Galax
     ENZO_FAIL("Error in GetUnits.");
   }
 
+  double MassUnitsDouble=1.0;
+
+  if(ComovingCoordinates)
+    MassUnitsDouble = double(DensityUnits)*POW(double(LengthUnits), 3.0);
+
   // Set the point source gravity parameters.  This is the DM mass (in g)
   //   within rs.  The core radius to rs in cm.
   //
@@ -343,11 +348,11 @@ float gasvel(FLOAT radius, float DiskDensity, FLOAT ExpansionFactor, float Galax
   // Grid::ComputeAccelerationFieldExternal, and converted back to CGS where needed.
   //
 
-  PointSourceGravityConstant = (M_200/f_C)*(log(1.0+1.0)-1.0/(1.0+1.0))*1000.0 / MassUnits;
+  PointSourceGravityConstant = (M_200/f_C)*(log(1.0+1.0)-1.0/(1.0+1.0))*1000.0 / MassUnitsDouble;
   PointSourceGravityCoreRadius = r_s*100.0 / LengthUnits;
 
   /*
-  fprintf(stderr,"Grid::GalaxySimulationInitializeGrid:  %d  %e  %e\n",MyProcessorNumber,MassUnits, LengthUnits);
+  fprintf(stderr,"Grid::GalaxySimulationInitializeGrid:  %d  %e  %e\n",MyProcessorNumber,MassUnitsDouble, LengthUnits);
   fprintf(stderr,"  PointSourceGravityConstant = %e  %d\n",PointSourceGravityConstant,MyProcessorNumber);
   fprintf(stderr,"  PointSourceGravityCoreRadius = %e  %d\n",PointSourceGravityCoreRadius,MyProcessorNumber);
   */
