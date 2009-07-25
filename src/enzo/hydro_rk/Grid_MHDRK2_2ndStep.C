@@ -118,6 +118,10 @@ int grid::MHDRK2_2ndStep(int CycleNumber, fluxes *SubgridFluxes[],
 
   /* Compute dU */
 
+  for (int field = 0; field < NEQ_MHD+NSpecies+NColor; field++) {
+    dU[field] = new float[activesize];
+  }
+
   int fallback = 0;
   if (this->MHD3D(Prim, dU, dtFixed, SubgridFluxes, NumberOfSubgrids, 
 		  0.5, fallback) == FAIL) {

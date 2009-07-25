@@ -21,8 +21,9 @@
 #include "Grid.h"
 
 double ReturnWallTime();
-int HydroTimeUpdate_CUDA(float **Prim, int GridDimension[], int GridStartIndex[], int GridEndIndex[], int GridRank,
-		          float dtdx, float dt);
+int HydroTimeUpdate_CUDA(float **Prim, int GridDimension[], 
+			 int GridStartIndex[], int GridEndIndex[], int GridRank,
+			 float dtdx, float dt);
 
 int grid::RungeKutta2_1stStep(int CycleNumber, fluxes *SubgridFluxes[], 
 			      int NumberOfSubgrids, int level,
@@ -88,7 +89,7 @@ int grid::RungeKutta2_1stStep(int CycleNumber, fluxes *SubgridFluxes[],
   } // end of loop over subgrids
 
 
-  float *dU[NEQ_HYDRO+NSpecies+NColor];
+
   float *Prim[NEQ_HYDRO+NSpecies+NColor];
 
   int size = 1;
@@ -99,29 +100,29 @@ int grid::RungeKutta2_1stStep(int CycleNumber, fluxes *SubgridFluxes[],
   for (int dim = 0; dim < GridRank; dim++)
     activesize *= (GridDimension[dim] - 2*DEFAULT_GHOST_ZONES);
 
-  for (int field = 0; field < NEQ_HYDRO+NSpecies+NColor; field++) {
-    dU[field] = new float[activesize];
-    for (int i = 0; i < activesize; i++)
-      dU[field][i] = 0.0;
-  }
-
   this->ReturnHydroRKPointers(Prim);
 
   // RK2 first step
 #ifdef ECUDA 
   if (UseCUDA == 1) {
-
     FLOAT dtdx = dtFixed/CellWidth[0][0];
     double time2 = ReturnWallTime();
     if (HydroTimeUpdate_CUDA(Prim, GridDimension, GridStartIndex, GridEndIndex, GridRank,
 		  	      dtdx, dtFixed) == FAIL) {
-      printf("RK1: HydroTimeUpdate_CUDA3 failed.\n");
+      printf("RK1: HydroTimeUpdate_CUDA failed.\n");
       return FAIL;
     }
     return SUCCESS;
   }
 #endif
 
+  float *dU[NEQ_HYDRO+NSpecies+NColor];
+  for (int field = 0; field < NEQ_HYDRO+NSpecies+NColor; field++) {
+    dU[field] = new float[activesize];
+    for (int i = 0; i < activesize; i++) {
+      dU[field][i] = 0.0;
+    }
+  }
 
   // compute dU
   int fallback = 0;
