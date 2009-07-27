@@ -630,6 +630,7 @@ void my_exit(int status)
     fprintf (stderr,"%s:%d %"ISYM" ABORT ON EXIT_FAILURE!\n",
 	     __FILE__,__LINE__,MyProcessorNumber);
 
+    ENZO_FAIL("my_exit has been called.");
     CommunicationAbort(status);
 
   } else {
@@ -637,6 +638,7 @@ void my_exit(int status)
     fprintf (stderr,"%s:%d %"ISYM" ABORT ON UNKNOWN EXIT VALUE %"ISYM"!\n",
 	     __FILE__,__LINE__,MyProcessorNumber,status);
 
+    ENZO_FAIL("my_exit has been called without a known exit value.");
     CommunicationAbort(status);
 
   }

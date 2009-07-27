@@ -405,6 +405,7 @@ typedef int            HDF5_hid_t;
 #define PARTICLE_TYPE_BLACK_HOLE   6
 #define PARTICLE_TYPE_CLUSTER      7
 #define PARTICLE_TYPE_MBH          8
+#define PARTICLE_TYPE_COLOR_STAR   9
 
 /* Star particle handling */
 
@@ -416,6 +417,7 @@ typedef int            HDF5_hid_t;
 #define STAR_CLUSTER    5
 #define INSTANT_STAR    7
 #define SPRINGEL_HERNQUIST_STAR 8
+#define COLORED_POP3_STAR  9
 #define STARMAKE_METHOD(A) (StarParticleCreation >> (A) & 1)
 #define STARFEED_METHOD(A) (StarParticleFeedback >> (A) & 1)
 
@@ -431,6 +433,7 @@ typedef int            HDF5_hid_t;
 #define DEATH 6
 #define MBH_THERMAL 7
 #define MBH_RADIATIVE 8
+#define COLOR_FIELD 9
 
 /* Sink particle accretion modes */
 
