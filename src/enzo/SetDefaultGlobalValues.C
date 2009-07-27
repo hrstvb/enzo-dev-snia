@@ -256,6 +256,8 @@ int SetDefaultGlobalValues(TopGridData &MetaData)
   RadiativeCooling            = FALSE;             // off
   GadgetEquilibriumCooling    = FALSE;             // off
   MultiSpecies                = FALSE;             // off
+  PrimordialChemistrySolver   = 0;
+  ThreeBodyRate               = 0;                 // ABN02
   GloverChemistryModel        = 0;                 // 0ff
   GloverRadiationBackground   = 0;
   GloverOpticalDepth          = 0;
@@ -343,6 +345,8 @@ int SetDefaultGlobalValues(TopGridData &MetaData)
   PopIIIMetalCriticalFraction      = 1e-4;
   PopIIISupernovaRadius            = 1;            // pc
   PopIIISupernovaUseColour         = FALSE;
+  PopIIIColorDensityThreshold      = 1e6;         // times mean total density
+  PopIIIColorMass                  = 1e6;         // total mass to color
 
   MBHUseMetalField         = FALSE;
   MBHMinDynamicalTime      = 10e6;         // in years

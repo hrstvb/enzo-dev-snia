@@ -92,6 +92,11 @@ int Star::SetFeedbackFlag(FLOAT Time)
     this->FeedbackFlag = NO_FEEDBACK;
     break;
 
+  case PopIII_CF:
+    if (this->type < 0) this->FeedbackFlag = COLOR_FIELD;
+    else FeedbackFlag = NO_FEEDBACK;
+    break;
+
   case MBH:
     if (this->type > 0)
       if (RadiativeTransfer) 

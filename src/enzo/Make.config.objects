@@ -40,6 +40,7 @@ OBJS_CONFIG_LIB = \
         cic_flag.o \
         cic_interp.o \
         cicinterp.o \
+        cie_thin_cooling_rate.o \
         CloudyCoolingInterpolate.o \
         cluster_maker.o \
         c_message.o \
@@ -274,6 +275,7 @@ OBJS_CONFIG_LIB = \
         Grid_FindNewStarParticles.o \
         Grid_FinishFFT.o \
         Grid_FlagBufferZones.o \
+        Grid_FlagCellsToAvoidRefinement.o \
         Grid_FlagCellsToBeRefinedByCoolingTime.o \
         Grid_FlagCellsToBeRefinedByJeansLength.o \
         Grid_FlagCellsToBeRefinedByMass.o \
@@ -474,10 +476,15 @@ OBJS_CONFIG_LIB = \
         pgas2d_dual.o \
         pgas2d.o \
         PoissonSolverTestInitialize.o \
+        pop3_color_maker.o \
         pop3_maker.o \
         pop3_properties.o \
         power_of_2.o \
         prefort2.o \
+        primordial_calc_derivs.o \
+        primordial_cool.o \
+        primordial_lookup_rates.o \
+        primordial_solver.o \
         PrepareGravitatingMassField.o \
         PrepareIsolatedGreensFunction.o \
         PressurelessCollapseInitialize.o \
@@ -657,6 +664,7 @@ POBJS_CONFIG_LIB = \
         Grid_ReturnSubgridMarker.o \
         Grid_SetSubgridMarkerFromSubgrid.o \
         Grid_SolveCoupledRateEquations.o \
+        Grid_SolveHighDensityPrimordialChemistry.o \
         Grid_Shine.o \
         Grid_TransportPhotonPackages.o \
         Grid_WalkPhotonPackage.o \

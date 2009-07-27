@@ -543,8 +543,12 @@ int WriteParameterFile(FILE *fptr, TopGridData &MetaData)
   fprintf(fptr, "MBHIonizingLuminosity         = %lg\n",
           MBHIonizingLuminosity);
 
-  /* Most Stanford additions: */
+  fprintf(fptr, "PopIIIColorDensityThreshold            = %"GSYM"\n",
+          PopIIIColorDensityThreshold);
+  fprintf(fptr, "PopIIIColorMass                        = %"GSYM"\n",
+          PopIIIColorMass);
 
+  /* Most Stanford additions: */
 
   fprintf(fptr, "Theta_Limiter = %f\n", Theta_Limiter);
   fprintf(fptr, "RiemannSolver = %d\n", RiemannSolver);
