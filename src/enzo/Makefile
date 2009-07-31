@@ -47,6 +47,8 @@ MODULES  =
 
 SVN      = svn
 
+SHARED_OPT = -fPIC -shared
+
 #-----------------------------------------------------------------------
 # Make.config.settings is used for setting default values to all compile-time 
 # configuration settings.
@@ -102,6 +104,7 @@ include Make.config.objects
 #-----------------------------------------------------------------------
 
 all: $(EXE).exe
+lib: lib$(EXE)_p$(ASSEMBLE_PARTICLE_NUMBER)_b$(ASSEMBLE_PRECISION_NUMBER).so
 
 #-----------------------------------------------------------------------
 # MAIN AN EXECUTABLE
@@ -115,6 +118,20 @@ all: $(EXE).exe
 	   echo "Success!"; \
 	else \
 	   echo "$(LD) $(LDFLAGS) -o $*.exe $*.o $(OBJS_LIB) $(LIBS)" >> temp1; \
+	   cat temp1 $(OUTPUT) > temp2; \
+	   rm -f temp1; \
+	   mv -f temp2 $(OUTPUT); \
+	   echo "Failed! See $(OUTPUT) for error messages"; \
+	fi)
+
+lib%.so: $(MODULES) autogen dep enzo.o $(OBJS_LIB)
+	@rm -f $@
+	@echo "Linking"
+	-@$(LD) $(LDFLAGS) $(SHARED_OPT) -o $@ enzo.o $(OBJS_LIB) $(LIBS) >& $(OUTPUT)
+	@(if [ -e $@ ]; then \
+	   echo "Success!"; \
+	else \
+	   echo "$(LD) $(LDFLAGS) $(SHARED_OPT) -o $*.so $*.o $(OBJS_LIB) $(LIBS)" >> temp1; \
 	   cat temp1 $(OUTPUT) > temp2; \
 	   rm -f temp1; \
 	   mv -f temp2 $(OUTPUT); \
@@ -329,7 +346,7 @@ help:
 #-----------------------------------------------------------------------
 
 clean:
-	-@rm -f *.o *.mod *.f *.f90 DEPEND.bak *~ $(OUTPUT) *.exe \
+	-@rm -f *.so *.o *.mod *.f *.f90 DEPEND.bak *~ $(OUTPUT) *.exe \
           auto_show*.C svn_version.def hydro_rk/*.o
 
 #-----------------------------------------------------------------------
