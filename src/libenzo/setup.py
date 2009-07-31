@@ -6,14 +6,43 @@ import os
 import numpy
 numpy_include = numpy.get_include()
 
+# Let's try to figure out the -D options
+
+for line in open("../enzo/temp.show-flags"):
+    if line.startswith("DEFINES"): break
+
+define_macros = []
+for opt in line.split("=", 1)[1].split():
+    vd = opt[2:].split("=")
+    if len(vd) == 1: vd.append(None)
+    define_macros.append(tuple(vd))
+
+print define_macros
+
+def check_for_hdf5():
+    if "HDF5_DIR" in os.environ:
+        return os.environ["HDF5_DIR"]
+    elif os.path.exists("hdf5.cfg"):
+        return open("hdf5.cfg").read().strip().rstrip()
+    print "Reading HDF5 location from hdf5.cfg failed."
+    print "Please place the base directory of your HDF5 install in hdf5.cfg and restart."
+    print "(ex: \"echo '/usr/local/' > hdf5.cfg\" )"
+    sys.exit(1)
+
+H5dir = check_for_hdf5()
+
 setup(name="enzo",
       py_modules=['enzo'], 
       ext_modules=[Extension("_enzo",
                      ["enzo.i"],
                      swig_opts=['-c++'],
-                     include_dirs=["../enzo/", numpy_include],
-                     libraries=['enzo_p8_b8'],
-                     library_dirs=["../enzo/"],
+                     include_dirs=["../enzo/", numpy_include,
+                                   os.path.join(H5dir,"include"),
+                                   "/afs/slac/package/OpenMPI/1.2.5/amd64_linux26/include/"],
+                     libraries=['enzo_p8_b8','hdf5'],
+                     library_dirs=["../enzo/",
+                                   os.path.join(H5dir,"lib")],
+                     define_macros=define_macros
                   )]
       
 )
