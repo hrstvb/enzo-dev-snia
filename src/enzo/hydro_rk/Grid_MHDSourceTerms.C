@@ -28,6 +28,7 @@
 int GetUnits(float *DensityUnits, float *LengthUnits,
 	     float *TemperatureUnits, float *TimeUnits,
 	     float *VelocityUnits, FLOAT Time);
+int CosmologyComputeExpansionFactor(FLOAT time, FLOAT *a, FLOAT *dadt);
 
 int grid::MHDSourceTerms(float **dU)
 {
@@ -37,12 +38,9 @@ int grid::MHDSourceTerms(float **dU)
   }
 
   int DensNum, GENum, TENum, Vel1Num, Vel2Num, Vel3Num, 
-    B1Num, B2Num, B3Num, PhiNum, HMNum, H2INum, H2IINum;
-  if (this->IdentifyPhysicalQuantities(DensNum, GENum, Vel1Num, Vel2Num, 
-				       Vel3Num, TENum, B1Num, B2Num, B3Num, PhiNum) == FAIL) {
-    fprintf(stderr, "Error in IdentifyPhysicalQuantities.\n");
-    return FAIL;
-  }
+    B1Num, B2Num, B3Num, PhiNum;
+  this->IdentifyPhysicalQuantities(DensNum, GENum, Vel1Num, Vel2Num, Vel3Num, 
+				   TENum, B1Num, B2Num, B3Num, PhiNum);
 
 
 #ifdef USE
@@ -52,6 +50,8 @@ int grid::MHDSourceTerms(float **dU)
     dtdy = (GridRank > 1) ? dtFixed/CellWidth[1][0] : 0.0,
     dtdz = (GridRank > 2) ? dtFixed/CellWidth[2][0] : 0.0;  
   float Bx, By, Bz;
+  float coeff = 1.;
+  //  if (Gamma < 1.01)  coeff = 0.; // turn of adding dissipated B-field to Etot if isothermal
   int n = 0, igrid, igridyp1, igridym1, igridzp1, igridzm1;
   for (int k = GridStartIndex[2]; k <= GridEndIndex[2]; k++) {
     for (int j = GridStartIndex[1]; j <= GridEndIndex[1]; j++) {
@@ -61,20 +61,22 @@ int grid::MHDSourceTerms(float **dU)
 	Bx = BaryonField[B1Num][igrid];
 	By = BaryonField[B2Num][igrid];
 	Bz = BaryonField[B3Num][igrid];
-	/*igridyp1 = i+(j+1+k*GridDimension[1])*GridDimension[0];
+	/*
+	igridyp1 = i+(j+1+k*GridDimension[1])*GridDimension[0];
 	igridym1 = i+(j-1+k*GridDimension[1])*GridDimension[0];
 	igridzp1 = i+(j+(k+1)*GridDimension[1])*GridDimension[0];
 	igridzm1 = i+(j+(k-1)*GridDimension[1])*GridDimension[0];
-	divB[n] = 0.5*(BaryonField[iBx][igrid+1]-BaryonField[iBx][igrid-1])*dtdx +
-	  0.5*(BaryonField[iBy][igridyp1]-BaryonField[iBy][igridym1])*dtdy +
-	  0.5*(BaryonField[iBz][igridzp1]-BaryonField[iBz][igridzm1])*dtdz;
-	gradPhi[0][n] = 0.5*(BaryonField[iPhi][igrid+1]-BaryonField[iPhi][igrid-1])*dtdx;
-	gradPhi[1][n] = 0.5*(BaryonField[iPhi][igridyp1]-BaryonField[iPhi][igridym1])*dtdy;
-	gradPhi[2][n] = 0.5*(BaryonField[iPhi][igridzp1]-BaryonField[iPhi][igridzm1])*dtdz;*/
+	divB[n] = 0.5*(BaryonField[B1Num][igrid+1]-BaryonField[B1Num][igrid-1])*dtdx +
+	  0.5*(BaryonField[B2Num][igridyp1]-BaryonField[B2Num][igridym1])*dtdy +
+	  0.5*(BaryonField[B3Num][igridzp1]-BaryonField[B3Num][igridzm1])*dtdz; 
+	gradPhi[0][n] = 0.5*(BaryonField[PhiNum][igrid+1]-BaryonField[PhiNum][igrid-1])*dtdx;
+	gradPhi[1][n] = 0.5*(BaryonField[PhiNum][igridyp1]-BaryonField[PhiNum][igridym1])*dtdy;
+	gradPhi[2][n] = 0.5*(BaryonField[PhiNum][igridzp1]-BaryonField[PhiNum][igridzm1])*dtdz;
+	*/ 
 	dU[iS1  ][n] -= divB[n]*Bx;
 	dU[iS2  ][n] -= divB[n]*By;
 	dU[iS3  ][n] -= divB[n]*Bz;
-	dU[iEtot][n] -= (Bx*gradPhi[0][n] + By*gradPhi[1][n] + Bz*gradPhi[2][n]);
+	dU[iEtot][n] -= coeff*(Bx*gradPhi[0][n] + By*gradPhi[1][n] + Bz*gradPhi[2][n]);
       }
     }
   }
@@ -209,6 +211,33 @@ int grid::MHDSourceTerms(float **dU)
     }
   }
 
+  if ((ComovingCoordinates == 1)) { // add cosmological expansion terms here
+
+    int igrid;
+    float rho, coef=0.;
+    FLOAT a, dadt;
+    int n = 0;
+    CosmologyComputeExpansionFactor(0.5*(Time+OldTime), &a, &dadt);
+    coef = -0.5*dadt/a;
+    for (int k = GridStartIndex[2]; k <= GridEndIndex[2]; k++) {
+      for (int j = GridStartIndex[1]; j <= GridEndIndex[1]; j++) {
+	for (int i = GridStartIndex[0]; i <= GridEndIndex[0]; i++, n++) {
+	  igrid = i+(j+k*GridDimension[1])*GridDimension[0];
+	  rho = BaryonField[DensNum][igrid];
+	  
+	  
+	  dU[iBx  ][n] += dtFixed*coef*BaryonField[B1Num][n];
+	  dU[iBy  ][n] += dtFixed*coef*BaryonField[B2Num][n];
+	  dU[iBz  ][n] += dtFixed*coef*BaryonField[B3Num][n];
+	  dU[iEtot][n] -= dtFixed*coef*(BaryonField[B1Num][n]*BaryonField[B1Num][n]+
+					BaryonField[B2Num][n]*BaryonField[B2Num][n]+
+					BaryonField[B3Num][n]*BaryonField[B3Num][n]);
+	  dU[iPhi][n] += 0.0; // Add correct Phi term here .....
+	}
+      }
+    }
+  }
+
   /* Apply external driving force */
 
   if (UseDrivingField) {
@@ -268,11 +297,12 @@ int grid::MHDSourceTerms(float **dU)
   
   /* Add centrifugal force for the shearing box */
 
-  if (ProblemType == 400) {
+  if (ProblemType == 31 && ShearingBoxProblemType !=0) {
     
     int igrid;
     float rho, gx, gy, gz;
-    float vx, vy, vz, vx_old, v2, vy_old, vz_old;  FLOAT x,z;
+    FLOAT xPos[3];
+    float vels[3]; 
     int n = 0;
 
     for (int k = GridStartIndex[2]; k <= GridEndIndex[2]; k++) {
@@ -280,24 +310,20 @@ int grid::MHDSourceTerms(float **dU)
 	for (int i = GridStartIndex[0]; i <= GridEndIndex[0]; i++, n++) {
 	  igrid = i+(j+k*GridDimension[1])*GridDimension[0];
 	  rho = BaryonField[DensNum][igrid];
-	  x = CellLeftEdge[0][i] + 0.5*CellWidth[0][i];//-0.5;
-	  z = CellLeftEdge[2][k] + 0.5*CellWidth[2][k];//-0.5;
+	  xPos[0] = CellLeftEdge[0][i] + 0.5*CellWidth[0][i];
+	  xPos[1] = CellLeftEdge[1][i] + 0.5*CellWidth[1][i];
+	  xPos[2] = CellLeftEdge[2][i] + 0.5*CellWidth[2][i];
 	 
-	  vx = BaryonField[Vel1Num][igrid];
-	  vy = BaryonField[Vel2Num][igrid];
-	  vz = BaryonField[Vel3Num][igrid];
+	  vels[0] = BaryonField[Vel1Num][igrid];
+	  vels[1] = BaryonField[Vel2Num][igrid];
+	  vels[2] = BaryonField[Vel3Num][igrid];
 
 	  //adding Omega cross v term; given Omega in z direction
-	  dU[iS1][n] += dtFixed*2.0*rho*AngularVelocity*(vy+VelocityGradient*AngularVelocity*x);
-	  dU[iS2][n] += -dtFixed*2.0*rho*AngularVelocity*vx;
-
-	  //adding tidal expansion terms
-	  //dU[iS1][n] += dtFixed*3*VelocityGradient*AngularVelocity*AngularVelocity*x;
+	  dU[iS1][n] += dtFixed*2.0*rho*AngularVelocity*
+	    (vels[ShearingVelocityDirection]+VelocityGradient*AngularVelocity*xPos[ShearingBoundaryDirection])*rho;
+	  dU[iS2][n] += -dtFixed*2.0*rho*AngularVelocity*vels[ShearingVelocityDirection]*rho;
 	  
-	  //Adding vertical gravitational forces of the central object in the thin disk approximation
-	  //dU[iS1][n] += -dtFixed*AngularVelocity*AngularVelocity*z;
-	  
-	  dU[iEtot][n] += dtFixed*2*AngularVelocity*AngularVelocity*VelocityGradient*x*vx;
+	  dU[iEtot][n] += dtFixed*2*AngularVelocity*AngularVelocity*VelocityGradient*xPos[ShearingBoundaryDirection]*vels[ShearingBoundaryDirection]*rho;
 	  
  	}
       }

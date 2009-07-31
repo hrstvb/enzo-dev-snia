@@ -244,6 +244,12 @@
     endif
 
 #-----------------------------------------------------------------------
+# Determine CUDA compiler
+#-----------------------------------------------------------------------
+	
+    ASSEMBLE_CUDACOMPILER = $(MACH_CUDACOMPILER)
+
+#-----------------------------------------------------------------------
 # DETERMINE OBJECT MODE SETTINGS
 #-----------------------------------------------------------------------
 
@@ -443,34 +449,6 @@
     endif
 
 #-----------------------------------------------------------------------
-# DETERMINE UNIGRID_TRANSPOSE SETTINGS
-#-----------------------------------------------------------------------
-
-    ERROR_UNIGRID_TRANSPOSE = 1
-
-    # Settings to turn unigrid transpose ON
-
-    ifeq ($(CONFIG_UNIGRID_TRANSPOSE),yes)
-        ERROR_UNIGRID_TRANSPOSE = 0
-        ASSEMBLE_UNIGRID_TRANSPOSE_DEFINES = -DUNIGRID_TRANSPOSE
-    endif
-
-    # Settings to turn unigrid transpose OFF
-
-    ifeq ($(CONFIG_UNIGRID_TRANSPOSE),no)
-        ERROR_UNIGRID_TRANSPOSE = 0
-        ASSEMBLE_UNIGRID_TRANSPOSE_DEFINES =
-    endif
-
-    # error if CONFIG_UNIGRID_TRANSPOSE is incorrect
-
-    ifeq ($(ERROR_UNIGRID_TRANSPOSE),1)
-       .PHONY: error_unigrid_transpose
-       error_unigrid_transpose:
-	$(error Illegal value '$(CONFIG_UNIGRID_TRANSPOSE)' for $$(CONFIG_UNIGRID_TRANSPOSE))
-    endif
-
-#-----------------------------------------------------------------------
 # DETERMINE OOC_BOUNDARY SETTINGS
 #-----------------------------------------------------------------------
 
@@ -569,35 +547,6 @@
     endif
 
 #-----------------------------------------------------------------------
-# DETERMINE ISOLATED GRAVITY BOUNDARY CONDITION (ISOBCS) SETTINGS
-#-----------------------------------------------------------------------
-
-    ERROR_ISOBCS = 1
-
-    # Settings to turn isolated gravity boundary conditions ON
-
-    ifeq ($(CONFIG_ISOBCS),yes)
-        ERROR_ISOBCS = 0
-        ASSEMBLE_ISOBCS_DEFINES = -DISOLATED_GRAVITY
-    endif
-
-    # Settings to turn isolated gravity boundary conditions OFF
-
-    ifeq ($(CONFIG_ISOBCS),no)
-        ERROR_ISOBCS = 0
-        ASSEMBLE_ISOBCS_DEFINES =
-    endif
-
-    # error if CONFIG_ISOBCS is incorrect
-
-    ifeq ($(ERROR_ISOBCS),1)
-       .PHONY: error_isobcs
-       error_isobcs:
-	$(error Illegal value '$(CONFIG_ISOBCS)' for $$(CONFIG_ISOBCS))
-    endif
-
-
-#-----------------------------------------------------------------------
 # DETERMINE TRACER PARTICLE VELOCITY OUTPUT SETTINGS
 #-----------------------------------------------------------------------
 
@@ -626,19 +575,50 @@
     endif
 
 #-----------------------------------------------------------------------
+# DETERMINE RADIATIVE TRANSFER SETTINGS
+#-----------------------------------------------------------------------
+
+    ERROR_PHOTON = 1
+
+    # Settings to turn radiative transfer ON
+
+    ifeq ($(CONFIG_PHOTON),yes)
+        ERROR_PHOTON = 0
+        ASSEMBLE_PHOTON_DEFINES = -DTRANSFER
+	OBJS_PHOTON_LIB = $(POBJS_CONFIG_LIB)
+    endif
+
+    # Settings to turn radiative transfer OFF
+
+    ifeq ($(CONFIG_PHOTON),no)
+        ERROR_PHOTON = 0
+        ASSEMBLE_PHOTON_DEFINES =
+	OBJS_PHOTON_LIB = 
+    endif
+
+    # error if CONFIG_PHOTON is incorrect
+
+    ifeq ($(ERROR_PHOTON),1)
+       .PHONY: error_transfer
+       error_tpvel:
+	$(error Illegal value '$(CONFIG_PHOTON)' for $$(CONFIG_PHOTON))
+    endif
+
+
+#-----------------------------------------------------------------------
 # DETERMINE FAST SIBLING SETTINGS
 #-----------------------------------------------------------------------
 
     ERROR_FAST_SIB = 1
 
-    # Settings to turn radiative transfer ON
+    # Settings to turn fast sibling search ON
 
     ifeq ($(CONFIG_FAST_SIB),yes)
         ERROR_FAST_SIB = 0
         ASSEMBLE_FAST_SIB_DEFINES = -DFAST_SIB
     endif
 
-    # Settings to turn radiative transfer OFF
+    # Settings to turn fast sibling search OFF
 
     ifeq ($(CONFIG_FAST_SIB),no)
         ERROR_FAST_SIB = 0
@@ -651,6 +631,41 @@
        .PHONY: error_fast_sib
        error_fast_sib:
 	$(error Illegal value '$(CONFIG_FAST_SIB)' for $$(CONFIG_FAST_SIB))
+    endif
+
+
+#-----------------------------------------------------------------------
+# DETERMINE CUDA (GPU computing) Settings
+# When compiling with CUDA support it just compiles the necessary routines. 
+# but only uses it if you set UseCUDA = 1 in your parameter files.
+#-----------------------------------------------------------------------
+
+    ERROR_ECUDA = 1
+
+    # Settings to compile CUDA kernels 
+
+    ifeq ($(CONFIG_ECUDA),yes)
+        ERROR_ECUDA = 0
+	    ASSEMBLE_ECUDA_DEFINES = -DECUDA
+	    ASSEMBLE_CUDA_LIBS = $(MACH_LIBS_CUDA)
+	    ASSEMBLE_CUDA_INCLUDES = $(MACH_LIBS_INCLUDES)
+	    OBJS_ECUDA_LIB = $(OBJS_ECUDA_ALL)
+    endif
+
+    # Settings to tell the make system not to compile CUDA routines
+
+    ifeq ($(CONFIG_ECUDA),no)
+        ERROR_ECUDA = 0
+        ASSEMBLE_ECUDA_DEFINES = 
+	OBJS_ECUDA_LIB = 
+    endif
+
+    # error if 
+
+    ifeq ($(ERROR_ECUDA),1)
+       .PHONY: error_ecuda
+       error_ecuda:
+	$(error Illegal value '$(CONFIG_ECUDA)' for $$(CONFIG_ECUDA))
     endif
 
 
@@ -682,6 +697,33 @@
 	$(error Illegal value '$(CONFIG_FLUX_FIX)' for $$(CONFIG_FLUX_FIX))
     endif
 
+#=======================================================================
+# DETERMINE HDF4 USAGE
+#=======================================================================
+
+    ERROR_USE_HDF4 = 1
+
+    # compilers and settings if USE_HDF4 is yes
+
+    ifeq ($(CONFIG_USE_HDF4),yes)
+        ERROR_USE_HDF4 = 0
+        ASSEMBLE_HDF4_DEFINES  = -DUSE_HDF4
+    endif
+
+    # compilers and settings if USE_HDF4 is no
+
+    ifeq ($(CONFIG_USE_HDF4),no)
+        ERROR_USE_HDF4 = 0
+        ASSEMBLE_HDF4_DEFINES  =
+    endif
+
+    # error if CONFIG_USE_HDF4 is incorrect
+
+    ifeq ($(ERROR_USE_HDF4),1)
+       .PHONY: error_compilers
+       error_compilers:
+	$(error Illegal value '$(CONFIG_USE_HDF4)' for $$(CONFIG_USE_HDF4))
+    endif
 
 
 #=======================================================================
@@ -694,6 +736,7 @@
     FC       = $(ASSEMBLE_FC)
     F90      = $(ASSEMBLE_F90)
     LD       = $(ASSEMBLE_LD)
+    CUDACOMPILER = $(ASSEMBLE_CUDACOMPILER)
 
     CPPFLAGS = $(MACH_CPPFLAGS)
     CFLAGS   = $(MACH_CFLAGS) \
@@ -728,12 +771,12 @@
               $(ASSEMBLE_PACKED_AMR_DEFINES) \
               $(ASSEMBLE_PACKED_MEM_DEFINES) \
               $(ASSEMBLE_TESTING_DEFINES) \
-              $(ASSEMBLE_ISOBCS_DEFINES) \
               $(ASSEMBLE_TPVEL_DEFINES) \
               $(ASSEMBLE_PHOTON_DEFINES) \
               $(ASSEMBLE_FAST_SIB_DEFINES) \
               $(ASSEMBLE_FLUX_FIX_DEFINES) \
-              $(ASSEMBLE_UNIGRID_TRANSPOSE_DEFINES)
+              $(ASSEMBLE_ECUDA_DEFINES) \
+              $(ASSEMBLE_HDF4_DEFINES)
 
     INCLUDES = $(MACH_INCLUDES) \
     	       $(ASSEMBLE_MPI_INCLUDES) \
@@ -745,7 +788,8 @@
 
     OBJS_LIB = $(OBJS_CONFIG_LIB) \
     	       $(OBJS_PHOTON_LIB) \
-	       $(OBJS_HYDRO_RK)
+	       $(OBJS_HYDRO_RK) \
+	       $(OBJS_ECUDA_LIB) 
 
     LIBS = $(MACH_LIBS) \
            $(ASSEMBLE_MPI_LIBS) \
@@ -753,5 +797,6 @@
            $(ASSEMBLE_JBPERF_LIBS) \
            $(ASSEMBLE_PAPI_LIBS) \
            $(ASSEMBLE_PYTHON_LIBS) \
+           $(ASSEMBLE_CUDA_LIBS)
 
 

@@ -41,7 +41,7 @@
 int FindField(int f, int farray[], int n);
 int GetUnits(float *DensityUnits, float *LengthUnits,
 	     float *TemperatureUnits, float *TimeUnits,
-	     float *VelocityUnits, float *MassUnits, FLOAT Time);
+	     float *VelocityUnits, FLOAT Time);
  
  
 int grid::ComputeTemperatureField(float *temperature)
@@ -55,6 +55,20 @@ int grid::ComputeTemperatureField(float *temperature)
   int DeNum, HINum, HIINum, HeINum, HeIINum, HeIIINum, HMNum, H2INum, H2IINum,
       DINum, DIINum, HDINum;
  
+  /* If Gadget equilibrium cooling is on, call the appropriate routine,
+     then exit - don't use the rest of the routine. */
+
+  if(GadgetEquilibriumCooling){
+    if(DualEnergyFormalism)
+      result = this->GadgetComputeTemperatureDEF(Time, temperature);
+    else
+      result = this->GadgetComputeTemperature(Time,temperature);
+
+    if(result == FAIL) { ENZO_FAIL("Error in grid->ComputePressure: Gadget.");
+    }
+    return SUCCESS;
+  }
+
   /* Compute the pressure first. */
  
   if (DualEnergyFormalism)
@@ -63,8 +77,7 @@ int grid::ComputeTemperatureField(float *temperature)
     result = this->ComputePressure(Time, temperature);
  
   if (result == FAIL) {
-    fprintf(stderr, "Error in grid->ComputePressure.\n");
-    ENZO_FAIL("");
+        ENZO_FAIL("Error in grid->ComputePressure.");
   }
  
   /* Compute the size of the fields. */
@@ -76,8 +89,7 @@ int grid::ComputeTemperatureField(float *temperature)
   /* Find Density, if possible. */
  
   if ((DensNum = FindField(Density, FieldType, NumberOfBaryonFields)) < 0) {
-    fprintf(stderr, "Cannot find density.\n");
-    ENZO_FAIL("");
+        ENZO_FAIL("Cannot find density.");
   }
  
  
@@ -92,14 +104,13 @@ int grid::ComputeTemperatureField(float *temperature)
   }
  
   float TemperatureUnits = 1, number_density;
-  float DensityUnits=1, LengthUnits=1, VelocityUnits=1, TimeUnits=1, MassUnits=1;
+  float DensityUnits=1, LengthUnits=1, VelocityUnits=1, TimeUnits=1;
  
   /* Find the temperature units. */
  
   if (GetUnits(&DensityUnits, &LengthUnits, &TemperatureUnits,
-	       &TimeUnits, &VelocityUnits, &MassUnits, Time) == FAIL) {
-    fprintf(stderr, "Error in GetUnits.\n");
-    ENZO_FAIL("");
+	       &TimeUnits, &VelocityUnits, Time) == FAIL) {
+        ENZO_FAIL("Error in GetUnits.");
   }
  
   if (MultiSpecies == FALSE)
@@ -117,8 +128,7 @@ int grid::ComputeTemperatureField(float *temperature)
  
     if (IdentifySpeciesFields(DeNum, HINum, HIINum, HeINum, HeIINum, HeIIINum,
 		      HMNum, H2INum, H2IINum, DINum, DIINum, HDINum) == FAIL) {
-      fprintf(stderr, "Error in grid->IdentifySpeciesFields.\n");
-      ENZO_FAIL("");
+            ENZO_FAIL("Error in grid->IdentifySpeciesFields.");
     }
  
     /* Compute temperature with mu calculated directly. */

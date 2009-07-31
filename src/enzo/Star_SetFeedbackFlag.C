@@ -4,7 +4,8 @@
 /
 /  written by: John Wise
 /  date:       November, 2005
-/  modified1:
+/  modified1: Ji-hoon Kim
+/             July, 2009
 /
 /  NOTES:  When the star particle is created, it is assigned the 
 /          ParticleType from the grid.  Change this to represent the 
@@ -28,7 +29,7 @@
 
 int GetUnits(float *DensityUnits, float *LengthUnits,
 	     float *TemperatureUnits, float *TimeUnits,
-	     float *VelocityUnits, float *MassUnits, FLOAT Time);
+	     float *VelocityUnits, FLOAT Time);
 
 void Star::SetFeedbackFlag(int flag)
 {
@@ -50,16 +51,16 @@ int Star::SetFeedbackFlag(FLOAT Time)
   const float PISNLowerMass = 140, PISNUpperMass = 260;
   const float StarClusterSNeStart = 4.0;   // Myr after cluster is born
   const float StarClusterSNeEnd = 20.0; // Myr (lifetime of a 8 Msun star)
-  const double PI = 3.14159, G = 6.673e-8, k_b = 1.38e-16, m_h = 1.673e-24;
+  const double G = 6.673e-8, k_b = 1.38e-16, m_h = 1.673e-24;
   const double Msun = 1.989e33;
 
   int abs_type;
   float AgeInMyr;
 
   float DensityUnits, LengthUnits, TemperatureUnits, TimeUnits,
-    VelocityUnits, MassUnits;
+    VelocityUnits;
   GetUnits(&DensityUnits, &LengthUnits, &TemperatureUnits,
-	   &TimeUnits, &VelocityUnits, &MassUnits, Time);
+	   &TimeUnits, &VelocityUnits, Time);
 
   abs_type = abs(this->type);
   switch (abs_type) {
@@ -89,6 +90,19 @@ int Star::SetFeedbackFlag(FLOAT Time)
 
   case BlackHole:
     this->FeedbackFlag = NO_FEEDBACK;
+    break;
+
+  case MBH:
+    AgeInMyr = (Time - BirthTime) * TimeUnits / 3.15e13;
+    if (this->type > 0 && AgeInMyr > 0)
+      if (RadiativeTransfer) 
+	this->FeedbackFlag = MBH_RADIATIVE;
+      else if (MBHFeedbackThermal)
+	this->FeedbackFlag = MBH_THERMAL;
+      else
+	this->FeedbackFlag = NO_FEEDBACK;
+    else
+      this->FeedbackFlag = NO_FEEDBACK;
     break;
 
   } // ENDSWITCH

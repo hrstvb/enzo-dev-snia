@@ -6,7 +6,7 @@
      &                d, e, ge, u, v, w, de, HI, HII, HeI, HeII, HeIII,
      &                  cooltime,
      &                in, jn, kn, nratec, iexpand, imethod,
-     &                idual, ispecies, imetal, idim,
+     &                idual, ispecies, imetal, imcool, idim,
      &                is, js, ks, ie, je, ke, ih2co, ipiht,
      &                dt, aye, temstart, temend,
      &                utem, uxyz, uaye, urho, utim,
@@ -49,7 +49,7 @@
       integer in, jn, kn, is, js, ks, ie, je, ke, nratec, imethod,
      &        idual, iexpand, ih2co, ipiht, ispecies, imetal, idim,
      &        iradtype, nfreq, imetalregen, iradshield, iradtrans,
-     &        n_xe
+     &        n_xe, imcool
       real    dt, aye, temstart, temend,
      &        utem, uxyz, uaye, urho, utim,
      &        eta1, eta2, gamma, xe_start, xe_end
@@ -60,13 +60,13 @@
      &        cooltime(in,jn,kn)
       real    HM(in,jn,kn),  H2I(in,jn,kn), H2II(in,jn,kn),
      &        DI(in,jn,kn),  DII(in,jn,kn), HDI(in,jn,kn)
-      real    gaHIa(nratec), gaH2a(nratec), gaHea(nratec),
-     &        gaHpa(nratec), gaela(nratec)
       real    metal(in,jn,kn)
       real    gammaHI(in,jn,kn), gammaHeI(in,jn,kn), gammaHeII(in,jn,kn)
       real    hyd01ka(nratec), h2k01a(nratec), vibha(nratec), 
      &        rotha(nratec), rotla(nratec), gpldla(nratec),
      &        gphdla(nratec), hdltea(nratec), hdlowa(nratec)
+      real    gaHIa(nratec), gaH2a(nratec), gaHea(nratec),
+     &        gaHpa(nratec), gaela(nratec)
       real    ceHIa(nratec), ceHeIa(nratec), ceHeIIa(nratec),
      &        ciHIa(nratec), ciHeIa(nratec), ciHeISa(nratec), 
      &        ciHeIIa(nratec), reHIIa(nratec), reHeII1a(nratec), 
@@ -157,7 +157,7 @@
          call cool1d_multi(     
      &                d, e, ge, u, v, w, de, HI, HII, HeI, HeII, HeIII,
      &                in, jn, kn, nratec, idual, imethod,
-     &                iexpand, ispecies, imetal, idim,
+     &                iexpand, ispecies, imetal, imcool, idim,
      &                is, ie, j, k, ih2co, ipiht, 1,
      &                aye, temstart, temend,
      &                utem, uxyz, uaye, urho, utim,

@@ -21,6 +21,7 @@
 #include "typedefs.h"
 #include "global_data.h"
 #include "phys_constants.h"
+#include "TopGridData.h"
 
 /* function prototypes */
 int CosmologyGetUnits(float *DensityUnits, float *LengthUnits,
@@ -29,7 +30,7 @@ int CosmologyGetUnits(float *DensityUnits, float *LengthUnits,
 
 int GetUnits(float *DensityUnits, float *LengthUnits,
 	     float *TemperatureUnits, float *TimeUnits,
-	     float *VelocityUnits, float *MassUnits, FLOAT Time)
+	     float *VelocityUnits, double *MassUnits, FLOAT Time)
 
 {
   /* If using cosmology, get cosmology units */

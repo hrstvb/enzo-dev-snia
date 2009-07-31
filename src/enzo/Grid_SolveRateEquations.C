@@ -31,7 +31,7 @@ int CosmologyComputeExpansionFactor(FLOAT time, FLOAT *a, FLOAT *dadt);
 int FindField(int f, int farray[], int n);
 int GetUnits(float *DensityUnits, float *LengthUnits,
 	     float *TemperatureUnits, float *TimeUnits,
-	     float *VelocityUnits, float *MassUnits, FLOAT Time);
+	     float *VelocityUnits, FLOAT Time);
 int RadiationFieldCalculateRates(FLOAT Time);
 extern "C" void FORTRAN_NAME(solve_rate)(
 	float *de, float *HI, float *HII, float *HeI, float *HeII,
@@ -62,8 +62,10 @@ int grid::SolveRateEquations()
  
   /* Return if this doesn't concern us. */
   /* We should be calling SolveRateAndCoolingEquations if both are true */
-  if (!((MultiSpecies) && (!RadiativeCooling))) return SUCCESS;
- 
+  
+  if (MultiSpecies && RadiativeCooling && 
+      (MetalCooling != CLOUDY_METAL_COOLING)) return SUCCESS;
+
   if (ProcessorNumber != MyProcessorNumber)
     return SUCCESS;
  
@@ -100,14 +102,22 @@ int grid::SolveRateEquations()
   /* Find the density field. */
  
   int DensNum = FindField(Density, FieldType, NumberOfBaryonFields);
+
+  int MetalNum = 0, MetalFieldPresent = FALSE;
+
+  // First see if there's a metal field (so we can conserve species in
+  // the solver)
+  if ((MetalNum = FindField(Metallicity, FieldType, NumberOfBaryonFields)) == -1)
+    MetalNum = FindField(SNColour, FieldType, NumberOfBaryonFields);
+  MetalFieldPresent = (MetalNum != -1);
  
   /* If using cosmology, compute the expansion factor and get units. */
  
   float TemperatureUnits = 1, DensityUnits = 1, LengthUnits = 1,
-    VelocityUnits = 1, TimeUnits = 1, MassUnits = 1, aUnits = 1;
- 
+    VelocityUnits = 1, TimeUnits = 1, aUnits = 1;
+
   if (GetUnits(&DensityUnits, &LengthUnits, &TemperatureUnits,
-	       &TimeUnits, &VelocityUnits, &MassUnits, Time) == FAIL) {
+	       &TimeUnits, &VelocityUnits, Time) == FAIL) {
     fprintf(stderr, "Error in GetUnits.\n");
     ENZO_FAIL("");
   }

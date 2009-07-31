@@ -37,7 +37,7 @@ extern int RadiationFieldRecomputeMetalRates;
 int CosmologyComputeExpansionFactor(FLOAT time, FLOAT *a, FLOAT *dadt);
 int GetUnits(float *DensityUnits, float *LengthUnits,
 	     float *TemperatureUnits, float *TimeUnits,
-	     float *VelocityUnits, float *MassUnits, FLOAT Time);
+	     float *VelocityUnits, FLOAT Time);
 int RadiationFieldCalculateRates(FLOAT Time);
 int FindField(int field, int farray[], int numfields);
 double ReturnWallTime();
@@ -46,7 +46,7 @@ extern "C" void FORTRAN_NAME(solve_rate_cool)(
 	float *HI, float *HII, float *HeI, float *HeII, float *HeIII,
 	int *in, int *jn, int *kn, int *nratec, int *iexpand, 
            hydro_method *imethod,
-        int *idual, int *ispecies, int *imetal, int *idim,
+        int *idual, int *ispecies, int *imetal, int *imcool, int *idim,
 	int *is, int *js, int *ks, int *ie, int *je, int *ke, int *ih2co, 
 	   int *ipiht,
 	float *dt, float *aye, float *temstart, float *temend,
@@ -139,7 +139,7 @@ int grid::SolveCoupledRateEquations()
   /* If using cosmology, compute the expansion factor and get units. */
 
   float TemperatureUnits = 1, DensityUnits = 1, LengthUnits = 1, 
-    VelocityUnits = 1, TimeUnits = 1, MassUnits = 1, aUnits = 1;
+    VelocityUnits = 1, TimeUnits = 1, aUnits = 1;
 
   if (ComovingCoordinates) {
 
@@ -154,7 +154,7 @@ int grid::SolveCoupledRateEquations()
   }
 
   if (GetUnits(&DensityUnits, &LengthUnits, &TemperatureUnits,
-	       &TimeUnits, &VelocityUnits, &MassUnits, PhotonTime) == FAIL) {
+	       &TimeUnits, &VelocityUnits, PhotonTime) == FAIL) {
     fprintf(stderr, "Error in GetUnits.\n");
     ENZO_FAIL("");
   }
@@ -164,12 +164,17 @@ int grid::SolveCoupledRateEquations()
   /* Metal cooling codes. */
 
   int MetalCoolingType = FALSE, MetalNum = 0;
+  int MetalFieldPresent = FALSE;
+
+  // First see if there's a metal field (so we can conserve species in
+  // the solver)
+  if ((MetalNum = FindField(Metallicity, FieldType, NumberOfBaryonFields)) == -1)
+    MetalNum = FindField(SNColour, FieldType, NumberOfBaryonFields);
+  MetalFieldPresent = (MetalNum != -1);
+
+  // Double check if there's a metal field when we have metal cooling
   if (MetalCooling == JHW_METAL_COOLING) {
-    if ((MetalNum = FindField(Metallicity, FieldType, NumberOfBaryonFields)) 
-	!= -1)
-      MetalCoolingType = JHW_METAL_COOLING;
-    else if ((MetalNum = FindField(SNColour, FieldType, NumberOfBaryonFields)) 
-	     != -1)
+    if (MetalNum != -1)
       MetalCoolingType = JHW_METAL_COOLING;
     else {
       fprintf(stderr, 
@@ -179,9 +184,14 @@ int grid::SolveCoupledRateEquations()
     }
   }
   if (MetalCooling == CEN_METAL_COOLING)
-    if ((MetalNum = FindField(Metallicity, FieldType, NumberOfBaryonFields)) 
-	!= -1)
+    if (MetalNum != 1)
       MetalCoolingType = CEN_METAL_COOLING;
+    else {
+      fprintf(stderr, 
+	      "Warning: No metal field found.  Turning OFF MetalCooling.\n");
+      MetalCooling = FALSE;
+      MetalNum = 0;
+    }
 
   /* Calculate the rates due to the radiation field. */
 
@@ -214,8 +224,8 @@ int grid::SolveCoupledRateEquations()
        BaryonField[HeINum], BaryonField[HeIINum], BaryonField[HeIIINum], 
     GridDimension, GridDimension+1, GridDimension+2, 
        &CoolData.NumberOfTemperatureBins, &ComovingCoordinates, &HydroMethod, 
-    &DualEnergyFormalism, &MultiSpecies, &MetalCoolingType, &GridRank,
-    GridStartIndex, GridStartIndex+1, GridStartIndex+2, 
+    &DualEnergyFormalism, &MultiSpecies, &MetalFieldPresent, &MetalCoolingType, 
+       &GridRank, GridStartIndex, GridStartIndex+1, GridStartIndex+2, 
        GridEndIndex, GridEndIndex+1, GridEndIndex+2,
        &CoolData.ih2co, &CoolData.ipiht,
     &dtPhoton, &afloat, &CoolData.TemperatureStart, &CoolData.TemperatureEnd,

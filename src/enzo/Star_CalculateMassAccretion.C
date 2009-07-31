@@ -4,7 +4,8 @@
 /
 /  written by: John Wise
 /  date:       March, 2009
-/  modified1:
+/  modified1: Ji-hoon Kim
+/             July, 2009
 /
 ************************************************************************/
 #include <stdlib.h>
@@ -25,15 +26,15 @@
 
 int GetUnits(float *DensityUnits, float *LengthUnits,
 	     float *TemperatureUnits, float *TimeUnits,
-	     float *VelocityUnits, float *MassUnits, FLOAT Time);
+	     float *VelocityUnits, FLOAT Time);
 
 int Star::CalculateMassAccretion(void)
 {
 
-  if (this->type != BlackHole || this->CurrentGrid == NULL)
+  if ((this->type != BlackHole && this->type != MBH) || this->CurrentGrid == NULL)
     return SUCCESS;
 
-  const double PI = 3.14159, G = 6.673e-8, k_b = 1.38e-16, m_h = 1.673e-24;
+  const double Grav = 6.673e-8, k_b = 1.38e-16, m_h = 1.673e-24;
   const double Msun = 1.989e33, yr = 3.1557e7;
   const int AccretionType = LOCAL_ACCRETION;
   FLOAT time = CurrentGrid->OldTime;
@@ -42,9 +43,9 @@ int Star::CalculateMassAccretion(void)
     time = CurrentGrid->Time - CurrentGrid->dtFixed;
 
   float DensityUnits, LengthUnits, TemperatureUnits, TimeUnits,
-    VelocityUnits, MassUnits;
+    VelocityUnits;
   GetUnits(&DensityUnits, &LengthUnits, &TemperatureUnits,
-	   &TimeUnits, &VelocityUnits, &MassUnits, time);
+	   &TimeUnits, &VelocityUnits, time);
 
   int DensNum, GENum, TENum, Vel1Num, Vel2Num, Vel3Num;
   int DeNum, HINum, HIINum, HeINum, HeIINum, HeIIINum, HMNum, H2INum, H2IINum,
@@ -127,7 +128,7 @@ int Star::CalculateMassAccretion(void)
     v_rel = sqrt(v_rel) * VelocityUnits;
 
     // Calculate accretion rate in Msun/s
-    mdot = 4.0 * PI * G*G * (old_mass * old_mass * Msun) * 
+    mdot = 4.0 * PI * Grav*Grav * (old_mass * old_mass * Msun) * 
       (density * DensityUnits) / pow(c_s * c_s + v_rel * v_rel, 1.5);
   
     // No accretion if the BH is in some low-density and cold cell.

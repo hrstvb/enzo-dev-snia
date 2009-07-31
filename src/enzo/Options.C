@@ -135,10 +135,6 @@ int ENZO_OptionsinEffect(void)
     fprintf(opf, "  Minimum memory start-up => non-apative mesh only\n");
 #endif
 
-#ifdef UNIGRID_TRANSPOSE
-    fprintf(opf, "  Fast book-keeping for FFT TopGrid neighbours\n");
-#endif
-
 #ifdef HDF5_USE_HDF5_GROUPS
     fprintf(opf, "  HDF5 groups for packed AMR\n");
 #endif
@@ -167,16 +163,34 @@ int ENZO_OptionsinEffect(void)
     fprintf(opf, "  Force message progress with MPI_Barrier calls\n");
 #endif
 
-#ifdef ISOLATED_GRAVITY
-    fprintf(opf, "  Isolated gravity enabled\n");
-#else /* ISOLATED_GRAVITY */
-    fprintf(opf, "  Isolated gravity disabled\n");
-#endif /* ISOLATED_GRAVITY */
-
 #ifdef TRANSFER
     fprintf(opf, "  Adaptive ray tracing enabled\n");
 #else
     fprintf(opf, "  Adaptive ray tracing disabled\n");
+#endif
+
+#ifdef USE_PYTHON
+    fprintf(opf, "  Inline python enabled\n");
+#else
+    fprintf(opf, "  Inline python disabled\n");
+#endif
+
+#ifdef FAST_SIB
+    fprintf(opf, "  Fast sibiling search enabled\n");
+#else
+    fprintf(opf, "  Fast sibiling search disabled\n");
+#endif
+
+#ifdef USE_HDF4
+    fprintf(opf, "  HDF4 reading enabled\n");
+#else
+    fprintf(opf, "  HDF4 reading disabled\n");
+#endif
+
+#ifdef FLUX_FIX
+    fprintf(opf, "  Flux fix for subgrid siblings enabled\n");
+#else
+    fprintf(opf, "  Flux fix for subgrid siblings disabled\n");
 #endif
 
 

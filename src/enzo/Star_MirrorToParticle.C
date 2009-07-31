@@ -25,7 +25,7 @@
 
 int GetUnits(float *DensityUnits, float *LengthUnits,
 	     float *TemperatureUnits, float *TimeUnits,
-	     float *VelocityUnits, float *MassUnits, FLOAT Time);
+	     float *VelocityUnits, FLOAT Time);
 
 void Star::MirrorToParticle(void)
 {
@@ -38,15 +38,15 @@ void Star::MirrorToParticle(void)
   float MassConversion;
 
   float DensityUnits, LengthUnits, TemperatureUnits, TimeUnits,
-    VelocityUnits, MassUnits;
+    VelocityUnits;
   GetUnits(&DensityUnits, &LengthUnits, &TemperatureUnits,
-	   &TimeUnits, &VelocityUnits, &MassUnits, CurrentGrid->Time);
+	   &TimeUnits, &VelocityUnits, CurrentGrid->Time);
 
   double dx = LengthUnits * CurrentGrid->CellWidth[0][0];
   MassConversion = (float) (dx*dx*dx * double(DensityUnits) / Msun);
 
   // Find where this star particle is stored in main arrays
-  for (i = 0; i < CurrentGrid->NumberOfParticles; i++)
+  for (i = 0; i < CurrentGrid->NumberOfParticles; i++) 
     if (CurrentGrid->ParticleNumber[i] == this->Identifier) {
       place = i;
       break;

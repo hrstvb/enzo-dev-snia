@@ -50,6 +50,7 @@
 #undef DEFINE_STORAGE
 #ifdef USE_PYTHON
 int InitializePythonInterface(int argc, char **argv);
+int FinalizePythonInterface();
 #endif
  
 // Function prototypes
@@ -106,6 +107,11 @@ int CommunicationInitialize(Eint32 *argc, char **argv[]);
 int CommunicationFinalize();
 
 int CommunicationPartitionGrid(HierarchyEntry *Grid, int gridnum);
+int CommunicationCombineGrids(HierarchyEntry *OldHierarchy,
+			      HierarchyEntry **NewHierarchyPointer,
+			      FLOAT WriteTime);
+void DeleteGridHierarchy(HierarchyEntry *GridEntry);
+
 void CommunicationAbort(int);
 int ENZO_OptionsinEffect(void);
 
@@ -217,31 +223,6 @@ Eint32 main(Eint32 argc, char *argv[])
   ENZO_OptionsinEffect();
 
 
-#ifdef ISOLATED_GRAVITY
-#ifdef UNIGRID_TRANSPOSE
-    /* it turns out that Robert Harkness' unigrid transpose stuff is incompatible with the top
-       grid isolated gravity boundary conditions.  I'm not 100 percent sure why this is - in the 
-       meantime, just double-check to make sure that if one tries to use the isolated boundary
-       conditions when the unigrid transpose stuff is on, the code crashes loudly.
-       -- BWO, 26 June 2008 */
-      if (MyProcessorNumber == ROOT_PROCESSOR){
-	fprintf(stderr, "\n\n");
-	fprintf(stderr, "  ************************************************************************\n");
-	fprintf(stderr, "  ****  D'oh!  At present, you cannot use isolated top grid boundary  ****\n");
-	fprintf(stderr, "  ****  conditions with the top grid unigrid bookkeeping scheme.      ****\n");
-	fprintf(stderr, "  ****  Consult Brian O'Shea for the details of this wackiness,       ****\n");
-	fprintf(stderr, "  ****  and in the meantime recompile enzo with                       ****\n");
-	fprintf(stderr, "  ****  'gmake unigrid-transpose-no' instead of                       ****\n");
-	fprintf(stderr, "  ****  'gmake unigrid-transpose-yes'.                                ****\n");
-	fprintf(stderr, "  ************************************************************************\n");      
-	fprintf(stderr, "\n\n");
-      }
-      my_exit(EXIT_FAILURE);
-#endif /* UNIGRID_TRANSPOSE */
-#endif /* ISOLATED_GRAVITY */
-
-
- 
   // Main declarations
  
   TopGridData MetaData;
@@ -344,7 +325,11 @@ Eint32 main(Eint32 argc, char *argv[])
 			   RegionStart, RegionEnd,
 			   RegionStartCoordinates, RegionEndCoordinates,
 			   RegionLevel, MyProcessorNumber) == FAIL) {
-    my_exit(EXIT_FAILURE);
+    if(int_argc==1){
+      my_exit(EXIT_SUCCESS);
+    } else {
+      my_exit(EXIT_FAILURE);
+    }
   }
 
  
@@ -356,22 +341,26 @@ Eint32 main(Eint32 argc, char *argv[])
  
     if (debug) printf("Reading parameter file %s\n", ParameterFile);
 
+
+  // First expect to read in packed-HDF5
+
 #ifdef USE_HDF5_GROUPS
-    if (debug) fprintf(stderr, "Input with Group_ReadAllData\n");
     if (Group_ReadAllData(ParameterFile, &TopGrid, MetaData, &Exterior) == FAIL) {
-      if (MyProcessorNumber == ROOT_PROCESSOR)
-	fprintf(stderr, "Error in ParameterFile %s.\n", ParameterFile);
-      my_exit(EXIT_FAILURE);
-    }
-#else 
-    if (debug) fprintf(stderr, "Input with ReadAllData\n");
-    if (ReadAllData(ParameterFile, &TopGrid, MetaData, &Exterior) == FAIL) {
-      if (MyProcessorNumber == ROOT_PROCESSOR)
-	fprintf(stderr, "Error in ParameterFile %s.\n", ParameterFile);
-      my_exit(EXIT_FAILURE);
+      if (MyProcessorNumber == ROOT_PROCESSOR) {
+	fprintf(stderr, "Error in Group_ReadAllData %s\n", ParameterFile);
+	fprintf(stderr, "Probably not in a packed-HDF5 format. Trying other read routines.\n");
+      }
+#endif
+      // If not packed-HDF5, then try usual HDF5 or HDF4
+      if (ReadAllData(ParameterFile, &TopGrid, MetaData, &Exterior) == FAIL) {
+	if (MyProcessorNumber == ROOT_PROCESSOR)
+	  fprintf(stderr, "Error in ReadAllData %s.\n", ParameterFile);
+	my_exit(EXIT_FAILURE);
+      }
+#ifdef USE_HDF5_GROUPS
     }
 #endif
- 
+
     if (!ParallelRootGridIO && restart && TopGrid.NextGridThisLevel == NULL) {
       CommunicationPartitionGrid(&TopGrid, 0);  // partition top grid if necessary
     }
@@ -448,6 +437,7 @@ Eint32 main(Eint32 argc, char *argv[])
     else {
       if (MyProcessorNumber == ROOT_PROCESSOR)
 	fprintf(stderr, "Successfully read in parameter file %s.\n", ParameterFile);
+      //      Exterior.Prepare(TopGrid.GridData);
       AddLevel(LevelArray, &TopGrid, 0);    // recursively add levels
     }
  
@@ -604,6 +594,9 @@ Eint32 main(Eint32 argc, char *argv[])
 void my_exit(int status)
 {
   // Exit gracefully if successful; abort on error
+#ifdef USE_PYTHON
+  FinalizePythonInterface();
+#endif
 
   if (status == EXIT_SUCCESS) {
 

@@ -32,15 +32,15 @@
 int WriteTracerParticleData(char *basename, int filenumber,
 		   LevelHierarchyEntry *LevelArray[], TopGridData *MetaData,
 		   FLOAT WriteTime);
-#ifdef USE_HDF5_GROUPS
+//#ifdef USE_HDF5_GROUPS
 int Group_WriteAllData(char *basename, int filenumber, HierarchyEntry *TopGrid,
 		       TopGridData &MetaData, ExternalBoundary *Exterior,
 		       FLOAT WriteTime = -1);
-#else
-int WriteAllData(char *basename, int filenumber, HierarchyEntry *TopGrid,
-                 TopGridData &MetaData, ExternalBoundary *Exterior,
-                 FLOAT WriteTime = -1);
-#endif
+// #else
+// int WriteAllData(char *basename, int filenumber, HierarchyEntry *TopGrid,
+//                  TopGridData &MetaData, ExternalBoundary *Exterior,
+//                  FLOAT WriteTime = -1);
+// #endif
 void my_exit(int status);
 int GenerateGridArray(LevelHierarchyEntry *LevelArray[], int level,
 		      HierarchyEntry **Grids[]);
@@ -171,12 +171,18 @@ int OutputFromEvolveLevel(LevelHierarchyEntry *LevelArray[],TopGridData *MetaDat
     }
   }//Finest Level
 
+  FILE *Exit_fptr;
+
   if( ExitEnzo == TRUE ){
     if (MovieSkipTimestep != INT_UNDEFINED) {
       fprintf(stderr, "Closing movie file.\n");
       MetaData->AmiraGrid.AMRHDF5Close();
     }
-    fprintf(stderr, "Stopping due to request on level %"ISYM"\n", level);
+    if (MyProcessorNumber == ROOT_PROCESSOR) {
+      fprintf(stderr, "Stopping due to request on level %"ISYM"\n", level);
+      Exit_fptr = fopen("RunFinished", "w");
+      fclose(Exit_fptr);
+    }
     my_exit(EXIT_SUCCESS);
   }
   
@@ -185,21 +191,21 @@ int OutputFromEvolveLevel(LevelHierarchyEntry *LevelArray[],TopGridData *MetaDat
     LevelHierarchyEntry *Temp2 = LevelArray[0];
     while (Temp2->NextGridThisLevel != NULL)
       Temp2 = Temp2->NextGridThisLevel; /* ugh: find last in linked list */
-#ifdef USE_HDF5_GROUPS
+    //#ifdef USE_HDF5_GROUPS
     if (Group_WriteAllData(MetaData->DataDumpName, MetaData->DataDumpNumber++,
 			   Temp2->GridHierarchyEntry, *MetaData, Exterior,
 			   LevelArray[level]->GridData->ReturnTime()) == FAIL) {
       fprintf(stderr, "Error in Group_WriteAllData.\n");
       return FAIL;
     }
-#else
-    if (WriteAllData(MetaData->DataDumpName, MetaData->DataDumpNumber++,
-		     Temp2->GridHierarchyEntry, *MetaData, Exterior, 
-		     LevelArray[level]->GridData->ReturnTime()) == FAIL) {
-      fprintf(stderr, "Error in WriteAllData.\n");
-      return FAIL;
-    }
-#endif
+// #else
+//     if (WriteAllData(MetaData->DataDumpName, MetaData->DataDumpNumber++,
+// 		     Temp2->GridHierarchyEntry, *MetaData, Exterior, 
+// 		     LevelArray[level]->GridData->ReturnTime()) == FAIL) {
+//       fprintf(stderr, "Error in WriteAllData.\n");
+//       return FAIL;
+//     }
+// #endif
   }//Write == TRUE
 
   

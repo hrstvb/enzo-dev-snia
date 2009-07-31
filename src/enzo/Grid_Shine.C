@@ -24,11 +24,11 @@
 #include "GridList.h"
 #include "ExternalBoundary.h"
 #include "Grid.h"
+#include "RadiativeTransferHealpixRoutines.h"
 
 #define ONE_ENERGY
 
 RadiationSourceEntry* DeleteRadiationSource(RadiationSourceEntry *RS);
-int  pix2vec_nest(long nside,long ipix, FLOAT *v);
 FLOAT FindCrossSection(int type, float energy);
 
 int grid::Shine(RadiationSourceEntry *RadiationSource)
@@ -125,6 +125,8 @@ int grid::Shine(RadiationSourceEntry *RadiationSource)
 //      if (MyProcessorNumber == ProcessorNumber)
 //	printf("Shine: ramp = %lf, lapsed = %lf\n", RampPercent,
 //	       PhotonTime-RS->CreationTime+dtPhoton);
+      break;
+    case MBH:
       break;
     } // ENDSWITCH type
 

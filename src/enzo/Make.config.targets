@@ -138,6 +138,31 @@ help-config:
 	@echo "      gmake photon-yes"
 	@echo "      gmake photon-no"
 	@echo 
+	@echo "   Include fast sibling search"
+	@echo
+	@echo "      gmake fastsib-yes"
+	@echo "      gmake fastsib-no"
+	@echo 
+	@echo "   Include sibling subgrid boundary fix"
+	@echo
+	@echo "      gmake fluxfix-yes"
+	@echo "      gmake fluxfix-no"
+	@echo 
+	@echo "   Set whether to use HDF4"
+	@echo
+	@echo "      gmake use-hdf4-yes"
+	@echo "      gmake use-hdf4-no"
+	@echo
+	@echo "   Set whether to use inline python"
+	@echo
+	@echo "      gmake python-yes"
+	@echo "      gmake python-no"
+	@echo
+	@echo "   Set whether to use CUDA (GPU-computing)"
+	@echo
+	@echo "      gmake cuda-yes"
+	@echo "      gmake cuda-no"
+	@echo
 
 #-----------------------------------------------------------------------
 
@@ -187,13 +212,15 @@ show-config:
 	@echo "   CONFIG_JBPERF:                $(CONFIG_JBPERF)"
 	@echo "   CONFIG_PAPI:                  $(CONFIG_PAPI)"
 	@echo "   CONFIG_PYTHON:                $(CONFIG_PYTHON)"
-	@echo "   CONFIG_UNIGRID_TRANSPOSE:     $(CONFIG_UNIGRID_TRANSPOSE)"
+	@echo "   CONFIG_ECUDA:                 $(CONFIG_ECUDA)"
 	@echo "   CONFIG_OOC_BOUNDARY:          $(CONFIG_OOC_BOUNDARY)"
 	@echo "   CONFIG_OPT:                   $(CONFIG_OPT)"
 	@echo "   CONFIG_TESTING:               $(CONFIG_TESTING)"
-	@echo "   CONFIG_ISOBCS:                $(CONFIG_ISOBCS)"
 	@echo "   CONFIG_TPVEL:                 $(CONFIG_TPVEL)"
 	@echo "   CONFIG_PHOTON:                $(CONFIG_PHOTON)"
+	@echo "   CONFIG_USE_HDF4:              $(CONFIG_USE_HDF4)"
+	@echo "   CONFIG_FAST_SIB:              $(CONFIG_FAST_SIB)"
+	@echo "   CONFIG_FLUX_FIX:              $(CONFIG_FLUX_FIX)"
 	@echo
 
 #-----------------------------------------------------------------------
@@ -500,19 +527,20 @@ CONFIG_PYTHON-%: suggest-clean
 
 #-----------------------------------------------------------------------
 
-VALID_UNIGRID-TRANSPOSE = unigrid-transpose-yes unigrid-transpose-no
-.PHONY: $(VALID_UNIGRID-TRANSPOSE)
+VALID_ECUDA = cuda-yes cuda-no
+.PHONY: $(VALID_ECUDA)
 
-unigrid-transpose-yes: CONFIG_UNIGRID-TRANSPOSE-yes
-unigrid-transpose-no: CONFIG_UNIGRID-TRANSPOSE-no
-unigrid-transpose-%:
-	@printf "\n\tInvalid target: $@\n\n\tValid targets: [$(VALID_UNIGRID-TRANSPOSE)]\n\n"
-CONFIG_UNIGRID-TRANSPOSE-%: suggest-clean
+cuda-yes: CONFIG_ECUDA-yes
+cuda-no: CONFIG_ECUDA-no
+cuda-%:
+	@printf "\n\tInvalid target: $@\n\n\tValid targets: [$(VALID_ECUDA)]\n\n"
+CONFIG_ECUDA-%: 
 	@tmp=.config.temp; \
-        grep -v CONFIG_UNIGRID_TRANSPOSE $(MAKE_CONFIG_OVERRIDE) > $${tmp}; \
+        echo ""; \
+        grep -v CONFIG_ECUDA $(MAKE_CONFIG_OVERRIDE) > $${tmp}; \
         mv $${tmp} $(MAKE_CONFIG_OVERRIDE); \
-        echo "CONFIG_UNIGRID_TRANSPOSE = $*" >> $(MAKE_CONFIG_OVERRIDE); \
-	$(MAKE)  show-config | grep CONFIG_UNIGRID_TRANSPOSE:
+        echo "CONFIG_ECUDA = $*" >> $(MAKE_CONFIG_OVERRIDE); \
+	$(MAKE)  show-config | grep CONFIG_ECUDA:
 	@echo
 
 #-----------------------------------------------------------------------
@@ -570,24 +598,6 @@ CONFIG_TESTING-%: suggest-clean
 
 #-----------------------------------------------------------------------
 
-VALID_ISOBCS = isolated-bcs-yes isolated-bcs-no
-.PHONY: $(VALID_ISOBCS)
-
-isolated-bcs-yes: CONFIG_ISOBCS-yes
-isolated-bcs-no: CONFIG_ISOBCS-no
-
-isolated-bcs-%:
-	@printf "\n\tInvalid target: $@\n\n\tValid targets: [$(VALID_ISOBCS)]\n\n"
-CONFIG_ISOBCS-%:
-	@tmp=.config.temp; \
-        grep -v CONFIG_ISOBCS $(MAKE_CONFIG_OVERRIDE) > $${tmp}; \
-        mv $${tmp} $(MAKE_CONFIG_OVERRIDE); \
-        echo "CONFIG_ISOBCS = $*" >> $(MAKE_CONFIG_OVERRIDE); \
-	$(MAKE) show-config | grep CONFIG_ISOBCS:
-	@echo
-
-#-----------------------------------------------------------------------
-
 VALID_TPVEL = tpvel-yes tpvel-no
 .PHONY: $(VALID_TPVEL)
 
@@ -620,40 +630,59 @@ CONFIG_PHOTON-%:
 	$(MAKE) show-config | grep CONFIG_PHOTON:
 	@echo
 
-
-
 #-----------------------------------------------------------------------
 
-VALID_FLUX_FIX = flux_fix-yes flux_fix_no
-.PHONY: $(VALID_PHOTON)
+VALID_FAST_SIB = fastsib-yes fastsib-no
+.PHONY: $(VALID_FAST_SIB)
 
-photon-yes: CONFIG_PHOTON-yes
-photon-no: CONFIG_PHOTON-no
-photon-%:
-	@printf "\n\tInvalid target: $@\n\n\tValid targets: [$(VALID_PHOTON)]\n\n"
-CONFIG_PHOTON-%:
+fastsib-yes: CONFIG_FAST_SIB-yes
+fastsib-no: CONFIG_FAST_SIB-no
+fastsib-%:
+	@printf "\n\tInvalid target: $@\n\n\tValid targets: [$(VALID_FAST_SIB)]\n\n"
+CONFIG_FAST_SIB-%: suggest-clean
 	@tmp=.config.temp; \
-        grep -v CONFIG_PHOTON $(MAKE_CONFIG_OVERRIDE) > $${tmp}; \
+        grep -v CONFIG_FAST_SIB $(MAKE_CONFIG_OVERRIDE) > $${tmp}; \
         mv $${tmp} $(MAKE_CONFIG_OVERRIDE); \
-        echo "CONFIG_PHOTON = $*" >> $(MAKE_CONFIG_OVERRIDE); \
-	$(MAKE) show-config | grep CONFIG_PHOTON:
+        echo "CONFIG_FAST_SIB = $*" >> $(MAKE_CONFIG_OVERRIDE); \
+	$(MAKE)  show-config | grep CONFIG_FAST_SIB:
 	@echo
 
 
 #-----------------------------------------------------------------------
 
-VALID_PHOTON = photon-yes photon-no
-.PHONY: $(VALID_PHOTON)
+VALID_FLUX_FIX = fluxfix-yes fluxfix-no
+.PHONY: $(VALID_FLUX_FIX)
 
-photon-yes: CONFIG_PHOTON-yes
-photon-no: CONFIG_PHOTON-no
-photon-%:
-	@printf "\n\tInvalid target: $@\n\n\tValid targets: [$(VALID_PHOTON)]\n\n"
-CONFIG_PHOTON-%:
+fluxfix-yes: CONFIG_FLUX_FIX-yes
+fluxfix-no: CONFIG_FLUX_FIX-no
+fluxfix-%:
+	@printf "\n\tInvalid target: $@\n\n\tValid targets: [$(VALID_FLUX_FIX)]\n\n"
+CONFIG_FLUX_FIX-%: suggest-clean
 	@tmp=.config.temp; \
-        grep -v CONFIG_PHOTON $(MAKE_CONFIG_OVERRIDE) > $${tmp}; \
+        grep -v CONFIG_FLUX_FIX $(MAKE_CONFIG_OVERRIDE) > $${tmp}; \
         mv $${tmp} $(MAKE_CONFIG_OVERRIDE); \
-        echo "CONFIG_PHOTON = $*" >> $(MAKE_CONFIG_OVERRIDE); \
-	$(MAKE) show-config | grep CONFIG_PHOTON:
+        echo "CONFIG_FLUX_FIX = $*" >> $(MAKE_CONFIG_OVERRIDE); \
+	$(MAKE)  show-config | grep CONFIG_FLUX_FIX:
 	@echo
+
+
+#-----------------------------------------------------------------------
+
+VALID_USE-HDF4 = use-hdf4-yes use-hdf4-no
+.PHONY: $(VALID_USE-HDF4)
+
+use-hdf4-yes: CONFIG_USE-HDF4-yes
+use-hdf4-no: CONFIG_USE-HDF4-no
+use-hdf4-%:
+	@printf "\n\tInvalid target: $@\n\n\tValid targets: [$(VALID_USE-HDF4)]\n\n"
+CONFIG_USE-HDF4-%: suggest-clean
+	@tmp=.config.temp; \
+        grep -v CONFIG_USE_HDF4 $(MAKE_CONFIG_OVERRIDE) > $${tmp}; \
+        mv $${tmp} $(MAKE_CONFIG_OVERRIDE); \
+        echo "CONFIG_USE_HDF4 = $*" >> $(MAKE_CONFIG_OVERRIDE); \
+	$(MAKE)  show-config | grep CONFIG_USE_HDF4:
+	@echo
+
+
+#-----------------------------------------------------------------------
 

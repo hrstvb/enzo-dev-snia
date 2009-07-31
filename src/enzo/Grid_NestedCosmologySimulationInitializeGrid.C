@@ -76,7 +76,7 @@ void icol(int *x, int n, int m, FILE *log_fptr);
  
 int GetUnits(float *DensityUnits, float *LengthUnits,
 	     float *TemperatureUnits, float *TimeUnits,
-	     float *VelocityUnits, float *MassUnits, FLOAT Time);
+	     float *VelocityUnits, double *MassUnits, FLOAT Time);
  
 int CommunicationBroadcastValue(int *Value, int BroadcastProcessor);
  
@@ -159,7 +159,7 @@ int grid::NestedCosmologySimulationInitializeGrid(
   float SubCellWidth[3];
  
   int enzo_layout[3];
-  int A,B,C,I,J,K,M;
+  int A,B,CC,I,J,K,M;
 
 //  MPI_Arg NOP,RNK;
 //  MPI_Arg mpi_layout[3];
@@ -476,7 +476,8 @@ int grid::NestedCosmologySimulationInitializeGrid(
   // Get the units so we can convert temperature later
  
   float DensityUnits=1, LengthUnits=1, TemperatureUnits=1, TimeUnits=1,
-    VelocityUnits=1, MassUnits=1;
+    VelocityUnits=1;
+  double MassUnits=1;
  
   if (GetUnits(&DensityUnits, &LengthUnits, &TemperatureUnits,
 	       &TimeUnits, &VelocityUnits, &MassUnits, 
@@ -853,14 +854,14 @@ int grid::NestedCosmologySimulationInitializeGrid(
  
       A = enzo_layout[0];
       B = enzo_layout[1];
-      C = enzo_layout[2];
+      CC = enzo_layout[2];
       I = nint( (GridLeftEdge[0]-SubDomainLeftEdge[0])/((SubDomainRightEdge[0]-SubDomainLeftEdge[0])/((float) A)));
       J = nint( (GridLeftEdge[1]-SubDomainLeftEdge[1])/((SubDomainRightEdge[1]-SubDomainLeftEdge[1])/((float) B)));
-      K = nint( (GridLeftEdge[2]-SubDomainLeftEdge[2])/((SubDomainRightEdge[2]-SubDomainLeftEdge[2])/((float) C)));
-//    M = ((I*B*C) + J*C) + K;
+      K = nint( (GridLeftEdge[2]-SubDomainLeftEdge[2])/((SubDomainRightEdge[2]-SubDomainLeftEdge[2])/((float) CC)));
+//    M = ((I*B*CC) + J*CC) + K;
       M = ((K*B*A) + J*A) + I;
  
-      if (io_log) fprintf(log_fptr, "ABC %"ISYM" %"ISYM" %"ISYM";  IJK %"ISYM" %"ISYM" %"ISYM";  M = %"ISYM"\n", A,B,C,I,J,K,M);
+      if (io_log) fprintf(log_fptr, "ABC %"ISYM" %"ISYM" %"ISYM";  IJK %"ISYM" %"ISYM" %"ISYM";  M = %"ISYM"\n", A,B,CC,I,J,K,M);
  
       sprintf(pid, "%"TASK_TAG_FORMAT""ISYM, M);
  
