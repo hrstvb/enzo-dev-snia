@@ -69,6 +69,7 @@ MACH_CXXFLAGS =
 MACH_FFLAGS   = -132
 MACH_F90FLAGS = 
 MACH_LDFLAGS  = -Wl
+MACH_SHARED_FLAGS = -fPIC
 #,-static 
 
 #-----------------------------------------------------------------------

@@ -47,8 +47,6 @@ MODULES  =
 
 SVN      = svn
 
-SHARED_OPT = -fPIC -shared
-
 #-----------------------------------------------------------------------
 # Make.config.settings is used for setting default values to all compile-time 
 # configuration settings.
@@ -104,6 +102,13 @@ include Make.config.objects
 #-----------------------------------------------------------------------
 
 all: $(EXE).exe
+
+# I believe this has to be done here, as it is target-specific.
+lib: CFLAGS   += $(MACH_SHARED_FLAGS)
+lib: CXXFLAGS += $(MACH_SHARED_FLAGS)
+lib: FFLAGS   += $(MACH_SHARED_FLAGS)
+lib: F90FLAGS += $(MACH_SHARED_FLAGS)
+lib: LDFLAGS  += $(MACH_SHARED_FLAGS)
 lib: lib$(EXE)_p$(ASSEMBLE_PARTICLE_NUMBER)_b$(ASSEMBLE_PRECISION_NUMBER).so
 
 #-----------------------------------------------------------------------
