@@ -14,6 +14,16 @@
 #endif
 #endif
 
+#ifdef ECUDA
+#ifdef LARGE_INTS
+// CUDA hates LARGE_INTS, and who can blame it?
+#error "Sorry, you need to be using 32 bit integers with CUDA because of #define int!"
+#endif // LARGE_INTS
+#ifdef CONFIG_BFLOAT_8
+#error "Sorry, you need to be using 32 bit precision with CUDA because of #define float!"
+#endif
+#endif
+
 #include "message.h"
 
 #ifdef CONFIG_THROW_ABORT
@@ -161,7 +171,7 @@ typedef int            HDF5_hid_t;
 #endif
 
 #ifdef LARGE_INTS
-#define int long_int
+#define int long_int // CUDA doesn't like this, and who can blame it?
 #define Eint long_int
 #define Eunsigned_int unsigned_long_int
 #define ISYM "lld"
@@ -176,6 +186,7 @@ typedef int            HDF5_hid_t;
 #ifdef CONFIG_BFLOAT_4
 #define Eflt float
 #define FSYM "f"
+#define ESYM "e"
 #define FloatDataType MPI_FLOAT
 #ifdef COMPACT_IO
 #define HDF5_REAL HDF5_R4
@@ -192,6 +203,7 @@ typedef int            HDF5_hid_t;
 #ifdef CONFIG_BFLOAT_8
 #define Eflt double
 #define FSYM "lf"
+#define ESYM "le"
 #define FloatDataType MPI_DOUBLE
 #define float32 TEMP_HOLD_NAME
 #define float double
@@ -279,6 +291,8 @@ typedef int            HDF5_hid_t;
 #define min(A,B) ((A) < (B) ? (A) : (B))
 #define sign(A)  ((A) >  0  ?  1  : -1 )
 #define POW(X,Y) pow((double) (X), (double) (Y))
+#define COS(X) cos((double) (X))
+#define SIN(X) sin((double) (X))
 
 /* Macros for grid indices (with and without ghost zones, and
    vertex-centered data) */
@@ -380,7 +394,7 @@ typedef int            HDF5_hid_t;
 
 /* Particle types (note: gas is a conceptual type) */
 
-#define NUM_PARTICLE_TYPES 8
+#define NUM_PARTICLE_TYPES 9
 
 #define PARTICLE_TYPE_GAS          0
 #define PARTICLE_TYPE_DARK_MATTER  1
@@ -390,6 +404,7 @@ typedef int            HDF5_hid_t;
 #define PARTICLE_TYPE_SINGLE_STAR  5
 #define PARTICLE_TYPE_BLACK_HOLE   6
 #define PARTICLE_TYPE_CLUSTER      7
+#define PARTICLE_TYPE_MBH          8
 
 /* Star particle handling */
 
@@ -400,6 +415,7 @@ typedef int            HDF5_hid_t;
 #define SINK_PARTICLE	4
 #define STAR_CLUSTER    5
 #define INSTANT_STAR    7
+#define SPRINGEL_HERNQUIST_STAR 8
 #define STARMAKE_METHOD(A) (StarParticleCreation >> (A) & 1)
 #define STARFEED_METHOD(A) (StarParticleFeedback >> (A) & 1)
 
@@ -413,6 +429,8 @@ typedef int            HDF5_hid_t;
 #define FORMATION 4
 #define STROEMGREN 5
 #define DEATH 6
+#define MBH_THERMAL 7
+#define MBH_RADIATIVE 8
 
 /* Sink particle accretion modes */
 

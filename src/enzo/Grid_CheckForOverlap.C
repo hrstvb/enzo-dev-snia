@@ -45,7 +45,6 @@ int grid::CheckForOverlap(grid *OtherGrid,
   int i, j, k;
   FLOAT EdgeOffset[MAX_DIMENSION] = {0,0,0};
  
-  //pgrintf("Entered CheckForOverLap \n");
   /* If the copy function is AddOverlappingParticleMassField, then
      apply to self, otherwise don't. */
  

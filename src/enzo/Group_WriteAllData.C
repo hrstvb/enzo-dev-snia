@@ -96,8 +96,6 @@ int Group_WriteAllData(char *basename, int filenumber,
 		 HierarchyEntry *TopGrid, TopGridData &MetaData,
 		 ExternalBoundary *Exterior, FLOAT WriteTime = -1)
 {
-
-
  
   char id[MAX_CYCLE_TAG_SIZE], *cptr, name[MAX_LINE_LENGTH];
   char dumpdirname[MAX_LINE_LENGTH];
@@ -166,7 +164,6 @@ int Group_WriteAllData(char *basename, int filenumber,
   local = 0;
   global = 0;
  
-
   if (MetaData.LocalDir != NULL)
   {
      local = 1;
@@ -196,6 +193,8 @@ int Group_WriteAllData(char *basename, int filenumber,
  
     sprintf(id, "%"CYCLE_TAG_FORMAT""ISYM, filenumber);
     sprintf(pid, "%"TASK_TAG_FORMAT""ISYM, MyProcessorNumber);
+
+    /******************** CYCLE / DT BASED OUTPUTS ********************/
  
     if ( (cptr = strstr(basename, MetaData.DataDumpName)) ) {
  
@@ -254,6 +253,8 @@ int Group_WriteAllData(char *basename, int filenumber,
       if (debug) fprintf(stderr, "DATA dump: %s\n", name);
  
     } // if DataDumpName
+
+    /******************** RESTART BASED OUTPUTS ********************/
  
     if ( (cptr = strstr(basename, MetaData.RedshiftDumpName)) ) {
  
@@ -313,6 +314,67 @@ int Group_WriteAllData(char *basename, int filenumber,
 	fprintf(stderr, "REDSHIFT dump: %s\n", name);
  
     } // if RedshiftDumpName
+
+    /******************** RESTART BASED OUTPUTS ********************/
+
+    if ( (cptr = strstr(basename, MetaData.RestartDumpName)) ) {
+ 
+      if (MetaData.RestartDumpDir != NULL)
+      {
+        if (MetaData.LocalDir != NULL) {
+          // Local fs
+          strcpy(dumpdirname, MetaData.LocalDir);
+          strcat(dumpdirname, "/");
+          strcat(dumpdirname, MetaData.RestartDumpDir);
+          strcat(dumpdirname, id);
+  
+          // Create once per node...
+#ifdef USE_NODE_LOCAL
+          strcat(dumpdirname, "/mpi");
+          strcat(dumpdirname, pid);
+#endif /* USE_NODE_LOCAL */
+ 
+          strcpy(name, dumpdirname);
+          strcat(name, "/");
+          strcat(name, basename);
+        } // if LocalDir
+ 
+        else
+ 
+        {
+          if (MetaData.GlobalDir != NULL) {
+            // Global fs
+            strcpy(dumpdirname, MetaData.GlobalDir);
+            strcat(dumpdirname, "/");
+            strcat(dumpdirname, MetaData.RestartDumpDir);
+            strcat(dumpdirname, id);
+            // Do mkdir on cpu 0 only
+            strcpy(name, dumpdirname);
+            strcat(name, "/");
+            strcat(name, basename);
+          } // if GlobalDir
+ 
+          else
+ 
+          {
+            // No local or global specified
+            strcpy(name, basename);
+          } // else GlobalDir
+ 
+        } // else LocalDir
+ 
+      } // if RedshiftDumpDir
+ 
+      else
+ 
+      {
+        strcpy(name, basename);
+      } // else RedshiftDumpDir
+
+      if (debug)
+	fprintf(stderr, "RESTART dump: %s\n", name);
+ 
+    } // if RestartDumpName
  
     if (filenumber >= 0)
       strcat(name, id);
@@ -323,31 +385,25 @@ int Group_WriteAllData(char *basename, int filenumber,
   strcpy(groupfilename, name);
   strcat(groupfilename, CPUSuffix);
   strcat(groupfilename, pid);
-  
  
-
   if (debug)
     fprintf(stderr, "WriteAllData: writing group file %s\n", groupfilename);
  
-
-
 //  Synchronization point for directory creation
  
 #ifdef USE_MPI
-  iot1a = MPI_Wtime(); 
+  iot1a = MPI_Wtime();
   CommunicationBarrier();
   dc_start = MPI_Wtime();
-  iot1b = MPI_Wtime();  
+  iot1b = MPI_Wtime();
 #endif /* USE_MPI */
-
-
  
 //  Get cwd
 //  Generate command
 //  Execute system call
  
     if ( local )
-    { 
+    {
 
       MPI_Arg mpi_size;
       MPI_Arg mpi_rank;
@@ -382,7 +438,7 @@ int Group_WriteAllData(char *basename, int filenumber,
               if (debug) fprintf(stderr, "DATA dump: %s == %"ISYM"\n", unixcommand, unixresult);
 #endif
             }
-          }
+          } // ENDIF datadump
  
           if ( (cptr = strstr(basename, MetaData.RedshiftDumpName)) ) {
             if (MetaData.RedshiftDumpDir != NULL) {
@@ -395,15 +451,29 @@ int Group_WriteAllData(char *basename, int filenumber,
               fprintf(stderr, "REDSHIFT dump: %s == %"ISYM"\n", unixcommand, unixresult);
 #endif
             }
-          }
-        }
-      }
-    }
+          } // ENDIF redshift
+
+          if ( (cptr = strstr(basename, MetaData.RestartDumpName)) ) {
+            if (MetaData.RestartDumpDir != NULL) {
+#ifdef SYSCALL
+              unixresult = SysMkdir("", dumpdirname);
+              fprintf(stderr, "RESTART dump: dumpdirname=(%s) == unixresult=%"ISYM"\n", dumpdirname, unixresult);
+#else
+              strcat(strcpy(unixcommand, "mkdir -p "), dumpdirname);
+              unixresult = system(unixcommand);
+              fprintf(stderr, "RESTART dump: %s == %"ISYM"\n", unixcommand, unixresult);
+#endif
+            }
+          } // ENDIF restart
+
+        } // ENDIF pe == ii
+      } // ENDFOR ii
+    } // ENDIF local
  
     if ( global )
     {
       if ( MyProcessorNumber == ROOT_PROCESSOR )
-      { 
+      {
  
         if ( (cptr = strstr(basename, MetaData.DataDumpName)) ) {
           if (MetaData.DataDumpDir != NULL) {
@@ -416,7 +486,7 @@ int Group_WriteAllData(char *basename, int filenumber,
             if (debug) fprintf(stderr, "DATA dump: %s == %"ISYM"\n", unixcommand, unixresult);
 #endif
           }
-        }
+        } // ENDIF datadump
  
         if ( (cptr = strstr(basename, MetaData.RedshiftDumpName)) ) {
           if (MetaData.RedshiftDumpDir != NULL) {
@@ -429,7 +499,20 @@ int Group_WriteAllData(char *basename, int filenumber,
             fprintf(stderr, "REDSHIFT dump: %s == %"ISYM"\n", unixcommand, unixresult);
 #endif
           }
-        }
+        } // ENDIF redshift
+
+        if ( (cptr = strstr(basename, MetaData.RestartDumpName)) ) {
+          if (MetaData.RestartDumpDir != NULL) {
+#ifdef SYSCALL
+            unixresult = SysMkdir("", dumpdirname);
+            fprintf(stderr, "RESTART dump: dumpdirname=(%s) == unixresult=%"ISYM"\n", dumpdirname, unixresult);
+#else
+            strcat(strcpy(unixcommand, "mkdir -p "), dumpdirname);
+            unixresult = system(unixcommand);
+            fprintf(stderr, "RESTART dump: %s == %"ISYM"\n", unixcommand, unixresult);
+#endif
+          }
+        } // ENDIF restart
  
       }
     }
@@ -491,10 +574,8 @@ int Group_WriteAllData(char *basename, int filenumber,
     if (WriteTime >= 0)
       fprintf(fptr, "# WARNING! Interpolated output: level = %"ISYM"\n",
 	      MetaData.OutputFirstTimeAtLevel-1);
-    if (WriteParameterFile(fptr, MetaData) == FAIL) {
-      fprintf(stderr, "Error in WriteParameterFile\n");
-      ENZO_FAIL("");
-    }
+    if (WriteParameterFile(fptr, MetaData) == FAIL)
+      ENZO_FAIL("Error in WriteParameterFile");
     fclose(fptr);
   
   }
@@ -510,10 +591,8 @@ int Group_WriteAllData(char *basename, int filenumber,
     }
     strcat(MetaData.BoundaryConditionName, hdfsuffix);
     if (Exterior->WriteExternalBoundary(fptr, MetaData.BoundaryConditionName)
-	== FAIL) {
-      fprintf(stderr, "Error in WriteExternalBoundary\n");
-      ENZO_FAIL("");
-    }
+	== FAIL)
+      ENZO_FAIL("Error in WriteExternalBoundary");
     fclose(fptr);
  
   }
@@ -551,10 +630,8 @@ int Group_WriteAllData(char *basename, int filenumber,
       ENZO_FAIL("");
     }
  
-  if (Group_WriteDataHierarchy(fptr, MetaData, TempTopGrid, gridbasename, GridID, WriteTime, file_id) == FAIL) {
-    fprintf(stderr, "Error in Group_WriteDataHierarchy\n");
-    ENZO_FAIL("");
-  }
+  if (Group_WriteDataHierarchy(fptr, MetaData, TempTopGrid, gridbasename, GridID, WriteTime, file_id) == FAIL)
+    ENZO_FAIL("Error in Group_WriteDataHierarchy");
 
   // At this point all the grid data has been written
 
@@ -575,17 +652,16 @@ int Group_WriteAllData(char *basename, int filenumber,
       ENZO_FAIL("");
     }
 
-  if (WriteMemoryMap(mptr, TempTopGrid, gridbasename, GridKD, WriteTime) == FAIL) {
-    fprintf(stderr, "Error in WriteMemoryMap\n");
-    ENZO_FAIL("");
-  }
+  if (WriteMemoryMap(mptr, TempTopGrid, gridbasename, GridKD, WriteTime) == FAIL)
+    ENZO_FAIL("Error in WriteMemoryMap");
 
   // Output configure
 
   if (MyProcessorNumber == ROOT_PROCESSOR) {
     if ((optr = fopen(configurename, "w")) == NULL) {
       fprintf(stderr, "Error opening configure file %s\n", configurename);
-      ENZO_FAIL("");
+      fprintf(stderr, "Not crucial but worrysome. Will continue.\n" );
+      //      ENZO_FAIL("");
     }
 
     WriteConfigure(optr);
@@ -600,10 +676,8 @@ int Group_WriteAllData(char *basename, int filenumber,
     ENZO_FAIL("");
   }
 
-  if (WriteTaskMap(tptr, TempTopGrid, gridbasename, GridLD, WriteTime) == FAIL) {
-    fprintf(stderr, "Error in WriteTaskMap\n");
-    ENZO_FAIL("");
-  }
+  if (WriteTaskMap(tptr, TempTopGrid, gridbasename, GridLD, WriteTime) == FAIL)
+    ENZO_FAIL("Error in WriteTaskMap");
  
   int TGdims[3];
  
@@ -613,12 +687,9 @@ int Group_WriteAllData(char *basename, int filenumber,
  
   //  fprintf(stderr, "TGdims  %"ISYM"  %"ISYM"  %"ISYM"\n", TGdims[0], TGdims[1], TGdims[2]);
  
-  if (CubeDumpEnabled == 1) {
-    if (WriteDataCubes(TempTopGrid, TGdims, name, GridJD, WriteTime) == FAIL) {
-      fprintf(stderr, "Error in WriteDataCubes\n");
-      ENZO_FAIL("");
-    }
-  }
+  if (CubeDumpEnabled == 1)
+    if (WriteDataCubes(TempTopGrid, TGdims, name, GridJD, WriteTime) == FAIL)
+      ENZO_FAIL("Error in WriteDataCubes");
  
   // Clean up combined top level grid, and first two levels of hierarchy
  
@@ -631,10 +702,8 @@ int Group_WriteAllData(char *basename, int filenumber,
  
   // Output StarParticle data (actually just number of stars)
  
-  if (WriteStarParticleData(fptr) == FAIL) {
-    fprintf(stderr, "Error in WriteStarParticleData\n");
-    ENZO_FAIL("");
-  }
+  if (WriteStarParticleData(fptr) == FAIL)
+    ENZO_FAIL("Error in WriteStarParticleData");
  
   // Create radiation name and write radiation data
  
@@ -650,10 +719,8 @@ int Group_WriteAllData(char *basename, int filenumber,
       fprintf(stderr, "Error opening radiation file %s\n", radiationname);
       ENZO_FAIL("");
     }
-    if (WriteRadiationData(Radfptr) == FAIL) {
-      fprintf(stderr, "Error in WriteRadiationData\n");
-      ENZO_FAIL("");
-    }
+    if (WriteRadiationData(Radfptr) == FAIL)
+      ENZO_FAIL("Error in WriteRadiationData");
  
     fclose(Radfptr);
  
@@ -732,8 +799,6 @@ void DeleteGridHierarchy(HierarchyEntry *GridEntry)
  
   delete GridEntry;
  
-
-  printf("Exit WriteAllData \n");
   return;
 }
 */
