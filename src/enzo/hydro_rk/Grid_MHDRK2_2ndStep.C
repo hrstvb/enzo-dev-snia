@@ -22,7 +22,9 @@
 
 
 double ReturnWallTime();
-
+int MHDTimeUpdate_CUDA(float **Prim, int GridDimension[], 
+			int GridStartIndex[], int GridEndIndex[], int GridRank,
+		        float dtdx, float dt, float C_h, float C_p);
 
 int grid::MHDRK2_2ndStep(int CycleNumber, fluxes *SubgridFluxes[], 
 			      int NumberOfSubgrids, int level,
@@ -41,69 +43,84 @@ int grid::MHDRK2_2ndStep(int CycleNumber, fluxes *SubgridFluxes[],
     return SUCCESS;
   }
 
-  int DensNum, GENum, TENum, Vel1Num, Vel2Num, Vel3Num, 
-    B1Num, B2Num, B3Num, PhiNum, HMNum, H2INum, H2IINum;
-  if (this->IdentifyPhysicalQuantities(DensNum, GENum, Vel1Num, Vel2Num, 
-				       Vel3Num, TENum, B1Num, B2Num, B3Num, PhiNum) == FAIL) {
-    fprintf(stderr, "Error in IdentifyPhysicalQuantities.\n");
-    return FAIL;
-  }
-
   double time1 = ReturnWallTime();
 
   float *dU[NEQ_MHD+NSpecies+NColor];
   float *Prim[NEQ_MHD+NSpecies+NColor];
 
   int size = 1;
-  for (int dim = 0; dim < GridRank; dim++) {
+  for (int dim = 0; dim < GridRank; dim++)
     size *= GridDimension[dim];
-  }
   
   int activesize = 1;
-  for (int dim = 0; dim < GridRank; dim++) {
+  for (int dim = 0; dim < GridRank; dim++)
     activesize *= (GridDimension[dim] - 2*DEFAULT_GHOST_ZONES);
-  }
 
+  for (int field = 0; field < NEQ_MHD+NSpecies+NColor; field++)
+    dU[field] = new float[activesize];
+
+  if (StellarWindFeedback)
+    this->ReduceWindBoundary();
+
+  this->ReturnHydroRKPointers(Prim);
+
+#ifdef ECUDA
+  if (UseCUDA == 1) {
+    FLOAT dtdx = dtFixed/CellWidth[0][0];
+    double time3 = ReturnWallTime();
+    if (MHDTimeUpdate_CUDA(Prim, GridDimension, GridStartIndex, GridEndIndex, GridRank,
+			    dtdx, dtFixed, C_h, C_p) == FAIL) {
+      printf("RK2: MHDTimeUpdate_CUDA failed.\n");
+      return FAIL;
+    }
+    
+    double time2 = ReturnWallTime();
+
+    for (int field = ivx; field <= ietot; field++) {
+      for (int k = GridStartIndex[2]; k <= GridEndIndex[2]; k++) {
+	for (int j = GridStartIndex[1]; j <= GridEndIndex[1]; j++) {
+	  for (int i = GridStartIndex[0]; i <= GridEndIndex[0]; i++) {
+	    int igrid =i + (j + k*GridDimension[1])*GridDimension[0];
+	    BaryonField[field][igrid] *= BaryonField[iden][igrid];
+	    OldBaryonField[field][igrid] *= OldBaryonField[iden][igrid];
+	  }
+	}
+      }
+    }
+
+    for (int field = 0; field < NEQ_MHD; field++) {
+      for (int k = GridStartIndex[2]; k <= GridEndIndex[2]; k++) {
+	for (int j = GridStartIndex[1]; j <= GridEndIndex[1]; j++) {
+	  for (int i = GridStartIndex[0]; i <= GridEndIndex[0]; i++) {
+	    int igrid =i + (j + k*GridDimension[1])*GridDimension[0];
+	    BaryonField[field][igrid] = 0.5*(OldBaryonField[field][igrid] + BaryonField[field][igrid]);
+	  }
+	}
+      }
+    }
+
+    for (int field = ivx; field <= ietot; field++) {
+      for (int k = GridStartIndex[2]; k <= GridEndIndex[2]; k++) {
+	for (int j = GridStartIndex[1]; j <= GridEndIndex[1]; j++) {
+	  for (int i = GridStartIndex[0]; i <= GridEndIndex[0]; i++) {
+	    int igrid = i + (j + k*GridDimension[1])*GridDimension[0];
+	    BaryonField[field][igrid] /= BaryonField[iden][igrid];
+	    OldBaryonField[field][igrid] /= OldBaryonField[iden][igrid];
+	  }
+	}
+      }
+    }
+
+    return SUCCESS;
+
+  } // if (UseCUDA)
+#endif // ifdef ECUDA
+
+  /* Compute dU */
 
   for (int field = 0; field < NEQ_MHD+NSpecies+NColor; field++) {
     dU[field] = new float[activesize];
   }
-
-  if (StellarWindFeedback) {
-    this->ReduceWindBoundary();
-  }
-
-  Prim[iden ] = BaryonField[DensNum];
-  Prim[ivx  ] = BaryonField[Vel1Num];
-  Prim[ivy  ] = BaryonField[Vel2Num];
-  Prim[ivz  ] = BaryonField[Vel3Num];
-  Prim[ietot] = BaryonField[TENum];
-  if (DualEnergyFormalism) {
-    Prim[ieint] = BaryonField[GENum];
-  }
-
-  Prim[iBx  ] = BaryonField[B1Num];
-  Prim[iBy  ] = BaryonField[B2Num];
-  Prim[iBz  ] = BaryonField[B3Num];
-  Prim[iPhi ] = BaryonField[PhiNum];
-
-  /* Copy species field */
-
-  for (int ns = NEQ_MHD; ns < NEQ_MHD+NSpecies; ns++) {
-    /* change species from density to mass fraction */
-    for (int n = 0; n < size; n++) {
-      BaryonField[ns][n] /= BaryonField[iden][n];
-    }
-    Prim[ns] = BaryonField[ns];
-  }
-
-  /* Copy color field */
-
-  for (int nc = NEQ_MHD+NSpecies; nc < NEQ_MHD+NSpecies+NColor; nc++) {
-    Prim[nc] = BaryonField[nc];
-  }
-
-  /* Compute dU */
 
   int fallback = 0;
   if (this->MHD3D(Prim, dU, dtFixed, SubgridFluxes, NumberOfSubgrids, 
