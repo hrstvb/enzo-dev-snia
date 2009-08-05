@@ -27,6 +27,11 @@
 int StarParticleAccretion(Star *&AllStars)
 {
 
+#define SEDOV_TEST
+#ifdef SEDOV_TEST
+  return SUCCESS;
+#endif
+
   Star *ThisStar;
 
   /* Add accreted mass to star particles */
