@@ -44,7 +44,7 @@
 
 #define MAX_NUMBER_OF_SUBGRIDS               __max_subgrids
 
-#define MAX_DEPTH_OF_HIERARCHY             40
+#define MAX_DEPTH_OF_HIERARCHY             50
 
 #define MAX_LINE_LENGTH                   512
 
@@ -107,6 +107,12 @@
 
 #if defined(SPP) || defined(SP2) || defined(BGL)
 #define FORTRAN_NAME(NAME) NAME
+#endif
+
+#ifdef CONFIG_PFLOAT_16
+#define PFORTRAN_NAME(NAME) NAME##_c
+#else
+#define PFORTRAN_NAME(NAME) FORTRAN_NAME(NAME)
 #endif
 
 /* Precision-related definitions. */
@@ -226,6 +232,7 @@ typedef int            HDF5_hid_t;
 
 #ifdef CONFIG_PFLOAT_4
 #define FLOAT Eflt32
+#define PEXP expf
 #define PSYM "f"
 #define GSYM "g"
 #define GOUTSYM ".8g"
@@ -237,6 +244,7 @@ typedef int            HDF5_hid_t;
 
 #ifdef CONFIG_PFLOAT_8
 #define FLOAT double
+#define PEXP exp
 #define PSYM "lf"
 #define GSYM "g"
 #define GOUTSYM ".14g"
@@ -251,6 +259,7 @@ typedef int            HDF5_hid_t;
 
 #ifdef CONFIG_PFLOAT_16
 #define FLOAT long_double
+#define PEXP expl
 #define PSYM "Lf"
 #define GSYM "g"
 #define GOUTSYM ".21Lg"
@@ -409,6 +418,7 @@ typedef int            HDF5_hid_t;
 #define PARTICLE_TYPE_BLACK_HOLE   6
 #define PARTICLE_TYPE_CLUSTER      7
 #define PARTICLE_TYPE_MBH          8
+#define PARTICLE_TYPE_COLOR_STAR   9
 
 /* Star particle handling */
 
@@ -421,6 +431,7 @@ typedef int            HDF5_hid_t;
 #define INSTANT_STAR    7
 #define SPRINGEL_HERNQUIST_STAR 8
 #define MBH_PARTICLE    9
+#define COLORED_POP3_STAR  10
 #define STARMAKE_METHOD(A) (StarParticleCreation >> (A) & 1)
 #define STARFEED_METHOD(A) (StarParticleFeedback >> (A) & 1)
 
@@ -435,6 +446,8 @@ typedef int            HDF5_hid_t;
 #define STROEMGREN 5
 #define DEATH 6
 #define MBH_THERMAL 7
+#define MBH_RADIATIVE 8
+#define COLOR_FIELD 9
 
 /* Sink particle accretion modes */
 
