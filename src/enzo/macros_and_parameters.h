@@ -44,7 +44,7 @@
 
 #define MAX_NUMBER_OF_SUBGRIDS               __max_subgrids
 
-#define MAX_DEPTH_OF_HIERARCHY             40
+#define MAX_DEPTH_OF_HIERARCHY             50
 
 #define MAX_LINE_LENGTH                   512
 
@@ -107,6 +107,12 @@
 
 #if defined(SPP) || defined(SP2) || defined(BGL)
 #define FORTRAN_NAME(NAME) NAME
+#endif
+
+#ifdef CONFIG_PFLOAT_16
+#define PFORTRAN_NAME(NAME) NAME##_c
+#else
+#define PFORTRAN_NAME(NAME) FORTRAN_NAME(NAME)
 #endif
 
 /* Precision-related definitions. */
