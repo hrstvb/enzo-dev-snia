@@ -460,6 +460,7 @@ EXTERN FLOAT TracerParticleCreationLeftEdge[MAX_DIMENSION];
 EXTERN FLOAT TracerParticleCreationRightEdge[MAX_DIMENSION];
 
 EXTERN int   ParticleTypeInFile;
+EXTERN int   OutputParticleTypeGrouping;
 
 EXTERN int   ExternalBoundaryIO;
 EXTERN int   ExternalBoundaryTypeIO;
@@ -693,5 +694,8 @@ EXTERN int ShearingOtherDirection;
 EXTERN int useMHD;
 EXTERN FLOAT TopGridDx[MAX_DIMENSION];
 EXTERN int ShearingBoxProblemType; // 0 = advecting sphere; 1 = shearing box; 2 = vortex wave ; 3 = stratified
+
+EXTERN float IsothermalSoundSpeed;
+EXTERN int RefineByJeansLengthUnits;
 
 #endif

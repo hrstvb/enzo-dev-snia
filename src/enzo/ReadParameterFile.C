@@ -105,6 +105,8 @@ int ReadParameterFile(FILE *fptr, TopGridData &MetaData, float *Initialdt)
  
     ret += sscanf(line, "TracerParticleOn  = %"ISYM, &TracerParticleOn);
     ret += sscanf(line, "ParticleTypeInFile = %"ISYM, &ParticleTypeInFile);
+    ret += sscanf(line, "OutputParticleTypeGrouping = %"ISYM,
+                        &OutputParticleTypeGrouping);
     ret += sscanf(line, "TimeLastTracerParticleDump = %"PSYM,
                   &MetaData.TimeLastTracerParticleDump);
     ret += sscanf(line, "dtTracerParticleDump       = %"PSYM,
@@ -668,9 +670,9 @@ int ReadParameterFile(FILE *fptr, TopGridData &MetaData, float *Initialdt)
 
 
     /* Sink particles (for present day star formation) & winds */
-    ret += sscanf(line, "SinkMergeDistance = %lf", &SinkMergeDistance);
-    ret += sscanf(line, "SinkMergeMass        = %"FSYM, &SinkMergeMass);
-    ret += sscanf(line, "StellarWindFeedback  = %"ISYM, &StellarWindFeedback);
+    ret += sscanf(line, "SinkMergeDistance     = %"FSYM, &SinkMergeDistance);
+    ret += sscanf(line, "SinkMergeMass         = %"FSYM, &SinkMergeMass);
+    ret += sscanf(line, "StellarWindFeedback   = %"ISYM, &StellarWindFeedback);
     ret += sscanf(line, "StellarWindTurnOnMass = %"FSYM, &StellarWindTurnOnMass);
 
     //    ret += sscanf(line, "VelAnyl = %"ISYM, &VelAnyl);
@@ -780,7 +782,7 @@ int ReadParameterFile(FILE *fptr, TopGridData &MetaData, float *Initialdt)
   delete [] dummy;
   rewind(fptr);
 
-  OutputTemperature = ((ProblemType == 7) || (ProblemType == 11));
+  //  OutputTemperature = ((ProblemType == 7) || (ProblemType == 11));
  
   /* If we have turned on Comoving coordinates, read cosmology parameters. */
  
@@ -820,7 +822,9 @@ int ReadParameterFile(FILE *fptr, TopGridData &MetaData, float *Initialdt)
   StarMakerOverDensityThreshold /= DensityUnits;
   //  StarEnergyFeedbackRate = StarEnergyFeedbackRate/pow(LengthUnits,2)*pow(TimeUnits,3);
 
-  SinkMergeDistance /= LengthUnits;
+  if (SinkMergeDistance > 1.0)
+    SinkMergeDistance /= LengthUnits;
+  //printf(" \n SinkMergeDistance = %"FSYM"\n \n", SinkMergeDistance);
   SmallRho /= DensityUnits;
   SmallP /= PressureUnits;
   SmallT /= TemperatureUnits;
@@ -948,6 +952,9 @@ int ReadParameterFile(FILE *fptr, TopGridData &MetaData, float *Initialdt)
   if (MaximumGravityRefinementLevel == INT_UNDEFINED)
     MaximumGravityRefinementLevel = MaximumRefinementLevel;
 #endif
+
+    ret += sscanf(line, "IsothermalSoundSpeed = %"GSYM, &IsothermalSoundSpeed);
+    ret += sscanf(line, "RefineByJeansLengthUnits = %"ISYM, &RefineByJeansLengthUnits);
  
   MaximumGravityRefinementLevel =
     min(MaximumGravityRefinementLevel, MaximumRefinementLevel);
@@ -975,6 +982,12 @@ int ReadParameterFile(FILE *fptr, TopGridData &MetaData, float *Initialdt)
 //  PPMDiffusion causes an out-of-bounds condition as currently written
 //  The following is an over-ride to force PPMDiffusion OFF. This has
 //  been fixed in this latest version (AK).
+
+//  NOTE: The fix keeps the code from crashing, but is not a proper 
+//  implementation of PPM diffusion.  The reason why is that Enzo typically
+//  uses 3 ghost zones, and the correct PPM diffusion implementation requires
+//  4 parameters.  SO, you should not use this parameter for, e.g., cosmology
+//  runs unless you know what you're doing.  (BWO)
 
   if (MetaData.PPMDiffusionParameter != 0 && ProblemType != 60 // Turbulence
                                           && ProblemType != 4  // Double Mach Reflection test
@@ -1038,13 +1051,18 @@ int ReadParameterFile(FILE *fptr, TopGridData &MetaData, float *Initialdt)
      must be turned on. */
 
   int method;
-  bool MustRefineParticles = false;
-  for (method = 0; method < MAX_FLAGGING_METHODS; method++)
+  bool TurnOnParticleMassRefinement = false;
+  for (method = 0; method < MAX_FLAGGING_METHODS; method++) 
     if (CellFlaggingMethod[method] == 8) {
-      MustRefineParticles = true;
+      TurnOnParticleMassRefinement = true;
       break;
     }
-  if (MustRefineParticles) {
+  for (method = 0; method < MAX_FLAGGING_METHODS; method++) 
+    if (CellFlaggingMethod[method] == 4) {
+      TurnOnParticleMassRefinement = false;
+      break;
+    }
+  if (TurnOnParticleMassRefinement) {
     method = 0;
     while (CellFlaggingMethod[method] != INT_UNDEFINED)
       method++;
@@ -1054,8 +1072,13 @@ int ReadParameterFile(FILE *fptr, TopGridData &MetaData, float *Initialdt)
   if (TracerParticleOn) {
     ParticleTypeInFile = TRUE;
   }
+
+  if (OutputParticleTypeGrouping && (!ParticleTypeInFile)) {
+    OutputParticleTypeGrouping = FALSE;
+  }
  
-  if (WritePotential && ComovingCoordinates && SelfGravity) {
+  //  if (WritePotential && ComovingCoordinates && SelfGravity) {
+  if (WritePotential && SelfGravity) {
     CopyGravPotential = TRUE;
   }
 
