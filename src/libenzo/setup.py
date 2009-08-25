@@ -1,7 +1,13 @@
 # setup.py
 
-from distutils.core import setup, Extension
-from Cython.Distutils import build_ext
+#from distutils.core import setup, Extension
+#from Cython.Distutils import build_ext
+from mpidistutils import setup
+from mpidistutils import Distribution, Extension, Executable
+from mpidistutils import config, build, install, clean
+from mpidistutils import build_ext, build_exe
+from mpidistutils import install_data, install_exe
+
 import os, sys
 
 import numpy
@@ -35,7 +41,7 @@ H5dir = check_for_hdf5()
 setup(name="enzo",
       cmdclass = {'build_ext': build_ext},
       ext_modules=[Extension("enzo_wrap",
-                     ["enzo_wrap.pyx"],
+                     ["enzo_wrap.cpp"],
                      include_dirs=["/usr/include/", "../enzo/", numpy_include, 
                                    os.path.join(H5dir,"include")],
                      language="c++",

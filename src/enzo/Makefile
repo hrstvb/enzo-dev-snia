@@ -88,6 +88,8 @@ include Make.config.assemble
 # Make.mach.<machine-name> defines all machine-dependent settings.
 #-----------------------------------------------------------------------
 
+MACH_SHARED_EXT=so
+
 -include $(ENZO_DIR)/Make.mach.$(CONFIG_MACHINE)
 -include $(HOME)/.enzo/Make.mach.$(CONFIG_MACHINE)
 
@@ -104,12 +106,12 @@ include Make.config.objects
 all: $(EXE).exe
 
 # I believe this has to be done here, as it is target-specific.
-lib: CFLAGS   += $(MACH_SHARED_FLAGS)
-lib: CXXFLAGS += $(MACH_SHARED_FLAGS)
+lib: CFLAGS   += $(MACH_SHARED_FLAGS) 
+lib: CXXFLAGS += $(MACH_SHARED_FLAGS) -DSHARED_LIBRARY
 lib: FFLAGS   += $(MACH_SHARED_FLAGS)
 lib: F90FLAGS += $(MACH_SHARED_FLAGS)
 lib: LDFLAGS  += $(MACH_SHARED_FLAGS)
-lib: lib$(EXE)_p$(ASSEMBLE_PARTICLE_NUMBER)_b$(ASSEMBLE_PRECISION_NUMBER).so
+lib: lib$(EXE)_p$(ASSEMBLE_PARTICLE_NUMBER)_b$(ASSEMBLE_PRECISION_NUMBER).$(MACH_SHARED_EXT)
 
 #-----------------------------------------------------------------------
 # MAIN AN EXECUTABLE
@@ -129,7 +131,7 @@ lib: lib$(EXE)_p$(ASSEMBLE_PARTICLE_NUMBER)_b$(ASSEMBLE_PRECISION_NUMBER).so
 	   echo "Failed! See $(OUTPUT) for error messages"; \
 	fi)
 
-lib%.so: $(MODULES) autogen dep enzo.o $(OBJS_LIB)
+lib%.$(MACH_SHARED_EXT): $(MODULES) autogen dep enzo.o $(OBJS_LIB)
 	@rm -f $@
 	@echo "Linking"
 	-@$(LD) $(LDFLAGS) $(SHARED_OPT) -o $@ enzo.o $(OBJS_LIB) $(LIBS) >& $(OUTPUT)

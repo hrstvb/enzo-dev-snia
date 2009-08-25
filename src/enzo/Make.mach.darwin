@@ -31,7 +31,7 @@ MACH_FILE  = Make.mach.darwin
 LOCAL_PACKAGES       = /sw
 
 LOCAL_MPI_INSTALL    = /usr/local
-LOCAL_FC_INSTALL     = /sw/lib/gcc4.4
+LOCAL_FC_INSTALL     = /usr/local
 LOCAL_HDF5_INSTALL   = /opt/local
 LOCAL_SZIP_INSTALL   = $(LOCAL_PACKAGES)
 LOCAL_HYPRE_INSTALL  = $(HOME)
@@ -47,10 +47,10 @@ MACH_CPP       = /usr/bin/cpp
 # With MPI
 
 MACH_CC_MPI    = mpicc
-MACH_CXX_MPI   = mpic++
+MACH_CXX_MPI   = mpicxx
 MACH_FC_MPI    = gfortran
 MACH_F90_MPI   = gfortran
-MACH_LD_MPI    = mpic++
+MACH_LD_MPI    = mpicxx
 
 # Without MPI
 
@@ -76,9 +76,9 @@ MACH_DEFINES   = -DLINUX -DH5_USE_16_API -DOPTIMIZED_CTP
 
 MACH_CPPFLAGS = -P -traditional 
 MACH_CFLAGS   = 
-MACH_CXXFLAGS =
-MACH_FFLAGS   = -fno-second-underscore -ffixed-line-length-132
-MACH_F90FLAGS = -fno-second-underscore
+MACH_CXXFLAGS = 
+MACH_FFLAGS   = -fno-second-underscore -ffixed-line-length-132 
+MACH_F90FLAGS = -fno-second-underscore 
 MACH_LDFLAGS  = 
 
 #-----------------------------------------------------------------------
@@ -130,4 +130,6 @@ MACH_LIBS_MPI    = $(LOCAL_LIBS_MPI)
 MACH_LIBS_HYPRE  = $(LOCAL_LIBS_HYPRE)
 MACH_LIBS_JBPERF = $(LOCAL_LIBS_JBPERF)
 MACH_LIBS_PAPI    = $(LOCAL_LIBS_PAPI)
+MACH_SHARED_FLAGS = -dynamiclib -Wl,-headerpad_max_install_names,-undefined,dynamic_lookup
+MACH_SHARED_EXT   = dylib
 
