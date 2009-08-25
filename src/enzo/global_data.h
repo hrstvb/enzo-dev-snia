@@ -176,8 +176,8 @@ EXTERN char *DataUnits[MAX_NUMBER_OF_BARYON_FIELDS];
 
 /* Region in which refinement is allowed (in problem space). */
 
-EXTERN FLOAT RefineRegionLeftEdge[MAX_DIMENSION], 
-             RefineRegionRightEdge[MAX_DIMENSION];
+EXTERN FLOAT RefineRegionLeftEdge[MAX_DIMENSION];
+EXTERN FLOAT RefineRegionRightEdge[MAX_DIMENSION];
 EXTERN int RefineRegionAutoAdjust;
 
 /* Uniform gravity: on/off flag, direction, and strength. */
