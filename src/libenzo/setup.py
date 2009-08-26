@@ -154,7 +154,7 @@ def parse_global_data():
                 output.write(var_setter % dict(var=var))
     output.write(output_footer)
 
-parse_global_data()
+#parse_global_data()
 
 def check_for_hdf5():
     if "HDF5_DIR" in os.environ:
