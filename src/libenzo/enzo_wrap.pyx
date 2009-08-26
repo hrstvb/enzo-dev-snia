@@ -18,8 +18,8 @@ cdef extern from "../enzo/macros_and_parameters.h":
 cdef extern from "../enzo/typedefs.h":
     pass
 
-cdef extern from "../enzo/global_data.h":
-    pass
+include "enzo_globals.pxi"
+global_data = _global_data()
 
 cdef extern from "../enzo/Fluxes.h":
     pass
@@ -55,7 +55,15 @@ cdef extern from "../enzo/Hierarchy.h":
     pass
 
 cdef extern from "../enzo/TopGridData.h":
-    pass
+    struct c_TopGridData "TopGridData":
+        pass
+
+cdef class TopGridData:
+    cdef c_TopGridData thisptr
+    def __cinit__(self):
+        pass
+    def __dealloc__(self):
+        pass
 
 cdef extern from "../enzo/LevelHierarchy.h":
     pass
@@ -70,6 +78,7 @@ ctypedef int Eint32
 
 cdef extern from "../enzo/function_declarations.h":
     Eint32 c_enzo_main "enzo_main" (Eint32 argc, char **argv) except +
+    int c_SetDefaultGlobalValues "SetDefaultGlobalValues" (c_TopGridData MetaData)
 
 def run_enzo_main(args):
     cdef int argc = len(args)
@@ -77,6 +86,17 @@ def run_enzo_main(args):
     for i in range(argc):
         argv[i] = <char *>args[i]
     c_enzo_main(argc, argv)
+
+def SetDefaultGlobalValues(TopGridData MetaData):
+    return c_SetDefaultGlobalValues(MetaData.thisptr)
+
+def inquire_debug():
+    global debug
+    return debug
+
+def inquire_LoadBalancing():
+    global LoadBalancing
+    return LoadBalancing
 
 cdef extern from "fix_enzo_defs.h":
     pass
