@@ -168,6 +168,13 @@ def check_for_hdf5():
 
 H5dir = check_for_hdf5()
 
+for i,j in define_macros:
+    if i.startswith("CONFIG_BFLOAT_"):
+        bfloat = i[-1]
+    if i.startswith("CONFIG_PFLOAT_"):
+        pfloat = i[-1]
+
+print "Linking against %s-%s" % (pfloat, bfloat)
 setup(name="enzo",
       cmdclass = {'build_ext': build_ext},
       ext_modules=[Extension("enzo_wrap",
@@ -175,7 +182,7 @@ setup(name="enzo",
                      include_dirs=["/usr/include/", "../enzo/", numpy_include, 
                                    os.path.join(H5dir,"include")],
                      language="c++",
-                     libraries=['enzo_p8_b8','hdf5'],
+                     libraries=['enzo_p%s_b%s' % (pfloat, bfloat),'hdf5'],
                      library_dirs=["../enzo/",
                                    os.path.join(H5dir,"lib")],
                      define_macros=define_macros
