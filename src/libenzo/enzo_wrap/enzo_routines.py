@@ -1,6 +1,6 @@
 from mpi4py import MPI
-import enzo_wrap as ew
-gd = ew.global_data
+import enzo_module as em
+gd = em.global_data
 
 class constants:
     shared_state = {}
@@ -8,9 +8,9 @@ class constants:
         self.__dict__ = self.shared_state
 
 c = constants()
-for i in dir(ew):
+for i in dir(em):
     if not i.startswith("E_"): continue
-    setattr(c, i[2:], getattr(ew, i))
+    setattr(c, i[2:], getattr(em, i))
 
 def lgrids(start_grid):
     temp = start_grid
@@ -23,7 +23,7 @@ def non_block():
     yield 1
     gd.CommunicationDirection = c.COMMUNICATION_SEND
     yield 2
-    ew.CommunicationReceiveHandler()
+    em.CommunicationReceiveHandler()
 
 def EvolveHierarchy(top_grid, meta_data, exterior, level_array, initial_dt):
     Stop = False
@@ -48,36 +48,36 @@ def EvolveHierarchy(top_grid, meta_data, exterior, level_array, initial_dt):
         for g in lgrids(level_array[0]):
             g.GridData.SetExternalBoundaryValues(exterior)
             exterior.Prepare(g.GridData)
-            ew.CopyOverlappingZones(g.GridData, meta_data, level_array, 0)
+            em.CopyOverlappingZones(g.GridData, meta_data, level_array, 0)
 
     if gd.RandomForcing:
         for g in lgrids(level_array[0]):
             g.GridData.DetachForcingFromBaryonFields()
         Exterior.DetachForcingFromBaryonFields()
 
-top_grid = ew.HierarchyEntry()
-meta_data = ew.TopGridData()
-exterior = ew.ExternalBoundary()
-level_array = ew.LevelHierarchyArray()
-
-ew.CommunicationInitialize([])
-#ew.run_enzo_main(["-d", "CollapseTest.enzo"])
-gd.LoadBalancing = 0
-gd.debug = 1
-retval = ew.SetDefaultGlobalValues(meta_data)
-restart = False
-initial_dt = 0.0
-
 res_fn = "DD0001/moving7_0001"
 pf_fn = "CollapseTest.enzo"
 
-if restart:
-    ew.Group_ReadAllData(res_fn, top_grid, meta_data, exterior)
-    ew.CommunicationPartitionGrid(top_grid, 0)
-    #gd.CommunicationDirection = c.COMMUNICATION_SEND_RECEIVE
-else:
-    initial_dt = ew.InitializeNew(pf_fn, top_grid, meta_data, exterior)
+def main(restart, fn):
+    top_grid = em.HierarchyEntry()
+    meta_data = em.TopGridData()
+    exterior = em.ExternalBoundary()
+    level_array = em.LevelHierarchyArray()
+    em.CommunicationInitialize([])
+    #em.run_enzo_main(["-d", "CollapseTest.enzo"])
+    gd.LoadBalancing = 0
+    gd.debug = 1
+    retval = em.SetDefaultGlobalValues(meta_data)
+    initial_dt = 0.0
 
-ew.AddLevel(level_array, top_grid, 0)
-#ew.EvolveHierarchy(top_grid, meta_data, exterior, level_array, initial_dt)
-EvolveHierarchy(top_grid, meta_data, exterior, level_array, initial_dt)
+
+    if restart:
+        em.Group_ReadAllData(res_fn, top_grid, meta_data, exterior)
+        em.CommunicationPartitionGrid(top_grid, 0)
+        #gd.CommunicationDirection = c.COMMUNICATION_SEND_RECEIVE
+    else:
+        initial_dt = em.InitializeNew(pf_fn, top_grid, meta_data, exterior)
+
+    em.AddLevel(level_array, top_grid, 0)
+    #em.EvolveHierarchy(top_grid, meta_data, exterior, level_array, initial_dt)
+    EvolveHierarchy(top_grid, meta_data, exterior, level_array, initial_dt)
