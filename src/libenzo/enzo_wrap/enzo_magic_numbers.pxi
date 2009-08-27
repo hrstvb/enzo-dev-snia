@@ -1,5 +1,6 @@
 cdef extern from "macros_and_parameters.h" nogil:
 
+    enum: ENPY_INT
     enum: ENPY_PFLOAT
     enum: ENPY_BFLOAT
 
@@ -64,6 +65,7 @@ cdef extern from "macros_and_parameters.h" nogil:
     enum: TRUE
     enum: FALSE
 
+E_ENPY_INT = ENPY_INT
 E_ENPY_PFLOAT = ENPY_PFLOAT
 E_ENPY_BFLOAT = ENPY_BFLOAT
 

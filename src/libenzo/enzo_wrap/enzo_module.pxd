@@ -1,9 +1,11 @@
 ctypedef double Eflt
-ctypedef int Eint
-ctypedef long int long_int
 ctypedef double FLOAT
+
+# Now the business with the ints
+ctypedef long long long_int
+ctypedef long_int Eint
 ctypedef int Eint32
-ctypedef int Eint64
+ctypedef long_int Eint64
 
 cimport numpy as np
 cimport c_numpy as cnp
@@ -29,8 +31,7 @@ cdef extern from "global_data.h":
     pass
 
 cdef extern from "Fluxes.h":
-    ctypedef struct c_fluxes "fluxes":
-        pass
+    cdef struct c_fluxes "fluxes"
 
 cdef extern from "GridList.h":
     pass

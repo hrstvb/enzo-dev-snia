@@ -42,7 +42,7 @@ for i,j in define_macros:
     if i.startswith("CONFIG_PFLOAT_"):
         pfloat = i.split("_")[-1]
 
-args = ["cython", "--cplus", "enzo_module.pyx"]
+args = ["cython", "-a", "--cplus", "enzo_module.pyx"]
 print args
 p = subprocess.Popen(args, cwd=os.getcwd() + "/enzo_wrap/")
 p.communicate()

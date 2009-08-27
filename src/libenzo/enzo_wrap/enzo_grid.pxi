@@ -115,19 +115,149 @@ cdef class grid:
     def IsNull(self):
         return self.thisptr == NULL
 
-    def get_baryon_field(self, int index):
-        cdef int dim, size = 1, i
+    def get_baryon_field(self, int index, int old = 0):
+        cdef int dim, size = 1
         cdef Eint32 ndims = self.thisptr.GridRank
         cdef np.npy_intp dims[3]
-        for dim in range(3):
+        for dim in range(ndims):
             size *= self.thisptr.GridDimension[dim]
             dims[dim] = self.thisptr.GridDimension[dim]
+        cdef Eflt *bfield
+        if old: bfield = self.thisptr.OldBaryonField[index]
+        else: bfield = self.thisptr.BaryonField[index]
+        if bfield == NULL: return None
         cdef np.ndarray field
         field = cnp.PyArray_SimpleNewFromData(
                     ndims, dims, E_ENPY_BFLOAT,
-                    self.thisptr.BaryonField[index])
+                    bfield)
         # Might need to set field flags here
         return field
+
+    def get_flux(self, int index):
+        cdef c_grid *g = self.thisptr
+        fluxes = []
+        # We are essentially replicating Grid_ClearBoundaryFluxes's math
+        cdef Eint32 ndims = self.thisptr.GridRank
+        cdef int dim, i, field
+        cdef np.npy_intp size
+        cdef np.npy_intp fdims = 1
+        cdef np.ndarray f1, f2
+        for dim in range(ndims):
+            size = 1
+            for i in range(ndims):
+                size *= (g.BoundaryFluxes.LeftFluxEndGlobalIndex[dim][i] -
+                         g.BoundaryFluxes.LeftFluxStartGlobalIndex[dim][i] + 1)
+            for field in range(g.NumberOfBaryonFields):
+                if g.BoundaryFluxes.LeftFluxes[field][dim] == NULL:
+                    f1 = None
+                else:
+                    f1 = cnp.PyArray_SimpleNewFromData(
+                                fdims, &size, E_ENPY_BFLOAT,
+                                g.BoundaryFluxes.LeftFluxes[field][dim])
+                if g.BoundaryFluxes.RightFluxes[field][dim] == NULL:
+                    f2 = None
+                else:
+                    f2 = cnp.PyArray_SimpleNewFromData(
+                                fdims, &size, E_ENPY_BFLOAT,
+                                g.BoundaryFluxes.RightFluxes[field][dim])
+                fluxes.append((f1,f2))
+        return fluxes
+
+    property ParticlePositions:
+        def __get__(self):
+            cdef int dim
+            cdef np.npy_intp NumberOfParticles = self.thisptr.NumberOfParticles
+            cdef FLOAT **PField = self.thisptr.ParticlePosition
+            pos = []
+            for dim in range(MAX_DIMENSION):
+                if PField[dim] == NULL:
+                    pos.append(None)
+                    continue
+                pos.append(cnp.PyArray_SimpleNewFromData(
+                               1, &NumberOfParticles, E_ENPY_PFLOAT,
+                               PField[dim]))
+            return pos
+
+    property ParticleVelocity:
+        def __get__(self):
+            cdef int dim
+            cdef np.npy_intp NumberOfParticles = self.thisptr.NumberOfParticles
+            cdef Eflt **PField = self.thisptr.ParticleVelocity
+            pos = []
+            for dim in range(MAX_DIMENSION):
+                if PField[dim] == NULL:
+                    pos.append(None)
+                    continue
+                pos.append(cnp.PyArray_SimpleNewFromData(
+                               1, &NumberOfParticles, E_ENPY_BFLOAT,
+                               PField[dim]))
+            return pos
+
+    property ParticleAcceleration:
+        def __get__(self):
+            cdef int dim
+            cdef np.npy_intp NumberOfParticles = self.thisptr.NumberOfParticles
+            cdef Eflt **PField = self.thisptr.ParticleAcceleration
+            pos = []
+            for dim in range(MAX_DIMENSION+1):
+                if PField[dim] == NULL:
+                    pos.append(None)
+                    continue
+                pos.append(cnp.PyArray_SimpleNewFromData(
+                               1, &NumberOfParticles, E_ENPY_BFLOAT,
+                               PField[dim]))
+            return pos
+
+    property ParticleMass:
+        def __get__(self):
+            cdef np.ndarray f
+            cdef np.npy_intp NumberOfParticles = self.thisptr.NumberOfParticles
+            cdef Eflt *PField = self.thisptr.ParticleMass
+            if PField == NULL:
+                return None
+            f = cnp.PyArray_SimpleNewFromData(
+                           1, &NumberOfParticles, E_ENPY_BFLOAT,
+                           PField)
+            return f
+
+    property ParticleNumber:
+        def __get__(self):
+            cdef np.ndarray f
+            cdef np.npy_intp NumberOfParticles = self.thisptr.NumberOfParticles
+            cdef Eint *PField = self.thisptr.ParticleNumber
+            if PField == NULL:
+                return None
+            f = cnp.PyArray_SimpleNewFromData(
+                           1, &NumberOfParticles, E_ENPY_INT,
+                           PField)
+            return f
+
+    property ParticleType:
+        def __get__(self):
+            cdef np.ndarray f
+            cdef np.npy_intp TypeOfParticles = self.thisptr.NumberOfParticles
+            cdef Eint *PField = self.thisptr.ParticleType
+            if PField == NULL:
+                return None
+            f = cnp.PyArray_SimpleNewFromData(
+                           1, &TypeOfParticles, E_ENPY_INT,
+                           PField)
+            return f
+
+    property ParticleAttribute:
+        def __get__(self):
+            cdef int dim
+            cdef np.npy_intp NumberOfParticles = self.thisptr.NumberOfParticles
+            cdef Eflt **PField = self.thisptr.ParticleAttribute
+            pos = []
+            for dim in range(MAX_NUMBER_OF_PARTICLE_ATTRIBUTES):
+                if PField[dim] == NULL:
+                    pos.append(None)
+                    continue
+                pos.append(cnp.PyArray_SimpleNewFromData(
+                               1, &NumberOfParticles, E_ENPY_BFLOAT,
+                               PField[dim]))
+            return pos
 
     # This code was auto-generated by wrap_dot_h.py
 
@@ -389,9 +519,12 @@ cdef class grid:
 
 
 
-# SKIPPED: '*Exterior)'
+# SKIPPED and dealt with:
 # SKIPPED: '*BaryonField[MAX_NUMBER_OF_BARYON_FIELDS]'
 # SKIPPED: '*OldBaryonField[MAX_NUMBER_OF_BARYON_FIELDS]'
+
+# SKIPPED and not dealt with:
+
 # SKIPPED: '*InterpolatedField[MAX_NUMBER_OF_BARYON_FIELDS]'
 # SKIPPED: '*RandomForcingField[MAX_DIMENSION]'
 # SKIPPED: '*CellLeftEdge[MAX_DIMENSION]'
