@@ -34,7 +34,7 @@ def EvolveHierarchy(top_grid, meta_data, exterior, level_array, initial_dt):
 
     # Optimized CTP would go here
 
-    # Add Random Forcing if need be
+    # Add random forcing if need be
     if gd.RandomForcing:
         for g in lgrids(level_array[0]):
             g.GridData.AppendForcingToBaryonFields()
@@ -46,17 +46,23 @@ def EvolveHierarchy(top_grid, meta_data, exterior, level_array, initial_dt):
     
     for cd in non_block():
         for g in lgrids(level_array[0]):
-            g.GridData.SetExternalBoundaryValues(exterior)
-            exterior.Prepare(g.GridData)
+            i = g.GridData.SetExternalBoundaryValues(exterior)
+            if i == c.FAIL: exterior.Prepare(g.GridData)
             em.CopyOverlappingZones(g.GridData, meta_data, level_array, 0)
 
+    # Remove forcing field
     if gd.RandomForcing:
         for g in lgrids(level_array[0]):
             g.GridData.DetachForcingFromBaryonFields()
         Exterior.DetachForcingFromBaryonFields()
 
-res_fn = "DD0001/moving7_0001"
-pf_fn = "CollapseTest.enzo"
+    #  XXX
+    #  Stuff goes in here!  Important stuff!
+    #  But I'll come back to it.
+    #  XXX
+
+    initial_dt = 0.1
+    em.EvolveLevel(meta_data, level_array, 0, initial_dt, exterior)
 
 def main(restart, fn):
     top_grid = em.HierarchyEntry()
@@ -70,11 +76,11 @@ def main(restart, fn):
     initial_dt = 0.0
 
     if restart:
-        em.Group_ReadAllData(res_fn, top_grid, meta_data, exterior)
+        em.Group_ReadAllData(fn, top_grid, meta_data, exterior)
         em.CommunicationPartitionGrid(top_grid, 0)
         #gd.CommunicationDirection = c.COMMUNICATION_SEND_RECEIVE
     else:
-        initial_dt = em.InitializeNew(pf_fn, top_grid, meta_data, exterior)
+        initial_dt = em.InitializeNew(fn, top_grid, meta_data, exterior)
 
     em.AddLevel(level_array, top_grid, 0)
     #em.EvolveHierarchy(top_grid, meta_data, exterior, level_array, initial_dt)

@@ -17,3 +17,6 @@ int CommunicationReceiveHandler(fluxes **SubgridFluxesEstimate[] = NULL,
 				int NumberOfSubgrids[] = NULL,
 				int FluxFlag = FALSE,
 				TopGridData* MetaData = NULL);
+int EvolveLevel(TopGridData *MetaData, LevelHierarchyEntry *LevelArray[],
+		int level, float dtLevelAbove, ExternalBoundary *Exterior);
+

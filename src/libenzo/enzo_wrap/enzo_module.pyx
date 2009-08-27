@@ -35,6 +35,8 @@ cdef extern from "function_declarations.h":
             int NumberOfSubgrids[] = NULL, int FluxFlag = FALSE,
             c_TopGridData *MetaData = NULL)
     int c_CommunicationBarrier "CommunicationBarrier" ()
+    int c_EvolveLevel "EvolveLevel" (c_TopGridData *MetaData, c_LevelHierarchyEntry *Array[],
+                        int level, Eflt dtLevelAbove, c_ExternalBoundary *Exterior) except +
 
 def run_enzo_main(args):
     cdef int argc = len(args)
@@ -90,6 +92,11 @@ def CopyOverlappingZones(grid CurrentGrid, TopGridData MetaData,
 
 def CommunicationReceiveHandler():
     c_CommunicationReceiveHandler()
+
+def EvolveLevel(TopGridData MetaData, LevelHierarchyArray Array,
+                int level, Eflt dtLevelAbove, ExternalBoundary Exterior):
+    c_EvolveLevel(MetaData.thisptr, Array.thisarray,
+                  level, dtLevelAbove, Exterior.thisptr)
 
 # This has to go at the end; it fixes all the "#define float double" stuff.
 cdef extern from "fix_enzo_defs.h":
