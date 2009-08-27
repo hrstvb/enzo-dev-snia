@@ -2,22 +2,22 @@
 # Automatically-generated global data handler
 # DO NOT MODIFY DIRECTLY
 
-cdef extern from "../enzo/units.h":
+cdef extern from "units.h":
     pass
 
-cdef extern from "../enzo/flowdefs.h":
+cdef extern from "flowdefs.h":
     pass
 
-cdef extern from "../enzo/CosmologyParameters.h":
+cdef extern from "CosmologyParameters.h":
     pass
 
-cdef extern from "../enzo/communication.h":
+cdef extern from "communication.h":
     pass
 
-cdef extern from "../enzo/StarParticleData.h":
+cdef extern from "StarParticleData.h":
     pass
 
-cdef extern from "../enzo/global_data.h":
+cdef extern from "global_data.h":
     cdef extern int LoadBalancing
     cdef extern int LoadBalancingCycleSkip
     cdef extern int CoresPerNode

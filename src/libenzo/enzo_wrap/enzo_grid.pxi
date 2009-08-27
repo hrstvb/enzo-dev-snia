@@ -1,4 +1,4 @@
-cdef extern from "../enzo/Grid.h":
+cdef extern from "Grid.h":
     # First we declare our class as being exposed to Cython
     ctypedef struct c_grid "grid":
         void DeleteAllFields()
@@ -12,8 +12,6 @@ cdef extern from "../enzo/Grid.h":
 # Now we expose it to Python
 
 cdef class grid:
-    cdef c_grid *thisptr
-    cdef int own
     def __cinit__(self, int own):
         self.thisptr = NULL
         self.own = own

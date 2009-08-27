@@ -1,4 +1,4 @@
-cdef extern from "../enzo/Fluxes.h":
+cdef extern from "Fluxes.h":
     cdef struct c_fluxes "fluxes":
         long_int LeftFluxStartGlobalIndex[MAX_DIMENSION][MAX_DIMENSION]
         long_int LeftFluxEndGlobalIndex[MAX_DIMENSION][MAX_DIMENSION]

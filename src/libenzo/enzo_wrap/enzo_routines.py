@@ -65,11 +65,9 @@ def main(restart, fn):
     level_array = em.LevelHierarchyArray()
     em.CommunicationInitialize([])
     #em.run_enzo_main(["-d", "CollapseTest.enzo"])
-    gd.LoadBalancing = 0
     gd.debug = 1
     retval = em.SetDefaultGlobalValues(meta_data)
     initial_dt = 0.0
-
 
     if restart:
         em.Group_ReadAllData(res_fn, top_grid, meta_data, exterior)

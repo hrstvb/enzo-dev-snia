@@ -1,107 +1,17 @@
 from stdlib cimport *
 
-cdef extern from "math.h":
-    pass
-
-cdef extern from "mpi.h":
-    pass
-
-cdef extern from "../enzo/performance.h":
-    pass
-
-#cdef extern from "../enzo/ErrorExceptions.h":
-    #pass
-
 include "enzo_magic_numbers.pxi"
-
-ctypedef double Eflt
-ctypedef int Eint
-ctypedef long int long_int
-ctypedef double FLOAT
-
-cdef extern from "../enzo/typedefs.h":
-    pass
-
 include "enzo_globals.pxi"
-global_data = _global_data()
-
 include "enzo_fluxes.pxi"
-
-cdef extern from "../enzo/GridList.h":
-    pass
-
 include "enzo_external_boundary.pxi"
 include "enzo_grid.pxi"
-
-cdef extern from "../enzo/Hierarchy.h":
-    cdef struct c_HierarchyEntry "HierarchyEntry":
-        c_HierarchyEntry *NextGridThisLevel
-        c_HierarchyEntry *NextGridNextLevel
-        c_HierarchyEntry *ParentGrid
-        c_grid         *GridData
-
-cdef class HierarchyEntry:
-    cdef c_HierarchyEntry thisptr
-    def __cinit__(self):
-        pass
-    def __dealloc__(self):
-        pass
-
+include "enzo_hierarchy.pxi"
 include "enzo_top_grid_data.pxi"
+include "enzo_level_hierarchy.pxi"
 
-cdef extern from "../enzo/LevelHierarchy.h":
-    cdef struct c_LevelHierarchyEntry "LevelHierarchyEntry":
-        c_LevelHierarchyEntry *NextGridThisLevel
-        c_grid         *GridData
-        c_HierarchyEntry *GridHierarchyEntry
+global_data = _global_data()
 
-cdef class LevelHierarchyEntry:
-    cdef c_LevelHierarchyEntry *thisptr
-    def __cinit__(self):
-        pass
-    def __dealloc__(self):
-        pass
-
-    property NextGridThisLevel:
-        def __get__(self):
-            cdef c_LevelHierarchyEntry *NGTL
-            NGTL = self.thisptr.NextGridThisLevel
-            if NGTL == NULL:
-                return None
-            cdef LevelHierarchyEntry lh = LevelHierarchyEntry()
-            lh.thisptr = <c_LevelHierarchyEntry *> NGTL
-            return lh
-
-    property GridData:
-        def __get__(self):
-            cdef c_grid *GridData = self.thisptr.GridData
-            cdef grid g = grid(False)
-            g.thisptr = GridData
-            return g
-
-cdef class LevelHierarchyArray:
-    cdef c_LevelHierarchyEntry *thisarray[MAX_DEPTH_OF_HIERARCHY]
-    def __cinit__(self):
-        cdef int i
-        for i in range(MAX_DEPTH_OF_HIERARCHY):
-            self.thisarray[i] = NULL
-    def __dealloc__(self):
-        pass
-    def __getitem__(self, int i):
-        #if self.thisarray[i] == NULL: return None
-        cdef LevelHierarchyEntry a = LevelHierarchyEntry()
-        a.thisptr = self.thisarray[i]
-        return a
-
-cdef extern from "../enzo/CommunicationUtilities.h":
-    pass
- 
-cdef extern from "../enzo/macros_and_parameters.h":
-    pass
-
-ctypedef int Eint32
-
-cdef extern from "../enzo/function_declarations.h":
+cdef extern from "function_declarations.h":
     # All functions that don't get prototyped elsewhere get prototyped here.
     # This fixes name mangling issues.
     Eint32 c_enzo_main "enzo_main" (Eint32 argc, char **argv) except +
@@ -145,7 +55,7 @@ def CommunicationInitialize(args):
     free(argv)
 
 def SetDefaultGlobalValues(TopGridData MetaData):
-    return c_SetDefaultGlobalValues(MetaData.thisptr)
+    return c_SetDefaultGlobalValues(MetaData.thisptr[0])
 
 def CommunicationPartitionGrid(HierarchyEntry Grid, int gridnum):
     return c_CommunicationPartitionGrid(&Grid.thisptr, gridnum)
@@ -153,28 +63,28 @@ def CommunicationPartitionGrid(HierarchyEntry Grid, int gridnum):
 def InitializeNew(char *filename, HierarchyEntry TopGrid, TopGridData MetaData,
                   ExternalBoundary Exterior):
     cdef Eflt Initialdt = 0.0
-    c_InitializeNew(filename, TopGrid.thisptr, MetaData.thisptr,
+    c_InitializeNew(filename, TopGrid.thisptr, MetaData.thisptr[0],
                       Exterior.thisptr[0], &Initialdt)
     return Initialdt
 
 def Group_ReadAllData(char *filename, HierarchyEntry TopGrid, TopGridData MetaData, 
                   ExternalBoundary Exterior):
-    c_Group_ReadAllData(filename, &TopGrid.thisptr, MetaData.thisptr,
+    c_Group_ReadAllData(filename, &TopGrid.thisptr, MetaData.thisptr[0],
                       Exterior.thisptr)
 
 def AddLevel(LevelHierarchyArray Array, HierarchyEntry Grid, Eint level):
     c_AddLevel(Array.thisarray, &Grid.thisptr, level)
 
-def EvolveHierarchy(HierarchyEntry TopGrid, TopGridData tgd,
+def EvolveHierarchy(HierarchyEntry TopGrid, TopGridData MetaData,
                     ExternalBoundary Exterior, LevelHierarchyArray Array,
                     Eflt Initialdt):
-    c_EvolveHierarchy(TopGrid.thisptr, tgd.thisptr, Exterior.thisptr,
+    c_EvolveHierarchy(TopGrid.thisptr, MetaData.thisptr[0], Exterior.thisptr,
                       Array.thisarray, Initialdt)
 
 def CopyOverlappingZones(grid CurrentGrid, TopGridData MetaData,
                          LevelHierarchyArray Array, int level):
     cdef int rv
-    rv = c_CopyOverlappingZones(<c_grid *> grid.thisptr, &MetaData.thisptr,
+    rv = c_CopyOverlappingZones(<c_grid *> CurrentGrid.thisptr, MetaData.thisptr,
                                 Array.thisarray, level)
     return rv
 

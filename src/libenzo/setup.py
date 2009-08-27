@@ -8,7 +8,7 @@ from mpidistutils import config, build, install, clean
 from mpidistutils import build_ext, build_exe
 from mpidistutils import install_data, install_exe
 
-import os, sys
+import os, sys, subprocess
 
 import numpy
 numpy_include = numpy.get_include()
@@ -42,9 +42,11 @@ for i,j in define_macros:
     if i.startswith("CONFIG_PFLOAT_"):
         pfloat = i[-1]
 
-import subprocess
 p = subprocess.Popen(["cython", "--cplus", "enzo_module.pyx"], cwd=os.getcwd() + "/enzo_wrap/")
 p.communicate()
+if p.returncode:
+    print p.returncode
+    sys.exit(1)
 
 print "Linking against %s-%s" % (pfloat, bfloat)
 setup(name="enzo", packages = "enzo_wrap",
@@ -52,6 +54,7 @@ setup(name="enzo", packages = "enzo_wrap",
       ext_modules=[Extension("enzo_wrap/enzo_module",
                      ["enzo_wrap/enzo_module.cpp"],
                      include_dirs=["/usr/include/", "../enzo/", numpy_include, 
+                                   os.path.join(os.getcwd(), "enzo_wrap/"), 
                                    os.path.join(H5dir,"include")],
                      language="c++",
                      libraries=['enzo_p%s_b%s' % (pfloat, bfloat),'hdf5'],

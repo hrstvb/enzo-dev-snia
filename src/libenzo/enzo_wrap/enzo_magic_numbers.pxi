@@ -1,4 +1,4 @@
-cdef extern from "../enzo/macros_and_parameters.h" nogil:
+cdef extern from "macros_and_parameters.h" nogil:
     enum: COMMUNICATION_POST_RECEIVE
     enum: COMMUNICATION_SEND
     enum: COMMUNICATION_RECEIVE

@@ -1,4 +1,4 @@
-cdef extern from "../enzo/TopGridData.h":
+cdef extern from "TopGridData.h":
     struct c_TopGridData "TopGridData":
         Eint   CycleNumber
         Eint   SubcycleNumber
@@ -116,11 +116,10 @@ cdef extern from "../enzo/TopGridData.h":
         Eint TimestepCounter
 
 cdef class TopGridData:
-    cdef c_TopGridData thisptr
     def __cinit__(self):
-        pass
+        self.thisptr = <c_TopGridData *> malloc(sizeof(c_TopGridData))
     def __dealloc__(self):
-        pass
+        free(self.thisptr)
 
 
     property CycleNumber:
