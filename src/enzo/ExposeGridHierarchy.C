@@ -72,13 +72,13 @@ void ExposeGridHierarchy(int NumberOfGrids)
 
   //fprintf(stderr, "counter: %d\n", counter++); // 3
   flat_dimensions[1] = 3;
-  temp_array = (PyArrayObject *) PyArray_SimpleNew(2, flat_dimensions, ENPY_FLOAT);
+  temp_array = (PyArrayObject *) PyArray_SimpleNew(2, flat_dimensions, ENPY_PFLOAT);
   PyDict_SetItemString(hierarchy_information, "GridLeftEdge", (PyObject *) temp_array);
   Py_DECREF(temp_array);
 
   //fprintf(stderr, "counter: %d\n", counter++); // 4
   flat_dimensions[1] = 3;
-  temp_array = (PyArrayObject *) PyArray_SimpleNew(2, flat_dimensions, ENPY_FLOAT);
+  temp_array = (PyArrayObject *) PyArray_SimpleNew(2, flat_dimensions, ENPY_PFLOAT);
   PyDict_SetItemString(hierarchy_information, "GridRightEdge", (PyObject *) temp_array);
   Py_DECREF(temp_array);
 
@@ -90,13 +90,13 @@ void ExposeGridHierarchy(int NumberOfGrids)
 
   //fprintf(stderr, "counter: %d\n", counter++); // 6
   flat_dimensions[1] = 1;
-  temp_array = (PyArrayObject *) PyArray_SimpleNew(2, flat_dimensions, ENPY_FLOAT);
+  temp_array = (PyArrayObject *) PyArray_SimpleNew(2, flat_dimensions, ENPY_PFLOAT);
   PyDict_SetItemString(hierarchy_information, "GridTimes", (PyObject *) temp_array);
   Py_DECREF(temp_array);
 
   //fprintf(stderr, "counter: %d\n", counter++); // 7
   flat_dimensions[1] = 1;
-  temp_array = (PyArrayObject *) PyArray_SimpleNew(2, flat_dimensions, ENPY_FLOAT);
+  temp_array = (PyArrayObject *) PyArray_SimpleNew(2, flat_dimensions, ENPY_PFLOAT);
   PyDict_SetItemString(hierarchy_information, "GridOldTimes", (PyObject *) temp_array);
   Py_DECREF(temp_array);
 

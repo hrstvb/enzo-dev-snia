@@ -5,6 +5,9 @@ ctypedef double FLOAT
 ctypedef int Eint32
 ctypedef int Eint64
 
+cimport numpy as np
+cimport c_numpy as cnp
+
 # All our incldues...
 
 cdef extern from "math.h":
@@ -26,7 +29,8 @@ cdef extern from "global_data.h":
     pass
 
 cdef extern from "Fluxes.h":
-    pass
+    ctypedef struct c_fluxes "fluxes":
+        pass
 
 cdef extern from "GridList.h":
     pass

@@ -1,4 +1,8 @@
 cdef extern from "macros_and_parameters.h" nogil:
+
+    enum: ENPY_PFLOAT
+    enum: ENPY_BFLOAT
+
     enum: COMMUNICATION_POST_RECEIVE
     enum: COMMUNICATION_SEND
     enum: COMMUNICATION_RECEIVE
@@ -49,6 +53,9 @@ cdef extern from "macros_and_parameters.h" nogil:
     enum: SUCCESS
     enum: TRUE
     enum: FALSE
+
+E_ENPY_PFLOAT = ENPY_PFLOAT
+E_ENPY_BFLOAT = ENPY_BFLOAT - 1
 
 E_COMMUNICATION_SEND_RECEIVE = COMMUNICATION_SEND_RECEIVE
 E_COMMUNICATION_POST_RECEIVE = COMMUNICATION_POST_RECEIVE

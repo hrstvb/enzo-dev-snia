@@ -72,14 +72,14 @@ void grid::ConvertToNumpy(int GridID, PyArrayObject *container[], int ParentID, 
             /* This gives back a new reference 
                So we need to decref it after we add it to the dict */
             dataset = (PyArrayObject *) PyArray_SimpleNewFromData(
-                    3, dims, ENPY_FLOAT, BaryonField[field]);
+                    3, dims, ENPY_BFLOAT, BaryonField[field]);
             dataset->flags &= ~NPY_OWNDATA;
             PyDict_SetItemString(grid_data, DataLabel[field], (PyObject*) dataset);
             Py_DECREF(dataset);
 
 			/* Now the old grid data */
             dataset = (PyArrayObject *) PyArray_SimpleNewFromData(
-                    3, dims, ENPY_FLOAT, OldBaryonField[field]);
+                    3, dims, ENPY_BFLOAT, OldBaryonField[field]);
             dataset->flags &= ~NPY_OWNDATA;
             PyDict_SetItemString(old_grid_data, DataLabel[field], (PyObject*) dataset);
             Py_DECREF(dataset);

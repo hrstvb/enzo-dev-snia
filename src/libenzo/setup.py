@@ -18,7 +18,7 @@ numpy_include = numpy.get_include()
 for line in open("../enzo/temp.show-flags"):
     if line.startswith("DEFINES"): break
 
-define_macros = []
+define_macros = [("SHARED_LIBRARY",None)]
 for opt in line.split("=", 1)[1].split():
     vd = opt[2:].split("=")
     if len(vd) == 1: vd.append(None)
@@ -38,11 +38,13 @@ H5dir = check_for_hdf5()
 
 for i,j in define_macros:
     if i.startswith("CONFIG_BFLOAT_"):
-        bfloat = i[-1]
+        bfloat = i.split("_")[-1]
     if i.startswith("CONFIG_PFLOAT_"):
-        pfloat = i[-1]
+        pfloat = i.split("_")[-1]
 
-p = subprocess.Popen(["cython", "--cplus", "enzo_module.pyx"], cwd=os.getcwd() + "/enzo_wrap/")
+args = ["cython", "--cplus", "enzo_module.pyx"]
+print args
+p = subprocess.Popen(args, cwd=os.getcwd() + "/enzo_wrap/")
 p.communicate()
 if p.returncode:
     print p.returncode

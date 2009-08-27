@@ -62,7 +62,11 @@ def EvolveHierarchy(top_grid, meta_data, exterior, level_array, initial_dt):
     #  XXX
 
     initial_dt = 0.1
+    print "Evolving"
     em.EvolveLevel(meta_data, level_array, 0, initial_dt, exterior)
+
+def EvolveLevel(meta_data, level_array, level, dt_upper, exterior):
+    pass
 
 def main(restart, fn):
     top_grid = em.HierarchyEntry()
@@ -85,3 +89,5 @@ def main(restart, fn):
     em.AddLevel(level_array, top_grid, 0)
     #em.EvolveHierarchy(top_grid, meta_data, exterior, level_array, initial_dt)
     EvolveHierarchy(top_grid, meta_data, exterior, level_array, initial_dt)
+
+    return top_grid, meta_data, exterior, level_array, initial_dt
