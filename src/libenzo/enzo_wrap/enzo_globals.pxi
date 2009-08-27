@@ -36,9 +36,9 @@ cdef extern from "global_data.h":
     cdef extern int MaximumRefinementLevel
     cdef extern int MaximumGravityRefinementLevel
     cdef extern int MaximumParticleRefinementLevel
-    cdef extern int CellFlaggingMethod[7]
-    cdef extern double MustRefineRegionLeftEdge[3]
-    cdef extern double MustRefineRegionRightEdge[3]
+    cdef extern int CellFlaggingMethod[MAX_FLAGGING_METHODS]
+    cdef extern double MustRefineRegionLeftEdge[MAX_DIMENSION]
+    cdef extern double MustRefineRegionRightEdge[MAX_DIMENSION]
     cdef extern int MustRefineRegionMinRefinementLevel
     cdef extern int MetallicityRefinementMinLevel
     cdef extern double MetallicityRefinementMinMetallicity
@@ -49,17 +49,17 @@ cdef extern from "global_data.h":
     cdef extern int MinimumSubgridEdge
     cdef extern int MaximumSubgridSize
     cdef extern int NumberOfBufferZones
-    cdef extern double DomainLeftEdge[3]
-    cdef extern double DomainRightEdge[3]
-    cdef extern double GridVelocity[3]
-    cdef extern double RefineRegionLeftEdge[3]
-    cdef extern double RefineRegionRightEdge[3]
+    cdef extern double DomainLeftEdge[MAX_DIMENSION]
+    cdef extern double DomainRightEdge[MAX_DIMENSION]
+    cdef extern double GridVelocity[MAX_DIMENSION]
+    cdef extern double RefineRegionLeftEdge[MAX_DIMENSION]
+    cdef extern double RefineRegionRightEdge[MAX_DIMENSION]
     cdef extern int RefineRegionAutoAdjust
     cdef extern int UniformGravity
     cdef extern int UniformGravityDirection
     cdef extern double UniformGravityConstant
     cdef extern int PointSourceGravity
-    cdef extern double PointSourceGravityPosition[3]
+    cdef extern double PointSourceGravityPosition[MAX_DIMENSION]
     cdef extern double PointSourceGravityConstant
     cdef extern double PointSourceGravityCoreRadius
     cdef extern int SelfGravity
@@ -102,9 +102,9 @@ cdef extern from "global_data.h":
     cdef extern double ZEUSQuadraticArtificialViscosity
     cdef extern int UseMinimumPressureSupport
     cdef extern double MinimumPressureSupportParameter
-    cdef extern double StaticRefineRegionLeftEdge[1000][3]
-    cdef extern double StaticRefineRegionRightEdge[1000][3]
-    cdef extern int StaticRefineRegionLevel[1000]
+    cdef extern double StaticRefineRegionLeftEdge[MAX_STATIC_REGIONS][MAX_DIMENSION]
+    cdef extern double StaticRefineRegionRightEdge[MAX_STATIC_REGIONS][MAX_DIMENSION]
+    cdef extern int StaticRefineRegionLevel[MAX_STATIC_REGIONS]
     cdef extern int MyProcessorNumber
     cdef extern int NumberOfProcessors
     cdef extern double CommunicationTime
@@ -125,11 +125,11 @@ cdef extern from "global_data.h":
     cdef extern double HaloFinderLinkingLength
     cdef extern double HaloFinderTimestep
     cdef extern double HaloFinderLastTime
-    cdef extern double MinimumSlopeForRefinement[7]
-    cdef extern int SlopeFlaggingFields[7]
-    cdef extern double MinimumOverDensityForRefinement[7]
-    cdef extern double MinimumMassForRefinement[7]
-    cdef extern double MinimumMassForRefinementLevelExponent[7]
+    cdef extern double MinimumSlopeForRefinement[MAX_FLAGGING_METHODS]
+    cdef extern int SlopeFlaggingFields[MAX_FLAGGING_METHODS]
+    cdef extern double MinimumOverDensityForRefinement[MAX_FLAGGING_METHODS]
+    cdef extern double MinimumMassForRefinement[MAX_FLAGGING_METHODS]
+    cdef extern double MinimumMassForRefinementLevelExponent[MAX_FLAGGING_METHODS]
     cdef extern double DepositPositionsParticleSmoothRadius
     cdef extern double MinimumPressureJumpForRefinement
     cdef extern double MinimumEnergyRatioForRefinement
@@ -143,14 +143,14 @@ cdef extern from "global_data.h":
     cdef extern int StarParticleFeedback
     cdef extern int NumberOfParticleAttributes
     cdef extern int AddParticleAttributes
-    cdef extern int TimeActionType[10]
-    cdef extern double TimeActionTime[10]
-    cdef extern double TimeActionRedshift[10]
-    cdef extern double TimeActionParameter[10]
+    cdef extern int TimeActionType[MAX_TIME_ACTIONS]
+    cdef extern double TimeActionTime[MAX_TIME_ACTIONS]
+    cdef extern double TimeActionRedshift[MAX_TIME_ACTIONS]
+    cdef extern double TimeActionParameter[MAX_TIME_ACTIONS]
     cdef extern int TracerParticleOn
     cdef extern double TracerParticleCreationSpacing
-    cdef extern double TracerParticleCreationLeftEdge[3]
-    cdef extern double TracerParticleCreationRightEdge[3]
+    cdef extern double TracerParticleCreationLeftEdge[MAX_DIMENSION]
+    cdef extern double TracerParticleCreationRightEdge[MAX_DIMENSION]
     cdef extern int ParticleTypeInFile
     cdef extern int OutputParticleTypeGrouping
     cdef extern int ExternalBoundaryIO
@@ -158,15 +158,15 @@ cdef extern from "global_data.h":
     cdef extern int ExternalBoundaryValueIO
     cdef extern int ExternalBoundaryField
     cdef extern int SimpleConstantBoundary
-    cdef extern int TaskMap[16384]
-    cdef extern double NodeMem[1024]
-    cdef extern int NodeMap[1024]
+    cdef extern int TaskMap[MAX_NUMBER_OF_TASKS]
+    cdef extern double NodeMem[MAX_NUMBER_OF_NODES]
+    cdef extern int NodeMap[MAX_NUMBER_OF_NODES]
     cdef extern int LoadGridDataAtStart
     cdef extern double GlobalCommunication
     cdef extern double RecvComm
     cdef extern double WaitComm
-    cdef extern double timer[40]
-    cdef extern int counter[40]
+    cdef extern double timer[MAX_COUNTERS]
+    cdef extern int counter[MAX_COUNTERS]
     cdef extern int traceMEM
     cdef extern double starttime
     cdef extern double endtime
@@ -180,7 +180,7 @@ cdef extern from "global_data.h":
     cdef extern double flagging_pct
     cdef extern double moving_pct
     cdef extern int traceMPI
-    cdef extern int MovieDataField[6]
+    cdef extern int MovieDataField[MAX_MOVIE_FIELDS]
     cdef extern int MovieSkipTimestep
     cdef extern int Movie3DVolumes
     cdef extern int MovieVertexCentered
@@ -225,7 +225,7 @@ cdef extern from "global_data.h":
     cdef extern double C_h
     cdef extern double C_p
     cdef extern int UseConstantAcceleration
-    cdef extern double ConstantAcceleration[3]
+    cdef extern double ConstantAcceleration[MAX_DIMENSION]
     cdef extern double Mu
     cdef extern int ExternalGravity
     cdef extern int StringKick
@@ -286,7 +286,7 @@ cdef extern from "global_data.h":
     cdef extern int RadiativeTransferPeriodicBoundary
     cdef extern double EscapedPhotonCount[4]
     cdef extern double TotalEscapedPhotonCount[4]
-    cdef extern int FieldsToInterpolate[20]
+    cdef extern int FieldsToInterpolate[MAX_NUMBER_OF_BARYON_FIELDS]
     cdef extern int RadiativeTransferCoupledRateSolver
     cdef extern double AngularVelocity
     cdef extern double VelocityGradient
@@ -294,7 +294,7 @@ cdef extern from "global_data.h":
     cdef extern int ShearingVelocityDirection
     cdef extern int ShearingOtherDirection
     cdef extern int useMHD
-    cdef extern double TopGridDx[3]
+    cdef extern double TopGridDx[MAX_DIMENSION]
     cdef extern int ShearingBoxProblemType
     cdef extern double IsothermalSoundSpeed
     cdef extern int RefineByJeansLengthUnits
@@ -312,8 +312,8 @@ cdef extern from "global_data.h":
     cdef extern double MaxExpansionRate
     cdef extern double InitialTimeInCodeUnits
     cdef extern double InitialRedshift
-    cdef extern double CosmologyOutputRedshift[500]
-    cdef extern double CosmologyOutputRedshiftTime[500]
+    cdef extern double CosmologyOutputRedshift[MAX_NUMBER_OF_OUTPUT_REDSHIFTS]
+    cdef extern double CosmologyOutputRedshiftTime[MAX_NUMBER_OF_OUTPUT_REDSHIFTS]
     cdef extern int NumberOfStarParticles
     cdef extern int TotalNumberOfStars
     cdef extern double StarMakerOverDensityThreshold
@@ -341,8 +341,8 @@ cdef extern from "global_data.h":
     cdef extern double StarClusterFormEfficiency
     cdef extern double StarClusterMinimumMass
     cdef extern double StarClusterCombineRadius
-    cdef extern double StarClusterRegionLeftEdge[3]
-    cdef extern double StarClusterRegionRightEdge[3]
+    cdef extern double StarClusterRegionLeftEdge[MAX_DIMENSION]
+    cdef extern double StarClusterRegionRightEdge[MAX_DIMENSION]
     cdef extern double MBHMinDynamicalTime
     cdef extern double MBHMinimumMass
     cdef extern int MBHFeedbackThermal
@@ -355,12 +355,37 @@ cdef extern from "global_data.h":
     cdef extern double LastSupernovaTime
     cdef extern int CommunicationReceiveCurrentDependsOn
     cdef extern int CommunicationReceiveIndex
-    cdef extern int CommunicationReceiveCallType[50000]
-    cdef extern int CommunicationReceiveDependsOn[50000]
-    cdef extern double CommunicationReceiveArgument[3][50000]
-    cdef extern int CommunicationReceiveArgumentInt[3][50000]
+    cdef extern int CommunicationReceiveCallType[MAX_RECEIVE_BUFFERS]
+    cdef extern int CommunicationReceiveDependsOn[MAX_RECEIVE_BUFFERS]
+    cdef extern double CommunicationReceiveArgument[MAX_DIMENSION][MAX_RECEIVE_BUFFERS]
+    cdef extern int CommunicationReceiveArgumentInt[MAX_DIMENSION][MAX_RECEIVE_BUFFERS]
+
+    cdef extern char *DataLabel[MAX_NUMBER_OF_BARYON_FIELDS]
+    cdef extern char *DataUnits[MAX_NUMBER_OF_BARYON_FIELDS]
+
+cdef class LabelHandler:
+    cdef char **data
+    cdef int number
+
+    def __cinit__(self, int number):
+        self.number = number
+
+    def __getitem__(self, int index):
+        if index > self.number: raise IndexError
+        elif index < 0: raise IndexError
+        return <char *> self.data[index]
 
 cdef class _global_data:
+    cdef public LabelHandler DataLabel
+    cdef public LabelHandler DataUnits
+
+    def __cinit__(self):
+        global DataLabel
+        global DataUnits
+        self.DataLabel = LabelHandler(MAX_NUMBER_OF_BARYON_FIELDS)
+        self.DataLabel.data = DataLabel
+        self.DataUnits = LabelHandler(MAX_NUMBER_OF_BARYON_FIELDS)
+        self.DataUnits.data = DataUnits
 
     property LoadBalancing:
         def __get__(self):
@@ -511,13 +536,13 @@ cdef class _global_data:
             print "Returning a copy of CellFlaggingMethod"
             global CellFlaggingMethod
             retval = []
-            for i in range(7):
+            for i in range(MAX_FLAGGING_METHODS):
                 retval.append(CellFlaggingMethod[i])
             return retval
         def __set__(self, val):
             cdef int i
             global CellFlaggingMethod
-            for i in range(7):
+            for i in range(MAX_FLAGGING_METHODS):
                 CellFlaggingMethod[i] = val[i]
 
     property MustRefineRegionLeftEdge:
@@ -525,13 +550,13 @@ cdef class _global_data:
             print "Returning a copy of MustRefineRegionLeftEdge"
             global MustRefineRegionLeftEdge
             retval = []
-            for i in range(3):
+            for i in range(MAX_DIMENSION):
                 retval.append(MustRefineRegionLeftEdge[i])
             return retval
         def __set__(self, val):
             cdef int i
             global MustRefineRegionLeftEdge
-            for i in range(3):
+            for i in range(MAX_DIMENSION):
                 MustRefineRegionLeftEdge[i] = val[i]
 
     property MustRefineRegionRightEdge:
@@ -539,13 +564,13 @@ cdef class _global_data:
             print "Returning a copy of MustRefineRegionRightEdge"
             global MustRefineRegionRightEdge
             retval = []
-            for i in range(3):
+            for i in range(MAX_DIMENSION):
                 retval.append(MustRefineRegionRightEdge[i])
             return retval
         def __set__(self, val):
             cdef int i
             global MustRefineRegionRightEdge
-            for i in range(3):
+            for i in range(MAX_DIMENSION):
                 MustRefineRegionRightEdge[i] = val[i]
 
     property MustRefineRegionMinRefinementLevel:
@@ -633,13 +658,13 @@ cdef class _global_data:
             print "Returning a copy of DomainLeftEdge"
             global DomainLeftEdge
             retval = []
-            for i in range(3):
+            for i in range(MAX_DIMENSION):
                 retval.append(DomainLeftEdge[i])
             return retval
         def __set__(self, val):
             cdef int i
             global DomainLeftEdge
-            for i in range(3):
+            for i in range(MAX_DIMENSION):
                 DomainLeftEdge[i] = val[i]
 
     property DomainRightEdge:
@@ -647,13 +672,13 @@ cdef class _global_data:
             print "Returning a copy of DomainRightEdge"
             global DomainRightEdge
             retval = []
-            for i in range(3):
+            for i in range(MAX_DIMENSION):
                 retval.append(DomainRightEdge[i])
             return retval
         def __set__(self, val):
             cdef int i
             global DomainRightEdge
-            for i in range(3):
+            for i in range(MAX_DIMENSION):
                 DomainRightEdge[i] = val[i]
 
     property GridVelocity:
@@ -661,13 +686,13 @@ cdef class _global_data:
             print "Returning a copy of GridVelocity"
             global GridVelocity
             retval = []
-            for i in range(3):
+            for i in range(MAX_DIMENSION):
                 retval.append(GridVelocity[i])
             return retval
         def __set__(self, val):
             cdef int i
             global GridVelocity
-            for i in range(3):
+            for i in range(MAX_DIMENSION):
                 GridVelocity[i] = val[i]
 
     property RefineRegionLeftEdge:
@@ -675,13 +700,13 @@ cdef class _global_data:
             print "Returning a copy of RefineRegionLeftEdge"
             global RefineRegionLeftEdge
             retval = []
-            for i in range(3):
+            for i in range(MAX_DIMENSION):
                 retval.append(RefineRegionLeftEdge[i])
             return retval
         def __set__(self, val):
             cdef int i
             global RefineRegionLeftEdge
-            for i in range(3):
+            for i in range(MAX_DIMENSION):
                 RefineRegionLeftEdge[i] = val[i]
 
     property RefineRegionRightEdge:
@@ -689,13 +714,13 @@ cdef class _global_data:
             print "Returning a copy of RefineRegionRightEdge"
             global RefineRegionRightEdge
             retval = []
-            for i in range(3):
+            for i in range(MAX_DIMENSION):
                 retval.append(RefineRegionRightEdge[i])
             return retval
         def __set__(self, val):
             cdef int i
             global RefineRegionRightEdge
-            for i in range(3):
+            for i in range(MAX_DIMENSION):
                 RefineRegionRightEdge[i] = val[i]
 
     property RefineRegionAutoAdjust:
@@ -743,13 +768,13 @@ cdef class _global_data:
             print "Returning a copy of PointSourceGravityPosition"
             global PointSourceGravityPosition
             retval = []
-            for i in range(3):
+            for i in range(MAX_DIMENSION):
                 retval.append(PointSourceGravityPosition[i])
             return retval
         def __set__(self, val):
             cdef int i
             global PointSourceGravityPosition
-            for i in range(3):
+            for i in range(MAX_DIMENSION):
                 PointSourceGravityPosition[i] = val[i]
 
     property PointSourceGravityConstant:
@@ -1093,16 +1118,16 @@ cdef class _global_data:
             print "Returning a copy of StaticRefineRegionLeftEdge"
             global StaticRefineRegionLeftEdge
             retval = []
-            for i in range(1000):
+            for i in range(MAX_STATIC_REGIONS):
                 retval.append([])
-                for j in range(3):
+                for j in range(MAX_DIMENSION):
                     retval[-1].append(StaticRefineRegionLeftEdge[i][j])
             return retval
         def __set__(self, val):
             cdef int i, j
             global StaticRefineRegionLeftEdge
-            for i in range(1000):
-                for j in range(3):
+            for i in range(MAX_STATIC_REGIONS):
+                for j in range(MAX_DIMENSION):
                     StaticRefineRegionLeftEdge[i][j] = val[i][j]
 
     property StaticRefineRegionRightEdge:
@@ -1110,16 +1135,16 @@ cdef class _global_data:
             print "Returning a copy of StaticRefineRegionRightEdge"
             global StaticRefineRegionRightEdge
             retval = []
-            for i in range(1000):
+            for i in range(MAX_STATIC_REGIONS):
                 retval.append([])
-                for j in range(3):
+                for j in range(MAX_DIMENSION):
                     retval[-1].append(StaticRefineRegionRightEdge[i][j])
             return retval
         def __set__(self, val):
             cdef int i, j
             global StaticRefineRegionRightEdge
-            for i in range(1000):
-                for j in range(3):
+            for i in range(MAX_STATIC_REGIONS):
+                for j in range(MAX_DIMENSION):
                     StaticRefineRegionRightEdge[i][j] = val[i][j]
 
     property StaticRefineRegionLevel:
@@ -1127,13 +1152,13 @@ cdef class _global_data:
             print "Returning a copy of StaticRefineRegionLevel"
             global StaticRefineRegionLevel
             retval = []
-            for i in range(1000):
+            for i in range(MAX_STATIC_REGIONS):
                 retval.append(StaticRefineRegionLevel[i])
             return retval
         def __set__(self, val):
             cdef int i
             global StaticRefineRegionLevel
-            for i in range(1000):
+            for i in range(MAX_STATIC_REGIONS):
                 StaticRefineRegionLevel[i] = val[i]
 
     property MyProcessorNumber:
@@ -1301,13 +1326,13 @@ cdef class _global_data:
             print "Returning a copy of MinimumSlopeForRefinement"
             global MinimumSlopeForRefinement
             retval = []
-            for i in range(7):
+            for i in range(MAX_FLAGGING_METHODS):
                 retval.append(MinimumSlopeForRefinement[i])
             return retval
         def __set__(self, val):
             cdef int i
             global MinimumSlopeForRefinement
-            for i in range(7):
+            for i in range(MAX_FLAGGING_METHODS):
                 MinimumSlopeForRefinement[i] = val[i]
 
     property SlopeFlaggingFields:
@@ -1315,13 +1340,13 @@ cdef class _global_data:
             print "Returning a copy of SlopeFlaggingFields"
             global SlopeFlaggingFields
             retval = []
-            for i in range(7):
+            for i in range(MAX_FLAGGING_METHODS):
                 retval.append(SlopeFlaggingFields[i])
             return retval
         def __set__(self, val):
             cdef int i
             global SlopeFlaggingFields
-            for i in range(7):
+            for i in range(MAX_FLAGGING_METHODS):
                 SlopeFlaggingFields[i] = val[i]
 
     property MinimumOverDensityForRefinement:
@@ -1329,13 +1354,13 @@ cdef class _global_data:
             print "Returning a copy of MinimumOverDensityForRefinement"
             global MinimumOverDensityForRefinement
             retval = []
-            for i in range(7):
+            for i in range(MAX_FLAGGING_METHODS):
                 retval.append(MinimumOverDensityForRefinement[i])
             return retval
         def __set__(self, val):
             cdef int i
             global MinimumOverDensityForRefinement
-            for i in range(7):
+            for i in range(MAX_FLAGGING_METHODS):
                 MinimumOverDensityForRefinement[i] = val[i]
 
     property MinimumMassForRefinement:
@@ -1343,13 +1368,13 @@ cdef class _global_data:
             print "Returning a copy of MinimumMassForRefinement"
             global MinimumMassForRefinement
             retval = []
-            for i in range(7):
+            for i in range(MAX_FLAGGING_METHODS):
                 retval.append(MinimumMassForRefinement[i])
             return retval
         def __set__(self, val):
             cdef int i
             global MinimumMassForRefinement
-            for i in range(7):
+            for i in range(MAX_FLAGGING_METHODS):
                 MinimumMassForRefinement[i] = val[i]
 
     property MinimumMassForRefinementLevelExponent:
@@ -1357,13 +1382,13 @@ cdef class _global_data:
             print "Returning a copy of MinimumMassForRefinementLevelExponent"
             global MinimumMassForRefinementLevelExponent
             retval = []
-            for i in range(7):
+            for i in range(MAX_FLAGGING_METHODS):
                 retval.append(MinimumMassForRefinementLevelExponent[i])
             return retval
         def __set__(self, val):
             cdef int i
             global MinimumMassForRefinementLevelExponent
-            for i in range(7):
+            for i in range(MAX_FLAGGING_METHODS):
                 MinimumMassForRefinementLevelExponent[i] = val[i]
 
     property DepositPositionsParticleSmoothRadius:
@@ -1475,13 +1500,13 @@ cdef class _global_data:
             print "Returning a copy of TimeActionType"
             global TimeActionType
             retval = []
-            for i in range(10):
+            for i in range(MAX_TIME_ACTIONS):
                 retval.append(TimeActionType[i])
             return retval
         def __set__(self, val):
             cdef int i
             global TimeActionType
-            for i in range(10):
+            for i in range(MAX_TIME_ACTIONS):
                 TimeActionType[i] = val[i]
 
     property TimeActionTime:
@@ -1489,13 +1514,13 @@ cdef class _global_data:
             print "Returning a copy of TimeActionTime"
             global TimeActionTime
             retval = []
-            for i in range(10):
+            for i in range(MAX_TIME_ACTIONS):
                 retval.append(TimeActionTime[i])
             return retval
         def __set__(self, val):
             cdef int i
             global TimeActionTime
-            for i in range(10):
+            for i in range(MAX_TIME_ACTIONS):
                 TimeActionTime[i] = val[i]
 
     property TimeActionRedshift:
@@ -1503,13 +1528,13 @@ cdef class _global_data:
             print "Returning a copy of TimeActionRedshift"
             global TimeActionRedshift
             retval = []
-            for i in range(10):
+            for i in range(MAX_TIME_ACTIONS):
                 retval.append(TimeActionRedshift[i])
             return retval
         def __set__(self, val):
             cdef int i
             global TimeActionRedshift
-            for i in range(10):
+            for i in range(MAX_TIME_ACTIONS):
                 TimeActionRedshift[i] = val[i]
 
     property TimeActionParameter:
@@ -1517,13 +1542,13 @@ cdef class _global_data:
             print "Returning a copy of TimeActionParameter"
             global TimeActionParameter
             retval = []
-            for i in range(10):
+            for i in range(MAX_TIME_ACTIONS):
                 retval.append(TimeActionParameter[i])
             return retval
         def __set__(self, val):
             cdef int i
             global TimeActionParameter
-            for i in range(10):
+            for i in range(MAX_TIME_ACTIONS):
                 TimeActionParameter[i] = val[i]
 
     property TracerParticleOn:
@@ -1547,13 +1572,13 @@ cdef class _global_data:
             print "Returning a copy of TracerParticleCreationLeftEdge"
             global TracerParticleCreationLeftEdge
             retval = []
-            for i in range(3):
+            for i in range(MAX_DIMENSION):
                 retval.append(TracerParticleCreationLeftEdge[i])
             return retval
         def __set__(self, val):
             cdef int i
             global TracerParticleCreationLeftEdge
-            for i in range(3):
+            for i in range(MAX_DIMENSION):
                 TracerParticleCreationLeftEdge[i] = val[i]
 
     property TracerParticleCreationRightEdge:
@@ -1561,13 +1586,13 @@ cdef class _global_data:
             print "Returning a copy of TracerParticleCreationRightEdge"
             global TracerParticleCreationRightEdge
             retval = []
-            for i in range(3):
+            for i in range(MAX_DIMENSION):
                 retval.append(TracerParticleCreationRightEdge[i])
             return retval
         def __set__(self, val):
             cdef int i
             global TracerParticleCreationRightEdge
-            for i in range(3):
+            for i in range(MAX_DIMENSION):
                 TracerParticleCreationRightEdge[i] = val[i]
 
     property ParticleTypeInFile:
@@ -1631,13 +1656,13 @@ cdef class _global_data:
             print "Returning a copy of TaskMap"
             global TaskMap
             retval = []
-            for i in range(16384):
+            for i in range(MAX_NUMBER_OF_TASKS):
                 retval.append(TaskMap[i])
             return retval
         def __set__(self, val):
             cdef int i
             global TaskMap
-            for i in range(16384):
+            for i in range(MAX_NUMBER_OF_TASKS):
                 TaskMap[i] = val[i]
 
     property NodeMem:
@@ -1645,13 +1670,13 @@ cdef class _global_data:
             print "Returning a copy of NodeMem"
             global NodeMem
             retval = []
-            for i in range(1024):
+            for i in range(MAX_NUMBER_OF_NODES):
                 retval.append(NodeMem[i])
             return retval
         def __set__(self, val):
             cdef int i
             global NodeMem
-            for i in range(1024):
+            for i in range(MAX_NUMBER_OF_NODES):
                 NodeMem[i] = val[i]
 
     property NodeMap:
@@ -1659,13 +1684,13 @@ cdef class _global_data:
             print "Returning a copy of NodeMap"
             global NodeMap
             retval = []
-            for i in range(1024):
+            for i in range(MAX_NUMBER_OF_NODES):
                 retval.append(NodeMap[i])
             return retval
         def __set__(self, val):
             cdef int i
             global NodeMap
-            for i in range(1024):
+            for i in range(MAX_NUMBER_OF_NODES):
                 NodeMap[i] = val[i]
 
     property LoadGridDataAtStart:
@@ -1705,13 +1730,13 @@ cdef class _global_data:
             print "Returning a copy of timer"
             global timer
             retval = []
-            for i in range(40):
+            for i in range(MAX_COUNTERS):
                 retval.append(timer[i])
             return retval
         def __set__(self, val):
             cdef int i
             global timer
-            for i in range(40):
+            for i in range(MAX_COUNTERS):
                 timer[i] = val[i]
 
     property counter:
@@ -1719,13 +1744,13 @@ cdef class _global_data:
             print "Returning a copy of counter"
             global counter
             retval = []
-            for i in range(40):
+            for i in range(MAX_COUNTERS):
                 retval.append(counter[i])
             return retval
         def __set__(self, val):
             cdef int i
             global counter
-            for i in range(40):
+            for i in range(MAX_COUNTERS):
                 counter[i] = val[i]
 
     property traceMEM:
@@ -1837,13 +1862,13 @@ cdef class _global_data:
             print "Returning a copy of MovieDataField"
             global MovieDataField
             retval = []
-            for i in range(6):
+            for i in range(MAX_MOVIE_FIELDS):
                 retval.append(MovieDataField[i])
             return retval
         def __set__(self, val):
             cdef int i
             global MovieDataField
-            for i in range(6):
+            for i in range(MAX_MOVIE_FIELDS):
                 MovieDataField[i] = val[i]
 
     property MovieSkipTimestep:
@@ -2203,13 +2228,13 @@ cdef class _global_data:
             print "Returning a copy of ConstantAcceleration"
             global ConstantAcceleration
             retval = []
-            for i in range(3):
+            for i in range(MAX_DIMENSION):
                 retval.append(ConstantAcceleration[i])
             return retval
         def __set__(self, val):
             cdef int i
             global ConstantAcceleration
-            for i in range(3):
+            for i in range(MAX_DIMENSION):
                 ConstantAcceleration[i] = val[i]
 
     property Mu:
@@ -2709,13 +2734,13 @@ cdef class _global_data:
             print "Returning a copy of FieldsToInterpolate"
             global FieldsToInterpolate
             retval = []
-            for i in range(20):
+            for i in range(MAX_NUMBER_OF_BARYON_FIELDS):
                 retval.append(FieldsToInterpolate[i])
             return retval
         def __set__(self, val):
             cdef int i
             global FieldsToInterpolate
-            for i in range(20):
+            for i in range(MAX_NUMBER_OF_BARYON_FIELDS):
                 FieldsToInterpolate[i] = val[i]
 
     property RadiativeTransferCoupledRateSolver:
@@ -2779,13 +2804,13 @@ cdef class _global_data:
             print "Returning a copy of TopGridDx"
             global TopGridDx
             retval = []
-            for i in range(3):
+            for i in range(MAX_DIMENSION):
                 retval.append(TopGridDx[i])
             return retval
         def __set__(self, val):
             cdef int i
             global TopGridDx
-            for i in range(3):
+            for i in range(MAX_DIMENSION):
                 TopGridDx[i] = val[i]
 
     property ShearingBoxProblemType:
@@ -2929,13 +2954,13 @@ cdef class _global_data:
             print "Returning a copy of CosmologyOutputRedshift"
             global CosmologyOutputRedshift
             retval = []
-            for i in range(500):
+            for i in range(MAX_NUMBER_OF_OUTPUT_REDSHIFTS):
                 retval.append(CosmologyOutputRedshift[i])
             return retval
         def __set__(self, val):
             cdef int i
             global CosmologyOutputRedshift
-            for i in range(500):
+            for i in range(MAX_NUMBER_OF_OUTPUT_REDSHIFTS):
                 CosmologyOutputRedshift[i] = val[i]
 
     property CosmologyOutputRedshiftTime:
@@ -2943,13 +2968,13 @@ cdef class _global_data:
             print "Returning a copy of CosmologyOutputRedshiftTime"
             global CosmologyOutputRedshiftTime
             retval = []
-            for i in range(500):
+            for i in range(MAX_NUMBER_OF_OUTPUT_REDSHIFTS):
                 retval.append(CosmologyOutputRedshiftTime[i])
             return retval
         def __set__(self, val):
             cdef int i
             global CosmologyOutputRedshiftTime
-            for i in range(500):
+            for i in range(MAX_NUMBER_OF_OUTPUT_REDSHIFTS):
                 CosmologyOutputRedshiftTime[i] = val[i]
 
     property NumberOfStarParticles:
@@ -3173,13 +3198,13 @@ cdef class _global_data:
             print "Returning a copy of StarClusterRegionLeftEdge"
             global StarClusterRegionLeftEdge
             retval = []
-            for i in range(3):
+            for i in range(MAX_DIMENSION):
                 retval.append(StarClusterRegionLeftEdge[i])
             return retval
         def __set__(self, val):
             cdef int i
             global StarClusterRegionLeftEdge
-            for i in range(3):
+            for i in range(MAX_DIMENSION):
                 StarClusterRegionLeftEdge[i] = val[i]
 
     property StarClusterRegionRightEdge:
@@ -3187,13 +3212,13 @@ cdef class _global_data:
             print "Returning a copy of StarClusterRegionRightEdge"
             global StarClusterRegionRightEdge
             retval = []
-            for i in range(3):
+            for i in range(MAX_DIMENSION):
                 retval.append(StarClusterRegionRightEdge[i])
             return retval
         def __set__(self, val):
             cdef int i
             global StarClusterRegionRightEdge
-            for i in range(3):
+            for i in range(MAX_DIMENSION):
                 StarClusterRegionRightEdge[i] = val[i]
 
     property MBHMinDynamicalTime:
@@ -3297,13 +3322,13 @@ cdef class _global_data:
             print "Returning a copy of CommunicationReceiveCallType"
             global CommunicationReceiveCallType
             retval = []
-            for i in range(50000):
+            for i in range(MAX_RECEIVE_BUFFERS):
                 retval.append(CommunicationReceiveCallType[i])
             return retval
         def __set__(self, val):
             cdef int i
             global CommunicationReceiveCallType
-            for i in range(50000):
+            for i in range(MAX_RECEIVE_BUFFERS):
                 CommunicationReceiveCallType[i] = val[i]
 
     property CommunicationReceiveDependsOn:
@@ -3311,13 +3336,13 @@ cdef class _global_data:
             print "Returning a copy of CommunicationReceiveDependsOn"
             global CommunicationReceiveDependsOn
             retval = []
-            for i in range(50000):
+            for i in range(MAX_RECEIVE_BUFFERS):
                 retval.append(CommunicationReceiveDependsOn[i])
             return retval
         def __set__(self, val):
             cdef int i
             global CommunicationReceiveDependsOn
-            for i in range(50000):
+            for i in range(MAX_RECEIVE_BUFFERS):
                 CommunicationReceiveDependsOn[i] = val[i]
 
     property CommunicationReceiveArgument:
@@ -3325,16 +3350,16 @@ cdef class _global_data:
             print "Returning a copy of CommunicationReceiveArgument"
             global CommunicationReceiveArgument
             retval = []
-            for i in range(3):
+            for i in range(MAX_DIMENSION):
                 retval.append([])
-                for j in range(50000):
+                for j in range(MAX_RECEIVE_BUFFERS):
                     retval[-1].append(CommunicationReceiveArgument[i][j])
             return retval
         def __set__(self, val):
             cdef int i, j
             global CommunicationReceiveArgument
-            for i in range(3):
-                for j in range(50000):
+            for i in range(MAX_DIMENSION):
+                for j in range(MAX_RECEIVE_BUFFERS):
                     CommunicationReceiveArgument[i][j] = val[i][j]
 
     property CommunicationReceiveArgumentInt:
@@ -3342,16 +3367,16 @@ cdef class _global_data:
             print "Returning a copy of CommunicationReceiveArgumentInt"
             global CommunicationReceiveArgumentInt
             retval = []
-            for i in range(3):
+            for i in range(MAX_DIMENSION):
                 retval.append([])
-                for j in range(50000):
+                for j in range(MAX_RECEIVE_BUFFERS):
                     retval[-1].append(CommunicationReceiveArgumentInt[i][j])
             return retval
         def __set__(self, val):
             cdef int i, j
             global CommunicationReceiveArgumentInt
-            for i in range(3):
-                for j in range(50000):
+            for i in range(MAX_DIMENSION):
+                for j in range(MAX_RECEIVE_BUFFERS):
                     CommunicationReceiveArgumentInt[i][j] = val[i][j]
 
 # END GLOBAL DATA HANDLER

@@ -1,6 +1,9 @@
 from stdlib cimport *
 
 include "enzo_magic_numbers.pxi"
+
+cnp.import_array() # After magic numbers so we get the API name
+
 include "enzo_globals.pxi"
 include "enzo_fluxes.pxi"
 include "enzo_external_boundary.pxi"
