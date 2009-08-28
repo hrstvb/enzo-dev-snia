@@ -15,3 +15,7 @@ for g in [g1, g2, g3]: pnum += g.ParticleNumber.size
 print pf.h.gridNumberOfParticles.sum()
 print g1.NumberOfParticles + g2.NumberOfParticles + g3.NumberOfParticles
 print pnum
+print g1.PotentialField
+
+import enzo_wrap.grid_serialize as gs
+gd = gs.serialize(g)
