@@ -79,7 +79,7 @@ public:
   void  MarkForDeletion(void) { type = TO_DELETE; };
   void  AddMass(float dM) { Mass += dM; };
   bool  HasAccretion(void) { return (DeltaMass > 0); };
-  void  ResetAccretion(void) { if (type != BlackHole) DeltaMass = 0.0; };
+  void  ResetAccretion(void) { if (type != BlackHole && type != MBH) DeltaMass = 0.0; };
   bool  IsActive(void) { return type >= 0; }
   bool  IsUnborn(void) { return type < 0; }
   FLOAT *ReturnPosition(void) { return pos; }
@@ -123,10 +123,10 @@ public:
 				    double &EjectaMetalDensity,
 				    float DensityUnits, float LengthUnits, 
 				    float TemperatureUnits, float TimeUnits,
-				    float VelocityUnits);
+				    float VelocityUnits, float dtForThisStar);
 
   int FindFeedbackSphere(LevelHierarchyEntry *LevelArray[], int level,
-			 float &Radius, double &EjectaDensity, 
+			 float &Radius, double &EjectaDensity, double &EjectaThermalEnergy,
 			 int &SphereContained, int &SkipMassRemoval,
 			 float DensityUnits, float LengthUnits, 
 			 float TemperatureUnits, float TimeUnits,
