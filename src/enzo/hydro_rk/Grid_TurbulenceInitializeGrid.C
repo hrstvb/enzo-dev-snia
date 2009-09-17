@@ -474,6 +474,7 @@ int grid::TurbulenceInitializeGrid(float CloudDensity, float CloudSoundSpeed, FL
 
   /* Initialize driving force field = efficiency * density * velocity / t_ff*/
 
+
   if (UseDrivingField) {
     float k1, k2, dk;
     k1 = 3.0;
@@ -554,11 +555,12 @@ int grid::TurbulenceInitializeGrid(float CloudDensity, float CloudSoundSpeed, FL
     }
 
   }
-
+  printf("Grid_TurbInit: line 558\n");
   for (dim = 0; dim < GridRank; dim++) {
     delete [] TurbulenceVelocity[dim];
     delete [] DrivingField[dim];
   }    
+  printf("Grid_TurbInit: line 563\n");
 
   /* Put a sink particle if we are studying massive star formation */
 

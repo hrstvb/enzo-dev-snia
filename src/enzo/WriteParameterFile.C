@@ -294,6 +294,8 @@ int WriteParameterFile(FILE *fptr, TopGridData &MetaData)
   fprintf(fptr, "HaloFinderSubfind              = %"ISYM"\n", HaloFinderSubfind);
   fprintf(fptr, "HaloFinderCycleSkip            = %"ISYM"\n", 
 	  HaloFinderCycleSkip);
+  fprintf(fptr, "HaloFinderRunAfterOutput       = %"ISYM"\n", 
+	  HaloFinderRunAfterOutput);
   fprintf(fptr, "HaloFinderOutputParticleList   = %"ISYM"\n", 
 	  HaloFinderOutputParticleList);
   fprintf(fptr, "HaloFinderMinimumSize          = %"ISYM"\n", 
@@ -547,22 +549,24 @@ int WriteParameterFile(FILE *fptr, TopGridData &MetaData)
           PopIIISupernovaRadius);
   fprintf(fptr, "PopIIISupernovaUseColour              = %"ISYM"\n\n",
           PopIIISupernovaUseColour);
-  fprintf(fptr, "MBHMinDynamicalTime            = %"GSYM"\n",
+  fprintf(fptr, "MBHMinDynamicalTime             = %"GSYM"\n",
           MBHMinDynamicalTime);
-  fprintf(fptr, "MBHMinimumMass                 = %"GSYM"\n",
+  fprintf(fptr, "MBHMinimumMass                  = %"GSYM"\n",
           MBHMinimumMass);
-  fprintf(fptr, "MBHFeedbackThermal             = %"ISYM"\n",
+  fprintf(fptr, "MBHAccretingMassRatio           = %"GSYM"\n",
+          MBHAccretingMassRatio);
+  fprintf(fptr, "MBHFeedbackThermal              = %"ISYM"\n",
 	  MBHFeedbackThermal);
-  fprintf(fptr, "MBHFeedbackRadius              = %"GSYM"\n",
+  fprintf(fptr, "MBHFeedbackRadius               = %"GSYM"\n",
           MBHFeedbackRadius);
-  fprintf(fptr, "MBHFeedbackRadiativeEfficiency = %"GSYM"\n",
+  fprintf(fptr, "MBHFeedbackRadiativeEfficiency  = %"GSYM"\n",
           MBHFeedbackRadiativeEfficiency);
-  fprintf(fptr, "MBHFeedbackThermalCoupling     = %"GSYM"\n",
+  fprintf(fptr, "MBHFeedbackThermalCoupling      = %"GSYM"\n",
           MBHFeedbackThermalCoupling);
-  fprintf(fptr, "MBHCombineRadius               = %"GSYM"\n",
+  fprintf(fptr, "MBHFeedbackMassEjectionFraction = %"GSYM"\n",
+          MBHFeedbackMassEjectionFraction);
+  fprintf(fptr, "MBHCombineRadius                = %"GSYM"\n",
           MBHCombineRadius);
-  fprintf(fptr, "MBHIonizingLuminosity          = %lg\n\n",
-          MBHIonizingLuminosity);
 
   /* Most Stanford additions: */
 

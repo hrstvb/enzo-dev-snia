@@ -60,7 +60,7 @@ int GetUnits(float *DensityUnits, float *LengthUnits,
  
 int CheckShearingBoundaryConsistency(TopGridData &MetaData); 
 
-int ReadParameterFile(FILE *fptr, TopGridData &MetaData, float *Initialdt)
+int ReadParameterFile(FILE *fptr, TopGridData &MetaData, float &Initialdt)
 {
   /* declarations */
 
@@ -608,15 +608,17 @@ int ReadParameterFile(FILE *fptr, TopGridData &MetaData, float *Initialdt)
 		  &MBHMinDynamicalTime);
     ret += sscanf(line, "MBHMinimumMass = %"FSYM, 
 		  &MBHMinimumMass);
+    ret += sscanf(line, "MBHAccretingMassRatio = %"FSYM, 
+		  &MBHAccretingMassRatio);
     ret += sscanf(line, "MBHFeedbackThermal = %"ISYM, 
 		  &MBHFeedbackThermal);
     ret += sscanf(line, "MBHFeedbackRadius = %"FSYM, &MBHFeedbackRadius);
     ret += sscanf(line, "MBHFeedbackRadiativeEfficiency = %"FSYM, &MBHFeedbackRadiativeEfficiency);
     ret += sscanf(line, "MBHFeedbackThermalCoupling = %"FSYM, &MBHFeedbackThermalCoupling);
+    ret += sscanf(line, "MBHFeedbackMassEjectionFraction = %"FSYM, 
+		  &MBHFeedbackMassEjectionFraction);
     ret += sscanf(line, "MBHCombineRadius = %"FSYM,
 		  &MBHCombineRadius);
-    ret += sscanf(line, "MBHIonizingLuminosity = %lf", 
-		  &MBHIonizingLuminosity);
 
     /* Read Movie Dump parameters */
 
@@ -661,6 +663,8 @@ int ReadParameterFile(FILE *fptr, TopGridData &MetaData, float *Initialdt)
     ret += sscanf(line, "HaloFinderSubfind = %"ISYM, &HaloFinderSubfind);
     ret += sscanf(line, "HaloFinderOutputParticleList = %"ISYM, 
 		  &HaloFinderOutputParticleList);
+    ret += sscanf(line, "HaloFinderRunAfterOutput = %"ISYM, 
+		  &HaloFinderRunAfterOutput);
     ret += sscanf(line, "HaloFinderLinkingLength = %"FSYM, 
 		  &HaloFinderLinkingLength);
     ret += sscanf(line, "HaloFinderMinimumSize = %"ISYM, &HaloFinderMinimumSize);
@@ -685,16 +689,16 @@ int ReadParameterFile(FILE *fptr, TopGridData &MetaData, float *Initialdt)
     /* Read MHD Paramters */
     ret += sscanf(line, "UseDivergenceCleaning = %d", &UseDivergenceCleaning);
     ret += sscanf(line, "DivergenceCleaningBoundaryBuffer = %d", &DivergenceCleaningBoundaryBuffer);
-    ret += sscanf(line, "DivergenceCleaningThreshold = %f", &DivergenceCleaningThreshold);
-    ret += sscanf(line, "PoissonApproximationThreshold = %f", &PoissonApproximationThreshold);
-    ret += sscanf(line, "AngularVelocity = %f", &AngularVelocity);
-    ret += sscanf(line, "VelocityGradient = %f", &VelocityGradient);
+    ret += sscanf(line, "DivergenceCleaningThreshold = %"FSYM, &DivergenceCleaningThreshold);
+    ret += sscanf(line, "PoissonApproximationThreshold = %"FSYM, &PoissonApproximationThreshold);
+    ret += sscanf(line, "AngularVelocity = %"FSYM, &AngularVelocity);
+    ret += sscanf(line, "VelocityGradient = %"FSYM, &VelocityGradient);
     ret += sscanf(line, "UseDrivingField = %d", &UseDrivingField);
-    ret += sscanf(line, "DrivingEfficiency = %f", &DrivingEfficiency);
+    ret += sscanf(line, "DrivingEfficiency = %"FSYM, &DrivingEfficiency);
 
     ret += sscanf(line, "StringKick = %d", &StringKick);
     ret += sscanf(line, "UsePhysicalUnit = %d", &UsePhysicalUnit);
-    ret += sscanf(line, "Theta_Limiter = %f", &Theta_Limiter);
+    ret += sscanf(line, "Theta_Limiter = %"FSYM, &Theta_Limiter);
     ret += sscanf(line, "RKOrder = %d", &RKOrder);
     ret += sscanf(line, "UseFloor = %d", &UseFloor);
     ret += sscanf(line, "UseViscosity = %d", &UseViscosity);
@@ -777,7 +781,7 @@ int ReadParameterFile(FILE *fptr, TopGridData &MetaData, float *Initialdt)
 	fprintf(stderr, "warning: the following parameter line was not interpreted:\n%s", line);
  
   }
- 
+
   /* clean up */
  
   delete [] dummy;
@@ -1118,15 +1122,13 @@ int ReadParameterFile(FILE *fptr, TopGridData &MetaData, float *Initialdt)
    for (int i=0; i<MetaData.TopGridRank;i++)
     TopGridDx[i]=(DomainRightEdge[i]-DomainLeftEdge[i])/MetaData.TopGridDims[i];
 
-  if (debug) 
-    fprintf(stderr, "ReadParameter INITIALDT ::::::::::: %16.8e\n", Initialdt);
-
  //  for (int i=0; i<MetaData.TopGridRank; i++)
 //      fprintf (stderr, "read  %"ISYM"  %"ISYM" \n", 
 // 	      MetaData.LeftFaceBoundaryCondition[i], 
 // 	      MetaData.RightFaceBoundaryCondition[i]);
 
   if (UseCUDA) {
+    LoadBalancing = 0; // Should explore how LoadBalancing = 1 gives problems with CUDA
 #ifndef ECUDA
     printf("This executable was compiled without CUDA support.\n");
     printf("use \n");

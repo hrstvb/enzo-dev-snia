@@ -451,10 +451,8 @@ int EvolveLevel(TopGridData *MetaData, LevelHierarchyEntry *LevelArray[],
 			  Exterior, LevelArray[level]);
 #endif
 
-
-
     /* Finalize (accretion, feedback, etc.) star particles */
- 
+
     StarParticleFinalize(Grids, MetaData, NumberOfGrids, LevelArray,
 			 level, AllStars);
 
@@ -604,7 +602,6 @@ int EvolveLevel(TopGridData *MetaData, LevelHierarchyEntry *LevelArray[],
  
   /* If possible & desired, report on memory usage. */
  
-
   ReportMemoryUsage("Memory usage report: Evolve Level");
  
 #ifdef USE_JBPERF
