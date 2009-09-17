@@ -127,8 +127,7 @@ int grid::AddFeedbackSphere(Star *cstar, int level, float radius, float Velocity
   float outerRadius2;
 
   // Correct for exaggerated influence radius for pair-instability supernovae
-  if (cstar->FeedbackFlag == SUPERNOVA ||
-      cstar->FeedbackFlag == MBH_THERMAL)
+  if (cstar->FeedbackFlag == SUPERNOVA)
     radius /= 8.0;
 
   // Correct if the volume with 27 cells is larger than the energy bubble volume
@@ -206,26 +205,18 @@ int grid::AddFeedbackSphere(Star *cstar, int level, float radius, float Velocity
 	    /*
 	    if (i==GridDimension[0]/2 && j==GridDimension[1]/2 && k==GridDimension[2]/2) {
 	      fprintf(stderr, "Time = %g\n", Time);
-	      fprintf(stderr, "dtFixed = %g\n", dtFixed);
+	      fprintf(stderr, "dtFixed in G_AFS.C = %g\n", dtFixed);
 	      fprintf(stderr, "EjectaDensity = %g\n", EjectaDensity);
 	      fprintf(stderr, "EjectaThermalEnergy = %g\n\n", EjectaThermalEnergy);}
 	    */
 
 	    /* Add total energies of spheres together, then divide by
 	       density to get specific energy */
-	    /* For MBH_THERMAL, different definition for EjectaThermalEnergy is used;
-	       see Star_CalculateFeedbackParameters.C  - Ji-hoon Kim */
 
 	    if (GENum >= 0 && DualEnergyFormalism) {
-	      if (cstar->FeedbackFlag != MBH_THERMAL) {
-		newGE = (OldDensity * BaryonField[GENum][index] +
-			 ramp * factor * EjectaDensity * EjectaThermalEnergy) /
-		  BaryonField[DensNum][index];
-	      } else {
-		newGE = (OldDensity * BaryonField[GENum][index] +
-			 ramp * factor * EjectaThermalEnergy) /
-		  BaryonField[DensNum][index];	      
-	      }
+	      newGE = (OldDensity * BaryonField[GENum][index] +
+		       ramp * factor * EjectaDensity * EjectaThermalEnergy) /
+		BaryonField[DensNum][index];
 	      newGE = min(newGE, maxGE);  
 //	      newGE = ramp * EjectaThermalEnergy;
 //	      printf("AddSN: rho = %"GSYM"=>%"GSYM", GE = %"GSYM"=>%"GSYM", drho = %"GSYM", dE = %"GSYM"\n",
@@ -238,19 +229,20 @@ int grid::AddFeedbackSphere(Star *cstar, int level, float radius, float Velocity
 
 	    } else {
 
-	      if (cstar->FeedbackFlag != MBH_THERMAL) {
-		newGE = (OldDensity * BaryonField[TENum][index] +
-			 ramp * factor * EjectaDensity * EjectaThermalEnergy) /
-		  BaryonField[DensNum][index];
-	      } else {
-		newGE = (OldDensity * BaryonField[TENum][index] +
-			 ramp * factor * EjectaThermalEnergy) /
-		  BaryonField[DensNum][index];	      
-	      }
+	      newGE = (OldDensity * BaryonField[TENum][index] +
+		       ramp * factor * EjectaDensity * EjectaThermalEnergy) /
+		BaryonField[DensNum][index];
+
+#define NOT_SEDOV_TEST
+#ifdef SEDOV_TEST
+	      newGE = (OldDensity * BaryonField[TENum][index] +
+		       ramp * factor * EjectaThermalEnergy) /
+		BaryonField[DensNum][index];
+#endif
 	      newGE = min(newGE, maxGE);  
 	      /*
 	      if (i==GridDimension[0]/2 && j==GridDimension[1]/2 && k==GridDimension[2]/2) {
-	      printf("AddSN: rho = %"GSYM"=>%"GSYM", GE = %"GSYM"=>%"GSYM", drho = %"GSYM", dE = %"GSYM"\n",
+	      fprintf(stderr, "AddSN: rho = %"GSYM"=>%"GSYM", GE = %"GSYM"=>%"GSYM", drho = %"GSYM", dE = %"GSYM"\n",
 		     OldDensity, BaryonField[DensNum][index], 
 		     BaryonField[TENum][index], newGE, EjectaDensity,
 		     EjectaThermalEnergy);}

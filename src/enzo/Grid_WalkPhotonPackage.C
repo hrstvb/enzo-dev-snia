@@ -161,7 +161,7 @@ int grid::WalkPhotonPackage(PhotonPackageEntry **PP,
     ENZO_FAIL("");
   }
 
-  //  if (DEBUG) fprintf(stderr,"%"GSYM" %"GSYM" %"GSYM". \n", dir_vec[0],dir_vec[1],dir_vec[2]);
+  if (DEBUG) fprintf(stderr,"grid::WalkPhotonPackage: %"GSYM" %"GSYM" %"GSYM". \n", dir_vec[0],dir_vec[1],dir_vec[2]);
 
   // Quantities that help finding which cell index am I in ? 
 
