@@ -19,6 +19,7 @@
 #include <stdio.h>
 #include <math.h>
 #include <unistd.h>
+#include "performance.h"
 #include "ErrorExceptions.h"
 #include "macros_and_parameters.h"
 #include "typedefs.h"
@@ -154,6 +155,8 @@ int SetLevelTimeStep(HierarchyEntry *Grids[], int NumberOfGrids, int level,
 		     float dtLevelAbove);
 
 void my_exit(int status);
+int CallPython(LevelHierarchyEntry *LevelArray[], TopGridData *MetaData,
+               int level);
 
 /* Counters for performance and cycle counting. */
 
@@ -186,6 +189,13 @@ int EvolveLevel_RK2(TopGridData *MetaData, LevelHierarchyEntry *LevelArray[],
   int cycle = 0, counter = 0, grid1, subgrid, iLevel;
   HierarchyEntry *NextGrid;
   double time1 = ReturnWallTime();
+
+  // Update lcaperf "level" attribute
+
+  Eint32 jb_level = level;
+#ifdef USE_JBPERF
+  jbPerf.attribute ("level",&jb_level,JB_INT);
+#endif
 
 #ifdef FLUX_FIX
   /* Create a SUBling list of the subgrids */
@@ -428,12 +438,12 @@ int EvolveLevel_RK2(TopGridData *MetaData, LevelHierarchyEntry *LevelArray[],
 
 	if (HydroMethod == HD_RK)
 	  Grids[grid1]->GridData->RungeKutta2_1stStep
-	    (LevelCycleCount[level], SubgridFluxesEstimate[grid1], 
+	    (SubgridFluxesEstimate[grid1], 
 	     NumberOfSubgrids[grid1], level, Exterior);
 
 	else if (HydroMethod == MHD_RK) {
 	  Grids[grid1]->GridData->MHDRK2_1stStep
-	    (LevelCycleCount[level], SubgridFluxesEstimate[grid1], 
+	    (SubgridFluxesEstimate[grid1], 
 	     NumberOfSubgrids[grid1], level, Exterior);
 	}
       } // ENDIF UseHydro
@@ -462,13 +472,13 @@ int EvolveLevel_RK2(TopGridData *MetaData, LevelHierarchyEntry *LevelArray[],
       if (UseHydro) {
 	if (HydroMethod == HD_RK)
 	  Grids[grid1]->GridData->RungeKutta2_2ndStep
-	    (LevelCycleCount[level], SubgridFluxesEstimate[grid1], 
+	    (SubgridFluxesEstimate[grid1], 
 	     NumberOfSubgrids[grid1], level, Exterior);
 
 	else if (HydroMethod == MHD_RK) {
 
 	  Grids[grid1]->GridData->MHDRK2_2ndStep
-	    (LevelCycleCount[level], SubgridFluxesEstimate[grid1], 
+	    (SubgridFluxesEstimate[grid1], 
 	     NumberOfSubgrids[grid1], level, Exterior);
 	  
 	  if (UseAmbipolarDiffusion) {
@@ -558,6 +568,7 @@ int EvolveLevel_RK2(TopGridData *MetaData, LevelHierarchyEntry *LevelArray[],
     for (grid1 = 0; grid1 < NumberOfGrids; grid1++)
       Grids[grid1]->GridData->DeleteGravitatingMassFieldParticles();
 
+
     /* ----------------------------------------- */
     /* Evolve the next level down (recursively). */
 
@@ -573,6 +584,24 @@ int EvolveLevel_RK2(TopGridData *MetaData, LevelHierarchyEntry *LevelArray[],
     }
     time1 = ReturnWallTime();
 
+#ifdef USE_JBPERF
+    // Update lcaperf "level" attribute
+
+    jbPerf.attribute ("level",&jb_level,JB_INT);
+#endif
+
+    OutputFromEvolveLevel(LevelArray,MetaData,level,Exterior);
+    CallPython(LevelArray, MetaData, level);
+
+    /* Update SubcycleNumber and the timestep counter for the
+       streaming data if this is the bottom of the hierarchy -- Note
+       that this not unique based on which level is the highest, it
+       just keeps going */
+
+    if (LevelArray[level+1] == NULL) {
+      MetaData->SubcycleNumber++;
+      MetaData->TimestepCounter++;
+    }
 
     /* ------------------------------------------------------- */
     /* For each grid,
@@ -615,29 +644,27 @@ int EvolveLevel_RK2(TopGridData *MetaData, LevelHierarchyEntry *LevelArray[],
        Don't bother on the last cycle, as we'll rebuild this grid soon. */
 
     //    LevelWallTime[level] += ReturnWallTime() - time1;
-    if (dtThisLevelSoFar < dtLevelAbove) {
-      if (RebuildHierarchy(MetaData, LevelArray, level) == FAIL) {
-	fprintf(stderr, "Error in RebuildHierarchy.\n");
-	ENZO_FAIL("");
-      }
-    }
+    if (dtThisLevelSoFar < dtLevelAbove) 
+      RebuildHierarchy(MetaData, LevelArray, level);
+
     time1 = ReturnWallTime();
 
     /* Count up number of grids on this level. */
 
     int GridMemory, NumberOfCells, CellsTotal, Particles;
     float AxialRatio, GridVolume;
+#ifdef UNUSED
     for (grid1 = 0; grid1 < NumberOfGrids; grid1++) {
       Grids[grid1]->GridData->CollectGridInformation
         (GridMemory, GridVolume, NumberOfCells, AxialRatio, CellsTotal, Particles);
       //      LevelZoneCycleCount[level] += NumberOfCells;
-      //      if (MyProcessorNumber == Grids[grid1]->GridData->ReturnProcessorNumber())
+      //if (MyProcessorNumber == Grids[grid1]->GridData->ReturnProcessorNumber())
       //	LevelZoneCycleCountPerProc[level] += NumberOfCells;
     }
-
+#endif
 
     cycle++;
-    //    LevelCycleCount[level]++;
+    LevelCycleCount[level]++;
 
   } // while (dtThisLevelSoFar < dtLevelAbove)
 

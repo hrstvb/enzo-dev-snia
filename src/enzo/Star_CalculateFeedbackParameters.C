@@ -31,7 +31,7 @@ void Star::CalculateFeedbackParameters(float &Radius,
 				       double &EjectaMetalDensity,
 				       float DensityUnits, float LengthUnits, 
 				       float TemperatureUnits, float TimeUnits,
-				       float VelocityUnits)
+				       float VelocityUnits, float dtForThisStar)
 {
 
   // Parameters for the Stroemgen sphere in Whalen et al. (2004)
@@ -41,7 +41,7 @@ void Star::CalculateFeedbackParameters(float &Radius,
   const float	WhalenMaxVelocity = 35;		// km/s
 
   const double pc = 3.086e18, Msun = 1.989e33, Grav = 6.673e-8, yr = 3.1557e7, Myr = 3.1557e13, 
-    k_b = 1.38e-16, m_h = 1.673e-24, c = 3.0e10, sigma_T = 6.65e-25;
+    k_b = 1.38e-16, m_h = 1.673e-24, c = 3.0e10, sigma_T = 6.65e-25, h=0.70;
 
   float StarLevelCellWidth;
   double EjectaVolume, SNEnergy, HeliumCoreMass, Delta_SF;
@@ -178,49 +178,68 @@ void Star::CalculateFeedbackParameters(float &Radius,
     mdot = 4.0 * PI * Grav*Grav * (old_mass * old_mass * Msun) * 
       (density * DensityUnits) / pow(c_s * c_s + v_rel * v_rel, 1.5);
 
-    /* end of the code snippets from Star_CalculateMassAccretion.C */
+    // No accretion if the BH is in some low-density and cold cell.
+    if (density < tiny_number || temperature[index] < 10 || isnan(mdot))
+      mdot = 0.0;
 
-    // Calculate Eddington accretion rate in Msun/s; the Eddington limit for feedback
-    mdot_Edd = 4.0 * PI * Grav * old_mass * m_h /
-      MBHFeedbackRadiativeEfficiency / sigma_T / c; 
+    if (this->type == MBH) { 
+      // For MBH, MBHAccretingMassRatio is implemented because
+      // since we already resolve Bondi radius, the local density we used to calculate mdot 
+      // could be higher than what you are supposed to use for mdot, thus overestimating mdot.
+      // So MBHAccretingMassRatio < 1 can be used to fix this.  Ji-hoon Kim Sep.2009
+      mdot *= MBHAccretingMassRatio;
+
+      // Calculate Eddington accretion rate in Msun/s; the Eddington limit for feedback
+      mdot_Edd = 4.0 * PI * Grav * old_mass * m_h /
+	MBHFeedbackRadiativeEfficiency / sigma_T / c; 
+
+      mdot = min(mdot, mdot_Edd); 
+    }
+
+    /* end of the code snippets from Star_CalculateMassAccretion.C */
 
     // Inject energy into a sphere
     Radius = MBHFeedbackRadius * pc / LengthUnits;
     Radius = max(Radius, 2*StarLevelCellWidth);
 
     // Release MBH-AGN thermal energy constantly. Here no mass is released.
-    EjectaVolume = 4.0/3.0 * 3.14159 * pow(Radius*LengthUnits, 3);
-    EjectaDensity = 0.0;
-    EjectaMetalDensity = 0.0; 
+    EjectaVolume = 4.0/3.0 * PI * pow(Radius*LengthUnits, 3);
+    EjectaDensity = mdot * Msun * c * c * dtForThisStar * TimeUnits * MBHFeedbackMassEjectionFraction /
+      EjectaVolume / DensityUnits;
+    EjectaMetalDensity = EjectaDensity * StarMetalYield; //very fiducial
 
-    /* Now calculate the feedback parameter based on mdot estimated above.  - Ji-hoon Kim 
-       For CONT_SUPERNOVA, the unit of EjectaThermalEnergy was ergs/g, 
-       but here for MBH_THERMAL, the unit of EjectaThermalEnergy is ergs/cm^3/sec.
-       This is because EjectaDensity = 0 in this case; see Grid_AddFeedbackSphere.C  - Ji-hoon Kim */
+    /* Now calculate the feedback parameter based on mdot estimated above.  
+       The unit of EjectaThermalEnergy was ergs/g = cm^2/s^2.   
+       - Ji-hoon Kim  Aug.2009 */
 
     EjectaThermalEnergy = MBHFeedbackThermalCoupling * MBHFeedbackRadiativeEfficiency * 
-      min(mdot, mdot_Edd) * Msun * c * c * CurrentGrid->dtFixed * TimeUnits /
-      EjectaVolume / DensityUnits / (VelocityUnits * VelocityUnits) ; //Eq.(34) in Springel (2005) 
+      mdot * Msun * c * c * dtForThisStar * TimeUnits / 
+      EjectaDensity / EjectaVolume / (VelocityUnits * VelocityUnits) ; //Eq.(34) in Springel (2005) 
 
 #define NOT_SEDOV_TEST
 #ifdef SEDOV_TEST
-    // For Sedov test (This EjectaThermalEnergy is not quite intuitive, but fits the definition at least.)
+    /* For Sedov test, here the unit of EjectaThermalEnergy is ergs/cm^3.  
+       This is because EjectaDensity = 0 in this case; see Grid_AddFeedbackSphere.C  */
     /*
+    EjectaDensity = 0.0;
     EjectaThermalEnergy = 1.0e50 /
       EjectaVolume / DensityUnits / (VelocityUnits * VelocityUnits);  
     */
     
     // For Ostriker & McKee test (the continuous energy injection case, variation of Sedov test)
-    fprintf(stderr, "dtFixed = %g", CurrentGrid->dtFixed);
-    EjectaThermalEnergy = 1.0e50 * CurrentGrid->dtFixed * TimeUnits / 2.0e11 /
+    EjectaDensity = 0.0;
+    EjectaThermalEnergy = 1.0e40 * dtForThisStar * TimeUnits /
       EjectaVolume / DensityUnits / (VelocityUnits * VelocityUnits);  
+
+    fprintf(stderr, "EjectaThermalEnergy = %g in S_CFP.C\n", EjectaThermalEnergy);
+    fprintf(stderr, "Radius = %g in S_CFP.C\n", Radius);
+    /*
+    fprintf(stderr, "dtForThisStar in S_CFP.C = %g\n", dtForThisStar);
+    fprintf(stderr, "1.0e50 * dtForThisStar * TimeUnits / 2.0e11 = %g\n", 1.0e50 * dtForThisStar * TimeUnits / 2.0e11);
+    */
     
 #endif
 
-    // Exaggerate influence radius because the blastwave will enter
-    // into some of the surrounding parent grids within the next
-    // timestep if we inject the energy into a small radius.
-    Radius *= 8.0;    
     break;
 
   } // ENDSWITCH FeedbackFlag
