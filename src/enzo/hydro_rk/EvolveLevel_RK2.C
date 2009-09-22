@@ -10,6 +10,7 @@
 /         Evolve Hydro & MHD using 2nd order Runge-Kutta method.
 /
 ************************************************************************/
+#include "preincludes.h"
 
 #ifdef USE_MPI
 #include "mpi.h"
@@ -32,6 +33,9 @@
 #include "Grid.h"
 #include "LevelHierarchy.h"
 #include "../hydro_rk/tools.h"
+#ifdef TRANSFER
+#include "ImplicitProblemABC.h"
+#endif
 
 /* function prototypes */
 
@@ -97,7 +101,11 @@ int SetBoundaryConditions(HierarchyEntry *Grids[], int NumberOfGrids,
 
 
 int OutputFromEvolveLevel(LevelHierarchyEntry *LevelArray[],TopGridData *MetaData,
-		      int level, ExternalBoundary *Exterior);
+		      int level, ExternalBoundary *Exterior
+#ifdef TRANSFER
+			  , ImplicitProblemABC *ImplicitSolver
+#endif
+			  );
 
 #ifdef FLUX_FIX
 int UpdateFromFinerGrids(int level, HierarchyEntry *Grids[], int NumberOfGrids,
@@ -181,7 +189,11 @@ static int StaticLevelZero = 0;
 /* EvolveGrid function */
 
 int EvolveLevel_RK2(TopGridData *MetaData, LevelHierarchyEntry *LevelArray[],
-		    int level, float dtLevelAbove, ExternalBoundary *Exterior, FLOAT dt0)
+		    int level, float dtLevelAbove, ExternalBoundary *Exterior, 
+#ifdef TRANSFER
+		    ImplicitProblemABC *ImplicitSolver,
+#endif
+		    FLOAT dt0)
 {
 
   float dtThisLevelSoFar = 0.0, dtThisLevel, dtGrid;
@@ -551,7 +563,11 @@ int EvolveLevel_RK2(TopGridData *MetaData, LevelHierarchyEntry *LevelArray[],
     StarParticleFinalize(Grids, MetaData, NumberOfGrids, LevelArray,
 			 level, AllStars);
 
-    OutputFromEvolveLevel(LevelArray,MetaData,level,Exterior);
+    OutputFromEvolveLevel(LevelArray,MetaData,level,Exterior
+#ifdef TRANSFER
+			  , ImplicitSolver
+#endif
+			  );
     CallPython(LevelArray, MetaData, level);
 
     /* For each grid, delete the GravitatingMassFieldParticles. */
@@ -567,7 +583,11 @@ int EvolveLevel_RK2(TopGridData *MetaData, LevelHierarchyEntry *LevelArray[],
 
     //    LevelWallTime[level] += ReturnWallTime() - time1;
     if (LevelArray[level+1] != NULL) {
-      if (EvolveLevel_RK2(MetaData, LevelArray, level+1, dtThisLevel, Exterior, dt0) 
+      if (EvolveLevel_RK2(MetaData, LevelArray, level+1, dtThisLevel, Exterior, 
+#ifdef TRANSFER
+			  ImplicitSolver, 
+#endif
+			  dt0) 
 	  == FAIL) {
 	fprintf(stderr, "Error in EvolveLevel_RK2 (%d).\n", level);
 	ENZO_FAIL("");

@@ -40,6 +40,7 @@ class Star
   int		 Identifier;
   int		 level;
   int		 GridID;
+  bool           AddedEmissivity;
   star_type	 type;
 
   friend class grid;
@@ -64,8 +65,10 @@ public:
 
   // Routines
   star_type ReturnType(void) { return type; };
+  FLOAT* ReturnPosition(void) { return pos; };
   int   ReturnID(void) { return Identifier; };
   float ReturnMass(void) { return Mass; };
+  float ReturnBirthTime(void) { return BirthTime; };
   float ReturnLifetime(void) { return LifeTime; };
   int   ReturnLevel(void) { return level; };
   void  ReduceLevel(void) { level--; };
@@ -82,6 +85,8 @@ public:
   void  ResetAccretion(void) { if (type != BlackHole && type != MBH) DeltaMass = 0.0; };
   bool  IsActive(void) { return type >= 0; }
   bool  IsUnborn(void) { return type < 0; }
+  bool  ReturnEmissivityFlag(void) { return AddedEmissivity; };
+  void  AddEmissivityFlag(void) { this->AddedEmissivity = true; };
   FLOAT *ReturnPosition(void) { return pos; }
   void	ConvertAllMassesToSolar(void);
   void	ConvertMassToSolar(void);
