@@ -40,7 +40,7 @@ int RadiativeTransferPrepare(LevelHierarchyEntry *LevelArray[], int level,
 {
 
   /* Return if this does not concern us */
-  if (!(RadiativeTransfer)) return SUCCESS;
+  if (!RadiativeTransfer) return SUCCESS;
 
   FLOAT GridTime, dt;
   GridTime = LevelArray[level]->GridData->ReturnTime();
@@ -65,10 +65,7 @@ int RadiativeTransferPrepare(LevelHierarchyEntry *LevelArray[], int level,
      EvolvePhotons to populate the grids with the proper rates. */
 
   if (MetaData->FirstTimestepAfterRestart == TRUE)
-    if (RestartPhotons(MetaData, LevelArray, AllStars) == FAIL) {
-      fprintf(stderr, "Error in RestartPhotons.\n");
-      ENZO_FAIL("");
-    }
+    RestartPhotons(MetaData, LevelArray, AllStars);
 
   return SUCCESS;
 

@@ -34,6 +34,9 @@
 /                Optional StaticSiblingList for root grid
 /  modified8:  April, 2009 by John Wise
 /                Added star particle class and radiative transfer
+/  modified9:  June, 2009 by MJT, DC, JHW, TA
+/                Cleaned up error handling and created new routines for
+/                computing the timestep, output, handling fluxes
 /
 /  PURPOSE:
 /    This routine is the main grid evolution function.  It assumes that the
@@ -62,6 +65,7 @@
 /          the list of subgrids.
 /
 ************************************************************************/
+#include "preincludes.h"
  
 #ifdef USE_MPI
 #include "mpi.h"
@@ -85,6 +89,9 @@
 #include "TopGridData.h"
 #include "LevelHierarchy.h"
 #include "CommunicationUtilities.h"
+#ifdef TRANSFER
+#include "ImplicitProblemABC.h"
+#endif
  
 /* function prototypes */
  
@@ -162,7 +169,11 @@ int RadiationFieldUpdate(LevelHierarchyEntry *LevelArray[], int level,
 
 
 int OutputFromEvolveLevel(LevelHierarchyEntry *LevelArray[],TopGridData *MetaData,
-		      int level, ExternalBoundary *Exterior);
+			  int level, ExternalBoundary *Exterior
+#ifdef TRANSFER
+			  , ImplicitProblemABC *ImplicitSolver
+#endif
+			  );
  
 int ComputeRandomForcingNormalization(LevelHierarchyEntry *LevelArray[],
                                       int level, TopGridData *MetaData,
@@ -186,6 +197,11 @@ int StarParticleFinalize(HierarchyEntry *Grids[], TopGridData *MetaData,
 			 int level, Star *&AllStars);
 int AdjustRefineRegion(LevelHierarchyEntry *LevelArray[], 
 		       TopGridData *MetaData, int EL_level);
+int SetLevelTimeStep(HierarchyEntry *Grids[], int NumberOfGrids, int level,
+		     float *dtThisLevelSoFar, float *dtThisLevel,
+		     float dtLevelAbove);
+int CallPython(LevelHierarchyEntry *LevelArray[], TopGridData *MetaData,
+               int level);
 
 #ifdef TRANSFER
 int EvolvePhotons(TopGridData *MetaData, LevelHierarchyEntry *LevelArray[],
@@ -193,17 +209,11 @@ int EvolvePhotons(TopGridData *MetaData, LevelHierarchyEntry *LevelArray[],
 int RadiativeTransferPrepare(LevelHierarchyEntry *LevelArray[], int level,
 			     TopGridData *MetaData, Star *&AllStars,
 			     float dtLevelAbove);
+int RadiativeTransferCallFLD(LevelHierarchyEntry *LevelArray[], int level,
+			     TopGridData *MetaData, Star *AllStars, 
+			     ImplicitProblemABC *ImplicitSolver);
 #endif
-
-int SetLevelTimeStep(HierarchyEntry *Grids[],
-        int NumberOfGrids, int level,
-        float *dtThisLevelSoFar, float *dtThisLevel,
-        float dtLevelAbove);
-
 void my_exit(int status);
- 
-int CallPython(LevelHierarchyEntry *LevelArray[], TopGridData *MetaData,
-               int level);
  
 int LevelCycleCount[MAX_DEPTH_OF_HIERARCHY];
 int MovieCycleCount[MAX_DEPTH_OF_HIERARCHY];
@@ -220,7 +230,11 @@ static int StaticLevelZero = 0;
 #endif
 
 int EvolveLevel(TopGridData *MetaData, LevelHierarchyEntry *LevelArray[],
-		int level, float dtLevelAbove, ExternalBoundary *Exterior)
+		int level, float dtLevelAbove, ExternalBoundary *Exterior
+#ifdef TRANSFER
+		, ImplicitProblemABC *ImplicitSolver
+#endif
+		)
 {
   /* Declarations */
 
@@ -319,6 +333,8 @@ int EvolveLevel(TopGridData *MetaData, LevelHierarchyEntry *LevelArray[],
 #ifdef TRANSFER
     RadiativeTransferPrepare(LevelArray, level, MetaData, AllStars, 
 			     dtLevelAbove);
+    RadiativeTransferCallFLD(LevelArray, level, MetaData, AllStars, 
+			     ImplicitSolver);
 #endif /* TRANSFER */
  
     CreateFluxes(Grids,SubgridFluxesEstimate,NumberOfGrids,NumberOfSubgrids);
@@ -505,7 +521,11 @@ int EvolveLevel(TopGridData *MetaData, LevelHierarchyEntry *LevelArray[],
     MetaData->FirstTimestepAfterRestart = FALSE;
 
     if (LevelArray[level+1] != NULL) {
-      if (EvolveLevel(MetaData, LevelArray, level+1, dtThisLevel, Exterior) == FAIL) {
+      if (EvolveLevel(MetaData, LevelArray, level+1, dtThisLevel, Exterior
+#ifdef TRANSFER
+		      , ImplicitSolver
+#endif
+		      ) == FAIL) {
 	fprintf(stderr, "Error in EvolveLevel (%"ISYM").\n", level);
 	ENZO_FAIL("");
       }
@@ -519,7 +539,11 @@ int EvolveLevel(TopGridData *MetaData, LevelHierarchyEntry *LevelArray[],
     jbPerf.attribute ("level",&jb_level,JB_INT);
 #endif
 
-    OutputFromEvolveLevel(LevelArray,MetaData,level,Exterior);
+    OutputFromEvolveLevel(LevelArray, MetaData, level, Exterior
+#ifdef TRANSFER
+			  , ImplicitSolver
+#endif
+			  );
     CallPython(LevelArray, MetaData, level);
 
     /* Update SubcycleNumber and the timestep counter for the
@@ -567,10 +591,7 @@ int EvolveLevel(TopGridData *MetaData, LevelHierarchyEntry *LevelArray[],
  
     if (RadiationFieldType >= 10 && RadiationFieldType <= 11 &&
 	level <= RadiationFieldLevelRecompute)
-      if (RadiationFieldUpdate(LevelArray, level, MetaData) == FAIL) {
-	fprintf(stderr, "Error in RecomputeRadiationField.\n");
-	ENZO_FAIL("");
-      }
+      RadiationFieldUpdate(LevelArray, level, MetaData);
  
     /* Rebuild the Grids on the next level down.
        Don't bother on the last cycle, as we'll rebuild this grid soon. */
