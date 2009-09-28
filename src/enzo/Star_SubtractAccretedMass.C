@@ -43,7 +43,9 @@ int Star::SubtractAccretedMass(void)
 
   /* Check if the star type is correct */
 
-  if ((this->type != BlackHole && abs(this->type) != MBH) || (this->CurrentGrid == NULL))
+  if ((this->type != BlackHole && abs(this->type) != MBH) || 
+      (this->CurrentGrid == NULL) ||
+      (MBHAccretion != 1))
     return SUCCESS;
 
   int dim, igrid[MAX_DIMENSION], index, size;
@@ -114,8 +116,7 @@ int Star::SubtractAccretedMass(void)
   /* Subtract accreted mass from the grids, and calculate new densities */
   
   OldDensity = CurrentGrid->BaryonField[DensNum][index];
-  NewDensity = OldDensity - this->DeltaMass * Msun / 
-    pow(CurrentGrid->CellWidth[0][0]*LengthUnits, 3.0) / DensityUnits;    
+  NewDensity = OldDensity - this->DeltaMass / MassConversion;  
   factor = NewDensity / OldDensity;
 
   denssink  = (this->Mass - this->DeltaMass) / MassConversion; //check below
