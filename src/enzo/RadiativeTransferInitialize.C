@@ -10,6 +10,7 @@
 /          ray tracer that is not included in the normal routines.
 /
 ************************************************************************/
+#include "preincludes.h"
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -27,13 +28,20 @@
 #include "LevelHierarchy.h"
 #include "StarParticleData.h"
 #include "RadiativeTransferHealpixRoutines.h"
+#include "ImplicitProblemABC.h"
+#include "FSProb.h"
+#include "NullProblem.h"
 
 int RadiativeTransferReadParameters(FILE *fptr);
 int ReadPhotonSources(FILE *fptr, FLOAT CurrentTime);
+int DetermineParallelism(HierarchyEntry *TopGrid, TopGridData &MetaData);
+void my_exit(int status);
 
-
-int RadiativeTransferInitialize(char *ParameterFile, TopGridData &MetaData,
+int RadiativeTransferInitialize(char *ParameterFile, 
+				HierarchyEntry &TopGrid, 
+				TopGridData &MetaData,
 				ExternalBoundary &Exterior, 
+				ImplicitProblemABC* &ImplicitSolver,
 				LevelHierarchyEntry *LevelArray[])
 {
 
@@ -61,23 +69,21 @@ int RadiativeTransferInitialize(char *ParameterFile, TopGridData &MetaData,
     ENZO_FAIL("");
   }
 
-  if (RadiativeTransferReadParameters(fptr) == FAIL) {
-    fprintf(stderr, "Error in RadiativeTransferReadParameters.\n");;
-    ENZO_FAIL("");
-  }
+  RadiativeTransferReadParameters(fptr);
   rewind(fptr);
   if (ProblemType == 50)
-    if (ReadPhotonSources(fptr, MetaData.Time) == FAIL) {
-      fprintf(stderr, "Error in ReadPhotonSources.\n");;
-      ENZO_FAIL("");
-    }
+    ReadPhotonSources(fptr, MetaData.Time);
+
   PhotonTime = MetaData.Time;
+  MetaData.FLDTime = MetaData.Time;
+  MetaData.dtFLD = 0.0;
 
   fclose(fptr);
 
   if (RadiativeTransferPhotonEscapeRadius > 0) {
     PhotonEscapeFilename = new char[80];
-    sprintf(PhotonEscapeFilename, "fesc%4.4d.dat", MetaData.DataDumpNumber-1);
+    sprintf(PhotonEscapeFilename, "fesc%4.4d.dat", 
+	    (Eint32) MetaData.DataDumpNumber-1);
   }
 
   /* Create all StarParticles from normal particles */
@@ -145,10 +151,7 @@ int RadiativeTransferInitialize(char *ParameterFile, TopGridData &MetaData,
 
   for (level = 0; level < MAX_DEPTH_OF_HIERARCHY; level++)
     for (Temp = LevelArray[level]; Temp; Temp = Temp->NextGridThisLevel)
-      if (Temp->GridData->AddFields(TypesToAdd, FieldsToAdd) == FAIL) {
-	fprintf(stderr, "Error in grid::AddFields\n");
-	ENZO_FAIL("");
-      }
+      Temp->GridData->AddFields(TypesToAdd, FieldsToAdd);
 
   /* Add external boundaries */
 
@@ -214,6 +217,30 @@ int RadiativeTransferInitialize(char *ParameterFile, TopGridData &MetaData,
     mk_xy2pix(&x2pix[0], &y2pix[0]);
   }
 
+  // if using an implicit RT solver, declare the appropriate object here
+
+  if (RadiativeTransferFLD == 1)
+    ImplicitSolver = new FSProb; 
+  else
+    ImplicitSolver = new NullProblem;
+
+  // if using the FLD solver, initialize it here
+#ifdef USE_HYPRE
+  if (RadiativeTransferFLD == 1) {
+    ImplicitSolver = new FSProb;
+    if (DetermineParallelism(&TopGrid, MetaData) == FAIL) {
+      fprintf(stderr,"Error in DetermineParallelism.\n");
+      my_exit(EXIT_FAILURE);
+    }
+  } else {
+    ImplicitSolver = new NullProblem;
+  }
+  ImplicitSolver->Initialize(TopGrid, MetaData);
+#else
+  if (RadiativeTransferFLD == 1)
+    ENZO_FAIL("Error: cannot use RadiativeTransferFLD without HYPRE.");
+#endif
+
   return SUCCESS;
 
-    }
+}
