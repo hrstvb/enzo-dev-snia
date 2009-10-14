@@ -45,7 +45,7 @@ OUTPUT   = out.compile
 ENZO_DIR = .
 MODULES  = 
 
-SVN      = hg
+SVN      = /u/ki/mturk/Research/local/yt-x86_64/bin/hg
 
 #-----------------------------------------------------------------------
 # Make.config.settings is used for setting default values to all compile-time 
