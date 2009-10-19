@@ -203,8 +203,7 @@ int OutputFromEvolveLevel(LevelHierarchyEntry *LevelArray[],TopGridData *MetaDat
     my_exit(EXIT_SUCCESS);
   }
   
-  if( Write == TRUE ){
-    
+  if( Write == TRUE ){    
     LevelHierarchyEntry *Temp2 = LevelArray[0];
     while (Temp2->NextGridThisLevel != NULL)
       Temp2 = Temp2->NextGridThisLevel; /* ugh: find last in linked list */
