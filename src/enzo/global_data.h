@@ -65,6 +65,7 @@ EXTERN int extract;
 	    51 = ThermalPancake test
 	    60 = TurbulenceSimulation
 	                                                                  */
+EXTERN int CheckpointRestart;
 EXTERN int ProblemType;
 
 /* Hydrodynamics method:
@@ -289,6 +290,8 @@ EXTERN fpos_t  BaryonFileNamePosition;
 /* Multi-species rate equation flag and associated data. */
 
 EXTERN int MultiSpecies;
+EXTERN int PrimordialChemistrySolver;
+EXTERN int ThreeBodyRate;
 EXTERN RateDataType RateData;
 
 /* Glover chemistry/cooling network flags */
@@ -360,6 +363,14 @@ EXTERN int ExtractFieldsOnly;
 EXTERN int First_Pass;
 EXTERN int UnigridTranspose;
 EXTERN int NumberOfRootGridTilesPerDimensionPerProcessor;
+
+/* Parameters that control density dex output */
+
+EXTERN int OutputOnDensity;
+EXTERN float StartDensityOutputs;
+EXTERN float CurrentDensityOutput;
+EXTERN float CurrentMaximumDensity;
+EXTERN float IncrementDensityOutput;
 
 /* Parameter(s) for embedded python execution */
 EXTERN int PythonSubcycleSkip;
@@ -669,6 +680,10 @@ EXTERN float dtPhoton;
 EXTERN RadiationSourceEntry *GlobalRadiationSources;
 EXTERN SuperSourceEntry *SourceClusteringTree;
 EXTERN SuperSourceEntry *OldSourceClusteringTree;
+
+EXTERN int LevelCycleCount[MAX_DEPTH_OF_HIERARCHY];
+EXTERN float dtThisLevelSoFar[MAX_DEPTH_OF_HIERARCHY];
+EXTERN float dtThisLevel[MAX_DEPTH_OF_HIERARCHY];
 
 /* [0]: Emitted photons
    [1]: escaped past 0.5 RadiativeTransferPhotonEscapeRadius
