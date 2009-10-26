@@ -309,9 +309,9 @@
     ifeq ($(CONFIG_PACKED_AMR),yes)
         ERROR_PACKED_AMR = 0
         ASSEMBLE_PACKED_AMR_DEFINES = \
-                 -DUSE_HDF5_GROUPS
+                 -DUSE_HDF5_GROUPS \
+                 -DSINGLE_HDF5_OPEN_ON_INPUT
     endif
-#                 -DSINGLE_HDF5_OPEN_ON_INPUT
 
     # Settings for not using PACKED_AMR mods
 
@@ -610,6 +610,33 @@
 	$(error Illegal value '$(CONFIG_PHOTON)' for $$(CONFIG_PHOTON))
     endif
 
+#-----------------------------------------------------------------------
+# DETERMINE GRID IO SETTINGS
+#-----------------------------------------------------------------------
+
+    ERROR_NEW_GRID_IO = 1
+
+    # Settings to turn fast sibling search ON
+
+    ifeq ($(CONFIG_NEW_GRID_IO),yes)
+        ERROR_NEW_GRID_IO = 0
+        ASSEMBLE_NEW_GRID_IO_DEFINES = -DNEW_GRID_IO
+    endif
+
+    # Settings to turn new grid IO OFF
+
+    ifeq ($(CONFIG_NEW_GRID_IO),no)
+        ERROR_NEW_GRID_IO = 0
+        ASSEMBLE_NEW_GRID_IO_DEFINES =
+    endif
+
+    # error if CONFIG_NEW_GRID_IO is incorrect
+
+    ifeq ($(ERROR_NEW_GRID_IO),1)
+       .PHONY: error_NEW_GRID_IO
+       error_NEW_GRID_IO:
+	$(error Illegal value '$(CONFIG_NEW_GRID_IO)' for $$(CONFIG_NEW_GRID_IO))
+    endif
 
 #-----------------------------------------------------------------------
 # DETERMINE FAST SIBLING SETTINGS
