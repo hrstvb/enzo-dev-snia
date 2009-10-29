@@ -593,6 +593,7 @@ int SetDefaultGlobalValues(TopGridData &MetaData)
   useMHD=0;
 
   MoveParticlesBetweenSiblings = FALSE;
+  ParticleSplitterIterations = FALSE;
 
   return SUCCESS;
 }

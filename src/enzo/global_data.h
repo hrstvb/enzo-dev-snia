@@ -718,5 +718,6 @@ EXTERN float IsothermalSoundSpeed;
 EXTERN int RefineByJeansLengthUnits;
 
 EXTERN int MoveParticlesBetweenSiblings;
+EXTERN int ParticleSplitterIterations;
 
 #endif
