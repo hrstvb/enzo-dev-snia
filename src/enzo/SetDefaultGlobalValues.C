@@ -594,6 +594,7 @@ int SetDefaultGlobalValues(TopGridData &MetaData)
   useMHD=0;
 
   MoveParticlesBetweenSiblings = FALSE;
-
+  VelAnyl                     = 0;
+  BAnyl                     = 0;
   return SUCCESS;
 }
