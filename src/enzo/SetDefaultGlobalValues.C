@@ -420,6 +420,7 @@ int SetDefaultGlobalValues(TopGridData &MetaData)
   MaximumAlvenSpeed	     = 1e30;
   RiemannSolver		     = HLL;
   ReconstructionMethod	     = PLM;
+  ConservativeReconstruction = 0;
   EOSType		     = 0;
   EOSSoundSpeed		     = 2.65e4;
   EOSCriticalDensity	     = 1e-13;
@@ -435,6 +436,7 @@ int SetDefaultGlobalValues(TopGridData &MetaData)
   UseCUDA		     = 0;
   UseFloor		     = 0;
   UseViscosity		     = 0;
+  ViscosityCoefficient       = 0.;
   UseAmbipolarDiffusion	     = 0;
   UseResistivity	     = 0;
 
