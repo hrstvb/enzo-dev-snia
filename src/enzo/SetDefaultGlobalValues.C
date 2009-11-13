@@ -602,6 +602,7 @@ int SetDefaultGlobalValues(TopGridData &MetaData)
   BAnyl                     = 0;
 
   ParticleSplitterIterations = FALSE;
+  ParticleSplitterChildrenParticleSeparation = 1.0;
 
 
   return SUCCESS;
