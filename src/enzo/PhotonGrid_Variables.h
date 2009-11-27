@@ -25,3 +25,8 @@ int HasRadiation;
 // through with a cumulative optical depth >0.1.
 float MaximumkphIfront;
 int IndexOfMaximumkph;
+
+// Marker for cells traversed by a ray from a given source.  This is
+// evaluated bitwise.  E.g. 0010001001 = cell has been traced by a ray
+// from sources 0,3,7.
+int *RayMarker;

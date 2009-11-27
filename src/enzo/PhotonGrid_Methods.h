@@ -5,74 +5,74 @@
 
 /* Identify radiation pressure fields */
 
-  int IdentifyRadiationPressureFields(int &RPresNum1, int &RPresNum2,
-				      int &RPresNum3);
+int IdentifyRadiationPressureFields(int &RPresNum1, int &RPresNum2,
+				    int &RPresNum3);
 
 /* Photons: Move PhotonPackages from FromGrids[] to this one */
 
-   int MoveAllPhotonPackages(int NumberOfGrids, grid* FromGrid[]);
+int MoveAllPhotonPackages(int NumberOfGrids, grid* FromGrid[]);
 
 /* Photons: Computes photon timestep */
 
-   float ComputePhotonTimestep(void);
-   float ComputePhotonTimestepHII(float DensityUnits, float LengthUnits,
-				  float VelocityUnits, float aye, 
-				  float Ifront_kph);
+float ComputePhotonTimestep(void);
+float ComputePhotonTimestepHII(float DensityUnits, float LengthUnits,
+			       float VelocityUnits, float aye, 
+			       float Ifront_kph);
 
 /* Photons: return number of PhotonPackages. */
 
-   int ReturnNumberOfPhotonPackages(void) {return NumberOfPhotonPackages;};
+int ReturnNumberOfPhotonPackages(void) {return NumberOfPhotonPackages;};
 
 /* Photons: return PhotonPackage pointer. */
 
-   PhotonPackageEntry *ReturnPhotonPackagePointer(void) {return PhotonPackages;};
+PhotonPackageEntry *ReturnPhotonPackagePointer(void) {return PhotonPackages;};
 
 /* Photons: set number of photons. */
 
-   void SetNumberOfPhotonPackages(int num) {NumberOfPhotonPackages = num;};
+void SetNumberOfPhotonPackages(int num) {NumberOfPhotonPackages = num;};
 
 /* remove unused photon packages */ 
 
-   int CleanUpMovedPhotonPackages(void);
+int CleanUpMovedPhotonPackages(void);
 
 /* remove all photon packages */ 
 
-   int DeletePhotonPackages(void);
+int DeletePhotonPackages(void);
 
 /* Set Subgrid Marker field */
 
-   int SetSubgridMarkerFromSubgrid(grid *Subgrid, grid *CurrentGrid);
+int SetSubgridMarkerFromSubgrid(grid *Subgrid, grid *CurrentGrid);
 
 /* Return Subgrid Marker for a position */
 
-  int ReturnSubgridMarker(int &cindex, FLOAT x, FLOAT y, FLOAT z);
+int ReturnSubgridMarker(int &cindex, FLOAT x, FLOAT y, FLOAT z);
 
 /* Initialize photoionization and heating fields  */
  
-  int InitializeRadiativeTransferFields(void);
-  int AllocateInterpolatedRadiation(void);
+int InitializeRadiativeTransferFields(void);
+int AllocateInterpolatedRadiation(void);
 
 /* Flag cells to be refined by optical depth */
 
-  int FlagCellsToBeRefinedByOpticalDepth(void);
+int FlagCellsToBeRefinedByOpticalDepth(void);
 
 /* Add acceleration from radiation pressure */
 
-  int AddRadiationPressureAcceleration(void);
+int AddRadiationPressureAcceleration(void);
 
 /* Solve cooling/rate equations coupled to the radiative transfer */
 
-  int SolveCoupledRateEquations();
+int SolveCoupledRateEquations();
 
 /* Initialize ionized sphere around a source */
 
-  int InitializeSource(RadiationSourceEntry *RS);
+int InitializeSource(RadiationSourceEntry *RS);
 
 /* Communicate photon packages when rebuilding hierarchy */
 
-  int CommunicationSendPhotonPackages(grid *ToGrid, int ToProcessor,
-				      int ToNumber, int FromNumber, 
-				      PhotonPackageEntry **ToPP);
+int CommunicationSendPhotonPackages(grid *ToGrid, int ToProcessor,
+				    int ToNumber, int FromNumber, 
+				    PhotonPackageEntry **ToPP);
 
 /* Transport Photon Packages */ 
 
@@ -118,6 +118,22 @@ int MoveFinishedPhotonsBack(void) {
   FinishedPhotonPackages->NextPackage = NULL;
 
   return SUCCESS;
+}
+
+void InitializeRayMarker(void) {
+  int i, size=1;
+  for (i = 0; i < GridRank; i++) size *= GridDimension[i];
+  if (RayMarker == NULL)
+    RayMarker = new int[size];
+  for (i = 0; i < size; i++)
+    RayMarker[i] = 0;
+  return;
+}
+
+void DeleteRayMarker(void) {
+  delete [] RayMarker;
+  RayMarker = NULL;
+  return;
 }
 
 /************************************************************************

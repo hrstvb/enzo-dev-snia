@@ -584,21 +584,24 @@ int grid::WalkPhotonPackage(PhotonPackageEntry **PP,
 
     } // ENDSWITCH type
 
+    /* If not Lyman-Werner photons (done above), add to total column
+       density. */
+
+    if (type != iH2I)
+      (*PP)->ColumnDensity += dN;
+
     /* Keep track of the maximum hydrogen photo-ionization rate in the
        I-front, so we can calculate the maximum ionization timescale
        for timestepping purposes. */
 
     if (RadiativeTransferHIIRestrictedTimestep)
-      if (type == iHI || type == 4) {
-	(*PP)->ColumnDensity += dN;
-	if ((*PP)->ColumnDensity > MinTauIfront) {
+      if (type == iHI || type == 4)
+	if ((*PP)->ColumnDensity > MinTauIfront)
 	  if (BaryonField[kphNum[iHI]][index] > this->MaximumkphIfront) {
 	    this->MaximumkphIfront = BaryonField[kphNum[iHI]][index];
 	    this->IndexOfMaximumkph = index;
 	  } // ENDIF max
-	} // ENDIF tau > min_tau (I-front)
-      } // ENDIF type==iHI || Xrays
-      
+	  
     /* Acceleration due to radiation pressure */
 
     // Remember:  dA = [~] * dP * Energy / Density * r_hat

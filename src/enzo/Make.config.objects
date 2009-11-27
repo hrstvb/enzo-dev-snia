@@ -718,6 +718,7 @@ POBJS_CONFIG_LIB = \
         Grid_TransportPhotonPackages.o \
         Grid_WalkPhotonPackage.o \
         LinkedListRoutines.o \
+	OutputEscapeFraction.o \
         PhotonTestInitialize.o \
         RadiativeTransferComputeTimestep.o \
         RadiativeTransferHealpixRoutines.o \
