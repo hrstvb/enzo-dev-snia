@@ -249,6 +249,7 @@ int grid::WalkPhotonPackage(PhotonPackageEntry **PP,
   SplitCriteronIonized = dx2;
   Volume_inv = 1.0 / CellVolume;
   Area_inv = 1.0 / dx2;
+  slice_factor2 = 0.0;
 
   FLOAT emission_dt_inv = 1.0 / (*PP)->EmissionTimeInterval;
   FLOAT heat_energy;
@@ -442,12 +443,13 @@ int grid::WalkPhotonPackage(PhotonPackageEntry **PP,
 
       OpticallyThin = true;
 
-      if (RayMarker[index] >> (*PP)->SourceNumber & 1 == 0) {
+      if ((RayMarker[index] >> (*PP)->SourceNumber & 1) == 0) {
 	// Radius from source to cell center
 	for (dim = 0, cr2 = 0.0; dim < MAX_DIMENSION; dim++) {
 	  dxc = (*PP)->SourcePosition[dim] - (ce[dim] + 0.5 * dx);
 	  cr2 += dxc * dxc;
 	}
+	cr2 = max(cr2, 0.01*dx2); // make sure the rates don't go infinite
 	flux_scaling = radius*radius / cr2;
 	SkipCalculation = false;
       } // ENDIF RayMarker == false
@@ -458,7 +460,6 @@ int grid::WalkPhotonPackage(PhotonPackageEntry **PP,
     } // ENDIF OpticallyThin
     else
       OpticallyThin = false;
-
 
     /* Geometric correction factor because the ray's solid angle could
        not completely cover the cell */
@@ -509,13 +510,14 @@ int grid::WalkPhotonPackage(PhotonPackageEntry **PP,
 
 	// Optically thin rates at cell center (flux_scaling corrects
 	// for the difference in radius)
-	kestimate = flux_scaling * (*PP)->Photons * sigma[0] / solid_angle;
-	BaryonField[kphNum[type]][index] += kestimate;
-	BaryonField[gammaNum][index] += kestimate*heat_energy;
+	kestimate = thisDensity * CellVolume * flux_scaling * 
+	  (*PP)->Photons * sigma[0] / solid_angle;
+	BaryonField[kphNum[type]][index] += kestimate*factor1;
+	BaryonField[gammaNum][index] += kestimate*factor2[0];
 
 	// Mark cell for this source.  No more rays from this source
 	// can contribute to this cell.
-	RayMarker[index] |= (*PP)->SourceNumber;
+	RayMarker[index] |= (1 << (*PP)->SourceNumber);
 
 	} // ENDIF !SkipCalculation
       } // ENDIF OpticallyThin
@@ -611,13 +613,15 @@ int grid::WalkPhotonPackage(PhotonPackageEntry **PP,
 
 	    // Optically thin rates at cell center (flux_scaling
 	    // corrects for the difference in radius)
-	    kestimate = flux_scaling * (*PP)->Photons * sigma[0] / solid_angle;
-	    BaryonField[kphNum[type]][index] += kestimate;
-	    BaryonField[gammaNum][index] += kestimate*heat_energy;
+	    kestimate = thisDensity * CellVolume * flux_scaling * 
+	      (*PP)->Photons * sigma[0] / solid_angle;
+	    BaryonField[kphNum[type]][index] += kestimate * factor1 * 
+	      ion2_factor[i];
+	    BaryonField[gammaNum][index] += kestimate * factor2[i] * heat_factor;
 
 	    // Mark cell for this source.  No more rays from this
 	    // source can contribute to this cell.
-	    RayMarker[index] |= (*PP)->SourceNumber;
+	    RayMarker[index] |= (1 << (*PP)->SourceNumber);
 
 	  } // ENDIF !SkipCalculation
 	} // ENDIF OpticallyThin
@@ -678,6 +682,11 @@ int grid::WalkPhotonPackage(PhotonPackageEntry **PP,
     (*PP)->Photons     -= dP;
     (*PP)->Radius      += ddr;
 
+    if (index == 14913)
+      printf("kph=%g, Thin=%d, Skip=%d, Mark=%d, PH=%g, dP1=%g, tau=%g\n",
+	     BaryonField[kphNum[type]][index], OpticallyThin,
+	     SkipCalculation, RayMarker[index], (*PP)->Photons,
+	     dP1, tau);
     //BaryonField[kphHeIINum][index] += 1;
 
     // return in case we're pausing to merge
