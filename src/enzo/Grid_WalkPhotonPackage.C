@@ -682,11 +682,6 @@ int grid::WalkPhotonPackage(PhotonPackageEntry **PP,
     (*PP)->Photons     -= dP;
     (*PP)->Radius      += ddr;
 
-    if (index == 14913)
-      printf("kph=%g, Thin=%d, Skip=%d, Mark=%d, PH=%g, dP1=%g, tau=%g\n",
-	     BaryonField[kphNum[type]][index], OpticallyThin,
-	     SkipCalculation, RayMarker[index], (*PP)->Photons,
-	     dP1, tau);
     //BaryonField[kphHeIINum][index] += 1;
 
     // return in case we're pausing to merge
