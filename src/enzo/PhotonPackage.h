@@ -28,4 +28,5 @@ struct PhotonPackageEntry  {
   int   level;                  // level in HEALPIX terminology
   FLOAT SourcePosition[3];      // Position where package was emitted
   float SourcePositionDiff;     // Radius at which it was radiated (0 = pt src)
+  char  SourceNumber;           // Source number (for RayMarker)
 };

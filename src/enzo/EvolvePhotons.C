@@ -37,6 +37,8 @@
 #include "LevelHierarchy.h"
 #include "CommunicationUtilities.h"
 
+#define ONE_ENERGY
+
 /* function prototypes */
 void my_exit(int status);
 int CommunicationTransferPhotons(LevelHierarchyEntry *LevelArray[], 
@@ -100,7 +102,6 @@ int EvolvePhotons(TopGridData *MetaData, LevelHierarchyEntry *LevelArray[],
     /* Declarations */
 
     grid *Helper;
-    int RefinementFactors[MAX_DIMENSION];
 
     /* Create an array (Grids) of all the grids. */
 
@@ -112,7 +113,7 @@ int EvolvePhotons(TopGridData *MetaData, LevelHierarchyEntry *LevelArray[],
     int GridNum = 0, value, i, proc, lvl;
     int NumberOfGrids = 0;  
     int NumberOfSources, NumberOfSourcesInLoop, SourcesCompleted;
-    int SourcesCompletedInLoop;
+    int SourcesCompletedInLoop, NumberOfPhotonTypes, PhotonType;
 
     /* delete source if we are passed (or before) their lifetime */
 
@@ -157,6 +158,19 @@ int EvolvePhotons(TopGridData *MetaData, LevelHierarchyEntry *LevelArray[],
       continue;
     }    
 
+    /* Determine maximum number of photon types with the given
+       parameters */
+    
+#ifdef ONE_ENERGY
+    NumberOfPhotonTypes = 1;
+#else
+    NumberOfPhotonTypes = 3;
+#endif
+    if (MultiSpecies>1 && !RadiativeTransferOpticallyThinH2) 
+      NumberOfPhotonTypes++;
+    if (RadiativeTransferHydrogenOnly == TRUE) 
+      NumberOfPhotonTypes = 1;
+
     /* Create tree that clusters the sources if requested.  While
        creating tree (type SuperSource), compute position of the super
        source in each leaf. */
@@ -175,11 +189,12 @@ int EvolvePhotons(TopGridData *MetaData, LevelHierarchyEntry *LevelArray[],
     RS = GlobalRadiationSources->NextSource;
 
     /* Because the ray marking field only holds N bits of information,
-       we loop over that number of sources. */
+       we loop over that number of sources first, then photon types. */
 
     NumberOfSourcesInLoop = 8*sizeof(int);
 
     while (SourcesCompleted < NumberOfSources) {
+    for (PhotonType = 0; PhotonType < NumberOfPhotonTypes; PhotonType++) {
 
     SourcesCompletedInLoop = 0;
  
@@ -192,7 +207,8 @@ int EvolvePhotons(TopGridData *MetaData, LevelHierarchyEntry *LevelArray[],
 
 	    // Find grid
 	    if (Temp->GridData->PointInGrid(RS->Position)) {
-	      Temp->GridData->Shine(RS);
+	      Temp->GridData->Shine(RS, SourcesCompletedInLoop, PhotonType, 
+				    NumberOfPhotonTypes);
 	      Continue = FALSE; // do not continue with this source
 	    } // If source in grid
 
@@ -285,6 +301,7 @@ int EvolvePhotons(TopGridData *MetaData, LevelHierarchyEntry *LevelArray[],
 
     delete PhotonsToMove;
 
+    } // ENDFOR photon types
     } // ENDWHILE (SourcesCompleted < NumberOfSources)
 
     //  StopKeepTransportingCheck();

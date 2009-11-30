@@ -121,8 +121,9 @@ int MoveFinishedPhotonsBack(void) {
 }
 
 void InitializeRayMarker(void) {
-  int i, size=1;
-  for (i = 0; i < GridRank; i++) size *= GridDimension[i];
+  int i, size;
+  if (MyProcessorNumber != this->ProcessorNumber) return;
+  for (i = 0, size=1; i < GridRank; i++) size *= GridDimension[i];
   if (RayMarker == NULL)
     RayMarker = new int[size];
   for (i = 0; i < size; i++)
@@ -131,6 +132,7 @@ void InitializeRayMarker(void) {
 }
 
 void DeleteRayMarker(void) {
+  if (MyProcessorNumber != this->ProcessorNumber) return;
   delete [] RayMarker;
   RayMarker = NULL;
   return;
@@ -342,7 +344,8 @@ int FindPhotonNewGrid(grid **Grids0, int nGrids0, FLOAT *r,
 
 /* Create PhotonPackages for a given radiation sources   */
 
-int Shine(RadiationSourceEntry *RadiationSource);
+int Shine(RadiationSourceEntry *RadiationSource, int ID, 
+	  int PhotonType, int NumberOfPhotonTypes);
 
 /* PhotonTest: Initialize grid allowing for up to ten sources  */
 

@@ -79,9 +79,11 @@ int CommunicationReceiverPhotons(LevelHierarchyEntry *LevelArray[],
 
     NumberOfCompletedRequests = 0;
     if (DEBUG) {
-      printf("PH_CRH[%"ISYM"][a] : %"ISYM" %"ISYM" %"ISYM"\n", MyProcessorNumber, TotalReceives, 
+      printf("PH_CRH[%"ISYM"][a] : %"ISYM" %"ISYM" %"ISYM"\n", 
+	     MyProcessorNumber, TotalReceives, 
 	     ReceivesCompletedToDate, NumberOfCompletedRequests);
-      printf("PH_CRH[%"ISYM"][a1]: %"ISYM" %"ISYM" %"ISYM" %"ISYM" %"ISYM"\n", MyProcessorNumber,
+      printf("PH_CRH[%"ISYM"][a1]: %"ISYM" %"ISYM" %"ISYM" %"ISYM" %"ISYM"\n", 
+	     MyProcessorNumber,
 	     PH_CommunicationReceiveMPI_Request[0],
 	     PH_CommunicationReceiveMPI_Request[1],
 	     PH_CommunicationReceiveMPI_Request[2],
@@ -94,7 +96,8 @@ int CommunicationReceiverPhotons(LevelHierarchyEntry *LevelArray[],
 		 PH_ListOfIndices, PH_ListOfStatuses);
 
     if (DEBUG) {
-      printf("PH_CRH[%"ISYM"][b]: %"ISYM" %"ISYM" %"ISYM" (%"ISYM" %"ISYM" %"ISYM")\n", MyProcessorNumber,
+      printf("PH_CRH[%"ISYM"][b]: %"ISYM" %"ISYM" %"ISYM" "
+	     "(%"ISYM" %"ISYM" %"ISYM")\n", MyProcessorNumber,
 	     TotalReceives, ReceivesCompletedToDate, NumberOfCompletedRequests, 
 	     PH_ListOfIndices[0], PH_ListOfIndices[1], PH_ListOfIndices[2]);
       fflush(stdout);
@@ -114,16 +117,16 @@ int CommunicationReceiverPhotons(LevelHierarchyEntry *LevelArray[],
 	fprintf(stderr, "MPI Error on processor %"ISYM". "
 		"Error number %"ISYM" on request %"ISYM"\n",
 		MyProcessorNumber, PH_ListOfStatuses[index].MPI_ERROR, index);
-	fprintf(stdout, "P(%"ISYM") index %"ISYM" -- mpi error %"ISYM"\n", MyProcessorNumber,
-		index, PH_ListOfStatuses[index].MPI_ERROR);
+	fprintf(stdout, "P(%"ISYM") index %"ISYM" -- mpi error %"ISYM"\n", 
+		MyProcessorNumber, index, PH_ListOfStatuses[index].MPI_ERROR);
       }
 
       if (CompletedRequests[index] == TRUE)
 	continue;
 
       if (DEBUG) {
-	printf("PH_CRH[P%"ISYM"][%"ISYM"]: processing request %"ISYM" (addr %"ISYM")\n",
-	       MyProcessorNumber, irecv, index, 
+	printf("PH_CRH[P%"ISYM"][%"ISYM"]: processing request %"ISYM" "
+	       "(addr %"ISYM")\n", MyProcessorNumber, irecv, index, 
 	       PH_CommunicationReceiveMPI_Request[index]);
 	fflush(stdout);
       }
@@ -163,22 +166,23 @@ int CommunicationReceiverPhotons(LevelHierarchyEntry *LevelArray[],
 	  
 	lvl	 = RecvBuffer[i].ToLevel;
 	gi	 = RecvBuffer[i].ToGrid;
-	ToGrid = Grids[lvl][gi]->GridData;
+	ToGrid   = Grids[lvl][gi]->GridData;
 	ToPP	 = ToGrid->ReturnPhotonPackagePointer();
 
 	NewPack = new PhotonPackageEntry;
-	NewPack->Photons		= RecvBuffer[i].buffer.Photons;
-	NewPack->Type			= RecvBuffer[i].buffer.Type;
-	NewPack->Energy		= RecvBuffer[i].buffer.Energy;
+	NewPack->Photons       = RecvBuffer[i].buffer.Photons;
+	NewPack->Type	       = RecvBuffer[i].buffer.Type;
+	NewPack->Energy	       = RecvBuffer[i].buffer.Energy;
+	NewPack->EmissionTime  = RecvBuffer[i].buffer.EmissionTime;
+	NewPack->CurrentTime   = RecvBuffer[i].buffer.CurrentTime;
+	NewPack->ColumnDensity = RecvBuffer[i].buffer.ColumnDensity;
+	NewPack->CrossSection  = RecvBuffer[i].buffer.CrossSection;
+	NewPack->Radius	       = RecvBuffer[i].buffer.Radius;
+	NewPack->ipix	       = RecvBuffer[i].buffer.ipix;
+	NewPack->level	       = RecvBuffer[i].buffer.level;
+	NewPack->SourceNumber  = RecvBuffer[i].buffer.SourceNumber;
 	NewPack->EmissionTimeInterval = 
 	  RecvBuffer[i].buffer.EmissionTimeInterval;
-	NewPack->EmissionTime		= RecvBuffer[i].buffer.EmissionTime;
-	NewPack->CurrentTime		= RecvBuffer[i].buffer.CurrentTime;
-	NewPack->ColumnDensity	= RecvBuffer[i].buffer.ColumnDensity;
-	NewPack->CrossSection		= RecvBuffer[i].buffer.CrossSection;
-	NewPack->Radius		= RecvBuffer[i].buffer.Radius;
-	NewPack->ipix			= RecvBuffer[i].buffer.ipix;
-	NewPack->level		= RecvBuffer[i].buffer.level;
 
 	for (dim = 0; dim < MAX_DIMENSION; dim++)
 	  NewPack->SourcePosition[dim] = 
@@ -189,17 +193,13 @@ int CommunicationReceiverPhotons(LevelHierarchyEntry *LevelArray[],
 	/* Search for the corresponding SuperSource, given a source ID
 	   on the tree */
 
-//	printf("CTPhR(P%"ISYM"): Photon %"ISYM" :: lvl %"ISYM", grid %"ISYM", srcid=%"ISYM", L = %"GSYM"\n",
-//	       MyProcessorNumber, i, lvl, gi, 
+//	printf("CTPhR(P%"ISYM"): Photon %"ISYM" :: lvl %"ISYM", grid %"ISYM", "
+//	       "srcid=%"ISYM", L = %"GSYM"\n", MyProcessorNumber, i, lvl, gi, 
 //	       RecvBuffer[i].buffer.SuperSourceID, NewPack->Photons);
 
-	if (RadiativeTransferSourceClustering) {
-	  if (FindSuperSource(&NewPack, RecvBuffer[i].buffer.SuperSourceID) 
-	      == FAIL) {
-	    fprintf(stderr, "Error in FindSuperSource.\n");
-	    ENZO_FAIL("");
-	  }
-	} else
+	if (RadiativeTransferSourceClustering)
+	  FindSuperSource(&NewPack, RecvBuffer[i].buffer.SuperSourceID);
+	else
 	  NewPack->CurrentSource = NULL;
 
 	InsertPhotonAfter(ToPP, NewPack);

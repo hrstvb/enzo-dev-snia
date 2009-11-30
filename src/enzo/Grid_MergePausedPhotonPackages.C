@@ -83,7 +83,8 @@ int grid::MergePausedPhotonPackages() {
 
     // Calculate original unit directional vector
     if (pix2vec_nest((long) (1 << PP->level), PP->ipix, original_vec) == FAIL) {
-      fprintf(stderr, "grid::MergePausedPhotonPackages -- pix2vec_nest %"ISYM" %"ISYM" %"GSYM"\n",
+      fprintf(stderr, "grid::MergePausedPhotonPackages -- pix2vec_nest"
+	      " %"ISYM" %"ISYM" %"GSYM"\n",
 	      (long) (1 << PP->level), PP->ipix, PP->Photons);
       ENZO_FAIL("");
     }
@@ -117,7 +118,8 @@ int grid::MergePausedPhotonPackages() {
 
     // Calculate new pixel number with the super source
     if (vec2pix_nest( (long) (1 << PP->level), vec, &(PP->ipix) ) == FAIL) {
-      fprintf(stderr, "grid::MergePausedPhotonPackages -- vec2pix_nest %"ISYM" %"ISYM" %"GSYM"\n",
+      fprintf(stderr, "grid::MergePausedPhotonPackages -- vec2pix_nest"
+	      " %"ISYM" %"ISYM" %"GSYM"\n",
 	      (long) (1 << PP->level), PP->ipix, PP->Photons);
       ENZO_FAIL("");
     }
@@ -270,6 +272,7 @@ int grid::MergePausedPhotonPackages() {
       NewPack->ipix = TempPP[i].ipix;
       NewPack->level = TempPP[i].level;
       NewPack->SourcePositionDiff = 0.0;
+      NewPack->SourceNumber = TempPP[i].SourceNumber;
       for (dim = 0; dim < MAX_DIMENSION; dim++)
 	NewPack->SourcePosition[dim] = TempPP[i].SourcePosition[dim];
       

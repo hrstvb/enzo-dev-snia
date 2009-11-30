@@ -69,6 +69,7 @@ int grid::WalkPhotonPackage(PhotonPackageEntry **PP,
 
   float ConvertToProperNumberDensity = DensityUnits/1.673e-24f;
 
+  bool OpticallyThin, SkipCalculation;
   int i, index, dim, splitMe, direction;
   int keep_walking, count, H2Thin, type;
   int g[3], celli[3], u_dir[3], u_sign[3];
@@ -84,8 +85,9 @@ int grid::WalkPhotonPackage(PhotonPackageEntry **PP,
   FLOAT dir_vec[3], sigma[4];
   FLOAT ddr, dP, dP1, EndTime;
   FLOAT thisDensity, min_dr;
+  FLOAT kestimate, flux_scaling;
   FLOAT ce[3], nce[3];
-  FLOAT s[3], u[3], f[3], u_inv[3], r[3], dri[3];
+  FLOAT s[3], u[3], f[3], u_inv[3], r[3], dri[3], cr2, dxc;
 
   /* Check for early termination */
 
@@ -379,11 +381,6 @@ int grid::WalkPhotonPackage(PhotonPackageEntry **PP,
     // less than one box length.  Don't split beyond SplitWithinRadius
     // if the radiation is optically thin (Xray, LW)
 
-    // One ray per cell in ionized cells
-//    if (HII[cindex] > 0.5*fH*density[cindex])
-//      splitMe = omega_package*r*r > SplitCriteronIonized;
-//    else
-    //float total_r = r + (*PP)->SourcePositionDiff;
     solid_angle = radius * radius * omega_package;
     splitMe = (solid_angle > SplitCriteron);
 
@@ -437,30 +434,57 @@ int grid::WalkPhotonPackage(PhotonPackageEntry **PP,
       } // ENDFOR i
     } // ENDIF PhotonEscapeRadius > 0
 
+    /* If another ray from the same source has already touched this
+       cell, skip computation and go to the next cell.  Estimate flux
+       at the cell center, while we're at it. */
+
+    if ((*PP)->ColumnDensity < MinTauIfront) {
+
+      OpticallyThin = true;
+
+      if (RayMarker[index] >> (*PP)->SourceNumber & 1 == 0) {
+	// Radius from source to cell center
+	for (dim = 0, cr2 = 0.0; dim < MAX_DIMENSION; dim++) {
+	  dxc = (*PP)->SourcePosition[dim] - (ce[dim] + 0.5 * dx);
+	  cr2 += dxc * dxc;
+	}
+	flux_scaling = radius*radius / cr2;
+	SkipCalculation = false;
+      } // ENDIF RayMarker == false
+      else
+	// RayMarker == true -> propagate ray but no contribute to rates
+	SkipCalculation = true;
+
+    } // ENDIF OpticallyThin
+    else
+      OpticallyThin = false;
+
+
     /* Geometric correction factor because the ray's solid angle could
        not completely cover the cell */
 
-    midpoint = oldr + 0.5f*ddr - ROUNDOFF;
-    nearest_edge = -1e20;
-    for (dim = 0; dim < 3; dim++)
-      m[dim] = fabs(s[dim] + midpoint * u[dim] - (ce[dim] + dxhalf));
-    nearest_edge = max(max(m[0], m[1]), m[2]);
-    sangle_inv = 1.0 / (dtheta*radius);
-    slice_factor = min(0.5f + (dxhalf-nearest_edge) * sangle_inv, 1.0f);
-    slice_factor2 = slice_factor * slice_factor;
+    if (!OpticallyThin) {
+      midpoint = oldr + 0.5f*ddr - ROUNDOFF;
+      nearest_edge = -1e20;
+      for (dim = 0; dim < 3; dim++)
+	m[dim] = fabs(s[dim] + midpoint * u[dim] - (ce[dim] + dxhalf));
+      nearest_edge = max(max(m[0], m[1]), m[2]);
+      sangle_inv = 1.0 / (dtheta*radius);
+      slice_factor = min(0.5f + (dxhalf-nearest_edge) * sangle_inv, 1.0f);
+      slice_factor2 = slice_factor * slice_factor;
+    } // ENDIF !OpticallyThin
 
-    // Adjust length and energy due to cosmological expansion
-    // assumes that da/a=dl/l=2/3 dt/t which is strictly only true for OmegaM=1
-    // note that we only uses this locally though. 
+    /* Adjust length and energy due to cosmological expansion assumes
+     that da/a=dl/l=2/3 dt/t which is strictly only true for OmegaM=1
+     note that we only uses this locally though. */
 
-    /*
+#ifdef UNUSED
     if (ComovingCoordinates) {
       FLOAT daovera = 2/3*cdt/(*PP)->CurrentTime ;
       LengthUnits  = (LengthUnits + (1+daovera) * LengthUnits)/2;
       (*PP)->Energy  -= daovera * (*PP)->Energy;
     }
-      
-    */
+#endif
 
     /* Calculate the absorption.  There are three different cases:
        single ionizations, H2 dissociation, and X-rays. */
@@ -476,24 +500,45 @@ int grid::WalkPhotonPackage(PhotonPackageEntry **PP,
       thisDensity = PopulationFractions[type] * fields[type][index] * 
 	ConvertToProperNumberDensity; 
 
-      // optical depth of ray segment
+      // column density of ray segment
       dN = thisDensity * ddr;
-      tau = dN*sigma[0];
+      (*PP)->ColumnDensity += dN;
 
-      // at most use all photons for photo-ionizations
-      if (tau > 2.e1) dP = (1.0+ROUNDOFF) * (*PP)->Photons;
-      else if (tau > 1.e-4) 
-	dP = min((*PP)->Photons*(1-expf(-tau)), (*PP)->Photons);
-      else
-	dP = min((*PP)->Photons*tau, (*PP)->Photons);
-      dP1 = dP * slice_factor2;
+      if (OpticallyThin) {
+	if (!SkipCalculation) {
 
-      // contributions to the photoionization rate is over whole timestep
-      BaryonField[kphNum[type]][index] += dP1*factor1;
+	// Optically thin rates at cell center (flux_scaling corrects
+	// for the difference in radius)
+	kestimate = flux_scaling * (*PP)->Photons * sigma[0] / solid_angle;
+	BaryonField[kphNum[type]][index] += kestimate;
+	BaryonField[gammaNum][index] += kestimate*heat_energy;
+
+	// Mark cell for this source.  No more rays from this source
+	// can contribute to this cell.
+	RayMarker[index] |= (*PP)->SourceNumber;
+
+	} // ENDIF !SkipCalculation
+      } // ENDIF OpticallyThin
+
+      // Optically thick regime
+      else {
+	// at most use all photons for photo-ionizations
+	tau = dN*sigma[0];
+	if (tau > 2.e1) dP = (1.0+ROUNDOFF) * (*PP)->Photons;
+	else if (tau > 1.e-4) 
+	  dP = min((*PP)->Photons*(1-expf(-tau)), (*PP)->Photons);
+	else
+	  dP = min((*PP)->Photons*tau, (*PP)->Photons);
+	dP1 = dP * slice_factor2;
+
+	// contributions to the photoionization rate is over whole timestep
+	BaryonField[kphNum[type]][index] += dP1*factor1;
 	
-      // the heating rate is just the number of photo ionizations
-      // times the excess energy units here are eV/s *TimeUnits.
-      BaryonField[gammaNum][index] += dP1*factor2[0];
+	// the heating rate is just the number of photo ionizations
+	// times the excess energy units here are eV/s *TimeUnits.
+	BaryonField[gammaNum][index] += dP1*factor2[0];
+
+      } // ENDELSE OpticallyThin
 
       break;
 
@@ -538,7 +583,7 @@ int grid::WalkPhotonPackage(PhotonPackageEntry **PP,
       /************************************************************/
     case 4:
 
-      if (RadiationXRaySecondaryIon) {
+      if (RadiationXRaySecondaryIon && !SkipCalculation) {
 	xx = max(fields[iHII][index] / 
 		 (fields[iHI][index] + fields[iHII][index]), 1e-4);
 	heat_factor    = 0.9971 * (1 - powf(1 - powf(xx, 0.2663f), 1.3163));
@@ -558,21 +603,44 @@ int grid::WalkPhotonPackage(PhotonPackageEntry **PP,
 	dN = thisDensity * ddr;
 	tau = dN*sigma[i];
 
-	// at most use all photons for photo-ionizations
-	if (tau > 2.e1) dP = (1.0+ROUNDOFF) * (*PP)->Photons;
-	else if (tau > 1.e-4) 
-	  dP = min((*PP)->Photons*(1-expf(-tau)), (*PP)->Photons);
-	else
-	  dP = min((*PP)->Photons*tau, (*PP)->Photons);
-	dP1 = dP * slice_factor2;
+	if (i == 0)
+	  (*PP)->ColumnDensity += dN;
 
-	// contributions to the photoionization rate is over whole timestep
-	BaryonField[kphNum[i]][index] += dP1 * factor1 * ion2_factor[i];
+	if (OpticallyThin) {
+	  if (!SkipCalculation) {
+
+	    // Optically thin rates at cell center (flux_scaling
+	    // corrects for the difference in radius)
+	    kestimate = flux_scaling * (*PP)->Photons * sigma[0] / solid_angle;
+	    BaryonField[kphNum[type]][index] += kestimate;
+	    BaryonField[gammaNum][index] += kestimate*heat_energy;
+
+	    // Mark cell for this source.  No more rays from this
+	    // source can contribute to this cell.
+	    RayMarker[index] |= (*PP)->SourceNumber;
+
+	  } // ENDIF !SkipCalculation
+	} // ENDIF OpticallyThin
+
+	// Optically thick regime
+	else { 
+
+	  // at most use all photons for photo-ionizations
+	  if (tau > 2.e1) dP = (1.0+ROUNDOFF) * (*PP)->Photons;
+	  else if (tau > 1.e-4) 
+	    dP = min((*PP)->Photons*(1-expf(-tau)), (*PP)->Photons);
+	  else
+	    dP = min((*PP)->Photons*tau, (*PP)->Photons);
+	  dP1 = dP * slice_factor2;
+
+	  // contributions to the photoionization rate is over whole timestep
+	  BaryonField[kphNum[i]][index] += dP1 * factor1 * ion2_factor[i];
 	
-	// the heating rate is just the number of photo ionizations times
-	// the excess energy units here are  eV/s/cm^3 *TimeUnits.  
-	BaryonField[gammaNum][index] += dP1 * factor2[i] * heat_factor;
+	  // the heating rate is just the number of photo ionizations times
+	  // the excess energy units here are  eV/s/cm^3 *TimeUnits.  
+	  BaryonField[gammaNum][index] += dP1 * factor2[i] * heat_factor;
 
+	} // ENDELSE OpticallyThin
       } // ENDFOR absorber
 
       break;
@@ -583,12 +651,6 @@ int grid::WalkPhotonPackage(PhotonPackageEntry **PP,
       ENZO_FAIL("Bad photon type.");
 
     } // ENDSWITCH type
-
-    /* If not Lyman-Werner photons (done above), add to total column
-       density. */
-
-    if (type != iH2I)
-      (*PP)->ColumnDensity += dN;
 
     /* Keep track of the maximum hydrogen photo-ionization rate in the
        I-front, so we can calculate the maximum ionization timescale
@@ -605,7 +667,7 @@ int grid::WalkPhotonPackage(PhotonPackageEntry **PP,
     /* Acceleration due to radiation pressure */
 
     // Remember:  dA = [~] * dP * Energy / Density * r_hat
-    if (RadiationPressure && 
+    if (!OpticallyThin && RadiationPressure && 
 	(*PP)->Radius > (*PP)->SourcePositionDiff)
       for (dim = 0; dim < MAX_DIMENSION; dim++)
 	BaryonField[RPresNum1+dim][index] += 
@@ -629,8 +691,8 @@ int grid::WalkPhotonPackage(PhotonPackageEntry **PP,
 		"PP->CurrentTime: %"FSYM"\n",
 		(*PP)->Photons, (*PP)->Radius, (*PP)->CurrentTime);
       if (DEBUG>1) 
-	fprintf(stderr, "\tdP: %"GSYM"\tddr: %"GSYM"\t cdt: %"GSYM"\t tau: %"GSYM"\n", 
-		dP, ddr, cdt, tau);
+	fprintf(stderr, "\tdP: %"GSYM"\tddr: %"GSYM"\t cdt: %"GSYM"\t"
+		"tau: %"GSYM"\n", dP, ddr, cdt, tau);
       (*PP)->Photons = -1;
       DeleteMe = TRUE;
       return SUCCESS;

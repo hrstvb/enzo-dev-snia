@@ -13,6 +13,7 @@ struct PhotonBuffer {
   FLOAT		SourcePosition[3];
   float		SourcePositionDiff;
   int		SuperSourceID;
+  char          SourceNumber;
 };
 
 struct GroupPhotonList {
