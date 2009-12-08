@@ -715,8 +715,8 @@ int grid::MHD2DTestInitializeGrid(int MHD2DProblemType,
   if (MHD2DProblemType == 9) {
     FLOAT x,y;
     int n=0;
-    float omega=0.1;
-    //    float omega=0.05;
+    float omega=vyu; // reusing UpperVelocityY as perturbation amplitude
+
     float ramp,eint;
     float delx=0.05; // range in y over which to apply the ramp
 
@@ -733,12 +733,12 @@ int grid::MHD2DTestInitializeGrid(int MHD2DProblemType,
 	ramp =  1./((1.+exp(-2/delx*(y-0.25)))*(1.+exp(-2/delx*(0.75-y))));
 	BaryonField[iden ][igrid] = rhou + ramp*(rhol-rhou);
 	BaryonField[ivx  ][igrid] = vxu  + ramp*(vxl-vxu);
-	BaryonField[ivy  ][igrid] = vyu  + ramp*(vyl-vyu);
+	BaryonField[ivy  ][igrid] = 0.0;
 	BaryonField[ivz  ][igrid] = 0.0;
 	
 	// y-velocity perturbation: 
 	BaryonField[ivy][igrid]  += omega*sin(2.*M_PI*x);
-	
+
 	eint = (pu + ramp*(pl-pu)) / ((Gamma-1.0)*BaryonField[iden][igrid]);
 	BaryonField[ietot][igrid] = eint + 
 	  0.5*(pow(BaryonField[ivx  ][igrid],2)+
@@ -776,7 +776,7 @@ int grid::MHD2DTestInitializeGrid(int MHD2DProblemType,
 	if (y <= 0.5) {
 	  // Rayleigh-Taylor problem, calculate pressure from hydro equilibrium
 	  float g = ConstantAcceleration[1];
-	  pres = pl+g*rhol*(y-0.5);
+	  pres = pl+g*rho*(y-0.5);
 	  EOS(pres, rho, eintl, h, cs, dpdrho, dpde, 0, 1);
 	  // impose mode perturbation
 	  vyl = 0.7 * (1.0+cos(4.0*M_PI*(x+.25))) * (1.0+cos(2.0/.8*M_PI*(y-0.5))) * 0.25;

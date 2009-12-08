@@ -336,6 +336,10 @@ EXTERN RadiationFieldDataType RadiationData;
 EXTERN int RadiationFieldLevelRecompute;
 EXTERN int RadiationXRaySecondaryIon;
 
+/* Photoelectric cooling turn on/off */
+
+EXTERN int PhotoelectricHeating;
+
 /* Output cooling time with grid data. */
 
 EXTERN int OutputCoolingTime;
@@ -383,6 +387,7 @@ EXTERN int ExtractFieldsOnly;
 EXTERN int First_Pass;
 EXTERN int UnigridTranspose;
 EXTERN int NumberOfRootGridTilesPerDimensionPerProcessor;
+EXTERN int CosmologySimulationNumberOfInitialGrids;
 
 /* Parameters that control density dex output */
 
@@ -606,7 +611,6 @@ EXTERN int UseResistivity;
 /* Chemistry & cooling parameters */
 
 EXTERN int UseH2OnDust;
-EXTERN double PhotoelectricHeating;
 EXTERN float CoolingCutOffDensity1;
 EXTERN float CoolingCutOffDensity2;
 EXTERN float CoolingPowerCutOffDensity1;
@@ -647,6 +651,7 @@ EXTERN int NBodyDirectSummation;
 /* Turbulence simulation parameters */
 EXTERN int UseDrivingField;
 EXTERN float DrivingEfficiency;
+
 /* Parameters to use CUDA extensions */ 
 EXTERN int UseCUDA;
 
@@ -740,9 +745,20 @@ EXTERN int ShearingBoxProblemType; // 0 = advecting sphere; 1 = shearing box; 2 
 EXTERN float IsothermalSoundSpeed;
 EXTERN int RefineByJeansLengthUnits;
 
-EXTERN int MoveParticlesBetweenSiblings;
-EXTERN int ParticleSplitterIterations;
 
+
+EXTERN int MoveParticlesBetweenSiblings;
+
+/* Particle Splitter */
+
+EXTERN int ParticleSplitterIterations;
+EXTERN float ParticleSplitterChildrenParticleSeparation;
+
+/* Star Class MBH Particle IO (PARTICLE_TYPE_MBH) */
+
+EXTERN int MBHParticleIO;
+EXTERN char *MBHParticleIOFilename;
+EXTERN float MBHParticleIOTemp[30][5+MAX_DIMENSION];
 
 /* Vorticity Calculations */
 

@@ -20,7 +20,6 @@
 #include "Hierarchy.h"
 #include "TopGridData.h"
 #include "LevelHierarchy.h"
-#include "StarParticleData.h"
 
 #define NO_DEATH 0
 #define KILL_STAR 1
@@ -35,7 +34,7 @@ int Star::HitEndpoint(FLOAT Time)
      constrains based on its star type */
 
   int result = NO_DEATH;
-  if (Time > this->BirthTime + this->LifeTime)
+  if ((Time > this->BirthTime + this->LifeTime) && this->type >=0)
     result = KILL_ALL;
   else
     return result;
