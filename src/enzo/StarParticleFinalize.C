@@ -154,8 +154,6 @@ int StarParticleFinalize(HierarchyEntry *Grids[], TopGridData *MetaData,
 
   } // ENDFOR stars
 
-
-
   /* Merge star particles */
   if (StarParticleCreation >> SINK_PARTICLE & 1 && level == MaximumRefinementLevel) {
     if (CommunicationMergeStarParticle(Grids, NumberOfGrids) == FAIL) {
@@ -163,8 +161,6 @@ int StarParticleFinalize(HierarchyEntry *Grids[], TopGridData *MetaData,
       return FAIL;
     }
   }
-
-
 
   /* Delete the global star particle list, AllStars */
 
