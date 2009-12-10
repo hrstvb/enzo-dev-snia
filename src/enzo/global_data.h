@@ -634,6 +634,7 @@ EXTERN int UseDivergenceCleaning;
 EXTERN int DivergenceCleaningBoundaryBuffer;
 EXTERN float DivergenceCleaningThreshold;
 EXTERN float PoissonApproximationThreshold;
+EXTERN int PoissonBoundaryType;
 
 
 
@@ -696,6 +697,7 @@ EXTERN int H2OpticalDepthApproximation;
 //   1 - Adaptive ray tacing transfer
 //   0 - none
 EXTERN int RadiativeTransfer;
+EXTERN int RadiativeTransferHydrogenOnly;
 #ifdef TRANSFER
 EXTERN long *pix2x;
 EXTERN long *pix2y;
