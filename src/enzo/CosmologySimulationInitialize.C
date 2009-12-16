@@ -68,7 +68,6 @@ static char *CosmologySimulationVelocityNames[MAX_DIMENSION];
 static char *CosmologySimulationParticleVelocityNames[MAX_DIMENSION];
 
 static int   CosmologySimulationSubgridsAreStatic    = TRUE;
-static int   CosmologySimulationNumberOfInitialGrids = 1;
  
 static float CosmologySimulationInitialFractionHII   = 1.2e-5;
 static float CosmologySimulationInitialFractionHeII  = 1.0e-14;
@@ -209,7 +208,7 @@ int CosmologySimulationInitialize(FILE *fptr, FILE *Outfptr,
       CosmologySimulationParticleVelocityNames[1] = dummy;
     if (sscanf(line, "CosmologySimulationParticleVelocity3Name = %s", dummy) == 1)
       CosmologySimulationParticleVelocityNames[2] = dummy;    
- 
+
     ret += sscanf(line, "CosmologySimulationNumberOfInitialGrids = %"ISYM,
 		  &CosmologySimulationNumberOfInitialGrids);
     ret += sscanf(line, "CosmologySimulationSubgridsAreStatic = %"ISYM,
@@ -891,15 +890,11 @@ int CosmologySimulationReInitialize(HierarchyEntry *TopGrid,
   if (debug)
     printf("FinalParticleCount = %"ISYM"\n", ParticleCount);
 
-#ifdef MISCOUNT
   // 2006-12-11 Skory bug fix for star particle miscounts
   // Removed the following line:
   // MetaData.NumberOfParticles = 0;
   // Added the following line:
   MetaData.NumberOfParticles = ParticleCount;
-#else
-  MetaData.NumberOfParticles = 0;
-#endif
 
 #ifdef MEM_TRACE
     MemInUse = mused();

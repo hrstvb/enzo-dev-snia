@@ -34,7 +34,6 @@
 #include "ExternalBoundary.h"
 #include "Grid.h"
 #include "TopGridData.h"
-#include "StarParticleData.h"
 #include "hydro_rk/EOS.h" 
  
 /* This variable is declared here and only used in Grid_ReadGrid. */
@@ -123,11 +122,11 @@ int ReadParameterFile(FILE *fptr, TopGridData &MetaData, float *Initialdt)
     ret += sscanf(line, "dtInterpolatedDataDump          = %"PSYM, 
 		  &MetaData.dtInterpolatedDataDump);
  
-    ret += sscanf(line, "NewMovieLeftEdge  = %"FSYM" %"FSYM" %"FSYM, 
+    ret += sscanf(line, "NewMovieLeftEdge  = %"PSYM" %"PSYM" %"PSYM, 
 		  MetaData.NewMovieLeftEdge,
 		  MetaData.NewMovieLeftEdge+1, 
 		  MetaData.NewMovieLeftEdge+2);
-    ret += sscanf(line, "NewMovieRightEdge = %"FSYM" %"FSYM" %"FSYM, 
+    ret += sscanf(line, "NewMovieRightEdge = %"PSYM" %"PSYM" %"PSYM, 
 		  MetaData.NewMovieRightEdge, 
 		  MetaData.NewMovieRightEdge+1,
 		  MetaData.NewMovieRightEdge+2);
@@ -391,12 +390,14 @@ int ReadParameterFile(FILE *fptr, TopGridData &MetaData, float *Initialdt)
     ret += sscanf(line, "AdjustUVBackground = %"ISYM, &AdjustUVBackground);
     ret += sscanf(line, "SetUVBAmplitude = %"FSYM, &SetUVBAmplitude);
     ret += sscanf(line, "SetHeIIHeatingScale = %"FSYM, &SetHeIIHeatingScale);
-
     ret += sscanf(line, "RadiationFieldLevelRecompute = %"ISYM,
-		  &RadiationFieldLevelRecompute);
+		  &RadiationFieldLevelRecompute);    
+    ret += sscanf(line, "RadiationShield = %"ISYM,
+		  &RadiationData.RadiationShield);
     ret += sscanf(line, "RadiationSpectrumNormalization = %"FSYM,
 		  &CoolData.f3);
     ret += sscanf(line, "RadiationSpectrumSlope = %"FSYM, &CoolData.alpha0);
+    ret += sscanf(line, "PhotoelectricHeating  = %"ISYM, &PhotoelectricHeating);
 
     if (sscanf(line, "CoolDataParameterFile = %s", dummy) == 1)
       CoolData.ParameterFilename = dummy;
@@ -420,6 +421,8 @@ int ReadParameterFile(FILE *fptr, TopGridData &MetaData, float *Initialdt)
 		  &MinimumPressureSupportParameter);
     ret += sscanf(line, "RefineByJeansLengthSafetyFactor = %"FSYM,
 		  &RefineByJeansLengthSafetyFactor);
+    ret += sscanf(line, "JeansRefinementColdTemperature = %"FSYM,
+		  &JeansRefinementColdTemperature);
     ret += sscanf(line, "RefineByResistiveLengthSafetyFactor = %" FSYM,
 		  &RefineByResistiveLengthSafetyFactor);
     ret += sscanf(line, "MustRefineParticlesRefineToLevel = %"ISYM,
@@ -639,25 +642,23 @@ int ReadParameterFile(FILE *fptr, TopGridData &MetaData, float *Initialdt)
     ret += sscanf(line, "PopIIIColorMass = %"FSYM,
 		  &PopIIIColorMass);
 
-    ret += sscanf(line, "MBHMinDynamicalTime = %"FSYM, 
-		  &MBHMinDynamicalTime);
-    ret += sscanf(line, "MBHMinimumMass = %"FSYM, 
-		  &MBHMinimumMass);
-    ret += sscanf(line, "MBHAccretion = %"ISYM, 
-		  &MBHAccretion);
-    ret += sscanf(line, "MBHAccretingMassRatio = %"FSYM, 
-		  &MBHAccretingMassRatio);
-    ret += sscanf(line, "MBHFeedbackThermal = %"ISYM, 
-		  &MBHFeedbackThermal);
-    ret += sscanf(line, "MBHFeedbackRadius = %"FSYM, &MBHFeedbackRadius);
+    ret += sscanf(line, "MBHMinDynamicalTime = %"FSYM, &MBHMinDynamicalTime);
+    ret += sscanf(line, "MBHMinimumMass = %"FSYM, &MBHMinimumMass);
+    ret += sscanf(line, "MBHAccretion = %"ISYM, &MBHAccretion);
+    ret += sscanf(line, "MBHAccretingMassRatio = %"FSYM, &MBHAccretingMassRatio);
+    ret += sscanf(line, "MBHFeedback = %"ISYM, &MBHFeedback);
     ret += sscanf(line, "MBHFeedbackRadiativeEfficiency = %"FSYM, &MBHFeedbackRadiativeEfficiency);
     ret += sscanf(line, "MBHFeedbackThermalCoupling = %"FSYM, &MBHFeedbackThermalCoupling);
-    ret += sscanf(line, "MBHFeedbackMassEjectionFraction = %"FSYM, 
-		  &MBHFeedbackMassEjectionFraction);
-    ret += sscanf(line, "MBHFeedbackMetalYield = %"FSYM, 
-		  &MBHFeedbackMetalYield);
-    ret += sscanf(line, "MBHCombineRadius = %"FSYM,
-		  &MBHCombineRadius);
+    ret += sscanf(line, "MBHFeedbackThermalRadius = %"FSYM, &MBHFeedbackThermalRadius);
+    ret += sscanf(line, "MBHFeedbackMassEjectionFraction = %"FSYM, &MBHFeedbackMassEjectionFraction);
+    ret += sscanf(line, "MBHFeedbackMetalYield = %"FSYM, &MBHFeedbackMetalYield);
+    ret += sscanf(line, "MBHFeedbackJetsMassLoadingFactor = %"FSYM, &MBHFeedbackJetsMassLoadingFactor);
+    ret += sscanf(line, "MBHCombineRadius = %"FSYM, &MBHCombineRadius);
+
+    ret += sscanf(line, "MBHParticleIO = %"ISYM,
+		  &MBHParticleIO);
+    if (sscanf(line, "MBHParticleIOFilename = %s", dummy) == 1)
+      MBHParticleIOFilename = dummy;
 
     /* Read Movie Dump parameters */
 
@@ -671,7 +672,7 @@ int ReadParameterFile(FILE *fptr, TopGridData &MetaData, float *Initialdt)
     ret += sscanf(line, "NewMovieDumpNumber = %"ISYM, &NewMovieDumpNumber);
     if (sscanf(line, "NewMovieName = %s", dummy) == 1)
       NewMovieName = dummy;
-    ret += sscanf(line, "MovieTimestepCounter = %"ISYM, &MetaData.TimestepCounter);
+    ret += sscanf(line, "MovieTimestepCounter = %"ISYM, &MetaData.MovieTimestepCounter);
 
     ret += sscanf(line, "MultiMetals = %"ISYM, &MultiMetals);
 
@@ -717,7 +718,7 @@ int ReadParameterFile(FILE *fptr, TopGridData &MetaData, float *Initialdt)
 
 
     /* Sink particles (for present day star formation) & winds */
-    ret += sscanf(line, "SinkMergeDistance     = %"FSYM, &SinkMergeDistance);
+    ret += sscanf(line, "SinkMergeDistance     = %"FSYM, &SinkMergeDistance); 
     ret += sscanf(line, "SinkMergeMass         = %"FSYM, &SinkMergeMass);
     ret += sscanf(line, "StellarWindFeedback   = %"ISYM, &StellarWindFeedback);
     ret += sscanf(line, "StellarWindTurnOnMass = %"FSYM, &StellarWindTurnOnMass);
@@ -732,6 +733,9 @@ int ReadParameterFile(FILE *fptr, TopGridData &MetaData, float *Initialdt)
     ret += sscanf(line, "DivergenceCleaningBoundaryBuffer = %d", &DivergenceCleaningBoundaryBuffer);
     ret += sscanf(line, "DivergenceCleaningThreshold = %"FSYM, &DivergenceCleaningThreshold);
     ret += sscanf(line, "PoissonApproximationThreshold = %"FSYM, &PoissonApproximationThreshold);
+    ret += sscanf(line, "PoissonBoundaryType = %d", &PoissonBoundaryType);
+   
+
     ret += sscanf(line, "AngularVelocity = %"FSYM, &AngularVelocity);
     ret += sscanf(line, "VelocityGradient = %"FSYM, &VelocityGradient);
     ret += sscanf(line, "UseDrivingField = %d", &UseDrivingField);
@@ -768,13 +772,14 @@ int ReadParameterFile(FILE *fptr, TopGridData &MetaData, float *Initialdt)
     ret += sscanf(line, "CoolingPowerCutOffDensity1 = %"GSYM, &CoolingPowerCutOffDensity1);
     ret += sscanf(line, "CoolingPowerCutOffDensity2 = %"GSYM, &CoolingPowerCutOffDensity2);
     ret += sscanf(line, "UseH2OnDust           = %"ISYM, &UseH2OnDust);
-    ret += sscanf(line, "PhotoelectricHeating  = %lf", &PhotoelectricHeating);
     ret += sscanf(line, "UseCUDA = %"ISYM,&UseCUDA);
 
     ret += sscanf(line, "MoveParticlesBetweenSiblings = %"ISYM,
 		  &MoveParticlesBetweenSiblings);
     ret += sscanf(line, "ParticleSplitterIterations = %"ISYM,
 		  &ParticleSplitterIterations);
+    ret += sscanf(line, "ParticleSplitterChildrenParticleSeparation = %"FSYM,
+		  &ParticleSplitterChildrenParticleSeparation);
 
     /* If the dummy char space was used, then make another. */
  
@@ -836,6 +841,10 @@ int ReadParameterFile(FILE *fptr, TopGridData &MetaData, float *Initialdt)
   rewind(fptr);
 
   //  OutputTemperature = ((ProblemType == 7) || (ProblemType == 11));
+
+  /* Even if this is not cosmology, due to a check for nested grid cosmology
+     in ProtoSubgrid_AcceptableGrid.C, we'll set the default for this here. */
+  CosmologySimulationNumberOfInitialGrids = 1;
  
   /* If we have turned on Comoving coordinates, read cosmology parameters. */
  
@@ -868,10 +877,7 @@ int ReadParameterFile(FILE *fptr, TopGridData &MetaData, float *Initialdt)
 
 
     /* Change input physical parameters into code units */
-    
-    double mh = 1.6726e-24;
-    double uheat = pow(VelocityUnits,2)*2.0*mh/TimeUnits;
-    PhotoelectricHeating /= uheat;
+
     StarMakerOverDensityThreshold /= DensityUnits;
     //  StarEnergyFeedbackRate = StarEnergyFeedbackRate/pow(LengthUnits,2)*pow(TimeUnits,3);
     
@@ -958,11 +964,23 @@ int ReadParameterFile(FILE *fptr, TopGridData &MetaData, float *Initialdt)
 
   /* If using the internal radiation field, initialize it. */
  
-  if (RadiationFieldType >= 10 && RadiationFieldType <= 11)
+  if (RadiationFieldType == 11) 
+    RadiationData.RadiationShield = TRUE; 
+  else if (RadiationFieldType == 10)
+    RadiationData.RadiationShield = FALSE; 
+
+  if ((RadiationFieldType >= 10 && RadiationFieldType <= 11) ||
+      RadiationData.RadiationShield == TRUE)
     if (InitializeRadiationFieldData(MetaData.Time) == FAIL) {
 	ENZO_FAIL("Error in InitializeRadiationFieldData.");
       }
  
+  /* If using MBHFeedback = 2 (Star->FeedbackFlag = MBH_JETS), 
+     you need MBHParticleIO for angular momentum */
+
+  if (MBHFeedback == 2 || MBHFeedback == 3) 
+    MBHParticleIO = TRUE;
+
   /* Turn off DualEnergyFormalism for zeus hydro (and a few other things). */
  
   if (HydroMethod == Zeus_Hydro) {
@@ -1165,11 +1183,15 @@ int ReadParameterFile(FILE *fptr, TopGridData &MetaData, float *Initialdt)
   size_t cwd_buffer_len = MAX_LINE_LENGTH;
  
   if ( (MetaData.GlobalDir == NULL) && (MetaData.LocalDir == NULL) ) {
-    if(getcwd(cwd_buffer, cwd_buffer_len) == NULL) {
+    /*if(getcwd(cwd_buffer, cwd_buffer_len) == NULL) {
       fprintf(stderr, "GETCWD call FAILED\n");
     }
     if (MyProcessorNumber == ROOT_PROCESSOR)
       fprintf(stderr,"CWD %s\n", cwd_buffer);
+    */
+    /* No one seems to want GlobalDir to default to abspath(CWD).  I'm leaving
+       the code here in case you do. MJT */ 
+    strcpy(cwd_buffer, ".");
     MetaData.GlobalDir = cwd_buffer;
     if (MyProcessorNumber == ROOT_PROCESSOR)
       fprintf(stderr,"Global Dir set to %s\n", cwd_buffer);
