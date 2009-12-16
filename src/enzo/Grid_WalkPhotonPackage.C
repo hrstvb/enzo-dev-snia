@@ -42,9 +42,15 @@
 #define MAX_HEALPIX_LEVEL 13
 #define MAX_COLUMN_DENSITY 1e25
 #define MIN_TAU_IFRONT 0.1
+#define MIN_TAU_THIN 0.5
 
 int SplitPhotonPackage(PhotonPackageEntry *PP);
 FLOAT FindCrossSection(int type, float energy);
+float RayGeometricCorrection
+(const FLOAT oldr, const FLOAT radius, const FLOAT ddr, const FLOAT s[], 
+ const float u[], const FLOAT ce[], const float dxhalf, const float dtheta, 
+ const FLOAT roundoff);
+
 
 enum species { iHI, iHeI, iHeII, iH2I, iHII };
 int grid::WalkPhotonPackage(PhotonPackageEntry **PP, 
@@ -75,7 +81,7 @@ int grid::WalkPhotonPackage(PhotonPackageEntry **PP,
   int g[3], celli[3], u_dir[3], u_sign[3];
   long cindex;
   float m[3], slice_factor, slice_factor2, sangle_inv;
-  float MinTauIfront, PhotonEscapeRadius[3], c, c_inv, tau;
+  float MinTauIfront, MinTauOptThin, PhotonEscapeRadius[3], c, c_inv, tau;
   float DomainWidth[3], dx, dx2, dxhalf, fraction;
   float shield1, shield2, solid_angle, midpoint, nearest_edge;
   double dN;
@@ -219,6 +225,7 @@ int grid::WalkPhotonPackage(PhotonPackageEntry **PP,
   }
   
   MinTauIfront = MIN_TAU_IFRONT / sigma[0];  // absorb sigma
+  MinTauOptThin = MIN_TAU_THIN / sigma[0];  // absorb sigma
 
   // solid angle associated with package (= 4 Pi/N_package[on this level]) 
   float n_on_this_level = (float) (12 * (2 << (2*(*PP)->level-1)));
@@ -435,46 +442,6 @@ int grid::WalkPhotonPackage(PhotonPackageEntry **PP,
       } // ENDFOR i
     } // ENDIF PhotonEscapeRadius > 0
 
-    /* If another ray from the same source has already touched this
-       cell, skip computation and go to the next cell.  Estimate flux
-       at the cell center, while we're at it. */
-
-    if ((*PP)->ColumnDensity < MinTauIfront) {
-
-      OpticallyThin = true;
-
-      if ((RayMarker[index] >> (*PP)->SourceNumber & 1) == 0) {
-	// Radius from source to cell center
-	for (dim = 0, cr2 = 0.0; dim < MAX_DIMENSION; dim++) {
-	  dxc = (*PP)->SourcePosition[dim] - (ce[dim] + 0.5 * dx);
-	  cr2 += dxc * dxc;
-	}
-	cr2 = max(cr2, 0.01*dx2); // make sure the rates don't go infinite
-	flux_scaling = radius*radius / cr2;
-	SkipCalculation = false;
-      } // ENDIF RayMarker == false
-      else
-	// RayMarker == true -> propagate ray but no contribute to rates
-	SkipCalculation = true;
-
-    } // ENDIF OpticallyThin
-    else
-      OpticallyThin = false;
-
-    /* Geometric correction factor because the ray's solid angle could
-       not completely cover the cell */
-
-    if (!OpticallyThin) {
-      midpoint = oldr + 0.5f*ddr - ROUNDOFF;
-      nearest_edge = -1e20;
-      for (dim = 0; dim < 3; dim++)
-	m[dim] = fabs(s[dim] + midpoint * u[dim] - (ce[dim] + dxhalf));
-      nearest_edge = max(max(m[0], m[1]), m[2]);
-      sangle_inv = 1.0 / (dtheta*radius);
-      slice_factor = min(0.5f + (dxhalf-nearest_edge) * sangle_inv, 1.0f);
-      slice_factor2 = slice_factor * slice_factor;
-    } // ENDIF !OpticallyThin
-
     /* Adjust length and energy due to cosmological expansion assumes
      that da/a=dl/l=2/3 dt/t which is strictly only true for OmegaM=1
      note that we only uses this locally though. */
@@ -505,6 +472,14 @@ int grid::WalkPhotonPackage(PhotonPackageEntry **PP,
       dN = thisDensity * ddr;
       (*PP)->ColumnDensity += dN;
 
+      /* If another ray from the same source has already touched this
+	 cell, skip computation and go to the next cell.  Estimate
+	 flux at the cell center, while we're at it. */
+
+      this->OpticallyThinPhoton(PP, MinTauOptThin, index, radius, dx, dx2,
+				ce, flux_scaling, SkipCalculation,
+				OpticallyThin);
+
       if (OpticallyThin) {
 	if (!SkipCalculation) {
 
@@ -514,6 +489,7 @@ int grid::WalkPhotonPackage(PhotonPackageEntry **PP,
 	  (*PP)->Photons * sigma[0] / solid_angle;
 	BaryonField[kphNum[type]][index] += kestimate*factor1;
 	BaryonField[gammaNum][index] += kestimate*factor2[0];
+	dP = 0;
 
 	// Mark cell for this source.  No more rays from this source
 	// can contribute to this cell.
@@ -531,6 +507,13 @@ int grid::WalkPhotonPackage(PhotonPackageEntry **PP,
 	  dP = min((*PP)->Photons*(1-expf(-tau)), (*PP)->Photons);
 	else
 	  dP = min((*PP)->Photons*tau, (*PP)->Photons);
+
+	/* Geometric correction factor because the ray's solid angle
+	   could not completely cover the cell */
+
+	//slice_factor2 = RayGeometricCorrection(oldr, radius, ddr, s, u, ce, 
+	//				       dxhalf, dtheta, ROUNDOFF);
+	slice_factor2 = 1.0f;
 	dP1 = dP * slice_factor2;
 
 	// contributions to the photoionization rate is over whole timestep
@@ -605,8 +588,16 @@ int grid::WalkPhotonPackage(PhotonPackageEntry **PP,
 	dN = thisDensity * ddr;
 	tau = dN*sigma[i];
 
-	if (i == 0)
+	if (i == 0) {
 	  (*PP)->ColumnDensity += dN;
+	  this->OpticallyThinPhoton(PP, MinTauOptThin, index, radius, dx, dx2,
+				    ce, flux_scaling, SkipCalculation,
+				    OpticallyThin);
+	  slice_factor2 = 1.0f;
+//	  if (!OpticallyThin)
+//	    slice_factor2 = RayGeometricCorrection(oldr, radius, ddr, s, u, ce, 
+//						   dxhalf, dtheta, ROUNDOFF);
+	} // ENDIF i==0
 
 	if (OpticallyThin) {
 	  if (!SkipCalculation) {
@@ -618,6 +609,7 @@ int grid::WalkPhotonPackage(PhotonPackageEntry **PP,
 	    BaryonField[kphNum[type]][index] += kestimate * factor1 * 
 	      ion2_factor[i];
 	    BaryonField[gammaNum][index] += kestimate * factor2[i] * heat_factor;
+	    dP = 0;
 
 	    // Mark cell for this source.  No more rays from this
 	    // source can contribute to this cell.
@@ -635,6 +627,9 @@ int grid::WalkPhotonPackage(PhotonPackageEntry **PP,
 	    dP = min((*PP)->Photons*(1-expf(-tau)), (*PP)->Photons);
 	  else
 	    dP = min((*PP)->Photons*tau, (*PP)->Photons);
+
+	  slice_factor2 = RayGeometricCorrection(oldr, radius, ddr, s, u, ce, 
+						 dxhalf, dtheta, ROUNDOFF);
 	  dP1 = dP * slice_factor2;
 
 	  // contributions to the photoionization rate is over whole timestep
@@ -660,7 +655,7 @@ int grid::WalkPhotonPackage(PhotonPackageEntry **PP,
        I-front, so we can calculate the maximum ionization timescale
        for timestepping purposes. */
 
-    if (RadiativeTransferHIIRestrictedTimestep)
+    if (RadiativeTransferHIIRestrictedTimestep && !SkipCalculation)
       if (type == iHI || type == 4)
 	if ((*PP)->ColumnDensity > MinTauIfront)
 	  if (BaryonField[kphNum[iHI]][index] > this->MaximumkphIfront) {

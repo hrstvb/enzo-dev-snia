@@ -709,6 +709,7 @@ POBJS_CONFIG_LIB = \
         Grid_InitializeSource.o \
         Grid_MergePausedPhotonPackages.o \
         Grid_MoveAllPhotonPackages.o \
+	Grid_OpticallyThinPhoton.o \
         Grid_PhotonTestInitializeGrid.o \
         Grid_ReassignSuperSources.o \
         Grid_ReturnSubgridMarker.o \

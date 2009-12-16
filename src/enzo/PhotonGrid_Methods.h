@@ -388,3 +388,7 @@ int ReassignSuperSources(void);
 
 int CorrectRadiationIncompleteness(void);
 int FinalizeRadiationFields(void);
+
+int OpticallyThinPhoton(PhotonPackageEntry **PP, float min_tau, int index,
+			FLOAT radius, float dx, float dx2, FLOAT ce[],
+			FLOAT &scaling, bool &skip, bool &thin);
