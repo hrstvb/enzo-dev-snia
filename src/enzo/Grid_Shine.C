@@ -48,6 +48,7 @@ int grid::Shine(RadiationSourceEntry *RadiationSource)
   stype = 1;
 #endif
   if (MultiSpecies>1 && !RadiativeTransferOpticallyThinH2) stype++;
+  if (RadiativeTransferHydrogenOnly == TRUE) stype = 1;
 
   /* At most how many new Photon Packages should be allocated and
      created?  */
@@ -117,11 +118,11 @@ int grid::Shine(RadiationSourceEntry *RadiationSource)
 	       RS->Luminosity);
       break;
     case BlackHole:
-      if (RadiativeTransferInterpolateField) {
-	FieldsToInterpolate[HINum] = TRUE;
-	FieldsToInterpolate[HeINum] = TRUE;
-	FieldsToInterpolate[HeIINum] = TRUE;
-      } // ENDIF interpolate fields
+//      if (RadiativeTransferInterpolateField) {
+//	FieldsToInterpolate[HINum] = TRUE;
+//	FieldsToInterpolate[HeINum] = TRUE;
+//	FieldsToInterpolate[HeIINum] = TRUE;
+//      } // ENDIF interpolate fields
 //      if (MyProcessorNumber == ProcessorNumber)
 //	printf("Shine: ramp = %lf, lapsed = %lf\n", RampPercent,
 //	       PhotonTime-RS->CreationTime+dtPhoton);

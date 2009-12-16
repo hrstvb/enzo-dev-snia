@@ -24,12 +24,12 @@
 #include <string.h>
 #include <unistd.h>
  
+#define DEFINE_STORAGE
 #include "ErrorExceptions.h"
 #include "svn_version.def"
 #include "performance.h"
 #include "macros_and_parameters.h"
 #include "typedefs.h"
-#define DEFINE_STORAGE
 #include "global_data.h"
 #include "units.h"
 #include "flowdefs.h"
@@ -41,7 +41,6 @@
 #include "LevelHierarchy.h"
 #include "TopGridData.h"
 #include "CosmologyParameters.h"
-#include "StarParticleData.h"
 #include "communication.h"
 #include "CommunicationUtilities.h"
 #ifdef TRANSFER
@@ -101,7 +100,7 @@ int InterpretCommandLine(int argc, char *argv[], char *myname,
 			 int &InformationOutput,
 			 int &OutputAsParticleDataFlag,
 			 int &project, int &ProjectionDimension,
-			 int &ProjectionSmooth,
+			 int &ProjectionSmooth, int &velanyl,
 			 char *ParameterFile[],
 			 int RegionStart[], int RegionEnd[],
 			 FLOAT RegionStartCoordinates[],
@@ -109,6 +108,49 @@ int InterpretCommandLine(int argc, char *argv[], char *myname,
 			 int &Level, int MyProcessorNumber);
 void AddLevel(LevelHierarchyEntry *Array[], HierarchyEntry *Grid, int level);
 int SetDefaultGlobalValues(TopGridData &MetaData);
+
+int WriteAllData(char *basename, int filenumber, HierarchyEntry *TopGrid,
+                 TopGridData &MetaData, ExternalBoundary *Exterior,
+                 FLOAT WriteTime = -1);
+
+int Group_WriteAllData(char *basename, int filenumber,
+		 HierarchyEntry *TopGrid, TopGridData &MetaData,
+		 ExternalBoundary *Exterior, FLOAT WriteTime = -1,
+         int RestartDump = FALSE);
+
+
+
+#ifdef FAST_SIB
+int SetBoundaryConditions(HierarchyEntry *Grids[], int NumberOfGrids,
+			  SiblingGridList SiblingList[],
+			  int level, TopGridData *MetaData,
+			  ExternalBoundary *Exterior, LevelHierarchyEntry *Level);
+#else
+int SetBoundaryConditions(HierarchyEntry *Grids[], int NumberOfGrids,
+			  int level, TopGridData *MetaData,
+			  ExternalBoundary *Exterior, LevelHierarchyEntry *Level);
+#endif
+
+int FastSiblingLocatorInitialize(ChainingMeshStructure *Mesh, int Rank,
+                                 int TopGridDims[]);
+int FastSiblingLocatorFinalize(ChainingMeshStructure *Mesh);
+
+int RebuildHierarchy(TopGridData *MetaData,
+		     LevelHierarchyEntry *LevelArray[], int level);
+int CopyOverlappingZones(grid* CurrentGrid, TopGridData *MetaData,
+			 LevelHierarchyEntry *LevelArray[], int level);
+int CommunicationReceiveHandler(fluxes **SubgridFluxesEstimate[] = NULL,
+				int NumberOfSubgrids[] = NULL,
+				int FluxFlag = FALSE,
+				TopGridData* MetaData = NULL);
+int CreateSiblingList(HierarchyEntry ** Grids, int NumberOfGrids, SiblingGridList *SiblingList, 
+		      int StaticLevelZero,TopGridData * MetaData,int level);
+
+
+
+int GenerateGridArray(LevelHierarchyEntry *LevelArray[], int level,
+		      HierarchyEntry **Grids[]);
+
 int CommunicationInitialize(Eint32 *argc, char **argv[]);
 int CommunicationFinalize();
 
@@ -177,14 +219,14 @@ Eint32 main(Eint32 argc, char *argv[])
   int int_argc;
   int_argc = argc;
  
-  if (MyProcessorNumber == ROOT_PROCESSOR &&
-      ENZO_SVN_REVISION != 0) {
-    printf("=========================\n");
-    printf("Enzo SVN Branch   %s\n",ENZO_SVN_BRANCH);
-    printf("Enzo SVN Revision %s\n",ENZO_SVN_REVISION);
-    printf("=========================\n");
-    fflush(stdout);
-  }
+ //  if (MyProcessorNumber == ROOT_PROCESSOR &&
+//       ENZO_SVN_REVISION != 0) {
+//     printf("=========================\n");
+//     printf("Enzo SVN Branch   %s\n",ENZO_SVN_BRANCH);
+//     printf("Enzo SVN Revision %s\n",ENZO_SVN_REVISION);
+//     printf("=========================\n");
+//     fflush(stdout);
+//   }
   // Performance Monitoring
 
 #ifdef USE_MPI
@@ -243,11 +285,12 @@ Eint32 main(Eint32 argc, char *argv[])
   // Initialize
  
   int restart                  = FALSE,
-      OutputAsParticleDataFlag = FALSE,
-      InformationOutput        = FALSE,
-      project                  = FALSE,
-      ProjectionDimension      = INT_UNDEFINED,
-      ProjectionSmooth         = FALSE;
+    OutputAsParticleDataFlag = FALSE,
+    InformationOutput        = FALSE,
+    project                  = FALSE,
+    ProjectionDimension      = INT_UNDEFINED,
+    ProjectionSmooth         = FALSE,
+    velanyl                  = FALSE;
   debug                        = FALSE;
   extract                      = FALSE;
   flow_trace_on                = FALSE;
@@ -329,7 +372,7 @@ Eint32 main(Eint32 argc, char *argv[])
  
   if (InterpretCommandLine(int_argc, argv, myname, restart, debug, extract,
 			   InformationOutput, OutputAsParticleDataFlag,
-			   project, ProjectionDimension, ProjectionSmooth,
+			   project, ProjectionDimension, ProjectionSmooth,  velanyl,
 			   &ParameterFile,
 			   RegionStart, RegionEnd,
 			   RegionStartCoordinates, RegionEndCoordinates,
@@ -344,7 +387,7 @@ Eint32 main(Eint32 argc, char *argv[])
  
   // If we need to read the parameter file as a restart file, do it now
  
-  if (restart || OutputAsParticleDataFlag || extract || InformationOutput || project) {
+  if (restart || OutputAsParticleDataFlag || extract || InformationOutput || project  ||  velanyl) {
  
     SetDefaultGlobalValues(MetaData);
  
@@ -454,6 +497,66 @@ Eint32 main(Eint32 argc, char *argv[])
     } // ENDFOR dim
   } 
  
+
+
+  /* Do vector analysis */
+  
+  if (velanyl) {
+    VelAnyl = 1;
+  //   RebuildHierarchy(&MetaData, LevelArray, 0);
+    
+
+//     for (int level = 0; level < MAX_DEPTH_OF_HIERARCHY; level++) {
+//       HierarchyEntry **Grids;
+//       int NumberOfGrids = GenerateGridArray(LevelArray, level, &Grids);
+//       if (LevelArray[level] != NULL) {
+// 	/* Initialize the chaining mesh used in the FastSiblingLocator. */
+	
+// 	ChainingMeshStructure ChainingMesh;
+// 	FastSiblingLocatorInitialize(&ChainingMesh, MetaData.TopGridRank,
+// 				     MetaData.TopGridDims);
+// 	SiblingGridList *SiblingList = new SiblingGridList[NumberOfGrids];
+// 	if (SiblingList == NULL) {
+// 	  fprintf(stderr, "Error allocating SiblingList\n");
+// 	  return FAIL;
+// 	}
+	
+// 	/* Add all the grids to the chaining mesh. */
+	
+// 	for (int grid1 = 0; grid1 < NumberOfGrids; grid1++)
+// 	  Grids[grid1]->GridData->FastSiblingLocatorAddGrid(&ChainingMesh);
+	
+// 	/* For each grid, get a list of possible siblings from the chaining mesh. */
+	
+// 	for (int grid1 = 0; grid1 < NumberOfGrids; grid1++)
+// 	  if (Grids[grid1]->GridData->FastSiblingLocatorFindSiblings(
+// 					   &ChainingMesh, &SiblingList[grid1],
+// 					   MetaData.LeftFaceBoundaryCondition,
+// 					   MetaData.RightFaceBoundaryCondition) == FAIL) {
+// 	    fprintf(stderr, "Error in grid->FastSiblingLocatorFindSiblings.\n");
+// 	    return FAIL;
+// 	  }
+
+// 	/* Clean up the chaining mesh. */
+	
+// 	FastSiblingLocatorFinalize(&ChainingMesh);
+	
+// 	if (SetBoundaryConditions(Grids, NumberOfGrids, SiblingList, level, &MetaData, 
+// 				  &Exterior, LevelArray[level]) == FAIL) {
+// 	  printf("error setboundary");
+// 	}
+//       }
+//     }
+    
+//     if (Group_WriteAllData(MetaData.DataDumpName, MetaData.DataDumpNumber-1,
+//                      &TopGrid, MetaData, &Exterior) == FAIL) {
+//       fprintf(stderr, "Error in WriteAllData.\n");
+//       return FAIL;
+//     }
+//     my_exit(EXIT_SUCCESS);
+  }
+
+
   // Normal start: Open and read parameter file
 
 #ifdef MEM_TRACE
@@ -648,6 +751,7 @@ void my_exit(int status)
     fprintf (stderr,"%s:%d %"ISYM" ABORT ON EXIT_FAILURE!\n",
 	     __FILE__,__LINE__,MyProcessorNumber);
 
+    ENZO_FAIL("my_exit has been called.");
     CommunicationAbort(status);
 
   } else {
@@ -655,6 +759,7 @@ void my_exit(int status)
     fprintf (stderr,"%s:%d %"ISYM" ABORT ON UNKNOWN EXIT VALUE %"ISYM"!\n",
 	     __FILE__,__LINE__,MyProcessorNumber,status);
 
+    ENZO_FAIL("my_exit has been called without a known exit value.");
     CommunicationAbort(status);
 
   }

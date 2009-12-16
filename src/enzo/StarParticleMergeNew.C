@@ -31,7 +31,6 @@
 #include "Hierarchy.h"
 #include "TopGridData.h"
 #include "LevelHierarchy.h"
-#include "StarParticleData.h"
 
 void DeleteStar(Star * &Node);
 int GetUnits(float *DensityUnits, float *LengthUnits,
@@ -80,7 +79,13 @@ int StarParticleMergeNew(LevelHierarchyEntry *LevelArray[], Star *&AllStars)
     for (OtherStar = ThisStar->NextStar; OtherStar;
 	 OtherStar = OtherStar->NextStar) {
       if (ThisStar->ReturnID() == OtherStar->ReturnID()) {
-	printf("%"ISYM" -- merging duplicate particle??\n", ThisStar->ReturnID());
+	if (debug) {
+	  printf("%"ISYM" -- merging duplicate particle??\n", ThisStar->ReturnID());
+	  printf("ThisStar:\n");
+	  ThisStar->PrintInfo();
+	  printf("OtherStar:\n");
+	  OtherStar->PrintInfo();
+	}
 	ENZO_FAIL("");
       }
       if (ThisStar->Mergable(OtherStar))
