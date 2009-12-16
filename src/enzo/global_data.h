@@ -336,6 +336,10 @@ EXTERN RadiationFieldDataType RadiationData;
 EXTERN int RadiationFieldLevelRecompute;
 EXTERN int RadiationXRaySecondaryIon;
 
+/* Photoelectric cooling turn on/off */
+
+EXTERN int PhotoelectricHeating;
+
 /* Output cooling time with grid data. */
 
 EXTERN int OutputCoolingTime;
@@ -383,6 +387,7 @@ EXTERN int ExtractFieldsOnly;
 EXTERN int First_Pass;
 EXTERN int UnigridTranspose;
 EXTERN int NumberOfRootGridTilesPerDimensionPerProcessor;
+EXTERN int CosmologySimulationNumberOfInitialGrids;
 
 /* Parameters that control density dex output */
 
@@ -439,6 +444,10 @@ EXTERN float MinimumPressureJumpForRefinement, MinimumEnergyRatioForRefinement;
    The number of cells by which the Jeans length should be resolved. */
 
 EXTERN float RefineByJeansLengthSafetyFactor;
+
+/* If > 0, this will be used instead of the temperature at all locations */
+
+EXTERN float JeansRefinementColdTemperature;
 
 /* For CellFlaggingMethod = 8,
    The level to which the must refine particles apply */
@@ -606,7 +615,6 @@ EXTERN int UseResistivity;
 /* Chemistry & cooling parameters */
 
 EXTERN int UseH2OnDust;
-EXTERN double PhotoelectricHeating;
 EXTERN float CoolingCutOffDensity1;
 EXTERN float CoolingCutOffDensity2;
 EXTERN float CoolingPowerCutOffDensity1;
@@ -630,13 +638,14 @@ EXTERN int UseDivergenceCleaning;
 EXTERN int DivergenceCleaningBoundaryBuffer;
 EXTERN float DivergenceCleaningThreshold;
 EXTERN float PoissonApproximationThreshold;
+EXTERN int PoissonBoundaryType;
 
 
 
 /* Star Particle paramters */
 
 EXTERN int ShiningParticleID;
-EXTERN double SinkMergeDistance;
+EXTERN float SinkMergeDistance;
 EXTERN float SinkMergeMass;
 EXTERN float TotalSinkMass;
 EXTERN int StellarWindFeedback;
@@ -647,6 +656,7 @@ EXTERN int NBodyDirectSummation;
 /* Turbulence simulation parameters */
 EXTERN int UseDrivingField;
 EXTERN float DrivingEfficiency;
+
 /* Parameters to use CUDA extensions */ 
 EXTERN int UseCUDA;
 
@@ -691,6 +701,7 @@ EXTERN int H2OpticalDepthApproximation;
 //   1 - Adaptive ray tacing transfer
 //   0 - none
 EXTERN int RadiativeTransfer;
+EXTERN int RadiativeTransferHydrogenOnly;
 #ifdef TRANSFER
 EXTERN long *pix2x;
 EXTERN long *pix2y;
@@ -740,9 +751,20 @@ EXTERN int ShearingBoxProblemType; // 0 = advecting sphere; 1 = shearing box; 2 
 EXTERN float IsothermalSoundSpeed;
 EXTERN int RefineByJeansLengthUnits;
 
-EXTERN int MoveParticlesBetweenSiblings;
-EXTERN int ParticleSplitterIterations;
 
+
+EXTERN int MoveParticlesBetweenSiblings;
+
+/* Particle Splitter */
+
+EXTERN int ParticleSplitterIterations;
+EXTERN float ParticleSplitterChildrenParticleSeparation;
+
+/* Star Class MBH Particle IO (PARTICLE_TYPE_MBH) */
+
+EXTERN int MBHParticleIO;
+EXTERN char *MBHParticleIOFilename;
+EXTERN float MBHParticleIOTemp[30][5+MAX_DIMENSION];
 
 /* Vorticity Calculations */
 

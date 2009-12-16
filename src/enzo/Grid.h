@@ -13,11 +13,11 @@
 #ifndef GRID_DEFINED__
 #define GRID_DEFINED__
 
-
 #include "ProtoSubgrid.h"
 #include "ListOfParticles.h"
 #include "region.h"
 #include "FastSiblingLocator.h"
+#include "StarParticleData.h"
 #include "AMRH5writer.h"
 #include "Star.h"
 #include "FOF_allvars.h"
@@ -40,6 +40,15 @@ struct HierarchyEntry;
 #endif /* TRANSFER */
 
 //extern int CommunicationDirection;
+
+//struct ParticleEntry {
+//  FLOAT Position[3];
+//  float Mass;
+//  float Velocity[3];
+//  float Attribute[MAX_NUMBER_OF_PARTICLE_ATTRIBUTES];
+//  int Number;
+// int Type;
+//};
 
 extern int CommunicationDirection;
 int FindField(int f, int farray[], int n);
@@ -257,6 +266,10 @@ class grid
    int Group_WriteGridInterpolate(FLOAT WriteTime, FILE *main_file_pointer,
                             char *base_name, int grid_id, HDF5_hid_t file_id);
 
+   int ComputeVectorAnalysisFields(field_type fx, field_type fy, field_type fz,
+                                   float *curl_x, float *curl_y, float *curl_z,
+                                   float *div);
+
 private:
    int write_dataset(int ndims, hsize_t *dims, char *name, hid_t group, 
        hid_t data_type, void *data, int active_only = TRUE,
@@ -264,6 +277,7 @@ private:
    int read_dataset(int ndims, hsize_t *dims, char *name, hid_t group,
        hid_t data_type, void *read_to, int copy_back_active=FALSE,
        float *copy_to=NULL, int *active_dims=NULL);
+   int ReadExtraFields(hid_t group_id);
 public:
 
 /* Compute the timestep constraint for this grid
@@ -553,7 +567,7 @@ public:
 			 int RootResolution, FLOAT StopTime, 
 			 AMRHDF5Writer &AmiraGrid,
 			 int lastMovieStep, int TopGridCycle, 
-			 int WriteMe, int TimestepCounter, int open, 
+			 int WriteMe, int MovieTimestepCounter, int open, 
 			 FLOAT WriteTime);
 
    int ReturnMovieTimestep() { return TimestepsSinceCreation; };
@@ -1114,13 +1128,7 @@ public:
 
    int ReturnNumberOfParticles() {return NumberOfParticles;};
 
-   int ReturnNumberOfStarParticles() {
-     int np = 0;
-     if (MyProcessorNumber == ProcessorNumber)
-       for (int n = 0; n < NumberOfParticles; n++) 
-	 if (ParticleType[n] == PARTICLE_TYPE_STAR) np++;
-     return np;
-   };
+   int ReturnNumberOfStarParticles(void);
 
 /* Particles: set number of particles. */
 
@@ -1179,15 +1187,7 @@ public:
 
 /* Particles: Set new star particle index. */
 
-   void SetNewParticleIndex(int &NumberCount1, int &NumberCount2) {
-     for (int n = 0; n < NumberOfParticles; n++) 
-       if (ParticleNumber[n] == INT_UNDEFINED) {
-	 if (ParticleType[n] == PARTICLE_TYPE_STAR) 
-	   ParticleNumber[n] = NumberCount1++ + NumberCount2;
-	 else 
-	   ParticleNumber[n] = NumberCount1 + NumberCount2++;
-       }
-   };
+   void SetNewParticleIndex(int &NumberCount1, int &NumberCount2);
 
 /* Particles: Set new star particle index. - Old version */
 
@@ -1225,6 +1225,19 @@ public:
          return PARTICLE_TYPE_STAR;
      return PARTICLE_TYPE_DARK_MATTER;
    }
+
+/* Particles: return particle information in structure array */
+
+   int ReturnParticleEntry(ParticleEntry *ParticleList);
+
+/* Particles: set mass of merged particles to be -1 */
+
+   void RemoveMergedParticles(ParticleEntry *List, const int &Size, int *Flag);
+
+/* Particles: append particles belonging to this grid from a list */
+
+   int AddParticlesFromList(ParticleEntry *List, const int &Size, int *AddedNewParticleNumber);
+   int CheckGridBoundaries(FLOAT *Position);
 
 /* Particles: sort particle data in ascending order by number (id) or type. */
 
@@ -2049,8 +2062,8 @@ int CollapseTestInitializeGrid(int NumberOfSpheres,
 //  Inline FOF halo finder and particle interpolation using a tree
 //------------------------------------------------------------------------
 
-  int MoveParticlesFOF(int level, int GridNum, FOF_particle_data* &P, 
-		       int &Index, FOFData &AllVars, float VelocityUnits, 
+  int MoveParticlesFOF(int level, FOF_particle_data* &P, 
+		       int &Index, FOFData AllVars, float VelocityUnits, 
 		       double MassUnits, int CopyDirection);
 
   int InterpolateParticlesToGrid(FOFData *D);
@@ -2197,9 +2210,9 @@ int CollapseTestInitializeGrid(int NumberOfSpheres,
   int PoissonSolverCGA(int difftype, double *divB_p);
   template <typename T> int multA(T* input, T* output,  int *MatrixStartIndex, int *MatrixEndIndex);
   template <typename T> int multA2(T* input, T* output,  int *MatrixStartIndex, int *MatrixEndIndex);
-  template <typename T> T dot(T *a, T *b,  int *MatrixStartIndex, int *MatrixEndIndex);
-  int setNeumannBC(float* x, int *MatrixStartIndex, int *MatrixEndIndex);
-  int PoissonSolverDirichletBC(double *divB_p);
+  template <typename T> T dot(T *a, T *b,  int size);
+  template <typename T> int setNeumannBC(T* x, int *MatrixStartIndex, int *MatrixEndIndex,int type);
+  template <typename T> int setDirichletBC(T* x, int *MatrixStartIndex, int *MatrixEndIndex);
 
   int PoissonCleanStep(int level);
 

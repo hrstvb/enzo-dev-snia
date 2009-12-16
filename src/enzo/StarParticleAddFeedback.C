@@ -31,7 +31,6 @@
 #include "Hierarchy.h"
 #include "TopGridData.h"
 #include "LevelHierarchy.h"
-#include "StarParticleData.h"
 
 #define MAX_TEMPERATURE 1e8
 
@@ -93,6 +92,7 @@ int StarParticleAddFeedback(TopGridData *MetaData,
     AddedFeedback[count] = false;
 
     if ((cstar->ReturnFeedbackFlag() != MBH_THERMAL) && 
+	(cstar->ReturnFeedbackFlag() != MBH_JETS) && 
 	(!cstar->ApplyFeedbackTrue(SNe_dt)))
       continue;
 
@@ -116,12 +116,19 @@ int StarParticleAddFeedback(TopGridData *MetaData,
             ENZO_FAIL("Error in star::FindFeedbackSphere");
     }
 
+    /* If the particle already had sufficient mass, we still want to
+       mark this particle to activate it. */
+
+    if (SkipMassRemoval == TRUE)
+      AddedFeedback[count] = true;
+
     /* If there's no feedback or something weird happens, don't bother. */
 
-    if ((influenceRadius <= tiny_number) || 
-	(cstar->ReturnFeedbackFlag() == MBH_THERMAL &&
+    if ( influenceRadius <= tiny_number || 
+	((cstar->ReturnFeedbackFlag() == MBH_THERMAL ||
+	  cstar->ReturnFeedbackFlag() == MBH_JETS) && 
 	 (influenceRadius >= RootCellWidth/2 || 
-	  EjectaThermalEnergy <= tiny_number)))
+	  EjectaThermalEnergy <= tiny_number)) )
       continue;
 
     /* Determine if a sphere is enclosed within the grids on next level
@@ -130,7 +137,8 @@ int StarParticleAddFeedback(TopGridData *MetaData,
 
     SphereContainedNextLevel = FALSE;
 
-    if (cstar->ReturnFeedbackFlag() == MBH_THERMAL &&
+    if ((cstar->ReturnFeedbackFlag() == MBH_THERMAL ||
+	 cstar->ReturnFeedbackFlag() == MBH_JETS) &&
 	LevelArray[level+1] != NULL) {
       if (cstar->FindFeedbackSphere(LevelArray, level+1, influenceRadius, 
 				    EjectaDensity, EjectaThermalEnergy, 
@@ -142,18 +150,17 @@ int StarParticleAddFeedback(TopGridData *MetaData,
       }
     }
 
-    /*
-    if (debug) {
-      fprintf(stdout, "EjectaDensity=%g, influenceRadius=%g\n", EjectaDensity, influenceRadius); 
-      fprintf(stdout, "SkipMassRemoval=%d, SphereContained=%d, SphereContainedNextLevel=%d\n", 
-	      SkipMassRemoval, SphereContained, SphereContainedNextLevel); 
-    }
-    */
+
+//    if (debug) {
+//      fprintf(stdout, "EjectaDensity=%g, influenceRadius=%g\n", EjectaDensity, influenceRadius); 
+//      fprintf(stdout, "SkipMassRemoval=%d, SphereContained=%d, SphereContainedNextLevel=%d\n", 
+//	      SkipMassRemoval, SphereContained, SphereContainedNextLevel); 
+//    }
+
 
     /* Quit this routine when 
        (1) sphere is not contained, or 
        (2) sphere is contained, but the next level can contain the sphere, too. */ 
-
     if ((SphereContained == FALSE) ||
 	(SphereContained == TRUE && SphereContainedNextLevel == TRUE))
       continue;
@@ -167,13 +174,10 @@ int StarParticleAddFeedback(TopGridData *MetaData,
     if (SkipMassRemoval == FALSE)
       for (l = level; l < MAX_DEPTH_OF_HIERARCHY; l++)
 	for (Temp = LevelArray[l]; Temp; Temp = Temp->NextGridThisLevel) 
-	  if (Temp->GridData->
-	      AddFeedbackSphere(cstar, l, influenceRadius, DensityUnits, LengthUnits, 
-				VelocityUnits, TemperatureUnits, TimeUnits, EjectaDensity, 
-				EjectaMetalDensity, EjectaThermalEnergy, 
-				CellsModified) == FAIL) {
-	    	    ENZO_FAIL("Error in AddFeedbackSphere.");
-	  }
+	  Temp->GridData->AddFeedbackSphere
+	    (cstar, l, influenceRadius, DensityUnits, LengthUnits, 
+	     VelocityUnits, TemperatureUnits, TimeUnits, EjectaDensity, 
+	     EjectaMetalDensity, EjectaThermalEnergy, CellsModified);
 
     /*    
     fprintf(stdout, "StarParticleAddFeedback[%"ISYM"][%"ISYM"]: "
@@ -187,7 +191,6 @@ int StarParticleAddFeedback(TopGridData *MetaData,
       cstar->SetFeedbackFlag(DEATH);
 
     /* We only color the fields once */
-
 
     AddedFeedback[count] = true;
 
@@ -203,7 +206,8 @@ int StarParticleAddFeedback(TopGridData *MetaData,
 		cstar->ReturnID(), level, influenceRadius*LengthUnits/pc);
       if (cstar->ReturnFeedbackFlag() == SUPERNOVA || 
 	  cstar->ReturnFeedbackFlag() == CONT_SUPERNOVA ||
-	  cstar->ReturnFeedbackFlag() == MBH_THERMAL )
+	  cstar->ReturnFeedbackFlag() == MBH_THERMAL ||
+	  cstar->ReturnFeedbackFlag() == MBH_JETS )
 	fprintf(stdout, "StarParticleAddFeedback[%"ISYM"][%"ISYM"]: "
 		"Energy = %"GSYM"  , skip = %"ISYM"\n",
 		cstar->ReturnID(), level, EjectaThermalEnergy, SkipMassRemoval);

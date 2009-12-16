@@ -62,6 +62,7 @@ OBJS_CONFIG_LIB = \
         CommunicationInitialize.o \
         CommunicationLoadBalanceRootGrids.o \
         CommunicationLoadBalanceGrids.o \
+	CommunicationMergeStarParticle.o \
         CommunicationParallelFFT.o \
         CommunicationPartitionGrid.o \
         CommunicationReceiveFluxes.o \
@@ -128,8 +129,8 @@ OBJS_CONFIG_LIB = \
         ExposeGridHierarchy.o \
         ExternalBoundary_AppendForcingToBaryonFields.o \
         ExternalBoundary_constructor.o \
-	ExternalBoundary_DeleteObsoleteFields.o \
         ExternalBoundary_DetachForcingFromBaryonFields.o \
+        ExternalBoundary_DeleteObsoleteFields.o \
         ExternalBoundary_IdentifyPhysicalQuantities.o \
         ExternalBoundary_InitializeExternalBoundaryFaceIO.o \
         ExternalBoundary_Prepare.o \
@@ -164,6 +165,7 @@ OBJS_CONFIG_LIB = \
         FOF_allocate.o \
         FOF_cmpfunc.o \
         FOF_density.o \
+	FOF_Finalize.o \
         FOF_forcetree.o \
         FOF_iindexx.o \
         FOF_indexx.o \
@@ -183,6 +185,7 @@ OBJS_CONFIG_LIB = \
         fourn.o \
 	FreeExpansionInitialize.o \
         FreeRealMem.o \
+        FriendOfFriend.o \
 	GadgetInitCoolMemory.o \
 	GadgetIonizeParamsTable.o \
 	GadgetMakeCoolingTable.o \
@@ -203,6 +206,7 @@ OBJS_CONFIG_LIB = \
         Grid_AddFieldMassToMassFlaggingField.o \
         Grid_AddFields.o \
         Grid_AddOverlappingParticleMassField.o \
+	Grid_AddParticlesFromList.o \
         Grid_AddRandomForcing.o \
         Grid_AddToBoundaryFluxes.o \
         Grid_AllocateGrids.o \
@@ -255,6 +259,7 @@ OBJS_CONFIG_LIB = \
         Grid_ComputePressure.o \
         Grid_ComputeTemperatureField.o \
         Grid_ComputeTimeStep.o \
+        Grid_ComputeVectorAnalysisFields.o \
         Grid_ComputeVertexCenteredField.o \
         Grid_ComputeXrayEmissivity.o \
         Grid_constructor.o \
@@ -278,10 +283,10 @@ OBJS_CONFIG_LIB = \
         Grid_DeleteAllButParticles.o \
         Grid_DeleteAllFields.o \
         Grid_DeleteFlaggingField.o \
+        Grid_DeleteObsoleteFields.o \
 	Grid_FlagCellsToBeRefinedByMetallicity.o	\
         Grid_DepositMustRefineParticles.o \
 	Grid_FlagCellsToBeRefinedByMustRefineRegion.o	\
-	Grid_DeleteObsoleteFields.o \
         Grid_DepositBaryons.o \
         Grid_DepositParticlePositions.o \
         Grid_DepositParticlePositionsLocal.o \
@@ -332,10 +337,10 @@ OBJS_CONFIG_LIB = \
         Grid_IdentifyNewSubgrids.o \
         Grid_IdentifyNewSubgridsSmall.o \
         Grid_IdentifyPhysicalQuantities.o \
-        Grid_IdentifyRadiativeTransferFields.o \
         Grid_IdentifySpeciesFields.o \
 	Grid_IdentifyGloverSpeciesFields.o \
 	Grid_IdentifyColourFields.o \
+        Grid_IdentifyRadiativeTransferFields.o \
         Grid_ImplosionInitializeGrid.o \
         Grid_InheritProperties.o \
         Grid_InitializeGravitatingMassField.o \
@@ -387,6 +392,8 @@ OBJS_CONFIG_LIB = \
         Grid_RestoreEnergyConsistency.o \
         Grid_ReturnFluxDims.o \
         Grid_ReturnGridInfo.o \
+	Grid_ReturnNumberOfStarParticles.o \
+	Grid_ReturnParticleEntry.o \
 	Grid_ReturnStarStatistics.o \
         Grid_RotatingCylinderInitialize.o \
         Grid_SedovBlastInitializeGrid3D.o \
@@ -396,6 +403,7 @@ OBJS_CONFIG_LIB = \
         Grid_SetFlaggingFieldStaticRegions.o \
         Grid_SetIsolatedPotentialBoundary.o \
         Grid_SetMinimumSupport.o \
+	Grid_SetNewParticleIndex.o \
         Grid_SetParticleMassFlaggingField.o \
         Grid_ShearingBoxInitializeGrid.o \
         Grid_ShearingBox2DInitializeGrid.o \
@@ -505,6 +513,7 @@ OBJS_CONFIG_LIB = \
         OutputFromEvolveLevel.o\
         OutputLevelInformation.o \
         P_ColumnFormat.o \
+	ParticleMergeRoutines.o \
         ParticleSplitter.o \
         performance.o \
         pgas2d_dual.o \
@@ -604,8 +613,10 @@ OBJS_CONFIG_LIB = \
         StarParticleMergeMBH.o \
         StarRoutines.o \
         Star_Accrete.o \
+        Star_AccreteAngularMomentum.o \
         Star_ActivateNewStar.o \
         Star_ApplyFeedbackTrue.o \
+        Star_AssignAccretedAngularMomentum.o \
         Star_CalculateFeedbackParameters.o \
         Star_CalculateMassAccretion.o \
         Star_ComputePhotonRates.o \
@@ -814,7 +825,8 @@ OBJS_ECUDA_ALL = \
 	hydro_rk/CUDA_Rec_PLM.o \
 	hydro_rk/HydroSweep_CUDA.o \
 	hydro_rk/MHDSweep_CUDA.o
-
+#	hydro_rk/overlapping_MHDSweep_CUDA.o
+#
 
 
 
