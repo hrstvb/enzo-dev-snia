@@ -79,8 +79,8 @@ int grid::PhotonTestInitializeGrid(int NumberOfSpheres,
 
   int dim, i, j, k, m, field, sphere, size, index;
   int DeNum, HINum, HIINum, HeINum, HeIINum, HeIIINum, HMNum, H2INum, H2IINum,
-    DINum, DIINum, HDINum,  kphHINum, gammaHINum, kphHeINum, gammaHeINum,
-    kphHeIINum, gammaHeIINum, kdissH2INum, RPresNum1, RPresNum2, RPresNum3; 
+    DINum, DIINum, HDINum,  kphHINum, gammaNum, kphHeINum,
+    kphHeIINum, kdissH2INum, RPresNum1, RPresNum2, RPresNum3; 
 
 
   /* create fields */
@@ -126,11 +126,11 @@ int grid::PhotonTestInitializeGrid(int NumberOfSpheres,
   if (RadiativeTransfer)
     if (MultiSpecies) {
       FieldType[kphHINum    = NumberOfBaryonFields++] = kphHI;
-      FieldType[gammaHINum  = NumberOfBaryonFields++] = gammaHI;
-      FieldType[kphHeINum   = NumberOfBaryonFields++] = kphHeI;
-      FieldType[gammaHeINum = NumberOfBaryonFields++] = gammaHeI;
-      FieldType[kphHeIINum  = NumberOfBaryonFields++] = kphHeII;
-      FieldType[gammaHeIINum= NumberOfBaryonFields++] = gammaHeII;
+      FieldType[gammaNum    = NumberOfBaryonFields++] = PhotoGamma;
+      if (RadiativeTransferHydrogenOnly == FALSE) {
+	FieldType[kphHeINum   = NumberOfBaryonFields++] = kphHeI;
+	FieldType[kphHeIINum  = NumberOfBaryonFields++] = kphHeII;
+      }
       if (MultiSpecies > 1) 
 	FieldType[kdissH2INum    = NumberOfBaryonFields++] = kdissH2I;
     } 
@@ -446,7 +446,7 @@ int grid::PhotonTestInitializeGrid(int NumberOfSpheres,
 	    /* 4) Gaussian */
 	    if (SphereType[sphere] == 4) {
 	      dens1 = SphereDensity[sphere]*
-                      exp(-0.5*pow(r/SphereCoreRadius[sphere], 2));
+                      PEXP(-0.5*pow(r/SphereCoreRadius[sphere], 2));
 	    }
 
 	    /* 5) r^-2 power law with core radius */
@@ -503,7 +503,7 @@ int grid::PhotonTestInitializeGrid(int NumberOfSpheres,
 		/* Compute density (Kruit & Searle 1982). */
 
 		if (dim == 0)
-		  dens1 = SphereDensity[sphere]*exp(-drad/ScaleHeightR)/
+		  dens1 = SphereDensity[sphere]*PEXP(-drad/ScaleHeightR)/
 		    pow(cosh(zheight/max(ScaleHeightz, CellWidth[0][0])), 2);
 
 		if (dens1 < density)

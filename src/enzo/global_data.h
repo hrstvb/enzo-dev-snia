@@ -41,7 +41,9 @@ EXTERN int PreviousMaxTask;
 /* FileDirectedOutput checks for file existence: 
    stopNow (writes, stops),   outputNow, subgridcycleCount */
 EXTERN int FileDirectedOutput;
-
+/* This governs whether or not we'll be writing out a supplemental binary
+   hierarchy file in HDF5. */
+EXTERN int WriteBinaryHierarchy;
 
 /* debugging, extraction flags */
 
@@ -65,6 +67,7 @@ EXTERN int extract;
 	    51 = ThermalPancake test
 	    60 = TurbulenceSimulation
 	                                                                  */
+EXTERN int CheckpointRestart;
 EXTERN int ProblemType;
 
 /* Hydrodynamics method:
@@ -289,6 +292,8 @@ EXTERN fpos_t  BaryonFileNamePosition;
 /* Multi-species rate equation flag and associated data. */
 
 EXTERN int MultiSpecies;
+EXTERN int PrimordialChemistrySolver;
+EXTERN int ThreeBodyRate;
 EXTERN RateDataType RateData;
 
 /* Glover chemistry/cooling network flags */
@@ -299,6 +304,24 @@ EXTERN int GloverOpticalDepth; // 0: opticaly thin, 1: single-cell
 /* Multi-element metallicity field flag and count. */
 
 EXTERN int MultiMetals;
+
+/* Cosmic Ray Model 
+ * 0: Off - default
+ * 1: On, Let CRs accululate on Grid
+ * 2: On, Zero out CRs each step to only look at instantaneous acceleration
+ * 3: Highly experimental, takes energy out of gas.  Unstable.
+ */
+EXTERN int CRModel; 
+/* Shock Finding Method: Always on when CRModel nonzero
+ * 0: temperature unsplit - default
+ * 1: temperature split 
+ * 2: velocity unsplit
+ * 3: velocity split
+ */
+EXTERN int ShockMethod; 
+EXTERN CosmicRayDataType CosmicRayData;
+EXTERN float ShockTemperatureFloor;
+EXTERN int StorePreShockFields;
 
 /* Type of radiation field. 
    0 - none,                    1 - Haardt & Madau alpha=-1.5
@@ -312,6 +335,10 @@ EXTERN float SetHeIIHeatingScale;
 EXTERN RadiationFieldDataType RadiationData;
 EXTERN int RadiationFieldLevelRecompute;
 EXTERN int RadiationXRaySecondaryIon;
+
+/* Photoelectric cooling turn on/off */
+
+EXTERN int PhotoelectricHeating;
 
 /* Output cooling time with grid data. */
 
@@ -360,6 +387,15 @@ EXTERN int ExtractFieldsOnly;
 EXTERN int First_Pass;
 EXTERN int UnigridTranspose;
 EXTERN int NumberOfRootGridTilesPerDimensionPerProcessor;
+EXTERN int CosmologySimulationNumberOfInitialGrids;
+
+/* Parameters that control density dex output */
+
+EXTERN int OutputOnDensity;
+EXTERN float StartDensityOutputs;
+EXTERN float CurrentDensityOutput;
+EXTERN float CurrentMaximumDensity;
+EXTERN float IncrementDensityOutput;
 
 /* Parameter(s) for embedded python execution */
 EXTERN int PythonSubcycleSkip;
@@ -408,6 +444,10 @@ EXTERN float MinimumPressureJumpForRefinement, MinimumEnergyRatioForRefinement;
    The number of cells by which the Jeans length should be resolved. */
 
 EXTERN float RefineByJeansLengthSafetyFactor;
+
+/* If > 0, this will be used instead of the temperature at all locations */
+
+EXTERN float JeansRefinementColdTemperature;
 
 /* For CellFlaggingMethod = 8,
    The level to which the must refine particles apply */
@@ -554,6 +594,7 @@ EXTERN int NEQ_HYDRO;
 EXTERN int NEQ_MHD;
 EXTERN int ReconstructionMethod;
 EXTERN int RiemannSolver;
+EXTERN int ConservativeReconstruction;
 EXTERN int EOSType;
 EXTERN float EOSSoundSpeed;
 EXTERN float EOSCriticalDensity;
@@ -567,13 +608,13 @@ EXTERN int ExternalGravity;
 EXTERN int StringKick;
 EXTERN int UseFloor;
 EXTERN int UseViscosity;
+EXTERN float ViscosityCoefficient;
 EXTERN int UseAmbipolarDiffusion;
 EXTERN int UseResistivity;
 
 /* Chemistry & cooling parameters */
 
 EXTERN int UseH2OnDust;
-EXTERN double PhotoelectricHeating;
 EXTERN float CoolingCutOffDensity1;
 EXTERN float CoolingCutOffDensity2;
 EXTERN float CoolingPowerCutOffDensity1;
@@ -597,22 +638,25 @@ EXTERN int UseDivergenceCleaning;
 EXTERN int DivergenceCleaningBoundaryBuffer;
 EXTERN float DivergenceCleaningThreshold;
 EXTERN float PoissonApproximationThreshold;
+EXTERN int PoissonBoundaryType;
 
 
 
 /* Star Particle paramters */
 
 EXTERN int ShiningParticleID;
-EXTERN double SinkMergeDistance;
+EXTERN float SinkMergeDistance;
 EXTERN float SinkMergeMass;
 EXTERN float TotalSinkMass;
 EXTERN int StellarWindFeedback;
 EXTERN float StellarWindTurnOnMass;
+EXTERN float MSStellarWindTurnOnMass;
 EXTERN int NBodyDirectSummation;
 
 /* Turbulence simulation parameters */
 EXTERN int UseDrivingField;
 EXTERN float DrivingEfficiency;
+
 /* Parameters to use CUDA extensions */ 
 EXTERN int UseCUDA;
 
@@ -657,6 +701,7 @@ EXTERN int H2OpticalDepthApproximation;
 //   1 - Adaptive ray tacing transfer
 //   0 - none
 EXTERN int RadiativeTransfer;
+EXTERN int RadiativeTransferHydrogenOnly;
 #ifdef TRANSFER
 EXTERN long *pix2x;
 EXTERN long *pix2y;
@@ -682,6 +727,10 @@ EXTERN int FieldsToInterpolate[MAX_NUMBER_OF_BARYON_FIELDS];
 
 #endif /* TRANSFER  */
 
+EXTERN int LevelCycleCount[MAX_DEPTH_OF_HIERARCHY];
+EXTERN float dtThisLevelSoFar[MAX_DEPTH_OF_HIERARCHY];
+EXTERN float dtThisLevel[MAX_DEPTH_OF_HIERARCHY];
+
 /* Coupled radiative transfer, cooling, and rate solver */
 
 EXTERN int RadiativeTransferCoupledRateSolver;
@@ -702,6 +751,24 @@ EXTERN int ShearingBoxProblemType; // 0 = advecting sphere; 1 = shearing box; 2 
 EXTERN float IsothermalSoundSpeed;
 EXTERN int RefineByJeansLengthUnits;
 
+
+
 EXTERN int MoveParticlesBetweenSiblings;
+
+/* Particle Splitter */
+
+EXTERN int ParticleSplitterIterations;
+EXTERN float ParticleSplitterChildrenParticleSeparation;
+
+/* Star Class MBH Particle IO (PARTICLE_TYPE_MBH) */
+
+EXTERN int MBHParticleIO;
+EXTERN char *MBHParticleIOFilename;
+EXTERN float MBHParticleIOTemp[30][5+MAX_DIMENSION];
+
+/* Vorticity Calculations */
+
+EXTERN int VelAnyl;
+EXTERN int BAnyl;
 
 #endif

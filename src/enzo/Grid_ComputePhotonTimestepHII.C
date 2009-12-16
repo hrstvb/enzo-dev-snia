@@ -28,7 +28,6 @@
 #include "GridList.h"
 #include "ExternalBoundary.h"
 #include "Grid.h"
-#include "StarParticleData.h"
 #include "RadiativeTransferParameters.h"
 
 #define MAX_CHANGE 0.1
@@ -76,10 +75,9 @@ float grid::ComputePhotonTimestepHII(float DensityUnits, float LengthUnits,
   /* Find photo-ionization fields */
 
   int kphHINum, kphHeINum, kphHeIINum, kdissH2INum;
-  int gammaHINum, gammaHeINum, gammaHeIINum;
-  IdentifyRadiativeTransferFields(kphHINum, gammaHINum, kphHeINum, 
-				  gammaHeINum, kphHeIINum, gammaHeIINum, 
-				  kdissH2INum);
+  int gammaNum;
+  IdentifyRadiativeTransferFields(kphHINum, gammaNum, kphHeINum, 
+				  kphHeIINum, kdissH2INum);
 
 
   /* Compute temperature field */

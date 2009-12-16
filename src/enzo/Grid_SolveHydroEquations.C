@@ -190,8 +190,44 @@ int grid::SolveHydroEquations(int CycleNumber, int NumberOfSubgrids,
     } // if(TestProblemData.GloverChemistryModel)
 
 
-    /* Determine if Gamma should be a scalar or a field. */
+    /* Add shock/cosmic ray variables as a colour variable. */
 
+    if(CRModel){
+      int MachNum, CRNum, PSTempNum,PSDenNum;
+      
+      if (IdentifyCRSpeciesFields(MachNum,CRNum,PSTempNum,PSDenNum) == FAIL) {
+	ENZO_FAIL("Error in IdentifyCRSpeciesFields.")
+      }
+      
+      colnum[NumberOfColours++] = MachNum;
+      if(StorePreShockFields){
+	colnum[NumberOfColours++] = PSTempNum;
+	colnum[NumberOfColours++] = PSDenNum;
+      }
+      colnum[NumberOfColours++] = CRNum;
+      
+      /*  Zero out Mach number array so that we don't get strange advection */
+      
+      float *mach = BaryonField[MachNum];
+      if(StorePreShockFields){
+	float *pstemp = BaryonField[PSTempNum];
+	float *psden = BaryonField[PSDenNum];
+	for (i = 0; i < size; i++){
+	  pstemp[i] = tiny_number;
+	  psden[i] = tiny_number;
+	}
+      }
+      for (i = 0; i < size; i++)
+	mach[i] = tiny_number;
+      if(CRModel == 2){  //zero out CR to get instantanous injection
+	float *cr = BaryonField[CRNum];
+	for (i = 0; i < size; i++)
+	  cr[i] = tiny_number;
+      }
+    }
+    
+    /* Determine if Gamma should be a scalar or a field. */
+    
     int UseGammaField = FALSE;
     float *GammaField;
     if (HydroMethod == Zeus_Hydro && MultiSpecies > 1) {
@@ -218,6 +254,10 @@ int grid::SolveHydroEquations(int CycleNumber, int NumberOfSubgrids,
       }
 
     /* allocate space for fluxes */
+
+    /* Set up our restart dump fluxes container */
+    this->SubgridFluxStorage = SubgridFluxes;
+    this->NumberOfSubgrids = NumberOfSubgrids;
 
     for (i = 0; i < NumberOfSubgrids; i++) {
       for (dim = 0; dim < GridRank; dim++)  {
@@ -274,7 +314,7 @@ int grid::SolveHydroEquations(int CycleNumber, int NumberOfSubgrids,
        (including boundary zones) */
 
     for (dim = 0; dim < GridRank; dim++)
-      GridGlobalStart[dim] = nint((GridLeftEdge[dim]-DomainLeftEdge[dim])/(*(CellWidth[dim]))) -
+      GridGlobalStart[dim] = nlongint((GridLeftEdge[dim]-DomainLeftEdge[dim])/(*(CellWidth[dim]))) -
 	GridStartIndex[dim];
 
     /* fix grid quantities so they are defined to at least 3 dims */
@@ -372,6 +412,15 @@ int grid::SolveHydroEquations(int CycleNumber, int NumberOfSubgrids,
 
     for (dim = 0; dim < MAX_DIMENSION; dim++)
       delete [] CellWidthTemp[dim];
+
+  /* If we're supposed to be outputting on Density, we need to update
+     the current maximum value of that Density. */
+
+    if(OutputOnDensity == 1){
+      int DensNum = FindField(Density, FieldType, NumberOfBaryonFields);
+      for(i = 0; i < size; i++)
+        max(BaryonField[DensNum][size], CurrentMaximumDensity);
+    }
 
   }  // end: if (NumberOfBaryonFields > 0)
 

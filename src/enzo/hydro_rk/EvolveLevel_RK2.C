@@ -35,11 +35,14 @@
 
 /* function prototypes */
 
-int StarParticleInitialize(LevelHierarchyEntry *LevelArray[], int ThisLevel,
-			   TopGridData *MetaData, Star *&AllStars);
+int StarParticleInitialize(HierarchyEntry *Grids[], TopGridData *MetaData,
+			   int NumberOfGrids, LevelHierarchyEntry *LevelArray[], 
+			   int ThisLevel, Star *&AllStars,
+			   int TotalStarParticleCountPrevious[]);
 int StarParticleFinalize(HierarchyEntry *Grids[], TopGridData *MetaData,
 			 int NumberOfGrids, LevelHierarchyEntry *LevelArray[], 
-			 int level, Star *&AllStars);
+			 int level, Star *&AllStars,
+			 int TotalStarParticleCountPrevious[]);
 int AdjustRefineRegion(LevelHierarchyEntry *LevelArray[], 
 		       TopGridData *MetaData, int EL_level);
 int ComputeDednerWaveSpeeds(TopGridData *MetaData,LevelHierarchyEntry *LevelArray[], 
@@ -62,7 +65,6 @@ int  ReportMemoryUsage(char *header = NULL);
 int  UpdateParticlePositions(grid *Grid);
 int  CheckEnergyConservation(HierarchyEntry *Grids[], int grid, 
 			     int NumberOfGrids, int level, float dt);
-int CommunicationMergeStarParticle(HierarchyEntry *Grids[], int NumberOfGrids);
 #ifdef USE_MPI
 int CommunicationReduceValues(float *Values, int Number, MPI_Op ReduceOperation);
 #endif
@@ -175,7 +177,6 @@ int CallPython(LevelHierarchyEntry *LevelArray[], TopGridData *MetaData,
 
 /* Counters for performance and cycle counting. */
 
-static int LevelCycleCount[MAX_DEPTH_OF_HIERARCHY];
 static int MovieCycleCount[MAX_DEPTH_OF_HIERARCHY];
 static double LevelWallTime[MAX_DEPTH_OF_HIERARCHY];
 static double LevelZoneCycleCount[MAX_DEPTH_OF_HIERARCHY];
@@ -229,6 +230,7 @@ int EvolveLevel_RK2(TopGridData *MetaData, LevelHierarchyEntry *LevelArray[],
   int NumberOfGrids = GenerateGridArray(LevelArray, level, &Grids);
   int *NumberOfSubgrids = new int[NumberOfGrids];
   fluxes ***SubgridFluxesEstimate = new fluxes **[NumberOfGrids];
+  int *TotalStarParticleCountPrevious = new int[NumberOfGrids];
 
   /* Initialize the chaining mesh used in the FastSiblingLocator. */
 
@@ -292,7 +294,8 @@ int EvolveLevel_RK2(TopGridData *MetaData, LevelHierarchyEntry *LevelArray[],
    /* Initialize the star particles */
 
     Star *AllStars = NULL;
-    StarParticleInitialize(LevelArray, level, MetaData, AllStars);
+    StarParticleInitialize(Grids, MetaData, NumberOfGrids, LevelArray,
+			   level, AllStars, TotalStarParticleCountPrevious);
 
  
 #ifdef TRANSFER
@@ -484,15 +487,18 @@ int EvolveLevel_RK2(TopGridData *MetaData, LevelHierarchyEntry *LevelArray[],
 	
 	  time1 = ReturnWallTime();
 	  
-	  Grids[grid1]->GridData->PoissonSolver(level);
+	 
 	
 	} // ENDIF MHD_RK
       } // ENDIF UseHydro
 
       /* Add viscosity */
 
-      if (UseViscosity) 
+      if (UseViscosity) {
 	Grids[grid1]->GridData->AddViscosity();
+
+      }
+
 
       /* Solve the cooling and species rate equations. */
  
@@ -513,6 +519,8 @@ int EvolveLevel_RK2(TopGridData *MetaData, LevelHierarchyEntry *LevelArray[],
 	     MaximumGravityRefinementLevel == MaximumRefinementLevel)
 	     Grids[grid1]->GridData->DeleteAccelerationField();
 
+
+
       Grids[grid1]->GridData->DeleteParticleAcceleration();
  
       if (UseFloor) 
@@ -525,6 +533,23 @@ int EvolveLevel_RK2(TopGridData *MetaData, LevelHierarchyEntry *LevelArray[],
 
     }  // end loop over grids
 
+    
+    if (UseDivergenceCleaning!=0){
+
+#ifdef FAST_SIB
+      SetBoundaryConditions(Grids, NumberOfGrids, SiblingList, level, 
+			    MetaData, Exterior, LevelArray[level]);
+#else
+      SetBoundaryConditions(Grids, NumberOfGrids, level, MetaData, 
+			    Exterior, LevelArray[level]);
+#endif
+      
+      for (grid1 = 0; grid1 < NumberOfGrids; grid1++) {
+
+	Grids[grid1]->GridData->PoissonSolver(level);
+      }
+      
+    }
 
 #ifdef FAST_SIB
     SetBoundaryConditions(Grids, NumberOfGrids, SiblingList, level, 
@@ -534,12 +559,12 @@ int EvolveLevel_RK2(TopGridData *MetaData, LevelHierarchyEntry *LevelArray[],
 			  Exterior, LevelArray[level]);
 #endif
 
-
-
     /* Finalize (accretion, feedback, etc.) star particles */
  
     StarParticleFinalize(Grids, MetaData, NumberOfGrids, LevelArray,
-			 level, AllStars);
+			 level, AllStars, TotalStarParticleCountPrevious);
+
+
 
     OutputFromEvolveLevel(LevelArray,MetaData,level,Exterior);
     CallPython(LevelArray, MetaData, level);
@@ -580,7 +605,7 @@ int EvolveLevel_RK2(TopGridData *MetaData, LevelHierarchyEntry *LevelArray[],
 
     if (LevelArray[level+1] == NULL) {
       MetaData->SubcycleNumber++;
-      MetaData->TimestepCounter++;
+      MetaData->MovieTimestepCounter++;
     }
 
     /* ------------------------------------------------------- */
