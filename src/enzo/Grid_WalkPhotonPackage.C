@@ -481,6 +481,7 @@ int grid::WalkPhotonPackage(PhotonPackageEntry **PP,
 				OpticallyThin);
 
       if (OpticallyThin) {
+	dP = 0;
 	if (!SkipCalculation) {
 
 	// Optically thin rates at cell center (flux_scaling corrects
@@ -489,7 +490,6 @@ int grid::WalkPhotonPackage(PhotonPackageEntry **PP,
 	  (*PP)->Photons * sigma[0] / solid_angle;
 	BaryonField[kphNum[type]][index] += kestimate*factor1;
 	BaryonField[gammaNum][index] += kestimate*factor2[0];
-	dP = 0;
 
 	// Mark cell for this source.  No more rays from this source
 	// can contribute to this cell.
@@ -568,16 +568,6 @@ int grid::WalkPhotonPackage(PhotonPackageEntry **PP,
       /************************************************************/
     case 4:
 
-      if (RadiationXRaySecondaryIon && !SkipCalculation) {
-	xx = max(fields[iHII][index] / 
-		 (fields[iHI][index] + fields[iHII][index]), 1e-4);
-	heat_factor    = 0.9971 * (1 - powf(1 - powf(xx, 0.2663f), 1.3163));
-	ion2_factor[0] = 0.3908 * nSecondaryHII * 
-	  powf(1 - powf(xx, 0.4092f), 1.7592f);
-	ion2_factor[2] = 0.0554 * nSecondaryHeIII * 
-	  powf(1 - powf(xx, 0.4614f), 1.6660f);
-      }
-
       /* Loop over absorbers */
       for (i = 0; i < 3; i++) {
 
@@ -597,9 +587,21 @@ int grid::WalkPhotonPackage(PhotonPackageEntry **PP,
 //	  if (!OpticallyThin)
 //	    slice_factor2 = RayGeometricCorrection(oldr, radius, ddr, s, u, ce, 
 //						   dxhalf, dtheta, ROUNDOFF);
+
+	  if (RadiationXRaySecondaryIon && !SkipCalculation) {
+	    xx = max(fields[iHII][index] / 
+		     (fields[iHI][index] + fields[iHII][index]), 1e-4);
+	    heat_factor    = 0.9971 * (1 - powf(1 - powf(xx, 0.2663f), 1.3163));
+	    ion2_factor[0] = 0.3908 * nSecondaryHII * 
+	      powf(1 - powf(xx, 0.4092f), 1.7592f);
+	    ion2_factor[2] = 0.0554 * nSecondaryHeIII * 
+	      powf(1 - powf(xx, 0.4614f), 1.6660f);
+	  }
+
 	} // ENDIF i==0
 
 	if (OpticallyThin) {
+	  dP = 0;
 	  if (!SkipCalculation) {
 
 	    // Optically thin rates at cell center (flux_scaling
@@ -609,7 +611,6 @@ int grid::WalkPhotonPackage(PhotonPackageEntry **PP,
 	    BaryonField[kphNum[type]][index] += kestimate * factor1 * 
 	      ion2_factor[i];
 	    BaryonField[gammaNum][index] += kestimate * factor2[i] * heat_factor;
-	    dP = 0;
 
 	    // Mark cell for this source.  No more rays from this
 	    // source can contribute to this cell.
@@ -628,8 +629,9 @@ int grid::WalkPhotonPackage(PhotonPackageEntry **PP,
 	  else
 	    dP = min((*PP)->Photons*tau, (*PP)->Photons);
 
-	  slice_factor2 = RayGeometricCorrection(oldr, radius, ddr, s, u, ce, 
-						 dxhalf, dtheta, ROUNDOFF);
+//	  slice_factor2 = RayGeometricCorrection(oldr, radius, ddr, s, u, ce, 
+//						 dxhalf, dtheta, ROUNDOFF);
+	  slice_factor2 = 1.0f;
 	  dP1 = dP * slice_factor2;
 
 	  // contributions to the photoionization rate is over whole timestep
