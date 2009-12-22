@@ -678,9 +678,8 @@ int ReadParameterFile(FILE *fptr, TopGridData &MetaData, float *Initialdt)
     ret += sscanf(line, "MultiMetals = %"ISYM, &MultiMetals);
 
     ret += sscanf(line, "RadiativeTransfer = %"ISYM, &RadiativeTransfer);
-    ret += sscanf(line, "RadiationXRaySecondaryIon = %"ISYM, 
-		  &RadiationXRaySecondaryIon);
-
+    ret += sscanf(line, "RadiationXRaySecondaryIon = %"ISYM, &RadiationXRaySecondaryIon);
+    ret += sscanf(line, "RadiationXRayComptonHeating = %"ISYM, &RadiationXRayComptonHeating);
 
     /* Shearing Box Boundary parameters */
 
@@ -976,7 +975,7 @@ int ReadParameterFile(FILE *fptr, TopGridData &MetaData, float *Initialdt)
 	ENZO_FAIL("Error in InitializeRadiationFieldData.");
       }
  
-  /* If using MBHFeedback = 2 (Star->FeedbackFlag = MBH_JETS), 
+  /* If using MBHFeedback = 2 or 3 (Star->FeedbackFlag = MBH_JETS), 
      you need MBHParticleIO for angular momentum */
 
   if (MBHFeedback == 2 || MBHFeedback == 3) 
