@@ -12,6 +12,7 @@
 #
 # To use this makefile, you need to update your environment. Either
 # execute these on the command line, or better, put them you profile.
+#   module swap pgi intel
 #   module swap mvapich2/1.0 mvapich-devel/1.0
 #   module load acml
 #
@@ -28,7 +29,7 @@
 
 MACH_TEXT  = TACC Ranger
 MACH_VALID = 1
-MACH_FILE  = Make.mach.tacc-ranger
+MACH_FILE  = Make.mach.ranger-mp
 
 #-----------------------------------------------------------------------
 # Commands to run test executables
@@ -58,7 +59,7 @@ MACH_CPP       = /usr/bin/cpp
 # With MPI
 
 MACH_CC_MPI    = mpicc
-MACH_CXX_MPI   = mpicxx -DMPICH_IGNORE_CXX_SEEK 
+MACH_CXX_MPI   = mpicxx
 MACH_FC_MPI    = mpif90
 MACH_F90_MPI   = mpif90
 MACH_LD_MPI    = mpicxx
@@ -77,19 +78,20 @@ MACH_LD_NOMPI  = mpicxx
 
 #MACH_DEFINES   = -DXT3 -DNO_IO_LOG -DSYSCALL -DENZO_ANALYSIS
 #MACH_DEFINES   = -DXT3 -DNO_IO_LOG -DSYSCALL -DHAVE_SPRNG
-MACH_DEFINES   = -DLINUX -DNO_IO_LOG -DSYSCALL -DHAVE_SPRNG -DSFGEN_PERF -DUSE_OMP
+MACH_DEFINES   = -DLINUX -DIA64 -DNO_IO_LOG -DSYSCALL -DHAVE_SPRNG \
+		-DSFGEN_PERF -DNO_IO_LOG -DNO_MEM_TRACE
 
 #-----------------------------------------------------------------------
 # Compiler flag settings
 #-----------------------------------------------------------------------
 
+MACH_OPENMP   = -openmp
 MACH_CPPFLAGS = -P -traditional 
-#MACH_CPPFLAGS = 
-MACH_CFLAGS   = -xW -openmp -DIA64 -DNO_MEM_TRACE -DNO_IO_LOG -DSYSCALL -mp1 -prec_div -fp_port -align
-MACH_CXXFLAGS = -xW -openmp -DIA64 -DNO_MEM_TRACE -DNO_IO_LOG -DSYSCALL -DUSE_MPI -mp1 -prec_div -fp_port -align -DMPICH_IGNORE_CXX_SEEK -DNEED_GETOPT # getopt for Rick's particle extractor code
-MACH_FFLAGS   = -D_OPENMP
-MACH_F90FLAGS = -openmp -mp1 -prec_div -fp_port -align -save -zero
-MACH_LDFLAGS  = -openmp -Wl,-noinhibit-exec -L/opt/apps/intel/10.1/fc/lib -lifcore -lifport -lpthread -ldl
+MACH_CFLAGS   = -mp1 -prec_div -fp_port -align
+MACH_CXXFLAGS = -mp1 -prec_div -fp_port -align -DNEED_GETOPT # getopt for Rick's particle extractor code
+MACH_FFLAGS   = 
+MACH_F90FLAGS = -mp1 -prec_div -fp_port -align -save -zero
+MACH_LDFLAGS  = -Wl,-noinhibit-exec -L/opt/apps/intel/10.1/fc/lib -lifcore -lifport -lpthread -ldl
 
 #-----------------------------------------------------------------------
 # Precision-related flags
@@ -104,15 +106,18 @@ MACH_FFLAGS_REAL_64    = -r8
 # Optimization flags
 #-----------------------------------------------------------------------
 
-MACH_OPT_WARN        = 
-MACH_OPT_DEBUG       = -g -O0 -Minfo=all
-#MACH_OPT_CRASHES        = -fastsse
-#MACH_OPT_HIGH        = -O2 -Mprof=func
-#MACH_OPT_HIGH        = -O2 -Mbounds -gopt
-MACH_OPT_HIGH        = -O2 -Minfo=all
-MACH_OPT_AGGRESSIVE  = -O3 -Mfptrap -Mflushz -fastsse -Mdaz -Mnontemporal -Mnofprelaxed -Mvect=altcode,assoc,prefetch -Kieee -tp barcelona-64
+MACH_OPT_WARN        = -Wall -g
+MACH_OPT_DEBUG       = -g
+MACH_OPT_HIGH        = -O3
+#MACH_OPT_AGGRESSIVE  = -prof-gen -prof-dir /share/home/00852/tg459019/codes/prof-gen
+#MACH_OPT_AGGRESSIVE  = -O3 -ipo -prof-use -prof-dir /share/home/00852/tg459019/codes/prof-gen
+#MACH_OPT_AGGRESSIVE  = -O3
+MACH_OPT_AGGRESSIVE  = -O3 -ipo
 
-LDR_OPT      = -Mdaz -Mflushz -fastsse -Mnontemporal -Mnofprelaxed -Mvect=altcode,assoc,prefetch -Kieee -tp barcelona-64
+# PGI Options
+#MACH_OPT_AGGRESSIVE  = -O3 -Mfptrap -Mflushz -fastsse -Mdaz -Mnontemporal -Mnofprelaxed -Mvect=altcode,assoc,prefetch -Kieee -tp barcelona-64
+#LDR_OPT      = -Mdaz -Mflushz -fastsse -Mnontemporal -Mnofprelaxed -Mvect=altcode,assoc,prefetch -Kieee -tp barcelona-64
+
 
 #-----------------------------------------------------------------------
 # Includes

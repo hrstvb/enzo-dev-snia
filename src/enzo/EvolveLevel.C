@@ -69,9 +69,9 @@
 #include "mpi.h"
 #endif /* USE_MPI */
 
-#ifdef USE_OMP
+#ifdef _OPENMP
 #include <omp.h>
-#endif /* USE_OMP*/
+#endif /* _OPENMP */
  
 #include <stdlib.h>
 #include <stdio.h>
