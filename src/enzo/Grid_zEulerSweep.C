@@ -199,6 +199,7 @@ int grid::zEulerSweep(int j, int NumberOfSubgrids, fluxes *SubgridFluxes[],
 
   /* Compute Eulerian left and right states at zone edges via interpolation */
 
+#ifndef _OPENMP
   FORTRAN_NAME(inteuler)(dslice, pslice, &GravityOn, grslice, geslice, uslice,
 			 vslice, wslice, CellWidthTemp[2], flatten,
 			 &GridDimension[2], &GridDimension[0],
@@ -208,6 +209,12 @@ int grid::zEulerSweep(int j, int NumberOfSubgrids, fluxes *SubgridFluxes[],
 			 &dtFixed, &Gamma, &PressureFree, 
 			 dls, drs, pls, prs, gels, gers, uls, urs, vls, vrs,
 			 wls, wrs, &NumberOfColours, colslice, colls, colrs);
+#else
+  this->inteuler(dim, dslice, pslice, GravityOn, grslice, geslice, uslice,
+		 vslice, wslice, CellWidthTemp[2], flatten,
+		 dls, drs, pls, prs, gels, gers, uls, urs, vls, vrs,
+		 wls, wrs, NumberOfColours, colslice, colls, colrs);
+#endif
 
   /* Compute (Lagrangian part of the) Riemann problem at each zone boundary */
 
