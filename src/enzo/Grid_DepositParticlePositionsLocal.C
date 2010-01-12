@@ -71,6 +71,7 @@ int grid::DepositParticlePositionsLocal(FLOAT DepositTime, int DepositField)
   if ((DepositField == MASS_FLAGGING_FIELD ||
        DepositField == PARTICLE_MASS_FLAGGING_FIELD) &&
       DepositParticleMaximumParticleMass > 0 && MassFactor != 1.0)
+#pragma omp parallel for schedule(static)
     for (i = 0; i < NumberOfParticles; i++)
       ParticleMassPointer[i] = min(DepositParticleMaximumParticleMass,
 				   ParticleMassPointer[i]);

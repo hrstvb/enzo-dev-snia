@@ -29,11 +29,8 @@
 int IdentifyNewSubgridsBySignature(ProtoSubgrid *SubgridList[],
 				   int &NumberOfSubgrids);
  
-static ProtoSubgrid *SubgridList[MAX_NUMBER_OF_SUBGRIDS];
- 
- 
-int FindSubgrids(HierarchyEntry *Grid, int level, int &TotalFlaggedCells,
-		 int &FlaggedGrids)
+int FindSubgrids(HierarchyEntry *Grid, ProtoSubgrid *SubgridList[],
+		 int level, int &TotalFlaggedCells, int &FlaggedGrids)
 {
  
   /* declarations */

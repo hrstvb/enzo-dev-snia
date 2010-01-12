@@ -141,6 +141,7 @@ int CommunicationCollectParticles(LevelHierarchyEntry *LevelArray[],
       StarsToMove[i] = 0;
     }
 
+#pragma omp parallel for schedule(static)
     for (j = 0; j < NumberOfSubgrids; j++)
       SubgridPointers[j] = SubgridHierarchyPointer[j]->GridData;
 
@@ -154,7 +155,8 @@ int CommunicationCollectParticles(LevelHierarchyEntry *LevelArray[],
 	GridHierarchyPointer[j]->GridData->
 	  ZeroSolutionUnderSubgrid(NULL, ZERO_UNDER_SUBGRID_FIELD, 1.0, 
 				   ZeroOnAllProcs);
- 
+
+#pragma omp parallel for schedule(static) 
 	for (k = 0; k < NumberOfSubgrids; k++)
 	  if (SubgridHierarchyPointer[k]->ParentGrid == GridHierarchyPointer[j])
 	    GridHierarchyPointer[j]->GridData->ZeroSolutionUnderSubgrid

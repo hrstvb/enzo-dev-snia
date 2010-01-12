@@ -284,19 +284,20 @@ int grid::CopyZonesFromGrid(grid *OtherGrid, FLOAT EdgeOffset[MAX_DIMENSION])
   /* Copy zones */
 
  
-
+  int field,i,j,k;
   int addDim[3] = {1, OtherDim[0], OtherDim[0]*OtherDim[1]};
   int velocityTypes[3]={Velocity1, Velocity2, Velocity3};
 
- 
-  for (int field = 0; field < NumberOfBaryonFields; field++)
-    for (int k = 0; k < Dim[2]; k++)
-      for (int j = 0; j < Dim[1]; j++) {
+#pragma omp parallel for schedule(static) \
+  private(k,j,i,thisindex,otherindex,val1,val2,a,b)
+  for (field = 0; field < NumberOfBaryonFields; field++)
+    for (k = 0; k < Dim[2]; k++)
+      for (j = 0; j < Dim[1]; j++) {
 	thisindex = (0 + Start[0]) + (j + Start[1])*GridDimension[0] +
 	  (k + Start[2])*GridDimension[0]*GridDimension[1];
 	otherindex = (0 + StartOther[0]) + (j + StartOther[1])*OtherDim[0] +
 	  (k + StartOther[2])*OtherDim[0]*OtherDim[1];
-	for (int i = 0; i < Dim[0]; i++, thisindex++, otherindex++){
+	for (i = 0; i < Dim[0]; i++, thisindex++, otherindex++){
 
 	 
 	  if (!isShearing) {  
