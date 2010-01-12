@@ -57,23 +57,25 @@ void intvarC(float *qslice, int in, int is, int ie, int j, int isteep,
 {
 
   const float ft = 4.0/3.0;
-  int i, index;
+  int i, index, indexm1, indexm2;
   float qplus, qmnus, temp1, temp2, temp3, temp22, temp23;
+  indexm1 = j*in+is-1;
+  indexm2 = indexm1-1;
 //
 //     Compute average linear slopes (eqn 1.7)
 //      Monotonize (eqn 1.8)
 //
-  for (i = is-2, index = j*in+is-2; i <= ie+2; i++, index++) {
+  for (i = is-2, index = indexm2; i <= ie+2; i++, index++) {
     qplus = qslice[index+1] - qslice[index];
     qmnus = qslice[index  ] - qslice[index-1];
     dq[i] = c1[i] * qplus + c2[i] * qmnus;
-    temp1 = min(min(fabs(dq[i]), 2.0*fabs(qmnus)), 2.0*fabs(qplus));
+    temp1 = min(min(fabs(dq[i]), 2.0f*fabs(qmnus)), 2.0f*fabs(qplus));
     dq[i] = (qplus*qmnus > 0) ? temp1*sign(dq[i]) : 0.0;
   }
 //     
 //     Construct left and right values (eqn 1.6)
 //
-  for (i = is-1, index = j*in+is-1; i <= ie+2; i++, index++) {
+  for (i = is-1, index = indexm1; i <= ie+2; i++, index++) {
     ql[i] = c3[i] * qslice[index-1] + c4[i] * qslice[index] +
       c5[i] * dq[i-1] + c6[i] * dq[i];
     qr[i-1] = ql[i];
@@ -82,52 +84,52 @@ void intvarC(float *qslice, int in, int is, int ie, int j, int isteep,
 //     Steepen if asked for (use precomputed steepening parameter)
 //
   if (isteep)
-    for (i = is-1, index = j*in+is-1; i <= ie+1; i++, index++) {
-      ql[i] = (1.0-steepen[i])*ql[i] + 
-	steepen[i]*(qslice[index-1] + 0.5*dq[i-1]);
-      qr[i] = (1.0-steepen[i])*qr[i] +
-	steepen[i]*(qslice[index+1] + 0.5*dq[i+1]);
+    for (i = is-1, index = indexm1; i <= ie+1; i++, index++) {
+      ql[i] = (1.0f-steepen[i])*ql[i] + 
+	steepen[i]*(qslice[index-1] + 0.5f*dq[i-1]);
+      qr[i] = (1.0f-steepen[i])*qr[i] +
+	steepen[i]*(qslice[index+1] + 0.5f*dq[i+1]);
     }
 //
 //     Monotonize again (eqn 1.10)
 //
-  for (i = is-1, index = j*in+is-1; i <= ie+1; i++, index++) {
+  for (i = is-1, index = indexm1; i <= ie+1; i++, index++) {
     temp1 = (qr[i]-qslice[index])*(qslice[index]-ql[i]);
     temp2 = qr[i]-ql[i];
-    temp3 = 6.0*(qslice[index]-0.5*(qr[i]+ql[i]));
+    temp3 = 6.0f*(qslice[index]-0.5f*(qr[i]+ql[i]));
     if (temp1 < 0.0) {
       ql[i] = qslice[index];
       qr[i] = qslice[index];
     }
     temp22 = temp2*temp2;
     temp23 = temp2*temp3;
-    if (temp22 < temp23)  ql[i] = 3.0*qslice[index] - 2.0*qr[i];
-    if (temp22 < -temp23) qr[i] = 3.0*qslice[index] - 2.0*ql[i];
+    if (temp22 < temp23)  ql[i] = 3.0f*qslice[index] - 2.0f*qr[i];
+    if (temp22 < -temp23) qr[i] = 3.0f*qslice[index] - 2.0f*ql[i];
   } // ENDFOR i
 //
 //     If requested, flatten slopes with flatteners calculated in calcdiss (4.1)
 //
   if (iflatten)
-    for (i = is-1, index = j*in+is-1; i <= ie+1; i++, index++) {
-      ql[i] = qslice[index]*flatten[i] + ql[i]*(1.0-flatten[i]);
-      qr[i] = qslice[index]*flatten[i] + qr[i]*(1.0-flatten[i]);
+    for (i = is-1, index = indexm1; i <= ie+1; i++, index++) {
+      ql[i] = qslice[index]*flatten[i] + ql[i]*(1.0f-flatten[i]);
+      qr[i] = qslice[index]*flatten[i] + qr[i]*(1.0f-flatten[i]);
     }
 //
 //    Now construct left and right interface values (eqn 1.12 and 3.3)
 //
-  for (i = is-1, index = j*in+is-1; i <= ie+1; i++, index++) {
-    q6[i] = 6.0*(qslice[index]-0.5*(ql[i]+qr[i]));
+  for (i = is-1, index = indexm1; i <= ie+1; i++, index++) {
+    q6[i] = 6.0f*(qslice[index]-0.5f*(ql[i]+qr[i]));
     dq[i] = qr[i] - ql[i];
   }
 
   for (i = is; i <= ie+1; i++) {
-    qla[i]= qr[i-1]-char1[i-1]*(dq[i-1]-(1.0-ft*char1[i-1])*q6[i-1]);
-    qra[i]= ql[i  ]+char2[i  ]*(dq[i  ]+(1.0-ft*char2[i  ])*q6[i  ]);
+    qla[i]= qr[i-1]-char1[i-1]*(dq[i-1]-(1.0f-ft*char1[i-1])*q6[i-1]);
+    qra[i]= ql[i  ]+char2[i  ]*(dq[i  ]+(1.0f-ft*char2[i  ])*q6[i  ]);
   }
 
   for (i = is; i <= ie+1; i++) {
-    ql0[i] = qr[i-1]-c0[i-1]*(dq[i-1]-(1.0-ft*c0[i-1])*q6[i-1]);
-    qr0[i] = ql[i  ]-c0[i  ]*(dq[i  ]+(1.0+ft*c0[i  ])*q6[i  ]);
+    ql0[i] = qr[i-1]-c0[i-1]*(dq[i-1]-(1.0f-ft*c0[i-1])*q6[i-1]);
+    qr0[i] = ql[i  ]-c0[i  ]*(dq[i  ]+(1.0f+ft*c0[i  ])*q6[i  ]);
   }
 
   return;
