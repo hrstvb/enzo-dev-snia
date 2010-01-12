@@ -54,7 +54,7 @@ bool FirstTimeCalled = true;
 int CommunicationPartitionGrid(HierarchyEntry *Grid, int gridnum)
 {
  
-  if (NumberOfProcessors*NumberOfRootGridTilesPerDimensionPerProcessor == 1)
+  if (NumberOfCores*NumberOfRootGridTilesPerDimensionPerProcessor == 1)
     return SUCCESS;
  
   // Declarations
@@ -84,7 +84,7 @@ int CommunicationPartitionGrid(HierarchyEntry *Grid, int gridnum)
   for (dim = 0; dim < Rank; dim++)
     Dims[dim] -= 2*DEFAULT_GHOST_ZONES;
  
-  float Edge = POW(float(Dims[0]*Dims[1]*Dims[2])/float(NumberOfProcessors),
+  float Edge = POW(float(Dims[0]*Dims[1]*Dims[2])/float(NumberOfCores),
 		   1/float(Rank));
  
  
@@ -104,7 +104,7 @@ int CommunicationPartitionGrid(HierarchyEntry *Grid, int gridnum)
   }
 */
 
-  int Nnodes = NumberOfProcessors;
+  int Nnodes = NumberOfCores;
   int Ndims = Rank;
   int LayoutDims[] = {0, 0, 0};
 

@@ -33,7 +33,7 @@ int CommunicationCombineGrids(HierarchyEntry *OldHierarchy,
  
   /* If there is only one proc, then just point the new one at the old one. */
  
-  if (NumberOfProcessors == 1 || ParallelRootGridIO == TRUE) {
+  if (NumberOfCores == 1 || ParallelRootGridIO == TRUE) {
     *NewHierarchyPointer = OldHierarchy;
     return SUCCESS;
   }

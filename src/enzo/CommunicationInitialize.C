@@ -14,6 +14,9 @@
 #include "mpi.h"
 #include <stdlib.h>
 #endif /* USE_MPI */
+#ifdef _OPENMP
+#include "omp.h"
+#endif /* _OPENMP */
 
 #include <stdio.h>
 #include <string.h>
@@ -60,6 +63,17 @@ int CommunicationInitialize(Eint32 *argc, char **argv[])
   NumberOfProcessors = 1;
  
 #endif /* USE_MPI */
+
+#ifdef _OPENMP
+  int CoresPerProcessor;
+#pragma omp parallel
+  CoresPerProcessor = omp_get_num_threads();
+  NumberOfCores = CoresPerProcessor * NumberOfProcessors;
+  if (MyProcessorNumber == ROOT_PROCESSOR)
+    printf("MPI_Init: NumberOfCores = %"ISYM"\n", NumberOfCores);
+#else
+  NumberOfCores = NumberOfProcessors;
+#endif  
  
   CommunicationTime = 0;
  
