@@ -75,7 +75,7 @@ int grid::CollectParticles(int GridNum, int* &NumberToMove,
       //n1++;
     } // ENDFOR particles
 
-    StartIndex = n1+1;
+    StartIndex = n1+NumberOfParticles;
     this->DeleteParticles();
 
   } // end: if (COPY_OUT)
@@ -126,7 +126,9 @@ int grid::CollectParticles(int GridNum, int* &NumberToMove,
 
       int n;
 
-#pragma omp parallel for schedule(static)
+#pragma omp parallel private(dim,j)
+      {
+#pragma omp for nowait schedule(static)
       for (i = 0; i < NumberOfParticles; i++) {
 	Mass[i] = ParticleMass[i];
 	Number[i] = ParticleNumber[i];
@@ -134,20 +136,20 @@ int grid::CollectParticles(int GridNum, int* &NumberToMove,
       }
 
       for (dim = 0; dim < GridRank; dim++)
-#pragma omp parallel for schedule(static)
+#pragma omp for nowait schedule(static)
 	for (i = 0; i < NumberOfParticles; i++) {
 	  Position[dim][i] = ParticlePosition[dim][i];
 	  Velocity[dim][i] = ParticleVelocity[dim][i];
 	}
 	
       for (j = 0; j < NumberOfParticleAttributes; j++)
-#pragma omp parallel for schedule(static)
+#pragma omp for nowait schedule(static)
 	for (i = 0; i < NumberOfParticles; i++)
 	  Attribute[j][i] = ParticleAttribute[j][i];
  
       /* Copy new particles */
 
-#pragma omp parallel for schedule(static) private(n)
+#pragma omp for nowait schedule(static) private(n)
       for (i = StartIndex; i < EndIndex; i++) {
 	n = NumberOfParticles + i - StartIndex;
 	Mass[n] = List[i].mass;
@@ -156,7 +158,7 @@ int grid::CollectParticles(int GridNum, int* &NumberToMove,
       }
 
       for (dim = 0; dim < GridRank; dim++) {
-#pragma omp parallel for schedule(static) private(n)
+#pragma omp for nowait schedule(static) private(n)
 	for (i = StartIndex; i < EndIndex; i++) {
 	  n = NumberOfParticles + i - StartIndex;
 	  Position[dim][n] = List[i].pos[dim];
@@ -165,12 +167,13 @@ int grid::CollectParticles(int GridNum, int* &NumberToMove,
       }
       
       for (j = 0; j < NumberOfParticleAttributes; j++) {
-#pragma omp parallel for schedule(static) private(n)
+#pragma omp for nowait schedule(static) private(n)
 	for (i = StartIndex; i < EndIndex; i++) {
 	  n = NumberOfParticles + i - StartIndex;
 	  Attribute[j][n] = List[i].attribute[j];
 	}
       }
+      } // ENDIF pragma omp parallel
       
     } // ENDIF TotalNumberOfParticles > 0
  

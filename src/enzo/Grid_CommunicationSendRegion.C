@@ -46,7 +46,9 @@ int CommunicationBufferedSend(void *buffer, int size, MPI_Datatype Type, int Tar
 
  
 int grid::CommunicationSendRegion(grid *ToGrid, int ToProcessor,int SendField,
-			      int NewOrOld, int RegionStart[], int RegionDim[])
+				  int NewOrOld, int RegionStart[], int RegionDim[],
+				  int CommType, grid* grid_one, grid* grid_two,
+				  FLOAT CommArg[], int CommArgInt[])
 {
 #ifdef USE_MPI 
   MPI_Request  RequestHandle;
@@ -63,7 +65,7 @@ int grid::CommunicationSendRegion(grid *ToGrid, int ToProcessor,int SendField,
 //  if (MyProcessorNumber != ProcessorNumber && 
 //      MyProcessorNumber != ToProcessor)
 //    return SUCCESS;
- 
+
   int index, field, dim, Zero[] = {0, 0, 0};
  
   // Compute size of region to transfer
@@ -163,6 +165,21 @@ int grid::CommunicationSendRegion(grid *ToGrid, int ToProcessor,int SendField,
     starttime = MPI_Wtime();
 #endif
 
+#pragma omp critical
+    {
+
+  /* Record details of the receive call */
+  
+  if (CommunicationDirection == COMMUNICATION_POST_RECEIVE) {
+    CommunicationReceiveGridOne[CommunicationReceiveIndex]  = grid_one;
+    CommunicationReceiveGridTwo[CommunicationReceiveIndex]  = grid_two;
+    CommunicationReceiveCallType[CommunicationReceiveIndex] = CommType;
+    for (dim = 0; dim < MAX_DIMENSION; dim++) {
+      CommunicationReceiveArgument[dim][CommunicationReceiveIndex] = CommArg[dim];
+      CommunicationReceiveArgumentInt[dim][CommunicationReceiveIndex] = CommArgInt[dim];
+    }
+  }
+
 //    fprintf(stderr, "P(%d) communication for %d floats from %d to %d (phase %d)\n",
 //    	    MyProcessorNumber, TransferSize, ProcessorNumber,
 //    	    ToProcessor, CommunicationDirection);
@@ -212,6 +229,7 @@ int grid::CommunicationSendRegion(grid *ToGrid, int ToProcessor,int SendField,
 
     } // ENDIF ToProcessor
 
+    } // END omp critical
  
 #ifdef MPI_INSTRUMENTATION
     endtime = MPI_Wtime();

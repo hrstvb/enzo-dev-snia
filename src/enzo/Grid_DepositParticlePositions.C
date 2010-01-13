@@ -299,7 +299,8 @@ int grid::DepositParticlePositions(grid *TargetGrid, FLOAT DepositTime,
 #ifdef USE_MPI
 
     /* If posting a receive, then record details of call. */
-
+#pragma omp critical
+    {
     if (CommunicationDirection == COMMUNICATION_POST_RECEIVE) {
       CommunicationReceiveGridOne[CommunicationReceiveIndex]  = this;
       CommunicationReceiveGridTwo[CommunicationReceiveIndex]  = TargetGrid;
@@ -338,8 +339,8 @@ int grid::DepositParticlePositions(grid *TargetGrid, FLOAT DepositTime,
 	  CommunicationReceiveCurrentDependsOn;
       CommunicationReceiveIndex++;
     }      
-
     CommunicationTime += ReturnWallTime() - time1;
+    } // END #pragma omp critical
 
 #endif /* USE_MPI */
 

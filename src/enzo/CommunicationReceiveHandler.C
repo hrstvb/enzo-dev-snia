@@ -45,6 +45,7 @@ int CommunicationReceiveHandler(fluxes **SubgridFluxesEstimate[],
 
   int NoErrorSoFar = TRUE;
   int Zero[] = {0, 0, 0};
+  FLOAT ZeroFL[] = {0, 0, 0};
 
   /* Set the communication mode. */
 
@@ -255,9 +256,11 @@ int CommunicationReceiveHandler(fluxes **SubgridFluxesEstimate[],
 	case 16:
 	  for (dim = 0; dim < MAX_DIMENSION; dim++)
 	    GridDimension[dim] = CommunicationReceiveArgumentInt[dim][index];
+	  // The last arguments (all zeros here) are only used in
+	  // post-receive mode.
 	  errcode = grid_one->CommunicationSendRegion
 	    (grid_two, MyProcessorNumber, ALL_FIELDS, NEW_ONLY, Zero,
-	     GridDimension);
+	     GridDimension, 0, NULL, NULL, ZeroFL, Zero);
 	  break;
 
 	case 17:

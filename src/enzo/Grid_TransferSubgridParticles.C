@@ -230,7 +230,9 @@ int grid::TransferSubgridParticles(grid* Subgrids[], int NumberOfSubgrids,
 
     /* Copy this grid's particles to the new space. */
 
-#pragma omp parallel for schedule(static)
+#pragma omp parallel private(dim,j)
+    {
+#pragma omp for nowait schedule(static)
     for (i = 0; i < NumberOfParticles; i++) {
       Mass[i] = ParticleMass[i];
       Number[i] = ParticleNumber[i];
@@ -238,14 +240,14 @@ int grid::TransferSubgridParticles(grid* Subgrids[], int NumberOfSubgrids,
     }
 
     for (dim = 0; dim < GridRank; dim++)
-#pragma omp parallel for schedule(static)
+#pragma omp for nowait schedule(static)
       for (i = 0; i < NumberOfParticles; i++) {
 	Position[dim][i] = ParticlePosition[dim][i];
 	Velocity[dim][i] = ParticleVelocity[dim][i];
       }
 	
     for (j = 0; j < NumberOfParticleAttributes; j++)
-#pragma omp parallel for schedule(static)
+#pragma omp for nowait schedule(static)
       for (i = 0; i < NumberOfParticles; i++)
 	  Attribute[j][i] = ParticleAttribute[j][i];
  
@@ -253,7 +255,7 @@ int grid::TransferSubgridParticles(grid* Subgrids[], int NumberOfSubgrids,
 
     int n;
 
-#pragma omp parallel for schedule(static) private(n)
+#pragma omp for nowait schedule(static) private(n)
     for (i = StartIndex; i < EndIndex; i++) {
       n = NumberOfParticles + i - StartIndex;
       Mass[n] = List[i].mass;
@@ -262,7 +264,7 @@ int grid::TransferSubgridParticles(grid* Subgrids[], int NumberOfSubgrids,
     }
 
     for (dim = 0; dim < GridRank; dim++) {
-#pragma omp parallel for schedule(static) private(n)
+#pragma omp for nowait schedule(static) private(n)
       for (i = StartIndex; i < EndIndex; i++) {
 	n = NumberOfParticles + i - StartIndex;
 	Position[dim][n] = List[i].pos[dim];
@@ -271,12 +273,13 @@ int grid::TransferSubgridParticles(grid* Subgrids[], int NumberOfSubgrids,
     }
       
     for (j = 0; j < NumberOfParticleAttributes; j++) {
-#pragma omp parallel for schedule(static) private(n)
+#pragma omp for nowait schedule(static) private(n)
       for (i = StartIndex; i < EndIndex; i++) {
 	n = NumberOfParticles + i - StartIndex;
 	Attribute[j][n] = List[i].attribute[j];
       }
     }
+    } // ENDIF #pragma parallel
       
     } // ENDIF TotalNumberOfParticles > 0
 

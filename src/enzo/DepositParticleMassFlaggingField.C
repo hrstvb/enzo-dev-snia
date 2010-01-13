@@ -94,25 +94,28 @@ int DepositParticleMassFlaggingField(LevelHierarchyEntry* LevelArray[],
   }
 
   LevelHierarchyEntry *Temp;
+  HierarchyEntry **Grids;
 
   if (NumberOfProcessors == 1 || AllLocal) {
 
-    int Zero = 0;
+    int grid1, Zero = 0;
+    int NumberOfGrids = GenerateGridArray(LevelArray, level, &Grids);
 
     CommunicationDirection = COMMUNICATION_SEND;
-    for (Temp = LevelArray[level]; Temp; Temp = Temp->NextGridThisLevel)
-
+#pragma omp parallel for schedule(static)
+    for (grid1 = 0; grid1 < NumberOfGrids; grid1++)
       // Still have to check for the correct processor because this
       // isn't done in the routine because the particles aren't local
       // most of the time.
-      if (MyProcessorNumber == Temp->GridData->ReturnProcessorNumber())
-	if (Temp->GridData->SetParticleMassFlaggingField
+      if (MyProcessorNumber == Grids[grid1]->GridData->ReturnProcessorNumber())
+	if (Grids[grid1]->GridData->SetParticleMassFlaggingField
 	    (Zero, Zero, level, ParticleMassMethod) == FAIL) {
 	  fprintf(stderr, "Error in grid->SetParticleMassFlaggingField(send).\n");
 	  ENZO_FAIL("");
 	}
 
     CommunicationDirection = COMMUNICATION_SEND_RECEIVE;
+    delete [] Grids;
     
   } // ENDIF serial
 
@@ -143,7 +146,6 @@ int DepositParticleMassFlaggingField(LevelHierarchyEntry* LevelArray[],
       FirstTimeCalled = FALSE;
     }
 
-    HierarchyEntry **Grids;
     int i, count, proc, grid1, StartGrid, EndGrid, NumberOfGrids;
     int TotalNumberOfRecv, TotalNumberOfSends;
     two_int *SendList = NULL;
@@ -328,6 +330,8 @@ int DepositParticleMassFlaggingField(LevelHierarchyEntry* LevelArray[],
 
 	if (TotalNumberOfRecv > 0) {
 
+	  /* JHW (Jan10): Can we thread the post-receive phase? */
+
 	  for (grid1 = StartGrid; grid1 < EndGrid && count < TotalNumberOfRecv; 
 	       grid1++) {
 
@@ -358,6 +362,7 @@ int DepositParticleMassFlaggingField(LevelHierarchyEntry* LevelArray[],
 	/* Calculate and send field */
 
 	CommunicationDirection = COMMUNICATION_SEND;
+#pragma omp parallel for schedule(static)
 	for (grid1 = StartGrid; grid1 < EndGrid; grid1++)
 	  if (Grids[grid1]->GridData->SetParticleMassFlaggingField
 	      (StartProc, EndProc, level, ParticleMassMethod) == FAIL) {

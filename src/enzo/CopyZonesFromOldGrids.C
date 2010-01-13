@@ -33,20 +33,46 @@
 #include "CommunicationUtilities.h"
 #include "communication.h"
 
+int GenerateGridArray(LevelHierarchyEntry *LevelArray[], int level,
+		      HierarchyEntry **Grids[]);
 int CommunicationReceiveHandler(fluxes **SubgridFluxesEstimate[] = NULL,
 				int NumberOfSubgrids[] = NULL,
 				int FluxFlag = FALSE,
 				TopGridData* MetaData = NULL);
 
-int CopyZonesFromOldGrids(LevelHierarchyEntry *OldGrids, 
+int CopyZonesFromOldGrids(LevelHierarchyEntry *OldGrids,
 			  TopGridData *MetaData,
 			  ChainingMeshStructure ChainingMesh)
 {
 
-  int i;
+  int i, grid1, NumberOfGrids, counter;
   FLOAT ZeroVector[] = {0,0,0};
   LevelHierarchyEntry *Temp;
-  SiblingGridList SiblingList;
+  LevelHierarchyEntry **GridList;
+  
+  /* For threading, create a grid pointer array.  Can't use
+     GenerateGridArray because GridHierarchyEntry isn't valid
+     anymore. */
+
+  NumberOfGrids = 0;
+  for (Temp = OldGrids; Temp; Temp = Temp->NextGridThisLevel)
+    NumberOfGrids++;
+
+  counter = 0;
+  GridList = new LevelHierarchyEntry*[NumberOfGrids];
+  for (Temp = OldGrids; Temp; Temp = Temp->NextGridThisLevel)
+    GridList[counter++] = Temp;
+
+  SiblingGridList *SiblingList = new SiblingGridList[NumberOfGrids];
+
+  /* Find sibling grids for all subgrids */
+
+#pragma omp parallel for schedule(static)
+  for (grid1 = 0; grid1 < NumberOfGrids; grid1++)
+    GridList[grid1]->GridData->FastSiblingLocatorFindSiblings
+      (&ChainingMesh, &SiblingList[grid1],
+       MetaData->LeftFaceBoundaryCondition,
+       MetaData->RightFaceBoundaryCondition);
 
   /* Post receives, looping over the old grids */
 
@@ -54,21 +80,13 @@ int CopyZonesFromOldGrids(LevelHierarchyEntry *OldGrids,
   CommunicationReceiveCurrentDependsOn = COMMUNICATION_NO_DEPENDENCE;
   CommunicationDirection = COMMUNICATION_POST_RECEIVE;
 
-  for (Temp = OldGrids; Temp; Temp = Temp->NextGridThisLevel) {
-
-    // Find sibling grids
-    Temp->GridData->FastSiblingLocatorFindSiblings
-      (&ChainingMesh, &SiblingList, MetaData->LeftFaceBoundaryCondition, 
-       MetaData->RightFaceBoundaryCondition);
+#pragma omp parallel for schedule(static) private(i)
+  for (grid1 = 0; grid1 < NumberOfGrids; grid1++) {
 
     // For each of the sibling grids, copy data.
-    for (i = 0; i < SiblingList.NumberOfSiblings; i++)
-      SiblingList.GridList[i]->CopyZonesFromGrid(Temp->GridData, ZeroVector);
-
-    // Don't delete the old grids yet, we need to copy their data in
-    // the next step.
-    
-    delete [] SiblingList.GridList;
+    for (i = 0; i < SiblingList[grid1].NumberOfSiblings; i++)
+      SiblingList[grid1].GridList[i]->CopyZonesFromGrid
+	(GridList[grid1]->GridData, ZeroVector);
 
   }
 
@@ -76,29 +94,21 @@ int CopyZonesFromOldGrids(LevelHierarchyEntry *OldGrids,
 
   CommunicationDirection = COMMUNICATION_SEND;
 
-  for (Temp = OldGrids; Temp; Temp = Temp->NextGridThisLevel) {
-
-    /* Find sibling grids.  Note that we do this twice to save memory.
-       This step isn't that expensive, so we can afford to compute
-       this twice.  However this may change in larger simulations. */
-
-    Temp->GridData->FastSiblingLocatorFindSiblings
-      (&ChainingMesh, &SiblingList, MetaData->LeftFaceBoundaryCondition, 
-       MetaData->RightFaceBoundaryCondition);
+#pragma omp parallel for schedule(static) private(i)
+  for (grid1 = 0; grid1 < NumberOfGrids; grid1++) {
 
     // For each of the sibling grids, copy data.
-    for (i = 0; i < SiblingList.NumberOfSiblings; i++)
-      SiblingList.GridList[i]->CopyZonesFromGrid(Temp->GridData, ZeroVector);
+    for (i = 0; i < SiblingList[grid1].NumberOfSiblings; i++)
+      SiblingList[grid1].GridList[i]->CopyZonesFromGrid
+	(GridList[grid1]->GridData, ZeroVector);
 
     /* Delete all fields (only on the host processor -- we need
        BaryonField on the receiving processor) after sending them.  We
        only delete the grid object on all processors after
        everything's done. */
 
-    if (Temp->GridData->ReturnProcessorNumber() == MyProcessorNumber)
-      Temp->GridData->DeleteAllFields();
-
-    delete [] SiblingList.GridList;
+    if (GridList[grid1]->GridData->ReturnProcessorNumber() == MyProcessorNumber)
+      GridList[grid1]->GridData->DeleteAllFields();
 
   }
 
@@ -109,10 +119,15 @@ int CopyZonesFromOldGrids(LevelHierarchyEntry *OldGrids,
 
   /* Delete old grids */
 
-  for (Temp = OldGrids; Temp; Temp = Temp->NextGridThisLevel) {
-    delete Temp->GridData;
-    Temp->GridData = NULL;
+#pragma omp parallel for schedule(static)
+  for (grid1 = 0; grid1 < NumberOfGrids; grid1++) {
+    delete [] SiblingList[grid1].GridList;
+    delete GridList[grid1]->GridData;
+    GridList[grid1]->GridData = NULL;
   }
+
+  delete [] GridList;
+  delete [] SiblingList;
 
   return SUCCESS;
 

@@ -158,6 +158,7 @@ int grid::SetParticleMassFlaggingField(int StartProc, int EndProc, int level,
       //MPI_Tag = Return_MPI_Tag(GridNum, MyProcessorNumber);
 //      printf("----> SetPMFlag[P%"ISYM"/%"ISYM"]: sending %"ISYM" floats.\n",
 //	     MyProcessorNumber, ProcessorNumber, size);
+#pragma omp critical
       CommunicationBufferedSend(ParticleMassFlaggingField, size, DataType,
 				ProcessorNumber, MPI_SENDPMFLAG_TAG, 
 				MPI_COMM_WORLD, size*sizeof(float));

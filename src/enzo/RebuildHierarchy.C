@@ -63,7 +63,7 @@ int CommunicationSyncNumberOfParticles(HierarchyEntry *GridHierarchyPointer[],
 int FastSiblingLocatorInitialize(ChainingMeshStructure *Mesh, int Rank,
 				 int TopGridDims[]);
 int FastSiblingLocatorFinalize(ChainingMeshStructure *Mesh);
-int CopyZonesFromOldGrids(LevelHierarchyEntry *OldGrids, 
+int CopyZonesFromOldGrids(LevelHierarchyEntry *OldGrids,
 			  TopGridData *MetaData,
 			  ChainingMeshStructure ChainingMesh);
 #ifdef TRANSFER
@@ -340,8 +340,8 @@ int RebuildHierarchy(TopGridData *MetaData,
 
       tt0 = ReturnWallTime();
       TotalFlaggedCells = FlaggedGrids = 0;
-//#pragma omp parallel for schedule(static) private(SubgridList)	\
-//  reduction(+:TotalFlaggedCells, FlaggedGrids)
+#pragma omp parallel for schedule(guided) private(SubgridList)	\
+  reduction(+:TotalFlaggedCells, FlaggedGrids)
       for (j = 0; j < grids; j++)
 	FindSubgrids(GridHierarchyPointer[j], SubgridList,
 		     i, TotalFlaggedCells, FlaggedGrids);

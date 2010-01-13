@@ -100,7 +100,7 @@ int grid::CopyParentToGravitatingFieldBoundary(grid *ParentGrid)
       ENZO_FAIL("");
     }
   }
- 
+
   /* If posting a receive, then record details of call. */
 
 #ifdef USE_MPI
@@ -111,13 +111,19 @@ int grid::CopyParentToGravitatingFieldBoundary(grid *ParentGrid)
   }
 #endif /* USE_MPI */
 
+  FLOAT Zero3[] = {0,0,0};
+  int ZeroInt3[] = {0,0,0};
+  int CommType = 4;
+
   /* Copy data from other processor if needed (modify ParentDim and
      ParentStartIndex to reflect the fact that we are only coping part of
      the grid. */
  
   if (ProcessorNumber != ParentGrid->ProcessorNumber) {
-    ParentGrid->CommunicationSendRegion(ParentGrid, ProcessorNumber,
-	    GRAVITATING_MASS_FIELD, NEW_ONLY, ParentStartIndex, ParentTempDim);
+    ParentGrid->CommunicationSendRegion
+      (ParentGrid, ProcessorNumber, GRAVITATING_MASS_FIELD, NEW_ONLY, 
+       ParentStartIndex, ParentTempDim, CommType, this, ParentGrid, 
+       Zero3, ZeroInt3);
     if (CommunicationDirection == COMMUNICATION_POST_RECEIVE ||
 	CommunicationDirection == COMMUNICATION_SEND)
       return SUCCESS;

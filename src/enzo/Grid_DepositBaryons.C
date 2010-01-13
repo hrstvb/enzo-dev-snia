@@ -256,6 +256,9 @@ int grid::DepositBaryons(grid *TargetGrid, FLOAT DepositTime)
     Source = ProcessorNumber;
  
     double time1 = MPI_Wtime();
+
+#pragma omp critical
+    {
  
     /* If posting a receive, then record details of call. */
 
@@ -293,8 +296,10 @@ int grid::DepositBaryons(grid *TargetGrid, FLOAT DepositTime)
       CommunicationReceiveIndex++;
     }
  
-    double time3 = MPI_Wtime();
+    } // END omp critical
  
+    double time3 = MPI_Wtime();
+
     CommunicationTime += time3 - time1;
  
 #endif /* USE_MPI */

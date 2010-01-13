@@ -1271,8 +1271,10 @@ int CreateParticleTypeGrouping(hid_t ptype_dset,
 
 /* Send a region from a real grid to a 'fake' grid on another processor. */
 
-  int CommunicationSendRegion(grid *ToGrid, int ToProcessor, int SendField, 
-			     int NewOrOld, int RegionStart[], int RegionDim[]);
+  int CommunicationSendRegion(grid *ToGrid, int ToProcessor,int SendField,
+			      int NewOrOld, int RegionStart[], int RegionDim[],
+			      int CommType, grid* grid_one, grid* grid_two,
+			      FLOAT CommArg[], int CommArgInt[]);
 
 /* Send a region from a 'fake' grid to a real grid on another processor. */
 

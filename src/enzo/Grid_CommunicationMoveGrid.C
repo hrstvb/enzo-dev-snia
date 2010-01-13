@@ -49,18 +49,14 @@ int grid::CommunicationMoveGrid(int ToProcessor, int MoveParticles)
     /* Copy baryons. */
  
     if (NumberOfBaryonFields > 0) {
-#ifdef USE_MPI
-      if (CommunicationDirection == COMMUNICATION_POST_RECEIVE) {
-	CommunicationReceiveGridOne[CommunicationReceiveIndex] = this;
-	CommunicationReceiveGridTwo[CommunicationReceiveIndex] = this;
-	CommunicationReceiveCallType[CommunicationReceiveIndex] = 16;
-	for (dim = 0; dim < MAX_DIMENSION; dim++)
-	  CommunicationReceiveArgumentInt[dim][CommunicationReceiveIndex] =
-	    GridDimension[dim];
-      }
-#endif
+
+      FLOAT Zero3[] = {0,0,0};
+      int CommType = 16;
+      
       this->CommunicationSendRegion(this, ToProcessor, ALL_FIELDS,
-				    NEW_ONLY, Zero, GridDimension);
+				    NEW_ONLY, Zero, GridDimension,
+				    CommType, this, this, Zero3, 
+				    GridDimension);
     }
  
     /* Copy particles. */
