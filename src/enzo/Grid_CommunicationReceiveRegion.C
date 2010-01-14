@@ -49,7 +49,8 @@ int CommunicationBufferedSend(void *buffer, int size, MPI_Datatype Type, int Tar
 int grid::CommunicationReceiveRegion(grid *FromGrid, int FromProcessor,
 				     int SendField, int NewOrOld,
 				     int RegionStart[], int RegionDim[],
-				     int IncludeBoundary)
+				     int IncludeBoundary, int CommType,
+				     grid *grid_one, grid *grid_two)
 {
 #ifdef USE_MPI 
   MPI_Request  RequestHandle;
@@ -151,6 +152,15 @@ int grid::CommunicationReceiveRegion(grid *FromGrid, int FromProcessor,
 #ifdef MPI_INSTRUMENTATION
     starttime=MPI_Wtime();
 #endif /* MPI_INSTRUMENTATION */
+
+#pragma omp critical
+    {
+
+    if (CommunicationDirection == COMMUNICATION_POST_RECEIVE) {
+      CommunicationReceiveGridOne[CommunicationReceiveIndex]  = grid_one;
+      CommunicationReceiveGridTwo[CommunicationReceiveIndex]  = grid_two;
+      CommunicationReceiveCallType[CommunicationReceiveIndex] = CommType;
+    }
  
     if (MyProcessorNumber == FromProcessor) {
 #ifdef MPI_INSTRUMENTATION
@@ -185,6 +195,8 @@ int grid::CommunicationReceiveRegion(grid *FromGrid, int FromProcessor,
       }
 
     } // ENDIF grid processor
+
+    } // END omp critical
  
 #ifdef MPI_INSTRUMENTATION
     endtime=MPI_Wtime();

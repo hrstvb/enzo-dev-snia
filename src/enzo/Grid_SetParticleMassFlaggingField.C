@@ -171,6 +171,9 @@ int grid::SetParticleMassFlaggingField(int StartProc, int EndProc, int level,
 
   } // ENDIF: COMMUNICATION_SEND
 
+#pragma omp critical
+  {
+
 #ifdef USE_MPI
   if (CommunicationDirection == COMMUNICATION_RECEIVE) {
 
@@ -213,6 +216,7 @@ int grid::SetParticleMassFlaggingField(int StartProc, int EndProc, int level,
     } // ENDFOR processors
 
   } // ENDIF post receive
+  } // END omp critical
 
 #endif /* USE_MPI */
    

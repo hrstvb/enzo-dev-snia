@@ -95,6 +95,8 @@ int UpdateFromFinerGrids(int level, HierarchyEntry *Grids[], int NumberOfGrids,
 
     CommunicationDirection = COMMUNICATION_POST_RECEIVE;
     CommunicationReceiveIndex = 0;
+#pragma omp parallel for schedule(guided) \
+  private(NextGrid, subgrid, SubgridFluxesRefined)
     for (grid1 = StartGrid; grid1 < EndGrid; grid1++) {
       
       /* Loop over subgrids for this grid. */
@@ -105,15 +107,9 @@ int UpdateFromFinerGrids(int level, HierarchyEntry *Grids[], int NumberOfGrids,
       
       while (NextGrid != NULL && FluxCorrection) {
  
-	/* Project subgrid's refined fluxes to the level of this grid. */
- 
-#ifdef USE_MPI
-	CommunicationReceiveArgumentInt[0][CommunicationReceiveIndex] = grid1;
-	CommunicationReceiveArgumentInt[1][CommunicationReceiveIndex] = subgrid;
-#endif /* USE_MPI */
-
 	NextGrid->GridData->
-	  GetProjectedBoundaryFluxes(Grids[grid1]->GridData, SubgridFluxesRefined);
+	  GetProjectedBoundaryFluxes(Grids[grid1]->GridData, grid1, subgrid,
+				     SubgridFluxesRefined);
  
 	NextGrid = NextGrid->NextGridThisLevel;
 	subgrid++;
@@ -125,6 +121,8 @@ int UpdateFromFinerGrids(int level, HierarchyEntry *Grids[], int NumberOfGrids,
 
     CommunicationDirection = COMMUNICATION_SEND;
 
+#pragma omp parallel for schedule(guided) \
+  private(NextGrid, subgrid, SubgridFluxesRefined)
     for (grid1 = StartGrid; grid1 < EndGrid; grid1++) {
 
       /* Loop over subgrids for this grid. */
@@ -136,7 +134,8 @@ int UpdateFromFinerGrids(int level, HierarchyEntry *Grids[], int NumberOfGrids,
 	/* Project subgrid's refined fluxes to the level of this grid. */
 
 	NextGrid->GridData->
-	  GetProjectedBoundaryFluxes(Grids[grid1]->GridData, SubgridFluxesRefined);
+	  GetProjectedBoundaryFluxes(Grids[grid1]->GridData, 0, 0,
+				     SubgridFluxesRefined);
 
 	/* Correct this grid for the refined fluxes (step #19)
 	   (this also deletes the fields in SubgridFluxesRefined). 
@@ -190,6 +189,8 @@ int UpdateFromFinerGrids(int level, HierarchyEntry *Grids[], int NumberOfGrids,
 
     CommunicationDirection = COMMUNICATION_POST_RECEIVE;
     CommunicationReceiveIndex = 0;
+#pragma omp parallel for schedule(guided) \
+  private(NextEntry, SubgridFluxesRefined)
     for (grid1 = StartGrid; grid1 < EndGrid; grid1++) {
 	  
       /* Loop over subgrids for this grid. */
@@ -205,14 +206,9 @@ int UpdateFromFinerGrids(int level, HierarchyEntry *Grids[], int NumberOfGrids,
 	  
 	  /* Project subgrid's refined fluxes to the level of this grid. */
 
-#ifdef USE_MPI
-	  CommunicationReceiveArgumentInt[0][CommunicationReceiveIndex] = grid1;
-	  CommunicationReceiveArgumentInt[1][CommunicationReceiveIndex] = 
-	    NumberOfSubgrids[grid1]-1;
-#endif /* USE_MPI */
-
 	  NextEntry->GridData->GetProjectedBoundaryFluxes
-	    (Grids[grid1]->GridData, SubgridFluxesRefined);
+	    (Grids[grid1]->GridData, grid1, NumberOfSubgrids[grid1]-1,
+	     SubgridFluxesRefined);
 	}
 
 	NextEntry = NextEntry->NextGridThisLevel;
@@ -224,6 +220,8 @@ int UpdateFromFinerGrids(int level, HierarchyEntry *Grids[], int NumberOfGrids,
 
     CommunicationDirection = COMMUNICATION_SEND;
 
+#pragma omp parallel for schedule(guided) \
+  private(NextEntry, SubgridFluxesRefined)
     for (grid1 = StartGrid; grid1 < EndGrid; grid1++) {
 
       NextEntry = SUBlingList[grid1];
@@ -237,7 +235,7 @@ int UpdateFromFinerGrids(int level, HierarchyEntry *Grids[], int NumberOfGrids,
 	  /* Project subgrid's refined fluxes to the level of this grid. */
 
 	  NextEntry->GridData->GetProjectedBoundaryFluxes
-	    (Grids[grid1]->GridData, SubgridFluxesRefined);
+	    (Grids[grid1]->GridData, 0, 0, SubgridFluxesRefined);
  
 	  /* Correct this grid for the refined fluxes (step #19)
 	     (this also deletes the fields in SubgridFluxesRefined). */
@@ -277,6 +275,7 @@ int UpdateFromFinerGrids(int level, HierarchyEntry *Grids[], int NumberOfGrids,
 
     CommunicationDirection = COMMUNICATION_POST_RECEIVE;
     CommunicationReceiveIndex = 0;
+#pragma omp parallel for schedule(guided) private(NextGrid)
     for (grid1 = StartGrid; grid1 < EndGrid; grid1++) {
 
       /* Loop over subgrids for this grid: replace solution. */
@@ -295,6 +294,7 @@ int UpdateFromFinerGrids(int level, HierarchyEntry *Grids[], int NumberOfGrids,
     /* -------------- SECOND PASS ----------------- */
 
     CommunicationDirection = COMMUNICATION_SEND;
+#pragma omp parallel for schedule(guided) private(NextGrid)
     for (grid1 = StartGrid; grid1 < EndGrid; grid1++) {
 
       /* Loop over subgrids for this grid: replace solution. */

@@ -98,6 +98,10 @@ int grid::CommunicationSendStars(grid *ToGrid, int ToProcessor)
 #ifdef MPI_INSTRUMENTATION
     starttime = MPI_Wtime();
 #endif
+
+#pragma omp critical
+    {
+
     if (MyProcessorNumber == ProcessorNumber)
       CommunicationBufferedSend(buffer, Count, MPI_STAR, 
 				Dest, MPI_SENDSTAR_TAG, MPI_COMM_WORLD, 
@@ -126,6 +130,8 @@ int grid::CommunicationSendStars(grid *ToGrid, int ToProcessor)
 		 MPI_SENDSTAR_TAG, MPI_COMM_WORLD, &status);
 
     } // ENDIF MyProcessorNumber == ToProcessor
+
+    } // END omp critical
 
 #ifdef MPI_INSTRUMENTATION
     /* Zhiling Lan's instrumented part */

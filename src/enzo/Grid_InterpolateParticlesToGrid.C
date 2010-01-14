@@ -125,6 +125,9 @@ int grid::InterpolateParticlesToGrid(FOFData *D)
 	Source = proc;
 	for (field = 0; field < NumberOfFields; field++) {
 
+#pragma omp critical
+	  {
+
 	  buffer = new float[size];
 	  Tag = MPI_SENDPARTFIELD_TAG+field;
 	  MPI_Irecv(buffer, Count, DataType, Source, Tag, MPI_COMM_WORLD,
@@ -138,6 +141,8 @@ int grid::InterpolateParticlesToGrid(FOFData *D)
 	  CommunicationReceiveDependsOn[CommunicationReceiveIndex] =
 	    CommunicationReceiveCurrentDependsOn;
 	  CommunicationReceiveIndex++;
+
+	  } // END omp critical
 
 	} // ENDFOR field
 
@@ -299,6 +304,7 @@ int grid::InterpolateParticlesToGrid(FOFData *D)
 
       for (field = 0; field < NumberOfFields; field++) {
 	Tag = MPI_SENDPARTFIELD_TAG + field;
+#pragma omp critical
 	CommunicationBufferedSend(InterpolatedField[field], size, DataType,
 				  ProcessorNumber, Tag, MPI_COMM_WORLD,
 				  size * sizeof(float));
@@ -317,8 +323,11 @@ int grid::InterpolateParticlesToGrid(FOFData *D)
 #ifdef USE_MPI
   if (CommunicationDirection == COMMUNICATION_RECEIVE) {
 
+#pragma omp critical
+    {
     buffer = CommunicationReceiveBuffer[CommunicationReceiveIndex];
     field = CommunicationReceiveArgumentInt[0][CommunicationReceiveIndex];
+    } // END omp critical
     for (i = 0; i < size; i++)
       InterpolatedField[field][i] += buffer[i];
     delete [] buffer;

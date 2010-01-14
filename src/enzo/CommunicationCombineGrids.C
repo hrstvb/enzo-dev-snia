@@ -104,9 +104,10 @@ int CommunicationCombineGrids(HierarchyEntry *OldHierarchy,
     CommunicationDirection = COMMUNICATION_SEND_RECEIVE;
 //  printf("(%"ISYM"): %"ISYM" --> %"ISYM"\n", MyProcessorNumber, OldProc, NewProc);
     if (MyProcessorNumber == NewProc || MyProcessorNumber == OldProc)
-      if (NewGrid->CommunicationReceiveRegion(OldGrid, OldProc, ALL_FIELDS,
-			      ((WriteTime < 0) ? NEW_ONLY : NEW_AND_OLD),
-			      StartIndex, TempDims, FALSE) == FAIL) {
+      if (NewGrid->CommunicationReceiveRegion
+	  (OldGrid, OldProc, ALL_FIELDS,
+	   ((WriteTime < 0) ? NEW_ONLY : NEW_AND_OLD),
+	   StartIndex, TempDims, FALSE, 0, NULL, NULL) == FAIL) {
 	fprintf(stderr, "Error in grid->CommunicationReceiveRegion.\n");
 	ENZO_FAIL("");
       }
@@ -122,8 +123,9 @@ int CommunicationCombineGrids(HierarchyEntry *OldHierarchy,
 	StartIndex[dim] = nint((Left[dim] - DomainLeftEdge[dim])/CellSize[dim])
 	  + SendOffset[dim];
       }
-      if (NewGrid->CommunicationReceiveRegion(OldGrid, OldProc, INTERPOLATED_FIELDS,
-			      NEW_ONLY, StartIndex, TempDims, FALSE) == FAIL) {
+      if (NewGrid->CommunicationReceiveRegion
+	  (OldGrid, OldProc, INTERPOLATED_FIELDS, NEW_ONLY, StartIndex, 
+	   TempDims, FALSE, 0, NULL, NULL) == FAIL) {
 	fprintf(stderr, "Error in grid->CommunicationReceiveRegion.\n");
 	ENZO_FAIL("");
       }

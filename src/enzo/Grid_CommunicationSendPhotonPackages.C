@@ -179,6 +179,9 @@ int grid::CommunicationSendPhotonPackages(grid *ToGrid, int ToProcessor,
       FirstTimeCalled = FALSE;
     }
 
+#pragma omp critical
+    {
+
     if (MyProcessorNumber == ProcessorNumber) {
       if (DEBUG)
 	printf("PhotonSend(P%"ISYM"): Sending %"ISYM" photons to processor %"ISYM".\n",
@@ -226,6 +229,7 @@ int grid::CommunicationSendPhotonPackages(grid *ToGrid, int ToProcessor,
 	}
 
     } /* ENDIF (MyProcessorNumber == ToProcessor) */
+    } // END omp critical
 
   } /* ENDIF (ProcessorNumber != ToProcessor) */
 #endif /* USE_MPI */

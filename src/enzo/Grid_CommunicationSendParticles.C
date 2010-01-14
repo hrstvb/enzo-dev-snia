@@ -192,6 +192,13 @@ int grid::CommunicationSendParticles(grid *ToGrid, int ToProcessor,
     MPI_Arg Dest = ToProcessor;
     MPI_Arg stat;
 
+#ifdef MPI_INSTRUMENTATION
+    starttime = MPI_Wtime();
+#endif
+
+#pragma omp critical
+    {
+
     if (FirstTimeCalled) {
       PCount = sizeof(particle_data);
       //  fprintf(stderr, "Size of ParticleMoveList %"ISYM"\n", Count);
@@ -200,10 +207,6 @@ int grid::CommunicationSendParticles(grid *ToGrid, int ToProcessor,
       if (stat != MPI_SUCCESS) my_exit(EXIT_FAILURE);
       FirstTimeCalled = FALSE;
     }
-
-#ifdef MPI_INSTRUMENTATION
-    starttime = MPI_Wtime();
-#endif
 
     if (MyProcessorNumber == ProcessorNumber)
       CommunicationBufferedSend(buffer, Count, ParticleDataType,
@@ -239,6 +242,8 @@ int grid::CommunicationSendParticles(grid *ToGrid, int ToProcessor,
 		 MPI_SENDPART_TAG, MPI_COMM_WORLD, &status);
 
     } // ENDIF (MyProcessorNumber == ToProcessor)
+
+    } // END omp parallel
  
 #ifdef MPI_INSTRUMENTATION
     endtime = MPI_Wtime();

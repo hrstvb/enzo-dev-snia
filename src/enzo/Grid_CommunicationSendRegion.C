@@ -178,6 +178,12 @@ int grid::CommunicationSendRegion(grid *ToGrid, int ToProcessor,int SendField,
       CommunicationReceiveArgument[dim][CommunicationReceiveIndex] = CommArg[dim];
       CommunicationReceiveArgumentInt[dim][CommunicationReceiveIndex] = CommArgInt[dim];
     }
+//    printf("P%d: %d floats from P%d. CommType/Index %d %d :: grids %d %d\n",
+//	   MyProcessorNumber, TransferSize, ProcessorNumber, CommType,
+//	   CommunicationReceiveIndex, grid_one, grid_two);
+//    printf("\tArg = %d %d %d :: FArg = %g %g %g\n",
+//	   CommArgInt[0], CommArgInt[1], CommArgInt[2],
+//	   CommArg[0], CommArg[1], CommArg[2]);
   }
 
 //    fprintf(stderr, "P(%d) communication for %d floats from %d to %d (phase %d)\n",
@@ -193,6 +199,8 @@ int grid::CommunicationSendRegion(grid *ToGrid, int ToProcessor,int SendField,
 	fprintf(tracePtr, "CSR Sending %"ISYM" floats from %"ISYM" to %"ISYM"\n", 
 		TransferSize, MyProcessorNumber, ToProcessor);
 #endif
+//      printf("CSR Sending %"ISYM" floats from %"ISYM" to %"ISYM"\n", 
+//	     TransferSize, MyProcessorNumber, ToProcessor);
       CommunicationBufferedSend(buffer, TransferSize, DataType, ToProcessor, 
 				MPI_SENDREGION_TAG, MPI_COMM_WORLD, BUFFER_IN_PLACE);
     }

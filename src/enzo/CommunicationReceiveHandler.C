@@ -28,6 +28,7 @@
 #include "ExternalBoundary.h"
 #include "Grid.h"
 #include "communication.h"
+#include "CommunicationUtilities.h"
  
 #ifdef USE_MPI
 static MPI_Arg ListOfIndices[MAX_RECEIVE_BUFFERS];
@@ -75,6 +76,8 @@ int CommunicationReceiveHandler(fluxes **SubgridFluxesEstimate[],
 
     float time1 = ReturnWallTime();
 
+//    printf("::: BEFORE MPI_Waitsome ::: %"ISYM" %"ISYM" %"ISYM"\n", 
+//	   TotalReceives, ReceivesCompletedToDate, NumberOfCompleteRequests);
     MPI_Waitsome(TotalReceives, CommunicationReceiveMPI_Request,
 		 &NumberOfCompleteRequests, ListOfIndices, ListOfStatuses);
 //    printf("MPI: %"ISYM" %"ISYM" %"ISYM"\n", TotalReceives, 
@@ -196,7 +199,7 @@ int CommunicationReceiveHandler(fluxes **SubgridFluxesEstimate[],
 
 	  /* Project subgrid's refined fluxes to the level of this grid. */
 
-	  if (grid_one->GetProjectedBoundaryFluxes(grid_two, 
+	  if (grid_one->GetProjectedBoundaryFluxes(grid_two, 0, 0,
 					       SubgridFluxesRefined) == FAIL) {
 	    fprintf(stderr, "Error in grid->GetProjectedBoundaryFluxes.\n");
 	    ENZO_FAIL("");
@@ -304,6 +307,7 @@ int CommunicationReceiveHandler(fluxes **SubgridFluxesEstimate[],
   /* Reset the communication mode. */
 
   CommunicationDirection = COMMUNICATION_SEND_RECEIVE;
+
   //  printf("P(%d) out of CRH\n", MyProcessorNumber);
 
 #endif /* USE_MPI */

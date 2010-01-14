@@ -364,7 +364,8 @@ public:
 	   Returns FAIL or SUCCESS.
     (for step #19) */
 
-   int GetProjectedBoundaryFluxes(grid *ParentGrid, fluxes &ProjectedFluxes);
+   int GetProjectedBoundaryFluxes(grid *ParentGrid, int grid_num,
+				  int subgrid_num, fluxes &ProjectedFluxes);
 
 /* Return the refinement factors as compared to the grid in the argument
    (integer version) (for step #19) */
@@ -1278,10 +1279,11 @@ int CreateParticleTypeGrouping(hid_t ptype_dset,
 
 /* Send a region from a 'fake' grid to a real grid on another processor. */
 
-  int CommunicationReceiveRegion(grid *ToGrid, int ToProcessor, 
-				 int SendField, int NewOrOld, 
+  int CommunicationReceiveRegion(grid *FromGrid, int FromProcessor,
+				 int SendField, int NewOrOld,
 				 int RegionStart[], int RegionDim[],
-				 int IncludeBoundary);
+				 int IncludeBoundary, int CommType,
+				 grid *grid_one, grid *grid_two);
 
 /* Move a grid from one processor to another. */
 
