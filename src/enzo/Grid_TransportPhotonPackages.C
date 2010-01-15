@@ -126,7 +126,7 @@ int grid::TransportPhotonPackages(int level, ListOfPhotonsToMove **PhotonsToMove
       PP=PP->NextPackage;
     }
     fprintf(stdout, "TransportPhotonPackage: done initializing.\n");
-    fprintf(stdout, "counted %"ISYM" packages\n", count);
+    fprintf(stdout, "G%d: counted %"ISYM" packages\n", GridNum, count);
   }
 
   /* If requested, make vertex centered field (only when it doesn't

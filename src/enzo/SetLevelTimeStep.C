@@ -55,7 +55,7 @@ int SetLevelTimeStep(HierarchyEntry *Grids[],
 #pragma omp parallel
       {
 	float dtThread = huge_number;
-#pragma omp for nowait schedule(static) private(dtGrid)
+#pragma omp for nowait schedule(guided) private(dtGrid)
 	for (grid1 = 0; grid1 < NumberOfGrids; grid1++) {
 	  dtGrid = Grids[grid1]->GridData->ComputeTimeStep();
 	  dtThread = min(dtThread, dtGrid);

@@ -367,9 +367,12 @@ int grid::Group_ReadGrid(FILE *fptr, int GridID, HDF5_hid_t file_id,
  
       BaryonField[field] = new float[size];
  
+#pragma omp parallel for schedule(static)
       for (i = 0; i < size; i++)
 	BaryonField[field][i] = 0;
- 
+
+
+#pragma omp parallel for schedule(static) private(i,j)
       for (k = GridStartIndex[2]; k <= GridEndIndex[2]; k++)
 	for (j = GridStartIndex[1]; j <= GridEndIndex[1]; j++)
 	  for (i = GridStartIndex[0]; i <= GridEndIndex[0]; i++)
@@ -566,6 +569,7 @@ int grid::Group_ReadGrid(FILE *fptr, int GridID, HDF5_hid_t file_id,
       if (io_log) fprintf(log_fptr, "H5Dclose: %"ISYM"\n", h5_status);
       if( h5_status == h5_error ){ENZO_FAIL("Error in IO");}
  
+#pragma omp parallel for schedule(static)
       for (i = 0; i < NumberOfParticles; i++)
 	ParticleVelocity[dim][i] = float(temp[i]);
     }
@@ -624,6 +628,7 @@ int grid::Group_ReadGrid(FILE *fptr, int GridID, HDF5_hid_t file_id,
     if (io_log) fprintf(log_fptr, "H5Dclose: %"ISYM"\n", h5_status);
     if( h5_status == h5_error ){ENZO_FAIL("Error in IO");}
  
+#pragma omp parallel for schedule(static)
     for (i = 0; i < NumberOfParticles; i++)
       ParticleNumber[i] = tempint[i];
  
@@ -656,6 +661,7 @@ int grid::Group_ReadGrid(FILE *fptr, int GridID, HDF5_hid_t file_id,
       if (io_log) fprintf(log_fptr, "H5Dclose: %"ISYM"\n", h5_status);
       if( h5_status == h5_error ){ENZO_FAIL("Error in IO");}
  
+#pragma omp parallel for schedule(static)
       for (i = 0; i < NumberOfParticles; i++)
         ParticleType[i] = tempint[i];
  
@@ -674,6 +680,7 @@ int grid::Group_ReadGrid(FILE *fptr, int GridID, HDF5_hid_t file_id,
  
       /* Otherwise create the type. */
  
+#pragma omp parallel for schedule(static)
       for (i = 0; i < NumberOfParticles; i++)
         ParticleType[i] = ReturnParticleType(i);
  
@@ -684,6 +691,7 @@ int grid::Group_ReadGrid(FILE *fptr, int GridID, HDF5_hid_t file_id,
     if (AddParticleAttributes) {
       for (j = 0; j < NumberOfParticleAttributes; j++) {
 	ParticleAttribute[j] = new float[NumberOfParticles];
+#pragma omp parallel for schedule(static)
 	for (i=0; i < NumberOfParticles; i++)
 	  ParticleAttribute[j][i] = 0;
       }
@@ -712,6 +720,7 @@ int grid::Group_ReadGrid(FILE *fptr, int GridID, HDF5_hid_t file_id,
       if (io_log) fprintf(log_fptr, "H5Dclose: %"ISYM"\n", h5_status);
       if( h5_status == h5_error ){ENZO_FAIL("Error in IO");}
  
+#pragma omp parallel for schedule(static)
       for (i = 0; i < NumberOfParticles; i++)
 	ParticleAttribute[j][i] = float(temp[i]);
  
