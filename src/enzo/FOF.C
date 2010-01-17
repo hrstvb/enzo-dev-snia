@@ -1248,7 +1248,6 @@ void find_groups(FOFData &AllVars)
 	    check_cell(AllVars, p, i  ,j+1,k+1);
 	    check_cell(AllVars, p, i  ,j  ,k+1);
 	    check_cell(AllVars, p, i  ,j  ,k);    
-	    } // END omp sections
 	  } while (p = AllVars.GridNext[p]);
 	} // ENDIF
       } // ENDFOR k

@@ -143,8 +143,8 @@ int grid::WalkPhotonPackage(PhotonPackageEntry **PP,
   /***********************************************************************/
 
   for (dim = 0; dim < GridRank; dim++) {
-    DomainWidth[dim] = DomainRightEdge[dim] - DomainLeftEdge[dim];
     CellVolume *= CellWidth[dim][0];
+    DomainWidth[dim] = DomainRightEdge[dim] - DomainLeftEdge[dim];
     s[dim] = (*PP)->SourcePosition[dim];
     u[dim] = dir_vec[dim];
     u_sign[dim] = sign(u[dim]);
@@ -449,7 +449,6 @@ int grid::WalkPhotonPackage(PhotonPackageEntry **PP,
        not completely cover the cell */
 
     midpoint = oldr + 0.5f*ddr - ROUNDOFF;
-    nearest_edge = -1e20;
     for (dim = 0; dim < 3; dim++)
       m[dim] = fabs(s[dim] + midpoint * u[dim] - (ce[dim] + dxhalf));
     nearest_edge = max(max(m[0], m[1]), m[2]);
