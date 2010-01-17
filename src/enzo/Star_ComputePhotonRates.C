@@ -59,12 +59,13 @@ int Star::ComputePhotonRates(float E[], double Q[])
     } // ENDELSE
     break;
 
-    /* Average energy from Schaerer (2003) */
+    /* Average energy and luminosities from Schaerer (2003) and Trac &
+       Cen (2007) */
 
   case PopII:
     EnergyFractionLW   = 0.01;
     EnergyFractionHeI  = 0.32;
-    EnergyFractionHeII = 5.2e-4;
+    EnergyFractionHeII = 0.052;
     E[0] = 21.96; // eV (good for a standard, low-Z IMF)
     E[1] = 25.0;
     E[2] = 61.54;

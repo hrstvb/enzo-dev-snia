@@ -716,6 +716,7 @@ void find_minids(FOFData &AllVars)
 {
   int n, pp, len, sum = 0;
 
+#pragma omp parallel for schedule(static) private(pp,len,sum)
   for (n = 1; n <= AllVars.Nlocal; n++)
     if (AllVars.Head[n] == n) {
       pp = n; 
@@ -1086,6 +1087,7 @@ void init_coarse_grid(FOFData &AllVars)
 //  if (debug)
 //    printf("Nlocal = %"ISYM" Task = %"ISYM"\n", AllVars.Nlocal, MyProcessorNumber);
 
+#pragma omp parallel for schedule(static)
   for (i = 1; i <= AllVars.Nlocal; i++) {
     AllVars.Head[i] = i;
     AllVars.Tail[i] = i;
@@ -1111,23 +1113,26 @@ void marking(FOFData &AllVars)
     qsort(&AllVars.P[1], AllVars.Nlocal, sizeof(FOF_particle_data), 
 	  comp_func_partcoord);
 
-    for (i = 2, idone = 0; i <= AllVars.Nlocal; i++)
+    idone = 0;
+#pragma omp parallel for schedule(static) private(k) reduction(+:idone)
+    for (i = 2; i <= AllVars.Nlocal; i++)
       if (fabs(AllVars.P[i-1].Pos[0] - AllVars.P[i].Pos[0]) < 1e-3*AllVars.Epsilon &&
 	  fabs(AllVars.P[i-1].Pos[1] - AllVars.P[i].Pos[1]) < 1e-3*AllVars.Epsilon &&
 	  fabs(AllVars.P[i-1].Pos[2] - AllVars.P[i].Pos[2]) < 1e-3*AllVars.Epsilon) {
 
 	for (k = 0; k < 3; k++) {
-	  posold[k]= AllVars.P[i].Pos[k];
+	  //posold[k]= AllVars.P[i].Pos[k];
 	  AllVars.P[i].Pos[k] += (0.001*AllVars.Epsilon)*(2*drand48()-1);
 	}
 	idone++;
       } // ENDIF
-      iter++;
+    iter++;
   } while (idone > 0 && iter < 10);
 
   qsort(&AllVars.P[1], AllVars.Nlocal, sizeof(FOF_particle_data), 
 	comp_func_partcoord);
 
+#pragma omp parallel for schedule(static)
   for (i = 1; i <= AllVars.Nlocal; i++)
     AllVars.P[i].ID = AllVars.Noffset[MyProcessorNumber] + i; 
 } // END marking()
@@ -1167,6 +1172,7 @@ int coarse_binning(FOFData &AllVars)
 //  if (debug)
 //    fprintf(stdout, "coarse binning...");
 
+#pragma omp parallel for schedule(static) private(j,k)
   for (i = 0; i < AllVars.Grid; i++)
     for (j = 0; j < AllVars.Grid; j++)
       for (k = 0; k < AllVars.Grid; k++) {
@@ -1174,12 +1180,16 @@ int coarse_binning(FOFData &AllVars)
 	AllVars.GridFlag[i][j][k] = 0;
       }
   
+#pragma omp parallel for schedule(static)
   for (n = 1; n <= AllVars.Nlocal; n++)
     AllVars.GridNext[n] = 0;
  
   fac = AllVars.Grid / AllVars.GridExtension;
 
-  for (n = 1, count = 0; n <= AllVars.Nlocal; n++) {
+  count = 0;
+#pragma omp parallel for schedule(static) private(i,j,k,n,pos) \
+  reduction(+:count)
+  for (n = 1; n <= AllVars.Nlocal; n++) {
     for (k = 0; k < 3; k++) {
       pos[k] = AllVars.P[n].Pos[k];
       if (pos[k] < AllVars.GridCorner[k])
@@ -1238,6 +1248,7 @@ void find_groups(FOFData &AllVars)
 	    check_cell(AllVars, p, i  ,j+1,k+1);
 	    check_cell(AllVars, p, i  ,j  ,k+1);
 	    check_cell(AllVars, p, i  ,j  ,k);    
+	    } // END omp sections
 	  } while (p = AllVars.GridNext[p]);
 	} // ENDIF
       } // ENDFOR k
