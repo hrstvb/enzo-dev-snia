@@ -34,6 +34,12 @@ int grid::OpticallyThinPhoton(PhotonPackageEntry **PP, float min_tau, int index,
   int dim;
   FLOAT cr2, dxc;
 
+  if (radius < 3*dx) {
+    thin = false;
+    skip = false;
+    return SUCCESS;
+  }
+
   if ((*PP)->ColumnDensity < min_tau) {
 
     thin = true;

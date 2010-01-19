@@ -87,7 +87,7 @@ int grid::WalkPhotonPackage(PhotonPackageEntry **PP,
   double dN;
   FLOAT radius, oldr, cdt, dr;
   FLOAT CellVolume = 1, Volume_inv, Area_inv, SplitCriteron, SplitWithinRadius;
-  FLOAT SplitCriteronIonized, PauseRadius, r_merge, d_ss, d2_ss, u_dot_d, sqrt_term;
+  FLOAT SplitCriteronThin, PauseRadius, r_merge, d_ss, d2_ss, u_dot_d, sqrt_term;
   FLOAT dir_vec[3], sigma[4];
   FLOAT ddr, dP, dP1, EndTime;
   FLOAT thisDensity, min_dr;
@@ -253,7 +253,7 @@ int grid::WalkPhotonPackage(PhotonPackageEntry **PP,
   dx2 = dx*dx;
   dxhalf = 0.5f * dx;
   SplitCriteron = dx2 / RaysPerCell;
-  SplitCriteronIonized = dx2;
+  SplitCriteronThin = 1.4*dx2;
   Volume_inv = 1.0 / CellVolume;
   Area_inv = 1.0 / dx2;
   slice_factor2 = 0.0;
@@ -336,7 +336,7 @@ int grid::WalkPhotonPackage(PhotonPackageEntry **PP,
     // This and the next cell edge
     for (dim = 0; dim < 3; dim++) {
       ce[dim] = CellLeftEdge[dim][g[dim]];
-      nce[dim] = CellLeftEdge[dim][g[dim] + u_dir[dim]];
+      nce[dim] = CellLeftEdge[dim][g[dim] + u_sign[dim]];
     }
 
     // Radius of the next edge crossing in each dimension
@@ -390,7 +390,10 @@ int grid::WalkPhotonPackage(PhotonPackageEntry **PP,
     // if the radiation is optically thin (Xray, LW)
 
     solid_angle = radius * radius * omega_package;
-    splitMe = (solid_angle > SplitCriteron);
+    if ((*PP)->ColumnDensity < MinTauOptThin)
+      splitMe = (solid_angle > SplitCriteronThin);
+    else
+      splitMe = (solid_angle > SplitCriteron);
 
     if (splitMe && radius < SplitWithinRadius && 
 	(*PP)->level < MAX_HEALPIX_LEVEL) {
