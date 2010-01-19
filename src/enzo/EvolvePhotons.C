@@ -257,47 +257,6 @@ int EvolvePhotons(TopGridData *MetaData, LevelHierarchyEntry *LevelArray[],
 
 	NumberOfGrids = GenerateGridArray(LevelArray, lvl, &Grids);
 
-#ifdef _OPENMP
-#pragma omp parallel private(ThreadMoveList)
-	{
-
-	  // Initialize thread move list since it's private.
-	  ThreadMoveList = new ListOfPhotonsToMove;
-	  ThreadMoveList->NextPackageToMove = NULL;
-
-#pragma omp for schedule(guided) private(Helper)
-	  for (GridNum = 0; GridNum < NumberOfGrids; GridNum++) {
-	    if (Grids[GridNum]->ParentGrid != NULL) 
-	      Helper = Grids[GridNum]->ParentGrid->GridData;
-	    else
-	      Helper = NULL;
-	    if (Grids[GridNum]->GridData->TransportPhotonPackages
-		(lvl, &ThreadMoveList, GridNum, Grids0, 
-		 nGrids0, Helper, Grids[GridNum]->GridData) == FAIL) {
-	      fprintf(stderr, "Error in %"ISYM" th grid. "
-		      "grid->TransportPhotonPackages.\n",GridNum);
-	      ENZO_FAIL("");
-	    }
-	  } // ENDFOR grids
-
-	  /* Link all of the photon move lists together from all
-	     threads on this processor */
-#pragma omp critical
-	  {
-	    // Find the end of the list and link it there.
-	    ListOfPhotonsToMove *TempL = PhotonsToMove;
-	    int counter = 0;
-	    while (TempL->NextPackageToMove != NULL) {
-	      TempL = TempL->NextPackageToMove;
-	    }
-	    TempL->NextPackageToMove = ThreadMoveList->NextPackageToMove;
-	  } // END omp critical
-
-	  delete ThreadMoveList;
-
-	} // END omp parallel
-
-#else /* NOT _OPENMP */
 	for (GridNum = 0; GridNum < NumberOfGrids; GridNum++) {
 	  if (Grids[GridNum]->ParentGrid != NULL) 
 	    Helper = Grids[GridNum]->ParentGrid->GridData;
@@ -311,7 +270,6 @@ int EvolvePhotons(TopGridData *MetaData, LevelHierarchyEntry *LevelArray[],
 	    ENZO_FAIL("");
 	  }
 	} // ENDFOR grids
-#endif
 
 	delete [] Grids;
 

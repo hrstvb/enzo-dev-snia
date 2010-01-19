@@ -16,6 +16,9 @@
 /  RETURNS: FAIL or SUCCESS
 /
 ************************************************************************/
+#ifdef _OPENMP
+#include "omp.h"
+#endif
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
@@ -49,9 +52,6 @@ int grid::TransportPhotonPackages(int level, ListOfPhotonsToMove **PhotonsToMove
 				  int GridNum, grid **Grids0, int nGrids0, 
 				  grid *ParentGrid, grid *CurrentGrid)
 {
-
-  int i,j,k, dim, index, count;
-  grid *MoveToGrid;
 
   if (MyProcessorNumber != ProcessorNumber)
     return SUCCESS;
@@ -116,6 +116,7 @@ int grid::TransportPhotonPackages(int level, ListOfPhotonsToMove **PhotonsToMove
   if (DEBUG) fprintf(stdout,"TransportPhotonPackage: %"ISYM" %"ISYM" .\n",
 		     GridStartIndex[0], GridEndIndex[0]);
 
+  int i, count, dcount, tcount, pcount, trcount;
   PhotonPackageEntry *PP, *FPP, *SavedPP, *PausedPP;
   PP = PhotonPackages;
 
@@ -141,135 +142,247 @@ int grid::TransportPhotonPackages(int level, ListOfPhotonsToMove **PhotonsToMove
 	  ENZO_FAIL("");
 	}
 
-  count = 0;
-  PP = PhotonPackages->NextPackage;
-  FPP = this->FinishedPhotonPackages;
-  PausedPP = this->PausedPhotonPackages;
-  
-  int dcount = 0;
-  int tcount = 0;
-  int pcount = 0;
-  int trcount = 0;
-  int AdvancePhotonPointer;
-  int DeleteMe, DeltaLevel, PauseMe;
-
-  const float clight = 2.9979e10;
-  float LightCrossingTime = 1.7320508 * (LengthUnits/TimeUnits) /
-    (clight * RadiativeTransferPropagationSpeedFraction);  // sqrt(3)=1.73
-  FLOAT EndTime;
-  if (RadiativeTransferAdaptiveTimestep)
-    EndTime = PhotonTime+LightCrossingTime;
-  else
-    EndTime = PhotonTime+dtPhoton-ROUNDOFF;
+  PP = PhotonPackages;
 
   while (PP != NULL) {
 
-    DeleteMe = FALSE;
-    PauseMe = FALSE;
-    MoveToGrid = NULL;
-    AdvancePhotonPointer = TRUE;
+  pcount = dcount = tcount = trcount = 0;
 
-    if ((PP->CurrentTime) < EndTime) {
-      WalkPhotonPackage(&PP,
-			&MoveToGrid, ParentGrid, CurrentGrid, Grids0, nGrids0,
-			DensNum, DeNum, HINum, HeINum, HeIINum, H2INum,
-			kphHINum, gammaNum, kphHeINum, 
-			kphHeIINum, kdissH2INum, RPresNum1,
-			RPresNum2, RPresNum3, DeleteMe, PauseMe, DeltaLevel, 
-			LightCrossingTime,
-			DensityUnits, TemperatureUnits, VelocityUnits, 
-			LengthUnits, TimeUnits);
-      tcount++;
+  ListOfPhotonsToMove *LocalMoveList;
+  int NumberOfThreads = NumberOfCores / NumberOfProcessors;
+#pragma omp parallel private(LocalMoveList,SavedPP,i)	\
+  reduction(+:pcount,dcount,tcount,trcount)
+  {
+
+    int tpcount, nph, start_num, end_num, thread_num;
+    PhotonPackageEntry *ThreadPP0 = new PhotonPackageEntry;
+    PhotonPackageEntry *TempPP, *ThreadPP;
+    LocalMoveList = new ListOfPhotonsToMove;
+    LocalMoveList->NextPackageToMove = NULL;
+
+#ifdef _OPENMP
+    thread_num = omp_get_thread_num();
+#else
+    thread_num = 0;
+#endif /* _OPENMP */
+
+    /* Manually split up photon linked list to divide the work among
+       cores */
+
+    // Count number of photons in list
+    nph = 0;
+    TempPP = PhotonPackages;
+    while (TempPP->NextPackage != NULL) {
+      TempPP = TempPP->NextPackage;
+      nph++;
+    }
+
+    if (NumberOfThreads > 1 && nph >= NumberOfThreads) {
+
+      start_num = thread_num * nph / NumberOfThreads;
+      if (thread_num < NumberOfThreads-1)
+	end_num = (thread_num+1) * nph / NumberOfThreads;
+      else
+	end_num = nph;
+
+      // Find the head of the list on this thread (i=start_num)
+      ThreadPP0->PreviousPackage = NULL;
+      TempPP = PhotonPackages->NextPackage;
+      for (i = 0; i < start_num; i++)
+	TempPP = TempPP->NextPackage;
+
+      /* Find the tail of the tail and mark the NextPackage as NULL,
+	 so the thread only does its share of work.  We'll piece
+	 together the thread lists after the computation. */
+
+      ThreadPP = TempPP;
+      ThreadPP->PreviousPackage = ThreadPP0;
+      ThreadPP0->NextPackage = ThreadPP;
+
+      for (i = start_num; i < end_num-1; i++)
+	TempPP = TempPP->NextPackage;
+
+      /* BARRIER: We don't want to mark the tail node's NextPackage to
+	 NULL until every thread has found their head node.
+	 Otherwise, it'll run into the NULL NextPackage pointer, set
+	 from another thread. */
+
+#pragma omp barrier
+      TempPP->NextPackage = NULL;
+
+      // Detach head node from list
+#pragma omp single
+      PhotonPackages->NextPackage = NULL;
+      
     } else {
-
-      /* If all work is finished, store in FinishedPhotonPackages and
-	 don't check for work until next timestep */
-
-      SavedPP = PopPhoton(PP);
-      PP = PP->NextPackage;
-      InsertPhotonAfter(FPP, SavedPP);
-      AdvancePhotonPointer = FALSE;
-
+      ThreadPP = PhotonPackages->NextPackage;
     }
 
-    if (DEBUG > 1) 
-      fprintf(stdout, "photon #%"ISYM" %x %x %x\n",
-	      tcount,  PP,  PhotonPackages, 
-	       MoveToGrid); 
-
-    if (PauseMe == TRUE) {
-      if (DEBUG > 1) fprintf(stdout, "paused photon %x\n", PP);
-      SavedPP = PopPhoton(PP);
-//      printf("paused photon %x lvl %"ISYM" ipix %"ISYM" CSRC %x leafID %"ISYM"\n",
-//	     SavedPP, SavedPP->level, SavedPP->ipix, SavedPP->CurrentSource,
-//	     SavedPP->CurrentSource->LeafID);
-      PP = PP->NextPackage;
-      InsertPhotonAfter(PausedPP, SavedPP);
-      AdvancePhotonPointer = FALSE;
-      MoveToGrid = NULL;
-      pcount++;
-    }
-
-    if (DeleteMe == TRUE) {   
-      if (DEBUG > 1) fprintf(stdout, "delete photon %x\n", PP);
-      dcount++;
-      PP = DeletePhotonPackage(PP);
-      MoveToGrid = NULL;
-    } 
-
-    if (MoveToGrid != NULL) {
-      if (DEBUG) {
-	fprintf(stdout, "moving photon from %x to %x\n", 
-		 CurrentGrid,  MoveToGrid);
-	fprintf(stdout, "moving photon %x %x %x %x\n", 
-		 PP,  PP->PreviousPackage, 
-		 PP->NextPackage,  PhotonPackages);
+    if (DEBUG>1) {
+      TempPP = ThreadPP;
+      tpcount = 0;
+      printf("T%d: ThreadPP0 = %x\n", thread_num, ThreadPP0);
+      while (TempPP != NULL) {
+	printf("T%d: photon %d/%d: %x %x %x\n", thread_num, 
+	       tpcount, nph, TempPP->PreviousPackage,
+	       TempPP, TempPP->NextPackage);
+	tpcount++;
+	TempPP = TempPP->NextPackage;
       }
-      ListOfPhotonsToMove *NewEntry = new ListOfPhotonsToMove;
-      NewEntry->NextPackageToMove = (*PhotonsToMove)->NextPackageToMove;
-      (*PhotonsToMove)->NextPackageToMove = NewEntry;
-      NewEntry->PhotonPackage = PP;
-      NewEntry->FromGrid = CurrentGrid;
-      NewEntry->ToGrid   = MoveToGrid;
-      NewEntry->ToGridNum= MoveToGrid->GetGridID();
-      NewEntry->ToLevel  = level + DeltaLevel;
-      NewEntry->ToProcessor = MoveToGrid->ReturnProcessorNumber();
-
-      if (NewEntry->ToProcessor >= NumberOfProcessors)
-	printf("TransportPH(P%"ISYM" :: G%"ISYM"): WARNING BAD TO_PROC -- P%"ISYM"->P%"ISYM".\n",
-	       MyProcessorNumber, GridNum, ProcessorNumber, 
-	       NewEntry->ToProcessor);
-
-      if (PP->PreviousPackage != NULL) 
-	PP->PreviousPackage->NextPackage = PP->NextPackage;
-      if (PP->NextPackage != NULL) 
-	PP->NextPackage->PreviousPackage = PP->PreviousPackage;
-      trcount++;
-    } // ENDIF MoveToGrid
-
-    if (AdvancePhotonPointer == TRUE)
-      PP = PP->NextPackage;
-
-    // Merge "paused" photons only when all photons have been transported
-    if (PP == NULL && PausedPP->NextPackage != NULL) {
-      if (this->MergePausedPhotonPackages() == FAIL) {
-	fprintf(stderr, "Error in grid::MergePausedPhotonPackages.\n");
-	ENZO_FAIL("");
-      }
-      // Reset temp pointers
-      PP = PhotonPackages->NextPackage;
-      //FPP = this->FinishedPhotonPackages;
-      PausedPP = this->PausedPhotonPackages;
-      this->PausedPhotonPackages->NextPackage = NULL;
-      this->PausedPhotonPackages->PreviousPackage = NULL;
     }
+    
+    count = 0;
+    //PP = PhotonPackages->NextPackage;
+    FPP = this->FinishedPhotonPackages;
+    PausedPP = this->PausedPhotonPackages;
+  
+    int AdvancePhotonPointer;
+    int DeleteMe, DeltaLevel, PauseMe;
+    grid *MoveToGrid;
 
-  } // ENDWHILE photons
+    const float clight = 2.9979e10;
+    float LightCrossingTime = 1.7320508 * (LengthUnits/TimeUnits) /
+      (clight * RadiativeTransferPropagationSpeedFraction);  // sqrt(3)=1.73
+    FLOAT EndTime;
+    if (RadiativeTransferAdaptiveTimestep)
+      EndTime = PhotonTime+LightCrossingTime;
+    else
+      EndTime = PhotonTime+dtPhoton-ROUNDOFF;
 
-  if (DEBUG)
+    while (ThreadPP != NULL) {
+
+      DeleteMe = FALSE;
+      PauseMe = FALSE;
+      MoveToGrid = NULL;
+      AdvancePhotonPointer = TRUE;
+
+      if ((ThreadPP->CurrentTime) < EndTime) {
+	WalkPhotonPackage(&ThreadPP,
+			  &MoveToGrid, ParentGrid, CurrentGrid, Grids0, nGrids0,
+			  DensNum, DeNum, HINum, HeINum, HeIINum, H2INum,
+			  kphHINum, gammaNum, kphHeINum, 
+			  kphHeIINum, kdissH2INum, RPresNum1,
+			  RPresNum2, RPresNum3, DeleteMe, PauseMe, DeltaLevel, 
+			  LightCrossingTime,
+			  DensityUnits, TemperatureUnits, VelocityUnits, 
+			  LengthUnits, TimeUnits);
+	tcount++;
+      } else {
+
+	/* If all work is finished, store in FinishedPhotonPackages and
+	   don't check for work until next timestep */
+
+	SavedPP = PopPhoton(ThreadPP);
+	ThreadPP = ThreadPP->NextPackage;
+#pragma omp critical
+	InsertPhotonAfter(FPP, SavedPP);
+	AdvancePhotonPointer = FALSE;
+
+      }
+
+      if (DEBUG > 1) 
+	fprintf(stdout, "photon #%"ISYM" %x %x %x\n",
+		tcount,  ThreadPP,  PhotonPackages, 
+		MoveToGrid); 
+
+      if (PauseMe == TRUE) {
+	if (DEBUG > 1) fprintf(stdout, "paused photon %x\n", ThreadPP);
+	SavedPP = PopPhoton(ThreadPP);
+	//printf("paused photon %x lvl %"ISYM" ipix %"ISYM" CSRC %x leafID %"ISYM"\n",
+	//SavedPP, SavedPP->level, SavedPP->ipix, SavedPP->CurrentSource,
+	//SavedPP->CurrentSource->LeafID);
+	ThreadPP = ThreadPP->NextPackage;
+#pragma omp critical
+	InsertPhotonAfter(PausedPP, SavedPP);
+	AdvancePhotonPointer = FALSE;
+	MoveToGrid = NULL;
+	pcount++;
+      }
+
+      if (DeleteMe == TRUE) {   
+	if (DEBUG > 1) fprintf(stdout, "delete photon %x\n", ThreadPP);
+	dcount++;
+	ThreadPP = DeletePhotonPackage(ThreadPP);
+	MoveToGrid = NULL;
+      } 
+
+      if (MoveToGrid != NULL) {
+	if (DEBUG) {
+	  fprintf(stdout, "moving photon from %x to %x\n", 
+		  CurrentGrid,  MoveToGrid);
+	  fprintf(stdout, "moving photon %x %x %x %x\n", 
+		  ThreadPP,  ThreadPP->PreviousPackage, 
+		  ThreadPP->NextPackage,  PhotonPackages);
+	}
+	ListOfPhotonsToMove *NewEntry = new ListOfPhotonsToMove;
+	NewEntry->NextPackageToMove = LocalMoveList->NextPackageToMove;
+	LocalMoveList->NextPackageToMove = NewEntry;
+	NewEntry->PhotonPackage = ThreadPP;
+	NewEntry->FromGrid = CurrentGrid;
+	NewEntry->ToGrid   = MoveToGrid;
+	NewEntry->ToGridNum= MoveToGrid->GetGridID();
+	NewEntry->ToLevel  = level + DeltaLevel;
+	NewEntry->ToProcessor = MoveToGrid->ReturnProcessorNumber();
+
+	if (NewEntry->ToProcessor >= NumberOfProcessors)
+	  printf("TransportPH(P%"ISYM" :: G%"ISYM"): WARNING BAD TO_PROC -- P%"ISYM"->P%"ISYM".\n",
+		 MyProcessorNumber, GridNum, ProcessorNumber, 
+		 NewEntry->ToProcessor);
+
+	if (ThreadPP->PreviousPackage != NULL) 
+	  ThreadPP->PreviousPackage->NextPackage = ThreadPP->NextPackage;
+	if (ThreadPP->NextPackage != NULL) 
+	  ThreadPP->NextPackage->PreviousPackage = ThreadPP->PreviousPackage;
+	trcount++;
+      } // ENDIF MoveToGrid
+
+      if (AdvancePhotonPointer == TRUE)
+	ThreadPP = ThreadPP->NextPackage;
+
+    } // ENDWHILE photons
+
+    /* After all of the photons are traced, combine all of the list of
+       photons to move from each thread into one list */
+
+#pragma omp critical
+    {
+      ListOfPhotonsToMove **TempL = PhotonsToMove;
+      // Find the end of the list and link it there.
+      while ((*TempL)->NextPackageToMove != NULL)
+	(*TempL) = (*TempL)->NextPackageToMove;
+      (*TempL)->NextPackageToMove = LocalMoveList->NextPackageToMove;
+    } // END omp critical
+
+    delete LocalMoveList;
+    delete ThreadPP0;
+
+  } // END omp parallel
+
+  //  if (DEBUG)
     fprintf(stdout, "grid::TransportPhotonPackage: "
 	    "transported %"ISYM" deleted %"ISYM" paused %"ISYM"\n",
 	    tcount, dcount, pcount);
+
+  // After threaded calls, reset pointers to the head
+  PP = PhotonPackages->NextPackage;
+  PausedPP = PausedPhotonPackages;
+
+  // Merge "paused" photons only when all photons have been transported
+  if (PP == NULL && PausedPP->NextPackage != NULL) {
+    if (this->MergePausedPhotonPackages() == FAIL) {
+      fprintf(stderr, "Error in grid::MergePausedPhotonPackages.\n");
+      ENZO_FAIL("");
+    }
+    // Reset temp pointers
+    PP = PhotonPackages->NextPackage;
+    //FPP = this->FinishedPhotonPackages;
+    PausedPP = this->PausedPhotonPackages;
+    this->PausedPhotonPackages->NextPackage = NULL;
+    this->PausedPhotonPackages->PreviousPackage = NULL;
+  } // ENDIF merge photons
+
+  } // ENDWHILE PP != NULL
+
   NumberOfPhotonPackages -= dcount;
 
   /* For safety, clean up paused photon list */
@@ -286,47 +399,5 @@ int grid::TransportPhotonPackages(int level, ListOfPhotonsToMove **PhotonsToMove
   }
 #endif
 
-#ifdef UNUSED
-  for (k = GridStartIndex[2]; k <= GridEndIndex[2]; k++) {
-    if (HasRadiation == TRUE) break;
-    for (j = GridStartIndex[1]; j <= GridEndIndex[1]; j++) {
-      if (HasRadiation == TRUE) break;
-      index = (k*GridDimension[1] + j)*GridDimension[0] + GridStartIndex[0];
-      for (i = GridStartIndex[0]; i <= GridEndIndex[0]; i++, index++) {
-	if (BaryonField[kphHINum][index] > 0) {
-	  HasRadiation = TRUE;
-	  break;
-	}
-      } // ENDFOR i
-    }  // ENDFOR j
-  } // ENDFOR k
-#endif /* UNUSED */
-
-  // Debug xyz-axis for a unigrid 64^3 with a source in the corner.
-#define NO_DEBUG_AXES
-#ifdef DEBUG_AXES
-  printf("PHDebug(x): kph= %"GSYM" %"GSYM" %"GSYM", Nph = %"GSYM" %"GSYM" %"GSYM"\n, HI = %"GSYM" %"GSYM" %"GSYM"\n",
-	 BaryonField[kphHINum][14914], BaryonField[kphHINum][14915], 
-	 BaryonField[kphHINum][14916], 
-	 BaryonField[kphHeIINum][14914], BaryonField[kphHeIINum][14915], 
-	 BaryonField[kphHeIINum][14916], 
-	 BaryonField[HINum][14914], BaryonField[HINum][14915], 
-	 BaryonField[HINum][14916]);
-  printf("PHDebug(y): kph= %"GSYM" %"GSYM" %"GSYM", Nph = %"GSYM" %"GSYM" %"GSYM"\n, HI = %"GSYM" %"GSYM" %"GSYM"\n",
-	 BaryonField[kphHINum][14983], BaryonField[kphHINum][15053], 
-	 BaryonField[kphHINum][15123], 
-	 BaryonField[kphHeIINum][14983], BaryonField[kphHeIINum][15053], 
-	 BaryonField[kphHeIINum][15123], 
-	 BaryonField[HINum][14983], BaryonField[HINum][15053], 
-	 BaryonField[HINum][15123]);
-  printf("PHDebug(z): kph= %"GSYM" %"GSYM" %"GSYM", Nph = %"GSYM" %"GSYM" %"GSYM"\n, HI = %"GSYM" %"GSYM" %"GSYM"\n",
-	 BaryonField[kphHINum][19813], BaryonField[kphHINum][24713], 
-	 BaryonField[kphHINum][29613], 
-	 BaryonField[kphHeIINum][19813], BaryonField[kphHeIINum][24713], 
-	 BaryonField[kphHeIINum][29613], 
-	 BaryonField[HINum][19813], BaryonField[HINum][24713], 
-	 BaryonField[HINum][29613]);
-#endif /* DEBUG_AXES */
-	 
   return SUCCESS;
 }

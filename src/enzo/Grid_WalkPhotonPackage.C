@@ -42,6 +42,7 @@
 #define MAX_HEALPIX_LEVEL 13
 #define MAX_COLUMN_DENSITY 1e25
 #define MIN_TAU_IFRONT 0.1
+#define OPTICALLY_THICK 20.0f  // optical depth
 
 int SplitPhotonPackage(PhotonPackageEntry *PP);
 FLOAT FindCrossSection(int type, float energy);
@@ -75,7 +76,7 @@ int grid::WalkPhotonPackage(PhotonPackageEntry **PP,
   int g[3], celli[3], u_dir[3], u_sign[3];
   long cindex;
   float m[3], slice_factor, slice_factor2, sangle_inv;
-  float MinTauIfront, PhotonEscapeRadius[3], c, c_inv, tau;
+  float OptThickTau, MinTauIfront, PhotonEscapeRadius[3], c, c_inv, tau;
   float DomainWidth[3], dx, dx2, dxhalf, fraction;
   float shield1, shield2, solid_angle, midpoint, nearest_edge;
   double dN;
@@ -205,7 +206,7 @@ int grid::WalkPhotonPackage(PhotonPackageEntry **PP,
   float xx, heat_factor = 1.0;
   float ion2_factor[] = {1.0, 1.0, 1.0};
 
-  if ((*PP)->Type == iHI || (*PP)->Type == iHeI || (*PP)->Type == iHeII) {
+  if ((*PP)->Type <= iHeII) {
     for (i = 0; i <= (*PP)->Type; i++)
       if (i == (*PP)->Type)
 	sigma[i] = (*PP)->CrossSection * LengthUnits;
@@ -223,6 +224,7 @@ int grid::WalkPhotonPackage(PhotonPackageEntry **PP,
   }
 
   MinTauIfront = MIN_TAU_IFRONT / sigma[0];  // absorb sigma
+  OptThickTau = OPTICALLY_THICK / sigma[(*PP)->Type];  // absorb sigma
 
   // solid angle associated with package (= 4 Pi/N_package[on this level]) 
   float n_on_this_level = (float) (12 * (2 << (2*(*PP)->level-1)));
@@ -499,7 +501,8 @@ int grid::WalkPhotonPackage(PhotonPackageEntry **PP,
 	}
 
 	// at most use all photons for photo-ionizations
-	if (tau > 2.e1) dPi[i] = (1.0+ROUNDOFF) * (*PP)->Photons;
+	if (tau > OPTICALLY_THICK) 
+	  dPi[i] = (1.0+ROUNDOFF) * (*PP)->Photons;
 	else if (tau > 1.e-4) 
 	  dPi[i] = min((*PP)->Photons*(1-expf(-tau)), (*PP)->Photons);
 	else
@@ -514,7 +517,7 @@ int grid::WalkPhotonPackage(PhotonPackageEntry **PP,
 	BaryonField[gammaNum][index] += dP1*factor2[i];
 
 	// Exit the loop if everything's been absorbed
-	if (tau > 2.e1) break;
+	if (tau > OPTICALLY_THICK) break;
 
       } // ENDFOR absorbers
 
@@ -589,7 +592,8 @@ int grid::WalkPhotonPackage(PhotonPackageEntry **PP,
 	tau = dN*sigma[i];
 
 	// at most use all photons for photo-ionizations
-	if (tau > 2.e1) dPXray[i] = (1.0+ROUNDOFF) * (*PP)->Photons;
+	if (tau > OPTICALLY_THICK) 
+	  dPXray[i] = (1.0+ROUNDOFF) * (*PP)->Photons;
 	else if (tau > 1.e-4) 
 	  dPXray[i] = min((*PP)->Photons*(1-expf(-tau)), (*PP)->Photons);
 	else
@@ -622,7 +626,8 @@ int grid::WalkPhotonPackage(PhotonPackageEntry **PP,
 	tau = dN*sigma[3];
 
 	// at most use all photons for Compton scattering
-	if (tau > 2.e1) dPXray[3] = (1.0+ROUNDOFF) * (*PP)->Photons;
+	if (tau > OPTICALLY_THICK) 
+	  dPXray[3] = (1.0+ROUNDOFF) * (*PP)->Photons;
 	else if (tau > 1.e-4) 
 	  dPXray[3] = min((*PP)->Photons*(1-expf(-tau)), (*PP)->Photons);
 	else
@@ -663,9 +668,10 @@ int grid::WalkPhotonPackage(PhotonPackageEntry **PP,
        I-front, so we can calculate the maximum ionization timescale
        for timestepping purposes. */
 
+    (*PP)->ColumnDensity += dN;
+
     if (RadiativeTransferHIIRestrictedTimestep)
       if (type == iHI || type == 4) {
-	(*PP)->ColumnDensity += dN;
 	if ((*PP)->ColumnDensity > MinTauIfront) {
 	  if (BaryonField[kphNum[iHI]][index] > this->MaximumkphIfront) {
 	    this->MaximumkphIfront = BaryonField[kphNum[iHI]][index];

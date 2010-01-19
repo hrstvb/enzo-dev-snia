@@ -49,7 +49,7 @@ int grid::MoveParticlesFOF(int level, FOF_particle_data* &P,
 
     Index0 = Index;
 
-#pragma omp parallel
+#pragma omp parallel private(dim,j)
     {
 
     for (dim = 0; dim < GridRank; dim++) {
@@ -104,7 +104,7 @@ int grid::MoveParticlesFOF(int level, FOF_particle_data* &P,
 
     this->AllocateNewParticles(npart);
 
-#pragma omp parallel
+#pragma omp parallel private(dim,j)
     {
 
     for (dim = 0; dim < GridRank; dim++)

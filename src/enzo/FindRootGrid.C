@@ -54,9 +54,9 @@ int FindRootGrid(int &dummy, grid **Grids0, int nGrids0,
   FLOAT Left[MAX_DIMENSION], Right[MAX_DIMENSION], Bump[MAX_DIMENSION];
   FLOAT BumpPos[MAX_DIMENSION];
 
-  Bump[0] = ROUNDOFF * sign(ux);
-  Bump[1] = ROUNDOFF * sign(uy);
-  Bump[2] = ROUNDOFF * sign(uz);
+  Bump[0] = 10*ROUNDOFF * sign(ux);
+  Bump[1] = 10*ROUNDOFF * sign(uy);
+  Bump[2] = 10*ROUNDOFF * sign(uz);
 
   // Make sure that bumped position is always within the domain
 
