@@ -69,7 +69,7 @@ void intvarC(float *qslice, int in, int is, int ie, int j, int isteep,
     qplus = qslice[index+1] - qslice[index];
     qmnus = qslice[index  ] - qslice[index-1];
     dq[i] = c1[i] * qplus + c2[i] * qmnus;
-    temp1 = min(min(fabs(dq[i]), 2.0f*fabs(qmnus)), 2.0f*fabs(qplus));
+    temp1 = min(min(fabsf(dq[i]), 2.0f*fabsf(qmnus)), 2.0f*fabsf(qplus));
     dq[i] = (qplus*qmnus > 0) ? temp1*sign(dq[i]) : 0.0;
   }
 //     
