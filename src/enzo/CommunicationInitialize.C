@@ -47,7 +47,18 @@ int CommunicationInitialize(Eint32 *argc, char **argv[])
   MPI_Arg mpi_rank;
   MPI_Arg mpi_size;
 
+#ifdef _OPENMP
+  int desired = MPI_THREAD_SERIALIZED;
+  int provided;
+  MPI_Init_thread(argc, argv, desired, &provided);
+  if (desired != provided) {
+    if (MyProcessorNumber == ROOT_PROCESSOR)
+      printf("desired = %d, provided = %d\n", desired, provided);
+    ENZO_FAIL("Cannot get proper OpenMP/MPI setting MPI_THREAD_SERIALIZED!");
+  }
+#else
   MPI_Init(argc, argv);
+#endif
   MPI_Comm_rank(MPI_COMM_WORLD, &mpi_rank);
   MPI_Comm_size(MPI_COMM_WORLD, &mpi_size);
 
