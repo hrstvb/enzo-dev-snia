@@ -30,3 +30,4 @@ int IndexOfMaximumkph;
 // evaluated bitwise.  E.g. 0010001001 = cell has been traced by a ray
 // from sources 0,3,7.
 int *RayMarker;
+int *OptThickMarker;

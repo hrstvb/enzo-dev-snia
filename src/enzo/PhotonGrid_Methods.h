@@ -126,15 +126,21 @@ void InitializeRayMarker(void) {
   for (i = 0, size=1; i < GridRank; i++) size *= GridDimension[i];
   if (RayMarker == NULL)
     RayMarker = new int[size];
-  for (i = 0; i < size; i++)
+  if (OptThickMarker == NULL)
+    OptThickMarker = new int[size];
+  for (i = 0; i < size; i++) {
     RayMarker[i] = 0;
+    OptThickMarker[i] = 0;
+  }
   return;
 }
 
 void DeleteRayMarker(void) {
   if (MyProcessorNumber != this->ProcessorNumber) return;
   delete [] RayMarker;
+  delete [] OptThickMarker;
   RayMarker = NULL;
+  OptThickMarker = NULL;
   return;
 }
 

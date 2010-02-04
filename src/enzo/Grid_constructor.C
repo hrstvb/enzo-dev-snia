@@ -144,6 +144,7 @@ grid::grid()
   HasRadiation                    = FALSE;
   SubgridMarker                   = NULL;
   RayMarker                       = NULL;
+  OptThickMarker                  = NULL;
   MaximumkphIfront                = 0;
   IndexOfMaximumkph               = INT_UNDEFINED;
 #endif

@@ -42,7 +42,7 @@
 #define MAX_HEALPIX_LEVEL 13
 #define MAX_COLUMN_DENSITY 1e25
 #define MIN_TAU_IFRONT 0.1
-#define MIN_TAU_THIN 0.5
+#define MIN_TAU_THIN 0.2
 
 int SplitPhotonPackage(PhotonPackageEntry *PP);
 FLOAT FindCrossSection(int type, float energy);
@@ -81,15 +81,16 @@ int grid::WalkPhotonPackage(PhotonPackageEntry **PP,
   int g[3], celli[3], u_dir[3], u_sign[3];
   long cindex;
   float m[3], slice_factor, slice_factor2, sangle_inv;
-  float MinTauIfront, MinTauOptThin, PhotonEscapeRadius[3], c, c_inv, tau;
+  float MinTauIfront, MinTauOptThin, PhotonEscapeRadius[3], c, c_inv;
+  float tau, tau_thin;
   float DomainWidth[3], dx, dx2, dxhalf, fraction;
   float shield1, shield2, solid_angle, midpoint, nearest_edge;
-  double dN;
+  double dN, dNthin;
   FLOAT radius, oldr, cdt, dr;
   FLOAT CellVolume = 1, Volume_inv, Area_inv, SplitCriteron, SplitWithinRadius;
   FLOAT SplitCriteronThin, PauseRadius, r_merge, d_ss, d2_ss, u_dot_d, sqrt_term;
   FLOAT dir_vec[3], sigma[4];
-  FLOAT ddr, dP, dP1, EndTime;
+  FLOAT ddr, dP, dP1, dPthin, EndTime;
   FLOAT thisDensity, min_dr;
   FLOAT kestimate, flux_scaling;
   FLOAT ce[3], nce[3];
@@ -253,7 +254,7 @@ int grid::WalkPhotonPackage(PhotonPackageEntry **PP,
   dx2 = dx*dx;
   dxhalf = 0.5f * dx;
   SplitCriteron = dx2 / RaysPerCell;
-  SplitCriteronThin = 1.4*dx2;
+  SplitCriteronThin = 1.0*dx2;
   Volume_inv = 1.0 / CellVolume;
   Area_inv = 1.0 / dx2;
   slice_factor2 = 0.0;
@@ -336,7 +337,7 @@ int grid::WalkPhotonPackage(PhotonPackageEntry **PP,
     // This and the next cell edge
     for (dim = 0; dim < 3; dim++) {
       ce[dim] = CellLeftEdge[dim][g[dim]];
-      nce[dim] = CellLeftEdge[dim][g[dim] + u_sign[dim]];
+      nce[dim] = CellLeftEdge[dim][g[dim] + u_dir[dim]];
     }
 
     // Radius of the next edge crossing in each dimension
@@ -390,7 +391,7 @@ int grid::WalkPhotonPackage(PhotonPackageEntry **PP,
     // if the radiation is optically thin (Xray, LW)
 
     solid_angle = radius * radius * omega_package;
-    if ((*PP)->ColumnDensity < MinTauOptThin)
+    if ((*PP)->ColumnDensity < 0.9*MinTauOptThin)
       splitMe = (solid_angle > SplitCriteronThin);
     else
       splitMe = (solid_angle > SplitCriteron);
@@ -479,12 +480,14 @@ int grid::WalkPhotonPackage(PhotonPackageEntry **PP,
 	 cell, skip computation and go to the next cell.  Estimate
 	 flux at the cell center, while we're at it. */
 
-      this->OpticallyThinPhoton(PP, MinTauOptThin, index, radius, dx, dx2,
+      this->OpticallyThinPhoton(PP, MinTauOptThin,
+				index, radius, dx, dx2,
 				ce, flux_scaling, SkipCalculation,
 				OpticallyThin);
 
       if (OpticallyThin) {
-	dP = 0;
+	dP = 0.0;
+	//dP = (*PP)->Photons * dN * sigma[0];
 	if (!SkipCalculation) {
 
 	// Optically thin rates at cell center (flux_scaling corrects
@@ -514,9 +517,9 @@ int grid::WalkPhotonPackage(PhotonPackageEntry **PP,
 	/* Geometric correction factor because the ray's solid angle
 	   could not completely cover the cell */
 
-	//slice_factor2 = RayGeometricCorrection(oldr, radius, ddr, s, u, ce, 
-	//				       dxhalf, dtheta, ROUNDOFF);
-	slice_factor2 = 1.0f;
+	slice_factor2 = RayGeometricCorrection(oldr, radius, ddr, s, u, ce, 
+					       dxhalf, dtheta, ROUNDOFF);
+	//slice_factor2 = 1.0f;
 	dP1 = dP * slice_factor2;
 
 	// contributions to the photoionization rate is over whole timestep
@@ -525,6 +528,18 @@ int grid::WalkPhotonPackage(PhotonPackageEntry **PP,
 	// the heating rate is just the number of photo ionizations
 	// times the excess energy units here are eV/s *TimeUnits.
 	BaryonField[gammaNum][index] += dP1*factor2[0];
+
+	// Mark cell for this source as optically thick.  All cells
+	// must contribute without the optically thin approximation.
+	OptThickMarker[index] |= (1 << (*PP)->SourceNumber);
+
+	// Correct for the photons lost in the optically thin regime
+	dNthin = (*PP)->ColumnDensity - dN;
+	if (dNthin < MinTauOptThin) {
+	  tau_thin = sigma[0] * dNthin;
+	  dPthin = (*PP)->Photons*(1-expf(-tau_thin));
+	  dP += dPthin;
+	}
 
       } // ENDELSE OpticallyThin
 
@@ -583,7 +598,8 @@ int grid::WalkPhotonPackage(PhotonPackageEntry **PP,
 
 	if (i == 0) {
 	  (*PP)->ColumnDensity += dN;
-	  this->OpticallyThinPhoton(PP, MinTauOptThin, index, radius, dx, dx2,
+	  this->OpticallyThinPhoton(PP, MinTauOptThin,
+				    index, radius, dx, dx2,
 				    ce, flux_scaling, SkipCalculation,
 				    OpticallyThin);
 	  slice_factor2 = 1.0f;
