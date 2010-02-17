@@ -682,7 +682,7 @@ EXTERN TestProblemDataType TestProblemData;
 
 /* Memory Limit */
 
-EXTERN int MemoryLimit;
+EXTERN long_int MemoryLimit;
 
 /* Staged input */
 
