@@ -179,6 +179,11 @@ help-config:
 	@echo "      gmake cuda-yes"
 	@echo "      gmake cuda-no"
 	@echo
+	@echo "   Set whether to use a cosmology lookup table"
+	@echo
+	@echo "      gmake use-cosmotable-yes"
+	@echo "      gmake use-cosmotable-no"
+	@echo
 
 #-----------------------------------------------------------------------
 
@@ -241,6 +246,7 @@ show-config:
 	@echo "   CONFIG_BITWISE_IDENTICALITY:  $(CONFIG_BITWISE_IDENTICALITY)"
 	@echo "   CONFIG_FAST_SIB:              $(CONFIG_FAST_SIB)"
 	@echo "   CONFIG_FLUX_FIX:              $(CONFIG_FLUX_FIX)"
+	@echo "   CONFIG_USE_COSMOTABLE:        $(CONFIG_USE_COSMOTABLE)"
 	@echo
 
 #-----------------------------------------------------------------------
@@ -755,6 +761,24 @@ CONFIG_USE-HDF4-%: suggest-clean
         mv $${tmp} $(MAKE_CONFIG_OVERRIDE); \
         echo "CONFIG_USE_HDF4 = $*" >> $(MAKE_CONFIG_OVERRIDE); \
 	$(MAKE)  show-config | grep CONFIG_USE_HDF4:
+	@echo
+
+
+#-----------------------------------------------------------------------
+
+VALID_USE-COSMOTABLE = use-cosmotable-yes use-cosmotable-no
+.PHONY: $(VALID_USE-COSMOTABLE)
+
+use-cosmotable-yes: CONFIG_USE-COSMOTABLE-yes
+use-cosmotable-no: CONFIG_USE-COSMOTABLE-no
+use-cosmotable-%:
+	@printf "\n\tInvalid target: $@\n\n\tValid targets: [$(VALID_USE-COSMOTABLE)]\n\n"
+CONFIG_USE-COSMOTABLE-%: suggest-clean
+	@tmp=.config.temp; \
+        grep -v CONFIG_USE_COSMOTABLE $(MAKE_CONFIG_OVERRIDE) > $${tmp}; \
+        mv $${tmp} $(MAKE_CONFIG_OVERRIDE); \
+        echo "CONFIG_USE_COSMOTABLE = $*" >> $(MAKE_CONFIG_OVERRIDE); \
+	$(MAKE)  show-config | grep CONFIG_USE_COSMOTABLE:
 	@echo
 
 

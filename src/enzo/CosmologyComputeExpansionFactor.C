@@ -4,7 +4,9 @@
 /
 /  written by: Greg Bryan
 /  date:       April, 1995
-/  modified1:
+/  modified1:  Michael Kuhlen
+/  date:       February, 2010
+/              modified to use a look-up table, #ifdef USE_COSMOTABLE.
 /
 /  PURPOSE:
 /
@@ -29,14 +31,90 @@
 #ifdef CONFIG_PFLOAT_16
 #define ETA_TOLERANCE 1.0e-20
 #endif
- 
+
 // function prototypes
  
 double arccosh(double x);
 double arcsinh(double x);
- 
+
 int CosmologyComputeExpansionFactor(FLOAT time, FLOAT *a, FLOAT *dadt)
 {
+
+  *a = FLOAT_UNDEFINED;
+ 
+  /* Find Omega due to curvature. */
+ 
+  float OmegaCurvatureNow = 1 - OmegaMatterNow - OmegaLambdaNow;
+
+  /* Convert the time from code units to Time * H0 (c.f. CosmologyGetUnits). */
+ 
+  float TimeUnits = 2.52e17/sqrt(OmegaMatterNow)/HubbleConstantNow/
+                    POW(1 + InitialRedshift,FLOAT(1.5));
+ 
+  FLOAT TimeHubble0 = time * TimeUnits * (HubbleConstantNow*3.24e-18);
+
+
+#ifdef USE_COSMOTABLE
+
+  if (CosmologyTableCalculated == FALSE)
+    CosmologyCalculateTable();
+
+  // printf("CosmologyTableSize = %d\n",(Eint32)CosmologyTableSize);
+  // printf("CosmologyTable_time = %e ... %e\n",CosmologyTable_time[0],CosmologyTable_time[CosmologyTableSize-1]);
+  // printf("TimeHubble0 = %e\n",TimeHubble0);
+
+  // Check whether TimeHubble0 lies right on the table boundary
+
+  if ( TimeHubble0 == CosmologyTable_time[0] ) {
+    (*a) = CosmologyTable_a[0] * (1 + InitialRedshift);
+    (*dadt) = CosmologyTable_dadt[0] * sqrt(2.0/(3.0*OmegaMatterNow*(1.0+InitialRedshift)));
+  }
+  if ( TimeHubble0 == CosmologyTable_time[CosmologyTableSize-1] ) {
+    (*a) = CosmologyTable_a[CosmologyTableSize-1] * (1 + InitialRedshift);
+    (*dadt) = CosmologyTable_dadt[CosmologyTableSize-1] * sqrt(2.0/(3.0*OmegaMatterNow*(1.0+InitialRedshift)));
+  }
+
+
+  // Find table index for TimeHubble0. The table is NOT equally spaced
+  // in this direction (time -> a), so we need to use bisection.
+
+  int j, jl, ju, jm;
+  jl = -1;
+  ju = CosmologyTableSize+1;
+  while (ju-jl > 1) {
+    jm = (ju+jl) >> 1;
+    if ( TimeHubble0 >= CosmologyTable_time[jm] )
+      jl = jm;
+    else
+      ju = jm;
+  }
+  j = jl;
+
+  // error check bounds, if j<0 or j>(CosmologyTableSize-1).
+  if( (j<0) || (j>(CosmologyTableSize-1)) ) {
+    fprintf(stderr,"Attempting to use CosmologyTable outside of bounds!\n");
+    ENZO_FAIL("");
+  }
+  
+  FLOAT dt = (TimeHubble0 - CosmologyTable_time[j]) / (CosmologyTable_time[j+1] - CosmologyTable_time[j]);
+
+  // printf("j = %d   (%e, %e)   dt = %e\n",j,CosmologyTable_time[j],CosmologyTable_time[j+1],dt);
+  // printf("%e %e\n",CosmologyTable_a[j],CosmologyTable_a[j+1]);
+
+  // Look up 'a'
+  (*a) = CosmologyTable_a[j] * (1.0 - dt) +
+    CosmologyTable_a[j+1] * dt;
+  (*a) *= (1 + InitialRedshift);  
+
+  // Look up 'da/dt'
+  (*dadt) = CosmologyTable_dadt[j] * (1.0 - dt) +
+    CosmologyTable_dadt[j+1] * dt;
+  (*dadt) *= sqrt(2.0/(3.0*OmegaMatterNow*(1.0+InitialRedshift)));
+  
+
+  return SUCCESS;
+#endif
+
  
   /* Error check. */
  
@@ -45,25 +123,14 @@ int CosmologyComputeExpansionFactor(FLOAT time, FLOAT *a, FLOAT *dadt)
     ENZO_FAIL("");
   }
  
-  *a = FLOAT_UNDEFINED;
  
-  /* Find Omega due to curvature. */
- 
-  float OmegaCurvatureNow = 1 - OmegaMatterNow - OmegaLambdaNow;
- 
-  /* Convert the time from code units to Time * H0 (c.f. CosmologyGetUnits). */
- 
-  float TimeUnits = 2.52e17/sqrt(OmegaMatterNow)/HubbleConstantNow/
-                    POW(1 + InitialRedshift,FLOAT(1.5));
- 
-  FLOAT TimeHubble0 = time * TimeUnits * (HubbleConstantNow*3.24e-18);
- 
+
   /* 1) For a flat universe with OmegaMatterNow = 1, it's easy. */
  
   if (fabs(OmegaMatterNow-1) < OMEGA_TOLERANCE &&
       OmegaLambdaNow < OMEGA_TOLERANCE)
     *a      = POW(time/InitialTimeInCodeUnits, FLOAT(2.0/3.0));
- 
+
 #define INVERSE_HYPERBOLIC_EXISTS
  
 #ifdef INVERSE_HYPERBOLIC_EXISTS
@@ -130,7 +197,8 @@ int CosmologyComputeExpansionFactor(FLOAT time, FLOAT *a, FLOAT *dadt)
 		OmegaLambdaNow*TempVal*TempVal*TempVal));
  
   /* Someday, we'll implement the general case... */
- 
+
+
   if ((*a) == FLOAT_UNDEFINED) {
     fprintf(stderr, "Cosmology selected is not implemented.\n");
     ENZO_FAIL("");

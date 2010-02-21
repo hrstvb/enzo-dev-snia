@@ -815,6 +815,34 @@
 	$(error Illegal value '$(CONFIG_USE_HDF4)' for $$(CONFIG_USE_HDF4))
     endif
 
+#=======================================================================
+# DETERMINE COSMOTABLE USAGE
+#=======================================================================
+
+    ERROR_USE_COSMOTABLE = 1
+
+    # compilers and settings if USE_COSMOTABLE is yes
+
+    ifeq ($(CONFIG_USE_COSMOTABLE),yes)
+        ERROR_USE_COSMOTABLE = 0
+        ASSEMBLE_COSMOTABLE_DEFINES  = -DUSE_COSMOTABLE
+    endif
+
+    # compilers and settings if USE_COSMOTABLE is no
+
+    ifeq ($(CONFIG_USE_COSMOTABLE),no)
+        ERROR_USE_COSMOTABLE = 0
+        ASSEMBLE_COSMOTABLE_DEFINES  =
+    endif
+
+    # error if CONFIG_USE_COSMOTABLE is incorrect
+
+    ifeq ($(ERROR_USE_COSMOTABLE),1)
+       .PHONY: error_compilers
+       error_compilers:
+	$(error Illegal value '$(CONFIG_USE_COSMOTABLE)' for $$(CONFIG_USE_COSMOTABLE))
+    endif
+
 
 #=======================================================================
 # ASSIGN ALL OUTPUT VARIABLES
@@ -871,7 +899,8 @@
               $(ASSEMBLE_FLUX_FIX_DEFINES) \
               $(ASSEMBLE_ECUDA_DEFINES) \
               $(ASSEMBLE_CUDADEBUG_DEFINES) \
-              $(ASSEMBLE_HDF4_DEFINES)
+              $(ASSEMBLE_HDF4_DEFINES) \
+              $(ASSEMBLE_COSMOTABLE_DEFINES)
 
     INCLUDES = $(MACH_INCLUDES) \
     	       $(ASSEMBLE_MPI_INCLUDES) \

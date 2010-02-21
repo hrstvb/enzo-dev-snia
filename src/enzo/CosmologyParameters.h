@@ -14,6 +14,10 @@ EXTERN float HubbleConstantNow;
 
 EXTERN float OmegaMatterNow;
 
+/* The value of Omega due to relativistic particles at z=0. */
+
+EXTERN float OmegaRadiationNow;
+
 /* The value of Omega due to lamba (the cosmological constant) at z=0. */
 
 EXTERN float OmegaLambdaNow;
@@ -39,3 +43,19 @@ EXTERN FLOAT InitialRedshift;
 EXTERN FLOAT CosmologyOutputRedshift[MAX_NUMBER_OF_OUTPUT_REDSHIFTS];
 EXTERN char *CosmologyOutputRedshiftName[MAX_NUMBER_OF_OUTPUT_REDSHIFTS];
 EXTERN FLOAT CosmologyOutputRedshiftTime[MAX_NUMBER_OF_OUTPUT_REDSHIFTS];
+
+
+#ifdef USE_COSMOTABLE
+
+EXTERN int CosmologyTableCalculated;
+EXTERN int CosmologyTableSize;
+EXTERN int CosmologyTableWriteToFile;
+
+EXTERN char CosmologyTableFilename[200];
+
+EXTERN FLOAT CosmologyTableDelta;
+EXTERN FLOAT *CosmologyTable_a, *CosmologyTable_dadt, *CosmologyTable_time;
+
+// function prototypes
+int CosmologyCalculateTable(void);
+#endif

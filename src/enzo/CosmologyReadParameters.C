@@ -34,6 +34,7 @@ int CosmologyReadParameters(FILE *fptr, FLOAT *StopTime, FLOAT *InitTime)
  
   HubbleConstantNow    = 0.701;
   OmegaMatterNow       = 0.279;
+  OmegaRadiationNow    = 0.0;
   OmegaLambdaNow       = 0.721;
   ComovingBoxSize      = 64;
   MaxExpansionRate     = 0.01;
@@ -44,6 +45,15 @@ int CosmologyReadParameters(FILE *fptr, FLOAT *StopTime, FLOAT *InitTime)
     CosmologyOutputRedshift[i]     = -1;  // Never!!
     CosmologyOutputRedshiftName[i] = NULL;
   }
+
+
+#ifdef USE_COSMOTABLE
+  CosmologyTableCalculated = FALSE;
+  CosmologyTableWriteToFile = TRUE;
+  CosmologyTableSize = 10000;
+  sprintf(CosmologyTableFilename,"CosmologyTable.out");
+#endif
+
  
   /* read input from file */
  
@@ -56,6 +66,7 @@ int CosmologyReadParameters(FILE *fptr, FLOAT *StopTime, FLOAT *InitTime)
     ret += sscanf(line, "CosmologyHubbleConstantNow = %"FSYM,
 		  &HubbleConstantNow);
     ret += sscanf(line, "CosmologyOmegaMatterNow = %"FSYM, &OmegaMatterNow);
+    ret += sscanf(line, "CosmologyOmegaRadiationNow = %"FSYM, &OmegaRadiationNow);
     ret += sscanf(line, "CosmologyOmegaLambdaNow = %"FSYM, &OmegaLambdaNow);
     ret += sscanf(line, "CosmologyComovingBoxSize = %"FSYM, &ComovingBoxSize);
     ret += sscanf(line, "CosmologyMaxExpansionRate = %"FSYM,
@@ -85,6 +96,15 @@ int CosmologyReadParameters(FILE *fptr, FLOAT *StopTime, FLOAT *InitTime)
       fprintf(stderr, "warning: the following parameter line was not interpreted:\n%s\n", line);
  
   }
+
+  /* #ifndef USE_COSMOTABLE, check that OmegaRadiationNow=0, since
+      it's not supported in the standard version. */
+#ifndef USE_COSMOTABLE
+  if (OmegaRadiationNow > 0.0) {
+    fprintf(stderr, "OmegaRadiationNow > 0 is not supported without use of a cosmological look-up table. Compile with -DUSE_COSMOTABLE.\n");    
+    ENZO_FAIL("");
+  }
+#endif
  
   /* Initialize by finding the time at the initial redshift. */
  
