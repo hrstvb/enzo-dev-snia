@@ -66,6 +66,11 @@ int CommunicationReceiveHandler(fluxes **SubgridFluxesEstimate[],
   PhotonPackageEntry *PP;
 #endif
 
+  MPI_Arg error_code;
+  char error_string[1024];
+  MPI_Arg length_of_error_string, error_class;
+  MPI_Errhandler_set(MPI_COMM_WORLD, MPI_ERRORS_RETURN);
+
   /* Define a temporary flux holder for the refined fluxes. */
 
   fluxes SubgridFluxesRefined;
@@ -76,11 +81,13 @@ int CommunicationReceiveHandler(fluxes **SubgridFluxesEstimate[],
 
     float time1 = ReturnWallTime();
 
-//    printf("::: BEFORE MPI_Waitsome ::: %"ISYM" %"ISYM" %"ISYM"\n", 
+//    printf("P%d ::: BEFORE MPI_Waitsome ::: %"ISYM" %"ISYM" %"ISYM"\n", 
+//	   MyProcessorNumber,
 //	   TotalReceives, ReceivesCompletedToDate, NumberOfCompleteRequests);
     MPI_Waitsome(TotalReceives, CommunicationReceiveMPI_Request,
 		 &NumberOfCompleteRequests, ListOfIndices, ListOfStatuses);
-//    printf("MPI: %"ISYM" %"ISYM" %"ISYM"\n", TotalReceives, 
+//    printf("P%d: MPI: %"ISYM" %"ISYM" %"ISYM"\n", MyProcessorNumber,
+//	   TotalReceives, 
 //	   ReceivesCompletedToDate, NumberOfCompleteRequests);
 
     CommunicationTime += ReturnWallTime() - time1;
@@ -104,13 +111,23 @@ int CommunicationReceiveHandler(fluxes **SubgridFluxesEstimate[],
 	  NoErrorSoFar = FALSE;
 	}
 	fprintf(stdout, "P(%"ISYM") index %"ISYM" -- mpi error %"ISYM"\n", 
-		MyProcessorNumber, index, ListOfStatuses[index].MPI_ERROR);
-	fprintf(stdout, "%"ISYM": Type = %"ISYM", Grid1 = %x, Request = %"ISYM", "
-		"DependsOn = %"ISYM"\n", index, 
-		CommunicationReceiveCallType[index],
-		CommunicationReceiveGridOne[index],
-		CommunicationReceiveMPI_Request[index],
-		CommunicationReceiveDependsOn[index]);
+		MyProcessorNumber, ListOfIndices[index], 
+		ListOfStatuses[index].MPI_ERROR);
+	fprintf(stdout, "%"ISYM": Type = %"ISYM", Grid1 = %d, Request = %"ISYM", "
+		"DependsOn = %"ISYM"\n", ListOfIndices[index], 
+		CommunicationReceiveCallType[ListOfIndices[index]],
+		CommunicationReceiveGridOne[ListOfIndices[index]],
+		CommunicationReceiveMPI_Request[ListOfIndices[index]],
+		CommunicationReceiveDependsOn[ListOfIndices[index]]);
+	fprintf(stdout, "%"ISYM": buffer = %x\n", ListOfIndices[index],
+		CommunicationReceiveBuffer[ListOfIndices[index]]);
+
+	MPI_Error_class(ListOfStatuses[index].MPI_ERROR, &error_class);
+	MPI_Error_string(error_class, error_string, &length_of_error_string);
+	fprintf(stderr, "P%d: %s\n", MyProcessorNumber, error_string);
+	MPI_Error_string(ListOfStatuses[index].MPI_ERROR, error_string, &length_of_error_string);
+	fprintf(stderr, "P%d: %s\n", MyProcessorNumber, error_string);
+	ENZO_FAIL("");
       }
 
     /* Loop over the receive handles, looking for completed (i.e. null)
@@ -124,7 +141,8 @@ int CommunicationReceiveHandler(fluxes **SubgridFluxesEstimate[],
 	  CommunicationReceiveMPI_Request[index] == MPI_REQUEST_NULL) {
 
 // 	if(CommunicationReceiveCallType[index]==2)
-// 	  fprintf(stdout, "%d %d %d %d %d\n", index, 
+// 	  fprintf(stdout, "P%d: %d %d %d %d %d\n", MyProcessorNumber,
+//		  index, 
 // 		CommunicationReceiveCallType[index],
 // 		CommunicationReceiveGridOne[index],
 // 		CommunicationReceiveMPI_Request[index],

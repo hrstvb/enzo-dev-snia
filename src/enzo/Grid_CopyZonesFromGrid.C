@@ -280,8 +280,8 @@ int grid::CopyZonesFromGrid(grid *OtherGrid, FLOAT EdgeOffset[MAX_DIMENSION])
   int addDim[3] = {1, OtherDim[0], OtherDim[0]*OtherDim[1]};
   int velocityTypes[3]={Velocity1, Velocity2, Velocity3};
 
-#pragma omp parallel for schedule(static) \
-  private(k,j,i,thisindex,otherindex,val1,val2,a,b)
+//#pragma omp parallel for schedule(static) \
+//  private(k,j,i,thisindex,otherindex,val1,val2,a,b)
   for (field = 0; field < NumberOfBaryonFields; field++)
     for (k = 0; k < Dim[2]; k++)
       for (j = 0; j < Dim[1]; j++) {

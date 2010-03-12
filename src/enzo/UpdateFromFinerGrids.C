@@ -88,6 +88,7 @@ int UpdateFromFinerGrids(int level, HierarchyEntry *Grids[], int NumberOfGrids,
 #endif
 
   TIME_MSG("UpdateFromFinerGrids");
+
   for (StartGrid = 0; StartGrid < NumberOfGrids; StartGrid += GRIDS_PER_LOOP) {
     EndGrid = min(StartGrid + GRIDS_PER_LOOP, NumberOfGrids);
 
@@ -95,7 +96,7 @@ int UpdateFromFinerGrids(int level, HierarchyEntry *Grids[], int NumberOfGrids,
 
     CommunicationDirection = COMMUNICATION_POST_RECEIVE;
     CommunicationReceiveIndex = 0;
-#pragma omp parallel for schedule(guided) \
+#pragma omp parallel for schedule(static) \
   private(NextGrid, subgrid, SubgridFluxesRefined)
     for (grid1 = StartGrid; grid1 < EndGrid; grid1++) {
       
@@ -121,7 +122,7 @@ int UpdateFromFinerGrids(int level, HierarchyEntry *Grids[], int NumberOfGrids,
 
     CommunicationDirection = COMMUNICATION_SEND;
 
-#pragma omp parallel for schedule(guided) \
+#pragma omp parallel for schedule(static) \
   private(NextGrid, subgrid, SubgridFluxesRefined)
     for (grid1 = StartGrid; grid1 < EndGrid; grid1++) {
 
@@ -189,7 +190,7 @@ int UpdateFromFinerGrids(int level, HierarchyEntry *Grids[], int NumberOfGrids,
 
     CommunicationDirection = COMMUNICATION_POST_RECEIVE;
     CommunicationReceiveIndex = 0;
-#pragma omp parallel for schedule(guided) \
+#pragma omp parallel for schedule(static) \
   private(NextEntry, SubgridFluxesRefined)
     for (grid1 = StartGrid; grid1 < EndGrid; grid1++) {
 	  
@@ -220,7 +221,7 @@ int UpdateFromFinerGrids(int level, HierarchyEntry *Grids[], int NumberOfGrids,
 
     CommunicationDirection = COMMUNICATION_SEND;
 
-#pragma omp parallel for schedule(guided) \
+#pragma omp parallel for schedule(static) \
   private(NextEntry, SubgridFluxesRefined)
     for (grid1 = StartGrid; grid1 < EndGrid; grid1++) {
 
@@ -275,7 +276,7 @@ int UpdateFromFinerGrids(int level, HierarchyEntry *Grids[], int NumberOfGrids,
 
     CommunicationDirection = COMMUNICATION_POST_RECEIVE;
     CommunicationReceiveIndex = 0;
-#pragma omp parallel for schedule(guided) private(NextGrid)
+#pragma omp parallel for schedule(static) private(NextGrid)
     for (grid1 = StartGrid; grid1 < EndGrid; grid1++) {
 
       /* Loop over subgrids for this grid: replace solution. */
@@ -294,7 +295,7 @@ int UpdateFromFinerGrids(int level, HierarchyEntry *Grids[], int NumberOfGrids,
     /* -------------- SECOND PASS ----------------- */
 
     CommunicationDirection = COMMUNICATION_SEND;
-#pragma omp parallel for schedule(guided) private(NextGrid)
+#pragma omp parallel for schedule(static) private(NextGrid)
     for (grid1 = StartGrid; grid1 < EndGrid; grid1++) {
 
       /* Loop over subgrids for this grid: replace solution. */

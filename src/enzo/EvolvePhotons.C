@@ -143,14 +143,14 @@ int EvolvePhotons(TopGridData *MetaData, LevelHierarchyEntry *LevelArray[],
 
     /* Initialize radiation fields */
 
-#pragma omp parallel for schedule(guided)
+#pragma omp parallel for schedule(static)
       for (GridNum = 0; GridNum < NumberOfGrids; GridNum++) 
 	Grids[GridNum]->GridData->InitializeRadiativeTransferFields();
 
     /* create temperature fields for Compton heating */  
 
       if (RadiationXRayComptonHeating)  
-#pragma omp parallel for schedule(guided)
+#pragma omp parallel for schedule(static)
 	for (GridNum = 0; GridNum < NumberOfGrids; GridNum++) 
 	  Grids[GridNum]->GridData->InitializeTemperatureFieldForComptonHeating();
 
@@ -374,7 +374,7 @@ int EvolvePhotons(TopGridData *MetaData, LevelHierarchyEntry *LevelArray[],
 
     for (lvl = 0; lvl < MAX_DEPTH_OF_HIERARCHY-1; lvl++) {
       NumberOfGrids = GenerateGridArray(LevelArray, lvl, &Grids);
-#pragma omp parallel for schedule(guided)
+#pragma omp parallel for schedule(static)
       for (GridNum = 0; GridNum < NumberOfGrids; GridNum++) 
 	if (Grids[GridNum]->GridData->RadiationPresent() == TRUE)
 	  Grids[GridNum]->GridData->FinalizeRadiationFields();
@@ -383,7 +383,7 @@ int EvolvePhotons(TopGridData *MetaData, LevelHierarchyEntry *LevelArray[],
 
     for (lvl = 0; lvl < MAX_DEPTH_OF_HIERARCHY-1; lvl++) {
       NumberOfGrids = GenerateGridArray(LevelArray, lvl, &Grids);
-#pragma omp parallel for schedule(guided)
+#pragma omp parallel for schedule(static)
       for (GridNum = 0; GridNum < NumberOfGrids; GridNum++) 
 	if (Grids[GridNum]->GridData->RadiationPresent() == TRUE) {
 
@@ -408,7 +408,7 @@ int EvolvePhotons(TopGridData *MetaData, LevelHierarchyEntry *LevelArray[],
 
     for (lvl = 0; lvl < MAX_DEPTH_OF_HIERARCHY-1; lvl++) {
       NumberOfGrids = GenerateGridArray(LevelArray, lvl, &Grids);
-#pragma omp parallel for schedule(guided)
+#pragma omp parallel for schedule(static)
       for (GridNum = 0; GridNum < NumberOfGrids; GridNum++) {
 	if (Grids[GridNum]->GridData->RadiationPresent() == FALSE &&
 	    RadiativeTransferOpticallyThinH2)

@@ -10,6 +10,9 @@
 /
 ************************************************************************/
 
+#ifndef __STARPARTICLEDATA_H
+#define __STARPARTICLEDATA_H
+
 #ifdef DEFINE_STORAGE
 # define SPEXTERN
 #else /* DEFINE_STORAGE */
@@ -89,3 +92,5 @@ SPEXTERN float  MBHCombineRadius;
 
 SPEXTERN float minStarLifetime;
 SPEXTERN FLOAT LastSupernovaTime;
+
+#endif

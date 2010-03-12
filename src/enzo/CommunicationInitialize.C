@@ -85,7 +85,7 @@ int CommunicationInitialize(Eint32 *argc, char **argv[])
 #else
   NumberOfCores = NumberOfProcessors;
 #endif  
- 
+
   CommunicationTime = 0;
  
   CommunicationDirection = COMMUNICATION_SEND_RECEIVE;

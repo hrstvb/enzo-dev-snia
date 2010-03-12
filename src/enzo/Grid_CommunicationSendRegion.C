@@ -15,6 +15,9 @@
 #ifdef USE_MPI
 #include "mpi.h"
 #endif /* USE_MPI */
+#ifdef _OPENMP
+#include "omp.h"
+#endif
  
 #include <stdlib.h>
 #include <stdio.h>
@@ -202,7 +205,7 @@ int grid::CommunicationSendRegion(grid *ToGrid, int ToProcessor,int SendField,
 //      printf("CSR Sending %"ISYM" floats from %"ISYM" to %"ISYM"\n", 
 //	     TransferSize, MyProcessorNumber, ToProcessor);
       CommunicationBufferedSend(buffer, TransferSize, DataType, ToProcessor, 
-				MPI_SENDREGION_TAG, MPI_COMM_WORLD, BUFFER_IN_PLACE);
+				MPI_SENDREGION_TAG*100000+TransferSize, MPI_COMM_WORLD, BUFFER_IN_PLACE);
     }
 
     if (MyProcessorNumber == ToProcessor) {
@@ -221,7 +224,7 @@ int grid::CommunicationSendRegion(grid *ToGrid, int ToProcessor,int SendField,
 //	       CommunicationReceiveIndex);
 
 	MPI_Irecv(buffer, TransferSize, DataType, ProcessorNumber, 
-		  MPI_SENDREGION_TAG, MPI_COMM_WORLD, 
+		  MPI_SENDREGION_TAG*100000+TransferSize, MPI_COMM_WORLD, 
 		  CommunicationReceiveMPI_Request+CommunicationReceiveIndex);
 	CommunicationReceiveBuffer[CommunicationReceiveIndex] = buffer;
 	CommunicationReceiveDependsOn[CommunicationReceiveIndex] =

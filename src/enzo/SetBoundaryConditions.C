@@ -99,7 +99,7 @@ int SetBoundaryConditions(HierarchyEntry *Grids[], int NumberOfGrids,
       CommunicationDirection = COMMUNICATION_POST_RECEIVE;
       CommunicationReceiveIndex = 0;
 
-#pragma omp parallel for schedule(guided)
+#pragma omp parallel for schedule(static)
       for (grid1 = StartGrid; grid1 < EndGrid; grid1++) {
 	
 	/* a) Interpolate boundaries from the parent grid or set external
@@ -123,7 +123,7 @@ int SetBoundaryConditions(HierarchyEntry *Grids[], int NumberOfGrids,
 	   for grids which are on the same processor as well. */
 
       CommunicationDirection = COMMUNICATION_SEND;
-#pragma omp parallel for schedule(guided)
+#pragma omp parallel for schedule(static)
       for (grid1 = StartGrid; grid1 < EndGrid; grid1++) {
 
 	/* a) Interpolate boundaries from the parent grid or set
@@ -159,16 +159,17 @@ int SetBoundaryConditions(HierarchyEntry *Grids[], int NumberOfGrids,
       CommunicationReceiveIndex = 0;
  
 #ifdef FAST_SIB
-#pragma omp parallel for schedule(guided) private(grid2)
+#pragma omp parallel for schedule(static) private(grid2)
       for (grid1 = StartGrid; grid1 < EndGrid; grid1++)
-	for (grid2 = 0; grid2 < SiblingList[grid1].NumberOfSiblings; grid2++)
+	for (grid2 = 0; grid2 < SiblingList[grid1].NumberOfSiblings; grid2++) {
 	  Grids[grid1]->GridData->
 	    CheckForOverlap(SiblingList[grid1].GridList[grid2],
 			    MetaData->LeftFaceBoundaryCondition,
 			    MetaData->RightFaceBoundaryCondition,
 			    &grid::CopyZonesFromGrid);
+	}
 #else
-#pragma omp parallel for schedule(guided) private(grid2)
+#pragma omp parallel for schedule(static) private(grid2)
       for (grid1 = StartGrid; grid1 < EndGrid; grid1++)
 	for (grid2 = 0; grid2 < NumberOfGrids; grid2++)
 	  Grids[grid1]->GridData->
@@ -183,7 +184,7 @@ int SetBoundaryConditions(HierarchyEntry *Grids[], int NumberOfGrids,
 
       CommunicationDirection = COMMUNICATION_SEND;
 #ifdef FAST_SIB
-#pragma omp parallel for schedule(guided) private(grid2)
+#pragma omp parallel for schedule(static) private(grid2)
       for (grid1 = StartGrid; grid1 < EndGrid; grid1++)
 	for (grid2 = 0; grid2 < SiblingList[grid1].NumberOfSiblings; grid2++)
 	  Grids[grid1]->GridData->
@@ -192,7 +193,7 @@ int SetBoundaryConditions(HierarchyEntry *Grids[], int NumberOfGrids,
 			    MetaData->RightFaceBoundaryCondition,
 			    &grid::CopyZonesFromGrid);
 #else
-#pragma omp parallel for schedule(guided) private(grid2)
+#pragma omp parallel for schedule(static) private(grid2)
       for (grid1 = StartGrid; grid1 < EndGrid; grid1++)
 	for (grid2 = 0; grid2 < NumberOfGrids; grid2++)
 	  Grids[grid1]->GridData->
@@ -213,7 +214,7 @@ int SetBoundaryConditions(HierarchyEntry *Grids[], int NumberOfGrids,
  
     /* c) Apply external reflecting boundary conditions, if needed.  */
 
-#pragma omp parallel for schedule(guided)
+#pragma omp parallel for schedule(static)
   for (grid1 = 0; grid1 < NumberOfGrids; grid1++)
     Grids[grid1]->GridData->CheckForExternalReflections
       (MetaData->LeftFaceBoundaryCondition,

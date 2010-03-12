@@ -203,6 +203,7 @@ int NonUnigridCommunicationTranspose(region *FromRegion, int NumberOfFromRegions
  
 #ifdef USE_MPI
  
+      MPI_Request RequestHandle; 
       MPI_Status status;
       MPI_Datatype DataType = (sizeof(float) == 4) ? MPI_FLOAT : MPI_DOUBLE;
       MPI_Arg Count;
@@ -226,14 +227,20 @@ int NonUnigridCommunicationTranspose(region *FromRegion, int NumberOfFromRegions
       Source = FromProc;
       Dest = ToProc;
        
-      if (MPI_Sendrecv((void*) SendBuffer, Count, DataType, Dest,
-	       MPI_TRANSPOSE_TAG, (void*) ReceiveBuffer, RecvCount,
-	       DataType, Source, MPI_TRANSPOSE_TAG, MPI_COMM_WORLD,
-	       &status) != MPI_SUCCESS) {
-	fprintf(stderr, "Proc %"ISYM" MPI_Sendrecv error %"ISYM"\n", MyProcessorNumber,
-		status.MPI_ERROR);
-	ENZO_FAIL("");
-      }
+//      if (MPI_Sendrecv((void*) SendBuffer, Count, DataType, Dest,
+//	       MPI_TRANSPOSE_TAG, (void*) ReceiveBuffer, RecvCount,
+//	       DataType, Source, MPI_TRANSPOSE_TAG, MPI_COMM_WORLD,
+//	       &status) != MPI_SUCCESS) {
+//	fprintf(stderr, "Proc %"ISYM" MPI_Sendrecv error %"ISYM"\n", MyProcessorNumber,
+//		status.MPI_ERROR);
+//	ENZO_FAIL("");
+//      }
+
+      MPI_Irecv((void*) ReceiveBuffer, RecvCount, DataType, Source, 
+		MPI_TRANSPOSE_TAG, MPI_COMM_WORLD, &RequestHandle);
+      MPI_Send((void*) SendBuffer, Count, DataType, Dest, MPI_TRANSPOSE_TAG, 
+	       MPI_COMM_WORLD);
+      MPI_Wait(&RequestHandle, &status);
  
 #ifdef MPI_INSTRUMENTATION
       endtime = MPI_Wtime();

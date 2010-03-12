@@ -113,7 +113,7 @@ int RadiativeTransferComputeTimestep(LevelHierarchyEntry *LevelArray[],
 #pragma omp parallel
       {
 	float dtThread = huge_number;
-#pragma omp for nowait schedule(guided) private(ThisPhotonDT)
+#pragma omp for nowait schedule(static) private(ThisPhotonDT)
 	for (grid1 = 0; grid1 < NumberOfGrids; grid1++) {
 	  ThisPhotonDT = Grids[grid1]->GridData->
 	    ComputePhotonTimestepHII(DensityUnits, LengthUnits, VelocityUnits, 
@@ -169,7 +169,7 @@ int RadiativeTransferComputeTimestep(LevelHierarchyEntry *LevelArray[],
 #pragma omp parallel
       {
 	float dtThread = huge_number;
-#pragma omp for nowait schedule(guided) private(ThisPhotonDT)
+#pragma omp for nowait schedule(static) private(ThisPhotonDT)
 	for (grid1 = 0; grid1 < NumberOfGrids; grid1++) {
 	  ThisPhotonDT = Grids[grid1]->GridData->ComputePhotonTimestep();
 	  dtThread = min(dtThread, ThisPhotonDT);

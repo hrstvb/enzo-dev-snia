@@ -340,7 +340,7 @@ int RebuildHierarchy(TopGridData *MetaData,
 
       tt0 = ReturnWallTime();
       TotalFlaggedCells = FlaggedGrids = 0;
-#pragma omp parallel for schedule(guided) private(SubgridList)	\
+#pragma omp parallel for schedule(static) private(SubgridList)	\
   reduction(+:TotalFlaggedCells, FlaggedGrids)
       for (j = 0; j < grids; j++)
 	FindSubgrids(GridHierarchyPointer[j], SubgridList,
