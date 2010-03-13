@@ -578,6 +578,7 @@ OBJS_CONFIG_LIB = \
         ReduceFragmentation.o \
         remap.o \
         ReportMemoryUsage.o \
+	Return_MPI_Tag.o \
         ReturnWallTime.o \
         rotate2d.o \
         rotate3d.o \

@@ -75,7 +75,7 @@ int grid::CollectParticles(int GridNum, int* &NumberToMove,
       //n1++;
     } // ENDFOR particles
 
-    StartIndex = n1+NumberOfParticles;
+    StartIndex += NumberOfParticles;
     this->DeleteParticles();
 
   } // end: if (COPY_OUT)

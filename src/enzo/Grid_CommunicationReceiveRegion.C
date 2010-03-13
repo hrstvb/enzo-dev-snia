@@ -40,6 +40,7 @@ extern "C" void FORTRAN_NAME(copy3d)(float *source, float *dest,
                                    int *sstart1, int *sstart2, int *sstart3,
                                    int *dstart1, int *dstart2, int *dststart3);
  
+MPI_Arg Return_MPI_Tag(int tag, int num1, int num2);
 #ifdef USE_MPI
 int CommunicationBufferedSend(void *buffer, int size, MPI_Datatype Type, int Target,
 			      int Tag, MPI_Comm CommWorld, int BufferSize);
@@ -59,6 +60,7 @@ int grid::CommunicationReceiveRegion(grid *FromGrid, int FromProcessor,
   MPI_Arg Count;
   MPI_Arg Source;
   MPI_Arg ZeroTag;
+  MPI_Arg Tag;
 
   int i, index, field, dim, Zero[] = {0, 0, 0};
 
@@ -174,12 +176,14 @@ int grid::CommunicationReceiveRegion(grid *FromGrid, int FromProcessor,
     
     if (MyProcessorNumber == ProcessorNumber) {
 
+      Tag = Return_MPI_Tag(0, TransferSize, FromProcessor);
+
       /* Post the receive message without waiting for the message to
 	 be received.  When the data arrives, this will be called again
 	 in (the real) receive mode. */
 
       if (CommunicationDirection == COMMUNICATION_POST_RECEIVE) {
-	MPI_Irecv(buffer, TransferSize, DataType, FromProcessor, 0, 
+	MPI_Irecv(buffer, TransferSize, DataType, FromProcessor, Tag,
 		  MPI_COMM_WORLD, 
 		  CommunicationReceiveMPI_Request+CommunicationReceiveIndex);
 	CommunicationReceiveBuffer[CommunicationReceiveIndex] = buffer;
@@ -190,7 +194,7 @@ int grid::CommunicationReceiveRegion(grid *FromGrid, int FromProcessor,
       /* If in send-receive mode, then wait for the message now. */
 
       if (CommunicationDirection == COMMUNICATION_SEND_RECEIVE) {
-	MPI_Recv(buffer, TransferSize, DataType, FromProcessor, 0, 
+	MPI_Recv(buffer, TransferSize, DataType, FromProcessor, Tag,
 		 MPI_COMM_WORLD, &Status);
       }
 

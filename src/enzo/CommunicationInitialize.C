@@ -48,13 +48,16 @@ int CommunicationInitialize(Eint32 *argc, char **argv[])
   MPI_Arg mpi_size;
 
 #ifdef _OPENMP
-  int desired = MPI_THREAD_SERIALIZED;
-  int provided;
+  MPI_Arg desired = MPI_THREAD_SERIALIZED;
+  MPI_Arg provided;
   MPI_Init_thread(argc, argv, desired, &provided);
   if (desired != provided) {
-    if (MyProcessorNumber == ROOT_PROCESSOR)
-      printf("desired = %d, provided = %d\n", desired, provided);
-    ENZO_FAIL("Cannot get proper OpenMP/MPI setting MPI_THREAD_SERIALIZED!");
+    if (MyProcessorNumber == ROOT_PROCESSOR) {
+      fprintf(stderr, "desired = %d, provided = %d\n", desired, provided);
+      fprintf(stderr, "WARNING: Cannot get proper OpenMP/MPI setting MPI_THREAD_SERIALIZED!\n"
+	      "--> Hybrid MPI/OpenMPI mode may fail.\n"
+	      "--> Set environment variable MPICH_MAX_THREAD_SAFETY to serialized.\n");
+    }
   }
 #else
   MPI_Init(argc, argv);

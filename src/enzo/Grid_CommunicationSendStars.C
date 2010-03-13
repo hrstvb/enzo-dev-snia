@@ -36,6 +36,7 @@ int CommunicationBufferedSend(void *buffer, int size, MPI_Datatype Type,
                               int Target, int Tag, MPI_Comm CommWorld, 
 			      int BufferSize);
 #endif /* USE_MPI */
+MPI_Arg Return_MPI_Tag(int tag, int num1, int num2);
 Star* StarBufferToList(StarBuffer *buffer, int n);
 void InsertStarAfter(Star * &Node, Star * &NewNode);
 void DeleteStarList(Star * &Node);
@@ -94,6 +95,7 @@ int grid::CommunicationSendStars(grid *ToGrid, int ToProcessor)
     MPI_Arg Source = ProcessorNumber;
     MPI_Arg Dest = ToProcessor;
     MPI_Arg stat;
+    MPI_Arg Tag;
 
 #ifdef MPI_INSTRUMENTATION
     starttime = MPI_Wtime();
@@ -109,9 +111,11 @@ int grid::CommunicationSendStars(grid *ToGrid, int ToProcessor)
 
     if (MyProcessorNumber == ToProcessor) {
 
+      Tag = Return_MPI_Tag(MPI_SENDSTAR_TAG, Count, Source);
+
       if (CommunicationDirection == COMMUNICATION_POST_RECEIVE) {
 	MPI_Irecv(buffer, Count, MPI_STAR, Source,
-		  MPI_SENDSTAR_TAG, MPI_COMM_WORLD,
+		  Tag, MPI_COMM_WORLD,
 		  CommunicationReceiveMPI_Request+CommunicationReceiveIndex);
 
 	CommunicationReceiveGridOne[CommunicationReceiveIndex] = this;
@@ -127,7 +131,7 @@ int grid::CommunicationSendStars(grid *ToGrid, int ToProcessor)
 
       if (CommunicationDirection == COMMUNICATION_SEND_RECEIVE)
 	MPI_Recv(buffer, Count, MPI_STAR, Source,
-		 MPI_SENDSTAR_TAG, MPI_COMM_WORLD, &status);
+		 Tag, MPI_COMM_WORLD, &status);
 
     } // ENDIF MyProcessorNumber == ToProcessor
 

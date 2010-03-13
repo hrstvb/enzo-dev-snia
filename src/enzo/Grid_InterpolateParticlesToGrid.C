@@ -36,6 +36,7 @@
 #include "FOF_nrutil.h"
 #include "FOF_proto.h"
 
+MPI_Arg Return_MPI_Tag(int tag, int num1, int num2);
 int FindField(int field, int farray[], int numfields);
 int GetUnits(float *DensityUnits, float *LengthUnits,
 	     float *TemperatureUnits, float *TimeUnits,
@@ -129,7 +130,7 @@ int grid::InterpolateParticlesToGrid(FOFData *D)
 	  {
 
 	  buffer = new float[size];
-	  Tag = MPI_SENDPARTFIELD_TAG+field;
+	  Tag = Return_MPI_Tag(MPI_SENDPARTFIELD_TAG*field, Count, Source);
 	  MPI_Irecv(buffer, Count, DataType, Source, Tag, MPI_COMM_WORLD,
 		    CommunicationReceiveMPI_Request+CommunicationReceiveIndex);
 
@@ -303,11 +304,10 @@ int grid::InterpolateParticlesToGrid(FOFData *D)
     if (MyProcessorNumber != ProcessorNumber) {
 
       for (field = 0; field < NumberOfFields; field++) {
-	Tag = MPI_SENDPARTFIELD_TAG + field;
 #pragma omp critical
 	CommunicationBufferedSend(InterpolatedField[field], size, DataType,
-				  ProcessorNumber, Tag, MPI_COMM_WORLD,
-				  size * sizeof(float));
+				  ProcessorNumber, field*MPI_SENDPARTFIELD_TAG, 
+				  MPI_COMM_WORLD, size * sizeof(float));
 	delete [] InterpolatedField[field];
 	InterpolatedField[field] = NULL;
       } // ENDFOR field

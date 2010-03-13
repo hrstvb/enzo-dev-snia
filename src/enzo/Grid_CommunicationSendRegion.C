@@ -42,6 +42,7 @@ extern "C" void FORTRAN_NAME(copy3d)(float *source, float *dest,
                                    int *sstart1, int *sstart2, int *sstart3,
                                    int *dstart1, int *dstart2, int *dststart3);
  
+MPI_Arg Return_MPI_Tag(int tag, int num1, int num2);
 #ifdef USE_MPI
 int CommunicationBufferedSend(void *buffer, int size, MPI_Datatype Type, int Target,
 			      int Tag, MPI_Comm CommWorld, int BufferSize);
@@ -59,6 +60,7 @@ int grid::CommunicationSendRegion(grid *ToGrid, int ToProcessor,int SendField,
   MPI_Datatype DataType = (sizeof(float) == 4) ? MPI_FLOAT : MPI_DOUBLE;
   MPI_Arg Count;
   MPI_Arg Source;
+  MPI_Arg Tag;
 
   /* Return if not on processor. */
 
@@ -205,7 +207,7 @@ int grid::CommunicationSendRegion(grid *ToGrid, int ToProcessor,int SendField,
 //      printf("CSR Sending %"ISYM" floats from %"ISYM" to %"ISYM"\n", 
 //	     TransferSize, MyProcessorNumber, ToProcessor);
       CommunicationBufferedSend(buffer, TransferSize, DataType, ToProcessor, 
-				MPI_SENDREGION_TAG*100000+TransferSize, MPI_COMM_WORLD, BUFFER_IN_PLACE);
+				MPI_SENDREGION_TAG, MPI_COMM_WORLD, BUFFER_IN_PLACE);
     }
 
     if (MyProcessorNumber == ToProcessor) {
@@ -213,18 +215,21 @@ int grid::CommunicationSendRegion(grid *ToGrid, int ToProcessor,int SendField,
 //      fprintf(stderr, "Waiting for %d floats at %d from %d\n", TransferSize, 
 //	      MyProcessorNumber, ProcessorNumber);
 
+      Tag = Return_MPI_Tag(MPI_SENDREGION_TAG, TransferSize, ProcessorNumber);
+      //Tag = 1000000*MPI_SENDREGION_TAG+TransferSize;
+
       /* Post the receive message without waiting for the message to
 	 be received.  When the data arrives, this will be called again
 	 in (the real) receive mode. */
 
       if (CommunicationDirection == COMMUNICATION_POST_RECEIVE) {
 
-//	printf("Posting receive from P%"ISYM" for %"ISYM" floats in "
-//	       "comm index %"ISYM"\n", ProcessorNumber, TransferSize, 
+//	printf("Posting (tag=%d) receive from P%"ISYM" for %"ISYM" floats in "
+//	       "comm index %"ISYM"\n", Tag, ProcessorNumber, TransferSize, 
 //	       CommunicationReceiveIndex);
 
 	MPI_Irecv(buffer, TransferSize, DataType, ProcessorNumber, 
-		  MPI_SENDREGION_TAG*100000+TransferSize, MPI_COMM_WORLD, 
+		  Tag, MPI_COMM_WORLD, 
 		  CommunicationReceiveMPI_Request+CommunicationReceiveIndex);
 	CommunicationReceiveBuffer[CommunicationReceiveIndex] = buffer;
 	CommunicationReceiveDependsOn[CommunicationReceiveIndex] =
@@ -236,7 +241,7 @@ int grid::CommunicationSendRegion(grid *ToGrid, int ToProcessor,int SendField,
 
       if (CommunicationDirection == COMMUNICATION_SEND_RECEIVE)
 	MPI_Recv(buffer, TransferSize, DataType, ProcessorNumber, 
-		 MPI_SENDREGION_TAG, MPI_COMM_WORLD, &Status);
+		 Tag, MPI_COMM_WORLD, &Status);
 
     } // ENDIF ToProcessor
 

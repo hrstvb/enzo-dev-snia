@@ -32,6 +32,7 @@
 static MyRequest *PhotonNumberReceiveHandles = NULL;
 static MyRequest *KeepTransportingHandles = NULL;
 #endif /* USE_MPI */
+MPI_Arg Return_MPI_Tag(int tag, int num1, int num2);
 
 int InitiateKeepTransportingCheck(int keep_transporting)
 {
@@ -39,6 +40,7 @@ int InitiateKeepTransportingCheck(int keep_transporting)
 #ifdef USE_MPI
   int proc, index, i;
   MPI_Request dummy_req;
+  MPI_Arg Tag;
 
   /* If this is the first call, initialize the keep_transporting
      request array and buffer. */
@@ -71,12 +73,15 @@ int InitiateKeepTransportingCheck(int keep_transporting)
       if (DEBUG)
 	printf("EP[%"ISYM"]: Sending keep_transporting = %"ISYM" to P%"ISYM" (index %"ISYM")\n",
 	       MyProcessorNumber, keep_transporting, proc, index);
+
+      Tag = Return_MPI_Tag(MPI_KEEPTRANSPORTING_TAG, 1, proc);
       MPI_Irecv(&KeepTransportingHandles[proc].buffer[index], 1, MPI_INT, proc, 
-		MPI_KEEPTRANSPORTING_TAG, MPI_COMM_WORLD,
+		Tag, MPI_COMM_WORLD,
 		&KeepTransportingHandles[proc].requests[index]);
       KeepTransportingHandles[proc].nbuffer++;
 
-      MPI_Isend(&keep_transporting, 1, MPI_INT, proc, MPI_KEEPTRANSPORTING_TAG,
+      Tag = Return_MPI_Tag(MPI_KEEPTRANSPORTING_TAG, 1, proc);
+      MPI_Isend(&keep_transporting, 1, MPI_INT, proc, Tag,
 		MPI_COMM_WORLD, &dummy_req);
       if (dummy_req != MPI_REQUEST_NULL)
 	MPI_Request_free(&dummy_req);
@@ -268,6 +273,7 @@ int InitiatePhotonNumberSend(int *nPhoton)
 #ifdef USE_MPI
   int i, index, proc;
   MPI_Request dummy_req;
+  MPI_Arg Tag;
 
   /* If this is the first call, initialize the request array */
 
@@ -295,6 +301,7 @@ int InitiatePhotonNumberSend(int *nPhoton)
 	}
 
       // Post receive for nPhoton_RECV
+      Tag = Return_MPI_Tag(MPI_NPHOTON_TAG, 1, proc);
       MPI_Irecv(&PhotonNumberReceiveHandles[proc].buffer[index], 1, 
 		MPI_INT, proc, MPI_NPHOTON_TAG, MPI_COMM_WORLD,
 		&PhotonNumberReceiveHandles[proc].requests[index]);
@@ -306,6 +313,7 @@ int InitiatePhotonNumberSend(int *nPhoton)
 	       MyProcessorNumber, nPhoton[proc]);
 	ENZO_FAIL("");
       }
+      Tag = Return_MPI_Tag(MPI_NPHOTON_TAG, 1, proc);
       MPI_Isend(nPhoton+proc, 1, MPI_INT, proc, MPI_NPHOTON_TAG, MPI_COMM_WORLD,
 		&dummy_req);
       if (dummy_req != MPI_REQUEST_NULL)
@@ -326,7 +334,7 @@ int InitializePhotonReceive(int group_size)
 #ifdef USE_MPI
   int i, index, nPhoton_RECV, proc;
   Eint32 NumberOfReceives, NumberOfRequests;
-  int tag;
+  MPI_Arg Tag;
   int FinishedAny = FALSE;
   Eint32 ListOfIndices[MAX_PH_REQUESTS];
   GroupPhotonList *RecvList = NULL;
@@ -377,14 +385,15 @@ int InitializePhotonReceive(int group_size)
 		ENZO_FAIL("");
 	      }
 	      RecvList = new GroupPhotonList[nPhoton_RECV];
-	      tag = MPI_PHOTONGROUP_TAG*10+nPhoton_RECV;
+	      //Tag = MPI_PHOTONGROUP_TAG*10+nPhoton_RECV;
+	      Tag = Return_MPI_Tag(MPI_PHOTONGROUP_TAG, nPhoton_RECV, proc);
 	      if (DEBUG)
 		printf("CTPh[P%"ISYM"]: Receiving %"ISYM" photons from P%"ISYM" "
 		       "(TAG=%"ISYM", index = %"ISYM", %"ISYM"/%"ISYM")\n", 
-		       MyProcessorNumber, nPhoton_RECV, proc, tag, index, i+1, 
+		       MyProcessorNumber, nPhoton_RECV, proc, Tag, index, i+1, 
 		       NumberOfReceives);
 	      MPI_Irecv(RecvList, group_size*nPhoton_RECV, MPI_BYTE, proc,
-			tag, MPI_COMM_WORLD,
+			Tag, MPI_COMM_WORLD,
 			PH_CommunicationReceiveMPI_Request + 
 			PH_CommunicationReceiveIndex);
 	      PH_CommunicationReceiveBuffer[PH_CommunicationReceiveIndex] =

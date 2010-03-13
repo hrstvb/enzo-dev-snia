@@ -25,6 +25,7 @@
 #include "typedefs.h"
 #include "global_data.h" 
 void my_exit(int status);
+MPI_Arg Return_MPI_Tag(int tag, int num1, int num2);
 /* Records the number of times we've been called. */
  
 static int CallCount = 0;
@@ -157,7 +158,8 @@ int CommunicationBufferedSend(void *buffer, int size, MPI_Datatype Type, int Tar
 
   MPI_Arg Count = size;
   MPI_Arg Dest = Target;
-  MPI_Arg Mtag = Tag;
+  //MPI_Arg Mtag = Tag;
+  MPI_Arg Mtag = Return_MPI_Tag(Tag, Count, Dest);
  
   stat = MPI_Isend(buffer_send, Count, Type, Dest, Mtag, CommWorld, RequestHandle+index);
     if( stat != MPI_SUCCESS ){my_exit(EXIT_FAILURE);}

@@ -31,7 +31,7 @@
 int CommunicationBufferedSend(void *buffer, int size, MPI_Datatype Type, int Target,
 			      int Tag, MPI_Comm CommWorld, int BufferSize);
 #endif /* USE_MPI */
-int Return_MPI_Tag(int grid_num, int proc);
+int Return_MPI_Tag(int tag, int num1, int num2);
 
 /* The following is defined in Grid_DepositParticlePositions.C. */
  
@@ -42,7 +42,7 @@ int grid::SetParticleMassFlaggingField(int StartProc, int EndProc, int level,
 				       int NumberOfSends)
 {
 
-  int i, irecv, dim, size, proc, MPI_Tag;
+  int i, irecv, dim, size, proc, Tag;
 
   /* Return if we're not needed here */
 
@@ -155,7 +155,6 @@ int grid::SetParticleMassFlaggingField(int StartProc, int EndProc, int level,
 
 #ifdef USE_MPI
     if (MyProcessorNumber != ProcessorNumber) {
-      //MPI_Tag = Return_MPI_Tag(GridNum, MyProcessorNumber);
 //      printf("----> SetPMFlag[P%"ISYM"/%"ISYM"]: sending %"ISYM" floats.\n",
 //	     MyProcessorNumber, ProcessorNumber, size);
 #pragma omp critical
@@ -199,7 +198,8 @@ int grid::SetParticleMassFlaggingField(int StartProc, int EndProc, int level,
 
       if (Source >= StartProc && Source < EndProc) {
 	buffer = new float[size];
-	MPI_Irecv(buffer, Count, DataType, Source, MPI_SENDPMFLAG_TAG, MPI_COMM_WORLD, 
+	Tag = Return_MPI_Tag(MPI_SENDPMFLAG_TAG, Count, Source);
+	MPI_Irecv(buffer, Count, DataType, Source, Tag, MPI_COMM_WORLD, 
 		  CommunicationReceiveMPI_Request+CommunicationReceiveIndex);
 
 	CommunicationReceiveGridOne[CommunicationReceiveIndex] = this;
@@ -226,26 +226,4 @@ int grid::SetParticleMassFlaggingField(int StartProc, int EndProc, int level,
 
 /************************************************************************/
 
-int Return_MPI_Tag(int grid_num, int proc)
-{
-  // Return a somewhat-unique MPI tag for communication.  The factors
-  // are prime.
-  return 6373*MPI_SENDPMFLAG_TAG + 4041*grid_num + 1973*proc;
-}
 
-#ifdef UNUSED
-void InitializeParticleMassFlaggingFieldCommunication(void)
-{
-#ifdef USE_MPI
-  int i;
-  irq = 0;
-  for (i = 0; i < MAX_REQUEST_HANDLES; i++) {
-    FlagRequestHandle[i] = NULL;
-    if (FlagBuffer[i] != NULL)
-      delete [] FlagBuffer[i];
-    FlagBuffer[i] = NULL;
-  }
-#endif USE_MPI
-  return;
-}
-#endif
