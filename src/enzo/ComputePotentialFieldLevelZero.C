@@ -241,7 +241,7 @@ int ComputePotentialFieldLevelZeroPer(TopGridData *MetaData,
   /* ------------------------------------------------------------------- */
   /* Generate FFT regions for density field. */
  
-#pragma omp parallel for schedule(static)
+#pragma omp parallel for schedule(static) lastprivate(DomainDim)
   for (grid1 = 0; grid1 < NumberOfGrids; grid1++)
     if (Grids[grid1]->GridData->PrepareFFT(&InitialRegion[grid1],
 					  GRAVITATING_MASS_FIELD, DomainDim)
