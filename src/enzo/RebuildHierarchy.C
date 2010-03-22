@@ -478,6 +478,11 @@ int RebuildHierarchy(TopGridData *MetaData,
  
       FastSiblingLocatorFinalize(&ChainingMesh);
 
+      /* set grid IDs */
+
+      for (Temp = LevelArray[i+1], j = 0; Temp; Temp = Temp->NextGridThisLevel, j++)
+	Temp->GridData->SetGridID(j);
+ 
       tt0 = ReturnWallTime();
       /* Redistribute grids over processors to Load balance. */
       switch( LoadBalancing ){
@@ -603,7 +608,7 @@ int RebuildHierarchy(TopGridData *MetaData,
  
 	Temp = Temp->NextGridThisLevel;
       }
- 
+
     } // end: loop over levels
  
   } // end: if (StaticHierarchy == TRUE)
@@ -616,9 +621,9 @@ int RebuildHierarchy(TopGridData *MetaData,
     ENZO_FAIL("Error in SetSubgridMarker from RebuildHierarchy.");
 #endif /* TRANSFER  */
 
-  /* set grid IDs */
+  /* Set grid IDs for root level */
 
-  for (i = level; i < MAX_DEPTH_OF_HIERARCHY-1; i++)
+  for (i = 0; i < MAX_DEPTH_OF_HIERARCHY; i++)
     for (Temp = LevelArray[i], j = 0; Temp; Temp = Temp->NextGridThisLevel, j++)
       Temp->GridData->SetGridID(j);
  

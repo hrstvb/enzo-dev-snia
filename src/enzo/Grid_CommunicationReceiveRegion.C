@@ -40,7 +40,7 @@ extern "C" void FORTRAN_NAME(copy3d)(float *source, float *dest,
                                    int *sstart1, int *sstart2, int *sstart3,
                                    int *dstart1, int *dstart2, int *dststart3);
  
-MPI_Arg Return_MPI_Tag(int tag, int num1, int num2);
+MPI_Arg Return_MPI_Tag(int tag, int num1[], int num2[3]=0);
 #ifdef USE_MPI
 int CommunicationBufferedSend(void *buffer, int size, MPI_Datatype Type, int Target,
 			      int Tag, MPI_Comm CommWorld, int BufferSize);
@@ -158,6 +158,13 @@ int grid::CommunicationReceiveRegion(grid *FromGrid, int FromProcessor,
 #pragma omp critical
     {
 
+    if (CommunicationDirection != COMMUNICATION_RECEIVE) {
+      CommunicationGridID[0] = grid_one->ID;
+      CommunicationGridID[1] = grid_two->ID;
+      for (dim = 0; dim < MAX_DIMENSION; dim++)
+	CommunicationTags[dim] = FromOffset[dim];
+    }
+
     if (CommunicationDirection == COMMUNICATION_POST_RECEIVE) {
       CommunicationReceiveGridOne[CommunicationReceiveIndex]  = grid_one;
       CommunicationReceiveGridTwo[CommunicationReceiveIndex]  = grid_two;
@@ -171,12 +178,14 @@ int grid::CommunicationReceiveRegion(grid *FromGrid, int FromProcessor,
 		TransferSize, FromProcessor, ProcessorNumber);
 #endif
       CommunicationBufferedSend(buffer, TransferSize, DataType, ProcessorNumber, 
-				0, MPI_COMM_WORLD, BUFFER_IN_PLACE);
+				MPI_RECEIVEREGION_TAG, MPI_COMM_WORLD, 
+				BUFFER_IN_PLACE);
     } // ENDIF from processor
     
     if (MyProcessorNumber == ProcessorNumber) {
 
-      Tag = Return_MPI_Tag(0, TransferSize, FromProcessor);
+      Tag = Return_MPI_Tag(MPI_RECEIVEREGION_TAG, CommunicationGridID, 
+			   CommunicationTags);
 
       /* Post the receive message without waiting for the message to
 	 be received.  When the data arrives, this will be called again

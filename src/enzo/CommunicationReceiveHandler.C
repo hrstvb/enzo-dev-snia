@@ -52,8 +52,8 @@ int CommunicationReceiveHandler(fluxes **SubgridFluxesEstimate[],
 
   CommunicationDirection = COMMUNICATION_RECEIVE;
 
-//  printf("P(%"ISYM") in CRH with %"ISYM" requests\n", MyProcessorNumber,
-//  	 CommunicationReceiveIndex);
+//    printf("P(%"ISYM") in CRH with %"ISYM" requests\n", MyProcessorNumber,
+//	   CommunicationReceiveIndex);
 
   MPI_Arg NumberOfCompleteRequests, TotalReceives;
   int ReceivesCompletedToDate = 0, index, errcode,
@@ -116,7 +116,7 @@ int CommunicationReceiveHandler(fluxes **SubgridFluxesEstimate[],
 	fprintf(stdout, "%"ISYM": Type = %"ISYM", Grid1 = %d, Request = %"ISYM", "
 		"DependsOn = %"ISYM"\n", ListOfIndices[index], 
 		CommunicationReceiveCallType[ListOfIndices[index]],
-		CommunicationReceiveGridOne[ListOfIndices[index]],
+		CommunicationReceiveGridOne[ListOfIndices[index]]->GetGridID(),
 		CommunicationReceiveMPI_Request[ListOfIndices[index]],
 		CommunicationReceiveDependsOn[ListOfIndices[index]]);
 	fprintf(stdout, "%"ISYM": buffer = %x\n", ListOfIndices[index],
@@ -141,10 +141,11 @@ int CommunicationReceiveHandler(fluxes **SubgridFluxesEstimate[],
 	  CommunicationReceiveMPI_Request[index] == MPI_REQUEST_NULL) {
 
 // 	if(CommunicationReceiveCallType[index]==2)
-// 	  fprintf(stdout, "P%d: %d %d %d %d %d\n", MyProcessorNumber,
+// 	  fprintf(stdout, "P%d: %d %d %d %d %d %d\n", MyProcessorNumber,
 //		  index, 
 // 		CommunicationReceiveCallType[index],
-// 		CommunicationReceiveGridOne[index],
+// 		CommunicationReceiveGridOne[index]->GetGridID(),
+// 		CommunicationReceiveGridTwo[index]->GetGridID(),
 // 		CommunicationReceiveMPI_Request[index],
 // 		CommunicationReceiveDependsOn[index]);
 

@@ -31,7 +31,7 @@
 #include "LevelHierarchy.h"
 #include "communication.h"
 void my_exit(int status);
-MPI_Arg Return_MPI_Tag(int tag, int num1, int num2);
+MPI_Arg Return_MPI_Tag(int tag, int num1[], int num2[3]=0);
  
  
  
@@ -77,7 +77,7 @@ int CommunicationReceiveFluxes(fluxes *Fluxes, int FromProc,
 
   MPI_Arg Count = TotalSize;
   MPI_Arg Source = FromProc;
-  MPI_Arg Tag = Return_MPI_Tag(MPI_FLUX_TAG, Count, Source);
+  MPI_Arg Tag = Return_MPI_Tag(MPI_FLUX_TAG, CommunicationGridID);
 
   /* If in post-receive mode, then register the receive buffer to be filled
      when the data actually arrives. */

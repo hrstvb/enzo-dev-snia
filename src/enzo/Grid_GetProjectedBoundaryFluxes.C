@@ -189,6 +189,11 @@ int grid::GetProjectedBoundaryFluxes(grid *ParentGrid, int grid_num,
   }
 #endif /* USE_MPI */
 
+  if (CommunicationDirection != COMMUNICATION_RECEIVE) {
+    CommunicationGridID[0] = this->ID;
+    CommunicationGridID[1] = ParentGrid->ID;
+  }
+
   /* If appropriate, receive data and exit. */
 
   if (ProcessorNumber != MyProcessorNumber) {

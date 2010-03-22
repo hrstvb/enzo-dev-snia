@@ -34,7 +34,7 @@
 
 /* function prototypes */
  
-MPI_Arg Return_MPI_Tag(int tag, int num1, int num2);
+MPI_Arg Return_MPI_Tag(int tag, int num1[], int num2[3]=0);
 #ifdef USE_MPI
 int CommunicationBufferedSend(void *buffer, int size, MPI_Datatype Type, int Target,
 			      int Tag, MPI_Comm CommWorld, int BufferSize);
@@ -210,6 +210,11 @@ int grid::CommunicationSendParticles(grid *ToGrid, int ToProcessor,
       FirstTimeCalled = FALSE;
     }
 
+    if (CommunicationDirection != COMMUNICATION_RECEIVE) {
+      CommunicationGridID[0] = ToGrid->ID;
+      CommunicationGridID[1] = this->ID;
+    }
+
     if (MyProcessorNumber == ProcessorNumber)
       CommunicationBufferedSend(buffer, Count, ParticleDataType,
 				Dest, MPI_SENDPART_TAG, MPI_COMM_WORLD,
@@ -217,7 +222,7 @@ int grid::CommunicationSendParticles(grid *ToGrid, int ToProcessor,
 
     if (MyProcessorNumber == ToProcessor) {
 
-      Tag = Return_MPI_Tag(MPI_SENDPART_TAG, Count, Source);
+      Tag = Return_MPI_Tag(MPI_SENDPART_TAG, CommunicationGridID);
 
       if (CommunicationDirection == COMMUNICATION_POST_RECEIVE) {
 	MPI_Irecv(buffer, Count, ParticleDataType, Source,

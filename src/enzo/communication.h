@@ -69,9 +69,23 @@ EXTERN int CommunicationDirection;
 
 EXTERN int CommunicationReceiveCurrentDependsOn;
 
-/* This is the index of the current receive buffer. */
+/* This is the index of the current receive buffer.  Alterations of
+   CommunicationReceiveIndex or CommunicationGridID MUST be done in
+   omp critical sections because they are global. */
 
 EXTERN int CommunicationReceiveIndex;
+
+/* This is the grid ID of the receiving and sending grid that is being
+   processed for use with thread-safe MPI tags.  Usually sent to
+   Return_MPI_Tag(). */
+
+EXTERN int CommunicationGridID[2];
+
+/* More flags to ensure unique MPI tags where the receiving and
+   sending grids are the same.  Necessary when copying overlapping
+   regions. */
+
+EXTERN int CommunicationTags[3];
 
 /* The following variables contain information about each receive buffer
    handler.  They are:

@@ -47,7 +47,7 @@ int grid::CommunicationMoveGrid(int ToProcessor, int MoveParticles)
       ProcessorNumber != ToProcessor) {
 
     /* Copy baryons. */
- 
+
     if (NumberOfBaryonFields > 0) {
 
       FLOAT Zero3[] = {0,0,0};
@@ -74,10 +74,11 @@ int grid::CommunicationMoveGrid(int ToProcessor, int MoveParticles)
 
 #ifdef TRANSFER
     PhotonPackageEntry *PP = PhotonPackages->NextPackage;    
-    if (PP != NULL)
+    if (PP != NULL) {
       this->CommunicationSendPhotonPackages(this, ToProcessor, 
 					    NumberOfPhotonPackages, 
 					    NumberOfPhotonPackages, &PP);
+    }
 #endif /* TRANSFER */    
 
     /* Delete fields on old grid. */

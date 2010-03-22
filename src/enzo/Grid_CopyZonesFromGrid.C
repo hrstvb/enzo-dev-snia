@@ -25,6 +25,7 @@
 #ifdef USE_MPI
 #include "mpi.h"
 #endif /* USE_MPI */
+#include "omp.h"
  
 #include <stdio.h>
 #include <math.h>
@@ -222,8 +223,7 @@ int grid::CopyZonesFromGrid(grid *OtherGrid, FLOAT EdgeOffset[MAX_DIMENSION])
   if (traceMPI) 
     fprintf(tracePtr, "CopyZones SendRegion from %"ISYM" to %"ISYM"\n", 
 	    ProcessorNumber, OtherGrid->ProcessorNumber);
- 
-  
+
   if (ProcessorNumber != OtherGrid->ProcessorNumber) {
     OtherGrid->CommunicationSendRegion(OtherGrid, ProcessorNumber,
 				       ALL_FIELDS, NEW_ONLY, StartOther, 

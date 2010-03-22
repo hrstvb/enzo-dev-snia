@@ -24,6 +24,7 @@
 #ifdef USE_MPI
 #include <mpi.h>
 #endif /* USE_MPI */
+#include "omp.h"
  
 #include <stdio.h>
 #include "ErrorExceptions.h"
@@ -157,17 +158,16 @@ int SetBoundaryConditions(HierarchyEntry *Grids[], int NumberOfGrids,
 
       CommunicationDirection = COMMUNICATION_POST_RECEIVE;
       CommunicationReceiveIndex = 0;
- 
+
 #ifdef FAST_SIB
 #pragma omp parallel for schedule(static) private(grid2)
       for (grid1 = StartGrid; grid1 < EndGrid; grid1++)
-	for (grid2 = 0; grid2 < SiblingList[grid1].NumberOfSiblings; grid2++) {
+	for (grid2 = 0; grid2 < SiblingList[grid1].NumberOfSiblings; grid2++)
 	  Grids[grid1]->GridData->
 	    CheckForOverlap(SiblingList[grid1].GridList[grid2],
 			    MetaData->LeftFaceBoundaryCondition,
 			    MetaData->RightFaceBoundaryCondition,
 			    &grid::CopyZonesFromGrid);
-	}
 #else
 #pragma omp parallel for schedule(static) private(grid2)
       for (grid1 = StartGrid; grid1 < EndGrid; grid1++)

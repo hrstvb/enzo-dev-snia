@@ -53,7 +53,7 @@ int CommunicationBufferedSend(void *buffer, int size, MPI_Datatype Type,
 			      int BufferSize);
 #endif /* USE_MPI */
 double ReturnWallTime(void);
-MPI_Arg Return_MPI_Tag(int tag, int num1, int num2);
+MPI_Arg Return_MPI_Tag(int tag, int num1[], int num2[3]=0);
 
 /* This controls the maximum particle mass which will be deposited in
    the MASS_FLAGGING_FIELD.  Only set in Grid_SetFlaggingField. */
@@ -311,6 +311,11 @@ int grid::DepositParticlePositions(grid *TargetGrid, FLOAT DepositTime,
 	                                                         DepositField;
     }
 
+    if (CommunicationDirection != COMMUNICATION_RECEIVE) {
+      CommunicationGridID[0] = TargetGrid->ID;
+      CommunicationGridID[1] = this->ID;
+    }
+
     MPI_Status status;
     MPI_Datatype DataType = (sizeof(float) == 4) ? MPI_FLOAT : MPI_DOUBLE;
     MPI_Arg Count = size;
@@ -327,14 +332,14 @@ int grid::DepositParticlePositions(grid *TargetGrid, FLOAT DepositTime,
 
     if (MyProcessorNumber == TargetGrid->ProcessorNumber &&
 	CommunicationDirection == COMMUNICATION_SEND_RECEIVE) {
-      Tag = Return_MPI_Tag(MPI_SENDREGION_TAG, Count, Source);
+      Tag = Return_MPI_Tag(MPI_SENDREGION_TAG, CommunicationGridID);
       MPI_Recv(DepositFieldPointer, Count, DataType, Source, 
 	       Tag, MPI_COMM_WORLD, &status);
     }
 
     if (MyProcessorNumber == TargetGrid->ProcessorNumber &&
 	CommunicationDirection == COMMUNICATION_POST_RECEIVE) {
-      Tag = Return_MPI_Tag(MPI_SENDREGION_TAG, Count, Source);
+      Tag = Return_MPI_Tag(MPI_SENDREGION_TAG, CommunicationGridID);
       MPI_Irecv(DepositFieldPointer, Count, DataType, Source, 
 	        Tag, MPI_COMM_WORLD, 
 	        CommunicationReceiveMPI_Request+CommunicationReceiveIndex);

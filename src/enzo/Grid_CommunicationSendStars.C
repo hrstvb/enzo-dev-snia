@@ -36,7 +36,7 @@ int CommunicationBufferedSend(void *buffer, int size, MPI_Datatype Type,
                               int Target, int Tag, MPI_Comm CommWorld, 
 			      int BufferSize);
 #endif /* USE_MPI */
-MPI_Arg Return_MPI_Tag(int tag, int num1, int num2);
+MPI_Arg Return_MPI_Tag(int tag, int num1[], int num2[3]=0);
 Star* StarBufferToList(StarBuffer *buffer, int n);
 void InsertStarAfter(Star * &Node, Star * &NewNode);
 void DeleteStarList(Star * &Node);
@@ -104,6 +104,11 @@ int grid::CommunicationSendStars(grid *ToGrid, int ToProcessor)
 #pragma omp critical
     {
 
+    if (CommunicationDirection != COMMUNICATION_RECEIVE) {
+      CommunicationGridID[0] = ToGrid->ID;
+      CommunicationGridID[1] = this->ID;
+    }
+
     if (MyProcessorNumber == ProcessorNumber)
       CommunicationBufferedSend(buffer, Count, MPI_STAR, 
 				Dest, MPI_SENDSTAR_TAG, MPI_COMM_WORLD, 
@@ -111,7 +116,7 @@ int grid::CommunicationSendStars(grid *ToGrid, int ToProcessor)
 
     if (MyProcessorNumber == ToProcessor) {
 
-      Tag = Return_MPI_Tag(MPI_SENDSTAR_TAG, Count, Source);
+      Tag = Return_MPI_Tag(MPI_SENDSTAR_TAG, CommunicationGridID);
 
       if (CommunicationDirection == COMMUNICATION_POST_RECEIVE) {
 	MPI_Irecv(buffer, Count, MPI_STAR, Source,

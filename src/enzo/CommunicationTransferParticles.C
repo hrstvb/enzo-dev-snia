@@ -31,7 +31,7 @@
 #include "Hierarchy.h"
 #include "LevelHierarchy.h"
 void my_exit(int status);
-MPI_Arg Return_MPI_Tag(int tag, int num1, int num2);
+MPI_Arg Return_MPI_Tag(int tag, int num1[], int num2[3]=0);
  
 // function prototypes
  
@@ -256,6 +256,9 @@ int CommunicationTransferParticles(grid *GridPointer[], int NumberOfGrids)
 	  Usize = sizeof(float_int);
 	  Xsize = TransferSize;
 
+	  CommunicationGridID[0] = i;
+	  CommunicationGridID[1] = j;
+
           // fprintf(stderr, "sizeof SendCount %"ISYM"\n", sizeof(SendCount));
           // fprintf(stderr, "sizeof MPI_Arg %"ISYM"\n", sizeof(MPI_Arg));
  
@@ -265,7 +268,7 @@ int CommunicationTransferParticles(grid *GridPointer[], int NumberOfGrids)
 	    SendCount = Usize * Xsize;
             Dest = ToProcessor;
 	    Here = MyProcessorNumber;
-	    Tag = Return_MPI_Tag(MPI_TRANSFERPARTICLE_TAG, SendCount, Dest);
+	    Tag = Return_MPI_Tag(MPI_TRANSFERPARTICLE_TAG, CommunicationGridID);
 
 	    if( SendCount > 0 ) {
 	    // fprintf(stderr, "P%"ISYM" Sending %"ISYM" bytes to %"ISYM" [%"ISYM" x %"ISYM"]\n", Here, SendCount, Dest, Usize, Xsize); 
@@ -284,7 +287,7 @@ int CommunicationTransferParticles(grid *GridPointer[], int NumberOfGrids)
 	    RecvCount = Xsize*Usize;
             Source = FromProcessor;
 	    Here = MyProcessorNumber;
-	    Tag = Return_MPI_Tag(MPI_TRANSFERPARTICLE_TAG, RecvCount, Source);
+	    Tag = Return_MPI_Tag(MPI_TRANSFERPARTICLE_TAG, CommunicationGridID);
 
 	    // fprintf(stderr, "P%"ISYM" Post receive %"ISYM" bytes from %"ISYM" [%"ISYM" x %"ISYM"]\n", Here, RecvCount, Source, Usize, Xsize);
 	    stat = MPI_Recv(SharedList[j].Pointer[i], RecvCount, DataTypeByte, 

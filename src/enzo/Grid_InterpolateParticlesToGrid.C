@@ -36,7 +36,7 @@
 #include "FOF_nrutil.h"
 #include "FOF_proto.h"
 
-MPI_Arg Return_MPI_Tag(int tag, int num1, int num2);
+MPI_Arg Return_MPI_Tag(int tag, int num1[], int num2[3]=0);
 int FindField(int field, int farray[], int numfields);
 int GetUnits(float *DensityUnits, float *LengthUnits,
 	     float *TemperatureUnits, float *TimeUnits,
@@ -130,7 +130,10 @@ int grid::InterpolateParticlesToGrid(FOFData *D)
 	  {
 
 	  buffer = new float[size];
-	  Tag = Return_MPI_Tag(MPI_SENDPARTFIELD_TAG*field, Count, Source);
+	  CommunicationGridID[0] = this->ID;
+	  CommunicationGridID[1] = 0;
+	  Tag = Return_MPI_Tag(MPI_SENDPARTFIELD_TAG+field, 
+			       CommunicationGridID);
 	  MPI_Irecv(buffer, Count, DataType, Source, Tag, MPI_COMM_WORLD,
 		    CommunicationReceiveMPI_Request+CommunicationReceiveIndex);
 
@@ -305,9 +308,13 @@ int grid::InterpolateParticlesToGrid(FOFData *D)
 
       for (field = 0; field < NumberOfFields; field++) {
 #pragma omp critical
-	CommunicationBufferedSend(InterpolatedField[field], size, DataType,
-				  ProcessorNumber, field*MPI_SENDPARTFIELD_TAG, 
-				  MPI_COMM_WORLD, size * sizeof(float));
+	{
+	  CommunicationGridID[0] = this->ID;
+	  CommunicationGridID[1] = 0;
+	  CommunicationBufferedSend(InterpolatedField[field], size, DataType,
+				    ProcessorNumber, MPI_SENDPARTFIELD_TAG+field, 
+				    MPI_COMM_WORLD, size * sizeof(float));
+	}
 	delete [] InterpolatedField[field];
 	InterpolatedField[field] = NULL;
       } // ENDFOR field

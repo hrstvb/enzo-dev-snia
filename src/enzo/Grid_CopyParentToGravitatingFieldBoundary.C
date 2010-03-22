@@ -103,7 +103,7 @@ int grid::CopyParentToGravitatingFieldBoundary(grid *ParentGrid)
 
   /* If posting a receive, then record details of call. */
 
-#ifdef USE_MPI
+#ifdef UNUSED // Done in CommunicationSendRegion
   if (CommunicationDirection == COMMUNICATION_POST_RECEIVE) {
     CommunicationReceiveGridOne[CommunicationReceiveIndex]  = this;
     CommunicationReceiveGridTwo[CommunicationReceiveIndex]  = ParentGrid;

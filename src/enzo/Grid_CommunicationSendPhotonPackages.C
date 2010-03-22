@@ -1,4 +1,4 @@
-#define DEBUG 1
+#define DEBUG 0
 /***********************************************************************
 /
 /  GRID CLASS (SEND PHOTONS FROM REAL GRID TO 'FAKE' (REPLICATED) GRID)
@@ -30,7 +30,7 @@
 #include "communication.h"
 #include "CommunicationUtilities.h"
 
-MPI_Arg Return_MPI_Tag(int tag, int num1, int num2);
+MPI_Arg Return_MPI_Tag(int tag, int num1[], int num2[3]=0);
 #ifdef USE_MPI
 int CommunicationBufferedSend(void *buffer, int size, MPI_Datatype Type, 
                               int Target, int Tag, MPI_Comm CommWorld, 
@@ -184,6 +184,11 @@ int grid::CommunicationSendPhotonPackages(grid *ToGrid, int ToProcessor,
 #pragma omp critical
     {
 
+    if (CommunicationDirection != COMMUNICATION_RECEIVE) {
+      CommunicationGridID[0] = ToGrid->ID;
+      CommunicationGridID[1] = this->ID;
+    }
+
     if (MyProcessorNumber == ProcessorNumber) {
       if (DEBUG)
 	printf("PhotonSend(P%"ISYM"): Sending %"ISYM" photons to processor %"ISYM".\n",
@@ -198,7 +203,7 @@ int grid::CommunicationSendPhotonPackages(grid *ToGrid, int ToProcessor,
 	printf("PhotonSend(P%"ISYM"): Receiving %"ISYM" photons from processor %"ISYM".\n",
 	       MyProcessorNumber, FromNumber, ProcessorNumber);
 
-      Tag = Return_MPI_Tag(MPI_PHOTON_TAG, Count, Source);
+      Tag = Return_MPI_Tag(MPI_PHOTON_TAG, CommunicationGridID);
 
       if (CommunicationDirection == COMMUNICATION_POST_RECEIVE) {
 	MPI_Irecv(buffer, Count, PhotonBufferType, Source, Tag,

@@ -31,7 +31,7 @@
 int CommunicationBufferedSend(void *buffer, int size, MPI_Datatype Type, int Target,
 			      int Tag, MPI_Comm CommWorld, int BufferSize);
 #endif /* USE_MPI */
-int Return_MPI_Tag(int tag, int num1, int num2);
+MPI_Arg Return_MPI_Tag(int tag, int num1[], int num2[3]=0);
 
 /* The following is defined in Grid_DepositParticlePositions.C. */
  
@@ -158,9 +158,13 @@ int grid::SetParticleMassFlaggingField(int StartProc, int EndProc, int level,
 //      printf("----> SetPMFlag[P%"ISYM"/%"ISYM"]: sending %"ISYM" floats.\n",
 //	     MyProcessorNumber, ProcessorNumber, size);
 #pragma omp critical
-      CommunicationBufferedSend(ParticleMassFlaggingField, size, DataType,
-				ProcessorNumber, MPI_SENDPMFLAG_TAG, 
-				MPI_COMM_WORLD, size*sizeof(float));
+      {
+	CommunicationGridID[0] = this->ID;
+	CommunicationGridID[1] = 0;
+	CommunicationBufferedSend(ParticleMassFlaggingField, size, DataType,
+				  ProcessorNumber, MPI_SENDPMFLAG_TAG, 
+				  MPI_COMM_WORLD, size*sizeof(float));
+      }
       delete [] ParticleMassFlaggingField;
       ParticleMassFlaggingField = NULL;
     }
@@ -187,6 +191,9 @@ int grid::SetParticleMassFlaggingField(int StartProc, int EndProc, int level,
 
   if (CommunicationDirection == COMMUNICATION_POST_RECEIVE) {
 
+    CommunicationGridID[0] = this->ID;
+    CommunicationGridID[1] = 0;
+
     /* Post receive requests */
 
     Count = size;
@@ -198,7 +205,7 @@ int grid::SetParticleMassFlaggingField(int StartProc, int EndProc, int level,
 
       if (Source >= StartProc && Source < EndProc) {
 	buffer = new float[size];
-	Tag = Return_MPI_Tag(MPI_SENDPMFLAG_TAG, Count, Source);
+	Tag = Return_MPI_Tag(MPI_SENDPMFLAG_TAG, CommunicationGridID);
 	MPI_Irecv(buffer, Count, DataType, Source, Tag, MPI_COMM_WORLD, 
 		  CommunicationReceiveMPI_Request+CommunicationReceiveIndex);
 
