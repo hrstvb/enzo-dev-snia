@@ -314,6 +314,8 @@ int grid::DepositParticlePositions(grid *TargetGrid, FLOAT DepositTime,
     if (CommunicationDirection != COMMUNICATION_RECEIVE) {
       CommunicationGridID[0] = TargetGrid->ID;
       CommunicationGridID[1] = this->ID;
+      for (dim = 0; dim < MAX_DIMENSION; dim++)
+	CommunicationTags[dim] = Offset[dim];
     }
 
     MPI_Status status;
@@ -332,14 +334,16 @@ int grid::DepositParticlePositions(grid *TargetGrid, FLOAT DepositTime,
 
     if (MyProcessorNumber == TargetGrid->ProcessorNumber &&
 	CommunicationDirection == COMMUNICATION_SEND_RECEIVE) {
-      Tag = Return_MPI_Tag(MPI_SENDREGION_TAG, CommunicationGridID);
+      Tag = Return_MPI_Tag(MPI_SENDREGION_TAG, CommunicationGridID,
+			   CommunicationTags);
       MPI_Recv(DepositFieldPointer, Count, DataType, Source, 
 	       Tag, MPI_COMM_WORLD, &status);
     }
 
     if (MyProcessorNumber == TargetGrid->ProcessorNumber &&
 	CommunicationDirection == COMMUNICATION_POST_RECEIVE) {
-      Tag = Return_MPI_Tag(MPI_SENDREGION_TAG, CommunicationGridID);
+      Tag = Return_MPI_Tag(MPI_SENDREGION_TAG, CommunicationGridID,
+			   CommunicationTags);
       MPI_Irecv(DepositFieldPointer, Count, DataType, Source, 
 	        Tag, MPI_COMM_WORLD, 
 	        CommunicationReceiveMPI_Request+CommunicationReceiveIndex);

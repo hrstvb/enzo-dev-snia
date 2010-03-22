@@ -436,8 +436,11 @@ int RebuildHierarchy(TopGridData *MetaData,
 	    RemoveForcingFromBaryonFields();
         }
 
+	SubgridHierarchyPointer[j]->GridData->SetGridID(j);
+
 	SubgridHierarchyPointer[j]->GridData->DebugCheck("Rebuild child");
       }
+
       tt1 = ReturnWallTime();
       RHperf[8] += tt1-tt0;
  
@@ -478,11 +481,6 @@ int RebuildHierarchy(TopGridData *MetaData,
  
       FastSiblingLocatorFinalize(&ChainingMesh);
 
-      /* set grid IDs */
-
-      for (Temp = LevelArray[i+1], j = 0; Temp; Temp = Temp->NextGridThisLevel, j++)
-	Temp->GridData->SetGridID(j);
- 
       tt0 = ReturnWallTime();
       /* Redistribute grids over processors to Load balance. */
       switch( LoadBalancing ){

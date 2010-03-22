@@ -67,7 +67,7 @@ int CopyZonesFromOldGrids(LevelHierarchyEntry *OldGrids,
 
   /* Find sibling grids for all subgrids */
 
-#pragma omp parallel for schedule(static)
+//#pragma omp parallel for schedule(static)
   for (grid1 = 0; grid1 < NumberOfGrids; grid1++)
     GridList[grid1]->GridData->FastSiblingLocatorFindSiblings
       (&ChainingMesh, &SiblingList[grid1],

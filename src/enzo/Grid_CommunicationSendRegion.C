@@ -178,6 +178,7 @@ int grid::CommunicationSendRegion(grid *ToGrid, int ToProcessor,int SendField,
       CommunicationGridID[1] = grid_two->ID;
       for (dim = 0; dim < MAX_DIMENSION; dim++)
 	CommunicationTags[dim] = RegionStart[dim];
+      CommunicationTags[0] += TransferSize;
     }
 
       /* Record details of the receive call */
