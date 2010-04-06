@@ -52,6 +52,7 @@
 #define CYCLE_TAG_FORMAT       "4.4"
 #define MAX_COUNTERS              40
 
+#define MEMORY_POOL_SIZE  __memory_pool_size
 
 #define DEFAULT_GHOST_ZONES                 3  /* at least 3 */
 
@@ -62,6 +63,8 @@
 #define MAX_FLAGGING_METHODS                9
 
 #define MAX_STATIC_REGIONS               1000
+
+#define MAX_REFINE_REGIONS               150
 
 #ifdef WINDS 
 #define MAX_NUMBER_OF_PARTICLE_ATTRIBUTES  6
@@ -185,6 +188,7 @@ typedef int            HDF5_hid_t;
 #define nlongint(A) ( (long_int) ((A) + 0.5*sign(A)) )
 #define ABS(A) abs((int) (A))
 #define ENPY_INT NPY_INT
+#define enpy_int npy_int
 #endif
 
 #ifdef LARGE_INTS
@@ -199,9 +203,11 @@ typedef int            HDF5_hid_t;
 #define nlongint(A) ( (long_int) ((A) + 0.5*sign(A)) )
 #define ABS(A) labs((long_int) (A))
 #define ENPY_INT NPY_LONG
+#define enpy_int npy_long
 #endif
 
 #ifdef CONFIG_BFLOAT_4
+#define BFLOAT_EPSILON 1e-6f
 #define Eflt float
 #define FSYM "f"
 #define ESYM "e"
@@ -215,10 +221,12 @@ typedef int            HDF5_hid_t;
 #endif
 #ifdef USE_PYTHON
 #define ENPY_BFLOAT NPY_FLOAT
+#define enpy_bfloat npy_float
 #endif
 #endif
 
 #ifdef CONFIG_BFLOAT_8
+#define BFLOAT_EPSILON 1e-12f
 #define Eflt double
 #define FSYM "lf"
 #define ESYM "le"
@@ -226,19 +234,15 @@ typedef int            HDF5_hid_t;
 #define float32 TEMP_HOLD_NAME
 #define float double
 #define TEMP_HOLD_NAME float32
-#ifdef COMPACT_IO
 #define HDF5_REAL HDF5_R8
-#define HDF5_FILE_REAL HDF5_FILE_R4
-#else
-#define HDF5_REAL HDF5_R8
-#define HDF5_FILE_REAL HDF5_FILE_R8
-#endif
 #ifdef USE_PYTHON
 #define ENPY_BFLOAT NPY_DOUBLE
+#define enpy_bfloat npy_double
 #endif
 #endif
 
 #ifdef CONFIG_PFLOAT_4
+#define PFLOAT_EPSILON 1e-6f
 #define FLOAT Eflt32
 #define PEXP expf
 #define PSYM "f"
@@ -247,13 +251,15 @@ typedef int            HDF5_hid_t;
 #define MY_MPIFLOAT MPI_FLOAT
 #define FLOATDataType MPI_FLOAT
 #define HDF5_PREC HDF5_R4
-#define HDF5_FILE_PREC HDF5_FILE_R4
+#define HDF5_FILE_PREC HDF5_R4
 #ifdef USE_PYTHON
 #define ENPY_PFLOAT NPY_FLOAT
+#define enpy_pfloat npy_float
 #endif
 #endif
 
 #ifdef CONFIG_PFLOAT_8
+#define PFLOAT_EPSILON 1e-12f
 #define FLOAT double
 #define PEXP exp
 #define PSYM "lf"
@@ -265,10 +271,12 @@ typedef int            HDF5_hid_t;
 #define HDF5_FILE_PREC HDF5_R8
 #ifdef USE_PYTHON
 #define ENPY_PFLOAT NPY_DOUBLE
+#define enpy_pfloat npy_double
 #endif
 #endif
 
 #ifdef CONFIG_PFLOAT_16
+#define PFLOAT_EPSILON 1e-16f
 #define FLOAT long_double
 #define PEXP expl
 #define PSYM "Lf"
@@ -280,9 +288,30 @@ typedef int            HDF5_hid_t;
 #define HDF5_FILE_PREC HDF5_R16
 #ifdef USE_PYTHON
 #define ENPY_PFLOAT NPY_LONGDOUBLE
+#define enpy_pfloat npy_longdouble
 #endif
 #endif
 
+/* Definitions for controlling the integer type for particle IDs
+   (8-byte needed for >2 billion particle simulations) */
+
+#ifdef CONFIG_PINT_4
+#define PINT Eint32
+#define PINTDataType MPI_INT
+#define HDF5_PINT HDF5_I4
+#define HDF5_FILE_PINT HDF5_FILE_I4
+#define PISYM "d"
+#define ENPY_PINT NPY_INT
+#endif
+
+#ifdef CONFIG_PINT_8
+#define PINT Eint64
+#define PINTDataType MPI_LONG_LONG_INT
+#define HDF5_PINT HDF5_I8
+#define HDF5_FILE_PINT HDF5_FILE_I8
+#define PISYM "lld"
+#define ENPY_PINT NPY_LONG
+#endif
 
 /* Standard definitions (well, fairly standard) */
 
@@ -418,8 +447,9 @@ typedef int            HDF5_hid_t;
 
 /* Particle types (note: gas is a conceptual type) */
 
-#define NUM_PARTICLE_TYPES 9
+#define NUM_PARTICLE_TYPES 10
 
+#define PARTICLE_TYPE_RESET       -1
 #define PARTICLE_TYPE_GAS          0
 #define PARTICLE_TYPE_DARK_MATTER  1
 #define PARTICLE_TYPE_STAR         2
@@ -448,7 +478,7 @@ typedef int            HDF5_hid_t;
 
 /* Feedback modes */
 
-#define TO_DELETE -99999
+#define TO_DELETE -99999  // TO_DELETE is for "type", not for "FeedbackFlag"
 #define NO_FEEDBACK 0
 #define ACCRETION 1
 #define SUPERNOVA 2
@@ -457,7 +487,7 @@ typedef int            HDF5_hid_t;
 #define STROEMGREN 5
 #define DEATH 6
 #define MBH_THERMAL 7
-#define MBH_RADIATIVE 8
+#define MBH_JETS 8
 #define COLOR_FIELD 9
 
 /* Sink particle accretion modes */

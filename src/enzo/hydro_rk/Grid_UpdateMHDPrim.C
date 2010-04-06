@@ -64,12 +64,26 @@ int grid::UpdateMHDPrim(float **dU, float c1, float c2)
 
   float *Prim[NEQ_MHD+NSpecies+NColor];
   float *OldPrim[NEQ_MHD+NSpecies+NColor];
-  this->ReturnHydroRKPointers(Prim, false);
+  this->ReturnHydroRKPointers(Prim, false);   
   this->ReturnOldHydroRKPointers(OldPrim, false);
 
-  // update species and colours
+  //##### Want to mix species and colors for renormalization?  Normally you don't
+  int MixSpeciesAndColors = 0;
+  int NSpecies_renorm;
 
-  for (field = NEQ_MHD; field < NEQ_MHD+NSpecies+NColor; field++) {
+  if (MixSpeciesAndColors) 
+    NSpecies_renorm = NSpecies+NColor;
+  else
+    switch (MultiSpecies) {
+    case 0:  NSpecies_renorm = 0;  break;
+    case 1:  NSpecies_renorm = 5;  break;
+    case 2:  NSpecies_renorm = 8;  break;
+    case 3:  NSpecies_renorm = 11; break;
+    default: NSpecies_renorm = 0;  break;
+    }
+  
+  // update species
+  for (field = NEQ_MHD; field < NEQ_MHD+NSpecies_renorm; field++) {  
     n = 0;
     for (k = GridStartIndex[2]; k <= GridEndIndex[2]; k++) {
       for (j = GridStartIndex[1]; j <= GridEndIndex[1]; j++) {
@@ -83,9 +97,9 @@ int grid::UpdateMHDPrim(float **dU, float c1, float c2)
     }
   }
 
-  // renormalize species and colours
+  // renormalize species 
 
-  for (field = NEQ_MHD; field < NEQ_MHD+NSpecies+NColor; field++) {
+  for (field = NEQ_MHD; field < NEQ_MHD+NSpecies_renorm; field++) {
     n = 0;
     for (k = GridStartIndex[2]; k <= GridEndIndex[2]; k++) {
       for (j = GridStartIndex[1]; j <= GridEndIndex[1]; j++) {
@@ -99,7 +113,7 @@ int grid::UpdateMHDPrim(float **dU, float c1, float c2)
     }
   }
 
-  for (field = NEQ_MHD; field < NEQ_MHD+NSpecies+NColor; field++) {
+  for (field = NEQ_MHD; field < NEQ_MHD+NSpecies_renorm; field++) {
     n = 0;
     for (k = GridStartIndex[2]; k <= GridEndIndex[2]; k++) {
       for (j = GridStartIndex[1]; j <= GridEndIndex[1]; j++) {
@@ -255,12 +269,11 @@ int grid::UpdateMHDPrim(float **dU, float c1, float c2)
       }
     }
   }
-  
-  /* Convert species from mass fraction to density */ 
 
-  for (field = NEQ_MHD; field < NEQ_MHD+NSpecies+NColor; field++)
-    for (n = 0; n < size; n++)
-      Prim[field][n] *= BaryonField[DensNum][n];
+  // Convert species from mass fraction to density  
+  for (field = NEQ_MHD; field < NEQ_MHD+NSpecies+NColor; field++)  
+    for (n = 0; n < size; n++) 
+      Prim[field][n] *= Prim[iden][n];
 
   this->UpdateElectronDensity();
 
@@ -268,7 +281,6 @@ int grid::UpdateMHDPrim(float **dU, float c1, float c2)
     delete [] D;
     delete [] sum;
   }
-
   
   return SUCCESS;
 }

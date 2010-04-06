@@ -65,7 +65,6 @@ int  ReportMemoryUsage(char *header = NULL);
 int  UpdateParticlePositions(grid *Grid);
 int  CheckEnergyConservation(HierarchyEntry *Grids[], int grid, 
 			     int NumberOfGrids, int level, float dt);
-int CommunicationMergeStarParticle(HierarchyEntry *Grids[], int NumberOfGrids);
 #ifdef USE_MPI
 int CommunicationReduceValues(float *Values, int Number, MPI_Op ReduceOperation);
 #endif
@@ -133,10 +132,16 @@ int UpdateFromFinerGrids(int level, HierarchyEntry *Grids[], int NumberOfGrids,
 #endif
 
 #ifdef FLUX_FIX
+#ifdef FAST_SIB 
 int CreateSUBlingList(TopGridData *MetaData,
-		      HierarchyEntry *Grids[],
-		      int NumberOfGrids,
+		      LevelHierarchyEntry *LevelArray[], int level,
+		      SiblingGridList SiblingList[],
 		      LevelHierarchyEntry ***SUBlingList);
+#else
+int CreateSUBlingList(TopGridData *MetaData,
+		      LevelHierarchyEntry *LevelArray[], int level,
+		      LevelHierarchyEntry ***SUBlingList);
+#endif /* FAST_SIB */
 int DeleteSUBlingList(int NumberOfGrids,
 		      LevelHierarchyEntry **SUBlingList);
 #endif
@@ -263,7 +268,7 @@ int EvolveLevel_RK2(TopGridData *MetaData, LevelHierarchyEntry *LevelArray[],
   /* Count the number of colours in the first grid (to define NColor) */
 
   Grids[0]->GridData->SetNumberOfColours();
-  //fprintf(stdout, "EvolveLevel_RK2: NColor =%d, NSpecies = %d\n", NColor, NSpecies);
+  //  fprintf(stdout, "EvolveLevel_RK2: NColor = %d, NSpecies = %d\n", NColor, NSpecies); 
 
   /* Clear the boundary fluxes for all Grids (this will be accumulated over
      the subcycles below (i.e. during one current grid step) and used to by the
@@ -421,7 +426,7 @@ int EvolveLevel_RK2(TopGridData *MetaData, LevelHierarchyEntry *LevelArray[],
       Grids[grid1]->GridData->AddRadiationPressureAcceleration();
 #endif /* TRANSFER */
 
-      Grids[grid1]->GridData->CopyBaryonFieldToOldBaryonField();
+      Grids[grid1]->GridData->CopyBaryonFieldToOldBaryonField();  
 
       if (UseHydro) 
 	if (HydroMethod == HD_RK)
@@ -435,12 +440,11 @@ int EvolveLevel_RK2(TopGridData *MetaData, LevelHierarchyEntry *LevelArray[],
       Grids[grid1]->GridData->SetTimeNextTimestep();
       
     }  // end loop over grids
-      
 
 #ifdef FAST_SIB
-    SetBoundaryConditions(Grids, NumberOfGrids, SiblingList, level, MetaData, Exterior, LevelArray[level]);
+      SetBoundaryConditions(Grids, NumberOfGrids, SiblingList, level, MetaData, Exterior, LevelArray[level]);
 #else
-    SetBoundaryConditions(Grids, NumberOfGrids, level, MetaData, Exterior, LevelArray[level]);
+      SetBoundaryConditions(Grids, NumberOfGrids, level, MetaData, Exterior, LevelArray[level]);
 #endif
 
     // Recompute potential and accelerations with time centered baryon Field
@@ -448,7 +452,7 @@ int EvolveLevel_RK2(TopGridData *MetaData, LevelHierarchyEntry *LevelArray[],
 
     RK2SecondStepBaryonDeposit = 0; // set this to (0/1) to (not use/use) this extra step
     //    printf("SECOND STEP\n");
-    if (RK2SecondStepBaryonDeposit & SelfGravity && UseHydro) {
+    if (RK2SecondStepBaryonDeposit && SelfGravity && UseHydro) {  
       When = 0.5;
 #ifdef FAST_SIB
       PrepareDensityField(LevelArray, SiblingList, level, MetaData, When);
@@ -488,16 +492,19 @@ int EvolveLevel_RK2(TopGridData *MetaData, LevelHierarchyEntry *LevelArray[],
 	
 	  time1 = ReturnWallTime();
 	  
-	  Grids[grid1]->GridData->PoissonSolver(level);
+	 
 	
 	} // ENDIF MHD_RK
       } // ENDIF UseHydro
 
       /* Add viscosity */
 
-      if (UseViscosity) 
+      if (UseViscosity) {
 	Grids[grid1]->GridData->AddViscosity();
-    printf("VISC: %f\n", ViscosityCoefficient);
+
+      }
+
+
       /* Solve the cooling and species rate equations. */
  
       Grids[grid1]->GridData->MultiSpeciesHandler();
@@ -517,6 +524,8 @@ int EvolveLevel_RK2(TopGridData *MetaData, LevelHierarchyEntry *LevelArray[],
 	     MaximumGravityRefinementLevel == MaximumRefinementLevel)
 	     Grids[grid1]->GridData->DeleteAccelerationField();
 
+
+
       Grids[grid1]->GridData->DeleteParticleAcceleration();
  
       if (UseFloor) 
@@ -529,21 +538,32 @@ int EvolveLevel_RK2(TopGridData *MetaData, LevelHierarchyEntry *LevelArray[],
 
     }  // end loop over grids
 
+    if (UseDivergenceCleaning != 0){
 
 #ifdef FAST_SIB
-    SetBoundaryConditions(Grids, NumberOfGrids, SiblingList, level, 
-			  MetaData, Exterior, LevelArray[level]);
+      SetBoundaryConditions(Grids, NumberOfGrids, SiblingList, level, MetaData, Exterior, LevelArray[level]);
 #else
-    SetBoundaryConditions(Grids, NumberOfGrids, level, MetaData, 
-			  Exterior, LevelArray[level]);
+      SetBoundaryConditions(Grids, NumberOfGrids, level, MetaData, Exterior, LevelArray[level]);
 #endif
+      
+      for (grid1 = 0; grid1 < NumberOfGrids; grid1++) {
 
-
+	Grids[grid1]->GridData->PoissonSolver(level);
+      }
+      
+    }
+    
+#ifdef FAST_SIB
+    SetBoundaryConditions(Grids, NumberOfGrids, SiblingList, level, MetaData, Exterior, LevelArray[level]);
+#else
+    SetBoundaryConditions(Grids, NumberOfGrids, level, MetaData, Exterior, LevelArray[level]);
+#endif
 
     /* Finalize (accretion, feedback, etc.) star particles */
  
     StarParticleFinalize(Grids, MetaData, NumberOfGrids, LevelArray,
 			 level, AllStars, TotalStarParticleCountPrevious);
+
 
     OutputFromEvolveLevel(LevelArray,MetaData,level,Exterior);
     CallPython(LevelArray, MetaData, level);
@@ -584,7 +604,7 @@ int EvolveLevel_RK2(TopGridData *MetaData, LevelHierarchyEntry *LevelArray[],
 
     if (LevelArray[level+1] == NULL) {
       MetaData->SubcycleNumber++;
-      MetaData->TimestepCounter++;
+      MetaData->MovieTimestepCounter++;
     }
 
     /* ------------------------------------------------------- */
@@ -596,7 +616,12 @@ int EvolveLevel_RK2(TopGridData *MetaData, LevelHierarchyEntry *LevelArray[],
 
 #ifdef FLUX_FIX
     SUBlingList = new LevelHierarchyEntry*[NumberOfGrids];
-    CreateSUBlingList(MetaData, Grids,NumberOfGrids, &SUBlingList);
+#ifdef FAST_SIB
+    CreateSUBlingList(MetaData, LevelArray, level, SiblingList,
+		      &SUBlingList);
+#else
+    CreateSUBlingList(MetaData, LevelArray, level, &SUBlingList);
+#endif /* FAST_SIB */
 #endif
 
 #ifdef FLUX_FIX
@@ -651,7 +676,6 @@ int EvolveLevel_RK2(TopGridData *MetaData, LevelHierarchyEntry *LevelArray[],
     LevelCycleCount[level]++;
 
   } // while (dtThisLevelSoFar < dtLevelAbove)
-
 
   if (debug)
     printf("EvolveLevelRK2[%d]: NumberOfSubCycles = %d (%d total)\n", level, 

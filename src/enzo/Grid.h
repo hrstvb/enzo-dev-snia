@@ -13,14 +13,15 @@
 #ifndef GRID_DEFINED__
 #define GRID_DEFINED__
 
-
 #include "ProtoSubgrid.h"
 #include "ListOfParticles.h"
 #include "region.h"
 #include "FastSiblingLocator.h"
+#include "StarParticleData.h"
 #include "AMRH5writer.h"
 #include "Star.h"
 #include "FOF_allvars.h"
+#include "MemoryPool.h"
 
 #ifdef FLUX_FIX
 #include "TopGridData.h"
@@ -40,6 +41,15 @@ struct HierarchyEntry;
 #endif /* TRANSFER */
 
 //extern int CommunicationDirection;
+
+//struct ParticleEntry {
+//  FLOAT Position[3];
+//  float Mass;
+//  float Velocity[3];
+//  float Attribute[MAX_NUMBER_OF_PARTICLE_ATTRIBUTES];
+//  int Number;
+// int Type;
+//};
 
 extern int CommunicationDirection;
 int FindField(int f, int farray[], int n);
@@ -98,7 +108,7 @@ class grid
   float *ParticleVelocity[MAX_DIMENSION];  // pointers to velocity arrays
   float *ParticleAcceleration[MAX_DIMENSION+1];  // 
   float *ParticleMass;                     // pointer to mass array
-  int   *ParticleNumber;                   // unique identifier
+  PINT  *ParticleNumber;                   // unique identifier
   int   *ParticleType;                     // type of particle
   float *ParticleAttribute[MAX_NUMBER_OF_PARTICLE_ATTRIBUTES];
 //
@@ -193,6 +203,9 @@ class grid
    EnzoArrayFLOAT *CreateFieldArrayFLOAT(field_type field);
    EnzoArrayFLOAT *CreateFieldArrayFLOAT(char *field_name);
 
+   EnzoArrayPINT *CreateFieldArrayPINT(field_type field);
+   EnzoArrayPINT *CreateFieldArrayPINT(char *field_name);
+
 /* Write unigrid cubes to a file (returns: success/failure) */
 
    int WriteCube(char *base_name, int grid_id, int TGdims[]);
@@ -257,6 +270,10 @@ class grid
    int Group_WriteGridInterpolate(FLOAT WriteTime, FILE *main_file_pointer,
                             char *base_name, int grid_id, HDF5_hid_t file_id);
 
+   int ComputeVectorAnalysisFields(field_type fx, field_type fy, field_type fz,
+                                   float *curl_x, float *curl_y, float *curl_z,
+                                   float *div);
+
 private:
    int write_dataset(int ndims, hsize_t *dims, char *name, hid_t group, 
        hid_t data_type, void *data, int active_only = TRUE,
@@ -264,6 +281,7 @@ private:
    int read_dataset(int ndims, hsize_t *dims, char *name, hid_t group,
        hid_t data_type, void *read_to, int copy_back_active=FALSE,
        float *copy_to=NULL, int *active_dims=NULL);
+   int ReadExtraFields(hid_t group_id);
 public:
 
 /* Compute the timestep constraint for this grid
@@ -553,7 +571,7 @@ public:
 			 int RootResolution, FLOAT StopTime, 
 			 AMRHDF5Writer &AmiraGrid,
 			 int lastMovieStep, int TopGridCycle, 
-			 int WriteMe, int TimestepCounter, int open, 
+			 int WriteMe, int MovieTimestepCounter, int open, 
 			 FLOAT WriteTime);
 
    int ReturnMovieTimestep() { return TimestepsSinceCreation; };
@@ -569,6 +587,10 @@ public:
 /* Handle the selection of cooling and chemistry modules */
 
    int MultiSpeciesHandler();
+
+/* Handle the selection of shock finding algorithm */
+
+   int ShocksHandler();
 
 /* Solve the radiative cooling/heating equations  */
 
@@ -645,6 +667,13 @@ public:
 
    float GadgetCoolingRateFromU(float u, float rho, float *ne_guess, 
 				float redshift);
+
+// Functions for shock finding and cosmic ray acceleration
+//
+   int FindShocks();
+   int FindTempSplitShocks();
+   int FindVelShocks();
+   int FindVelSplitShocks();
 
 // -------------------------------------------------------------------------
 // Functions for grid (re)generation.
@@ -727,6 +756,10 @@ public:
      (gg #4) */
 
    int FlagCellsToBeRefinedByShocks();
+
+/* Flag all points based on the Mach number of the shock. */
+
+   int FlagCellsToBeRefinedByShockwaves(int level);
 
 /* Flag all points that require refining by the Jean's length criterion. */
 
@@ -885,6 +918,10 @@ public:
 	 BaryonField[0][i]*BaryonField[0][i];
      FieldType[NumberOfBaryonFields++] = Density;
    };
+
+   void PrintBaryonFieldValues(int field, int index)
+     {fprintf(stdout, "Baryonfield[field = %d][index = %d] = %g\n", 
+	      field, index, BaryonField[field][index]);};
 
 // -------------------------------------------------------------------------
 // Functions for use with gravity.
@@ -1064,7 +1101,7 @@ public:
 
    int MoveSubgridParticles(grid *TargetGrid,
                             int *Counter,
-                            int *Number,
+                            PINT *Number,
                             int *Type,
                             float *Mass,
                             FLOAT *Position[],
@@ -1103,13 +1140,7 @@ public:
 
    int ReturnNumberOfParticles() {return NumberOfParticles;};
 
-   int ReturnNumberOfStarParticles() {
-     int np = 0;
-     if (MyProcessorNumber == ProcessorNumber)
-       for (int n = 0; n < NumberOfParticles; n++) 
-	 if (ParticleType[n] == PARTICLE_TYPE_STAR) np++;
-     return np;
-   };
+   int ReturnNumberOfStarParticles(void);
 
 /* Particles: set number of particles. */
 
@@ -1140,7 +1171,7 @@ public:
 
    void AllocateNewParticles(int NumberOfNewParticles) {
      ParticleMass = new float[NumberOfNewParticles];
-     ParticleNumber = new int[NumberOfNewParticles];
+     ParticleNumber = new PINT[NumberOfNewParticles];
      ParticleType = new int[NumberOfNewParticles];
      for (int dim = 0; dim < GridRank; dim++) {
        ParticlePosition[dim] = new FLOAT[NumberOfNewParticles];
@@ -1152,7 +1183,7 @@ public:
 
 /* Particles: Copy pointers passed into into grid. */
 
-   void SetParticlePointers(float *Mass, int *Number, int *Type,
+   void SetParticlePointers(float *Mass, PINT *Number, int *Type,
                             FLOAT *Position[], 
 			    float *Velocity[], float *Attribute[]) {
     ParticleMass   = Mass;
@@ -1168,15 +1199,7 @@ public:
 
 /* Particles: Set new star particle index. */
 
-   void SetNewParticleIndex(int &NumberCount1, int &NumberCount2) {
-     for (int n = 0; n < NumberOfParticles; n++) 
-       if (ParticleNumber[n] == INT_UNDEFINED) {
-	 if (ParticleType[n] == PARTICLE_TYPE_STAR) 
-	   ParticleNumber[n] = NumberCount1++ + NumberCount2;
-	 else 
-	   ParticleNumber[n] = NumberCount1 + NumberCount2++;
-       }
-   };
+   void SetNewParticleIndex(int &NumberCount1, PINT &NumberCount2);
 
 /* Particles: Set new star particle index. - Old version */
 
@@ -1188,7 +1211,7 @@ public:
 
 /* Particles: Add given number to particle index. */
 
-   void AddToParticleNumber(int *Count) {
+   void AddToParticleNumber(PINT *Count) {
      if (MyProcessorNumber == ProcessorNumber)
        for (int n = 0; n < NumberOfParticles; n++)
 	 ParticleNumber[n] += *Count;
@@ -1215,6 +1238,19 @@ public:
      return PARTICLE_TYPE_DARK_MATTER;
    }
 
+/* Particles: return particle information in structure array */
+
+   int ReturnParticleEntry(ParticleEntry *ParticleList);
+
+/* Particles: set mass of merged particles to be -1 */
+
+   void RemoveMergedParticles(ParticleEntry *List, const int &Size, int *Flag);
+
+/* Particles: append particles belonging to this grid from a list */
+
+   int AddParticlesFromList(ParticleEntry *List, const int &Size, int *AddedNewParticleNumber);
+   int CheckGridBoundaries(FLOAT *Position);
+
 /* Particles: sort particle data in ascending order by number (id) or type. */
 
 void SortParticlesByNumber();
@@ -1224,6 +1260,9 @@ int CreateParticleTypeGrouping(hid_t ptype_dset,
                                hid_t ptype_dspace,
                                hid_t parent_group,
                                hid_t file_id);
+
+ int ChangeParticleTypeBeforeSN(int _type, int level, 
+				int *ParticleBufferSize=NULL);
 
 // -------------------------------------------------------------------------
 // Communication functions
@@ -1389,8 +1428,10 @@ int CreateParticleTypeGrouping(hid_t ptype_dset,
 			    int &HMNum, int &H2INum, int &H2IINum,
                             int &DINum, int &DIINum, int &HDINum);
 
+/* Identify shock/cosmic ray fields. */
+  int IdentifyCRSpeciesFields(int &MachNum, int&CRNum, 
+			      int &PSTempNum, int &PSDenNum);
   // Identify Simon Glover Species Fields
-
   int IdentifyGloverSpeciesFields(int &HIINum,int &HINum,int &H2INum,
 				  int &DINum,int &DIINum,int &HDINum,
 				  int &HeINum,int &HeIINum,int &HeIIINum,
@@ -1449,6 +1490,9 @@ int zEulerSweep(int j, int NumberOfSubgrids, fluxes *SubgridFluxes[],
 // -------------------------------------------------------------------------
 // Functions for Specific problems (usually problem generator functions).
 //
+
+/* Generalized Extra Field Grid Initializer (returns NumberOfBaryonFields) */
+  int InitializeTestProblemGrid(int field_counter);
 
 /* Protostellar Collapse problem: initialize grid (returns SUCCESS or FAIL) */
   int ProtostellarCollapseInitializeGrid(float CoreDensity,
@@ -1640,7 +1684,7 @@ int CollapseTestInitializeGrid(int NumberOfSpheres,
 			  float CosmologySimulationInitialFrctionH2I,
 			  float CosmologySimulationInitialFrctionH2II,
 			  int   CosmologySimulationUseMetallicityField,
-			  int  &CurrentNumberOfParticles,
+			  PINT &CurrentNumberOfParticles,
 			  int CosmologySimulationManuallySetParticleMassRatio,
 			  float CosmologySimulationManualParticleMassRatio,
 			  int CosmologySimulationCalculatePositions);
@@ -1678,7 +1722,7 @@ int CollapseTestInitializeGrid(int NumberOfSpheres,
 			  float CosmologySimulationInitialFrctionH2I,
 			  float CosmologySimulationInitialFrctionH2II,
 			  int   CosmologySimulationUseMetallicityField,
-			  int  &CurrentNumberOfParticles,
+			  PINT &CurrentNumberOfParticles,
 			  int CosmologySimulationManuallySetParticleMassRatio,
 			  float CosmologySimulationManualParticleMassRatio,
 			  int CosmologySimulationCalculatePositions);
@@ -1719,6 +1763,11 @@ int CollapseTestInitializeGrid(int NumberOfSpheres,
 				 float EjectaThermalEnergy, 
 				 FLOAT EjectaCenter[3], int ColourField,
 				 int *NumberOfCellsSet);
+
+/* Put Sink restart initialize grid. */
+
+  int PutSinkRestartInitialize(int level ,int *NumberOfCellsSet);
+
 
   /* Cooling test initialization */
   int CoolingTestInitializeGrid();
@@ -1800,6 +1849,10 @@ int CollapseTestInitializeGrid(int NumberOfSpheres,
 
   int ParticleSplitter(int level);
 
+/* Magnetic field resetting routine. */
+
+  int MagneticFieldResetter(int level);
+
 /* Apply a time-action to a grid. */
 
   int ApplyTimeAction(int Type, float Parameter);
@@ -1811,7 +1864,7 @@ int CollapseTestInitializeGrid(int NumberOfSpheres,
 /* Creates tracer particles in this grid. */
 
   int TracerParticleCreateParticles(FLOAT LeftEdge[], FLOAT RightEdge[],
-                                    FLOAT Spacing, int &TotalParticleCount);
+                                    FLOAT Spacing, PINT &TotalParticleCount);
 
 
 /* ShearingBox: initialize grid. */
@@ -1944,14 +1997,25 @@ int CollapseTestInitializeGrid(int NumberOfSpheres,
   int GetEnclosedMass(Star *star, float radius, float &mass,
 		      float &metallicity, float &coldgas_mass, 
 		      float AvgVelocity[]);
+  int GetEnclosedMass(FLOAT star_pos[], float radius, float &mass,
+		      float &metallicity, float &coldgas_mass, 
+		      float AvgVelocity[]);
+  int GetEnclosedMassInShell(Star *star, float radius0, float radius1, 
+			     float &mass, float &metallicity, 
+			     float &coldgas_mass, float AvgVelocity[]);
 
-  int RemoveParticle(int ID);
+  int RemoveParticle(int ID, bool disable=false);
 
   int AddFeedbackSphere(Star *cstar, int level, float radius, float DensityUnits,
 			float LengthUnits, float VelocityUnits, 
 			float TemperatureUnits, float TimeUnits, double EjectaDensity, 
 			double EjectaMetalDensity, double EjectaThermalEnergy,
 			int &CellsModified);
+
+  int SubtractAccretedMassFromSphere(Star *cstar, int level, float radius, float DensityUnits,
+				     float LengthUnits, float VelocityUnits, 
+				     float TemperatureUnits, float TimeUnits, double EjectaDensity, 
+				     int &CellsModified);
 
   int MoveAllStars(int NumberOfGrids, grid* FromGrid[], int TopGridDimension);
 
@@ -2040,11 +2104,17 @@ int CollapseTestInitializeGrid(int NumberOfSpheres,
 //  Inline FOF halo finder and particle interpolation using a tree
 //------------------------------------------------------------------------
 
-  int MoveParticlesFOF(int level, int GridNum, FOF_particle_data* &P, 
-		       int &Index, FOFData &AllVars, float VelocityUnits, 
+  int MoveParticlesFOF(int level, FOF_particle_data* &P, 
+		       int &Index, FOFData AllVars, float VelocityUnits, 
 		       double MassUnits, int CopyDirection);
 
   int InterpolateParticlesToGrid(FOFData *D);
+
+//------------------------------------------------------------------------
+//  Grid star particles onto the AMR mesh
+//------------------------------------------------------------------------
+
+  int InterpolateStarParticlesToGrid(int NumberOfSPFields);  
 
 //------------------------------------------------------------------------
 // new hydro & MHD routines
@@ -2188,9 +2258,9 @@ int CollapseTestInitializeGrid(int NumberOfSpheres,
   int PoissonSolverCGA(int difftype, double *divB_p);
   template <typename T> int multA(T* input, T* output,  int *MatrixStartIndex, int *MatrixEndIndex);
   template <typename T> int multA2(T* input, T* output,  int *MatrixStartIndex, int *MatrixEndIndex);
-  template <typename T> T dot(T *a, T *b,  int *MatrixStartIndex, int *MatrixEndIndex);
-  int setNeumannBC(float* x, int *MatrixStartIndex, int *MatrixEndIndex);
-  int PoissonSolverDirichletBC(double *divB_p);
+  template <typename T> T dot(T *a, T *b,  int size);
+  template <typename T> int setNeumannBC(T* x, int *MatrixStartIndex, int *MatrixEndIndex,int type);
+  template <typename T> int setDirichletBC(T* x, int *MatrixStartIndex, int *MatrixEndIndex);
 
   int PoissonCleanStep(int level);
 
