@@ -107,7 +107,7 @@ int grid::CosmologySimulationInitializeGrid(
 			  float CosmologySimulationInitialFractionH2I,
 			  float CosmologySimulationInitialFractionH2II,
 			  int   UseMetallicityField,
-			  int  &CurrentParticleNumber,
+			  PINT &CurrentParticleNumber,
 			  int CosmologySimulationManuallySetParticleMassRatio,
 			  float CosmologySimulationManualParticleMassRatio,
 			  int   CosmologySimulationCalculatePositions)
@@ -117,6 +117,8 @@ int grid::CosmologySimulationInitializeGrid(
   int idim, dim, i, j, vel, OneComponentPerFile, ndim, level;
   int DeNum, HINum, HIINum, HeINum, HeIINum, HeIIINum, HMNum, H2INum, H2IINum,
       DINum, DIINum, HDINum, MetalNum;
+
+  int CRNum, MachNum, PSTempNum, PSDenNum;
  
   int ExtraField[2];
   int ForbidNum;
@@ -254,6 +256,14 @@ int grid::CosmologySimulationInitializeGrid(
     }
     if (WritePotential)
       FieldType[NumberOfBaryonFields++] = GravPotential;
+    if(CRModel){
+      FieldType[MachNum   = NumberOfBaryonFields++] = Mach;
+      if(StorePreShockFields){
+	FieldType[PSTempNum = NumberOfBaryonFields++] = PreShockTemperature;
+	FieldType[PSDenNum = NumberOfBaryonFields++] = PreShockDensity;
+      }
+      FieldType[CRNum     = NumberOfBaryonFields++] = CRDensity;
+    }    
   }
  
   // Set the subgrid static flag
@@ -421,8 +431,18 @@ int grid::CosmologySimulationInitializeGrid(
 	                             BaryonField[H2INum][i];
       }
  
+      //Shock/Cosmic Ray Model
+      if (CRModel && ReadData) {
+	BaryonField[MachNum][i] = tiny_number;
+	BaryonField[CRNum][i] = tiny_number;
+	if (StorePreShockFields) {
+	  BaryonField[PSTempNum][i] = tiny_number;
+	  BaryonField[PSDenNum][i] = tiny_number;
+	}
+      }
+      
     }
- 
+  
   // If using metallicity, set the field
  
   if (UseMetallicityField && ReadData)
@@ -2483,7 +2503,7 @@ if (PreSortedParticles == 0 && !CosmologySimulationCalculatePositions)
 
 	// If there are exactly 1/8 as many particles as cells, then set the
 	// particle mass to 8 times the usual
- 
+    
 	int NumberOfActiveCells = (GridEndIndex[0]-GridStartIndex[0]+1)*
 	  (GridEndIndex[1]-GridStartIndex[1]+1)*
 	  (GridEndIndex[2]-GridStartIndex[2]+1);
@@ -2491,7 +2511,7 @@ if (PreSortedParticles == 0 && !CosmologySimulationCalculatePositions)
 	  UniformParticleMass *= 8;
 	if (NumberOfParticles == NumberOfActiveCells*8)
 	  UniformParticleMass /= 8;
- 
+
 	//      UniformParticleMass *= float(POW(TotalRefinement, GridRank));
 	/*      for (dim = 0; dim < GridRank; dim++)
 		UniformParticleMass *= float(GridEndIndex[dim]-GridStartIndex[dim]+1);
@@ -2499,7 +2519,7 @@ if (PreSortedParticles == 0 && !CosmologySimulationCalculatePositions)
 
 	// Issue a warning if PPIO or PRGIO are on (possibility of errors
 	// being caused)
-	if( (ParallelParticleIO == TRUE) || (ParallelRootGridIO == TRUE) &&
+	if( ((ParallelParticleIO == TRUE) || (ParallelRootGridIO == TRUE)) &&
 	    MyProcessorNumber == ROOT_PROCESSOR) {
 	  fprintf(stderr,"\n\n\n*********************************************\n");
 	  fprintf(stderr,"CosmologySimulationInitializeGrid: WARNING!\n");

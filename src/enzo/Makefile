@@ -46,7 +46,6 @@ ENZO_DIR = .
 MODULES  = 
 VERBOSE  = 0
 
-# please remove this
 SVN      = hg
 
 #-----------------------------------------------------------------------
@@ -156,12 +155,7 @@ verbose: $(EXE).exe
 	@rm -f $@
 	@(if [ $(VERBOSE) -eq 0 ]; then \
 	  $(FC) -c -o $@ $(FFLAGS) $*.f >& $(OUTPUT) ; \
-	else \
-	  $(FC) -c -o $@ $(FFLAGS) $*.f >> $(OUTPUT) 2>&1 ; \
-	fi ; \
-	if [ -e $@ ]; then \
-             rm -f $*.f; \
-        else \
+	  if [ ! -e $@ ]; then \
              echo; \
              echo "$(CPP) $(DEFINES) $(CPPFLAGS) $*.src > $*.f"; \
              echo "$(FC) -c -o $@ $(FFLAGS) $*.f"; \
@@ -170,7 +164,17 @@ verbose: $(EXE).exe
              $(FC) -c -o $@ $(FFLAGS) $*.f; \
              echo; \
              exit 1; \
-        fi)
+          fi ; \
+	else \
+	  $(FC) -c -o $@ $(FFLAGS) $*.f >> $(OUTPUT) 2>&1 ; \
+	  if [ ! -e $@ ]; then \
+	     echo "See $(OUTPUT) for error messages"; \
+	     exit 1; \
+	  fi ; \
+	fi)
+	@(if [ -e $@ ]; then \
+             rm -f $*.f; \
+          fi)
 
 .src90.f90:
 	@echo "Compiling $<"
@@ -179,12 +183,7 @@ verbose: $(EXE).exe
 	@rm -f $@
 	@(if [ $(VERBOSE) -eq 0 ]; then \
 	  $(F90) -c -o $@ $(F90FLAGS) $*.f90 >& $(OUTPUT) ; \
-	else \
-	  $(F90) -c -o $@ $(F90FLAGS) $*.f90 >> $(OUTPUT) 2>&1 ; \
-	fi ; \
-	if [ -e $@ ]; then \
-             rm -f $*.f90; \
-        else \
+	  if [ ! -e $@ ]; then \
              echo; \
              echo "$(CPP) $(DEFINES) $(CPPFLAGS) $*.src90 > $*.f90"; \
              echo "$(F90) -c -o $@ $(F90FLAGS) $*.f90"; \
@@ -193,7 +192,17 @@ verbose: $(EXE).exe
              $(F90) -c -o $@ $(F90FLAGS) $*.f90; \
              echo; \
              exit 1; \
-        fi)
+	  fi ; \
+	else \
+	  $(F90) -c -o $@ $(F90FLAGS) $*.f90 >> $(OUTPUT) 2>&1 ; \
+	  if [ ! -e $@ ]; then \
+	     echo "See $(OUTPUT) for error messages"; \
+	     exit 1; \
+	  fi ; \
+	fi)
+	@(if [ -e $@ ]; then \
+             rm -f $*.f90; \
+          fi)
 
 .c.o:
 	@rm -f $@
@@ -201,18 +210,22 @@ verbose: $(EXE).exe
 	@(if [ $(VERBOSE) -eq 0 ]; then \
 	  $(CC) -c -o $@ $(DEFINES) $(CFLAGS) $(INCLUDES) $*.c \
 	    >& $(OUTPUT) ; \
-	else \
-	  $(CC) -c -o $@ $(DEFINES) $(CFLAGS) $(INCLUDES) $*.c \
-	    >> $(OUTPUT) 2>&1 ; \
-	fi ; \
-	if [ ! -e $@ ]; then \
+	  if [ ! -e $@ ]; then \
              echo; \
              echo "$(CC) -c -o $@ $(DEFINES) $(CFLAGS) $(INCLUDES) $*.c"; \
              echo; \
              $(CC) -c -o $@ $(DEFINES) $(CFLAGS) $(INCLUDES) $*.c;\
              echo; \
              exit 1; \
-        fi)
+          fi ; \
+	else \
+	  $(CC) -c -o $@ $(DEFINES) $(CFLAGS) $(INCLUDES) $*.c \
+	    >> $(OUTPUT) 2>&1 ; \
+	  if [ ! -e $@ ]; then \
+	     echo "See $(OUTPUT) for error messages"; \
+	     exit 1; \
+	  fi ; \
+	fi)
 
 .C.o:
 	@rm -f $@
@@ -220,18 +233,22 @@ verbose: $(EXE).exe
 	@(if [ $(VERBOSE) -eq 0 ]; then \
 	  $(CXX) -c -o $@ $(DEFINES) $(CXXFLAGS) $(INCLUDES) $*.C \
 	    >& $(OUTPUT) ; \
-	else \
-	  $(CXX) -c -o $@ $(DEFINES) $(CXXFLAGS) $(INCLUDES) $*.C \
-	    >> $(OUTPUT) 2>&1 ; \
-	fi ; \
-	if [ ! -e $@ ]; then \
+	  if [ ! -e $@ ]; then \
              echo; \
              echo "$(CXX) -c -o $@ $(DEFINES) $(CXXFLAGS) $(INCLUDES) $*.C"; \
              echo; \
              $(CXX) -c -o $@ $(DEFINES) $(CXXFLAGS) $(INCLUDES) $*.C;\
              echo; \
              exit 1; \
-        fi)
+          fi ; \
+	else \
+	  $(CXX) -c -o $@ $(DEFINES) $(CXXFLAGS) $(INCLUDES) $*.C \
+	    >> $(OUTPUT) 2>&1 ; \
+	  if [ ! -e $@ ]; then \
+	     echo "See $(OUTPUT) for error messages"; \
+	     exit 1; \
+	  fi ; \
+	fi)
 
 .cu.o: 
 	@rm -f $@
@@ -239,18 +256,22 @@ verbose: $(EXE).exe
 	@(if [ $(VERBOSE) -eq 0 ]; then \
 	  $(CUDACOMPILER) -c -o $@ $(DEFINES) $(CUDACOMPFLAGS) \
 	    $(INCLUDES) $*.cu >& $(OUTPUT) ; \
-	else \
-	  $(CUDACOMPILER) -c -o $@ $(DEFINES) $(CUDACOMPFLAGS) \
-	    $(INCLUDES) $*.cu >> $(OUTPUT) 2>&1 ; \
-	fi ; \
-	if [ ! -e $@ ]; then \
+	  if [ ! -e $@ ]; then \
 	     echo; \
              echo "$(CUDACOMPILER) -c -o $@ $(DEFINES) $(CUDACOMPFLAGS) $(INCLUDES) $*.cu"; \
              echo; \
              $(CUDACOMPILER)  -c -o $@ $(DEFINES) $(CUDACOMPFLAGS) $(INCLUDES) $*.cu;\
              echo; \
              exit 1; \
-        fi)
+          fi ; \
+	else \
+	  $(CUDACOMPILER) -c -o $@ $(DEFINES) $(CUDACOMPFLAGS) \
+	    $(INCLUDES) $*.cu >> $(OUTPUT) 2>&1 ; \
+	  if [ ! -e $@ ]; then \
+	     echo "See $(OUTPUT) for error messages"; \
+	     exit 1; \
+	  fi ; \
+	fi)
 
 #-----------------------------------------------------------------------
 # Generate all make-generated source files

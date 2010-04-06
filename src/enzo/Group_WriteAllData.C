@@ -69,7 +69,7 @@ int WriteConfigure(FILE *optr);
 int WriteTaskMap(FILE *fptr, HierarchyEntry *TopGrid,
 		 char *gridbasename, int &GridID, FLOAT WriteTime);
 int WriteParameterFile(FILE *fptr, TopGridData &MetaData);
-int WriteStarParticleData(FILE *fptr);
+int WriteStarParticleData(FILE *fptr, TopGridData &MetaData);
 int WriteRadiationData(FILE *fptr);
  
 int CosmologyComputeExpansionFactor(FLOAT time, FLOAT *a, FLOAT *dadt);
@@ -79,7 +79,7 @@ int CommunicationCombineGrids(HierarchyEntry *OldHierarchy,
 void DeleteGridHierarchy(HierarchyEntry *GridEntry);
 void ContinueExecution(void);
 int CreateSmoothedDarkMatterFields(TopGridData &MetaData, HierarchyEntry *TopGrid);
- 
+int CreateGriddedStarParticleFields(TopGridData &MetaData, HierarchyEntry *TopGrid); 
 
 void InitializeHierarchyArrayStorage(int grid_count);
 void WriteHierarchyArrayStorage(const char* name);
@@ -696,10 +696,17 @@ int Group_WriteAllData(char *basename, int filenumber,
                         "LevelCycleCount", LevelCycleCount);
   if(CheckpointDump == TRUE){
     // Write our supplemental (global) data
-    writeArrayAttribute(metadata_group, HDF5_REAL, MAX_DEPTH_OF_HIERARCHY,
-                        "dtThisLevel", dtThisLevel);
-    writeArrayAttribute(metadata_group, HDF5_REAL, MAX_DEPTH_OF_HIERARCHY,
-                        "dtThisLevelSoFar", dtThisLevelSoFar);
+    FLOAT dtThisLevelCopy[MAX_DEPTH_OF_HIERARCHY];
+    FLOAT dtThisLevelSoFarCopy[MAX_DEPTH_OF_HIERARCHY];
+    for (int level = 0; level < MAX_DEPTH_OF_HIERARCHY; level++) {
+        dtThisLevelCopy[level] = dtThisLevel[level];
+        dtThisLevelSoFarCopy[level] = dtThisLevelSoFar[level];
+    }
+    writeArrayAttribute(metadata_group, HDF5_PREC, MAX_DEPTH_OF_HIERARCHY,
+                        "dtThisLevel", dtThisLevelCopy);
+    writeArrayAttribute(metadata_group, HDF5_PREC, MAX_DEPTH_OF_HIERARCHY,
+                        "dtThisLevelSoFar", dtThisLevelSoFarCopy);
+    writeScalarAttribute(metadata_group, HDF5_PREC, "Time", &MetaData.Time);
   }
     H5Gclose(metadata_group);
 
@@ -776,14 +783,15 @@ int Group_WriteAllData(char *basename, int filenumber,
     delete TempTopGrid;
   }
  
-  // Output StarParticle data (actually just number of stars)
+  // Output star particle data 
  
-  if (WriteStarParticleData(fptr) == FAIL)
+  if (WriteStarParticleData(fptr, MetaData) == FAIL)
     ENZO_FAIL("Error in WriteStarParticleData");
  
   // Create radiation name and write radiation data
  
-  if (RadiationFieldType >= 10 && RadiationFieldType <= 11 &&
+  if (((RadiationFieldType >= 10 && RadiationFieldType <= 11) ||
+       RadiationData.RadiationShield == TRUE) &&
       MyProcessorNumber == ROOT_PROCESSOR) {
  
     FILE *Radfptr;

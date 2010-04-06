@@ -8,7 +8,7 @@
      &                HI, HII, HeI, HeII, HeIII,
      &                in, jn, kn, nratec, iexpand, imethod,
      &                idual, ispecies, imetal, imcool, idim,
-     &                is, js, ks, ie, je, ke, ih2co, ipiht,
+     &                is, js, ks, ie, je, ke, ih2co, ipiht, igammah,
      &                dt, aye, temstart, temend, 
      &                utem, uxyz, uaye, urho, utim,
      &                eta1, eta2, gamma, fh, dtoh,
@@ -19,7 +19,7 @@
      &                k50a, k51a, k52a, k53a, k54a, k55a, k56a,
      &                ceHIa, ceHeIa, ceHeIIa, ciHIa, ciHeIa, 
      &                ciHeISa, ciHeIIa, reHIIa, reHeII1a, 
-     &                reHeII2a, reHeIIIa, brema, compa,
+     &                reHeII2a, reHeIIIa, brema, compa, gammaha,
      &                comp_xraya, comp_temp, piHI, piHeI, piHeII,
      &                HM, H2I, H2II, DI, DII, HDI, metal,
      &                hyd01ka, h2k01a, vibha, rotha, rotla, 
@@ -72,7 +72,7 @@
 !    iexpand  - comoving coordinates flag (0 = off, 1 = on)
 !    idim     - dimensionality (rank) of problem
 !    ispecies - chemistry module (1 - H/He only, 2 - molecular H, 3 - D) 
-!    iradshield - flag for crude radiative shielding correction (rad type 12)
+!    iradshield - flag for crude radiative shielding correction 
 !    iradtype - type of radiative field (only used if = 8)
 !    imetal   - flag if metal field is active (0 = no, 1 = yes)
 !    imcool   - flag if there is metal cooling
@@ -126,7 +126,8 @@
       integer in, jn, kn, is, js, ks, ie, je, ke, nratec, imethod,
      &        idual, iexpand, ih2co, ipiht, ispecies, imetal, idim,
      &        iradtype, nfreq, imetalregen, iradshield, iradtrans,
-     &        iradcoupled, iradstep, n_xe, ierr, imcool, irt_honly
+     &        iradcoupled, iradstep, n_xe, ierr, imcool, irt_honly,
+     &        igammah
       real    dt, aye, temstart, temend, eta1, eta2, gamma,
      &        utim, uxyz, uaye, urho, utem, fh, dtoh, xe_start, xe_end
 
@@ -160,6 +161,7 @@
       real    metala(nratec, n_xe)
       real    compa, piHI, piHeI, piHeII, comp_xraya, comp_temp,
      &        inutot(nfreq), avgsighp, avgsighep, avgsighe2p
+      real    gammaha 
 
 !  Chemistry tables (rates as a function of temperature)
 
@@ -264,6 +266,11 @@
      &                  is, ie, js, je, ks, ke,
      &                  in, jn, kn, ispecies, imetal, aye**(-3))
 
+      call ceiling_species(de, HI, HII, HeI, HeII, HeIII,
+     &                     HM, H2I, H2II, DI, DII, HDI, metal,
+     &                     is, ie, js, je, ks, ke,
+     &                     in, jn, kn, ispecies, imetal)
+
 !  Loop over zones, and do an entire i-column in one go
 
       do k = ks+1, ke+1
@@ -320,13 +327,13 @@
      &                d, e, ge, u, v, w, de, HI, HII, HeI, HeII, HeIII,
      &                in, jn, kn, nratec, idual, imethod,
      &                iexpand, ispecies, imetal, imcool, idim,
-     &                is, ie, j, k, ih2co, ipiht, iter,
+     &                is, ie, j, k, ih2co, ipiht, iter, igammah,
      &                aye, temstart, temend,
      &                utem, uxyz, uaye, urho, utim,
      &                eta1, eta2, gamma,
      &                ceHIa, ceHeIa, ceHeIIa, ciHIa, ciHeIa, 
      &                ciHeISa, ciHeIIa, reHIIa, reHeII1a, 
-     &                reHeII2a, reHeIIIa, brema, compa, 
+     &                reHeII2a, reHeIIIa, brema, compa, gammaha,
      &                comp_xraya, comp_temp,
      &                piHI, piHeI, piHeII, comp1, comp2,
      &                HM, H2I, H2II, DI, DII, HDI, metal,
@@ -652,30 +659,116 @@ c -------------------------------------------------------------------
                HeII(i,j,k)  = HeII(i,j,k)*factor
                HeIII(i,j,k) = HeIII(i,j,k)*factor
             enddo
-            if (ispecies .gt. 1) then
+         enddo
+      enddo
+      if (ispecies .gt. 1) then
+         do k = ks+1, ke+1
+            do j = js+1, je+1
                do i = is+1, ie+1
                   HM(i,j,k)   = HM(i,j,k)*factor
                   H2I(i,j,k)  = H2I(i,j,k)*factor
                   H2II(i,j,k) = H2II(i,j,k)*factor
                enddo
-            endif
-            if (ispecies .gt. 2) then
+            enddo
+         enddo
+      endif
+      if (ispecies .gt. 2) then
+         do k = ks+1, ke+1
+            do j = js+1, je+1
                do i = is+1, ie+1
                   DI(i,j,k)  = DI(i,j,k)*factor
                   DII(i,j,k) = DII(i,j,k)*factor
                   HDI(i,j,k) = HDI(i,j,k)*factor
                enddo
-            endif
-            if (imetal .eq. 1) then
+            enddo
+         enddo
+      endif
+      if (imetal .eq. 1) then
+         do k = ks+1, ke+1
+            do j = js+1, je+1
                do i = is+1, ie+1
                   metal(i,j,k) = metal(i,j,k)*factor
                enddo
-            endif
+            enddo
          enddo
-      enddo
+      endif
 
       return
       end
+
+c -----------------------------------------------------------
+!   This routine ensures that the species aren't below tiny.
+
+      subroutine ceiling_species(de, HI, HII, HeI, HeII, HeIII,
+     &                           HM, H2I, H2II, DI, DII, HDI, metal,
+     &                           is, ie, js, je, ks, ke,
+     &                           in, jn, kn, ispecies, imetal)
+c -------------------------------------------------------------------
+
+      implicit NONE
+
+!     Arguments
+
+      integer in, jn, kn, is, ie, js, je, ks, ke, ispecies, imetal
+      real    de(in,jn,kn),   HI(in,jn,kn),   HII(in,jn,kn),
+     &       HeI(in,jn,kn), HeII(in,jn,kn), HeIII(in,jn,kn)
+      real    HM(in,jn,kn),  H2I(in,jn,kn), H2II(in,jn,kn)
+      real    DI(in,jn,kn),  DII(in,jn,kn), HDI(in,jn,kn)
+      real metal(in,jn,kn)
+
+!     locals
+
+      integer i, j, k
+
+!     Multiply all fields by factor (1/a^3 or a^3)
+
+      do k = ks+1, ke+1
+         do j = js+1, je+1
+            do i = is+1, ie+1
+               de(i,j,k)    = max(de(i,j,k), tiny)
+               HI(i,j,k)    = max(HI(i,j,k), tiny)
+               HII(i,j,k)   = max(HII(i,j,k), tiny)
+               HeI(i,j,k)   = max(HeI(i,j,k), tiny)
+               HeII(i,j,k)  = max(HeII(i,j,k), tiny)
+               HeIII(i,j,k) = max(HeIII(i,j,k), tiny)
+            enddo
+         enddo
+      enddo
+      if (ispecies .gt. 1) then
+         do k = ks+1, ke+1
+            do j = js+1, je+1
+               do i = is+1, ie+1
+                  HM(i,j,k)   = max(HM(i,j,k), tiny)
+                  H2I(i,j,k)  = max(H2I(i,j,k), tiny)
+                  H2II(i,j,k) = max(H2II(i,j,k), tiny)
+               enddo
+            enddo
+         enddo
+      endif
+      if (ispecies .gt. 2) then
+         do k = ks+1, ke+1
+            do j = js+1, je+1
+               do i = is+1, ie+1
+                  DI(i,j,k)  = max(DI(i,j,k), tiny)
+                  DII(i,j,k) = max(DII(i,j,k), tiny)
+                  HDI(i,j,k) = max(HDI(i,j,k), tiny)
+               enddo
+            enddo
+         enddo
+      endif
+      if (imetal .eq. 1) then
+         do k = ks+1, ke+1
+            do j = js+1, je+1
+               do i = is+1, ie+1
+                  metal(i,j,k) = max(metal(i,j,k), tiny)
+               enddo
+            enddo
+         enddo
+      endif
+
+      return
+      end
+
 
 
 ! -----------------------------------------------------------
@@ -1172,7 +1265,8 @@ c -------------------------------------------------------------------
             HIp(i)  = (scoef*dtit(i) + HI(i,j,k))/(1.0 + acoef*dtit(i))
             if (HIp(i) .ne. HIp(i)) then
                write(*,*) 'HUGE HIp! :: ', i, j, k, HIp(i), HI(i,j,k),
-     $              HII(i,j,k), de(i,j,k), kphHI(i,j,k)
+     $              HII(i,j,k), de(i,j,k), kphHI(i,j,k), 
+     $              scoef, acoef, dtit(i)
                ERROR_MESSAGE
             endif
 
@@ -1186,7 +1280,7 @@ c
             acoef  = k2(i)*de (i,j,k)
             HIIp(i) = (scoef*dtit(i) + HII(i,j,k))/(1.0 + acoef*dtit(i))
 
-!                 3) Electron density
+!        3) Electron density
 
             scoef = 0.0
 #ifdef RADIATION
@@ -1454,11 +1548,11 @@ c
       do i = is+1, ie+1
          if (itmask(i)) then
          HIdot_prev(i) = abs(HI(i,j,k)-HIp(i))/max(dtit(i),tiny)
-         HI(i,j,k)    = HIp(i)
-         HII(i,j,k)   = HIIp(i)
-         HeI(i,j,k)   = HeIp(i)
-         HeII(i,j,k)  = HeIIp(i)
-         HeIII(i,j,k) = max(HeIIIp(i), 1.0e-25)
+         HI(i,j,k)    = max(HIp(i), tiny)
+         HII(i,j,k)   = max(HIIp(i), tiny)
+         HeI(i,j,k)   = max(HeIp(i), tiny)
+         HeII(i,j,k)  = max(HeIIp(i), tiny)
+         HeIII(i,j,k) = max(HeIIIp(i), tiny)
 
 !        de(i,j,k)    = dep(i)
 
@@ -1472,15 +1566,15 @@ c
      &                         max(dtit(i),tiny)
 
          if (ispecies .gt. 1) then
-            HM(i,j,k)    = HMp(i)
-            H2I(i,j,k)   = H2Ip(i)
-            H2II(i,j,k)  = H2IIp(i)
+            HM(i,j,k)    = max(HMp(i), tiny)
+            H2I(i,j,k)   = max(H2Ip(i), tiny)
+            H2II(i,j,k)  = max(H2IIp(i), tiny)
          endif
 
          if (ispecies .gt. 2) then
-            DI(i,j,k)    = DIp(i)
-            DII(i,j,k)   = DIIp(i)
-            HDI(i,j,k)   = HDIp(i)
+            DI(i,j,k)    = max(DIp(i), tiny)
+            DII(i,j,k)   = max(DIIp(i), tiny)
+            HDI(i,j,k)   = max(HDIp(i), tiny)
          endif
       endif                     ! itmask
 !     
