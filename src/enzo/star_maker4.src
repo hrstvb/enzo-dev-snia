@@ -12,7 +12,9 @@ c
      &                      imetal, imethod, mintdyn,
      &                      odthresh, masseff, smthresh, level, np,
      &                      xp, yp, zp, up, vp, wp,
-     &                      mp, tdp, tcp, metalf)
+     &                      mp, tdp, tcp, metalf,
+     &                      rr_left0, rr_left1, rr_left2,
+     &                      rr_right0, rr_right1, rr_right2)
 c
 c  CREATES STAR PARTICLES
 c
@@ -47,6 +49,7 @@ c        smthresh unless (random number) < starmass/smthresh )
 c    mintdyn  - minimum dynamical time, in years
 c    level - current level of refinement
 c    procnum - processor number (for output)
+c    rr_left, rr_right - refinement region left and right edges
 c
 c  OUTPUTS:
 c
@@ -79,6 +82,8 @@ c
       real    up(nmax), vp(nmax), wp(nmax)
       real    mp(nmax), tdp(nmax), tcp(nmax), metalf(nmax)
       real    odthresh, masseff, smthresh, mintdyn
+      REALSUB rr_left0, rr_left1, rr_left2
+      REALSUB rr_right0, rr_right1, rr_right2
 c
       real   sformsum
       save   sformsum
@@ -91,6 +96,8 @@ c
       real   pi, G, sndspdC,mproton
       real   isosndsp2, starmass, starfraction, bmass, jeanmass
       real   densthresh, timeconstant, gasfrac
+      real   tempx, tempy, tempz
+      real   dtemp
       double precision msolar
       parameter (pi=3.14159265, G=6.67e-8, sndspdC=1.3095e8,
      &           msolar=1.989e33,mproton=1.67e-24)
@@ -102,7 +109,7 @@ c  and (d1/mproton) gives the mean density of the universe in
 c  particles/cm^3 (assuming hydrogen is dominant)
 c
 c
-      densthresh = odthresh / (d1 / mproton)
+      densthresh = odthresh / (dble(d1) / mproton)
 
 c
 c  calculate time constant for star formation.  This assumes that the
@@ -119,18 +126,34 @@ c
          do j=1+ibuff,ny-ibuff
             do i=1+ibuff,nx-ibuff
 c
+c              0) Is z ok?
+c
+               if (z .gt. 20.0) goto 10
+c
 c              1) is this finest level of refinement?
 c
                if (r(i,j,k) .ne. 0.0) goto 10
 c
-c              2) is density greater than threshold?
+c              2) is this the refinement region?
+c
+              tempx = xstart + (float(i)-0.5)*dx
+              tempy = ystart + (float(j)-0.5)*dx
+              tempz = zstart + (float(k)-0.5)*dx
+              if (tempx .lt. rr_left0 .or. tempx .gt. rr_right0 .or. 
+     &          tempy .lt. rr_left1 .or. tempy .gt. rr_right1 .or. 
+     &          tempz .lt. rr_left2 .or. tempz .gt. rr_right2) then
+                    goto 10
+               endif
+
+c
+c              3) is density greater than threshold?
 c
                if (d(i,j,k) .lt. densthresh) goto 10
 
 c            make sure that we never give put than 90% of the cell's mass
 c            into a star particle
 
-               gasfrac = min( 0.9, dt / timeconstant )
+               gasfrac = min( 0.9,  masseff * dt / timeconstant )
 
 c            calculate star mass in solar masses.  If this is less than the
 c            user-defined threshold mass, do NOT make a star in this cell.

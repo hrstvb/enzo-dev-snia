@@ -12,7 +12,9 @@ c
      &                      imetal, imethod, mintdyn,
      &                      odthresh, masseff, smthresh, level, np, 
      &                      xp, yp, zp, up, vp, wp,
-     &                      mp, tdp, tcp, metalf)
+     &                      mp, tdp, tcp, metalf,
+     &                      rr_left0, rr_left1, rr_left2,
+     &                      rr_right0, rr_right1, rr_right2)
 c
 c  CREATES GALAXY PARTICLES
 c
@@ -54,6 +56,7 @@ c        smthresh unless (random number) < starmass/smthresh )
 c    mintdyn  - minimum dynamical time, in years
 c    level - current level of refinement
 c    procnum - processor number (for output)
+c    rr_left, rr_right - refinement region left and right edges
 c
 c  OUTPUTS:
 c
@@ -86,6 +89,8 @@ c
       real    up(nmax), vp(nmax), wp(nmax)
       real    mp(nmax), tdp(nmax), tcp(nmax), metalf(nmax)
       real    odthresh, masseff, smthresh, mintdyn
+      real    rr_left0, rr_left1, rr_left2
+      real    rr_right0, rr_right1, rr_right2
 c
       real   sformsum
       save   sformsum
@@ -94,6 +99,7 @@ c
 c  Locals:
 c
       integer  i, j, k, ii
+      real   tempx, tempy, tempz
       real   div, tdyn, dtot
       real   pi, G, sndspdC
       real   isosndsp2, starmass, starfraction, bmass, jeanmass
@@ -123,6 +129,15 @@ c
 c              2) is density greater than threshold?
 c
                if (d(i,j,k) .lt. odthresh) goto 10
+c         Don't consider this cell if it's not in the refinement region.
+               tempx = xstart + (float(i)-0.5)*dx
+               tempy = ystart + (float(j)-0.5)*dx
+               tempz = zstart + (float(k)-0.5)*dx
+               if (tempx .lt. rr_left0 .or. tempx .gt. rr_right0 .or. 
+     &           tempy .lt. rr_left1 .or. tempy .gt. rr_right1 .or. 
+     &           tempz .lt. rr_left2 .or. tempz .gt. rr_right2) then
+                     goto 10
+                endif
 c
 c              3) is divergence negative?
 c                 (the first calculation is face centered for ZEUS, 
@@ -199,9 +214,9 @@ c
                mp(ii)  = starfraction * d(i,j,k)
                tcp(ii) = t
                tdp(ii) = tdyn
-               xp(ii) = xstart + (float(i)-0.5)*dx
-               yp(ii) = ystart + (float(j)-0.5)*dx
-               zp(ii) = zstart + (float(k)-0.5)*dx
+               xp(ii) = tempx
+               yp(ii) = tempy
+               zp(ii) = tempz
                if (imethod .eq. 2) then
                   up(ii) = 0.5*(u(i,j,k)+u(i+1,j,k))
                   vp(ii) = 0.5*(v(i,j,k)+v(i,j+1,k))
