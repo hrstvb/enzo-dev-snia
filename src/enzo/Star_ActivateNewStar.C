@@ -22,7 +22,6 @@
 #include "Hierarchy.h"
 #include "TopGridData.h"
 #include "LevelHierarchy.h"
-#include "StarParticleData.h"
 
 void Star::ActivateNewStar(FLOAT Time)
 {
@@ -32,7 +31,7 @@ void Star::ActivateNewStar(FLOAT Time)
     StarType = ABS(type);
     switch (StarType) {
     case PopII:
-      if (Mass > StarClusterMinimumMass) {
+      if (Mass >= StarClusterMinimumMass) {
 	type = StarType;
 	BirthTime = Time;
       }

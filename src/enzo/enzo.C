@@ -41,7 +41,6 @@
 #include "LevelHierarchy.h"
 #include "TopGridData.h"
 #include "CosmologyParameters.h"
-#include "StarParticleData.h"
 #include "communication.h"
 #include "CommunicationUtilities.h"
 #ifdef TRANSFER
@@ -84,7 +83,8 @@ int ProjectToPlane(TopGridData &MetaData, LevelHierarchyEntry *LevelArray[],
 		   FLOAT ProjectEndCoordinates[], int ProjectLevel,
 		   int ProjectionDimension, char *ProjectionFileName,
 		   int ProjectionSmooth, ExternalBoundary *Exterior);
-int ProjectToPlane2(TopGridData &MetaData, LevelHierarchyEntry *LevelArray[],
+int ProjectToPlane2(char *ParameterFile,
+		    TopGridData &MetaData, LevelHierarchyEntry *LevelArray[],
 		    int ProjectStartTemp[], int ProjectEndTemp[], 
 		    FLOAT ProjectStartCoordinate[],
 		    FLOAT ProjectEndCoordinate[], int ProjectLevel,
@@ -179,11 +179,7 @@ void lcaperfInitialize (int max_level);
 #endif
 
 void my_exit(int status);
-
- 
-#ifdef MEM_TRACE
-Eint64 mused(void);
-#endif 
+void PrintMemoryUsage(char *str);
 
 
  
@@ -193,9 +189,6 @@ Eint64 mused(void);
 Eint32 main(Eint32 argc, char *argv[])
 {
 
-#ifdef MEM_TRACE
-    Eint64 MemInUse;
-#endif
 
   int i;
 
@@ -255,6 +248,17 @@ Eint32 main(Eint32 argc, char *argv[])
   GetNodeFreeMemory();
 #endif
 
+  /* The initial size of the memory pool in units of photon packages.
+     Increase the memory pool by 1/4th of the initial size as more
+     memory is needed. */
+
+#ifdef MEMORY_POOL
+  const int PhotonMemorySize = MEMORY_POOL_SIZE;
+  int PhotonSize = sizeof(PhotonPackageEntry);
+  PhotonMemoryPool = new MPool::MemoryPool(PhotonMemorySize*PhotonSize,
+					   PhotonSize,
+					   PhotonMemorySize*PhotonSize/4);
+#endif
 
   // Begin 
 
@@ -485,10 +489,11 @@ Eint32 main(Eint32 argc, char *argv[])
     dim2 = (ProjectionDimension == -1) ? 
       MetaData.TopGridRank : ProjectionDimension+1;
     for (dim = dim1; dim < dim2; dim++) {
-      sprintf(proj_name, "amr_%c.project", 120+dim);
+      sprintf(proj_name, "project_%4.4d_%c.h5", MetaData.CycleNumber, 120+dim);
       if (MyProcessorNumber == ROOT_PROCESSOR)
 	printf("ProjectToPlane: dimension %d.  Output %s\n", dim, proj_name);
-      if (ProjectToPlane2(MetaData, LevelArray, RegionStart, RegionEnd,
+      if (ProjectToPlane2(ParameterFile, MetaData, LevelArray, 
+			  RegionStart, RegionEnd,
 			  RegionStartCoordinates, RegionEndCoordinates,
 			  RegionLevel, dim, proj_name,
 			  ProjectionSmooth, &Exterior) == FAIL)
@@ -560,10 +565,7 @@ Eint32 main(Eint32 argc, char *argv[])
 
   // Normal start: Open and read parameter file
 
-#ifdef MEM_TRACE
-    MemInUse = mused();
-    fprintf(memtracePtr, "Call initialize %16"ISYM" \n", MemInUse);
-#endif
+  PrintMemoryUsage("Call initialize");
 
  
   if (!restart) {
@@ -614,11 +616,7 @@ Eint32 main(Eint32 argc, char *argv[])
   }
 #endif
 
-
-#ifdef MEM_TRACE
-  MemInUse = mused();
-  fprintf(memtracePtr, "Call evolve hierarchy %8"ISYM"  %16"ISYM" \n", MetaData.CycleNumber, MemInUse);
-#endif
+  PrintMemoryUsage("Call evolve hierarchy");
 
 #ifdef USE_PYTHON
   // We initialize our Python interface now
@@ -638,6 +636,7 @@ Eint32 main(Eint32 argc, char *argv[])
     if (MovieSkipTimestep != INT_UNDEFINED) {
       fprintf(stderr, "Closing movie file.\n");
       MetaData.AmiraGrid.AMRHDF5Close();
+      MetaData.AmiraGrid.AMRHDF5CloseSeparateParticles();
     }
     my_exit(EXIT_FAILURE);
   }

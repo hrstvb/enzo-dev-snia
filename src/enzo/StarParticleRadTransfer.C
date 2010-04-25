@@ -26,7 +26,6 @@
 #include "Hierarchy.h"
 #include "TopGridData.h"
 #include "LevelHierarchy.h"
-#include "StarParticleData.h"
 
 #define RT_ENERGY_BINS 4
 #define NO_MEAN_ENERGY
@@ -129,6 +128,8 @@ int StarParticleRadTransfer(LevelHierarchyEntry *LevelArray[], int level,
 	RadSource->SED[j]    = Q[j];
       }
 
+      if (GlobalRadiationSources->NextSource != NULL)
+	GlobalRadiationSources->NextSource->PreviousSource = RadSource;
       GlobalRadiationSources->NextSource = RadSource;
       
     } // ENDIF is a radiation source?

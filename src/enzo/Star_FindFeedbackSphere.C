@@ -29,7 +29,6 @@
 #include "Hierarchy.h"
 #include "TopGridData.h"
 #include "LevelHierarchy.h"
-#include "StarParticleData.h"
 #include "CommunicationUtilities.h"
 
 int Star::FindFeedbackSphere(LevelHierarchyEntry *LevelArray[], int level,
@@ -44,7 +43,7 @@ int Star::FindFeedbackSphere(LevelHierarchyEntry *LevelArray[], int level,
     gravConst = 6.673e-8, yr = 3.1557e7, Myr = 3.1557e13;
 
   float AccretedMass, DynamicalTime = 0, AvgDensity, AvgVelocity[MAX_DIMENSION];
-  int StarType, i, l, dim, FirstLoop = TRUE, SphereTooSmall, cornerDone[8], MBHFeedbackRadiusTooSmall;
+  int StarType, i, l, dim, FirstLoop = TRUE, SphereTooSmall, cornerDone[8], MBHFeedbackThermalRadiusTooSmall;
   float MassEnclosed = 0, Metallicity = 0, ColdGasMass = 0, ColdGasFraction, initialRadius; 
   FLOAT corners[MAX_DIMENSION][8];
   int direction;
@@ -67,7 +66,7 @@ int Star::FindFeedbackSphere(LevelHierarchyEntry *LevelArray[], int level,
   // If there is already enough mass from accretion, create it
   // without removing a sphere of material.  It was already done in
   // grid::StarParticleHandler.
-  if (type == PopII && FeedbackFlag == FORMATION &&
+  if (StarType == PopII && FeedbackFlag == FORMATION &&
       Mass > StarClusterMinimumMass) {
     if (debug)
       printf("StarParticle[%"ISYM"]: Accreted mass = %"GSYM" Msun.\n", Identifier, Mass);
@@ -87,14 +86,16 @@ int Star::FindFeedbackSphere(LevelHierarchyEntry *LevelArray[], int level,
                  || (FeedbackFlag == COLOR_FIELD));
   initialRadius = Radius;
 
-  // MBHFeedbackToConstantMass is implemented 
-  // to apply your feedback energy always to a constant mass, not to a constant volume.
-  // Search MBH from here and below.
-  // For now, this is for future use and not tested, and shouldn't be used.  Ji-hoon Kim Sep.2009
-  int MBHFeedbackToConstantMass = FALSE; //#####
-  MBHFeedbackRadiusTooSmall = (type == MBH && MBHFeedbackToConstantMass);
+#ifdef UNUSED
+  /* MBHFeedbackToConstantMass is implemented to apply your feedback energy 
+     always to a constant mass, not to a constant volume.  For now, this is 
+     for future use and not tested, and shouldn't be used.  -Ji-hoon Kim, Sep.2009 */
+  int MBHFeedbackToConstantMass = FALSE; 
+  MBHFeedbackThermalRadiusTooSmall = (type == MBH && MBHFeedbackToConstantMass);
 
-  while (SphereTooSmall || MBHFeedbackRadiusTooSmall) { 
+  while (SphereTooSmall || MBHFeedbackThermalRadiusTooSmall) { 
+#endif
+  while (SphereTooSmall) { 
     Radius += CellWidth;
     MassEnclosed = 0;
     Metallicity = 0;
@@ -155,7 +156,7 @@ int Star::FindFeedbackSphere(LevelHierarchyEntry *LevelArray[], int level,
       SphereTooSmall = MassEnclosed < 2*PopIIIStarMass;
       ColdGasFraction = 1.0;
       // to make the total mass PopIIIStarMass
-      AccretedMass = PopIIIStarMass - Mass;
+      AccretedMass = PopIIIStarMass - float(Mass);
       break;
 
     case PopII:  // Star Cluster Formation
@@ -164,7 +165,7 @@ int Star::FindFeedbackSphere(LevelHierarchyEntry *LevelArray[], int level,
 	 double(4*M_PI/3.0 * pow(Radius*LengthUnits, 3)));
       DynamicalTime = sqrt((3.0 * M_PI) / (32.0 * gravConst * AvgDensity)) /
 	TimeUnits;
-      ColdGasFraction = ColdGasMass / (MassEnclosed + Mass);
+      ColdGasFraction = ColdGasMass / (MassEnclosed + float(Mass));
       AccretedMass = ColdGasFraction * StarClusterFormEfficiency * MassEnclosed;
       SphereTooSmall = DynamicalTime < 
 	StarClusterMinDynamicalTime/(TimeUnits/yr);
@@ -175,16 +176,17 @@ int Star::FindFeedbackSphere(LevelHierarchyEntry *LevelArray[], int level,
       break;
 
     case MBH:  
-      // This is to enlarge the Radius so that the thermal feedback affects the constant mass 
-      // as the AGN bubble expands, not the constant radius.  Ji-hoon Kim in Sep./2009  
-      // MassEnclosed in Msun, 
-      // assuming initial density around MBH ~ 1 Msun/pc^3 = 40/cm3, which is close to the density in Ostriker & McKee test problem
-      // (1 Msun/pc^3 = 6.77e-23 g/cm3 = 40/cm3) 
-      MBHFeedbackRadiusTooSmall = MassEnclosed < 
-	4*M_PI/3.0 * pow(MBHFeedbackRadius, 3) * 1.0; 
+#ifdef UNUSED
+      /* This is to enlarge Radius so that the thermal feedback affects the constant mass 
+	 as the AGN bubble expands, not the constant radius.  MassEnclosed in Msun. 
+	 assuming initial density around MBH ~ 1 Msun/pc^3 = 40/cm3, which is close to 
+	 the density in Ostriker & McKee test problem (1 Msun/pc^3 = 6.77e-23 g/cm3 = 40/cm3) */
+      MBHFeedbackThermalRadiusTooSmall = MassEnclosed < 
+	4*M_PI/3.0 * pow(MBHFeedbackThermalRadius, 3) * 1.0; 
       fprintf(stderr, "MassEnclosed = %g\n", MassEnclosed);
-      fprintf(stderr, "MassEnclosed_ought_to_be = %g\n", 4*M_PI/3.0 * pow(MBHFeedbackRadius, 3) * 1.0);
+      fprintf(stderr, "MassEnclosed_ought_to_be = %g\n", 4*M_PI/3.0 * pow(MBHFeedbackThermalRadius, 3) * 1.0);
       fprintf(stderr, "Radius = %g\n", Radius);
+#endif
       break;
 
     }  // ENDSWITCH FeedbackFlag
@@ -201,7 +203,7 @@ int Star::FindFeedbackSphere(LevelHierarchyEntry *LevelArray[], int level,
       // for MBH, we reduce EjectaThermalEnergy because Radius is now expanded
       EjectaThermalEnergy *= pow(initialRadius/Radius, 3);
 
-    //fprintf(stderr, "Star::FFS: EjectaThermalEnergy = %g\n", EjectaThermalEnergy); 
+      //fprintf(stderr, "Star::FFS: EjectaThermalEnergy = %g\n", EjectaThermalEnergy); 
 
       //      printf("AddFeedback: EjectaDensity = %"GSYM"\n", EjectaDensity);
       //      EjectaDensity = Shine[p].Mass / MassEnclosed;
@@ -214,7 +216,7 @@ int Star::FindFeedbackSphere(LevelHierarchyEntry *LevelArray[], int level,
   float eps_tdyn = sqrt(1.0+epsMass) * StarClusterMinDynamicalTime/(TimeUnits/yr);
   if (FeedbackFlag == FORMATION) {
     // single Pop III star
-    if (StarType == PopIII && MassEnclosed > (1.0+epsMass)*(AccretedMass+Mass)) {
+    if (StarType == PopIII && MassEnclosed > (1.0+epsMass)*(AccretedMass+float(Mass))) {
       SphereContained = FALSE;
       return SUCCESS;
     }
@@ -309,9 +311,13 @@ int Star::FindFeedbackSphere(LevelHierarchyEntry *LevelArray[], int level,
        never happen! */
 
     if (this->accretion_rate == NULL && this->accretion_time == NULL) {
-      this->naccretions = 2;
+      this->naccretions = 1;
       this->accretion_rate = new float[2];
-      this->accretion_rate[0] = AccretedMass / (Time * TimeUnits);
+
+      // Add a bit of a cushion, so we exceed Pop III stellar mass in
+      // the accretion.  Mass > PopIIIMass is required for star
+      // activation.
+      this->accretion_rate[0] = (1.0001) * AccretedMass / (Time * TimeUnits);
       this->accretion_rate[1] = 0.0;
 
       this->accretion_time = new FLOAT[2];

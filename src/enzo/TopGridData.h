@@ -19,7 +19,7 @@ struct TopGridData
   /* Counters for the TopGrid. */
 
   int   CycleNumber;         // Number of top grid timestep performed
-  int   SubcycleNumber;         // Number of top grid timestep performed
+  int   SubcycleNumber;         // Number of top grid tximestep performed
   FLOAT Time;                // Current problem time
   double CPUTime;            // Current CPU time used
   double StartCPUTime;
@@ -105,6 +105,11 @@ struct TopGridData
   char *LocalDir;               // local disk directory name
   char *GlobalDir;              // global disk directory name
 
+  char *MetaDataIdentifier;     // A name (string) that will be persisted between datasets
+  char *SimulationUUID;         // Unique identifier for the simulation
+  char *RestartDatasetUUID;     // Identifier of the dataset restarting from
+  char *InitialConditionsUUID;  // Identifier of the initial conditions used
+
   /* TopGrid Parameters governing hierarchy */
 
   int StaticHierarchy;     // TRUE for static mesh refinement
@@ -125,7 +130,7 @@ struct TopGridData
   /* Particle and Particle boundary data. (real one in ExternalBoundary). */
 
   boundary_type ParticleBoundaryType;
-  int           NumberOfParticles;
+  PINT          NumberOfParticles;
 
   /* Hydro Parameters.  
      These are here out of convenience, the real ones are in the grids. */
@@ -137,7 +142,7 @@ struct TopGridData
 
   AMRHDF5Writer AmiraGrid;
   int FirstTimestepAfterRestart;
-  int TimestepCounter;
+  int MovieTimestepCounter;
   float GlobalMaximumkphIfront;
 
 };

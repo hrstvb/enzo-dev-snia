@@ -22,7 +22,6 @@
 #include "Hierarchy.h"
 #include "TopGridData.h"
 #include "LevelHierarchy.h"
-#include "StarParticleData.h"
 
 int GetUnits(float *DensityUnits, float *LengthUnits,
 	     float *TemperatureUnits, float *TimeUnits,
@@ -72,8 +71,8 @@ int Star::CalculateMassAccretion(void)
     }
 
   int igrid[MAX_DIMENSION], dim, index, size = 1;
-  float c_s, mu, number_density, old_mass, delta_mass, mdot, mdot_UpperLimit, mdot_Edd, v_rel, dvel;
-  float *temperature, density;
+  float c_s, mu, number_density, old_mass, delta_mass, mdot, mdot_original, mdot_UpperLimit, mdot_Edd;
+  float *temperature, density, RadiusB, v_rel, dvel;
 
   for (dim = 0; dim < MAX_DIMENSION; dim++) {
     size *= CurrentGrid->GridDimension[dim];
@@ -99,6 +98,7 @@ int Star::CalculateMassAccretion(void)
        igrid[1] + CurrentGrid->GridStartIndex[1]) * CurrentGrid->GridDimension[0] + 
       igrid[0] + CurrentGrid->GridStartIndex[0];
     density = CurrentGrid->BaryonField[DensNum][index];
+
     if (MultiSpecies == 0) {
       number_density = density * DensityUnits / (DEFAULT_MU * m_h);
       mu = DEFAULT_MU;
@@ -117,8 +117,6 @@ int Star::CalculateMassAccretion(void)
 		 CurrentGrid->BaryonField[H2IINum][index]);
       mu = density / number_density;
     }
-    c_s = sqrt(Gamma * k_b * temperature[index] / (mu * m_h));
-    old_mass = this->Mass;
 
     // Calculate gas relative velocity (cm/s)
     v_rel = 0.0;
@@ -128,34 +126,58 @@ int Star::CalculateMassAccretion(void)
     }
     v_rel = sqrt(v_rel) * VelocityUnits;
 
+    // if requested, fix the temperature and zero v_rel 
+    // so you don't get overpowered by high T SN bubble
+    if (this->type == MBH && (MBHAccretion == 2 || MBHAccretion == 12)) {
+      v_rel = 0.0;
+      temperature[index] = MBHAccretionFixedTemperature;   
+    }
+
+    c_s = sqrt(Gamma * k_b * temperature[index] / (mu * m_h));
+    old_mass = (float)(this->Mass);
+
     // Calculate accretion rate in Msun/s
     mdot = 4.0 * PI * Grav*Grav * (old_mass * old_mass * Msun) * 
       (density * DensityUnits) / pow(c_s * c_s + v_rel * v_rel, 1.5);
 
-    // Don't take out too much mass suddenly; mdot should leave at least 75% of the gas in the grids.
-    // following star_maker8.C by Peng Wang  - Ji-hoon Kim in Sep.2009
-    mdot_UpperLimit = 0.25 * density * DensityUnits * 
-      pow(CurrentGrid->CellWidth[0][0]*LengthUnits, 3.0) / Msun / 
-      (CurrentGrid->dtFixed) / TimeUnits;
-    mdot = min(mdot, mdot_UpperLimit);
-
-    // No accretion if the BH is in some low-density and cold cell.
-    if (density < tiny_number || temperature[index] < 10 || isnan(mdot) || MBHAccretion != 1)
-      mdot = 0.0;
-
     if (this->type == MBH) { 
-      // For MBH, MBHAccretingMassRatio is implemented because
-      // since we already resolve Bondi radius, the local density we used to calculate mdot 
-      // could be higher than what you are supposed to use for mdot, thus overestimating mdot.
-      // So MBHAccretingMassRatio < 1 can be used to fix this.  Ji-hoon Kim Sep.2009
-      mdot *= MBHAccretingMassRatio;
 
-      // Calculate Eddington accretion rate in Msun/s; the Eddington limit for feedback
+      // if requested, just fix mdot (e.g. to 1e-4 Msun/yr)
+      if (MBHAccretion == 3 || MBHAccretion == 13)
+	mdot = MBHAccretionFixedRate / yr; 
+
+      /* For MBH, MBHAccretingMassRatio is implemented; when we resolve Bondi radius, 
+	 the local density used to calculate mdot can be higher than what was supposed 
+	 to be used (density at Bondi radius), resulting in the overestimation of mdot. 
+	 MBHAccretingMassRatio (=< 1) can be used to fix this.  Or one might try using
+	 the density profile of R^-1.5 to estimate the density at R_Bondi 
+	 (similar to Wang et al. 2009) -Ji-hoon Kim, Sep.2009 */
+      mdot_original = mdot;
+      if (MBHAccretingMassRatio > 0) {
+	mdot *= MBHAccretingMassRatio;
+      } else {
+	RadiusB = 2.0 * Grav * old_mass * Msun / (c_s * c_s) / LengthUnits;
+	mdot *= min(pow(CurrentGrid->CellWidth[0][0]/RadiusB, 1.5), 1.0);
+      }
+	
+      /* Don't take out too much mass suddenly */
+//     mdot_UpperLimit = 0.10 * density * DensityUnits * 
+//	pow(CurrentGrid->CellWidth[0][0]*LengthUnits, 3.0) / Msun / 
+//	(CurrentGrid->dtFixed) / TimeUnits;
+//     mdot = min(mdot, mdot_UpperLimit);
+      
+      /* Calculate Eddington accretion rate in Msun/s; the Eddington limit for feedback */
       mdot_Edd = 4.0 * PI * Grav * old_mass * m_h /
 	MBHFeedbackRadiativeEfficiency / sigma_T / c; 
 
-      mdot = min(mdot, mdot_Edd); 
-      //fprintf(stdout, "mdot_UpperLimit=%g, mdot_Edd=%g, mdot=%g\n", mdot_UpperLimit, mdot_Edd, mdot); 
+      if (MBHAccretion < 10)
+	mdot = min(mdot, mdot_Edd); 
+
+      /* No accretion if the BH is in some low-density and cold cell. */
+      if (density < tiny_number || temperature[index] < 10 || isnan(mdot) || !(MBHAccretion > 0))
+	mdot = 0.0;
+
+//    fprintf(stdout, "mdot_UpperLimit=%g, mdot_Edd=%g, mdot=%g\n", mdot_UpperLimit, mdot_Edd, mdot); 
     }
 
     //this->DeltaMass += mdot * (CurrentGrid->dtFixed * TimeUnits);
@@ -169,12 +191,14 @@ int Star::CalculateMassAccretion(void)
     this->accretion_time[0] = time;
 
     if (mdot > 0.0)
-      fprintf(stdout, "BH Accretion[%"ISYM"]: time = %"FSYM", mdot = %"GSYM" Msun/yr, "
-	      "M_BH = %"GSYM" Msun, rho = %"GSYM" g/cm3, T = %"GSYM" K, v_rel = %"GSYM" cm/s\n",
-	      Identifier, time, mdot*yr, Mass, density*DensityUnits,
+      fprintf(stdout, "BH Accretion[%"ISYM"]: time = %"FSYM", mdot_ori = %"GSYM", mdot = %"GSYM" Msun/yr, "
+	      "M_BH = %lf Msun, rho = %"GSYM" g/cm3, T = %"GSYM" K, v_rel = %"GSYM" cm/s\n",
+	      Identifier, time, mdot_original*yr, mdot*yr, Mass, density*DensityUnits,
 	      temperature[index], v_rel);
 
   } // ENDIF LOCAL_ACCRETION  
+
+
   
   if (AccretionType == BONDI_ACCRETION ||
       AccretionType == RADIAL_ACCRETION) {

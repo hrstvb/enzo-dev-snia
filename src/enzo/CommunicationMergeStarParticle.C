@@ -16,12 +16,12 @@
 /
 ************************************************************************/
 
-#include <stdio.h>
-#include <string>
-#include <math.h>
 #ifdef USE_MPI
 #include "mpi.h"
 #endif /* USE_MPI */
+#include <stdio.h>
+#include <string>
+#include <math.h>
 #include "macros_and_parameters.h"
 #include "typedefs.h"
 #include "global_data.h"
@@ -32,14 +32,13 @@
 #include "TopGridData.h"
 #include "Hierarchy.h"
 #include "LevelHierarchy.h"
-#include "StarParticleData.h"
 
 /* function prototypes */
 
 int CommunicationBarrier();
 int GetUnits(float *DensityUnits, float *LengthUnits,
 	     float *TemperatureUnits, float *TimeUnits,
-	     float *VelocityUnits, FLOAT Time);
+	     float *VelocityUnits, double *MassUnits, FLOAT Time);
 void ParticleMergeSmallToBig(ParticleEntry *List, const int &Size, 
 			     const float &MergeMass, const FLOAT &MergeDistance, 
 			     int *Flag, int &GroupSize);
@@ -61,12 +60,13 @@ static MPI_Datatype MPI_ParticleEntry;
 int CommunicationMergeStarParticle(HierarchyEntry *Grids[],				   
 				   int NumberOfGrids)
 {
-
+  printf("CommunicationMergeStarParticle running......................\n");
+#ifdef USE_MPI
   double time1 = ReturnWallTime();
 
   /* count particles on this processor */
 
-  int ParticlesToSend = 0;
+  Eint32 ParticlesToSend = 0;
   for (int grid = 0; grid < NumberOfGrids; grid++) {
     if (Grids[grid]->GridData->ReturnProcessorNumber() == MyProcessorNumber)
       ParticlesToSend += Grids[grid]->GridData->ReturnNumberOfParticles();
@@ -108,7 +108,7 @@ int CommunicationMergeStarParticle(HierarchyEntry *Grids[],
 
   /* communicate to get particle counts on every processory */
 
-  int *SendListCount = new int[NumberOfProcessors];
+  Eint32 *SendListCount = new Eint32[NumberOfProcessors];
 
   MPI_Allgather(&ParticlesToSend, 1, MPI_INT, SendListCount, 1, MPI_INT, MPI_COMM_WORLD);
 
@@ -123,7 +123,7 @@ int CommunicationMergeStarParticle(HierarchyEntry *Grids[],
   
   /* calculate memory displacement */
 
-  int *SendListDisplacements = new int[NumberOfProcessors];
+  Eint32 *SendListDisplacements = new Eint32[NumberOfProcessors];
   SendListDisplacements[0] = 0;
   for (int i = 1; i < NumberOfProcessors; i++)
     SendListDisplacements[i] = SendListDisplacements[i-1] + SendListCount[i-1];
@@ -136,11 +136,15 @@ int CommunicationMergeStarParticle(HierarchyEntry *Grids[],
 		 SharedList, SendListCount, SendListDisplacements, MPI_ParticleEntry,
 		 MPI_COMM_WORLD);
 
-  float DensityUnits = 1.0, LengthUnits = 1.0, TemperatureUnits = 1, TimeUnits = 1.0, 
-    VelocityUnits = 1.0;
-  GetUnits(&DensityUnits, &LengthUnits, &TemperatureUnits, &TimeUnits, &VelocityUnits, 1.0);
+  float DensityUnits = 1.0, LengthUnits = 1.0, TemperatureUnits = 1, 
+    TimeUnits = 1.0, VelocityUnits = 1.0;
+  double MassUnits = 1.0;
+
+  GetUnits(&DensityUnits, &LengthUnits, &TemperatureUnits, &TimeUnits, 
+	   &VelocityUnits, &MassUnits, 1.0);
+
   double Msun = 1.989e33;
-  double MassUnits = DensityUnits*pow(LengthUnits,3)/Msun;
+  if(UsePhysicalUnit) MassUnits = DensityUnits*pow(LengthUnits,3)/Msun;
 
   /*
   if (debug) {
@@ -159,6 +163,9 @@ int CommunicationMergeStarParticle(HierarchyEntry *Grids[],
     }
   }
   */
+  //  printf("\n CMSP: SinkMergeDistance = %g, SinkMergeMass = %g, MassUnits = %g\n \n",
+  //	 SinkMergeDistance, SinkMergeMass, MassUnits); 
+
 
   int *MergeFlagList = new int[NumberOfSharedParticles]; // group ID of every merged particle
   for (int i = 0; i < NumberOfSharedParticles; i++)
@@ -166,19 +173,19 @@ int CommunicationMergeStarParticle(HierarchyEntry *Grids[],
   int NumberOfGroups = 0;
 
   /* first, merge small particles to big ones */
-
+  printf("Merge small particles to big ones \n");
   ParticleMergeSmallToBig(SharedList, NumberOfSharedParticles, 
 			  SinkMergeMass/MassUnits, SinkMergeDistance, 
 			  MergeFlagList, NumberOfGroups);
 
   /* second, group small particles using FOF and merge */
-
+  printf("Merge small particles together \n");
   ParticleMergeSmallGroup(SharedList, NumberOfSharedParticles, 
 			  SinkMergeMass/MassUnits, SinkMergeDistance,
 			  MergeFlagList, NumberOfGroups);
 
   /* delete merged old particles */
-
+  printf("Delete old particles \n");
   for (int grid = 0; grid < NumberOfGrids; grid++) {
     if (Grids[grid]->GridData->ReturnProcessorNumber() == MyProcessorNumber) {
       Grids[grid]->GridData->RemoveMergedParticles(SharedList, NumberOfSharedParticles, 
@@ -248,6 +255,7 @@ int CommunicationMergeStarParticle(HierarchyEntry *Grids[],
   delete [] NewList;
 
   //  PerformanceTimers[34] += ReturnWallTime() - time1;
+#endif /* MPI */
 
   return SUCCESS;
 }

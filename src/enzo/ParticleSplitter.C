@@ -35,7 +35,6 @@
 #include "Hierarchy.h"
 #include "TopGridData.h"
 #include "LevelHierarchy.h"
-#include "StarParticleData.h"
 #include "CosmologyParameters.h"
 #include "CommunicationUtilities.h"
 
@@ -59,7 +58,9 @@ int ParticleSplitter(LevelHierarchyEntry *LevelArray[], int ThisLevel,
 
   /* Return if this does not concern us */
 
-  if (ParticleSplitterIterations <= 0 || !(MetaData->FirstTimestepAfterRestart)) 
+  if (ParticleSplitterIterations <= 0 || 
+      ParticleSplitterChildrenParticleSeparation <=0 ||
+      !(MetaData->FirstTimestepAfterRestart)) 
     return SUCCESS;
 
   int level, i, grid1;
@@ -75,6 +76,9 @@ int ParticleSplitter(LevelHierarchyEntry *LevelArray[], int ThisLevel,
 
 
   /* Initialize all star particles if this is a restart */
+
+  if (ParticleSplitterIterations > 1)
+    fprintf(stderr, "WARNING: ParticleSplitterIterations > 1 is not properly tested yet.\n");
 
   for (i = 0; i < ParticleSplitterIterations; i++) {
 

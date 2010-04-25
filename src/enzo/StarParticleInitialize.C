@@ -23,7 +23,6 @@
 #include "Hierarchy.h"
 #include "TopGridData.h"
 #include "LevelHierarchy.h"
-#include "StarParticleData.h"
 
 int StarParticleFindAll(LevelHierarchyEntry *LevelArray[], Star *&AllStars);
 int StarParticleMergeNew(LevelHierarchyEntry *LevelArray[], Star *&AllStars);
@@ -41,6 +40,15 @@ int StarParticleInitialize(HierarchyEntry *Grids[], TopGridData *MetaData,
   /* Return if this does not concern us */
   if (!(StarParticleCreation || StarParticleFeedback)) 
     return SUCCESS;
+
+  /* Set MetaData->NumberOfParticles and prepare TotalStarParticleCountPrevious
+     these are to be used in CommunicationUpdateStarParticleCount 
+     in StarParticleFinalize */  
+
+  MetaData->NumberOfParticles = FindTotalNumberOfParticles(LevelArray);
+  NumberOfOtherParticles = MetaData->NumberOfParticles - NumberOfStarParticles;
+  RecordTotalStarParticleCount(Grids, NumberOfGrids, 
+			       TotalStarParticleCountPrevious);
 
   int level, grids;
   Star *cstar;
@@ -95,21 +103,11 @@ int StarParticleInitialize(HierarchyEntry *Grids[], TopGridData *MetaData,
     cstar->MirrorToParticle();
   }
 
-  /* Set MetaData->NumberOfParticles and prepare TotalStarParticleCountPrevious
-     these are to be used in CommunicationUpdateStarParticleCount 
-     in StarParticleFinalize */  
+//  fprintf(stdout, "\nin StarParticleInitialize.C \n", MetaData->NumberOfParticles); 
+//  fprintf(stdout, "MetaData->NumberOfParticles = %d\n", MetaData->NumberOfParticles); 
+//  fprintf(stdout, "NumberOfStarParticles now = %d\n", NumberOfStarParticles);
+//  fprintf(stdout, "NumberOfOtherParticles now = %d\n", NumberOfOtherParticles);
 
-  MetaData->NumberOfParticles = FindTotalNumberOfParticles(LevelArray);
-  NumberOfOtherParticles = MetaData->NumberOfParticles - NumberOfStarParticles;
-  RecordTotalStarParticleCount(Grids, NumberOfGrids, 
-			       TotalStarParticleCountPrevious);
-
-  /*
-  fprintf(stdout, "\nin StarParticleInitialize.C \n", MetaData->NumberOfParticles); 
-  fprintf(stdout, "MetaData->NumberOfParticles = %d\n", MetaData->NumberOfParticles); 
-  fprintf(stdout, "NumberOfStarParticles now = %d\n", NumberOfStarParticles);
-  fprintf(stdout, "NumberOfOtherParticles now = %d\n", NumberOfOtherParticles);
-  */
 
   return SUCCESS;
 
