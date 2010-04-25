@@ -31,7 +31,6 @@
 #include "Hierarchy.h"
 #include "TopGridData.h"
 #include "LevelHierarchy.h"
-#include "StarParticleData.h"
 
 void DeleteStar(Star * &Node);
 int GetUnits(float *DensityUnits, float *LengthUnits,
@@ -107,7 +106,7 @@ int StarParticleMergeMBH(LevelHierarchyEntry *LevelArray[], Star *&AllStars)
   while (ThisStar)
     if (ThisStar->MarkedToDelete()) {
       ThisStar->DeleteCopyInGrid();
-      ThisStar->DeleteParticle(LevelArray);
+      ThisStar->DisableParticle(LevelArray);
       DeleteStar(ThisStar); // ThisStar becomes the next star in DeleteStar()
     } else
       ThisStar = ThisStar->NextStar;

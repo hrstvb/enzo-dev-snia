@@ -34,6 +34,8 @@
 /                Optional StaticSiblingList for root grid
 /  modified8:  April, 2009 by John Wise
 /                Added star particle class and radiative transfer
+/  modified9:  July, 2009 by Sam Skillman
+/                Added shock and cosmic ray analysis
 /
 /  PURPOSE:
 /    This routine is the main grid evolution function.  It assumes that the
@@ -171,10 +173,16 @@ int CreateSiblingList(HierarchyEntry ** Grids, int NumberOfGrids, SiblingGridLis
 		      int StaticLevelZero,TopGridData * MetaData,int level);
 
 #ifdef FLUX_FIX
+#ifdef FAST_SIB 
 int CreateSUBlingList(TopGridData *MetaData,
-		      HierarchyEntry *Grids[],
-		      int NumberOfGrids,
+		      LevelHierarchyEntry *LevelArray[], int level,
+		      SiblingGridList SiblingList[],
 		      LevelHierarchyEntry ***SUBlingList);
+#else
+int CreateSUBlingList(TopGridData *MetaData,
+		      LevelHierarchyEntry *LevelArray[], int level,
+		      LevelHierarchyEntry ***SUBlingList);
+#endif /* FAST_SIB */
 int DeleteSUBlingList(int NumberOfGrids,
 		      LevelHierarchyEntry **SUBlingList);
 #endif
@@ -229,14 +237,14 @@ int EvolveLevel(TopGridData *MetaData, LevelHierarchyEntry *LevelArray[],
   /* Declarations */
 
   int dbx = 0;
- 
+
   FLOAT When, GridTime;
   //float dtThisLevelSoFar = 0.0, dtThisLevel, dtGrid, dtActual, dtLimit;
   //float dtThisLevelSoFar = 0.0, dtThisLevel;
   int cycle = 0, counter = 0, grid1, subgrid, grid2;
   HierarchyEntry *NextGrid;
   int dummy_int;
- 
+
   // Update lcaperf "level" attribute
 
   Eint32 lcaperf_level = level;
@@ -274,15 +282,17 @@ int EvolveLevel(TopGridData *MetaData, LevelHierarchyEntry *LevelArray[],
   /* For each grid: a) interpolate boundaries from its parent.
                     b) copy any overlapping zones.  */
  
+  if (CheckpointRestart == FALSE) {
 #ifdef FAST_SIB
-  if (SetBoundaryConditions(Grids, NumberOfGrids, SiblingList,
-			    level, MetaData, Exterior, LevelArray[level]) == FAIL)
-    ENZO_FAIL("Error in SetBoundaryConditions (FastSib)");
+    if (SetBoundaryConditions(Grids, NumberOfGrids, SiblingList,
+                  level, MetaData, Exterior, LevelArray[level]) == FAIL)
+      ENZO_FAIL("Error in SetBoundaryConditions (FastSib)");
 #else
-  if (SetBoundaryConditions(Grids, NumberOfGrids, level, MetaData,
-                            Exterior, LevelArray[level]) == FAIL)
-    ENZO_FAIL("Error in SetBoundaryConditions (SlowSib)");
+    if (SetBoundaryConditions(Grids, NumberOfGrids, level, MetaData,
+                              Exterior, LevelArray[level]) == FAIL)
+      ENZO_FAIL("Error in SetBoundaryConditions (SlowSib)");
 #endif
+  }
  
   /* Clear the boundary fluxes for all Grids (this will be accumulated over
      the subcycles below (i.e. during one current grid step) and used to by the
@@ -442,6 +452,10 @@ int EvolveLevel(TopGridData *MetaData, LevelHierarchyEntry *LevelArray[],
 
       Grids[grid1]->GridData->StarParticleHandler
 	(Grids[grid1]->NextGridNextLevel, level);
+
+      /* Include shock-finding and cosmic ray acceleration */
+
+      Grids[grid1]->GridData->ShocksHandler();
  
       /* Gravity: clean up AccelerationField. */
 
@@ -518,8 +532,8 @@ int EvolveLevel(TopGridData *MetaData, LevelHierarchyEntry *LevelArray[],
     /* Evolve the next level down (recursively). */
  
     MetaData->FirstTimestepAfterRestart = FALSE;
-    } 
-    else { // CheckpointRestart == FALSE
+
+    } else { // CheckpointRestart
         // dtThisLevelSoFar set during restart
         // dtThisLevel set during restart
         // Set dtFixed on each grid to dtThisLevel
@@ -533,7 +547,6 @@ int EvolveLevel(TopGridData *MetaData, LevelHierarchyEntry *LevelArray[],
 	ENZO_FAIL("");
       }
     }
-
 
 #ifdef USE_LCAPERF
     // Update lcaperf "level" attribute
@@ -551,7 +564,7 @@ int EvolveLevel(TopGridData *MetaData, LevelHierarchyEntry *LevelArray[],
 
     if (LevelArray[level+1] == NULL) {
       MetaData->SubcycleNumber++;
-      MetaData->TimestepCounter++;
+      MetaData->MovieTimestepCounter++;
     }
 
     /* ------------------------------------------------------- */
@@ -563,8 +576,13 @@ int EvolveLevel(TopGridData *MetaData, LevelHierarchyEntry *LevelArray[],
  
 #ifdef FLUX_FIX
     SUBlingList = new LevelHierarchyEntry*[NumberOfGrids];
-    CreateSUBlingList(MetaData, Grids,NumberOfGrids, &SUBlingList);
-#endif
+#ifdef FAST_SIB
+    CreateSUBlingList(MetaData, LevelArray, level, SiblingList,
+		      &SUBlingList);
+#else
+    CreateSUBlingList(MetaData, LevelArray, level, &SUBlingList);
+#endif /* FAST_SIB */
+#endif /* FLUX_FIX */
 
 #ifdef FLUX_FIX
     UpdateFromFinerGrids(level, Grids, NumberOfGrids, NumberOfSubgrids,
@@ -624,15 +642,12 @@ int EvolveLevel(TopGridData *MetaData, LevelHierarchyEntry *LevelArray[],
   lcaperf.attribute ("level",0,LCAPERF_NULL);
 #endif
 
-
-
-
-  
   /* Clean up. */
  
   delete [] NumberOfSubgrids;
   delete [] Grids;
   delete [] SubgridFluxesEstimate;
+  delete [] TotalStarParticleCountPrevious;
 
   dtThisLevel[level] = dtThisLevelSoFar[level] = 0.0;
  

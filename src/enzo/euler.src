@@ -494,8 +494,8 @@ c
           endif
 c           A small cheat: if idual is on, assume a cosmo sim, and institute
 c              a minimum density.  This should be a parameter and pased in.
-c          if (idual .eq. 1 .and. gravity .eq. 1) 
-          dnu(i) = max(dnu(i),1.0e-3)
+          if (idual .eq. 1 .and. gravity .eq. 1) 
+     &         dnu(i) = max(dnu(i),1.0e-3)
           uold(i)     = uslice(i,j)
 c          write(20,*) i, uslice(i,j), (uslice(i,j)*dslice(i,j) +
 c     &         qc*(duub(i)-duub(i+1) +  pb(i) -  pb(i+1)))/dnu(i),
@@ -527,7 +527,7 @@ c
 c             colslice(i,j,n) = (colslice(i,j,n)*dslice(i,j) +
 c     &         (colf(i,j,n)-colf(i+1,j,n))/dx(i)      )/dnu(i) ! c*d conserved
              if (colslice(i,j,n)              +
-     &         (colf(i,j,n)-colf(i+1,j,n))/dx(i) .le. 0.0) write(6,*)
+     &         (colf(i,j,n)-colf(i+1,j,n))/dx(i) .lt. 0.0) write(6,*)
      &         'euler_c:',i,j,n,dx(i),
      &          colf(i-1,j,n),colf(i,j,n),colf(i+1,j,n),
      &          colslice(i-1,j,n),colslice(i,j,n),colslice(i+1,j,n),

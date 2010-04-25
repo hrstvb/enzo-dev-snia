@@ -50,13 +50,16 @@ int CommunicationShareGrids(HierarchyEntry *GridHierarchyPointer[], int grids,
 			    int ShareParticles = TRUE); 
 int CommunicationLoadBalanceGrids(HierarchyEntry *GridHierarchyPointer[],
 				  int NumberOfGrids, int MoveParticles = TRUE);
+int LoadBalanceHilbertCurve(HierarchyEntry *GridHierarchyPointer[],
+			    int NumberOfGrids, int MoveParticles = TRUE);
 int CommunicationTransferSubgridParticles(LevelHierarchyEntry *LevelArray[],
 					  TopGridData *MetaData, int level);
 int CommunicationTransferParticles(grid *GridPointer[], int NumberOfGrids);
 int CommunicationTransferStars(grid *GridPointer[], int NumberOfGrids);
 int CommunicationCollectParticles(LevelHierarchyEntry *LevelArray[], int level,
 				  bool ParticlesAreLocal,
-				  bool SyncNumberOfParticles, int CollectMode);
+				  bool SyncNumberOfParticles, 
+				  bool MoveStars, int CollectMode);
 int CommunicationSyncNumberOfParticles(HierarchyEntry *GridHierarchyPointer[],
 				       int NumberOfGrids);
 int FastSiblingLocatorInitialize(ChainingMeshStructure *Mesh, int Rank,
@@ -96,6 +99,7 @@ int RebuildHierarchy(TopGridData *MetaData,
   ReportMemoryUsage("Rebuild pos 1");
  
   bool ParticlesAreLocal, SyncNumberOfParticles = true;
+  bool MoveStars = true;
   int i, j, k, grids, grids2, subgrids, MoveParticles;
   int TotalFlaggedCells, FlaggedGrids;
   FLOAT ZeroVector[MAX_DIMENSION];
@@ -203,7 +207,8 @@ int RebuildHierarchy(TopGridData *MetaData,
     ParticlesAreLocal = false;
     SyncNumberOfParticles = false;
     CommunicationCollectParticles(LevelArray, level, ParticlesAreLocal, 
-				  SyncNumberOfParticles, SIBLINGS_ONLY);
+				  SyncNumberOfParticles, MoveStars,
+				  SIBLINGS_ONLY);
     ParticlesAreLocal = true;
     SyncNumberOfParticles = true;
   }
@@ -234,7 +239,8 @@ int RebuildHierarchy(TopGridData *MetaData,
       ParticlesAreLocal = false;
       SyncNumberOfParticles = true;
       CommunicationCollectParticles(LevelArray, level, ParticlesAreLocal, 
-				    SyncNumberOfParticles, SIBLINGS_ONLY);
+				    SyncNumberOfParticles, MoveStars,
+				    SIBLINGS_ONLY);
       ParticlesAreLocal = true;
       SyncNumberOfParticles = true;
     }
@@ -390,7 +396,8 @@ int RebuildHierarchy(TopGridData *MetaData,
 
       tt0 = ReturnWallTime();
       CommunicationCollectParticles(LevelArray, i, ParticlesAreLocal,
-				    SyncNumberOfParticles, SUBGRIDS_LOCAL);
+				    SyncNumberOfParticles, MoveStars,
+				    SUBGRIDS_LOCAL);
       tt1 = ReturnWallTime();
       RHperf[7] += tt1-tt0;
 
@@ -475,11 +482,16 @@ int RebuildHierarchy(TopGridData *MetaData,
       case 1:
       case 2:
       case 3:
-	CommunicationLoadBalanceGrids(SubgridHierarchyPointer, subgrids, 
-				      MoveParticles);
+	if (i >= LoadBalancingMinLevel && i <= LoadBalancingMaxLevel)
+	  CommunicationLoadBalanceGrids(SubgridHierarchyPointer, subgrids, 
+					MoveParticles);
+	break;
+      case 4:
+	if (i >= LoadBalancingMinLevel && i <= LoadBalancingMaxLevel)
+	  LoadBalanceHilbertCurve(SubgridHierarchyPointer, subgrids, 
+				  MoveParticles);
 	break;
       default:
-	
 	break;
       }
       tt1 = ReturnWallTime();
@@ -494,7 +506,8 @@ int RebuildHierarchy(TopGridData *MetaData,
 	for (j = level; j <= MaximumStaticSubgridLevel+1; j++)
 	  if (LevelArray[j] != NULL)
 	    CommunicationCollectParticles(LevelArray, j, ParticlesAreLocal,
-					  SyncNumberOfParticles, SIBLINGS_ONLY);
+					  SyncNumberOfParticles, MoveStars,
+					  SIBLINGS_ONLY);
       tt1 = ReturnWallTime();
       RHperf[14] += tt1-tt0;
 

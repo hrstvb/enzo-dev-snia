@@ -20,7 +20,6 @@
 #include "ExternalBoundary.h"
 #include "Grid.h"
 #include "CosmologyParameters.h"
-#include "StarParticleData.h"
 #include "EOS.h"
 
 int GetUnits(float *DensityUnits, float *LengthUnits,
@@ -38,7 +37,7 @@ int grid::TurbulenceInitializeGrid(float CloudDensity, float CloudSoundSpeed, FL
 
   /* declarations */
 
-  int dim, i, j, k, m, n, field, sphere, size, igrid, activesize;
+  int dim, i, j, k,l, m, n, field, sphere, size, igrid, activesize;
   int DeNum, HINum, HIINum, HeINum, HeIINum, HeIIINum, HMNum, H2INum, H2IINum,
     DINum, DIINum, HDINum,  kphHINum, gammaNum, kphHeINum,
     kphHeIINum, kdissH2INum, RPresNum1, RPresNum2, RPresNum3;
@@ -236,9 +235,9 @@ int grid::TurbulenceInitializeGrid(float CloudDensity, float CloudSoundSpeed, FL
 
 	if (r < CloudRadius) {
 
-	  /* Type 0: uniform cloud */
+	  /* Type 0: uniform cloud, 7: uniform cloud (only turb k=1-2) */
 
-	  if (CloudType == 0) {
+	  if (CloudType == 0 || CloudType == 7) {
 	    Density = CloudDensity;
 	    eint = CloudInternalEnergy;
 	  }
@@ -304,7 +303,7 @@ int grid::TurbulenceInitializeGrid(float CloudDensity, float CloudSoundSpeed, FL
 
 	} else {
 
-	  if (CloudType == 0) {
+	  if (CloudType == 0 || CloudType == 7 ) {
 	    Density = CloudDensity/100.0;
 	    eint = CloudInternalEnergy*100.;
 	  }
@@ -438,6 +437,14 @@ int grid::TurbulenceInitializeGrid(float CloudDensity, float CloudSoundSpeed, FL
       k2 = 10.0;
       dk = 1.0;
     }
+
+    if (CloudType == 7) {
+      k1 = 1.0;
+      k2 = 2.0;
+      dk = 0.5;
+    }
+
+
     printf("Begin generating turbulent velocity spectrum...\n");
     Turbulence_Generator(TurbulenceVelocity, GridDimension[0]-2*DEFAULT_GHOST_ZONES, 
 			 GridDimension[1]-2*DEFAULT_GHOST_ZONES,
@@ -449,7 +456,7 @@ int grid::TurbulenceInitializeGrid(float CloudDensity, float CloudSoundSpeed, FL
     float VelocityNormalization = 1;
 // for level > 0 grids the CloudMachNumber passed in is actuall the Velocity normalization factor
   if (level > 0) VelocityNormalization = CloudMachNumber; 
-
+  printf("Cloud Mach Number = %g \n",CloudMachNumber);
   for (i = 0; i < 3; i++) {
     for (n = 0; n < activesize; n++) {
       TurbulenceVelocity[i][n] *= VelocityNormalization;
@@ -523,7 +530,7 @@ int grid::TurbulenceInitializeGrid(float CloudDensity, float CloudSoundSpeed, FL
     }
     
     /* Renormalize the mass-weighted 3D rms velocity inside the cloud */
-
+    /*
     double VelRMS = 0.0, Mass = 0.0;
     n = 0;
     for (k = GridStartIndex[2]; k <= GridEndIndex[2]; k++) {
@@ -546,16 +553,16 @@ int grid::TurbulenceInitializeGrid(float CloudDensity, float CloudSoundSpeed, FL
 	}
       }
     }
-    
+    */
     //printf("Grid_TubInit: Mass = %"FSYM"\n",Mass);
-    VelRMS /= Mass;
+    /* VelRMS /= Mass;
     double t_ff = sqrt(32.0/(3.0*M_PI*CloudDensity));
     double NormFactor = CloudMachNumber * CloudSoundSpeed / VelRMS / t_ff;
     for (dim = 0; i < GridRank; dim++) {
       for (n = 0; n < activesize; n++) {
 	DrivingField[dim][n] *= NormFactor;
       }
-    }
+      }*/
 
     n = 0;
     for (k = GridStartIndex[2]; k <= GridEndIndex[2]; k++) {
@@ -625,6 +632,82 @@ int grid::TurbulenceInitializeGrid(float CloudDensity, float CloudSoundSpeed, FL
     this->ClearParticleAccelerations();
 
   }
+
+
+  if (PutSink == 2 && level == 0) {  // set it up on level zero and make it mustrefine
+
+    printf("Adding Sink Particles. \n");
+    NumberOfParticleAttributes = 3;
+    if (StellarWindFeedback) NumberOfParticleAttributes = 6;
+    this->AllocateNewParticles(NumberOfParticles);
+
+    //    double mass_p = 20.0*1.989e33;
+    double mass_m = 3.415*1.989e33; //Mass of massive stars
+    double mass_s = 0.01*1.989e33; //Mass of small stars
+    mass_m /= MassUnits;
+    mass_s /= MassUnits;
+    double dx = CellWidth[0][0];
+    double den_m = mass_m / pow(dx,3);
+    double den_s = mass_s / pow(dx,3);
+    double t_dyn_m = sqrt(3*M_PI/(6.672e-8*den_m*DensityUnits));
+    double t_dyn_s = sqrt(3*M_PI/(6.672e-8*den_s*DensityUnits));
+    t_dyn_m /= TimeUnits;
+    t_dyn_s /= TimeUnits;
+    double dxm = dx / pow(RefineBy, MaximumRefinementLevel);
+
+    printf("Adding Sink Particles. \n");
+
+    NumberOfParticles = 64;
+    NumberOfStars = 64;
+    //    MaximumParticleNumber = 1;
+    if (StellarWindFeedback) NumberOfParticleAttributes = 3;
+    this->AllocateNewParticles(NumberOfParticles);
+
+    for (k=0; k<4; k++){
+      for (j=0; j<4; j++){
+	for (i=0; i<4; i++){
+	  l = i+4*j+16*k;
+	  printf("Creating particle %i \n",l);
+	  ParticleMass[l] = den_m;
+	  ParticleNumber[l] = l;
+	  ParticleType[l] = PARTICLE_TYPE_MUST_REFINE;
+	  ParticlePosition[0][l] = 0.125+0.25*i; //+0.5*dx;
+	  ParticlePosition[1][l] = 0.125+0.25*j; //+0.5*dx;
+	  ParticlePosition[2][l] = 0.125+0.25*k; //+0.5*dx;
+	  ParticleVelocity[0][l] = 0.0;
+	  ParticleVelocity[1][l] = 0.0;
+	  ParticleVelocity[2][l] = 0.0;
+	  printf("line 680 \n");   
+	  ParticleAttribute[0][l] = 0.2; // creation time             
+	  printf("line 682 \n");   
+	  ParticleAttribute[1][l] = 0.0;
+	  printf("line 684 \n");   
+	  ParticleAttribute[2][l] = mass_m;
+	  printf("line 686 \n");   
+
+	  if (StellarWindFeedback) {
+	    ParticleAttribute[3][l] = 1.0;  
+	    ParticleAttribute[4][l] = 0.0;
+	    ParticleAttribute[5][l] = 0.0;
+	  }
+	  printf("line 693 \n");     
+	  /*for (m = 0; m< MAX_DIMENSION+1; m++){
+	    ParticleAcceleration[m][l] = 0.0;
+	    }*/
+
+	  printf("line 697 \n");     
+	  this->ClearParticleAccelerations();
+	  printf("Completed particle %i \n",l);
+	}
+      }
+    }
+
+  }
+
+
+
+
+
 
   /*  printf("XXX PutSinkParticle = %d\n", PutSinkParticle);
   int PutSinkParticle = 0;
