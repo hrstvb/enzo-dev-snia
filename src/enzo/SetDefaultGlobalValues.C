@@ -127,6 +127,7 @@ int SetDefaultGlobalValues(TopGridData &MetaData)
   CoresPerNode = 1;
   PreviousMaxTask = 0;
   LoadBalancingMinLevel = 0;     //All Levels
+  LoadBalancingMaxLevel = MAX_DEPTH_OF_HIERARCHY;  //All Levels
 
   FileDirectedOutput = 1;
   WriteBinaryHierarchy = 0;
@@ -180,6 +181,7 @@ int SetDefaultGlobalValues(TopGridData &MetaData)
   MustRefineRegionMinRefinementLevel = -1;        // unused if negative
   MetallicityRefinementMinLevel = -1;
   MetallicityRefinementMinMetallicity = 1.0e-5;
+  MetallicityRefinementMinDensity = FLOAT_UNDEFINED;
   FluxCorrection            = TRUE;
   InterpolationMethod       = SecondOrderA;      // ?
   ConservativeInterpolation = TRUE;              // true for ppm
@@ -395,6 +397,10 @@ int SetDefaultGlobalValues(TopGridData &MetaData)
   }
 
   PopIIIStarMass                   = 100;
+  PopIIIInitialMassFunction        = FALSE;
+  PopIIILowerMassCutoff            = 1.0;
+  PopIIIUpperMassCutoff            = 300.0;
+  PopIIIInitialMassFunctionSlope   = -1.3;         // high mass slope
   PopIIIBlackHoles                 = FALSE;
   PopIIIBHLuminosityEfficiency     = 0.1;
   PopIIIOverDensityThreshold       = 1e6;          // times mean total density
@@ -406,6 +412,7 @@ int SetDefaultGlobalValues(TopGridData &MetaData)
   PopIIISupernovaMustRefineResolution = 32;
   PopIIIColorDensityThreshold      = 1e6;          // times mean total density
   PopIIIColorMass                  = 1e6;          // total mass to color
+  IMFData                          = NULL;
 
   MBHMinDynamicalTime              = 10e6;         // in years
   MBHMinimumMass                   = 1e6;          // Msun
@@ -428,6 +435,7 @@ int SetDefaultGlobalValues(TopGridData &MetaData)
   /* Star Class MBH Paricle IO (PARTICLE_TYPE_MBH) */
   MBHParticleIO                    = FALSE;
   MBHParticleIOFilename            = (char*) "mbh_particle_io.dat";
+  OutputWhenJetsHaveNotEjected     = FALSE;
 
   NumberOfParticleAttributes       = INT_UNDEFINED;
   AddParticleAttributes            = FALSE;
@@ -444,6 +452,7 @@ int SetDefaultGlobalValues(TopGridData &MetaData)
   MetaData.MovieTimestepCounter      = 0;
 
   ran1_init = 0;
+  rand_init = 0;
 
   SinkMergeDistance     = 1e16;
   SinkMergeMass         = 0.1;
@@ -643,7 +652,7 @@ int SetDefaultGlobalValues(TopGridData &MetaData)
   ShearingBoxProblemType = 0; 
   useMHD=0;
 
-  MoveParticlesBetweenSiblings = FALSE;
+  MoveParticlesBetweenSiblings = TRUE;
 
   /* Particle Splitter */
 

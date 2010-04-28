@@ -506,6 +506,8 @@ typedef int            HDF5_hid_t;
 
 #define ALL_PARTICLES 1
 #define NON_DM_PARTICLES 2
+#define NON_DM_PARTICLES_MERGED_LEVEL 3
+#define NON_DM_PARTICLES_MERGED_ALL 4
 #define TEMPERATURE_FIELD 1000
 
 #define DEFAULT_MU 0.6
@@ -513,6 +515,10 @@ typedef int            HDF5_hid_t;
 /* Maximum number of leafs per parent in radiation source tree. */
 
 #define MAX_LEAF 2
+
+/* Number of entries in the Pop III IMF lookup table */
+
+#define IMF_TABLE_ENTRIES 1000
 
 #ifdef USE_MPI
 #define MPI_INSTRUMENTATION

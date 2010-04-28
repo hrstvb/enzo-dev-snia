@@ -41,6 +41,7 @@ EXTERN int ResetLoadBalancing;
 EXTERN int CoresPerNode;
 EXTERN int PreviousMaxTask;
 EXTERN int LoadBalancingMinLevel;
+EXTERN int LoadBalancingMaxLevel;
 
 /* FileDirectedOutput checks for file existence: 
    stopNow (writes, stops),   outputNow, subgridcycleCount */
@@ -136,9 +137,9 @@ EXTERN int MustRefineRegionMinRefinementLevel;
    will refine up to (does not prevent refinement to higher levels) */
 EXTERN int MetallicityRefinementMinLevel;
 
-/* threshold metallicity for FlagGridCellsToBeRefinedByMetallicity */
+/* threshold metallicity and density for FlagGridCellsToBeRefinedByMetallicity */
 EXTERN float MetallicityRefinementMinMetallicity;
-
+EXTERN float MetallicityRefinementMinDensity;
 
 /* Velocity to limit timesteps */
 
@@ -692,6 +693,10 @@ EXTERN int UseCUDA;
 
 EXTERN int ran1_init;
 
+/* random number initialization flag */
+
+EXTERN int rand_init;
+
 /* test problem stuff */
 EXTERN TestProblemDataType TestProblemData;
 
@@ -801,6 +806,7 @@ EXTERN float ResetMagneticFieldAmplitude[MAX_DIMENSION];
 EXTERN int MBHParticleIO;
 EXTERN char *MBHParticleIOFilename;
 EXTERN double MBHParticleIOTemp[30][5+MAX_DIMENSION];
+EXTERN int OutputWhenJetsHaveNotEjected;
 
 /* Vorticity Calculations */
 

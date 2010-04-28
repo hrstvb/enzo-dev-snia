@@ -44,11 +44,10 @@ int CommunicationTransferPhotons(LevelHierarchyEntry *LevelArray[],
 				 int &keep_transporting);
 int GenerateGridArray(LevelHierarchyEntry *LevelArray[], int level,
 		      HierarchyEntry **Grids[]);
-//int InitiateKeepTransportingCheck(int keep_transporting);
-//int StopKeepTransportingCheck();
 int InitializePhotonCommunication(char* &kt_global);
 int FinalizePhotonCommunication(char* &kt_global);
 int KeepTransportingCheck(char* &kt_global, int &keep_transporting);
+int KeepTransportingSend(int keep_transporting);
 RadiationSourceEntry* DeleteRadiationSource(RadiationSourceEntry *RS);
 PhotonPackageEntry* DeletePhotonPackage(PhotonPackageEntry *PP);
 int CreateSourceClusteringTree(int nShine, SuperSourceData *SourceList,
@@ -62,8 +61,8 @@ void PrintMemoryUsage(char *str);
 void fpcol(Eflt64 *x, int n, int m, FILE *log_fptr);
 double ReturnWallTime();
 
-#define NONBLOCKING
-#define REPORT_PERF
+#define NONBLOCKING_OFF
+#define REPORT_PERF_OFF
 
 #ifdef REPORT_PERF
 #define START_PERF() tt0 = ReturnWallTime();
@@ -102,21 +101,15 @@ int EvolvePhotons(TopGridData *MetaData, LevelHierarchyEntry *LevelArray[],
 //  printf("GridTime = %f, PhotonTime = %f, dtPhoton = %g (Loop = %d)\n",
 //	 GridTime, PhotonTime, dtPhoton, (GridTime >= PhotonTime));
 
-  //if (dtPhoton < 0)
-  //  return SUCCESS;
+  if (dtPhoton < 0)
+    return SUCCESS;  //#####
 
   /* Declarations */
 
+  int lvl;
   grid *Helper;
-  int lvl, RefinementFactors[MAX_DIMENSION];
-    
-  /* Create an array (Grids) of all the grids. */
-
-  typedef HierarchyEntry* HierarchyEntryPointer;
-  HierarchyEntry **Grids;
-  HierarchyEntry **Parents;
   LevelHierarchyEntry *Temp;
-
+    
   //while (GridTime >= PhotonTime) {
   while (GridTime > PhotonTime) {
 
@@ -133,8 +126,7 @@ int EvolvePhotons(TopGridData *MetaData, LevelHierarchyEntry *LevelArray[],
       printf("EvolvePhotons[%"ISYM"]: dt = %"GSYM", Time = %"FSYM", ", 
 	     level, dtPhoton, PhotonTime);
       
-    int GridNum = 0, value, i, proc;
-    int NumberOfGrids = 0;  
+    int i, GridNum = 0;
 
     // delete source if we are passed (or before) their lifetime (only
     // if not restarting)
@@ -158,9 +150,6 @@ int EvolvePhotons(TopGridData *MetaData, LevelHierarchyEntry *LevelArray[],
 
     if (debug) fprintf(stdout, "%"ISYM" SRC(s)\n", NumberOfSources);
 
-    int Rank, Dims[MAX_DIMENSION];
-    FLOAT Left[MAX_DIMENSION], Right[MAX_DIMENSION];
-  
     /* Initialize radiation fields */
 
     START_PERF();
@@ -262,9 +251,8 @@ int EvolvePhotons(TopGridData *MetaData, LevelHierarchyEntry *LevelArray[],
     ListOfPhotonsToMove *PhotonsToMove = new ListOfPhotonsToMove;
     PhotonsToMove->NextPackageToMove = NULL;
 
-    int loop_count = 0;
-    int ThisProcessor;
     int keep_transporting = 1;
+    int local_keep_transporting = 1, last_keep_transporting;
     char *kt_global = NULL;
 
     HierarchyEntry **Temp0;
@@ -282,30 +270,31 @@ int EvolvePhotons(TopGridData *MetaData, LevelHierarchyEntry *LevelArray[],
     /* Transport the rays! */
 
     while (keep_transporting) {
+      last_keep_transporting = local_keep_transporting;
       keep_transporting = 0;
       PhotonsToMove->NextPackageToMove = NULL;
       PrintMemoryUsage("EvolvePhotons -- loop");
       START_PERF();
+      if (local_keep_transporting)
       for (lvl = MAX_DEPTH_OF_HIERARCHY-1; lvl >= 0 ; lvl--) {
 
-	NumberOfGrids = GenerateGridArray(LevelArray, lvl, &Grids);
-	for (GridNum = 0; GridNum < NumberOfGrids; GridNum++) {
+	//NumberOfGrids = GenerateGridArray(LevelArray, lvl, &Grids);
+	for (Temp = LevelArray[lvl], GridNum = 0;
+	     Temp; Temp = Temp->NextGridThisLevel, GridNum++) {
+	  //for (GridNum = 0; GridNum < NumberOfGrids; GridNum++) {
 
-	  if (Grids[GridNum]->ParentGrid != NULL) 
-	    Helper = Grids[GridNum]->ParentGrid->GridData;
+	  if (Temp->GridHierarchyEntry->ParentGrid != NULL) 
+	    Helper = Temp->GridHierarchyEntry->ParentGrid->GridData;
 	  else
 	    Helper = NULL;
-	  if (Grids[GridNum]->GridData->TransportPhotonPackages
-	      (lvl, &PhotonsToMove, GridNum, Grids0, 
-	       nGrids0, Helper, Grids[GridNum]->GridData) == FAIL) {
-	    fprintf(stderr, "Error in %"ISYM" th grid. "
-		    "grid->TransportPhotonPackages.\n",GridNum);
-	    ENZO_FAIL("");
-	  }
+
+	  Temp->GridData->TransportPhotonPackages
+	    (lvl, &PhotonsToMove, GridNum, Grids0, nGrids0, Helper, 
+	     Temp->GridData);
 
 	} // ENDFOR grids
 
-	delete [] Grids;
+	//delete [] Grids;
 
       }                          // loop over levels
       END_PERF(4);
@@ -330,13 +319,16 @@ int EvolvePhotons(TopGridData *MetaData, LevelHierarchyEntry *LevelArray[],
 
       START_PERF();
 #ifdef NONBLOCKING
+      local_keep_transporting = keep_transporting;
+      if (keep_transporting != last_keep_transporting)
+	KeepTransportingSend(keep_transporting);
       KeepTransportingCheck(kt_global, keep_transporting);
 #else /* NONBLOCKING */
       keep_transporting = CommunicationMaxValue(keep_transporting);
 #endif
       END_PERF(6);
 
-#ifdef REPORT_PERF
+#ifdef UNUSED
       if (debug) puts("End of keep_transporting loop\n");
       printf("P%d:", MyProcessorNumber);
       fflush(stdout);
@@ -409,9 +401,6 @@ int EvolvePhotons(TopGridData *MetaData, LevelHierarchyEntry *LevelArray[],
     delete [] Temp0;
 
     /* Coupled rate & energy solver */
-
-    float dtMin, dtGrid;
-    float dtLastLevel = 1e20;
 
     int debug_store = debug;
     debug = FALSE;
@@ -508,13 +497,6 @@ int EvolvePhotons(TopGridData *MetaData, LevelHierarchyEntry *LevelArray[],
 	Temp->GridData->ErrorCheckPhotonNumber(lvl);
 #endif
 
-#ifdef REPORT_PERF
-    if (debug) puts("End of time loop\n");
-    printf("P%d:", MyProcessorNumber);
-    fflush(stdout);
-    fpcol(PerfCounter, 14, 14, stdout);
-#endif
-
     if (!LoopTime)
       break;
     
@@ -545,9 +527,14 @@ int EvolvePhotons(TopGridData *MetaData, LevelHierarchyEntry *LevelArray[],
   END_PERF(13);
 
 #ifdef REPORT_PERF
-  printf("P%d:", MyProcessorNumber);
-  fflush(stdout);
-  fpcol(PerfCounter, 14, 14, stdout);
+  for (int i = 0; i < NumberOfProcessors; i++) {
+    CommunicationBarrier();
+    if (MyProcessorNumber == i) {
+      printf("P%d:", MyProcessorNumber);
+      fpcol(PerfCounter, 14, 14, stdout);
+      fflush(stdout);
+    }
+  }
 #endif
 
 
