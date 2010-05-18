@@ -14,6 +14,8 @@
 /    doing a new run, a restart, an extraction, or a projection.
 /
 ************************************************************************/
+
+#include "preincludes.h"
  
 #ifdef USE_MPI
 #include "mpi.h"
@@ -45,6 +47,7 @@
 #include "CommunicationUtilities.h"
 #ifdef TRANSFER
 #include "PhotonCommunication.h"
+#include "ImplicitProblemABC.h"
 #endif
 #undef DEFINE_STORAGE
 #ifdef USE_PYTHON
@@ -68,6 +71,9 @@ int Group_ReadAllData(char *filename, HierarchyEntry *TopGrid, TopGridData &tgd,
 
 int EvolveHierarchy(HierarchyEntry &TopGrid, TopGridData &tgd,
 		    ExternalBoundary *Exterior, 
+#ifdef TRANSFER
+		    ImplicitProblemABC *ImplicitSolver,
+#endif
 		    LevelHierarchyEntry *Array[], float Initialdt);
 
 void ExtractSection(HierarchyEntry &TopGrid, TopGridData &tgd,
@@ -169,8 +175,11 @@ int GetNodeFreeMemory(void);
 #endif
 
 #ifdef TRANSFER
-int RadiativeTransferInitialize(char *ParameterFile, TopGridData &MetaData,
+int RadiativeTransferInitialize(char *ParameterFile, 
+				HierarchyEntry &TopGrid, 
+				TopGridData &MetaData,
 				ExternalBoundary &Exterior, 
+				ImplicitProblemABC* &ImplicitSolver,
 				LevelHierarchyEntry *LevelArray[]);
 #endif
 
@@ -593,24 +602,12 @@ Eint32 main(Eint32 argc, char *argv[])
 
   }
 
-
-/*
-
-  // Perform local initialization (even for restart, may just return, depends on problem)
-
-  if (InitializeLocal(restart, TopGrid, MetaData) == FAIL) {
-    if (MyProcessorNumber == ROOT_PROCESSOR)
-      fprintf(stderr, "Error in Local Initialization.\n");
-    my_exit(EXIT_FAILURE); 
-  }
-
-*/ 
-
   /* Initialize the radiative transfer */
 
 #ifdef TRANSFER
-  if (RadiativeTransferInitialize(ParameterFile, MetaData, Exterior, 
-				  LevelArray) == FAIL) {
+  ImplicitProblemABC *ImplicitSolver;
+  if (RadiativeTransferInitialize(ParameterFile, TopGrid, MetaData, Exterior, 
+				  ImplicitSolver, LevelArray) == FAIL) {
     fprintf(stderr, "Error in RadiativeTransferInitialize.\n");
     my_exit(EXIT_FAILURE);
   }
@@ -628,7 +625,11 @@ Eint32 main(Eint32 argc, char *argv[])
  
   if (debug) fprintf(stderr, "INITIALDT ::::::::::: %16.8e\n", Initialdt);
   try {
-  if (EvolveHierarchy(TopGrid, MetaData, &Exterior, LevelArray, Initialdt) == FAIL) {
+  if (EvolveHierarchy(TopGrid, MetaData, &Exterior, 
+#ifdef TRANSFER
+		      ImplicitSolver,
+#endif
+		      LevelArray, Initialdt) == FAIL) {
     if (MyProcessorNumber == ROOT_PROCESSOR) {
       fprintf(stderr, "Error in EvolveHierarchy.\n");
     }
