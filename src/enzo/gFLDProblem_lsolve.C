@@ -73,10 +73,6 @@
 int gFLDProblem::lsolve(EnzoVector *s, EnzoVector *b, 
 			EnzoVector *u, float delta)
 {
-#ifdef USE_JBPERF
-    JBPERF_START("gFLDProblem_lsolve");
-#endif
-  
 //   if (debug)  printf("Entering gFLDProblem::lsolve routine\n");
 
   // check that the gFLDProblem has been set up
@@ -118,10 +114,6 @@ int gFLDProblem::lsolve(EnzoVector *s, EnzoVector *b,
 
 //   if (debug)  printf("gFLDProblem::lsolve -- performing steps 1-2\n");
 
-#ifdef USE_JBPERF
-    JBPERF_START("gfldproblem_lsolve-local");
-#endif
-  
   //////////////////////////////////////////////////////////////
   // steps (1) and (2): local solves 
   //          c_m = Mi*b_m   (store c_m in b_m) 
@@ -230,10 +222,6 @@ int gFLDProblem::lsolve(EnzoVector *s, EnzoVector *b,
     }
   }
 
-#ifdef USE_JBPERF
-    JBPERF_STOP("gfldproblem_lsolve-local");
-#endif
-
 
 //   if (debug)  printf("gFLDProblem::lsolve -- performing step 5\n");
 
@@ -242,24 +230,14 @@ int gFLDProblem::lsolve(EnzoVector *s, EnzoVector *b,
   //    P = D-L*Mi*U.  In the code, this corresponds to the 
   //    matrix  P = D_EE + I*y_E;  we then scale the system 
   //    via  P = diag(P)^{-1}*P,  b_E = diag(P)^{-1}*b_E
+  float *s_E = s->GetData(0);
 
-#ifdef USE_JBPERF
-    JBPERF_START("gfldproblem_lsolve-exchange");
-#endif
-    
   //       communicate yvec to spread local corrections to neighbors
   if (yvec->exchange_component(0) == FAIL) 
     ENZO_FAIL("lsolve error: vector exchange_component error");
     
-#ifdef USE_JBPERF
-    JBPERF_STOP("gfldproblem_lsolve-exchange");
-#endif
-
 #ifdef USE_HYPRE
 
-#ifdef USE_JBPERF
-    JBPERF_START("gfldproblem_lsolve-SchurSetup");
-#endif
   //       set matrix values over grid
   float *u_E = u->GetData(0);
   float *u0_E = U0->GetData(0);
@@ -289,13 +267,7 @@ int gFLDProblem::lsolve(EnzoVector *s, EnzoVector *b,
   //  HYPRE_StructMatrixSetSymmetric(P, one);
 
 //   if (debug)  printf("gFLDProblem::lsolve -- performing step 6\n");
-#ifdef USE_JBPERF
-    JBPERF_STOP("gfldproblem_lsolve-SchurSetup");
-#endif
 
-#ifdef USE_JBPERF
-    JBPERF_START("gfldproblem_lsolve-SchurSolve");
-#endif
   //////////////////////////////////////////////////////////////
   // step (6): Solve the (nonlocal) Schur complement system,
   // i.e. solve for s_E:  P*s_E = b_E
@@ -311,7 +283,6 @@ int gFLDProblem::lsolve(EnzoVector *s, EnzoVector *b,
   xBuff = ghXl-SolvOff[0];
   yBuff = (ghYl-SolvOff[1])-SolvIndices[1][0];
   zBuff = (ghZl-SolvOff[2])-SolvIndices[2][0];
-  float *s_E = s->GetData(0);
   int Zbl, Ybl;
 //   if (debug)  printf("lsolve: calling HYPRE_StructVectorSetBoxValues\n");
   for (iz=SolvIndices[2][0]; iz<=SolvIndices[2][1]; iz++) {
@@ -407,9 +378,6 @@ int gFLDProblem::lsolve(EnzoVector *s, EnzoVector *b,
   //       destroy HYPRE matrix, vector and solver structures
   HYPRE_StructPCGDestroy(solver);
   HYPRE_StructPFMGDestroy(preconditioner);
-#ifdef USE_JBPERF
-    JBPERF_STOP("gfldproblem_lsolve-SchurSolve");
-#endif
 
 #else  // ifdef USE_HYPRE
 
@@ -438,9 +406,6 @@ int gFLDProblem::lsolve(EnzoVector *s, EnzoVector *b,
   }
 //   if (debug)  printf("gFLDProblem::lsolve -- finished!\n");
 
-#ifdef USE_JBPERF
-    JBPERF_STOP("gFLDProblem_lsolve");
-#endif
   // return success
   return SUCCESS;
 }

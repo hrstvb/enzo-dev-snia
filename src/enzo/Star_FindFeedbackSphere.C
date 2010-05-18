@@ -327,7 +327,6 @@ int Star::FindFeedbackSphere(LevelHierarchyEntry *LevelArray[], int level,
 
     //DeltaMass = AccretedMass;
     //type = abs(type);  // Unmark as unborn (i.e. negative type)
->>>>>>> other
 
   } // ENDIF formation
 

@@ -226,7 +226,6 @@ int RadiativeTransferCallFLD(LevelHierarchyEntry *LevelArray[], int level,
 #endif
 void my_exit(int status);
  
-int LevelCycleCount[MAX_DEPTH_OF_HIERARCHY];
 int CallPython(LevelHierarchyEntry *LevelArray[], TopGridData *MetaData,
                int level);
 int MovieCycleCount[MAX_DEPTH_OF_HIERARCHY];
