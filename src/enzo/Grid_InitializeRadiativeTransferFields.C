@@ -33,9 +33,18 @@ int grid::InitializeRadiativeTransferFields()
 //  if (HasRadiation == FALSE)
 //    return SUCCESS;
 
+<<<<<<< local
+  int kphHINum, gammaHINum, kphHeINum, gammaHeINum, kphHeIINum, gammaHeIINum,
+    kdissH2INum;
+
+  IdentifyRadiativeTransferFields(kphHINum, gammaHINum, kphHeINum, 
+				  gammaHeINum, kphHeIINum, gammaHeIINum, 
+				  kdissH2INum);
+=======
   int kphHINum, gammaNum, kphHeINum, kphHeIINum, kdissH2INum;
   IdentifyRadiativeTransferFields(kphHINum, gammaNum, kphHeINum, 
 				  kphHeIINum, kdissH2INum);
+>>>>>>> other
 
   int i,j,k, index;
 
@@ -46,6 +55,15 @@ int grid::InitializeRadiativeTransferFields()
       index = (k*GridDimension[1] + j)*GridDimension[0] + GridStartIndex[0];
       for (i = GridStartIndex[0]; i <= GridEndIndex[0]; i++, index++)
 	BaryonField[kphHINum][index] =
+<<<<<<< local
+	  BaryonField[gammaHINum][index]   =
+	  BaryonField[kphHeINum][index]    = 
+	  BaryonField[gammaHeINum][index]  =
+	  BaryonField[kphHeIINum][index]   = 
+	  BaryonField[gammaHeIINum][index] = 0.;
+	if (MultiSpecies > 1 && !RadiativeTransferOpticallyThinH2 && 
+	    !RadiativeTransferFLD)
+=======
 	  BaryonField[gammaNum][index]   = 0.0;
     }  // loop over grid
 
@@ -63,17 +81,14 @@ int grid::InitializeRadiativeTransferFields()
       for (j = GridStartIndex[1]; j <= GridEndIndex[1]; j++) {
 	index = (k*GridDimension[1] + j)*GridDimension[0] + GridStartIndex[0];
 	for (i = GridStartIndex[0]; i <= GridEndIndex[0]; i++, index++)
+>>>>>>> other
 	  BaryonField[kdissH2INum][index] = 0.;
       }  // loop over grid
 
   if (RadiationPressure) {
 
     int RPresNum1, RPresNum2, RPresNum3;
-    if (IdentifyRadiationPressureFields(RPresNum1, RPresNum2, RPresNum3) 
-	== FAIL) {
-      fprintf(stdout, "Error in IdentifyRadiationPressureFields.\n");
-      ENZO_FAIL("");
-    }
+    IdentifyRadiationPressureFields(RPresNum1, RPresNum2, RPresNum3);
 
     /* Initialize acceleration fields from radiation pressure */
     for (k = GridStartIndex[2]; k <= GridEndIndex[2]; k++)

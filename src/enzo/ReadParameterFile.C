@@ -245,6 +245,13 @@ int ReadParameterFile(FILE *fptr, TopGridData &MetaData, float *Initialdt)
     ret += sscanf(line, "TopGridGravityBoundary = %"ISYM,
 		  &MetaData.GravityBoundary);
  
+#ifdef TRANSFER
+    if (sscanf(line, "RadHydroParamfile = %s", dummy) == 1)
+      MetaData.RadHydroParameterFname = dummy;
+#endif
+    ret += sscanf(line, "ImplicitProblem = %"ISYM, &ImplicitProblem);
+    ret += sscanf(line, "RadiativeTransferFLD   = %"ISYM, &RadiativeTransferFLD);
+
     ret += sscanf(line, "ParticleBoundaryType   = %"ISYM,
 		  &MetaData.ParticleBoundaryType);
     ret += sscanf(line, "NumberOfParticles      = %"PISYM,
