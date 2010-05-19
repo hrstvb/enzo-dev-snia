@@ -1272,7 +1272,8 @@ int grid::NestedCosmologySimulationInitializeGrid(
 	  printf("P(%d): reading particles %d to %d\n", MyProcessorNumber, Start[0], End[0]);
 
 	  if (MyProcessorNumber+1 == NumberOfProcessors)
-	    assert (End[0]+1 == TotalParticleCount);
+	    if (End[0]+1 != TotalParticleCount)
+               ENZO_FAIL("Particle count is incorrect.");
 
 	} else {
 
