@@ -345,6 +345,7 @@ int WriteParameterFile(FILE *fptr, TopGridData &MetaData)
 	  PointSourceGravityCoreRadius);
  
   fprintf(fptr, "SelfGravity                    = %"ISYM"\n", SelfGravity);
+  fprintf(fptr, "SelfGravityGasOff              = %"ISYM"\n", SelfGravityGasOff);
   fprintf(fptr, "GravitationalConstant          = %e\n",
 	  GravitationalConstant);
   fprintf(fptr, "S2ParticleSize                 = %"GSYM"\n", S2ParticleSize);
@@ -582,6 +583,10 @@ int WriteParameterFile(FILE *fptr, TopGridData &MetaData)
 	  ComovingCoordinates);
   fprintf(fptr, "StarParticleCreation                  = %"ISYM"\n",
 	  StarParticleCreation);
+  fprintf(fptr, "BigStarFormation                      = %"ISYM"\n",
+	  BigStarFormation);
+  fprintf(fptr, "BigStarSeparation                     = %"FSYM"\n",
+	  BigStarSeparation);
   fprintf(fptr, "StarParticleFeedback                  = %"ISYM"\n",
 	  StarParticleFeedback);
   fprintf(fptr, "NumberOfParticleAttributes            = %"ISYM"\n",
@@ -713,8 +718,6 @@ int WriteParameterFile(FILE *fptr, TopGridData &MetaData)
 
   fprintf(fptr, "Theta_Limiter              = %f\n", Theta_Limiter);
   fprintf(fptr, "RiemannSolver              = %d\n", RiemannSolver);
-  fprintf(fptr, "ComovingRiemannSolver      = %d\n", ComovingRiemannSolver);
-  fprintf(fptr, "LagrangeReconstruction     = %d\n", LagrangeReconstruction);
   fprintf(fptr, "ConservativeReconstruction = %d\n", ConservativeReconstruction);
   fprintf(fptr, "ReconstructionMethod       = %d\n", ReconstructionMethod);
   fprintf(fptr, "RKOrder                    = %d\n", RKOrder);
