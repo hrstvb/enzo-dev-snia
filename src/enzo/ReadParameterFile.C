@@ -246,6 +246,18 @@ int ReadParameterFile(FILE *fptr, TopGridData &MetaData, float *Initialdt)
     ret += sscanf(line, "TopGridGravityBoundary = %"ISYM,
 		  &MetaData.GravityBoundary);
  
+#ifdef TRANSFER
+    if (sscanf(line, "RadHydroParamfile = %s", dummy) == 1)
+      MetaData.RadHydroParameterFname = dummy;
+#endif
+    ret += sscanf(line, "ImplicitProblem = %"ISYM, &ImplicitProblem);
+    ret += sscanf(line, "RadiativeTransferFLD   = %"ISYM, &RadiativeTransferFLD);
+#ifdef EMISSIVITY
+    ret += sscanf(line, "StarMakerEmissivityField = %"ISYM, 
+		  &StarMakerEmissivityField);
+    ret += sscanf(line, "uv_param = %"FSYM, &uv_param);
+#endif
+
     ret += sscanf(line, "ParticleBoundaryType   = %"ISYM,
 		  &MetaData.ParticleBoundaryType);
     ret += sscanf(line, "NumberOfParticles      = %"PISYM,
@@ -294,8 +306,10 @@ int ReadParameterFile(FILE *fptr, TopGridData &MetaData, float *Initialdt)
 		  &MustRefineRegionMinRefinementLevel);
     ret += sscanf(line, "MetallicityRefinementMinLevel = %"ISYM,
 		  &MetallicityRefinementMinLevel);
-    ret += sscanf(line, "MetallicityRefinementMinMetallicity      = %"FSYM, 
+    ret += sscanf(line, "MetallicityRefinementMinMetallicity = %"FSYM, 
 		  &MetallicityRefinementMinMetallicity);
+    ret += sscanf(line, "MetallicityRefinementMinDensity = %"FSYM, 
+		  &MetallicityRefinementMinDensity);
 
     ret += sscanf(line, "DomainLeftEdge        = %"PSYM" %"PSYM" %"PSYM, DomainLeftEdge,
 		  DomainLeftEdge+1, DomainLeftEdge+2);
@@ -346,6 +360,7 @@ int ReadParameterFile(FILE *fptr, TopGridData &MetaData, float *Initialdt)
 		  &PointSourceGravityCoreRadius);
  
     ret += sscanf(line, "SelfGravity           = %"ISYM, &SelfGravity);
+    ret += sscanf(line, "SelfGravityGasOff     = %"ISYM, &SelfGravityGasOff);
     ret += sscanf(line, "GravitationalConstant = %"FSYM, &GravitationalConstant);
     ret += sscanf(line, "S2ParticleSize        = %"FSYM, &S2ParticleSize);
     ret += sscanf(line, "GravityResolution     = %"FSYM, &GravityResolution);
@@ -443,6 +458,8 @@ int ReadParameterFile(FILE *fptr, TopGridData &MetaData, float *Initialdt)
 		  &RefineByResistiveLengthSafetyFactor);
     ret += sscanf(line, "MustRefineParticlesRefineToLevel = %"ISYM,
                   &MustRefineParticlesRefineToLevel);
+    ret += sscanf(line, "MustRefineParticlesRefineToLevelAutoAdjust = %"ISYM,
+                  &MustRefineParticlesRefineToLevelAutoAdjust);
     ret += sscanf(line, "ParticleTypeInFile = %"ISYM,
                   &ParticleTypeInFile);
 
@@ -578,6 +595,8 @@ int ReadParameterFile(FILE *fptr, TopGridData &MetaData, float *Initialdt)
                  &ShockwaveRefinementMaxLevel);
     ret += sscanf(line, "ComovingCoordinates = %"ISYM,&ComovingCoordinates);
     ret += sscanf(line, "StarParticleCreation = %"ISYM, &StarParticleCreation);
+    ret += sscanf(line, "BigStarFormation = %"ISYM, &BigStarFormation);
+    ret += sscanf(line, "BigStarSeparation = %"FSYM, &BigStarSeparation);
     ret += sscanf(line, "StarParticleFeedback = %"ISYM, &StarParticleFeedback);
     ret += sscanf(line, "NumberOfParticleAttributes = %"ISYM,
 		  &NumberOfParticleAttributes);
@@ -667,6 +686,12 @@ int ReadParameterFile(FILE *fptr, TopGridData &MetaData, float *Initialdt)
 		  StarClusterRegionRightEdge+2);
 
     ret += sscanf(line, "PopIIIStarMass = %"FSYM, &PopIIIStarMass);
+    ret += sscanf(line, "PopIIIInitialMassFunction = %"ISYM, 
+		  &PopIIIInitialMassFunction);
+    ret += sscanf(line, "PopIIIMassRange = %"FSYM" %"FSYM,
+		  &PopIIILowerMassCutoff, &PopIIIUpperMassCutoff);
+    ret += sscanf(line, "PopIIIInitialMassFunctionSlope = %"FSYM, 
+		  &PopIIIInitialMassFunctionSlope);
     ret += sscanf(line, "PopIIIBlackHoles = %"ISYM, &PopIIIBlackHoles);
     ret += sscanf(line, "PopIIIBHLuminosityEfficiency = %"FSYM, 
 		  &PopIIIBHLuminosityEfficiency);
@@ -683,14 +708,14 @@ int ReadParameterFile(FILE *fptr, TopGridData &MetaData, float *Initialdt)
 		  &PopIIISupernovaMustRefine);
     ret += sscanf(line, "PopIIISupernovaMustRefineResolution = %"ISYM,
 		  &PopIIISupernovaMustRefineResolution);
+    ret += sscanf(line, "PopIIIHeliumIonization = %"ISYM, 
+		  &PopIIIHeliumIonization);
 
     ret += sscanf(line, "PopIIIColorDensityThreshold = %"FSYM,
 		  &PopIIIColorDensityThreshold);
     ret += sscanf(line, "PopIIIColorMass = %"FSYM,
 		  &PopIIIColorMass);
 
-    ret += sscanf(line, "MBHMinDynamicalTime = %"FSYM, &MBHMinDynamicalTime);
-    ret += sscanf(line, "MBHMinimumMass = %"FSYM, &MBHMinimumMass);
     ret += sscanf(line, "MBHAccretion = %"ISYM, &MBHAccretion);
     ret += sscanf(line, "MBHAccretionRadius = %"FSYM, &MBHAccretionRadius);
     ret += sscanf(line, "MBHAccretingMassRatio = %"FSYM, &MBHAccretingMassRatio);
@@ -698,6 +723,8 @@ int ReadParameterFile(FILE *fptr, TopGridData &MetaData, float *Initialdt)
     ret += sscanf(line, "MBHAccretionFixedRate = %"FSYM, &MBHAccretionFixedRate);
     ret += sscanf(line, "MBHTurnOffStarFormation = %"ISYM, &MBHTurnOffStarFormation);
     ret += sscanf(line, "MBHCombineRadius = %"FSYM, &MBHCombineRadius);
+    ret += sscanf(line, "MBHMinDynamicalTime = %"FSYM, &MBHMinDynamicalTime);
+    ret += sscanf(line, "MBHMinimumMass = %"FSYM, &MBHMinimumMass);
 
     ret += sscanf(line, "MBHFeedback = %"ISYM, &MBHFeedback);
     ret += sscanf(line, "MBHFeedbackRadiativeEfficiency = %"FSYM, &MBHFeedbackRadiativeEfficiency);

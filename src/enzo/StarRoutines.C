@@ -53,6 +53,7 @@ Star::Star(void)
   CurrentGrid = NULL;
   Mass = FinalMass = DeltaMass = BirthTime = LifeTime = last_accretion_rate = NotEjectedMass = 0.0;
   FeedbackFlag = Identifier = level = GridID = type = naccretions = 0;
+  AddedEmissivity = false;
 }
 
 Star::Star(grid *_grid, int _id, int _level)
@@ -74,6 +75,7 @@ Star::Star(grid *_grid, int _id, int _level)
   PrevStar = NULL;
   CurrentGrid = _grid;
   DeltaMass = 0.0;
+  AddedEmissivity = false;
   last_accretion_rate = 0.0;
   NotEjectedMass = 0.0;
   level = _level;
@@ -122,6 +124,7 @@ Star::Star(StarBuffer *buffer, int n)
   level = buffer[n].level;
   GridID = buffer[n].GridID;
   type = buffer[n].type;
+  AddedEmissivity = buffer[n].AddedEmissivity;
   NextStar = NULL;
   PrevStar = NULL;
 }
@@ -205,6 +208,7 @@ void Star::operator=(Star a)
   level = a.level;
   GridID = a.GridID;
   type = a.type;
+  AddedEmissivity = a.AddedEmissivity;
   if (accretion_rate != NULL)
     delete [] accretion_rate;
   if (accretion_time != NULL)
@@ -268,6 +272,7 @@ Star *Star::copy(void)
   a->level = level;
   a->GridID = GridID;
   a->type = type;
+  a->AddedEmissivity = AddedEmissivity;
   if (naccretions > 0) {
     a->accretion_rate = new float[naccretions];
     a->accretion_time = new FLOAT[naccretions];
@@ -323,7 +328,7 @@ void Star::Merge(Star a)
     accreted_angmom[dim] = ratio1 * accreted_angmom[dim] + ratio2 * a.accreted_angmom[dim];
   }
   Mass += a.Mass;
-  FinalMass += a.FinalMass;
+  //FinalMass += a.FinalMass;
   DeltaMass += a.DeltaMass;
   last_accretion_rate += a.last_accretion_rate;
   NotEjectedMass += a.NotEjectedMass;
@@ -455,8 +460,8 @@ void Star::PrintInfo(void)
   else
     printf("\n");
   printf("\t birthtime = %"FSYM", lifetime = %"FSYM"\n", BirthTime, LifeTime);
-  printf("\t mass = %"GSYM", dmass = %"GSYM", type = %"ISYM", grid %"ISYM","
-	 " lvl %"ISYM"\n", Mass, DeltaMass, type, GridID, level);
+  printf("\t mass = %"GSYM", dmass = %"GSYM", fmass = %"GSYM", type = %"ISYM", grid %"ISYM","
+	 " lvl %"ISYM"\n", Mass, DeltaMass, FinalMass, type, GridID, level);
   printf("\t FeedbackFlag = %"ISYM"\n", FeedbackFlag);
   printf("\t accreted_angmom = %"FSYM" %"FSYM" %"FSYM"\n", accreted_angmom[0],
 	 accreted_angmom[1], accreted_angmom[2]);
@@ -477,6 +482,7 @@ RadiationSourceEntry* Star::RadiationSourceInitialize(void)
   source->Position[0]    = pos[0]; 
   source->Position[1]    = pos[1]; 
   source->Position[2]    = pos[2]; 
+  source->AddedEmissivity = false;
   return source;
 }
 #endif
@@ -518,6 +524,7 @@ StarBuffer* Star::StarListToBuffer(int n)
     result[count].level = tmp->level;
     result[count].GridID = tmp->GridID;
     result[count].type = tmp->type;
+    result[count].AddedEmissivity = tmp->AddedEmissivity;
     count++;
     tmp = tmp->NextStar;
   }

@@ -131,7 +131,6 @@ int grid::TurbulenceInitializeGrid(float CloudDensity, float CloudSoundSpeed, FL
     FieldType[NumberOfBaryonFields++] = AccelerationField3;
   }
 
-  /* Return if this doesn't concern us. */
 
   float DensityUnits = 1.0, LengthUnits = 1.0, TemperatureUnits = 1.0, TimeUnits = 1.0,
     VelocityUnits = 1.0;
@@ -144,13 +143,14 @@ int grid::TurbulenceInitializeGrid(float CloudDensity, float CloudSoundSpeed, FL
   GravitationalConstant = 4.0*pi*GravConst*MassUnits*pow(TimeUnits,2)/pow(LengthUnits,3);
 
 
+  /* Return if this doesn't concern us. */
+
   if (ProcessorNumber != MyProcessorNumber) {
     return SUCCESS;
   }
 
   if (SetBaryonFields == 0) 
     return SUCCESS;
-
 
 
   size = 1;
@@ -347,7 +347,9 @@ int grid::TurbulenceInitializeGrid(float CloudDensity, float CloudSoundSpeed, FL
 	BaryonField[ivx  ][n] = Velx;
 	BaryonField[ivy  ][n] = Vely;
 	BaryonField[ivz  ][n] = Velz;
-	BaryonField[ietot][n] = eint + 0.5*(Velx*Velx + Vely*Vely + Velz*Velz);
+	BaryonField[ietot][n] = eint;
+	if (HydroMethod != Zeus_Hydro)
+	  BaryonField[ietot][n] += 0.5*(Velx*Velx + Vely*Vely + Velz*Velz);
 	if (DualEnergyFormalism) {
 	  BaryonField[ieint][n] = eint;
 	}
@@ -608,7 +610,7 @@ int grid::TurbulenceInitializeGrid(float CloudDensity, float CloudSoundSpeed, FL
   if (PutSink == 1 && level == 0) {  // set it up on level zero and make it mustrefine
 
     //    double mass_p = 20.0*1.989e33;
-    double mass_p = 34.15*1.989e33;
+    double mass_p = 3.415*1.989e33;
     mass_p /= MassUnits;
     double dx = CellWidth[0][0];
     double den_p = mass_p / pow(dx,3);
@@ -629,9 +631,9 @@ int grid::TurbulenceInitializeGrid(float CloudDensity, float CloudSoundSpeed, FL
     ParticleMass[0] = den_p;
     ParticleNumber[0] = 0;
     ParticleType[0] = PARTICLE_TYPE_MUST_REFINE;
-    ParticlePosition[0][0] = 0.5+0.5*dxm;
-    ParticlePosition[1][0] = 0.5+0.5*dxm;
-    ParticlePosition[2][0] = 0.5+0.5*dxm;
+    ParticlePosition[0][0] = 0.35+0.5*dxm;
+    ParticlePosition[1][0] = 0.45+0.5*dxm;
+    ParticlePosition[2][0] = 0.70+0.5*dxm;
     ParticleVelocity[0][0] = 0.0;
     ParticleVelocity[1][0] = 0.0;
     ParticleVelocity[2][0] = 0.0;

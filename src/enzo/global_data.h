@@ -137,9 +137,9 @@ EXTERN int MustRefineRegionMinRefinementLevel;
    will refine up to (does not prevent refinement to higher levels) */
 EXTERN int MetallicityRefinementMinLevel;
 
-/* threshold metallicity for FlagGridCellsToBeRefinedByMetallicity */
+/* threshold metallicity and density for FlagGridCellsToBeRefinedByMetallicity */
 EXTERN float MetallicityRefinementMinMetallicity;
-
+EXTERN float MetallicityRefinementMinDensity;
 
 /* Velocity to limit timesteps */
 
@@ -206,6 +206,7 @@ EXTERN float PointSourceGravityCoreRadius;
 /* SelfGravity (TRUE or FALSE) */
 
 EXTERN int SelfGravity;
+EXTERN int SelfGravityGasOff;
 
 /* CopyGravPotential (TRUE or FALSE) */
 
@@ -472,10 +473,15 @@ EXTERN float JeansRefinementColdTemperature;
 
 EXTERN int   MustRefineParticlesRefineToLevel;
 
+/* For CellFlaggingMethod = 8,
+   The physical length (in pc) to which the must refine particles apply 
+   The above parameter will be automatically adjusted to match this length */
+
+EXTERN int   MustRefineParticlesRefineToLevelAutoAdjust;
+
 /* For CellFlaggingMethod = 9,   
    The minimum shear (roughly, dv accross two zones) required for 
    refinement.    */
-
 
 EXTERN float MinimumShearForRefinement;
 
@@ -507,6 +513,9 @@ EXTERN int   StarParticleCreation;
 EXTERN int   StarParticleFeedback;
 EXTERN int   NumberOfParticleAttributes;
 EXTERN int   AddParticleAttributes;
+EXTERN int   BigStarFormation;
+EXTERN float BigStarSeparation;
+
 
 /* Parameters governing certain time or redshift-dependent actions. */
 
@@ -693,6 +702,10 @@ EXTERN int UseCUDA;
 
 EXTERN int ran1_init;
 
+/* random number initialization flag */
+
+EXTERN int rand_init;
+
 /* test problem stuff */
 EXTERN TestProblemDataType TestProblemData;
 
@@ -724,7 +737,7 @@ EXTERN char *MetalCoolingTable;
 EXTERN int CIECooling;
 EXTERN int H2OpticalDepthApproximation;
 
-//   1 - Adaptive ray tacing transfer
+//   1 - Adaptive ray tracing transfer
 //   0 - none
 EXTERN int RadiativeTransfer;
 EXTERN int RadiativeTransferHydrogenOnly;
@@ -764,10 +777,29 @@ EXTERN float dtThisLevelSoFar[MAX_DEPTH_OF_HIERARCHY];
 EXTERN float dtThisLevel[MAX_DEPTH_OF_HIERARCHY];
 
 /* Coupled radiative transfer, cooling, and rate solver */
-
 EXTERN int RadiativeTransferCoupledRateSolver;
 
 
+//   2 - FLD radiation transfer only (no ray-tracing at all)
+//   1 - FLD radiation transfer (for optically-thin LW radiation)
+//   0 - none
+EXTERN int RadiativeTransferFLD;
+
+
+/* Implicit problem decision flag (only 0 through 3 work for now)
+      0 => do not use any implicit solver
+      1 => use the gFLDProblem module for single-group coupled FLD
+      2 => use the FSProb module for free-streaming FLD radiation 
+      3 => use the gFLDSplit module for single-group split FLD
+      4 => use the MFProb, multi-frequency fully implicit module
+      5 => use the MFSplit, multi-frequency split implicit module
+*/
+EXTERN int ImplicitProblem;
+
+/* Star-Maker emissivity field generator and uv_param used in calculating Geoffrey's Emissivity0 baryon field */
+
+EXTERN int StarMakerEmissivityField;
+EXTERN float uv_param;
 
 /* Shearing Boundary Conditions */
 
@@ -809,5 +841,7 @@ EXTERN int OutputWhenJetsHaveNotEjected;
 
 EXTERN int VelAnyl;
 EXTERN int BAnyl;
+
+EXTERN char current_error[255];
 
 #endif

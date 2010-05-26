@@ -9,6 +9,8 @@
 /  PURPOSE:
 /
 ************************************************************************/
+#ifndef STAR_PARTICLE_DATA_DEFINED__
+#define STAR_PARTICLE_DATA_DEFINED__
 
 #ifdef DEFINE_STORAGE
 # define SPEXTERN
@@ -53,11 +55,16 @@ SPEXTERN float StarEnergyToStellarUV;
 SPEXTERN float StarEnergyToQuasarUV;
 
 SPEXTERN float PopIIIStarMass;
+SPEXTERN int   PopIIIInitialMassFunction;
+SPEXTERN float PopIIILowerMassCutoff;
+SPEXTERN float PopIIIUpperMassCutoff;
+SPEXTERN float PopIIIInitialMassFunctionSlope;
 SPEXTERN int   PopIIIBlackHoles;
 SPEXTERN float PopIIIBHLuminosityEfficiency;
 SPEXTERN float PopIIIOverDensityThreshold;
 SPEXTERN float PopIIIH2CriticalFraction;
 SPEXTERN float PopIIIMetalCriticalFraction;
+SPEXTERN int   PopIIIHeliumIonization;
 SPEXTERN float PopIIISupernovaRadius;
 SPEXTERN int   PopIIISupernovaUseColour;
 SPEXTERN int   PopIIISupernovaMustRefine;
@@ -97,3 +104,6 @@ SPEXTERN float  MBHFeedbackJetsThresholdMass;
 
 SPEXTERN float minStarLifetime;
 SPEXTERN FLOAT LastSupernovaTime;
+SPEXTERN float *IMFData;
+
+#endif
