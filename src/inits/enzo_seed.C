@@ -7,7 +7,7 @@
  
 #include "macros_and_parameters.h"
 
-extern "C" void FORTRAN_NAME(ran1)(int *idim);
+extern "C" float FORTRAN_NAME(ran1)(int *iseed);
 
 /*
   amd    trailing underscore_            nec    trailing underscore_
@@ -41,7 +41,7 @@ extern "C" void enzo_seed_(int *seed, int *irangen)
 
   if (*irangen == 1) {
     printf("RAN1 Seed value %d\n", *seed);
-    FORTRAN_NAME(ran1)(seed);
+    float value = FORTRAN_NAME(ran1)(seed);
   }
 
   if (*irangen < 0 || *irangen > 1) {
