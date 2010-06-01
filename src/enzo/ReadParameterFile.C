@@ -1173,7 +1173,7 @@ int ReadParameterFile(FILE *fptr, TopGridData &MetaData, float *Initialdt)
     if (MyProcessorNumber == ROOT_PROCESSOR)
       printf("WARNING! PartitionNestedGrids = 1 forces Parallel IO = 1\n");
     ParallelRootGridIO = 1;
-    ParallelParticleIO = 1;
+//    ParallelParticleIO = 1; // Not necessarily ring IO
   }
 
   if ((MetaData.GravityBoundary != TopGridPeriodic) &&
