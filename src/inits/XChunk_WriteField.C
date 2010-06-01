@@ -86,13 +86,12 @@ int WriteField(int Rank, int Dims[3], FLOAT *Field, char *Name, int Part, int Np
   if (io_log) fprintf(log, "  Part %"ISYM" of %"ISYM"\n", Part, Npart);
 
 //  GB: Reverse dim ordering since we are using fortran array ordering
-//      (actually, we don't have to do this here).
 //
-//  out_dims[Rank-dim-1] = Dims[dim];
 
   for ( dim = 0; dim < Rank; dim++ )
   {
-    out_dims[dim] = Dims[dim];
+    //    out_dims[dim] = Dims[dim];  // original
+    out_dims[Rank-dim-1] = Dims[dim];
   }
 
 //  reverse these also?
@@ -139,7 +138,7 @@ int WriteField(int Rank, int Dims[3], FLOAT *Field, char *Name, int Part, int Np
 
   for ( dim = 0; dim < Rank; dim++ )
   {
-    field_dims_attr[dim] = Dims[dim];
+    field_dims_attr[dim] = out_dims[dim];
   }
 
   /* HDF5
