@@ -300,7 +300,7 @@ int grid::NestedCosmologySimulationInitializeGrid(
     for (dim = 0; dim < GridRank; dim++) {
       //      SubDomainLeftEdge[dim] = TopGridStart[dim] * (DomainRightEdge[dim]-DomainLeftEdge[dim])/((float) TopGridDims[dim]);
       //      SubDomainRightEdge[dim] = (TopGridEnd[dim]+1) * (DomainRightEdge[dim]-DomainLeftEdge[dim])/((float) TopGridDims[dim]);
-      SubCellWidth[dim] = (SubDomainRightEdge[dim]-SubDomainLeftEdge[dim])/((float) field_dims_attr[dim]);
+      SubCellWidth[dim] = (SubDomainRightEdge[dim]-SubDomainLeftEdge[dim])/((float) field_dims_attr[GridRank-dim-1]);
     }
  
     for (dim = 0; dim < GridRank; dim++)
