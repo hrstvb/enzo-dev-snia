@@ -32,21 +32,31 @@
 #              settings.  These make targets do error-checking; hand-editing 
 #              Make.config.override is more error-prone.
 #
+#
+# MODIFIED:    Elizabeth Tasker (taskere@mcmaster.ca), 2010-07-06
+#
+#	       This makefile can be run from a directory 'patch' that 
+#	       will compile routines in patch in preference to 
+#              those in src/enzo. 
+#
 #=======================================================================
 
 # Use bash since sh on datastar does not recognize ">&" used in dep: target
 
 SHELL    = /bin/bash
 
-TOP_DIR  = ../..
+TOP_DIR  = ../
 EXE      = enzo
 OUTPUT   = out.compile
 
-ENZO_DIR = .
+ENZO_DIR = ../src/enzo
 MODULES  = 
 VERBOSE  = 0
 
 SVN      = hg
+
+PATCH = ../patch
+VPATH = $(PATCH):$(ENZO_DIR)
 
 #-----------------------------------------------------------------------
 # Make.config.settings is used for setting default values to all compile-time 
@@ -59,7 +69,6 @@ include $(ENZO_DIR)/Make.config.settings
 # Make.config.machine is used for setting which Make.mach.* file to use
 #-----------------------------------------------------------------------
 
-MAKE_CONFIG_MACHINE  = $(ENZO_DIR)/Make.config.machine
 include $(ENZO_DIR)/Make.config.machine
 
 #-----------------------------------------------------------------------
@@ -83,12 +92,13 @@ include $(MAKE_CONFIG_OVERRIDE)
 # required by this makefile.  E.g. $(CXX), $(CXXFLAGS), etc.
 #-----------------------------------------------------------------------
 
-include Make.config.assemble
+include $(ENZO_DIR)/Make.config.assemble
 
 #-----------------------------------------------------------------------
 # Make.mach.<machine-name> defines all machine-dependent settings.
 #-----------------------------------------------------------------------
 
+#-include $(ENZO_DIR)/Make.mach.$(CONFIG_MACHINE)
 -include $(ENZO_DIR)/Make.mach.$(CONFIG_MACHINE)
 -include $(HOME)/.enzo/Make.mach.$(CONFIG_MACHINE)
 
@@ -96,7 +106,7 @@ include Make.config.assemble
 # OBJECT FILES
 #=======================================================================
 
-include Make.config.objects
+include $(ENZO_DIR)/Make.config.objects
 
 #-----------------------------------------------------------------------
 # MAKE ENZO BY DEFAULT
@@ -108,19 +118,21 @@ all: $(EXE).exe
 # MAKE AN EXECUTABLE
 #-----------------------------------------------------------------------
 
-%.exe: $(MODULES) autogen dep %.o $(OBJS_LIB)
+
+%.exe: 	$(MODULES) autogen dep %.o $(OBJS_LIB)
 	@rm -f $@
 	@echo "Linking enzo executable. Type  cat $(OUTPUT)  in case it fails."
 	@(if [ $(VERBOSE) -eq 0 ]; then \
+		cd ../src/enzo; \
 		$(LD) $(LDFLAGS) -o $*.exe $*.o $(OBJS_LIB) $(LIBS) >& $(OUTPUT) ; \
 	else \
-		$(LD) $(LDFLAGS) -o $*.exe $*.o $(OBJS_LIB) $(LIBS) >> $(OUTPUT) \
+		$(LD) $(LDFLAGS) -o $(ENZO_DIR)/$*.exe $(ENZO_DIR)/$*.o $(ENZO_DIR)/$(OBJS_LIB) $(LIBS) >> $(OUTPUT) \
 		2>&1 ; \
 	fi)  
-	@(if [ -e $@ ] ; then  \
+	@(if [ -e $(ENZO_DIR)/$@ ] ; then  \
 		echo "Success!" ; \
 	else \
-		echo "$(LD) $(LDFLAGS) -o $*.exe $*.o $(OBJS_LIB) $(LIBS)" > temp1; \
+		echo "$(LD) $(LDFLAGS) -o $< $*.o $(OBJS_LIB) $(LIBS)" > temp1; \
 		cat temp1 $(OUTPUT) > temp2 ;\
 		mv -f temp2 $(OUTPUT); \
 		rm -f temp1 temp2; \
@@ -149,102 +161,102 @@ verbose: $(EXE).exe
 .PRECIOUS: %.o %.f %.f90
 
 .src.f:
-	@$(CPP) $(DEFINES) $(CPPFLAGS) $*.src > $*.f
+	@$(CPP) $(DEFINES) $(CPPFLAGS) $< > $(ENZO_DIR)/$*.f
 .f.o:
 	@echo "Compiling $<"
-	@rm -f $@
+	@rm -f $(ENZO_DIR)/$@
 	@(if [ $(VERBOSE) -eq 0 ]; then \
-	  $(FC) -c -o $@ $(FFLAGS) $*.f >& $(OUTPUT) ; \
-	  if [ ! -e $@ ]; then \
+	  $(FC) -c -o $(ENZO_DIR)/$@ $(FFLAGS) $(ENZO_DIR)/$*.f >& $(OUTPUT) ; \
+	  if [ ! -e $(ENZO_DIR)/$@ ]; then \
              echo; \
              echo "$(CPP) $(DEFINES) $(CPPFLAGS) $*.src > $*.f"; \
-             echo "$(FC) -c -o $@ $(FFLAGS) $*.f"; \
+             echo "$(FC) -c -o $(ENZO_DIR)/$@ $(FFLAGS) $*.f"; \
              echo; \
-             $(CPP) $(DEFINES) $(CPPFLAGS) $*.src > $*.f; \
-             $(FC) -c -o $@ $(FFLAGS) $*.f; \
+             $(CPP) $(DEFINES) $(CPPFLAGS) $(ENZO_DIR)/$*.src > $*.f; \
+             $(FC) -c -o $(ENZO_DIR)/$@ $(FFLAGS) $(ENZO_DIR)/$*.f; \
              echo; \
              exit 1; \
           fi ; \
 	else \
-	  $(FC) -c -o $@ $(FFLAGS) $*.f >> $(OUTPUT) 2>&1 ; \
-	  if [ ! -e $@ ]; then \
+	  $(FC) -c -o $(ENZO_DIR)/$@ $(FFLAGS) $(ENZO_DIR)/$*.f >> $(OUTPUT) 2>&1 ; \
+	  if [ ! -e $(ENZO_DIR)/$@ ]; then \
 	     echo "See $(OUTPUT) for error messages"; \
 	     exit 1; \
 	  fi ; \
 	fi)
-	@(if [ -e $@ ]; then \
-             touch -f $*.f; \
+	@(if [ -e $(ENZO_DIR)/$@ ]; then \
+             touch -f $(ENZO_DIR)/$*.f; \
           fi)
 
 .src90.f90:
 	@echo "Compiling $<"
-	@$(CPP) $(DEFINES) $(CPPFLAGS) $*.src90 > $*.f90
+	@$(CPP) $(DEFINES) $(CPPFLAGS) $< > $(ENZO_DIR)/$*.f90
 .f90.o:
-	@rm -f $@
+	@rm -f $(ENZO_DIR)/$@
 	@(if [ $(VERBOSE) -eq 0 ]; then \
-	  $(F90) -c -o $@ $(F90FLAGS) $*.f90 >& $(OUTPUT) ; \
-	  if [ ! -e $@ ]; then \
+	  $(F90) -c -o $(ENZO_DIR)/$@ $(F90FLAGS) $(ENZO_DIR)/$*.f90 >& $(OUTPUT) ; \
+	  if [ ! -e $(ENZO_DIR)/$@ ]; then \
              echo; \
-             echo "$(CPP) $(DEFINES) $(CPPFLAGS) $*.src90 > $*.f90"; \
-             echo "$(F90) -c -o $@ $(F90FLAGS) $*.f90"; \
+             echo "$(CPP) $(DEFINES) $(CPPFLAGS) $(ENZO_DIR)/$*.src90 > $(ENZO_DIR)/$*.f90"; \
+             echo "$(F90) -c -o $(ENZO_DIR)/$@ $(F90FLAGS) $(ENZO_DIR)/$*.f90"; \
              echo; \
-             $(CPP) $(DEFINES) $(CPPFLAGS) $*.src90 > $*.f90; \
-             $(F90) -c -o $@ $(F90FLAGS) $*.f90; \
+             $(CPP) $(DEFINES) $(CPPFLAGS) $(ENZO_DIR)/$*.src90 > $(ENZO_DIR)/$*.f90; \
+             $(F90) -c -o $(ENZO_DIR)/$@ $(F90FLAGS) $(ENZO_DIR)/$*.f90; \
              echo; \
              exit 1; \
 	  fi ; \
 	else \
-	  $(F90) -c -o $@ $(F90FLAGS) $*.f90 >> $(OUTPUT) 2>&1 ; \
-	  if [ ! -e $@ ]; then \
+	  $(F90) -c -o $(ENZO_DIR)/$@ $(F90FLAGS) $(ENZO_DIR)/$*.f90 >> $(OUTPUT) 2>&1 ; \
+	  if [ ! -e $(ENZO_DIR)/$@ ]; then \
 	     echo "See $(OUTPUT) for error messages"; \
 	     exit 1; \
 	  fi ; \
 	fi)
-	@(if [ -e $@ ]; then \
-             rm -f $*.f90; \
+	@(if [ -e $(ENZO_DIR)/$@ ]; then \
+             rm -f $(ENZO_DIR)/$*.f90; \
           fi)
 
 .c.o:
-	@rm -f $@
+	@rm -f $(ENZO_DIR)/$@
 	@echo "Compiling $<"
 	@(if [ $(VERBOSE) -eq 0 ]; then \
-	  $(CC) -c -o $@ $(DEFINES) $(CFLAGS) $(INCLUDES) $*.c \
+	  $(CC) -c -o $(ENZO_DIR)/$@ $(DEFINES) $(CFLAGS) $(INCLUDES) $< \
 	    >& $(OUTPUT) ; \
-	  if [ ! -e $@ ]; then \
+	  if [ ! -e $(ENZO_DIR)/$@ ]; then \
              echo; \
-             echo "$(CC) -c -o $@ $(DEFINES) $(CFLAGS) $(INCLUDES) $*.c"; \
+             echo "$(CC) -c -o $(ENZO_DIR)/$@ $(DEFINES) $(CFLAGS) $(INCLUDES) $<"; \
              echo; \
-             $(CC) -c -o $@ $(DEFINES) $(CFLAGS) $(INCLUDES) $*.c;\
+             $(CC) -c -o $(ENZO_DIR)/$@ $(DEFINES) $(CFLAGS) $(INCLUDES) $<;\
              echo; \
              exit 1; \
           fi ; \
 	else \
-	  $(CC) -c -o $@ $(DEFINES) $(CFLAGS) $(INCLUDES) $*.c \
+	   $(CC) -c -o $(ENZO_DIR)/$@ $(DEFINES) $(CFLAGS) $(INCLUDES) $< \
 	    >> $(OUTPUT) 2>&1 ; \
-	  if [ ! -e $@ ]; then \
+	  if [ ! -e $(ENZO_DIR)/$@ ]; then \
 	     echo "See $(OUTPUT) for error messages"; \
 	     exit 1; \
 	  fi ; \
 	fi)
 
 .C.o:
-	@rm -f $@
+	@rm -f $(ENZO_DIR)/$@
 	@echo "Compiling $<"
 	@(if [ $(VERBOSE) -eq 0 ]; then \
-	  $(CXX) -c -o $@ $(DEFINES) $(CXXFLAGS) $(INCLUDES) $*.C \
+	  $(CXX) -c -o $(ENZO_DIR)/$@ $(DEFINES) $(CXXFLAGS) $(INCLUDES) $<  \
 	    >& $(OUTPUT) ; \
-	  if [ ! -e $@ ]; then \
+	  if [ ! -e $(ENZO_DIR)/$@ ]; then \
              echo; \
-             echo "$(CXX) -c -o $@ $(DEFINES) $(CXXFLAGS) $(INCLUDES) $*.C"; \
+             echo "$(CXX) -c -o $(ENZO_DIR)/$@ $(DEFINES) $(CXXFLAGS) $(INCLUDES) $<"; \
              echo; \
-             $(CXX) -c -o $@ $(DEFINES) $(CXXFLAGS) $(INCLUDES) $*.C;\
+             $(CXX) -c -o $(ENZO_DIR)/$@ $(DEFINES) $(CXXFLAGS) $(INCLUDES) $<;\
              echo; \
              exit 1; \
           fi ; \
 	else \
-	  $(CXX) -c -o $@ $(DEFINES) $(CXXFLAGS) $(INCLUDES) $*.C \
+	  $(CXX) -c -o $(ENZO_DIR)/$@ $(DEFINES) $(CXXFLAGS) $(INCLUDES) $< \
 	    >> $(OUTPUT) 2>&1 ; \
-	  if [ ! -e $@ ]; then \
+	  if [ ! -e $(ENZO_DIR)/$@ ]; then \
 	     echo "See $(OUTPUT) for error messages"; \
 	     exit 1; \
 	  fi ; \
@@ -332,7 +344,7 @@ dep:
 	@echo "Updating DEPEND"
 	-@(makedepend $(DEFINES) $(INCLUDES) -fDEPEND -o.o -m -- -- *.C *.c *.src *src90 *.h) >& out.make.DEPEND
 
-include DEPEND
+include $(ENZO_DIR)/DEPEND
 
 #-----------------------------------------------------------------------
 # Radiative transfer module
@@ -394,8 +406,8 @@ help:
 #-----------------------------------------------------------------------
 
 clean:
-	-@rm -f *.o uuid/*.o *.mod *.f *.f90 DEPEND.bak *~ $(OUTPUT) *.exe \
-          auto_show*.C svn_version.def hydro_rk/*.o
+	-@rm -f $(ENZO_DIR)/*.o $(ENZO_DIR)/uuid/*.o *.mod $(ENZO_DIR)/*.f $(ENZO_DIR)/*.f90 $(ENZO_DIR)/DEPEND.bak $(ENZO_DIR)/*~ $(OUTPUT) $(ENZO_DIR)/*.exe \
+          auto_show*.C svn_version.def $(ENZO_DIR)/hydro_rk/*.o temp.show*
 
 #-----------------------------------------------------------------------
 # Include configuration targets
