@@ -37,6 +37,8 @@
  
 int CommunicationBroadcastValue(int *Value, int BroadcastProcessor);
 int Enzo_Dims_create(int nnodes, int ndims, int *dims);
+int LoadBalanceHilbertCurve(grid *GridPointers[], int NumberOfGrids, 
+			    int* &NewProcessorNumber);
 
 #define USE_OLD_CPU_DISTRIBUTION
 
@@ -254,9 +256,8 @@ int CommunicationPartitionGrid(HierarchyEntry *Grid, int gridnum)
     } // ENDELSE ThisLevel == 1
 
     if (ParentGridNum == INT_UNDEFINED) {
-      fprintf(stderr, "CommunicationPartitionGrid: grid %d (%d), Parent not found?\n",
-	      gridnum, ThisLevel);
-      ENZO_FAIL("");
+      ENZO_VFAIL("CommunicationPartitionGrid: grid %d (%d), Parent not found?\n",
+	      gridnum, ThisLevel)
     }
 
     for (dim = 0; dim < MAX_DIMENSION; dim++) {
@@ -275,8 +276,8 @@ int CommunicationPartitionGrid(HierarchyEntry *Grid, int gridnum)
       // grid.
       for (i = 0; i < Layout[dim]; i++)
 	CoarseEdges[i] = 2 * AllStartIndex[ParentGridNum][dim][i] -
-	  (Left[dim] - AllLeftEdge[ParentGridNum][dim]) * 
-	  AllDims[0][dim] * nint(POW(RefineBy, ThisLevel));
+	  nint((Left[dim] - AllLeftEdge[ParentGridNum][dim]) * 
+	       AllDims[0][dim] * POW(RefineBy, ThisLevel));
 
       // Count the number of coarse slabs that overlap with this grid
       NumberOfCoarseSlabs = 0;
@@ -331,10 +332,7 @@ int CommunicationPartitionGrid(HierarchyEntry *Grid, int gridnum)
 
 	for (i = 0; i < NumberOfSlabs; i++) {
 	  ExactCount += ThisExactDims;
-	  if (dim == 0)
-	    GridDims[dim][ThisSlab+i] = nint(0.5*ExactCount)*2 - DisplacementCount;
-	  else
-	    GridDims[dim][ThisSlab+i] = nint(ExactCount) - DisplacementCount;
+	  GridDims[dim][ThisSlab+i] = nint(0.5*ExactCount)*2 - DisplacementCount;
 	  StartIndex[dim][ThisSlab+i] = ThisStartIndex + DisplacementCount;
 	  DisplacementCount += GridDims[dim][ThisSlab+i];
 	} // ENDFOR split coarse slab
@@ -500,8 +498,13 @@ int CommunicationPartitionGrid(HierarchyEntry *Grid, int gridnum)
       ENZO_FAIL("Error in grid->MoveSubgridParticlesFast.");
     }
  
+  int *PartitionProcessorNumbers = NULL;
+  if (LoadBalancing == 4)
+    LoadBalanceHilbertCurve(SubGrids, gridcounter,
+			    PartitionProcessorNumbers);
+
   delete [] SubGrids;
- 
+
   /* Distribute new grids amoung processors (and copy out fields). */
 
   CommunicationBarrier();
@@ -558,6 +561,9 @@ int CommunicationPartitionGrid(HierarchyEntry *Grid, int gridnum)
         if(NewGrid->ReturnGridInfo(&Rank, Dims, LeftEdge, RightEdge) == FAIL) {
           ENZO_FAIL("Error in grid->ReturnGridInfo.");
         }
+
+	if (PartitionProcessorNumbers != NULL)
+	  NewProc = PartitionProcessorNumbers[gridcounter];
  
 	/* Move Grid from current processor to new Processor. */
  
@@ -615,13 +621,15 @@ int CommunicationPartitionGrid(HierarchyEntry *Grid, int gridnum)
  
   if (MyProcessorNumber == ROOT_PROCESSOR)
     printf("OldGrid deleted\n");
- 
+
+  delete [] PartitionProcessorNumbers;
   for (dim = 0; dim < MAX_DIMENSION; dim++) {
     delete [] GridDims[dim];
     delete [] StartIndex[dim];
   }
 
   if (debug) printf("Exit CommunicationPartitionGrid.\n");
+
   CommunicationBarrier();
  
   return SUCCESS;

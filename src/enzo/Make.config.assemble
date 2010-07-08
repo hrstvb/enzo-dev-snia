@@ -45,7 +45,36 @@
     ASSEMBLE_PARAMETER_DEFINES = \
           -D__max_subgrids=$(PARAMETER_MAX_SUBGRIDS) \
           -D__max_baryons=$(PARAMETER_MAX_BARYONS) \
-          -D__max_cpu_per_node=$(PARAMETER_MAX_TASKS_PER_NODE)
+          -D__max_cpu_per_node=$(PARAMETER_MAX_TASKS_PER_NODE) \
+          -D__memory_pool_size=$(PARAMETER_MEMORY_POOL_SIZE)
+
+#-----------------------------------------------------------------------
+# DETERMINE INTEGER SIZE SETTINGS FOR PARTICLE INDICES
+#-----------------------------------------------------------------------
+
+    ERROR_IDS = 1
+
+    # Settings for 32-bit integers
+
+    ifeq ($(CONFIG_PARTICLE_IDS),32)
+        ERROR_IDS = 0
+        ASSEMBLE_IDS_DEFINES = -DCONFIG_PINT_4
+    endif
+
+    # Settings for 64-bit integers
+
+    ifeq ($(CONFIG_PARTICLE_IDS),64)
+        ERROR_IDS = 0
+        ASSEMBLE_IDS_DEFINES = -DCONFIG_PINT_8
+    endif
+
+    # error if CONFIG_INTEGERS is incorrect
+
+    ifeq ($(ERROR_IDS),1)
+       .PHONY: error_ids
+       error_ids:
+	$(error Illegal value '$(CONFIG_PARTICLE_IDS)' for $$(CONFIG_PARTICLE_IDS))
+    endif
 
 #-----------------------------------------------------------------------
 # DETERMINE INTEGER SIZE SETTINGS
@@ -642,8 +671,36 @@
 
     ifeq ($(ERROR_PHOTON),1)
        .PHONY: error_transfer
-       error_tpvel:
+       error_transfer:
 	$(error Illegal value '$(CONFIG_PHOTON)' for $$(CONFIG_PHOTON))
+    endif
+
+#-----------------------------------------------------------------------
+# DETERMINE EMISSIVITY FIELD SETTINGS
+#-----------------------------------------------------------------------
+
+    ERROR_EMISSIVITY = 1
+
+    # Settings to turn emissivity field ON
+
+    ifeq ($(CONFIG_EMISSIVITY),yes)
+        ERROR_EMISSIVITY = 0
+        ASSEMBLE_EMISSIVITY_DEFINES = -DEMISSIVITY
+    endif
+
+    # Settings to turn emissivity field OFF
+
+    ifeq ($(CONFIG_EMISSIVITY),no)
+        ERROR_EMISSIVITY = 0
+        ASSEMBLE_EMISSIVITY_DEFINES =
+    endif
+
+    # error if CONFIG_EMISSIVITY is incorrect
+
+    ifeq ($(ERROR_EMISSIVITY),1)
+       .PHONY: error_emissivity
+       error_emissivity:
+	$(error Illegal value '$(CONFIG_EMISSIVITY)' for $$(CONFIG_EMISSIVITY))
     endif
 
 #-----------------------------------------------------------------------
@@ -673,6 +730,39 @@
        error_NEW_GRID_IO:
 	$(error Illegal value '$(CONFIG_NEW_GRID_IO)' for $$(CONFIG_NEW_GRID_IO))
     endif
+
+#-----------------------------------------------------------------------
+# DETERMINE HYPRE SETTINGS
+#-----------------------------------------------------------------------
+
+    ERROR_HYPRE = 1
+
+    # Settings to turn HYPRE bindings on
+
+    ifeq ($(CONFIG_HYPRE),yes)
+        ERROR_HYPRE = 0
+        ASSEMBLE_HYPRE_DEFINES = -DUSE_HYPRE
+        ASSEMBLE_HYPRE_INCLUDES = $(MACH_INCLUDES_HYPRE)
+        ASSEMBLE_HYPRE_LIBS     = $(MACH_LIBS_HYPRE)
+    endif
+
+    # Settings to turn HYPRE bindings OFF
+
+    ifeq ($(CONFIG_HYPRE),no)
+        ERROR_HYPRE = 0
+        ASSEMBLE_HYPRE_DEFINES =
+        ASSEMBLE_HYPRE_INCLUDES =
+        ASSEMBLE_HYPRE_LIBS =
+    endif
+
+    # error if CONFIG_HYPRE is incorrect
+
+    ifeq ($(ERROR_HYPRE),1)
+       .PHONY: error_hypre
+       error_hypre:
+	$(error Illegal value '$(CONFIG_HYPRE)' for $$(CONFIG_HYPRE))
+    endif
+
 
 #-----------------------------------------------------------------------
 # DETERMINE FAST SIBLING SETTINGS
@@ -795,9 +885,9 @@
 	$(error Illegal value '$(CONFIG_FLUX_FIX)' for $$(CONFIG_FLUX_FIX))
     endif
 
-#=======================================================================
+#-----------------------------------------------------------------------
 # DETERMINE HDF4 USAGE
-#=======================================================================
+#-----------------------------------------------------------------------
 
     ERROR_USE_HDF4 = 1
 
@@ -821,6 +911,34 @@
        .PHONY: error_compilers
        error_compilers:
 	$(error Illegal value '$(CONFIG_USE_HDF4)' for $$(CONFIG_USE_HDF4))
+    endif
+
+#-----------------------------------------------------------------------
+# DETERMINE GRAVITY SOLVER
+#-----------------------------------------------------------------------
+
+    ERROR_GRAVITY_4S = 1
+
+    # compilers and settings if GRAVITY_4S is yes
+
+    ifeq ($(CONFIG_GRAVITY_4S),yes)
+        ERROR_GRAVITY_4S = 0
+        ASSEMBLE_GRAVITY_4S_DEFINES  = -DGRAVITY_4S 
+    endif
+
+    # compilers and settings if GRAVITY_4S is no
+
+    ifeq ($(CONFIG_GRAVITY_4S),no)
+        ERROR_GRAVITY_4S = 0
+        ASSEMBLE_GRAVITY_4S_DEFINES  =
+    endif
+
+    # error if CONFIG_GRAVITY_4S is incorrect
+
+    ifeq ($(ERROR_GRAVITY_4S),1)
+       .PHONY: error_compilers
+       error_compilers:
+	$(error Illegal value '$(CONFIG_GRAVITY_4S)' for $$(CONFIG_GRAVITY_4S))
     endif
 
 
@@ -864,6 +982,7 @@
               $(ASSEMBLE_PARAMETER_DEFINES) \
               $(ASSEMBLE_INITS_DEFINES) \
               $(ASSEMBLE_INTEGER_DEFINES) \
+	      $(ASSEMBLE_IDS_DEFINES) \
               $(ASSEMBLE_IO_DEFINES) \
               $(ASSEMBLE_LCAPERF_DEFINES) \
               $(ASSEMBLE_PYTHON_DEFINES) \
@@ -878,13 +997,16 @@
               $(ASSEMBLE_TESTING_DEFINES) \
               $(ASSEMBLE_TPVEL_DEFINES) \
               $(ASSEMBLE_PHOTON_DEFINES) \
+              $(ASSEMBLE_HYPRE_DEFINES) \
+              $(ASSEMBLE_EMISSIVITY_DEFINES) \
               $(ASSEMBLE_NEW_GRID_IO_DEFINES) \
               $(ASSEMBLE_FAST_SIB_DEFINES) \
               $(ASSEMBLE_BITWISE_IDENTICALITY_DEFINES) \
               $(ASSEMBLE_FLUX_FIX_DEFINES) \
               $(ASSEMBLE_ECUDA_DEFINES) \
               $(ASSEMBLE_CUDADEBUG_DEFINES) \
-              $(ASSEMBLE_HDF4_DEFINES)
+              $(ASSEMBLE_HDF4_DEFINES) \
+              $(ASSEMBLE_GRAVITY_4S_DEFINES)
 
     INCLUDES = $(MACH_INCLUDES) \
     	       $(ASSEMBLE_MPI_INCLUDES) \

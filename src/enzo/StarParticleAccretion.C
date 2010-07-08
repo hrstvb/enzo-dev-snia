@@ -64,31 +64,22 @@ int StarParticleAccretion(TopGridData *MetaData,
       continue;
 
     if (ThisStar->CalculateMassAccretion() == FAIL) {
-      fprintf(stderr, "Error in star::CalculateMassAccretion.\n");
-      ENZO_FAIL("");
+      ENZO_FAIL("Error in star::CalculateMassAccretion.\n");
     }
 
     /* Add accreted mass to star particles */
 
     if (ThisStar->Accrete() == FAIL) {
-      fprintf(stderr, "Error in star::Accrete.\n");
-      ENZO_FAIL("");
+      ENZO_FAIL("Error in star::Accrete.\n");
     }
 
     /* Add accreted angular momentum to star particles */
 
     if (ThisStar->AccreteAngularMomentum() == FAIL) {
-      fprintf(stderr, "Error in star::AccreteAngularMomentum.\n");
-      ENZO_FAIL("");
+      ENZO_FAIL("Error in star::AccreteAngularMomentum.\n");
+
     }
 
-    /* Subtract accreted mass from grids */
-    
-    if (ThisStar->SubtractAccretedMass() == FAIL) {
-      fprintf(stderr, "Error in star::SubtractAccretedMass.\n");
-      ENZO_FAIL("");
-    }
-    
   }
 
   return SUCCESS;

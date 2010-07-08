@@ -38,11 +38,13 @@ class Star
   float		 BirthTime;
   float		 LifeTime;
   int		 FeedbackFlag;
-  int		 Identifier;
+  PINT		 Identifier;
   int		 level;
   int		 GridID;
+  bool           AddedEmissivity;
   star_type	 type;
   float          accreted_angmom[MAX_DIMENSION];  // used for MBH_JETS feedback
+  double         NotEjectedMass;                  // Msun, used for MBH_JETS feedback
 
   friend class grid;
 
@@ -68,7 +70,11 @@ public:
   star_type ReturnType(void) { return type; };
   int   ReturnID(void) { return Identifier; };
   double ReturnMass(void) { return Mass; };
+  float ReturnBirthTime(void) { return BirthTime; };
+  double ReturnFinalMass(void) { return FinalMass; };
+  void  AssignFinalMass(double value) { FinalMass = value; };
   float ReturnLifetime(void) { return LifeTime; };
+  float ReturnBirthtime(void) { return BirthTime; };
   int   ReturnLevel(void) { return level; };
   void  ReduceLevel(void) { level--; };
   void  IncreaseLevel(void) { level++; };
@@ -82,17 +88,22 @@ public:
   void  AddMass(double dM) { Mass += dM; };
   bool  HasAccretion(void) { return (DeltaMass > 0); };
   void  ResetAccretion(void) { DeltaMass = 0.0; };
+  void  ResetNotEjectedMass(void) { NotEjectedMass = 0.0; };
+  double ReturnNotEjectedMass(void) { return NotEjectedMass; };
   void  ResetAccretionPointers(void) 
   { accretion_rate = NULL; accretion_time = NULL; }
   bool  IsActive(void) { return type >= 0; }
   bool  IsUnborn(void) { return type < 0; }
+  bool  ReturnEmissivityFlag(void) { return AddedEmissivity; };
+  void  AddEmissivityFlag(void) { this->AddedEmissivity = true; };
   FLOAT *ReturnPosition(void) { return pos; }
   float *ReturnVelocity(void) { return vel; }
   float *ReturnAccretedAngularMomentum(void) { return accreted_angmom; }
+  float ReturnLastAccretionRate(void) { return last_accretion_rate; }
   void	ConvertAllMassesToSolar(void);
   void	ConvertMassToSolar(void);
   int	CalculateMassAccretion(void);
-  int	ComputePhotonRates(float E[], double Q[]);
+  int	ComputePhotonRates(int &nbins, float E[], double Q[]);
   int	SetFeedbackFlag(FLOAT Time);
   void  SetFeedbackFlag(int flag);
 #ifdef LARGE_INTS
@@ -100,7 +111,7 @@ public:
 #endif
   int	Accrete(void);
   int	AccreteAngularMomentum(void);
-  int	SubtractAccretedMass(void);
+  int	SubtractAccretedMassFromCell(void);
   void	Merge(Star a);
   void	Merge(Star *a);
   bool	Mergable(Star a);
@@ -128,14 +139,17 @@ public:
   int   HitEndpoint(FLOAT Time);
   void  PrintInfo(void);
 
-  void  CalculateFeedbackParameters(float &Radius, float SNe_dt, 
-				    float RootCellWidth,
+  void  CalculateFeedbackParameters(float &Radius, 
+				    float RootCellWidth, float SNe_dt, 
 				    double &EjectaDensity,
 				    double &EjectaThermalEnergy,
 				    double &EjectaMetalDensity,
 				    float DensityUnits, float LengthUnits, 
 				    float TemperatureUnits, float TimeUnits,
 				    float VelocityUnits, float dtForThisStar);
+  int RemoveMassFromStarAfterFeedback(float &Radius, double &EjectaDensity, 
+				      float DensityUnits, float LengthUnits,
+				      int &CellsModified);
 
   int FindFeedbackSphere(LevelHierarchyEntry *LevelArray[], int level,
 			 float &Radius, double &EjectaDensity, double &EjectaThermalEnergy,
@@ -143,6 +157,10 @@ public:
 			 float DensityUnits, float LengthUnits, 
 			 float TemperatureUnits, float TimeUnits,
 			 float VelocityUnits, FLOAT Time);
+
+  int SphereContained(LevelHierarchyEntry *LevelArray[], int level, 
+		      float Radius);
+  int AssignFinalMassFromIMF(void);
 
 #ifdef TRANSFER
   RadiationSourceEntry* RadiationSourceInitialize(void);

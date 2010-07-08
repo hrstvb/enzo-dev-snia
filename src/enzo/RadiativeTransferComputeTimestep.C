@@ -31,19 +31,9 @@
 #include "Star.h"
 #include "CommunicationUtilities.h"
 
-#ifdef CONFIG_BFLOAT_4
-#define ROUNDOFF 1e-6f
-#endif
-#ifdef CONFIG_BFLOAT_8
-#define ROUNDOFF 1e-12
-#endif
-#ifdef CONFIG_BFLOAT_16
-#define ROUNDOFF 1e-16
-#endif
-
 extern int LevelCycleCount[MAX_DEPTH_OF_HIERARCHY];
 //int LastTimestepUseHII = FALSE;
-float LastPhotonDT = -1;
+float LastPhotonDT[2] = {-1,-1};
 
 int CosmologyComputeExpansionFactor(FLOAT time, FLOAT *a, FLOAT *dadt);
 int GetUnits(float *DensityUnits, float *LengthUnits,
@@ -64,7 +54,7 @@ int RadiativeTransferComputeTimestep(LevelHierarchyEntry *LevelArray[],
   const float PhotonCourantFactor = 1.0;
 
   // Restrict the increase in dtPhoton to this factor
-  const float MaxDTChange = 1.0;
+  const float MaxDTChange = 3.0;
 
   HierarchyEntry **Grids;
   LevelHierarchyEntry *Temp;
@@ -88,10 +78,9 @@ int RadiativeTransferComputeTimestep(LevelHierarchyEntry *LevelArray[],
       break;
     }
 
-//  LastPhotonDT = (MetaData->FirstTimestepAfterRestart && 
-//		  LastTimestepUseHII == FALSE) ? -1 : dtPhoton;
   dtPhoton = 10*huge_number;
 
+  float AvgLastTimestep;
   FLOAT TimeNow = LevelArray[level]->GridData->ReturnTime();
   float TemperatureUnits = 1, DensityUnits = 1, LengthUnits = 1,
     VelocityUnits = 1, TimeUnits = 1;
@@ -141,20 +130,21 @@ int RadiativeTransferComputeTimestep(LevelHierarchyEntry *LevelArray[],
        fluctuate significantly.  It gets even worse if the dtPhoton is
        allowed to vary a lot (>factor of a few). */
     
-    //    printf("dtPhoton=%g, LastPhotonDT=%g \n", 
-    //	   dtPhoton, LastPhotonDT); 
+    printf("dtPhoton=%g, LastPhotonDT=%g %g\n", dtPhoton, 
+	   LastPhotonDT[0], LastPhotonDT[1]); 
 
-    if (LastPhotonDT > 0 && dtPhoton < huge_number) {// && LastTimestepUseHII) {
-      if (dtPhoton > (1.0+MaxDTChange)*LastPhotonDT)
-	dtPhoton = LastPhotonDT;
+    if (LastPhotonDT[0] > 0 && LastPhotonDT[1] > 0 && dtPhoton < huge_number) {
+      AvgLastTimestep = 0.5 * (LastPhotonDT[0]+LastPhotonDT[1]);
+      if (dtPhoton > (1.0+MaxDTChange) * AvgLastTimestep)
+	dtPhoton = AvgLastTimestep;
       else
-	dtPhoton = 0.5 * (dtPhoton + LastPhotonDT);
+	dtPhoton = 0.5*(dtPhoton + AvgLastTimestep);
     }
 
     if (dtPhoton < huge_number) {
       // Store dtPhoton before modifying it based on the next topgrid timestep
-      LastPhotonDT = dtPhoton;  
-      //LastTimestepUseHII = TRUE;
+      LastPhotonDT[1] = LastPhotonDT[0];
+      LastPhotonDT[0] = dtPhoton;  
     }
 
   } // ENDIF
@@ -198,11 +188,18 @@ int RadiativeTransferComputeTimestep(LevelHierarchyEntry *LevelArray[],
 
   /* Do not go past the level-0 time (+timestep) */
 
+  float Saved_dtPhoton = dtPhoton;
   HydroTime = LevelArray[0]->GridData->ReturnTime();
   if (level == 0)
     HydroTime += LevelArray[0]->GridData->ReturnTimeStep();
-  if ((HydroTime - PhotonTime + ROUNDOFF) < dtPhoton) {
-    dtPhoton = HydroTime - PhotonTime + ROUNDOFF;
+  float dtTol = PFLOAT_EPSILON * HydroTime;
+  if ((HydroTime+dtTol - PhotonTime) < dtPhoton) {
+    if (debug) 
+      printf("HydroTime = %"PSYM", PhotonTime = %"PSYM
+	     ", dtPhoton = %g, dtPhoton0 = %g\n",
+	     HydroTime, PhotonTime, dtPhoton, Saved_dtPhoton);
+    dtPhoton = max(HydroTime+dtTol - PhotonTime, dtTol);
+    dtPhoton = max(dtPhoton, 1e-4*Saved_dtPhoton);
     //LastTimestepUseHII = FALSE;
   }
 

@@ -72,7 +72,7 @@ int grid::PPMDirectEuler
 
   float *temp = new float[tempsize*(31+NumberOfColours*4)];
 
-  //  Loop over directions, using a Strange-type splitting
+  //  Loop over directions, using a Strang-type splitting
 
   ixyz = CycleNumber % GridRank;
 
@@ -248,8 +248,7 @@ int grid::euler_sweep
 
   if (this->IdentifyPhysicalQuantities(DensNum, GENum, Vel1Num, Vel2Num, 
                                        Vel3Num, TENum) == FAIL) {
-    fprintf(stderr, "Error in IdentifyPhysicalQuantities.\n");
-    ENZO_FAIL("");
+    ENZO_FAIL("Error in IdentifyPhysicalQuantities.\n");
   }
 
   // Vel1 is the in-sweep velocity dimension, while vel2 and vel3 are
@@ -507,6 +506,7 @@ int grid::euler_sweep
     }
 
     if (DualEnergyFormalism) {
+
       for (ixl=0; ixl < nxl; ixl++) {
 	GET_INDEX_I;
 	BaryonField[GENum][i] = SLICE(GENUM,ixl,iyl);

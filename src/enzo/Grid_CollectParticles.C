@@ -103,12 +103,13 @@ int grid::CollectParticles(int GridNum, int* &NumberToMove,
     FLOAT *Position[MAX_DIMENSION];
     float *Velocity[MAX_DIMENSION], *Mass,
           *Attribute[MAX_NUMBER_OF_PARTICLE_ATTRIBUTES];
-    int *Number, *Type;
+    int *Type;
+    PINT *Number;
  
     if (TotalNumberOfParticles > 0) {
 
       Mass = new float[TotalNumberOfParticles];
-      Number = new int[TotalNumberOfParticles];
+      Number = new PINT[TotalNumberOfParticles];
       Type = new int[TotalNumberOfParticles];
       for (dim = 0; dim < GridRank; dim++) {
 	Position[dim] = new FLOAT[TotalNumberOfParticles];
@@ -118,8 +119,7 @@ int grid::CollectParticles(int GridNum, int* &NumberToMove,
 	Attribute[i] = new float[TotalNumberOfParticles];
 
       if (Velocity[GridRank-1] == NULL && TotalNumberOfParticles != 0) {
-	fprintf(stderr, "malloc error (out of memory?)\n");
-	ENZO_FAIL("");
+	ENZO_FAIL("malloc error (out of memory?)\n");
       }
  
       /* Copy this grid's particles to the new space. */
@@ -189,6 +189,7 @@ int grid::CollectParticles(int GridNum, int* &NumberToMove,
 				Attribute);
  
   } // end: if (COPY_IN)
+
 
  
   return SUCCESS;

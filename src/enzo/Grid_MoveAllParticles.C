@@ -1,4 +1,3 @@
-
 /***********************************************************************
 /
 /  GRID CLASS (MOVE ALL PARTICLES FROM SPECIFIED GRID TO THIS GRID)
@@ -32,15 +31,15 @@ int grid::MoveAllParticles(int NumberOfGrids, grid* FromGrid[])
 {
 
   if (NumberOfGrids < 1) {
-    fprintf(stderr, "NumberOfGrids(%"ISYM") must be > 0.\n", NumberOfGrids);
-    ENZO_FAIL("");
+    ENZO_VFAIL("NumberOfGrids(%"ISYM") must be > 0.\n", NumberOfGrids)
   }
  
   /* Determine total number of local particles. */
 
   int NumberOfSubgridParticles = 0;
   int TotalNumberOfParticles = NumberOfParticles;
-  int i, j, grid, dim, *Number, *Type;
+  int i, j, grid, dim, *Type;
+  PINT *Number;
  
   for (grid = 0; grid < NumberOfGrids; grid++)
     if (MyProcessorNumber == FromGrid[grid]->ProcessorNumber)
@@ -62,7 +61,7 @@ int grid::MoveAllParticles(int NumberOfGrids, grid* FromGrid[])
         *Attribute[MAX_NUMBER_OF_PARTICLE_ATTRIBUTES];
  
   Mass = new float[TotalNumberOfParticles];
-  Number = new int[TotalNumberOfParticles];
+  Number = new PINT[TotalNumberOfParticles];
   Type = new int[TotalNumberOfParticles];
   for (int dim = 0; dim < GridRank; dim++) {
     Position[dim] = new FLOAT[TotalNumberOfParticles];
@@ -72,8 +71,7 @@ int grid::MoveAllParticles(int NumberOfGrids, grid* FromGrid[])
     Attribute[i] = new float[TotalNumberOfParticles];
   
   if (Velocity[GridRank-1] == NULL) {
-    fprintf(stderr, "malloc error (out of memory?)\n");
-    ENZO_FAIL("");
+    ENZO_FAIL("malloc error (out of memory?)\n");
   }
  
   /* Compute the decrease in mass for particles moving to this grid
@@ -188,7 +186,8 @@ int grid::MoveAllParticlesOld(int NumberOfGrids, grid* FromGrid[])
   /* Determine total number of particles. */
 
   int TotalNumberOfParticles = NumberOfParticles;
-  int i, j, grid, dim, *Number, *Type;
+  int i, j, grid, dim, *Type;
+  PINT *Number;
 
   for (grid = 0; grid < NumberOfGrids; grid++)
     TotalNumberOfParticles += FromGrid[grid]->NumberOfParticles;
@@ -208,7 +207,7 @@ int grid::MoveAllParticlesOld(int NumberOfGrids, grid* FromGrid[])
 
   if (MyProcessorNumber == ProcessorNumber) {
      Mass = new float[TotalNumberOfParticles];
-     Number = new int[TotalNumberOfParticles]; 
+     Number = new PINT[TotalNumberOfParticles]; 
      Type = new int[TotalNumberOfParticles];
      for (int dim = 0; dim < GridRank; dim++) {
        Position[dim] = new FLOAT[TotalNumberOfParticles];
@@ -321,6 +320,7 @@ int grid::MoveAllParticlesOld(int NumberOfGrids, grid* FromGrid[])
   for (grid = 0; grid < NumberOfGrids; grid++) {
     FromGrid[grid]->NumberOfParticles = 0;
     if (MyProcessorNumber == FromGrid[grid]->ProcessorNumber)
+
       FromGrid[grid]->DeleteParticles();
   }
 

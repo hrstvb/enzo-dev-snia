@@ -51,13 +51,27 @@ EXTERN float RadiativeTransferTimestepVelocityLimit;
 
 EXTERN int RadiativeTransferSourceClustering;
 
+/* Radius to merge rays in units of separation of the two sources
+   associated with a super source. */
+
 EXTERN float RadiativeTransferPhotonMergeRadius;
+
+/* Radiative pressure flag */
 
 EXTERN int RadiationPressure;
 
+/* Flag to turn on a 1/r^2 Lyman-Werner radiation field */
+
 EXTERN int RadiativeTransferOpticallyThinH2;
 
+/* Periodic boundary conditions for the photon packages */
+
 EXTERN int RadiativeTransferPeriodicBoundary;
+
+/* Which level, i.e. the frequency it's called, we call the FLD
+   solver */
+
+EXTERN int RadiativeTransferFLDCallOnLevel;
 
 /* Flag to use timestepping to restrict HII fraction change to 50% */
 
@@ -71,4 +85,8 @@ EXTERN int RadiativeTransferAdaptiveTimestep;
 
 EXTERN float GlobalMaximumkphIfront;
 
+/* Flag to trace the spectrum in ray tracing */
 
+EXTERN int RadiativeTransferTraceSpectrum;
+
+EXTERN char *RadiativeTransferTraceSpectrumTable;

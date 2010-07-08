@@ -149,7 +149,7 @@ int grid::SetFlaggingField(int &NumberOfFlaggedCells, int level)
     /* ==== METHOD 9: BY SHEAR ==== */
  
   case 9:
- 
+
     NumberOfFlaggedCells = this->FlagCellsToBeRefinedByShear();
     if (NumberOfFlaggedCells < 0) {
       ENZO_FAIL("Error in grid->FlagCellsToBeRefinedByShear.");
@@ -179,10 +179,11 @@ int grid::SetFlaggingField(int &NumberOfFlaggedCells, int level)
       /* ==== METHOD 12: FORCE REFINEMENT TO SOME LEVEL IN A SET REGION ==== */
  
     case 12:
- 
-      NumberOfFlaggedCells = this->FlagCellsToBeRefinedByMustRefineRegion(level);
-      if (NumberOfFlaggedCells < 0) {
-        ENZO_FAIL("Error in grid->FlagCellsToBeRefinedByMustRefineRegion.");
+      if (level < MustRefineRegionMinRefinementLevel) {
+	NumberOfFlaggedCells = this->FlagCellsToBeRefinedByMustRefineRegion(level);
+	if (NumberOfFlaggedCells < 0) {
+	  ENZO_FAIL("Error in grid->FlagCellsToBeRefinedByMustRefineRegion.");
+	}
       }
       break;
  
@@ -190,14 +191,35 @@ int grid::SetFlaggingField(int &NumberOfFlaggedCells, int level)
       /* ==== METHOD 13: FORCE REFINEMENT BASED ON METALLICITY OF GAS ==== */
  
     case 13:
- 
-      NumberOfFlaggedCells = this->FlagCellsToBeRefinedByMetallicity(level);
-      if (NumberOfFlaggedCells < 0) {
-        ENZO_FAIL("Error in grid->FlagCellsToBeRefinedByMetallicity.");
+      if (level < MetallicityRefinementMinLevel) {
+	NumberOfFlaggedCells = this->FlagCellsToBeRefinedByMetallicity(level);
+	if (NumberOfFlaggedCells < 0) {
+	  ENZO_FAIL("Error in grid->FlagCellsToBeRefinedByMetallicity.");
+	}
       }
       break;
  
+
+      /* ==== METHOD 14: Refine around Shockwaves ==== */
+    case 14:
+      NumberOfFlaggedCells = this->FlagCellsToBeRefinedByShockwaves(level);
+      if (NumberOfFlaggedCells < 0) {
+        fprintf(stderr, "Error in grid->FlagCellsToBeRefinedByShockwaves.\n");
+        return FAIL;
+      }
+      break;
     /* ==== undefined ==== */
+
+    /* ==== METHOD 18: BY POSITION OF MUST-REFINE PARTICLES ONLY ABOVE A CERTAIN MASS  ==== */
+  case 18:
+
+    /* Searching for must-refine particles now done in
+       grid::SetParticleMassFlaggingField and stored in
+       ParticleMassFlaggingField.  This is checked in method #4, which
+       is automatically turned if method #8 is specified. */
+
+    break;
+ 
  
     /* ==== METHOD 100: UNDO REFINEMENT IN SOME REGIONS ==== */
  
@@ -212,9 +234,8 @@ int grid::SetFlaggingField(int &NumberOfFlaggedCells, int level)
     break;
  
   default:
-    fprintf(stderr, "CellFlaggingMethod[%"ISYM"] = %"ISYM" unknown\n", method,
-	    CellFlaggingMethod[method]);
-    ENZO_FAIL("");
+    ENZO_VFAIL("CellFlaggingMethod[%"ISYM"] = %"ISYM" unknown\n", method,
+	    CellFlaggingMethod[method])
  
   }
 
@@ -233,6 +254,7 @@ int grid::SetFlaggingField(int &NumberOfFlaggedCells, int level)
 #endif /* MPI_INSTRUMENTATION */
  
   if (debug1)
+
     printf("SetFlaggingField[method = %"ISYM"]: NumberOfFlaggedCells = %"ISYM".\n",
 	   method, NumberOfFlaggedCells);
  

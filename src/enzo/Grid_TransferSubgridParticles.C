@@ -104,9 +104,8 @@ int grid::TransferSubgridParticles(grid* Subgrids[], int NumberOfSubgrids,
  
       subgrid[i] = nint(BaryonField[NumberOfBaryonFields][index])-1;
       if (subgrid[i] < -1 || subgrid[i] > NumberOfSubgrids-1) {
-	fprintf(stderr, "particle subgrid (%"ISYM"/%"ISYM") out of range\n", 
-		subgrid[i], NumberOfSubgrids);
-	ENZO_FAIL("");
+	ENZO_VFAIL("particle subgrid (%"ISYM"/%"ISYM") out of range\n", 
+		subgrid[i], NumberOfSubgrids)
       }
       
     } // ENDFOR particles
@@ -119,7 +118,6 @@ int grid::TransferSubgridParticles(grid* Subgrids[], int NumberOfSubgrids,
 	  proc = Subgrids[subgrid[i]]->ReturnProcessorNumber();
 	NumberToMove[proc]++;
       }
-
 
     /* Allocate space. */
  
@@ -209,12 +207,13 @@ int grid::TransferSubgridParticles(grid* Subgrids[], int NumberOfSubgrids,
     FLOAT *Position[MAX_DIMENSION];
     float *Velocity[MAX_DIMENSION], *Mass,
           *Attribute[MAX_NUMBER_OF_PARTICLE_ATTRIBUTES];
-    int *Number, *Type;
+    PINT *Number;
+    int  *Type;
  
     if (TotalNumberOfParticles > 0) {
 
     Mass = new float[TotalNumberOfParticles];
-    Number = new int[TotalNumberOfParticles];
+    Number = new PINT[TotalNumberOfParticles];
     Type = new int[TotalNumberOfParticles];
     for (dim = 0; dim < GridRank; dim++) {
       Position[dim] = new FLOAT[TotalNumberOfParticles];
@@ -295,6 +294,7 @@ int grid::TransferSubgridParticles(grid* Subgrids[], int NumberOfSubgrids,
 				Attribute);
  
   } // end: if (COPY_IN)
+
 
  
   return SUCCESS;

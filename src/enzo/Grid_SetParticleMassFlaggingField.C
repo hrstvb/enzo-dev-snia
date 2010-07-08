@@ -50,6 +50,8 @@ int grid::SetParticleMassFlaggingField(int StartProc, int EndProc, int level,
 //      CommunicationDirection == COMMUNICATION_SEND)
 //    return SUCCESS;
 
+  //printf("    grid::SetParticleMassFlaggingField   \n");
+
   if (MyProcessorNumber != ProcessorNumber &&
       (CommunicationDirection == COMMUNICATION_RECEIVE ||
        CommunicationDirection == COMMUNICATION_POST_RECEIVE))
@@ -117,8 +119,7 @@ int grid::SetParticleMassFlaggingField(int StartProc, int EndProc, int level,
  
 	if (this->DepositParticlePositionsLocal(this->ReturnTime(),
 					PARTICLE_MASS_FLAGGING_FIELD) == FAIL) {
-	  fprintf(stderr, "Error in grid->DepositParticlePositions.\n");
-	  ENZO_FAIL("");
+	  ENZO_FAIL("Error in grid->DepositParticlePositions.\n");
 	}
 
 	DepositParticleMaximumParticleMass = 0;
@@ -132,9 +133,9 @@ int grid::SetParticleMassFlaggingField(int StartProc, int EndProc, int level,
 	if (level < MustRefineParticlesRefineToLevel) {
 	  NumberOfFlaggedCells = 
 	    this->DepositMustRefineParticles(ParticleMassMethod, level);
+	  //printf(" Level <  MustRefineParticlesRefineToLevel = %d   \n",MustRefineParticlesRefineToLevel );
 	  if (NumberOfFlaggedCells < 0) {
-	    fprintf(stderr, "Error in grid->DepositMustRefineParticles.\n");
-	    ENZO_FAIL("");
+	    ENZO_FAIL("Error in grid->DepositMustRefineParticles.\n");
 	  }
 	}
 	
@@ -234,3 +235,20 @@ int grid::SetParticleMassFlaggingField(int StartProc, int EndProc, int level,
 /************************************************************************/
 
 
+#ifdef UNUSED
+void InitializeParticleMassFlaggingFieldCommunication(void)
+{
+#ifdef USE_MPI
+  int i;
+  irq = 0;
+  for (i = 0; i < MAX_REQUEST_HANDLES; i++) {
+    FlagRequestHandle[i] = NULL;
+    if (FlagBuffer[i] != NULL)
+
+      delete [] FlagBuffer[i];
+    FlagBuffer[i] = NULL;
+  }
+#endif USE_MPI
+  return;
+}
+#endif

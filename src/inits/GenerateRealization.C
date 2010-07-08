@@ -27,7 +27,8 @@ extern "C" FLOAT FORTRAN_NAME(calc_ayed)(FLOAT *aye);
  
 int GenerateField(int Rank, int Dims[3], int MaxDims[3], int WaveNumberCutoff,
 		  FLOAT *Field, int FieldType, int NewCenter[3],
-		  int Refinement, int StartIndex[3], int Species);
+		  int Refinement, int StartIndex[3], 
+		  int RandomNumberGenerator, int Species);
 int WriteField(int Rank, int Dims[3], FLOAT *Field, char *Name, int Part, int Npart,
                int GridRank, int Starts[3], int Ends[3], int RootGridDims[3]);
 int WriteIntField(int Rank, int Dims[3], int *Field, char *Name, int Part, int Npart,
@@ -107,11 +108,13 @@ int GenerateRealization(parmstruct *Parameters, parmstruct *SubGridParameters)
     for (dim = 0; dim < Parameters->Rank; dim++) {
       size *= (Parameters->ParticleDims[dim] + ((dim == 0) ? 2 : 0));
       NumberOfParticles *= Parameters->ParticleDims[dim];
+        fprintf(stderr, "PARTICLEDIMS %"ISYM" are %"ISYM"\n", dim,
+Parameters->ParticleDims[dim]);
     }
  
 #ifdef RH_M
     big = ((long_int) (size)) * ((long_int) (sizeof(FLOAT)));
-    printf("Allocate %lld bytes for ParticleField\n", big);
+    printf("Allocate %lld bytes (%lld) for ParticleField\n", big, size);
 #endif
  
     if ((ParticleField = new FLOAT[size]) == NULL) {
@@ -198,7 +201,8 @@ int GenerateRealization(parmstruct *Parameters, parmstruct *SubGridParameters)
       GenerateField(Parameters->Rank, Parameters->ParticleDims,
 		    Parameters->MaxDims, Parameters->WaveNumberCutoff,
 		    ParticleField, 1+dim, Parameters->NewCenter,
-		    Parameters->ParticleRefinement, Parameters->StartIndex, 1);
+		    Parameters->ParticleRefinement, Parameters->StartIndex,
+		    Parameters->RandomNumberGenerator, 1);
  
       Temp = ayed * GrowthFunction;
  
@@ -394,7 +398,8 @@ int GenerateRealization(parmstruct *Parameters, parmstruct *SubGridParameters)
     GenerateField(Parameters->Rank, Parameters->GridDims,
 		  Parameters->MaxDims, Parameters->WaveNumberCutoff,
 		  GridField, 0, Parameters->NewCenter,
-		  Parameters->GridRefinement, Parameters->StartIndex, 2);
+		  Parameters->GridRefinement, Parameters->StartIndex, 
+		  Parameters->RandomNumberGenerator, 2);
  
     Temp = OmegaBaryonNow/OmegaMatterNow;
     for (i = 0; i < size; i++)
@@ -422,7 +427,8 @@ int GenerateRealization(parmstruct *Parameters, parmstruct *SubGridParameters)
       GenerateField(Parameters->Rank, Parameters->GridDims,
 		    Parameters->MaxDims, Parameters->WaveNumberCutoff,
 		    GridField, 1+dim, Parameters->NewCenter,
-		    Parameters->GridRefinement, Parameters->StartIndex, 2);
+		    Parameters->GridRefinement, Parameters->StartIndex, 
+		    Parameters->RandomNumberGenerator, 2);
  
       Temp = ayed * GrowthFunction;
  

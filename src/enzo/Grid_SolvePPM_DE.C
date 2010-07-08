@@ -42,43 +42,41 @@ int grid::SolvePPM_DE(int CycleNumber, int NumberOfSubgrids,
   nyz = GridEndIndex[1] - GridStartIndex[1] + 1;
   nzz = GridEndIndex[2] - GridStartIndex[2] + 1;
 
-  ixyz = CycleNumber % 3;
+  ixyz = CycleNumber % GridRank;
 
   int i,j,k,n;
-  for (n = ixyz; n <= ixyz+2; n++) {
+  for (n = ixyz; n < ixyz+GridRank; n++) {
 
     // Update in x-direction
-    if ((n % 3 == 0) && nxz > 1) {
-      for (k = GridStartIndex[2]; k <= GridEndIndex[2]; k++) {
+    if ((n % GridRank == 0) && nxz > 1) {
+      for (k = 0; k < GridDimension[2]; k++) {
 	if (this->xEulerSweep(k, NumberOfSubgrids, SubgridFluxes, 
 			      GridGlobalStart, CellWidthTemp, GravityOn, 
 			      NumberOfColours, colnum) == FAIL) {
-	  fprintf(stderr, "Error in xEulerSweep.  k = %d\n", k);
-	  ENZO_FAIL("");
+	  ENZO_VFAIL("Error in xEulerSweep.  k = %d\n", k)
 	}
       } // ENDFOR k
     } // ENDIF x-direction
 
     // Update in y-direction
-    if ((n % 3 == 1) && nyz > 1) {
-      for (i = GridStartIndex[0]; i <= GridEndIndex[0]; i++) {
+    if ((n % GridRank == 1) && nyz > 1) {
+      for (i = 0; i < GridDimension[0]; i++) {
 	if (this->yEulerSweep(i, NumberOfSubgrids, SubgridFluxes, 
 			      GridGlobalStart, CellWidthTemp, GravityOn, 
 			      NumberOfColours, colnum) == FAIL) {
-	  fprintf(stderr, "Error in yEulerSweep.  i = %d\n", i);
-	  ENZO_FAIL("");
+	  ENZO_VFAIL("Error in yEulerSweep.  i = %d\n", i)
 	}
       } // ENDFOR i
     } // ENDIF y-direction
 
     // Update in z-direction
-    if ((n % 3 == 2) && nzz > 1) {
-      for (j = GridStartIndex[1]; j <= GridEndIndex[1]; j++) {
+    if ((n % GridRank == 2) && nzz > 1) {
+      for (j = 0; j < GridDimension[1]; j++) {
 	if (this->zEulerSweep(j, NumberOfSubgrids, SubgridFluxes, 
 			      GridGlobalStart, CellWidthTemp, GravityOn, 
 			      NumberOfColours, colnum) == FAIL) {
-	  fprintf(stderr, "Error in zEulerSweep.  j = %d\n", j);
-	  ENZO_FAIL("");
+	  ENZO_VFAIL("Error in zEulerSweep.  j = %d\n", j)
+
 	}
       } // ENDFOR j
     } // ENDIF z-direction

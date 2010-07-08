@@ -269,9 +269,8 @@ int ComputePotentialFieldLevelZeroPer(TopGridData *MetaData,
   /* Quick error check. */
  
   if (NumberOfOutRegions != NumberOfGreensRegions) {
-    fprintf(stderr, "OutRegion(%"ISYM") != GreensRegion(%"ISYM")\n", NumberOfOutRegions,
-	    NumberOfGreensRegions);
-    ENZO_FAIL("");
+    ENZO_VFAIL("OutRegion(%"ISYM") != GreensRegion(%"ISYM")\n", NumberOfOutRegions,
+	    NumberOfGreensRegions)
   }
  
   /* Compute coefficient for Greens function. */
@@ -415,8 +414,8 @@ int ComputePotentialFieldLevelZeroPer(TopGridData *MetaData,
   /* Process the receives */
 
   if (CommunicationReceiveHandler() == FAIL)
-    ENZO_FAIL("");
-
+    ENZO_FAIL("CommunicationReceiveHandler() failed!\n");
+  
   CommunicationDirection = COMMUNICATION_SEND_RECEIVE;
  
   /* Clean up. */

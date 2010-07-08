@@ -45,6 +45,9 @@ int grid::CommunicationTransferParticles(grid* Grids[], int NumberOfGrids,
   int GridPosition[MAX_DIMENSION];
   int *ToGrid;
  
+  for (dim = 0; dim < MAX_DIMENSION; dim++)
+    GridPosition[dim] = 0;
+
   /* ----------------------------------------------------------------- */
   /* Copy particle out of grid. */
  
@@ -197,12 +200,13 @@ int grid::CommunicationTransferParticles(grid* Grids[], int NumberOfGrids,
     FLOAT *Position[MAX_DIMENSION];
     float *Velocity[MAX_DIMENSION], *Mass,
       *Attribute[MAX_NUMBER_OF_PARTICLE_ATTRIBUTES];
-    int *Number, *Type;
+    PINT *Number;
+    int *Type;
 
     if (TotalNumberOfParticles > 0) {
  
       Mass = new float[TotalNumberOfParticles];
-      Number = new int[TotalNumberOfParticles];
+      Number = new PINT[TotalNumberOfParticles];
       Type = new int[TotalNumberOfParticles];
       for (dim = 0; dim < GridRank; dim++) {
 	Position[dim] = new FLOAT[TotalNumberOfParticles];
@@ -212,8 +216,7 @@ int grid::CommunicationTransferParticles(grid* Grids[], int NumberOfGrids,
 	Attribute[i] = new float[TotalNumberOfParticles];
 
       if (Velocity[GridRank-1] == NULL && TotalNumberOfParticles != 0) {
-	fprintf(stderr, "malloc error (out of memory?)\n");
-	ENZO_FAIL("");
+	ENZO_FAIL("malloc error (out of memory?)\n");
       }
 
 #ifdef USE_MPI
@@ -299,6 +302,7 @@ int grid::CommunicationTransferParticles(grid* Grids[], int NumberOfGrids,
     //         T1-t00, T2-T1, T3-T2, T4-T3, t01-T4);
 
   } // end: if (COPY_IN)
+
 
  
   return SUCCESS;

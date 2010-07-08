@@ -11,6 +11,7 @@
 
 #include <stdio.h>
 #include <math.h>
+#include "ErrorExceptions.h"
 #include "macros_and_parameters.h"
 #include "typedefs.h"
 #include "global_data.h"
@@ -45,16 +46,16 @@ int grid::UpdateElectronDensity(void)
     size *= GridDimension[dim];
   
   for (i = 0; i < size; i++)
-    BaryonField[DeNum][i] = BaryonField[HIINum][i] + BaryonField[HeIINum][i] +
-      2*BaryonField[HeIIINum][i];
+    BaryonField[DeNum][i] = BaryonField[HIINum][i] + 0.25*BaryonField[HeIINum][i] +
+      0.5*BaryonField[HeIIINum][i]; 
 
   if (MultiSpecies > 1)
     for (i = 0; i < size; i++)
-      BaryonField[DeNum][i] += BaryonField[H2IINum][i] - BaryonField[HMNum][i];
+      BaryonField[DeNum][i] += 0.5*BaryonField[H2IINum][i] - BaryonField[HMNum][i];
 
   if (MultiSpecies > 2)
     for (i = 0; i < size; i++)
-      BaryonField[DeNum][i] += BaryonField[DIINum][i];
+      BaryonField[DeNum][i] += 0.5*BaryonField[DIINum][i];
 
   return SUCCESS;
 

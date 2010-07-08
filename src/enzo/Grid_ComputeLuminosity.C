@@ -63,7 +63,7 @@ extern "C" void FORTRAN_NAME(cool_multi_lum)(
            float *metal,
 	float *hyd01ka, float *h2k01a, float *vibha, float *rotha, 
 	   float *rotla,
-	float *gpldl, float *gphdl, float *HDltea, float *HDlowa, float *ciecoa,
+	float *gpldl, float *gphdl, float *HDltea, float *HDlowa,
 	float *metala, int *n_xe, float *xe_start, float *xe_end,
 	float *inutot, int *iradfield, int *nfreq, int *imetalregen,
 	int *iradshield, float *avgsighp, float *avgsighep, float *avgsighe2p,
@@ -100,8 +100,7 @@ int grid::ComputeLuminosity(float *luminosity, int NumberOfLuminosityFields)
 
   if (this->IdentifyPhysicalQuantities(DensNum, GENum, Vel1Num, Vel2Num, 
 				       Vel3Num, TENum) == FAIL) {
-    fprintf(stderr, "Error in IdentifyPhysicalQuantities.\n");
-    ENZO_FAIL("");
+    ENZO_FAIL("Error in IdentifyPhysicalQuantities.\n");
   }
 
   /* Find Multi-species fields. */
@@ -109,8 +108,7 @@ int grid::ComputeLuminosity(float *luminosity, int NumberOfLuminosityFields)
   if (MultiSpecies)
     if (IdentifySpeciesFields(DeNum, HINum, HIINum, HeINum, HeIINum, HeIIINum, 
 		      HMNum, H2INum, H2IINum, DINum, DIINum, HDINum) == FAIL) {
-      fprintf(stderr, "Error in grid->IdentifySpeciesFields.\n");
-      ENZO_FAIL("");
+      ENZO_FAIL("Error in grid->IdentifySpeciesFields.\n");
     }
 
   /* Find photo-ionization fields */
@@ -173,11 +171,19 @@ int grid::ComputeLuminosity(float *luminosity, int NumberOfLuminosityFields)
       MetalNum = 0;
     }
 
+  if (MetalCooling == CLOUDY_METAL_COOLING) {
+    fprintf(stderr, 
+	    "Warning: Cloudy cooling not implemented into projections.\n");
+    MetalCooling = FALSE;
+    MetalCoolingType = FALSE;
+    MetalFieldPresent = FALSE;
+    MetalNum = 0;
+  }
+
   /* Calculate the rates due to the radiation field. */
 
   if (RadiationFieldCalculateRates(Time+0.5*dtFixed) == FAIL) {
-    fprintf(stderr, "Error in RadiationFieldCalculateRates.\n");
-    ENZO_FAIL("");
+    ENZO_FAIL("Error in RadiationFieldCalculateRates.\n");
   }
 
   /* Set up information for rates which depend on the radiation field. 
@@ -224,7 +230,7 @@ int grid::ComputeLuminosity(float *luminosity, int NumberOfLuminosityFields)
        CoolData.hyd01k, CoolData.h2k01, CoolData.vibh, 
           CoolData.roth, CoolData.rotl,
        CoolData.GP99LowDensityLimit, CoolData.GP99HighDensityLimit, 
-          CoolData.HDlte, CoolData.HDlow, CoolData.cieco,
+          CoolData.HDlte, CoolData.HDlow,
           CoolData.metals, &CoolData.NumberOfElectronFracBins, 
           &CoolData.ElectronFracStart, &CoolData.ElectronFracEnd,
        RadiationData.Spectrum[0], &RadiationFieldType, 
@@ -253,8 +259,8 @@ int grid::ComputeLuminosity(float *luminosity, int NumberOfLuminosityFields)
 
     // TODO: Convert cooling time to luminosity
 
-    fprintf(stderr, "Grid_ComputeLuminosity not ready for MultiSpecies = 0\n");
-    ENZO_FAIL("");
+    ENZO_FAIL("Grid_ComputeLuminosity not ready for MultiSpecies = 0\n");
+
   }
 
   return SUCCESS;

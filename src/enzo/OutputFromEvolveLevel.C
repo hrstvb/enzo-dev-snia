@@ -5,7 +5,7 @@
 // date      : June 10, 2009, 3:37 pm
 // 
 // Purpose   : Control various outputs from the EvolveLevel routine.
-
+#include "preincludes.h"
  
 #ifdef USE_MPI
 #include "mpi.h"
@@ -29,6 +29,10 @@
 #include "TopGridData.h"
 #include "LevelHierarchy.h"
 #include "CommunicationUtilities.h"
+#ifdef TRANSFER
+#include "ImplicitProblemABC.h"
+#endif
+
 
 int WriteTracerParticleData(char *basename, int filenumber,
 		   LevelHierarchyEntry *LevelArray[], TopGridData *MetaData,
@@ -36,10 +40,16 @@ int WriteTracerParticleData(char *basename, int filenumber,
 //#ifdef USE_HDF5_GROUPS
 int Group_WriteAllData(char *basename, int filenumber, HierarchyEntry *TopGrid,
 		       TopGridData &MetaData, ExternalBoundary *Exterior,
+#ifdef TRANSFER
+		       ImplicitProblemABC *ImplicitSolver,
+#endif
 		       FLOAT WriteTime = -1, int CheckpointDump = FALSE);
 // #else
 // int WriteAllData(char *basename, int filenumber, HierarchyEntry *TopGrid,
 //                  TopGridData &MetaData, ExternalBoundary *Exterior,
+//#ifdef TRANSFER
+//	            ImplicitProblemABC *ImplicitSolver,
+//#endif
 //                  FLOAT WriteTime = -1);
 // #endif
 void my_exit(int status);
@@ -54,9 +64,14 @@ int GetUnits(float *DensityUnits, float *LengthUnits,
 EXTERN int LevelCycleCount[MAX_DEPTH_OF_HIERARCHY];
 
 int OutputFromEvolveLevel(LevelHierarchyEntry *LevelArray[],TopGridData *MetaData,
-			  int level, ExternalBoundary *Exterior){
+			  int level, ExternalBoundary *Exterior
+#ifdef TRANSFER
+			  , ImplicitProblemABC *ImplicitSolver
+#endif
+			  ){
 
   int WriteOutput = FALSE, ExitEnzo = FALSE, NumberOfGrids;
+  int PackedStatus = 0;
   int CheckpointDump = FALSE;
 
   //Do all "bottom of hierarchy" checks
@@ -115,11 +130,13 @@ int OutputFromEvolveLevel(LevelHierarchyEntry *LevelArray[],TopGridData *MetaDat
     
     int outputNow = -1, stopNow = -1, subcycleCount=-1, checkpointDumpNow=-1;
     if( FileDirectedOutput == TRUE){
+
+    if(MyProcessorNumber == ROOT_PROCESSOR) {
       
-      CommunicationBarrier();
       outputNow = access("outputNow", F_OK);
       subcycleCount = access("subcycleCount", F_OK);
       stopNow = access("stopNow", F_OK) ;
+      
       checkpointDumpNow = access("checkpointDump", F_OK);
 
       if ( outputNow != -1 ){
@@ -134,14 +151,10 @@ int OutputFromEvolveLevel(LevelHierarchyEntry *LevelArray[],TopGridData *MetaDat
       }
 
       if( checkpointDumpNow != -1 ) {
-	printf("Detected checkpointDump\n");
-	ExitEnzo = TRUE;
+	//ExitEnzo = TRUE;
 	WriteOutput = TRUE;
 	CheckpointDump = TRUE;
       }
-
-    /* We also reset checkpoint state here */
-    if (CheckpointRestart == TRUE) CheckpointRestart = FALSE;
 
       /* Check to see if new subcycle information has been given to us */
       
@@ -165,8 +178,6 @@ int OutputFromEvolveLevel(LevelHierarchyEntry *LevelArray[],TopGridData *MetaDat
 	}
       }
       
-      
-      CommunicationBarrier();
       if (MyProcessorNumber == ROOT_PROCESSOR){
 	if( outputNow != -1 )
 	  if (unlink("outputNow")) {
@@ -185,11 +196,20 @@ int OutputFromEvolveLevel(LevelHierarchyEntry *LevelArray[],TopGridData *MetaDat
    	    ENZO_FAIL("Error deleting checkpointDump");
 	  } 
       } 
-      
-      CommunicationBarrier();
-      
+
+    }//Root Processor only
+
+    /* This should be packed up */
+
+    WriteOutput = CommunicationMaxValue(WriteOutput);
+    ExitEnzo = CommunicationMaxValue(ExitEnzo);
+    CheckpointDump = CommunicationMaxValue(CheckpointDump);
+
     }//File Directed Output
     
+    /* We also reset checkpoint state here */
+    if (CheckpointRestart == TRUE) CheckpointRestart = FALSE;
+
 
     /* Check to see if we should start outputting interpolated data based on
        the time passed (dtInterpolatedDataDump < dtDataDump).
@@ -236,15 +256,20 @@ int OutputFromEvolveLevel(LevelHierarchyEntry *LevelArray[],TopGridData *MetaDat
     //#ifdef USE_HDF5_GROUPS
     if (Group_WriteAllData(MetaData->DataDumpName, MetaData->DataDumpNumber++,
 			   Temp2->GridHierarchyEntry, *MetaData, Exterior,
+#ifdef TRANSFER
+			   ImplicitSolver,
+#endif
 			   LevelArray[level]->GridData->ReturnTime(), CheckpointDump) == FAIL) {
             ENZO_FAIL("Error in Group_WriteAllData.");
     }
 // #else
 //     if (WriteAllData(MetaData->DataDumpName, MetaData->DataDumpNumber++,
 // 		     Temp2->GridHierarchyEntry, *MetaData, Exterior, 
+// #ifdef TRANSFER
+// 		     ImplicitSolver,
+// #endif
 // 		     LevelArray[level]->GridData->ReturnTime()) == FAIL) {
-//       fprintf(stderr, "Error in WriteAllData.\n");
-//       ENZO_FAIL("");
+//       ENZO_FAIL("Error in WriteAllData.\n");
 //     }
 // #endif
   }//WriteOutput == TRUE
@@ -253,15 +278,16 @@ int OutputFromEvolveLevel(LevelHierarchyEntry *LevelArray[],TopGridData *MetaDat
     if (MovieSkipTimestep != INT_UNDEFINED) {
       fprintf(stderr, "Closing movie file.\n");
       MetaData->AmiraGrid.AMRHDF5Close();
+      MetaData->AmiraGrid.AMRHDF5CloseSeparateParticles();
     }
     if (MyProcessorNumber == ROOT_PROCESSOR) {
+
       fprintf(stderr, "Stopping due to request on level %"ISYM"\n", level);
       Exit_fptr = fopen("RunFinished", "w");
       fclose(Exit_fptr);
     }
     my_exit(EXIT_SUCCESS);
   }
-  
   
   return SUCCESS;
 }

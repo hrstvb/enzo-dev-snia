@@ -41,6 +41,16 @@ int CreateSiblingList(HierarchyEntry ** Grids, int NumberOfGrids, SiblingGridLis
 		     int StaticLevelZero,TopGridData * MetaData,int level){
 
   int grid1;
+
+  if (NumberOfGrids == 0)
+    return SUCCESS;
+
+  if (NumberOfGrids == 1) {   // no siblings to find?
+    SiblingList[0].NumberOfSiblings = 0;
+    SiblingList[0].GridList = NULL;
+    return SUCCESS;
+  }
+
 #ifdef STATIC_SIBLING_LIST
   if ( StaticLevelZero == 1 && level == 0 ) {
     
@@ -61,8 +71,7 @@ int CreateSiblingList(HierarchyEntry ** Grids, int NumberOfGrids, SiblingGridLis
                               &StaticChainingMesh, &StaticSiblingList[grid1],
                               MetaData->LeftFaceBoundaryCondition,
                               MetaData->RightFaceBoundaryCondition) == FAIL) {
-          fprintf(stderr, "Error in grid->FastSiblingLocatorFindSiblings.\n");
-          ENZO_FAIL("");
+          ENZO_FAIL("Error in grid->FastSiblingLocatorFindSiblings.\n");
         }
 
       /* Clean up the chaining mesh. */
@@ -106,8 +115,8 @@ int CreateSiblingList(HierarchyEntry ** Grids, int NumberOfGrids, SiblingGridLis
                               &ChainingMesh, &SiblingList[grid1],
 			      MetaData->LeftFaceBoundaryCondition,
 			      MetaData->RightFaceBoundaryCondition) == FAIL) {
-      fprintf(stderr, "Error in grid->FastSiblingLocatorFindSiblings.\n");
-      ENZO_FAIL("");
+      ENZO_FAIL("Error in grid->FastSiblingLocatorFindSiblings.\n");
+
     }
  
   /* Clean up the chaining mesh. */

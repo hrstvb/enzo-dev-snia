@@ -106,8 +106,11 @@ int grid::CosmologySimulationInitializeGrid(
 			  float CosmologySimulationInitialFractionHM,
 			  float CosmologySimulationInitialFractionH2I,
 			  float CosmologySimulationInitialFractionH2II,
+#ifdef TRANSFER
+			  float RadHydroRadiation,
+#endif
 			  int   UseMetallicityField,
-			  int  &CurrentParticleNumber,
+			  PINT &CurrentParticleNumber,
 			  int CosmologySimulationManuallySetParticleMassRatio,
 			  float CosmologySimulationManualParticleMassRatio,
 			  int   CosmologySimulationCalculatePositions)
@@ -117,7 +120,12 @@ int grid::CosmologySimulationInitializeGrid(
   int idim, dim, i, j, vel, OneComponentPerFile, ndim, level;
   int DeNum, HINum, HIINum, HeINum, HeIINum, HeIIINum, HMNum, H2INum, H2IINum,
       DINum, DIINum, HDINum, MetalNum;
-
+#ifdef TRANSFER
+  int EgNum;
+#endif
+#ifdef EMISSIVITY
+  int EtaNum;
+#endif
   int CRNum, MachNum, PSTempNum, PSDenNum;
  
   int ExtraField[2];
@@ -225,6 +233,10 @@ int grid::CosmologySimulationInitializeGrid(
       FieldType[NumberOfBaryonFields++] = Velocity2;
     if (GridRank > 2)
       FieldType[NumberOfBaryonFields++] = Velocity3;
+#ifdef TRANSFER
+    if (RadiativeTransferFLD > 1)
+      FieldType[EgNum = NumberOfBaryonFields++] = RadiationFreq0;
+#endif
     if (MultiSpecies) {
       FieldType[DeNum    = NumberOfBaryonFields++] = ElectronDensity;
       FieldType[HINum    = NumberOfBaryonFields++] = HIDensity;
@@ -256,6 +268,10 @@ int grid::CosmologySimulationInitializeGrid(
     }
     if (WritePotential)
       FieldType[NumberOfBaryonFields++] = GravPotential;
+#ifdef EMISSIVITY
+    if (StarMakerEmissivityField > 0)
+      FieldType[EtaNum = NumberOfBaryonFields++] = Emissivity0;
+#endif
     if(CRModel){
       FieldType[MachNum   = NumberOfBaryonFields++] = Mach;
       if(StorePreShockFields){
@@ -370,11 +386,19 @@ int grid::CosmologySimulationInitializeGrid(
       if (READFILE(CosmologySimulationVelocityNames[dim], GridRank,
 		   GridDimension, GridStartIndex, GridEndIndex, Offset,
 		   BaryonField[vel+dim], &tempbuffer, idim, ndim) == FAIL) {
-	fprintf(stderr, "Error reading velocity field %"ISYM".\n", dim);
-	ENZO_FAIL("");
+	ENZO_VFAIL("Error reading velocity field %"ISYM".\n", dim)
       }
     } // ENDFOR dim
   } // ENDIF grid velocities
+
+#ifdef TRANSFER
+  // if using FLD-based radiation energy density, set the field
+  if ((RadiativeTransferFLD > 1) && ReadData) {
+    float RadScaled = RadHydroRadiation/DensityUnits/VelocityUnits/VelocityUnits;
+    for (i=0; i<size; i++)
+      BaryonField[EgNum][i] = RadScaled;
+  }
+#endif
  
   // If using multi-species, set the fields
  
@@ -447,7 +471,8 @@ int grid::CosmologySimulationInitializeGrid(
  
   if (UseMetallicityField && ReadData)
     for (i = 0; i < size; i++) {
-      BaryonField[MetalNum][i] = 1.0e-10 * BaryonField[0][i];
+      BaryonField[MetalNum][i] = 1.0e-10 * BaryonField[0][i];  
+      //BaryonField[MetalNum][i] = 3e-3 * 0.0204 * BaryonField[0][i];    // Z = 1e-4Zs  //#####
       if(MultiMetals){
 	BaryonField[ExtraField[0]][i] = 1.0e-10 * BaryonField[0][i];
 	BaryonField[ExtraField[1]][i] = 1.0e-10 * BaryonField[0][i];
@@ -457,6 +482,12 @@ int grid::CosmologySimulationInitializeGrid(
       for (i = 0; i < size; i++)
         BaryonField[ForbidNum][i] = 0.0;
     }
+
+#ifdef EMISSIVITY
+    // If using an emissivity field, initialize to zero
+    if ((StarMakerEmissivityField > 0) && ReadData)
+      for (i=0; i<size; i++)  BaryonField[EtaNum][i] = 0.0;
+#endif
  
   // If they were not read in above, set the total & gas energy fields now
  
@@ -528,9 +559,8 @@ int grid::CosmologySimulationInitializeGrid(
     // Error check
  
     if (TempInt != 1) {
-      fprintf(stderr, "Rank (%"ISYM") is not one in file %s.\n", TempInt,
-	      CosmologySimulationParticlePositionName);
-      ENZO_FAIL("");
+      ENZO_VFAIL("Rank (%"ISYM") is not one in file %s.\n", TempInt,
+	      CosmologySimulationParticlePositionName)
     }
  
     // If doing parallel root grid IO then read in the full list of particle
@@ -775,8 +805,7 @@ int grid::CosmologySimulationInitializeGrid(
  
   if ( TotParticleCount != TotalParticleCount )
   {
-    printf("DISASTER! Inconsistent particle count\n");
-    ENZO_FAIL("");
+    ENZO_FAIL("DISASTER! Inconsistent particle count\n");
   }
  
   NumberOfParticles = NumSortedParticles;
@@ -1452,8 +1481,7 @@ if (PreSortedParticles == 0 && !CosmologySimulationCalculatePositions)
  
         if ( Slab_Rank != 2 )
         {
-          printf(" MAJOR ERROR!! Particle Slab_Rank != 2\n");
-          ENZO_FAIL("");
+          ENZO_FAIL(" MAJOR ERROR!! Particle Slab_Rank != 2\n");
         }
  
         Slab_Dims[0] = component_rank_attr;
@@ -2424,8 +2452,7 @@ if (PreSortedParticles == 0 && !CosmologySimulationCalculatePositions)
       for (dim = 0; dim < GridRank; dim++) {
 	if (READFILE(CosmologySimulationParticlePositionName, 1, Dim,
 		     Start, End, Zero, NULL, &tempbuffer, dim, 3) == FAIL) {
-	  fprintf(stderr, "Error reading particle position %"ISYM".\n", dim);
-	  ENZO_FAIL("");
+	  ENZO_VFAIL("Error reading particle position %"ISYM".\n", dim)
 	}
 	for (i = Start[0]; i <= End[0]; i++)
 	  ParticlePosition[dim][i] = FLOAT(tempbuffer[i]);
@@ -2441,8 +2468,7 @@ if (PreSortedParticles == 0 && !CosmologySimulationCalculatePositions)
 	for (dim = 0; dim < GridRank; dim++) {
 	  if (READFILE(CosmologySimulationParticleVelocityName, 1, Dim,
 	     Start, End, Zero, ParticleVelocity[dim], &tempbuffer, dim, 3) == FAIL) {
-	    fprintf(stderr, "Error reading particle velocity %"ISYM".\n", dim);
-	    ENZO_FAIL("");
+	    ENZO_VFAIL("Error reading particle velocity %"ISYM".\n", dim)
 	  }
 //        fcol(ParticleVelocity[dim], NumberOfParticles, 10, log_fptr);
 	}
@@ -2503,7 +2529,7 @@ if (PreSortedParticles == 0 && !CosmologySimulationCalculatePositions)
 
 	// If there are exactly 1/8 as many particles as cells, then set the
 	// particle mass to 8 times the usual
- 
+    
 	int NumberOfActiveCells = (GridEndIndex[0]-GridStartIndex[0]+1)*
 	  (GridEndIndex[1]-GridStartIndex[1]+1)*
 	  (GridEndIndex[2]-GridStartIndex[2]+1);
@@ -2511,7 +2537,7 @@ if (PreSortedParticles == 0 && !CosmologySimulationCalculatePositions)
 	  UniformParticleMass *= 8;
 	if (NumberOfParticles == NumberOfActiveCells*8)
 	  UniformParticleMass /= 8;
- 
+
 	//      UniformParticleMass *= float(POW(TotalRefinement, GridRank));
 	/*      for (dim = 0; dim < GridRank; dim++)
 		UniformParticleMass *= float(GridEndIndex[dim]-GridStartIndex[dim]+1);
@@ -2519,7 +2545,7 @@ if (PreSortedParticles == 0 && !CosmologySimulationCalculatePositions)
 
 	// Issue a warning if PPIO or PRGIO are on (possibility of errors
 	// being caused)
-	if( (ParallelParticleIO == TRUE) || (ParallelRootGridIO == TRUE) &&
+	if( ((ParallelParticleIO == TRUE) || (ParallelRootGridIO == TRUE)) &&
 	    MyProcessorNumber == ROOT_PROCESSOR) {
 	  fprintf(stderr,"\n\n\n*********************************************\n");
 	  fprintf(stderr,"CosmologySimulationInitializeGrid: WARNING!\n");
@@ -2592,6 +2618,7 @@ if (PreSortedParticles == 0 && !CosmologySimulationCalculatePositions)
   OldTime = Time;
  
   if (io_log) fclose(log_fptr);
+
  
   return SUCCESS;
 }

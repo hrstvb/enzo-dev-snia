@@ -50,9 +50,9 @@ int CommunicationShareParticles(int *NumberToMove, particle_data* &SendList,
 int CommunicationShareStars(int *NumberToMove, star_data* &SendList,
 			    int &NumberOfReceives, star_data* &SharedList);
 
-#define NO_DEBUG_CCP 
-#define GRIDS_PER_LOOP 20000
-#define PARTICLES_PER_LOOP 10000000
+#define NO_DEBUG_CCP
+#define GRIDS_PER_LOOP 100000
+#define PARTICLES_PER_LOOP 100000000
  
 int CommunicationCollectParticles(LevelHierarchyEntry *LevelArray[],
 				  int level, bool ParticlesAreLocal, 
@@ -65,6 +65,7 @@ int CommunicationCollectParticles(LevelHierarchyEntry *LevelArray[],
   int NumberOfGrids = 0, NumberOfSubgrids = 0;
   HierarchyEntry *SubgridHierarchyPointer[MAX_NUMBER_OF_SUBGRIDS];
   HierarchyEntry *GridHierarchyPointer[MAX_NUMBER_OF_SUBGRIDS];
+  HierarchyEntry *Subgrid;
   LevelHierarchyEntry *Temp;
 
   Temp = LevelArray[level];
@@ -76,6 +77,7 @@ int CommunicationCollectParticles(LevelHierarchyEntry *LevelArray[],
   if (level < MAX_DEPTH_OF_HIERARCHY-1) {
     Temp = LevelArray[level+1];
     while (Temp != NULL) {
+      Temp->GridData->SetGridID(NumberOfSubgrids);
       SubgridHierarchyPointer[NumberOfSubgrids++] = Temp->GridHierarchyEntry;
       Temp = Temp->NextGridThisLevel;
     }
@@ -99,7 +101,7 @@ int CommunicationCollectParticles(LevelHierarchyEntry *LevelArray[],
   int *NumberToMove = new int[NumberOfProcessors];
   int *StarsToMove = new int[NumberOfProcessors];
 
-  int proc, i, j, k, jstart, jend;
+  int proc, i, j, k, jstart, jend, ThisID;
   int particle_data_size, star_data_size;
   int Zero = 0;
 
@@ -113,6 +115,7 @@ int CommunicationCollectParticles(LevelHierarchyEntry *LevelArray[],
     if (NumberOfSubgrids == 0) {
       CommunicationSyncNumberOfParticles(GridHierarchyPointer, NumberOfGrids);
       delete [] NumberToMove;
+      delete [] StarsToMove;
       return SUCCESS;
     }
 
@@ -495,7 +498,7 @@ int CommunicationCollectParticles(LevelHierarchyEntry *LevelArray[],
     if (SyncNumberOfParticles)
       CommunicationSyncNumberOfParticles(GridHierarchyPointer, NumberOfGrids);
     else {
-      for (i = StartGrid; i < EndGrid; i++)
+      for (i = 0; i < NumberOfGrids; i++)
 	if (MyProcessorNumber != 
 	    GridHierarchyPointer[i]->GridData->ReturnProcessorNumber()) {
 	  GridHierarchyPointer[i]->GridData->SetNumberOfParticles(0);

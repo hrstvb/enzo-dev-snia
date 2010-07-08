@@ -67,15 +67,16 @@ int ParticleSplitter(LevelHierarchyEntry *LevelArray[], int ThisLevel,
   HierarchyEntry **Grids;
   int NumberOfGrids;
 
-
   /* Find total NumberOfParticles in all grids; this is needed in 
      CommunicationUpdateStarParticleCount below */
 
   MetaData->NumberOfParticles = FindTotalNumberOfParticles(LevelArray);
   NumberOfOtherParticles = MetaData->NumberOfParticles - NumberOfStarParticles;
 
-
   /* Initialize all star particles if this is a restart */
+
+  if (ParticleSplitterIterations > 1)
+    fprintf(stderr, "WARNING: ParticleSplitterIterations > 1 is not properly tested yet.\n");
 
   for (i = 0; i < ParticleSplitterIterations; i++) {
 
@@ -99,7 +100,6 @@ int ParticleSplitter(LevelHierarchyEntry *LevelArray[], int ThisLevel,
       //	fprintf(stdout, "TotalStarParticleCountPrevious[grid=%d] = %d\n", grid1, 
       //		TotalStarParticleCountPrevious[grid1]);
       
-
       for (grid1 = 0; grid1 < NumberOfGrids; grid1++) {
 
 #ifdef DEBUG_PS
@@ -108,8 +108,7 @@ int ParticleSplitter(LevelHierarchyEntry *LevelArray[], int ThisLevel,
 #endif
 	
 	if (Grids[grid1]->GridData->ParticleSplitter(level) == FAIL) {
-	  fprintf(stderr, "Error in grid::ParticleSplitter.\n");
-	  ENZO_FAIL("");
+	  ENZO_FAIL("Error in grid::ParticleSplitter.\n");
 	}
 
       }  // loop for grid1
@@ -122,10 +121,8 @@ int ParticleSplitter(LevelHierarchyEntry *LevelArray[], int ThisLevel,
       if (CommunicationUpdateStarParticleCount(Grids, MetaData,
 					       NumberOfGrids, 
 					       TotalStarParticleCountPrevious) == FAIL) {
-	fprintf(stderr, "Error in CommunicationUpdateStarParticleCount.\n");
-	ENZO_FAIL("");
+	ENZO_FAIL("Error in CommunicationUpdateStarParticleCount.\n");
       }
-
 
     }  // loop for level
 
@@ -200,18 +197,16 @@ void RecordTotalStarParticleCount(HierarchyEntry *Grids[], int NumberOfGrids,
   for (grid = 0; grid < NumberOfGrids; grid++) {
     TotalStarParticleCountPrevious[grid] = 0;
     if (Grids[grid]->GridData->ReturnProcessorNumber() == MyProcessorNumber) {
+
       PartialStarParticleCountPrevious[grid] =
 	Grids[grid]->GridData->ReturnNumberOfStarParticles();
     }
     else {
       PartialStarParticleCountPrevious[grid] = 0;
     }
-
-}
-
+  }
  
 #ifdef USE_MPI
- 
   /* Get counts from each processor to get total list of new particles. */
  
   MPI_Datatype DataTypeInt = (sizeof(int) == 4) ? MPI_INT : MPI_LONG_LONG_INT;
@@ -220,7 +215,6 @@ void RecordTotalStarParticleCount(HierarchyEntry *Grids[], int NumberOfGrids,
    
   MPI_Allreduce(PartialStarParticleCountPrevious, TotalStarParticleCountPrevious, GridCount,
 		DataTypeInt, MPI_SUM, MPI_COMM_WORLD);
-
 #endif
 
   delete [] PartialStarParticleCountPrevious;

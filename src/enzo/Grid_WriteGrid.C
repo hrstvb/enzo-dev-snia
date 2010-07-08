@@ -338,8 +338,7 @@ int grid::WriteGrid(FILE *fptr, char *base_name, int grid_id)
       float *temperature = new float[size];
  
       if (this->ComputeTemperatureField(temperature) == FAIL) {
-	fprintf(stderr, "Error in grid->ComputeTemperatureField.\n");
-	ENZO_FAIL("");
+	ENZO_FAIL("Error in grid->ComputeTemperatureField.\n");
       }
  
       /* Copy active part of field into grid */
@@ -601,8 +600,7 @@ int grid::WriteGrid(FILE *fptr, char *base_name, int grid_id)
 	       &TimeUnits, &VelocityUnits, Time);
 
       if (this->ComputeCoolingTime(cooling_time) == FAIL) {
-	fprintf(stderr, "Error in grid->ComputeCoolingTime.\n");
-	ENZO_FAIL("");
+	ENZO_FAIL("Error in grid->ComputeCoolingTime.\n");
       }
 
       // Make all cooling time values positive and convert to seconds.
@@ -960,10 +958,10 @@ int grid::WriteGrid(FILE *fptr, char *base_name, int grid_id)
  
     /* Copy number (ID) to temp and write it. */
  
-    int *tempint = new int[NumberOfParticles];
+    PINT *tempPINT = new PINT[NumberOfParticles];
  
     for (i = 0; i < NumberOfParticles; i++)
-      tempint[i] = ParticleNumber[i];
+      tempPINT[i] = ParticleNumber[i];
  
  
     file_dsp_id = H5Screate_simple((Eint32) 1, TempIntArray, NULL);
@@ -972,11 +970,11 @@ int grid::WriteGrid(FILE *fptr, char *base_name, int grid_id)
  
     if (io_log) fprintf(log_fptr,"H5Dcreate with Name = particle_index\n");
  
-    dset_id =  H5Dcreate(file_id, "particle_index", HDF5_FILE_INT, file_dsp_id, H5P_DEFAULT);
+    dset_id =  H5Dcreate(file_id, "particle_index", HDF5_FILE_PINT, file_dsp_id, H5P_DEFAULT);
       if (io_log) fprintf(log_fptr, "H5Dcreate id: %"ISYM"\n", dset_id);
       if( dset_id == h5_error ){my_exit(EXIT_FAILURE);}
  
-    h5_status = H5Dwrite(dset_id, HDF5_INT, H5S_ALL, H5S_ALL, H5P_DEFAULT, (VOIDP) tempint);
+    h5_status = H5Dwrite(dset_id, HDF5_PINT, H5S_ALL, H5S_ALL, H5P_DEFAULT, (VOIDP) tempPINT);
       if (io_log) fprintf(log_fptr, "H5Dwrite: %"ISYM"\n", h5_status);
       if( h5_status == h5_error ){my_exit(EXIT_FAILURE);}
  
@@ -992,11 +990,11 @@ int grid::WriteGrid(FILE *fptr, char *base_name, int grid_id)
     /* Copy type to temp and write it. */
 
     if (ParticleTypeInFile == TRUE) {
- 
-    if( ParticleType == NULL ){my_exit(EXIT_FAILURE);}
- 
+
+    int *tempint = new int[NumberOfParticles];
+    
     if (ParticleType == NULL)
-      ENZO_FAIL("");
+      ENZO_FAIL("Undefined ParticleType!\n");
  
     for (i = 0; i < NumberOfParticles; i++)
       tempint[i] = ParticleType[i];
@@ -1022,6 +1020,8 @@ int grid::WriteGrid(FILE *fptr, char *base_name, int grid_id)
     h5_status = H5Dclose(dset_id);
       if (io_log) fprintf(log_fptr, "H5Dclose: %"ISYM"\n", h5_status);
       if( h5_status == h5_error ){my_exit(EXIT_FAILURE);}
+
+    delete [] tempint;
  
     }
 
@@ -1062,7 +1062,7 @@ int grid::WriteGrid(FILE *fptr, char *base_name, int grid_id)
     /* clean up */
  
     delete [] temp;
-    delete [] tempint;
+    delete [] tempPINT;
  
   } // end: if (MyProcessorNumber...)
   } // end: if (NumberOfParticles > 0)
@@ -1094,6 +1094,7 @@ int grid::WriteGrid(FILE *fptr, char *base_name, int grid_id)
  
   if (MyProcessorNumber == ROOT_PROCESSOR)
     if (SelfGravity)
+
       fprintf(fptr, "GravityBoundaryType = %"ISYM"\n", GravityBoundaryType);
  
   /* Clean up. */

@@ -4,7 +4,7 @@
 /
 /  written by: Peng Wang
 /  date:       September, 2007
-/  modified1:
+/  modified1:  May 2010, Tom Abel added exponential disk within NFW halo
 /
 /
 ************************************************************************/
@@ -12,6 +12,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
+#include "ErrorExceptions.h"
 #include "macros_and_parameters.h"
 #include "typedefs.h"
 #include "global_data.h"
@@ -20,13 +21,20 @@
 #include "ExternalBoundary.h"
 #include "Grid.h"
 #include "CosmologyParameters.h"
+#include "phys_constants.h"
 
 int GetUnits(float *DensityUnits, float *LengthUnits,
 	     float *TemperatureUnits, float *TimeUnits,
 	     float *VelocityUnits, FLOAT Time);
 float gasdev();
 
+double BESSI0(double X);
+double BESSI1(double X);
+double BESSK0(double X);
+double BESSK1(double X);
+
 static int CollapseTestParticleCount = 0;
+
 
 int grid::GalaxyDiskInitializeGrid(int NumberOfHalos,
 				   FLOAT HaloRadius[MAX_SPHERES],
@@ -42,6 +50,8 @@ int grid::GalaxyDiskInitializeGrid(int NumberOfHalos,
 				   FLOAT DiskHeight[MAX_SPHERES],
 				   float DiskDensity[MAX_SPHERES],
 				   float DiskTemperature[MAX_SPHERES],
+				   float DiskMassFraction[MAX_SPHERES],
+				   float DiskFlaringParameter[MAX_SPHERES],
 				   int   GalaxyType[MAX_SPHERES],
 				   int   UseParticles, int UseGas,
 				   float UniformVelocity[MAX_DIMENSION],
@@ -109,8 +119,6 @@ int grid::GalaxyDiskInitializeGrid(int NumberOfHalos,
 
   /* Set various units. */
 
-  const double Mpc = 3.0856e24, SolarMass = 1.989e33, GravConst = 6.672e-8,
-               pi = 3.14159, mh = 1.6726e-24, kboltz = 1.3807e-16;
   double  mu = Mu; // assume fully ionized cosmic gas
   float DensityUnits = 1.0, LengthUnits = 1.0, TemperatureUnits = 1, TimeUnits, 
     VelocityUnits, CriticalDensity = 1, BoxLength = 1, MagneticUnits;
@@ -160,7 +168,7 @@ int grid::GalaxyDiskInitializeGrid(int NumberOfHalos,
     NFWRadius[i] = HaloRadius[sphere]*pow(10, -3*(float(i)/NFW_POINTS));
     x1 = NFWRadius[i]/HaloCoreRadius[sphere];
     NFWDensity[i] = HaloDensity[sphere]*DensityUnits/(x1*(1.0+x1)*(1.0+x1));
-    NFWMass[i] = 4.0*pi*HaloDensity[sphere]*DensityUnits*
+    NFWMass[i] = 4.0*M_PI*HaloDensity[sphere]*DensityUnits*
 		pow(HaloCoreRadius[sphere]*LengthUnits, 3) *
 		(log(1.0+x1) - x1/(x1+1.0));  // in g
     dpdr_old = dpdr;
@@ -181,7 +189,7 @@ int grid::GalaxyDiskInitializeGrid(int NumberOfHalos,
     NFWVelc[i] = f_s*sqrt(GravConst*NFWMass[i]/(NFWRadius[i]*LengthUnits));
     
     mean_overdensity = 3.0*delta_c/pow(x1,3)*(log(1.0+x1)-x1/(x1+1.0));
-    fprintf(fptr, "%d %"GOUTSYM" %g %g %g %g %g %g %g\n", i, NFWRadius[i]*LengthUnits, 
+    fprintf(fptr, "%"ISYM" %"GOUTSYM" %"GSYM" %"GSYM" %"GSYM" %"GSYM" %"GSYM" %"GSYM" %"GSYM"\n", i, NFWRadius[i]*LengthUnits, 
 	 NFWDensity[i], NFWMass[i], NFWPressure[i], NFWTemp[i], NFWSigma[i],
          mean_overdensity, NFWVelc[i]);
     if (mean_overdensity > 199 && m200 == 0) {
@@ -190,7 +198,7 @@ int grid::GalaxyDiskInitializeGrid(int NumberOfHalos,
       r_vir = NFWRadius[i]*LengthUnits;
       i_vir = i;
       if (i_vir != 0) {
-	printf("Halo parameters wrong: mean_overdensity=%g\n",
+	printf("Halo parameters wrong: mean_overdensity=%"GSYM"\n",
 	       mean_overdensity);
 	return FAIL;
       }
@@ -213,7 +221,7 @@ int grid::GalaxyDiskInitializeGrid(int NumberOfHalos,
     NFWSigma[i] *= vfac;
   }
   double T_vir = 0.5*mh/kboltz*GravConst*m200*SolarMass/r_vir; 
-  fprintf(fptr, "#m200 = %g, r_vir = %g, T_vir=%g, r_sphere=%g, vfac=%g,rhomean=%g\n", 
+  fprintf(fptr, "#m200 = %"GSYM", r_vir = %"GSYM", T_vir=%"GSYM", r_sphere=%"GSYM", vfac=%"GSYM",rhomean=%"GSYM"\n", 
 	  m200, r_vir, T_vir, HaloRadius[0]*LengthUnits, vfac, rhomean);
   fclose(fptr);
 
@@ -239,7 +247,7 @@ int grid::GalaxyDiskInitializeGrid(int NumberOfHalos,
     double ParticleMeanDensity = NFWMass[i_vir]/1e4/pow(dx,3);
     ParticleMeanDensity /= DensityUnits;
     
-    printf("rho_sphere = %g, rho_p = %g\n", HaloDensity[0],
+    printf("rho_sphere = %"GSYM", rho_p = %"GSYM"\n", HaloDensity[0],
 	   ParticleMeanDensity);
     
     /* Set particles. */
@@ -257,7 +265,7 @@ int grid::GalaxyDiskInitializeGrid(int NumberOfHalos,
       npart = 0;
       
       /* Allocate space. */
-      printf("npart=%d\n", NumberOfParticles);
+      printf("npart=%"ISYM"\n", NumberOfParticles);
       this->AllocateNewParticles(NumberOfParticles);
       
       /* Particle values will be set below. */
@@ -286,7 +294,34 @@ int grid::GalaxyDiskInitializeGrid(int NumberOfHalos,
     float f_b = 1.0/10.0;
     float RotVelocity[3];
     FLOAT xpos, ypos, zpos, drad, cosphi, sinphi, sintheta; 
+
     
+    // this sets up an isothermal disk in equilbrium vertically and radially within a static NFW halo
+    // Central gas surface density Sigma_0 using DiskRadius for DiskScale Radius
+    // from M_disk = 6 Pi Sigma_0 R_D^2  from  Sigma(R) = 2 rho_0 h_0 (1 + R/R_D/F) Exp[ -R/R_D ]
+    // where F is the DiskFlaringParameter; 
+    // rho_0 is central midplane density; h_0 is central scale height and R_D is the disk scale radius
+    // R: is the cylindrical radius not spherical
+    
+    double R_D = DiskRadius[sphere] * LengthUnits;
+    double F = DiskFlaringParameter[sphere];
+    double Sigma_0 = DiskMassFraction[sphere]*NFWMass[0]/(R_D*R_D*2*M_PI)*F/(2+F);
+    double c_s;
+    double tgamma = Gamma;
+    if (EOSType == 3)
+      tgamma = 1.;
+
+    c_s = sqrt(tgamma/Mu/mh * kboltz * DiskTemperature[0]); // simple gamma law (gamma should be close to one to be in equilibrium)
+    double rho_0 = Sigma_0*Sigma_0*M_PI*GravConst/(c_s*c_s);
+    double h_0   = Sigma_0/2/rho_0;
+
+    if (GalaxyType[sphere] == 5) { 
+      printf("#mdisk= %"GSYM", r_disk = %"GSYM" kpc, T_disk=%"GSYM" K, central height h_0=%"GSYM" kpc, \nrho_0=%"GSYM" [g/cm3], c_s=%"GSYM" km/s, Sigma_0=%"GSYM" Msun/pc^2\n", 
+	     DiskMassFraction[sphere]*NFWMass[0]/SolarMass, 
+	     R_D/kpc, DiskTemperature[0], h_0/kpc, rho_0, c_s/1e5, Sigma_0/SolarMass*pc*pc); 
+    }
+
+
     for (k = 0; k < GridDimension[2]; k++) {
       for (j = 0; j < GridDimension[1]; j++) {
 	for (i = 0; i < GridDimension[0]; i++, n++) {
@@ -400,6 +435,57 @@ int grid::GalaxyDiskInitializeGrid(int NumberOfHalos,
 	      }	    
 
 	      /* 5) Exponential disk in NFW halo */
+
+	      if (GalaxyType[sphere] == 5 && R < HaloRadius[sphere]) { 
+		// this sets up an isothermal disk in equilbrium vertically and radially within a static NFW halo
+		// Central gas surface density Sigma_0 using DiskRadius for DiskScale Radius
+		// from M_disk = 6 Pi Sigma_0 R_D^2  from  Sigma(R) = 2 rho_0 h_0 (1 + R/R_D) Exp[ -R/R_D ]
+		// rho_0 is central midplane density; h_0 is central scale height and R_D is the disk scale radius
+		// R: is the cylindrical radius not spherical
+
+		double h=h_0*(1+R/DiskRadius[0]); // R and DiskRadius are in code units (fraction of box)
+
+		// if the central density in the midplane is not linearly decreasing with radius
+		// you do not have enough resolution for your parameter choice
+		density += rho_0 * exp(-R/DiskRadius[sphere])
+		  /pow(cosh(zpos/(h/LengthUnits)), 2)/DensityUnits;
+		  //		  /pow(cosh(zpos/max(h/LengthUnits,CellWidth[0][0])), 2)/DensityUnits;
+
+		// rotational velocity added by disk:
+		double yd = R/DiskRadius[0];
+		double vphidisk = sqrt(4.*M_PI*GravConst*Sigma_0*R_D*yd*yd
+				       *(BESSI0(yd)*BESSK0(yd)-BESSI1(yd)*BESSK1(yd)));
+		// printf("%g : %g %g %g %g \n", yd,BESSI0(yd),BESSK0(yd),BESSI1(yd),BESSK1(yd)); // works!
+
+		
+		// pressure gradient subtracts some from the rotational velocity
+		double vphiP= -sqrt(R/DiskRadius[0] * c_s*c_s);
+
+		if (density < 1.0001*MediumDensity)
+		  vphiP = 0.;
+
+		double vphi=0.;
+		temperature = DiskTemperature[0];
+		// add random perturbation to density and temperature
+		//		density *= (1.0+0.01*gasdev());
+		//		temperature *= (1.0+0.01*gasdev());
+		for (m = 1; m < NFW_POINTS; m++) {
+		  if (R >= NFWRadius[m]) {
+		    vphi = sqrt(GravConst*(NFWMass[m])/(R*LengthUnits));
+		    // printf("R: %g [kpc] : %g %g %g \n", R*LengthUnits/kpc, vphi, vphidisk, vphiP);
+		    break;
+		  }
+		}
+
+		vphi += vphidisk; // + disk mass 
+		vphi += vphiP;    // - pressure gradient
+		
+		vphi /= VelocityUnits;
+
+		Velocity[0] = -vphi*sinphi;
+		Velocity[1] = vphi*cosphi;
+
+	      }
 
 	    } // end: if (r < HaloRadius)
 	  } // end: loop over spheres
@@ -550,7 +636,7 @@ int grid::GalaxyDiskInitializeGrid(int NumberOfHalos,
   } // end loop SetupLoopCount
 
   if (UseParticles) {
-    printf("GalaxyDiskInitialize: NumberOfParticles = %d\n", 
+    printf("GalaxyDiskInitialize: NumberOfParticles = %"ISYM"\n", 
 	   NumberOfParticles);
   }
   

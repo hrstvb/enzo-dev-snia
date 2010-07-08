@@ -37,11 +37,16 @@
 
 /* remove all photon packages */ 
 
-   int DeletePhotonPackages(void);
+   int DeletePhotonPackages(int DeleteHeadPointer=FALSE);
 
 /* Set Subgrid Marker field */
 
-   int SetSubgridMarkerFromSubgrid(grid *Subgrid, grid *CurrentGrid);
+   int SetSubgridMarkerFromSubgrid(grid *Subgrid);
+   int SetSubgridMarkerFromParent(grid *Parent, int level);
+   int SetSubgridMarkerFromSibling(grid *Sibling, 
+				   FLOAT EdgeOffset[MAX_DIMENSION]);
+   int SubgridMarkerPostParallel(grid *Parent, HierarchyEntry **Grids[],
+				 int *NumberOfGrids);
 
 /* Return Subgrid Marker for a position */
 
@@ -66,10 +71,6 @@
 
   int AddRadiationPressureAcceleration(void);
 
-/* Solve cooling/rate equations coupled to the radiative transfer */
-
-  int SolveCoupledRateEquations();
-
 /* Initialize ionized sphere around a source */
 
   int InitializeSource(RadiationSourceEntry *RS);
@@ -88,6 +89,25 @@ int TransportPhotonPackages(int level, ListOfPhotonsToMove **PhotonsToMove,
 
 int ElectronFractionEstimate(float dt);
 int RadiationPresent(void) { return HasRadiation; }
+
+void InitializePhotonPackages(void) {
+  if (PhotonPackages == NULL) {
+    PhotonPackages = new PhotonPackageEntry;
+    PhotonPackages->NextPackage     = NULL;
+    PhotonPackages->PreviousPackage = NULL;
+  }
+  if (FinishedPhotonPackages == NULL) {
+    FinishedPhotonPackages = new PhotonPackageEntry;
+    FinishedPhotonPackages->NextPackage = NULL;
+    FinishedPhotonPackages->PreviousPackage = NULL;
+  }    
+  if (PausedPhotonPackages == NULL) {
+    PausedPhotonPackages = new PhotonPackageEntry;
+    PausedPhotonPackages->NextPackage = NULL;
+    PausedPhotonPackages->PreviousPackage = NULL;
+  }
+  return;
+}
 
 void ResetPhotonPackagePointer(void) {
   PhotonPackages->NextPackage     = NULL;
@@ -324,11 +344,15 @@ int WalkPhotonPackage(PhotonPackageEntry **PP,
 		      float TemperatureUnits, float VelocityUnits, 
 		      float LengthUnits, float TimeUnits);
 
-int FindPhotonNewGrid(grid **Grids0, int nGrids0, FLOAT *r, 
-		      const FLOAT *u, PhotonPackageEntry* &PP,
+int FindPhotonNewGrid(int cindex, FLOAT *r,
+		      PhotonPackageEntry* &PP,
 		      grid* &MoveToGrid, int &DeltaLevel,
 		      const float *DomainWidth, int &DeleteMe,
 		      grid *ParentGrid);
+
+int PhotonPeriodicBoundary(int &cindex, FLOAT *r, int *g, FLOAT *s,
+			   PhotonPackageEntry* &PP, grid* &MoveToGrid, 
+			   const float *DomainWidth, int &DeleteMe);
 
 /* Create PhotonPackages for a given radiation sources   */
 
@@ -365,7 +389,8 @@ int PhotonTestInitializeGrid(int NumberOfSpheres,
 			     float PhotonTestInitialFractionHM,
 			     float PhotonTestInitialFractionH2I, 
 			     float PhotonTestInitialFractionH2II,
-			     int RefineByOpticalDepth);
+			     int RefineByOpticalDepth,
+			     char *DensityFilename);
 
 /************************************************************************/
 
@@ -375,3 +400,11 @@ int ReassignSuperSources(void);
 
 int CorrectRadiationIncompleteness(void);
 int FinalizeRadiationFields(void);
+
+//***********************************************************************
+// Routines for coupling to FLD solver
+
+int DeleteEmissivity(void);
+int CreateEmissivityLW(Star *AllStars, FLOAT TimeFLD, float dtFLD);
+int AddRadiationImpulse(int field, double Luminosity, double sigma, 
+			FLOAT BirthTime, FLOAT* pos);

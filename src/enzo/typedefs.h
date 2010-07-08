@@ -28,6 +28,9 @@ typedef int gravity_boundary_type;
 typedef int interpolation_type;
 typedef int hydro_method;
 typedef int star_type;
+typedef int enum_type;
+typedef int staggering;
+typedef int fieldtype;
 #endif
 
 #ifdef LARGE_INTS
@@ -37,6 +40,9 @@ typedef long_int gravity_boundary_type;
 typedef long_int interpolation_type;
 typedef long_int hydro_method;
 typedef long_int star_type;
+typedef long_int enum_type;
+typedef long_int staggering;
+typedef long_int fieldtype;
 #endif
 
 const field_type 
@@ -77,6 +83,7 @@ const field_type
   RadPressure0    = 34,
   RadPressure1    = 35,
   RadPressure2    = 36,
+  Emissivity0     = 37,
 
 /* these pseudo-fields are used to access grid data 
    the "g" prefix is to avoid namespace conflict */
@@ -105,9 +112,9 @@ const field_type
   DrivingField2         = 56, 
   DrivingField3         = 57,
 
-  AccelerationField1         = 58, 
-  AccelerationField2         = 59, 
-  AccelerationField3         = 60,
+  AccelerationField1    = 58, 
+  AccelerationField2    = 59, 
+  AccelerationField3    = 60,
 
   Galaxy1Colour          = 61,
   Galaxy2Colour          = 62,
@@ -139,7 +146,19 @@ const field_type
   MBHColour       = 83,
   ForbiddenRefinement = 84,
 
-  FieldUndefined  = 85;
+/* FLD radiation module stuff (D. Reynolds) */ 
+  RadiationFreq0  = 85,
+  RadiationFreq1  = 86,
+  RadiationFreq2  = 87,
+  RadiationFreq3  = 88,
+  RadiationFreq4  = 89,
+  RadiationFreq5  = 90,
+  RadiationFreq6  = 91,
+  RadiationFreq7  = 92,
+  RadiationFreq8  = 93,
+  RadiationFreq9  = 94,
+
+  FieldUndefined  = 95;
    
 /*
 enum field_type {Density, TotalEnergy, InternalEnergy, Pressure,
@@ -152,8 +171,8 @@ enum field_type {Density, TotalEnergy, InternalEnergy, Pressure,
                  FieldUndefined};
 */
 
-#define FieldTypeIsDensity(A) ((((A) >= TotalEnergy && (A) <= Velocity3) || ((A) >= kphHI && (A) <= kdissH2I)) ? FALSE : TRUE)
-#define FieldTypeIsRadiation(A) (((A) >= kphHI && (A) <= kdissH2I) ? TRUE : FALSE)
+#define FieldTypeIsDensity(A) ((((A) >= TotalEnergy && (A) <= Velocity3) || ((A) >= kphHI && (A) <= kdissH2I) || ((A) >= RadiationFreq0 && (A) <= RadiationFreq9)) ? FALSE : TRUE)
+#define FieldTypeIsRadiation(A) ((((A) >= kphHI && (A) <= kdissH2I) || ((A) >= RadiationFreq0 && (A) <= RadiationFreq9)) ? TRUE : FALSE)
 #define FieldTypeNoInterpolate(A) ((((A) >= Mach) && ((A) <= Mach + 1 + CRModel)) ? TRUE : FALSE) 
 
 /* These are the different types of fluid boundary conditions. */
@@ -203,18 +222,28 @@ const hydro_method
   MHD_RK               = 4,
   HydroMethodUndefined = 5;
 
+// enum hydro_method {PPM_DirectEuler, PPM_LagrangeRemap, Zeus_Hydro};
+
+const enum_type iHI = 0, iHeI = 1, iHeII = 2, iH2I = 3, iHII = 4;
+const enum_type Cartesian = 0, Spherical = 1, Cylindrical = 2;
+const enum_type PLM = 0, PPM = 1, CENO = 2, WENO3 = 3, WENO5 = 4;
+const enum_type FluxReconstruction = 0, HLL = 1, Marquina = 2,
+  LLF = 3, HLLC = 4;
+const enum_type Neumann = 0, Dirichlet = 1;
+
+
 /* Stanford RK MUSCL solvers support */ 
-enum {Cartesian, Spherical, Cylindrical};
-enum {PLM, PPM, CENO, WENO3, WENO5};
-enum {FluxReconstruction, HLL, Marquina, LLF, HLLC};
+//enum {Cartesian, Spherical, Cylindrical};
+//enum {PLM, PPM, CENO, WENO3, WENO5};
+//enum {FluxReconstruction, HLL, Marquina, LLF, HLLC};
 
 /* These are the different types of poisson cleaining boundary conditions. */
-enum{Neumann, Dirichlet};
+//enum{Neumann, Dirichlet};
 
+/* Definitions for streaming format */
 
-
-
-// enum hydro_method {PPM_DirectEuler, PPM_LagrangeRemap, Zeus_Hydro};
+const staggering VERTEX_CENTERED = 0, CELL_CENTERED = 1;
+const fieldtype SCALAR = 1, VECTOR = 3;
 
 /* Star particle types */
 
@@ -229,6 +258,7 @@ const star_type
 
 union float_int {
   long_int ival;
+  PINT IVAL;
   float fval;
   FLOAT FVAL;
 };
@@ -245,7 +275,7 @@ struct particle_data {
   float vel[MAX_DIMENSION];
   float mass;
   float attribute[MAX_NUMBER_OF_PARTICLE_ATTRIBUTES];
-  int   id;
+  PINT  id;
   int   type;
   int   grid;
   int   proc;
@@ -256,6 +286,11 @@ struct star_data {
   StarBuffer data;
   int grid;
   int proc;
+};
+
+struct hilbert_data {
+  double hkey;
+  int grid_num;
 };
 
 #endif

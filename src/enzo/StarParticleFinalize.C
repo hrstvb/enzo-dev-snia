@@ -32,16 +32,20 @@
 #define KILL_STAR 1
 #define KILL_ALL 2
 
+int StarParticleSetRefinementLevel(Star *AllStars);
 int CommunicationUpdateStarParticleCount(HierarchyEntry *Grids[],
 					 TopGridData *MetaData,
 					 int NumberOfGrids,
 					 int TotalStarParticleCountPrevious[]);
 int StarParticleAddFeedback(TopGridData *MetaData, 
 			    LevelHierarchyEntry *LevelArray[], int level, 
-			    Star *&AllStars, bool* &AddedFeedback);
+			    Star* &AllStars, bool* &AddedFeedback);
 int StarParticleAccretion(TopGridData *MetaData, 
 			  LevelHierarchyEntry *LevelArray[], int level, 
 			  Star *&AllStars);
+int StarParticleSubtractAccretedMass(TopGridData *MetaData, 
+				     LevelHierarchyEntry *LevelArray[], int level, 
+				     Star *&AllStars);
 int StarParticleDeath(LevelHierarchyEntry *LevelArray[], int level,
 		      Star *&AllStars);
 int CommunicationMergeStarParticle(HierarchyEntry *Grids[], int NumberOfGrids);
@@ -56,12 +60,16 @@ int StarParticleFinalize(HierarchyEntry *Grids[], TopGridData *MetaData,
   if (!StarParticleCreation && !StarParticleFeedback)
     return SUCCESS;
 
-  int l;
+  int l, NumberOfStars;
   float TotalMass;
   Star *ThisStar, *MoveStar;
   LevelHierarchyEntry *Temp;
   FLOAT TimeNow;
-  bool *AddedFeedback = NULL;
+
+  NumberOfStars = 0;
+  for (ThisStar = AllStars; ThisStar; ThisStar = ThisStar->NextStar)
+    NumberOfStars++;
+  bool *AddedFeedback = new bool[NumberOfStars];
 
   LCAPERF_START("StarParticleFinalize");
 
@@ -79,10 +87,9 @@ int StarParticleFinalize(HierarchyEntry *Grids[], TopGridData *MetaData,
 
   /* Apply any stellar feedback onto the grids and add any gas to the
      accretion rates of the star particles */
-  
-  StarParticleAddFeedback(MetaData, LevelArray, level, 
-			  AllStars, AddedFeedback);
-  
+
+  StarParticleAddFeedback(MetaData, LevelArray, level, AllStars, AddedFeedback);
+
   /* Update star particles for any accretion */
 
   StarParticleAccretion(MetaData, LevelArray, level, AllStars);
@@ -102,6 +109,10 @@ int StarParticleFinalize(HierarchyEntry *Grids[], TopGridData *MetaData,
 	      TimeNow, TotalMass);
   }
 
+  /* Subtract gas from the grids that has accreted on to the star particles */
+
+  StarParticleSubtractAccretedMass(MetaData, LevelArray, level, AllStars);  
+
   /* Check for any stellar deaths */
 
   StarParticleDeath(LevelArray, level, AllStars);
@@ -118,9 +129,12 @@ int StarParticleFinalize(HierarchyEntry *Grids[], TopGridData *MetaData,
   int count = 0;
   int mbh_particle_io_count = 0;
   for (ThisStar = AllStars; ThisStar; ThisStar = ThisStar->NextStar, count++) {
-
     //TimeNow = LevelArray[ThisStar->ReturnLevel()]->GridData->ReturnTime();
     TimeNow = LevelArray[level]->GridData->ReturnTime();
+//    if (debug) {
+//      printf("AddedFeedback[%d] = %d\n", count, AddedFeedback[count]);
+//     ThisStar->PrintInfo();
+//    } 
     if (AddedFeedback[count])
       ThisStar->ActivateNewStar(TimeNow);
     ThisStar->ResetAccretion();
@@ -138,6 +152,7 @@ int StarParticleFinalize(HierarchyEntry *Grids[], TopGridData *MetaData,
       MBHParticleIOTemp[mbh_particle_io_count][1] = ThisStar->ReturnMass();      
       for (int dim = 0; dim < MAX_DIMENSION; dim++) 
 	MBHParticleIOTemp[mbh_particle_io_count][2+dim] = (double)(ThisStar->ReturnAccretedAngularMomentum()[dim]);
+      MBHParticleIOTemp[mbh_particle_io_count][5] = ThisStar->ReturnNotEjectedMass();      
       mbh_particle_io_count++;
     }
 
@@ -151,6 +166,10 @@ int StarParticleFinalize(HierarchyEntry *Grids[], TopGridData *MetaData,
       return FAIL;
     }
   }
+
+  /* Set minimum refinement level for metallicity if desired */
+
+  StarParticleSetRefinementLevel(AllStars);
 
   /* Delete the global star particle list, AllStars */
 

@@ -98,9 +98,9 @@ int CommunicationReceiveFluxes(fluxes *Fluxes, int FromProc,
   if (CommunicationDirection == COMMUNICATION_SEND_RECEIVE)
     if (MPI_Recv(buffer, Count, DataType, Source, Tag,
 		 MPI_COMM_WORLD, &status) != MPI_SUCCESS) {
-      fprintf(stderr, "Proc %d MPI_Recv error %d\n", MyProcessorNumber,
-	      status.MPI_ERROR);
-      ENZO_FAIL("");
+      ENZO_VFAIL("Proc %d MPI_Recv error %d\n", MyProcessorNumber,
+	      status.MPI_ERROR)
+
     }
  
 #ifdef MPI_INSTRUMENTATION

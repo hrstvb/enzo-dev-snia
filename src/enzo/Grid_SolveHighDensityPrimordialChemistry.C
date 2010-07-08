@@ -69,6 +69,7 @@ extern "C" void FORTRAN_NAME(primordial_solver)(
 	float *HM, float *H2I, float *H2II, float *DI, float *DII, float *HDI,
 	float *hyd01ka, float *h2k01a, float *vibha, float *rotha, float *rotla,
 	float *gpldl, float *gphdl, float *HDltea, float *HDlowa, float *HDcool, float *ciecoa,
+	float *gaHIa, float *gaH2a, float *gaHea, float *gaHpa, float *gaela,
 	float *inutot, int *iradtype, int *nfreq, 
 	int *iradshield, float *avgsighp, float *avgsighep, float *avgsighe2p,
     int *iciecool, int *ih2optical, int *errcode, int *omaskflag, int *threebody, int *subgridmask
@@ -235,6 +236,7 @@ int grid::SolveHighDensityPrimordialChemistry()
     CoolData.hyd01k, CoolData.h2k01, CoolData.vibh, CoolData.roth,CoolData.rotl,
     CoolData.GP99LowDensityLimit, CoolData.GP99HighDensityLimit, 
        CoolData.HDlte, CoolData.HDlow, CoolData.HDcool, CoolData.cieco,
+    CoolData.GAHI, CoolData.GAH2, CoolData.GAHe, CoolData.GAHp, CoolData.GAel,
     RadiationData.Spectrum[0], &RadiationFieldType, 
           &RadiationData.NumberOfFrequencyBins, 
     &RadiationData.RadiationShield, &HIShieldFactor, &HeIShieldFactor, &HeIIShieldFactor,
@@ -251,14 +253,13 @@ int grid::SolveHighDensityPrimordialChemistry()
     );
 
   if (ErrCode) {
-      fprintf(stdout, "Error in FORTRAN rate/cool solver\n");
       fprintf(stdout, "GridLeftEdge = %"FSYM" %"FSYM" %"FSYM"\n",
 	      GridLeftEdge[0], GridLeftEdge[1], GridLeftEdge[2]);
       fprintf(stdout, "GridRightEdge = %"FSYM" %"FSYM" %"FSYM"\n",
 	      GridRightEdge[0], GridRightEdge[1], GridRightEdge[2]);
       fprintf(stdout, "GridDimension = %"ISYM" %"ISYM" %"ISYM"\n",
 	      GridDimension[0], GridDimension[1], GridDimension[2]);
-      ENZO_FAIL("");
+      ENZO_FAIL("Error in FORTRAN rate/cool solver!\n");
   }
 
   if (HydroMethod == MHD_RK) {
@@ -268,6 +269,7 @@ int grid::SolveHighDensityPrimordialChemistry()
 
       /* Always trust gas energy in cooling routine */
       if (DualEnergyFormalism) {
+
 	v2 = pow(BaryonField[Vel1Num][n],2) + 
 	  pow(BaryonField[Vel2Num][n],2) + pow(BaryonField[Vel3Num][n],2);
 	BaryonField[TENum][n] = gasenergy[n] + 0.5*v2 + 0.5*B2/BaryonField[DensNum][n];

@@ -51,6 +51,7 @@ int grid::CommunicationSendStars(grid *ToGrid, int ToProcessor)
   int i, j, dim, index, TransferSize;
   StarBuffer *buffer = NULL;
   Star *RecvStars = NULL;
+  Star *cstar;
 
   if (CommunicationShouldExit(ProcessorNumber, ToProcessor))
     return SUCCESS;
@@ -164,6 +165,8 @@ int grid::CommunicationSendStars(grid *ToGrid, int ToProcessor)
 
     RecvStars = StarBufferToList(buffer, TransferSize);
     InsertStarAfter(ToGrid->Stars, RecvStars);
+    for (cstar = ToGrid->Stars; cstar; cstar = cstar->NextStar)
+      cstar->CurrentGrid = ToGrid;
     delete [] buffer;
 			  
   } // end: if (MyProcessorNumber...)

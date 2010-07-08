@@ -12,6 +12,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
+#include "ErrorExceptions.h"
 #include "macros_and_parameters.h"
 #include "typedefs.h"
 #include "global_data.h"
@@ -94,7 +95,7 @@ int grid::MHD3DTestInitializeGrid(int MHD3DProblemType,
 	y = CellLeftEdge[1][j] + 0.5*CellWidth[1][j];
 	if (x <= 0.1) {
 	  if (k==2) {
-	    printf("rhol=%g, vxl=%g, pl=%g\n", rhol, vxl, pl);
+	    printf("rhol=%"GSYM", vxl=%"GSYM", pl=%"GSYM"\n", rhol, vxl, pl);
 	  }
 
 	  BaryonField[iden ][igrid] = rhol;
@@ -111,7 +112,7 @@ int grid::MHD3DTestInitializeGrid(int MHD3DProblemType,
 	  BaryonField[iPhi ][igrid] = 0.0;
 	} else {
 	  if (k==2) {
-	    printf("rhor=%g, vxr=%g, pr=%g\n", rhou, vxu, pu);
+	    printf("rhor=%"GSYM", vxr=%"GSYM", pr=%"GSYM"\n", rhou, vxu, pu);
 	  }
 	  BaryonField[iden ][igrid] = rhou;
 	  BaryonField[ivx  ][igrid] = vxu;

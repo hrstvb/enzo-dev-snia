@@ -92,8 +92,7 @@ int CommunicationTransferParticles(grid *GridPointer[], int NumberOfGrids)
              SendList[GridsToSend].NumberToMove,
              SendList[GridsToSend].Pointer,
 	     COPY_OUT) == FAIL) {
-	fprintf(stderr, "Error in grid->CommunicationTransferParticles.\n");
-	ENZO_FAIL("");
+	ENZO_FAIL("Error in grid->CommunicationTransferParticles.\n");
       }
       GridsToSend++;
     }
@@ -113,6 +112,7 @@ int CommunicationTransferParticles(grid *GridPointer[], int NumberOfGrids)
   MPI_Datatype DataType = (sizeof(float) == 4) ? MPI_FLOAT : MPI_DOUBLE;
   MPI_Datatype DataTypeInt = (sizeof(int) == 4) ? MPI_INT : MPI_LONG_LONG_INT;
   MPI_Datatype DataTypeByte = MPI_BYTE;
+
   MPI_Arg Count;
   MPI_Arg SendCount;
   MPI_Arg RecvCount;
@@ -183,8 +183,7 @@ int CommunicationTransferParticles(grid *GridPointer[], int NumberOfGrids)
       MPI_SendListCount[i] = SendListCount[i];
     }
     if (NumberOfSharedGrids != NumberOfGrids) {
-      fprintf(stderr, "CTP error\n");
-      ENZO_FAIL("");
+      ENZO_FAIL("CTP error\n");
     }
 
 /*
@@ -349,8 +348,7 @@ int CommunicationTransferParticles(grid *GridPointer[], int NumberOfGrids)
       if (GridPointer[grid]->CommunicationTransferParticles(GridPointer,
 	      NumberOfGrids, SharedList[grid].ToGrid, LocalNumberToMove,
 	      LocalPointer, COPY_IN) == FAIL) {
-	fprintf(stderr, "Error in grid->CommunicationTransferParticless\n");
-	ENZO_FAIL("");
+	ENZO_FAIL("Error in grid->CommunicationTransferParticless\n");
       }
  
     } // end: if grid is on my processor
@@ -396,6 +394,7 @@ int CommunicationTransferParticles(grid *GridPointer[], int NumberOfGrids)
     printf("CommunicationTransferParticles: moved = %"ISYM"\n",
 	   NumberOfParticlesMoved);
   if (NumberOfParticlesMoved == 0)
+
     Done = TRUE;
  
   }

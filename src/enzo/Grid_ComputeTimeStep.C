@@ -350,8 +350,7 @@ float grid::ComputeTimeStep()
 
   if (GetUnits(&DensityUnits, &LengthUnits, &TemperatureUnits,
 	       &TimeUnits, &VelocityUnits, Time) == FAIL) {
-    fprintf(stderr, "Error in GetUnits.\n");
-    ENZO_FAIL("");
+    ENZO_FAIL("Error in GetUnits.\n");
   }
 
   float mindtNOstars;  // Myr
@@ -383,8 +382,7 @@ float grid::ComputeTimeStep()
     int RPresNum1, RPresNum2, RPresNum3;
     if (IdentifyRadiationPressureFields(RPresNum1, RPresNum2, RPresNum3) 
 	== FAIL) {
-      fprintf(stdout, "Error in IdentifyRadiationPressureFields.\n");
-      ENZO_FAIL("");
+      ENZO_FAIL("Error in IdentifyRadiationPressureFields.\n");
     }
 
     for (i = 0; i < size; i++)
@@ -409,6 +407,11 @@ float grid::ComputeTimeStep()
       (TimestepSafetyVelocity*1e5 / VelocityUnits);    // parameter in km/s
 
   dt = min(dt, dtSafetyVelocity);
+
+
+  /* 9) FLD Radiative Transfer timestep limitation */
+  if (RadiativeTransferFLD)
+    dt = min(dt, MaxRadiationDt);
   
 #endif /* TRANSFER */
  
@@ -427,6 +430,7 @@ float grid::ComputeTimeStep()
     if (dtAcceleration != huge_number)
       printf("Acc = %"FSYM" ", dtAcceleration);
     if (NumberOfParticles)
+
       printf("Part = %"FSYM" ", dtParticles);
     printf(")\n");
   }

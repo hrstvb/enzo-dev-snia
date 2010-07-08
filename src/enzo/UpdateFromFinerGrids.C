@@ -48,7 +48,7 @@ int CommunicationReceiveHandler(fluxes **SubgridFluxesEstimate[] = NULL,
 				int FluxFlag = FALSE,
 				TopGridData* MetaData = NULL);
 
-#define GRIDS_PER_LOOP 20000
+#define GRIDS_PER_LOOP 100000
  
  
 #ifdef FLUX_FIX
@@ -78,17 +78,16 @@ int UpdateFromFinerGrids(int level, HierarchyEntry *Grids[], int NumberOfGrids,
   fluxes SubgridFluxesRefined;
  
   /* For each grid,
-     (a)  project the subgrid's solution into this grid (step #18)
-     (a1) project the neighboring subgrid's solution into this grid
+     (a)  project the proper and neighboring subgrids' solutions into 
+          this grid (step #18)
      (b)  correct for the difference between this grid's fluxes and the
-     subgrid's fluxes. (step #19) */
+          subgrid's fluxes. (step #19) */
   
 #ifdef FORCE_MSG_PROGRESS 
   CommunicationBarrier();
 #endif
 
   TIME_MSG("UpdateFromFinerGrids");
-
   for (StartGrid = 0; StartGrid < NumberOfGrids; StartGrid += GRIDS_PER_LOOP) {
     EndGrid = min(StartGrid + GRIDS_PER_LOOP, NumberOfGrids);
 
@@ -108,13 +107,33 @@ int UpdateFromFinerGrids(int level, HierarchyEntry *Grids[], int NumberOfGrids,
       
       while (NextGrid != NULL && FluxCorrection) {
  
+	/* Project subgrid's refined fluxes to the level of this grid. */
+ 
 	NextGrid->GridData->
 	  GetProjectedBoundaryFluxes(Grids[grid1]->GridData, grid1, subgrid,
-				     SubgridFluxesRefined);
+				     SubgridFluxesRefined, FALSE);
  
 	NextGrid = NextGrid->NextGridThisLevel;
 	subgrid++;
       } // ENDWHILE subgrids
+
+      /* Loop over SUBlings for this grid. */
+
+#ifdef FLUX_FIX
+      NextEntry = SUBlingList[grid1];
+      while (NextEntry != NULL && FluxCorrection) {
+
+	/* make sure this isn't a "proper" subgrid */
+	if (NextEntry->GridHierarchyEntry->ParentGrid != Grids[grid1]) {
+
+	  NextEntry->GridData->GetProjectedBoundaryFluxes
+	    (Grids[grid1]->GridData, grid1, NumberOfSubgrids[grid1]-1,
+	     SubgridFluxesRefined, TRUE);
+
+	} // ENDIF not proper subgrid
+	NextEntry = NextEntry->NextGridThisLevel;
+      } // ENDWHILE SUBlings
+#endif /* FLUX_FIX */
 
     } // ENDFOR grids
 
@@ -135,8 +154,8 @@ int UpdateFromFinerGrids(int level, HierarchyEntry *Grids[], int NumberOfGrids,
 	/* Project subgrid's refined fluxes to the level of this grid. */
 
 	NextGrid->GridData->
-	  GetProjectedBoundaryFluxes(Grids[grid1]->GridData, 0, 0,
-				     SubgridFluxesRefined);
+	  GetProjectedBoundaryFluxes(Grids[grid1]->GridData, 0, 0, 
+				     SubgridFluxesRefined, 0);
 
 	/* Correct this grid for the refined fluxes (step #19)
 	   (this also deletes the fields in SubgridFluxesRefined). 
@@ -163,72 +182,11 @@ int UpdateFromFinerGrids(int level, HierarchyEntry *Grids[], int NumberOfGrids,
 
       } // ENDWHILE subgrids
 
-    } // ENDFOR grids
-
-    /* -------------- THIRD PASS ----------------- */
+      /* Loop over SUBlings for this grid. */
 
 #ifdef FLUX_FIX
-    CommunicationReceiveHandler(SubgridFluxesEstimate, NumberOfSubgrids, 
-				FALSE, MetaData);
-#else
-    CommunicationReceiveHandler(SubgridFluxesEstimate, NumberOfSubgrids);
-#endif
-
-  } // ENDFOR grid batches
-
-  /************************************************************************
-     (a1) project the neighboring subgrid's solution into this grid 
-          (SUBlings)
-  ************************************************************************/
-
-#ifdef FLUX_FIX
-  TIME_MSG("Projecting neighboring subgrid solution (FLUX_FIX)");
-  for (StartGrid = 0; StartGrid < NumberOfGrids; StartGrid += GRIDS_PER_LOOP) {
-    EndGrid = min(StartGrid + GRIDS_PER_LOOP, NumberOfGrids);
-
-    /* -------------- FIRST PASS ----------------- */
-
-    CommunicationDirection = COMMUNICATION_POST_RECEIVE;
-    CommunicationReceiveIndex = 0;
-#pragma omp parallel for schedule(static) \
-  private(NextEntry, SubgridFluxesRefined)
-    for (grid1 = StartGrid; grid1 < EndGrid; grid1++) {
-	  
-      /* Loop over subgrids for this grid. */
- 
-      CommunicationReceiveCurrentDependsOn = COMMUNICATION_NO_DEPENDENCE;
       NextEntry = SUBlingList[grid1];
-
       while (NextEntry != NULL && FluxCorrection) {
-
-	/* make sure this isn't a "proper" subgrid */
-	
-	if (NextEntry->GridHierarchyEntry->ParentGrid != Grids[grid1]) {
-	  
-	  /* Project subgrid's refined fluxes to the level of this grid. */
-
-	  NextEntry->GridData->GetProjectedBoundaryFluxes
-	    (Grids[grid1]->GridData, grid1, NumberOfSubgrids[grid1]-1,
-	     SubgridFluxesRefined);
-	}
-
-	NextEntry = NextEntry->NextGridThisLevel;
-
-      } // ENDWHILE subgrids
-    } // ENDFOR grids
-
-    /* -------------- SECOND PASS ----------------- */
-
-    CommunicationDirection = COMMUNICATION_SEND;
-
-#pragma omp parallel for schedule(static) \
-  private(NextEntry, SubgridFluxesRefined)
-    for (grid1 = StartGrid; grid1 < EndGrid; grid1++) {
-
-      NextEntry = SUBlingList[grid1];
- 
-      while (NextEntry != NULL && FluxCorrection) {
-
 	/* make sure this isn't a "proper" subgrid */
 
 	if (NextEntry->GridHierarchyEntry->ParentGrid != Grids[grid1]) {
@@ -236,7 +194,7 @@ int UpdateFromFinerGrids(int level, HierarchyEntry *Grids[], int NumberOfGrids,
 	  /* Project subgrid's refined fluxes to the level of this grid. */
 
 	  NextEntry->GridData->GetProjectedBoundaryFluxes
-	    (Grids[grid1]->GridData, 0, 0, SubgridFluxesRefined);
+	    (Grids[grid1]->GridData, 0, 0, SubgridFluxesRefined, 0);
  
 	  /* Correct this grid for the refined fluxes (step #19)
 	     (this also deletes the fields in SubgridFluxesRefined). */
@@ -251,17 +209,21 @@ int UpdateFromFinerGrids(int level, HierarchyEntry *Grids[], int NumberOfGrids,
 	}
 
 	NextEntry = NextEntry->NextGridThisLevel;
+      } // ENDWHILE SUBlings
+#endif /* FLUX_FIX */
 
-      } // ENDWHILE subgrids
     } // ENDFOR grids
 
     /* -------------- THIRD PASS ----------------- */
 
+#ifdef FLUX_FIX
     CommunicationReceiveHandler(SubgridFluxesEstimate, NumberOfSubgrids, 
-				TRUE, MetaData);
+				FALSE, MetaData);
+#else
+    CommunicationReceiveHandler(SubgridFluxesEstimate, NumberOfSubgrids);
+#endif
 
   } // ENDFOR grid batches
-#endif /* FLUX_FIX */
 
   /************************************************************************
     (b) correct for the difference between this grid's fluxes and the

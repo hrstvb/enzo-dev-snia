@@ -56,9 +56,10 @@ int InitializeRadiationFieldData(FLOAT Time);
 int GetUnits(float *DensityUnits, float *LengthUnits,
 	     float *TemperatureUnits, float *TimeUnits,
 	     float *VelocityUnits, double *MassUnits, FLOAT Time);
- 
+int ReadEvolveRefineFile(void);
  
 int CheckShearingBoundaryConsistency(TopGridData &MetaData); 
+void get_uuid(char *buffer);
 
 int ReadParameterFile(FILE *fptr, TopGridData &MetaData, float *Initialdt)
 {
@@ -95,7 +96,7 @@ int ReadParameterFile(FILE *fptr, TopGridData &MetaData, float *Initialdt)
     ret += sscanf(line, "ResubmitOn  = %"ISYM, &MetaData.ResubmitOn);
     if (sscanf(line, "ResubmitCommand = %s", dummy) == 1) 
       MetaData.ResubmitCommand = dummy;
- 
+
     ret += sscanf(line, "MaximumTopGridTimeStep = %"FSYM,
 		  &MetaData.MaximumTopGridTimeStep);
 
@@ -208,8 +209,7 @@ int ReadParameterFile(FILE *fptr, TopGridData &MetaData, float *Initialdt)
     if (sscanf(line, "CubeDump[%"ISYM"] = %s", &dim, dummy) == 2) {
       ret++; CubeDumps[dim] = dummy;
       if (dim >= MAX_CUBE_DUMPS) {
-        fprintf(stderr, "CubeDump %"ISYM" > maximum allowed.\n", dim);
-        ENZO_FAIL("");
+        ENZO_VFAIL("CubeDump %"ISYM" > maximum allowed.\n", dim)
       }
     }
 
@@ -217,12 +217,12 @@ int ReadParameterFile(FILE *fptr, TopGridData &MetaData, float *Initialdt)
     ret += sscanf(line, "ResetLoadBalancing = %"ISYM, &ResetLoadBalancing);
     ret += sscanf(line, "LoadBalancingCycleSkip = %"ISYM, &LoadBalancingCycleSkip);
     ret += sscanf(line, "LoadBalancingMinLevel = %"ISYM, &LoadBalancingMinLevel);
+    ret += sscanf(line, "LoadBalancingMaxLevel = %"ISYM, &LoadBalancingMaxLevel);
  
     if (sscanf(line, "TimeActionType[%"ISYM"] = %"ISYM, &dim, &int_dummy) == 2) {
       ret++; TimeActionType[dim] = int_dummy;
       if (dim >= MAX_TIME_ACTIONS-1) {
-	fprintf(stderr, "Time action %"ISYM" > maximum allowed.\n", dim);
-	ENZO_FAIL("");
+	ENZO_VFAIL("Time action %"ISYM" > maximum allowed.\n", dim)
       }
     }
     if (sscanf(line, "TimeActionRedshift[%"ISYM"] = ", &dim) == 1)
@@ -244,9 +244,21 @@ int ReadParameterFile(FILE *fptr, TopGridData &MetaData, float *Initialdt)
     ret += sscanf(line, "TopGridGravityBoundary = %"ISYM,
 		  &MetaData.GravityBoundary);
  
+#ifdef TRANSFER
+    if (sscanf(line, "RadHydroParamfile = %s", dummy) == 1)
+      MetaData.RadHydroParameterFname = dummy;
+#endif
+    ret += sscanf(line, "ImplicitProblem = %"ISYM, &ImplicitProblem);
+    ret += sscanf(line, "RadiativeTransferFLD   = %"ISYM, &RadiativeTransferFLD);
+#ifdef EMISSIVITY
+    ret += sscanf(line, "StarMakerEmissivityField = %"ISYM, 
+		  &StarMakerEmissivityField);
+    ret += sscanf(line, "uv_param = %"FSYM, &uv_param);
+#endif
+
     ret += sscanf(line, "ParticleBoundaryType   = %"ISYM,
 		  &MetaData.ParticleBoundaryType);
-    ret += sscanf(line, "NumberOfParticles      = %"ISYM,
+    ret += sscanf(line, "NumberOfParticles      = %"PISYM,
 		  &MetaData.NumberOfParticles);
  
     ret += sscanf(line, "CourantSafetyNumber    = %"FSYM,
@@ -287,12 +299,15 @@ int ReadParameterFile(FILE *fptr, TopGridData &MetaData, float *Initialdt)
     ret += sscanf(line, "MinimumSubgridEdge     = %"ISYM, &MinimumSubgridEdge);
     ret += sscanf(line, "MaximumSubgridSize     = %"ISYM, &MaximumSubgridSize);
     ret += sscanf(line, "NumberOfBufferZones    = %"ISYM, &NumberOfBufferZones);
+    ret += sscanf(line, "FastSiblingLocatorEntireDomain = %"ISYM, &FastSiblingLocatorEntireDomain);
     ret += sscanf(line, "MustRefineRegionMinRefinementLevel = %"ISYM,
 		  &MustRefineRegionMinRefinementLevel);
     ret += sscanf(line, "MetallicityRefinementMinLevel = %"ISYM,
 		  &MetallicityRefinementMinLevel);
-    ret += sscanf(line, "MetallicityRefinementMinMetallicity      = %"FSYM, 
+    ret += sscanf(line, "MetallicityRefinementMinMetallicity = %"FSYM, 
 		  &MetallicityRefinementMinMetallicity);
+    ret += sscanf(line, "MetallicityRefinementMinDensity = %"FSYM, 
+		  &MetallicityRefinementMinDensity);
 
     ret += sscanf(line, "DomainLeftEdge        = %"PSYM" %"PSYM" %"PSYM, DomainLeftEdge,
 		  DomainLeftEdge+1, DomainLeftEdge+2);
@@ -314,6 +329,14 @@ int ReadParameterFile(FILE *fptr, TopGridData &MetaData, float *Initialdt)
 		  MustRefineRegionRightEdge, MustRefineRegionRightEdge+1,
 		  MustRefineRegionRightEdge+2);
 
+    /* Read evolving RefineRegion */
+
+    ret += sscanf(line, "RefineRegionTimeType = %"ISYM, &RefineRegionTimeType);
+    if (sscanf(line, "RefineRegionFile = %s", dummy) == 1) {
+      RefineRegionFile = dummy;
+      ret++;
+    }
+
     if (sscanf(line, "DataLabel[%"ISYM"] = %s\n", &dim, dummy) == 2)
       DataLabel[dim] = dummy;
     if (sscanf(line, "DataUnits[%"ISYM"] = %s\n", &dim, dummy) == 2)
@@ -334,7 +357,11 @@ int ReadParameterFile(FILE *fptr, TopGridData &MetaData, float *Initialdt)
     ret += sscanf(line, "PointSourceGravityCoreRadius = %"FSYM,
 		  &PointSourceGravityCoreRadius);
  
+    ret += sscanf(line, "ExternalGravity         = %"ISYM,&ExternalGravity);
+
     ret += sscanf(line, "SelfGravity           = %"ISYM, &SelfGravity);
+    ret += sscanf(line, "SelfGravityGasOff     = %"ISYM, &SelfGravityGasOff);
+    ret += sscanf(line, "AccretionKernal       = %"ISYM, &AccretionKernal);
     ret += sscanf(line, "GravitationalConstant = %"FSYM, &GravitationalConstant);
     ret += sscanf(line, "S2ParticleSize        = %"FSYM, &S2ParticleSize);
     ret += sscanf(line, "GravityResolution     = %"FSYM, &GravityResolution);
@@ -379,8 +406,10 @@ int ReadParameterFile(FILE *fptr, TopGridData &MetaData, float *Initialdt)
     ret += sscanf(line, "CloudyMetallicityNormalization = %"FSYM,&CloudyCoolingData.CloudyMetallicityNormalization);
     ret += sscanf(line, "CloudyElectronFractionFactor = %"FSYM,&CloudyCoolingData.CloudyElectronFractionFactor);
     ret += sscanf(line, "MetalCooling = %d", &MetalCooling);
-    if (sscanf(line, "MetalCoolingTable = %s", dummy) == 1) 
+    if (sscanf(line, "MetalCoolingTable = %s", dummy) == 1) {
       MetalCoolingTable = dummy;
+      ret++;
+    }
 
     ret += sscanf(line, "CRModel = %"ISYM, &CRModel);
     ret += sscanf(line, "ShockMethod = %"ISYM, &ShockMethod);
@@ -410,6 +439,8 @@ int ReadParameterFile(FILE *fptr, TopGridData &MetaData, float *Initialdt)
 		  &OutputSmoothedDarkMatter);
     ret += sscanf(line, "SmoothedDarkMatterNeighbors = %"ISYM, 
 		  &SmoothedDarkMatterNeighbors);
+    ret += sscanf(line, "OutputGriddedStarParticle = %"ISYM, 
+		  &OutputGriddedStarParticle);
 
     ret += sscanf(line, "ZEUSQuadraticArtificialViscosity = %"FSYM,
 		  &ZEUSQuadraticArtificialViscosity);
@@ -428,14 +459,17 @@ int ReadParameterFile(FILE *fptr, TopGridData &MetaData, float *Initialdt)
 		  &RefineByResistiveLengthSafetyFactor);
     ret += sscanf(line, "MustRefineParticlesRefineToLevel = %"ISYM,
                   &MustRefineParticlesRefineToLevel);
+    ret += sscanf(line, "MustRefineParticlesRefineToLevelAutoAdjust = %"ISYM,
+                  &MustRefineParticlesRefineToLevelAutoAdjust);
+    ret += sscanf(line, "MustRefineParticlesMinimumMass = %"FSYM,
+                  &MustRefineParticlesMinimumMass);
     ret += sscanf(line, "ParticleTypeInFile = %"ISYM,
                   &ParticleTypeInFile);
 
  
     if (sscanf(line, "StaticRefineRegionLevel[%"ISYM"] = %"ISYM,&dim,&int_dummy) == 2){
       if (dim > MAX_STATIC_REGIONS-1) {
-        fprintf(stderr, "StaticRegion number %"ISYM" > MAX allowed\n", dim);
-        ENZO_FAIL("");
+        ENZO_VFAIL("StaticRegion number %"ISYM" > MAX allowed\n", dim)
       }
       ret++;
       StaticRefineRegionLevel[dim] = int_dummy;
@@ -473,7 +507,7 @@ int ReadParameterFile(FILE *fptr, TopGridData &MetaData, float *Initialdt)
 
     ret += sscanf(line, "Debug2 = %"ISYM, &debug2);
 
-    ret += sscanf(line, "MemoryLimit = %"ISYM, &MemoryLimit);
+    ret += sscanf(line, "MemoryLimit = %lld", &MemoryLimit);
 
 #ifdef STAGE_INPUT
     ret += sscanf(line, "StageInput = %"ISYM, &StageInput);
@@ -490,7 +524,6 @@ int ReadParameterFile(FILE *fptr, TopGridData &MetaData, float *Initialdt)
     ret += sscanf(line, "SimpleConstantBoundary = %"ISYM, &SimpleConstantBoundary);
 
 #endif
-
 
     ret += sscanf(line, "SlopeFlaggingFields = "
 		  " %"ISYM" %"ISYM" %"ISYM" %"ISYM" %"ISYM" %"ISYM" %"ISYM,
@@ -556,8 +589,16 @@ int ReadParameterFile(FILE *fptr, TopGridData &MetaData, float *Initialdt)
 		  &MinimumShearForRefinement);
     ret += sscanf(line, "MinimumEnergyRatioForRefinement = %"FSYM,
 		  &MinimumEnergyRatioForRefinement);
+    ret += sscanf(line, "ShockwaveRefinementMinMach = %"FSYM,
+                 &ShockwaveRefinementMinMach);
+    ret += sscanf(line, "ShockwaveRefinementMinVelocity = %"FSYM,
+                 &ShockwaveRefinementMinVelocity);
+    ret += sscanf(line, "ShockwaveRefinementMaxLevel = %"FSYM,
+                 &ShockwaveRefinementMaxLevel);
     ret += sscanf(line, "ComovingCoordinates = %"ISYM,&ComovingCoordinates);
     ret += sscanf(line, "StarParticleCreation = %"ISYM, &StarParticleCreation);
+    ret += sscanf(line, "BigStarFormation = %"ISYM, &BigStarFormation);
+    ret += sscanf(line, "BigStarSeparation = %"FSYM, &BigStarSeparation);
     ret += sscanf(line, "StarParticleFeedback = %"ISYM, &StarParticleFeedback);
     ret += sscanf(line, "NumberOfParticleAttributes = %"ISYM,
 		  &NumberOfParticleAttributes);
@@ -574,10 +615,26 @@ int ReadParameterFile(FILE *fptr, TopGridData &MetaData, float *Initialdt)
  		  MetaData.RightFaceBoundaryCondition,
  		  MetaData.RightFaceBoundaryCondition+1,
  		  MetaData.RightFaceBoundaryCondition+2);
-
   
     if (sscanf(line, "BoundaryConditionName         = %s", dummy) == 1)
       MetaData.BoundaryConditionName = dummy;
+
+    if (sscanf(line, "MetaDataIdentifier = %s", dummy) == 1) {
+      MetaData.MetaDataIdentifier = dummy;
+      ret++;
+    }
+    if (sscanf(line, "MetaDataSimulationUUID = %s", dummy) == 1) {
+      MetaData.SimulationUUID = dummy;
+      ret++;
+    }
+    if (sscanf(line, "MetaDataDatasetUUID = %s", dummy) == 1) {
+      MetaData.RestartDatasetUUID = dummy;
+      ret++;
+    }
+    if (sscanf(line, "MetaDataInitialConditionsUUID = %s", dummy) == 1) {
+      MetaData.InitialConditionsUUID = dummy;
+      ret++;
+    }
  
     /* Check version number. */
  
@@ -591,6 +648,8 @@ int ReadParameterFile(FILE *fptr, TopGridData &MetaData, float *Initialdt)
  
     ret += sscanf(line, "StarMakerOverDensityThreshold = %"FSYM,
 		  &StarMakerOverDensityThreshold);
+    ret += sscanf(line, "StarMakerSHDensityThreshold = %"FSYM,
+		  &StarMakerSHDensityThreshold);
     ret += sscanf(line, "StarMakerMassEfficiency = %"FSYM,
 		  &StarMakerMassEfficiency);
     ret += sscanf(line, "StarMakerMinimumMass = %"FSYM, &StarMakerMinimumMass);
@@ -629,6 +688,14 @@ int ReadParameterFile(FILE *fptr, TopGridData &MetaData, float *Initialdt)
 		  StarClusterRegionRightEdge+2);
 
     ret += sscanf(line, "PopIIIStarMass = %"FSYM, &PopIIIStarMass);
+    ret += sscanf(line, "PopIIIInitialMassFunction = %"ISYM, 
+		  &PopIIIInitialMassFunction);
+    ret += sscanf(line, "PopIIIInitialMassFunctionSeed = %"ISYM, 
+		  &PopIIIInitialMassFunctionSeed);
+    ret += sscanf(line, "PopIIIMassRange = %"FSYM" %"FSYM,
+		  &PopIIILowerMassCutoff, &PopIIIUpperMassCutoff);
+    ret += sscanf(line, "PopIIIInitialMassFunctionSlope = %"FSYM, 
+		  &PopIIIInitialMassFunctionSlope);
     ret += sscanf(line, "PopIIIBlackHoles = %"ISYM, &PopIIIBlackHoles);
     ret += sscanf(line, "PopIIIBHLuminosityEfficiency = %"FSYM, 
 		  &PopIIIBHLuminosityEfficiency);
@@ -641,29 +708,42 @@ int ReadParameterFile(FILE *fptr, TopGridData &MetaData, float *Initialdt)
     ret += sscanf(line, "PopIIISupernovaRadius = %"FSYM, &PopIIISupernovaRadius);
     ret += sscanf(line, "PopIIISupernovaUseColour = %"ISYM, 
 		  &PopIIISupernovaUseColour);
+    ret += sscanf(line, "PopIIISupernovaMustRefine = %"ISYM,
+		  &PopIIISupernovaMustRefine);
+    ret += sscanf(line, "PopIIISupernovaMustRefineResolution = %"ISYM,
+		  &PopIIISupernovaMustRefineResolution);
+    ret += sscanf(line, "PopIIIHeliumIonization = %"ISYM, 
+		  &PopIIIHeliumIonization);
 
     ret += sscanf(line, "PopIIIColorDensityThreshold = %"FSYM,
 		  &PopIIIColorDensityThreshold);
     ret += sscanf(line, "PopIIIColorMass = %"FSYM,
 		  &PopIIIColorMass);
 
+    ret += sscanf(line, "MBHAccretion = %"ISYM, &MBHAccretion);
+    ret += sscanf(line, "MBHAccretionRadius = %"FSYM, &MBHAccretionRadius);
+    ret += sscanf(line, "MBHAccretingMassRatio = %"FSYM, &MBHAccretingMassRatio);
+    ret += sscanf(line, "MBHAccretionFixedTemperature = %"FSYM, &MBHAccretionFixedTemperature);
+    ret += sscanf(line, "MBHAccretionFixedRate = %"FSYM, &MBHAccretionFixedRate);
+    ret += sscanf(line, "MBHTurnOffStarFormation = %"ISYM, &MBHTurnOffStarFormation);
+    ret += sscanf(line, "MBHCombineRadius = %"FSYM, &MBHCombineRadius);
     ret += sscanf(line, "MBHMinDynamicalTime = %"FSYM, &MBHMinDynamicalTime);
     ret += sscanf(line, "MBHMinimumMass = %"FSYM, &MBHMinimumMass);
-    ret += sscanf(line, "MBHAccretion = %"ISYM, &MBHAccretion);
-    ret += sscanf(line, "MBHAccretingMassRatio = %"FSYM, &MBHAccretingMassRatio);
+
     ret += sscanf(line, "MBHFeedback = %"ISYM, &MBHFeedback);
     ret += sscanf(line, "MBHFeedbackRadiativeEfficiency = %"FSYM, &MBHFeedbackRadiativeEfficiency);
-    ret += sscanf(line, "MBHFeedbackThermalCoupling = %"FSYM, &MBHFeedbackThermalCoupling);
-    ret += sscanf(line, "MBHFeedbackThermalRadius = %"FSYM, &MBHFeedbackThermalRadius);
+    ret += sscanf(line, "MBHFeedbackEnergyCoupling = %"FSYM, &MBHFeedbackEnergyCoupling);
     ret += sscanf(line, "MBHFeedbackMassEjectionFraction = %"FSYM, &MBHFeedbackMassEjectionFraction);
     ret += sscanf(line, "MBHFeedbackMetalYield = %"FSYM, &MBHFeedbackMetalYield);
-    ret += sscanf(line, "MBHFeedbackJetsMassLoadingFactor = %"FSYM, &MBHFeedbackJetsMassLoadingFactor);
-    ret += sscanf(line, "MBHCombineRadius = %"FSYM, &MBHCombineRadius);
+    ret += sscanf(line, "MBHFeedbackThermalRadius = %"FSYM, &MBHFeedbackThermalRadius);
+    ret += sscanf(line, "MBHFeedbackJetsThresholdMass = %"FSYM, &MBHFeedbackJetsThresholdMass);
 
     ret += sscanf(line, "MBHParticleIO = %"ISYM,
 		  &MBHParticleIO);
     if (sscanf(line, "MBHParticleIOFilename = %s", dummy) == 1)
       MBHParticleIOFilename = dummy;
+    if (sscanf(line, "MBHInsertLocationFilename = %s", dummy) == 1)
+      MBHInsertLocationFilename = dummy;
 
     /* Read Movie Dump parameters */
 
@@ -784,6 +864,12 @@ int ReadParameterFile(FILE *fptr, TopGridData &MetaData, float *Initialdt)
 		  &ParticleSplitterIterations);
     ret += sscanf(line, "ParticleSplitterChildrenParticleSeparation = %"FSYM,
 		  &ParticleSplitterChildrenParticleSeparation);
+    ret += sscanf(line, "ResetMagneticField = %"ISYM,
+		  &ResetMagneticField);
+    ret += sscanf(line, "ResetMagneticFieldAmplitude  =  %"GSYM" %"GSYM" %"GSYM, 
+		  ResetMagneticFieldAmplitude,
+		  ResetMagneticFieldAmplitude+1,
+		  ResetMagneticFieldAmplitude+2);
 
     /* If the dummy char space was used, then make another. */
  
@@ -803,6 +889,7 @@ int ReadParameterFile(FILE *fptr, TopGridData &MetaData, float *Initialdt)
     if (strstr(line, "Units")               ) ret++;
     if (strstr(line, "RadiatingShock")      ) ret++;
     if (strstr(line, "RotatingCylinder")    ) ret++;
+    if (strstr(line, "RotatingSphere")    ) ret++;
     if (strstr(line, "TestOrbit")    ) ret++;
     if (strstr(line, "KelvinHelmholtz")     ) ret++;
     if (strstr(line, "KH")                  ) ret++;
@@ -844,7 +931,6 @@ int ReadParameterFile(FILE *fptr, TopGridData &MetaData, float *Initialdt)
   delete [] dummy;
   rewind(fptr);
 
-  //  OutputTemperature = ((ProblemType == 7) || (ProblemType == 11));
 
   /* Even if this is not cosmology, due to a check for nested grid cosmology
      in ProtoSubgrid_AcceptableGrid.C, we'll set the default for this here. */
@@ -866,8 +952,7 @@ int ReadParameterFile(FILE *fptr, TopGridData &MetaData, float *Initialdt)
 
     if (CosmologyReadParameters(fptr, &MetaData.StopTime, &MetaData.Time)
 	== FAIL) {
-      fprintf(stderr, "Error in ReadCosmologyParameters.\n");;
-      ENZO_FAIL("");
+      ENZO_FAIL("Error in ReadCosmologyParameters.\n");
     }
     rewind(fptr);
   }
@@ -877,6 +962,19 @@ int ReadParameterFile(FILE *fptr, TopGridData &MetaData, float *Initialdt)
     }
     rewind(fptr);
   }
+
+  /*
+    if (EOSType == 3) // an isothermal equation of state implies the adiabatic index = 1 
+    Gamma = 1; 
+  */
+
+  /* convert MustRefineParticlesMinimumMass from a mass into a density, 
+     ASSUMING CUBE simulation space */
+    MustRefineParticlesMinimumMass /= POW(1/(float(MetaData.TopGridDims[0])
+				       *POW(float(RefineBy), float(MustRefineParticlesRefineToLevel))),3);
+
+
+    /* Use Physical units stuff */
 
   float DensityUnits = 1.0, LengthUnits = 1.0, TemperatureUnits = 1.0, 
     TimeUnits = 1.0, VelocityUnits = 1.0, PressureUnits = 1.0;
@@ -888,7 +986,7 @@ int ReadParameterFile(FILE *fptr, TopGridData &MetaData, float *Initialdt)
     /*IMOPORTANT: If change anything here must change both equivilant parts in WriteParameterFile.C as well */
 
     /* Change input physical parameters into code units */
-
+    MustRefineParticlesMinimumMass /= MassUnits; 
     StarMakerOverDensityThreshold /= DensityUnits;
     //  StarEnergyFeedbackRate = StarEnergyFeedbackRate/pow(LengthUnits,2)*pow(TimeUnits,3);
     
@@ -903,23 +1001,35 @@ int ReadParameterFile(FILE *fptr, TopGridData &MetaData, float *Initialdt)
     float h, cs, dpdrho, dpde;
     EOS(SmallP, SmallRho, SmallEint, h, cs, dpdrho, dpde, EOSType, 1);
     if (debug && (HydroMethod == HD_RK || HydroMethod == MHD_RK))
-      printf("smallrho=%g, smallp=%g, smalleint=%g, PressureUnits=%g, MaximumAlvenSpeed=%g\n",
-	     SmallRho, SmallP, SmallEint, PressureUnits, MaximumAlvenSpeed);
-    for (int i = 0; i < MAX_FLAGGING_METHODS; i++) {
+      printf("smallrho=%g, smallp=%g, smalleint=%g, DensityUnits = %g, PressureUnits=%g, MaximumAlvenSpeed=%g\n",
+	     SmallRho, SmallP, SmallEint,DensityUnits, PressureUnits, MaximumAlvenSpeed);
+    for (int i = 0; i < MAX_FLAGGING_METHODS; i++) 
       if (MinimumMassForRefinement[i] != FLOAT_UNDEFINED) {
 	MinimumMassForRefinement[i] /= MassUnits;
       }
-    }
-    
+
   }
 
-  
-  if (!ComovingCoordinates && UsePhysicalUnit) {
-    for (int i = 0; i < MAX_FLAGGING_METHODS; i++) {
+  /* For !restart, this only ruins the units because MinimumOverDensityForRefinement is already 
+     set in SetDefaultGlobalValues and not FLOAT_UNDEFINED.
+     For restart, MinimumOverDensityForRefinement is not even needs to be read because only 
+     MinimumMassForRefinement is used for CellFlagging.  
+     So, why did we have to do this in the first place?  - Ji-hoon Kim in Apr.2010
+     (The counterpart in WriteParameterFile is also commented out) */   //#####
+
+  /*
+  if (!ComovingCoordinates && UsePhysicalUnit) 
+    for (int i = 0; i < MAX_FLAGGING_METHODS; i++) 
       if (MinimumOverDensityForRefinement[i] != FLOAT_UNDEFINED) {
 	MinimumOverDensityForRefinement[i] /= DensityUnits;
       }
-    }
+  */
+  
+  /* If RefineRegionTimeType is 0 or 1, read in the input file. */
+  if ((RefineRegionTimeType == 0) || (RefineRegionTimeType == 1)) {
+      if (ReadEvolveRefineFile() == FAIL) {
+        ENZO_FAIL("Error in ReadEvolveRefineFile.");
+      }
   }
 
   /* If GadgetEquilibriumCooling == TRUE, we don't want MultiSpecies
@@ -967,10 +1077,9 @@ int ReadParameterFile(FILE *fptr, TopGridData &MetaData, float *Initialdt)
 
   /* If set, initialze Cosmic Ray Efficiency Models */
 
-  if(CRModel){
-    if(InitializeCosmicRayData() == FAIL){
+  if (CRModel){
+    if (InitializeCosmicRayData() == FAIL){
       ENZO_FAIL("Error in Initialize CosmicRayData.");
-      return FAIL;
     }
   }
 
@@ -1162,6 +1271,33 @@ int ReadParameterFile(FILE *fptr, TopGridData &MetaData, float *Initialdt)
     CellFlaggingMethod[method] = 4;
   }
 
+
+  /* If we're refining the region around P3 supernovae,
+     MustRefineByParticles must be set.  Check this.  */
+
+  if (PopIIISupernovaMustRefine == TRUE) {
+    bool TurnOnParticleMustRefine = true;
+    for (method = 0; method < MAX_FLAGGING_METHODS; method++)
+      if (CellFlaggingMethod[method] == 8)
+	TurnOnParticleMustRefine = false;
+    if (TurnOnParticleMustRefine) {
+      method = 0;
+      while (CellFlaggingMethod[method] != INT_UNDEFINED)
+	method++;
+      CellFlaggingMethod[method] = 8;
+    }
+
+    /* Check if the must refine level is still at the default.  If so,
+       break because it's zero!  Won't do anything, and the user will
+       be disappointed to find that the simulation didn't refine
+       around the SN. */
+
+    if (MustRefineParticlesRefineToLevel == 0)
+      ENZO_FAIL("MustRefineParticlesRefineToLevel is still ZERO, and you set"
+		"PopIIISupernovaMustRefine.  Set the level or turn off"
+		"PopIIISupernovaMustRefine.");
+  } // ENDIF PopIIISupernovaMustRefine
+
   if (TracerParticleOn) {
     ParticleTypeInFile = TRUE;
   }
@@ -1208,6 +1344,12 @@ int ReadParameterFile(FILE *fptr, TopGridData &MetaData, float *Initialdt)
     if (MyProcessorNumber == ROOT_PROCESSOR)
       fprintf(stderr,"Global Dir set to %s\n", cwd_buffer);
   }
+
+  /* Generate unique identifier if one wasn't found. */
+  if(MetaData.SimulationUUID == NULL){
+    MetaData.SimulationUUID = new char[MAX_LINE_LENGTH];
+    get_uuid(MetaData.SimulationUUID);
+  }
  
    for (int i=0; i<MetaData.TopGridRank;i++)
     TopGridDx[i]=(DomainRightEdge[i]-DomainLeftEdge[i])/MetaData.TopGridDims[i];
@@ -1228,6 +1370,7 @@ int ReadParameterFile(FILE *fptr, TopGridData &MetaData, float *Initialdt)
 #endif
   }
   if (debug) printf("Initialdt in ReadParameterFile = %e\n", *Initialdt);
+
   CheckShearingBoundaryConsistency(MetaData);
   return SUCCESS;
 }

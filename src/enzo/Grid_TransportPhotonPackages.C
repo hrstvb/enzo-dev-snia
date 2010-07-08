@@ -31,16 +31,6 @@
 #include "GridList.h"
 #include "Grid.h"
 
-#ifdef CONFIG_BFLOAT_4
-#define ROUNDOFF 1e-6
-#endif
-#ifdef CONFIG_BFLOAT_8
-#define ROUNDOFF 1e-12
-#endif
-#ifdef CONFIG_BFLOAT_16
-#define ROUNDOFF 1e-16
-#endif
-
 void InsertPhotonAfter(PhotonPackageEntry * &Node, PhotonPackageEntry * &NewNode);
 PhotonPackageEntry *PopPhoton(PhotonPackageEntry * &Node);
 PhotonPackageEntry *DeletePhotonPackage(PhotonPackageEntry *PP);
@@ -63,10 +53,7 @@ int grid::TransportPhotonPackages(int level, ListOfPhotonsToMove **PhotonsToMove
     return SUCCESS;
 
   if (RadiativeTransfer > 0 && GridRank < 3) {
-    fprintf(stderr, "Grid_TransportPhotonPackage: failed\n");
-    fprintf(stderr, "Grid_TransportPhotonPackage: "
-	    "Transfer in less than 3D is not implemented.\n");
-    ENZO_FAIL("");
+    ENZO_FAIL("Transfer in less than 3D is not implemented!\n");
   }
 
   if (PhotonPackages->NextPackage == NULL)
@@ -77,8 +64,7 @@ int grid::TransportPhotonPackages(int level, ListOfPhotonsToMove **PhotonsToMove
   int DensNum, GENum, Vel1Num, Vel2Num, Vel3Num, TENum;
   if (this->IdentifyPhysicalQuantities(DensNum, GENum, Vel1Num, Vel2Num, 
 				       Vel3Num, TENum) == FAIL) {
-    fprintf(stdout, "Error in IdentifyPhysicalQuantities.\n");
-    ENZO_FAIL("");
+    ENZO_FAIL("Error in IdentifyPhysicalQuantities.\n");
   }
 
   /* Find Multi-species fields. */
@@ -87,8 +73,7 @@ int grid::TransportPhotonPackages(int level, ListOfPhotonsToMove **PhotonsToMove
       DINum, DIINum, HDINum;
   if (IdentifySpeciesFields(DeNum, HINum, HIINum, HeINum, HeIINum, HeIIINum,
                       HMNum, H2INum, H2IINum, DINum, DIINum, HDINum) == FAIL) {
-    fprintf(stdout, "Error in grid->IdentifySpeciesFields.\n");
-    ENZO_FAIL("");
+    ENZO_FAIL("Error in grid->IdentifySpeciesFields.\n");
   }
 
   /* Find radiative transfer fields. */
@@ -108,8 +93,7 @@ int grid::TransportPhotonPackages(int level, ListOfPhotonsToMove **PhotonsToMove
 
   if (GetUnits(&DensityUnits, &LengthUnits, &TemperatureUnits,
 	       &TimeUnits, &VelocityUnits, PhotonTime) == FAIL) {
-    fprintf(stdout, "Error in GetUnits.\n");
-    ENZO_FAIL("");
+    ENZO_FAIL("Error in GetUnits.\n");
   }
 
   if (DEBUG) fprintf(stdout,"TransportPhotonPackage: initialize fields.\n");
@@ -137,13 +121,11 @@ int grid::TransportPhotonPackages(int level, ListOfPhotonsToMove **PhotonsToMove
     for (i = 0; i < NumberOfBaryonFields; i++)
       if (FieldsToInterpolate[i] == TRUE)
 	if (this->ComputeVertexCenteredField(i) == FAIL) {
-	  fprintf(stderr, "Error in grid->ComputeVertexCenteredField "
-		  "(field %"ISYM").\n", i);
-	  ENZO_FAIL("");
+	  ENZO_VFAIL("Error in grid->ComputeVertexCenteredField "
+		  "(field %"ISYM").\n", i)
 	}
 
   PP = PhotonPackages;
-
   while (PP != NULL) {
 
   pcount = dcount = tcount = trcount = 0;
@@ -284,6 +266,13 @@ int grid::TransportPhotonPackages(int level, ListOfPhotonsToMove **PhotonsToMove
 	fprintf(stdout, "photon #%"ISYM" %x %x %x\n",
 		tcount,  ThreadPP,  PhotonPackages, 
 		MoveToGrid); 
+
+      if (NewEntry->ToProcessor >= NumberOfProcessors ||
+	  NewEntry->ToProcessor < 0) {
+	PP->PrintInfo();
+	ENZO_VFAIL("Grid %d, Invalid ToProcessor P%d", GridNum, 
+		   NewEntry->ToProcessor)
+      }
 
       if (PauseMe == TRUE) {
 	if (DEBUG > 1) fprintf(stdout, "paused photon %x\n", ThreadPP);

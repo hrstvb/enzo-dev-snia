@@ -15,6 +15,7 @@
 #include <unistd.h>
 #include <math.h>
 
+#include "ErrorExceptions.h"
 #include "macros_and_parameters.h"
 #include "typedefs.h"
 #include "global_data.h"
@@ -193,7 +194,7 @@ int grid::MHDSourceTerms(float **dU)
 	  dU[iEtot][n] += dtFixed*rho*(gx*vx + gy*vy + gz*vz);
 
 	if (i==3 && j==3 && k==4 && GridLeftEdge[0]==0.0 && GridLeftEdge[1]==1.0)
-	  printf("StermStart4 old %g \n", dU[iS2][n])  ;
+	  printf("StermStart4 old %"GSYM" \n", dU[iS2][n])  ;
 	}
       }
     }
@@ -247,7 +248,7 @@ int grid::MHDSourceTerms(float **dU)
 	  dU[iBx  ][n] += dtFixed*coef*BaryonField[B1Num][n];
 	  dU[iBy  ][n] += dtFixed*coef*BaryonField[B2Num][n];
 	  dU[iBz  ][n] += dtFixed*coef*BaryonField[B3Num][n];
-	  dU[iEtot][n] -= dtFixed*coef*(BaryonField[B1Num][n]*BaryonField[B1Num][n]+
+	  dU[iEtot][n] += dtFixed*coef*(BaryonField[B1Num][n]*BaryonField[B1Num][n]+
 					BaryonField[B2Num][n]*BaryonField[B2Num][n]+
 					BaryonField[B3Num][n]*BaryonField[B3Num][n]);
 	  dU[iPhi][n] += 0.0; // Add correct Phi term here .....
