@@ -106,19 +106,8 @@ int grid::CopyOverlappingMassField(grid *OtherGrid,
   for (dim = 0; dim < MAX_DIMENSION; dim++)
     Dim[dim] = End[dim] - Start[dim] + 1;
  
-  /* If posting a receive, then record details of call. */
-
-#ifdef USE_MPI
-  if (CommunicationDirection == COMMUNICATION_POST_RECEIVE &&
-      MyProcessorNumber == ProcessorNumber) {
-    CommunicationReceiveGridOne[CommunicationReceiveIndex]  = this;
-    CommunicationReceiveGridTwo[CommunicationReceiveIndex]  = OtherGrid;
-    CommunicationReceiveCallType[CommunicationReceiveIndex] = 8;
-    for (dim = 0; dim < GridRank; dim++)
-      CommunicationReceiveArgument[dim][CommunicationReceiveIndex] = 
-	EdgeOffset[dim];
-  }
-#endif /* USE_MPI */
+  int CommType = 8;
+  int Zero3Int[] = {0,0,0};
 
   /* Copy data from other processor if needed (modify ParentDim and
      ParentStartIndex to reflect the fact that we are only coping part of
@@ -126,8 +115,10 @@ int grid::CopyOverlappingMassField(grid *OtherGrid,
  
   if (ProcessorNumber != OtherGrid->ProcessorNumber) {
     OtherGrid->CommunicationSendRegion(OtherGrid, ProcessorNumber,
-	                GRAVITATING_MASS_FIELD, NEW_ONLY,
-		        StartOther, Dim);
+				       GRAVITATING_MASS_FIELD, NEW_ONLY,
+				       StartOther, Dim, CommType,
+				       this, OtherGrid, EdgeOffset,
+				       Zero3Int);
     if (CommunicationDirection == COMMUNICATION_POST_RECEIVE ||
 	CommunicationDirection == COMMUNICATION_SEND)
       return SUCCESS;    

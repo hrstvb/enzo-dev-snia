@@ -31,6 +31,7 @@
  
 /* function prototypes */
  
+MPI_Arg Return_MPI_Tag(int tag, int num1[], int num2[3]=0);
 int CosmologyComputeExpansionFactor(FLOAT time, FLOAT *a, FLOAT *dadt);
  
 #ifdef USE_MPI
@@ -246,11 +247,15 @@ int grid::DepositBaryons(grid *TargetGrid, FLOAT DepositTime)
     MPI_Datatype DataType = (sizeof(float) == 4) ? MPI_FLOAT : MPI_DOUBLE;
     MPI_Arg Count;
     MPI_Arg Source;
+    MPI_Arg Tag;
 
     Count = size;
     Source = ProcessorNumber;
  
     double time1 = MPI_Wtime();
+
+#pragma omp critical
+    {
  
     /* If posting a receive, then record details of call. */
 
@@ -261,26 +266,38 @@ int grid::DepositBaryons(grid *TargetGrid, FLOAT DepositTime)
       CommunicationReceiveArgument[0][CommunicationReceiveIndex] = DepositTime;
     }
 
+    if (CommunicationDirection != COMMUNICATION_RECEIVE) {
+      CommunicationGridID[0] = TargetGrid->ID;
+      CommunicationGridID[1] = this->ID;
+      for (dim = 0; dim < MAX_DIMENSION; dim++)
+	CommunicationTags[dim] = GridOffset[dim];
+    }
+
     /* Send Mode */
 
     if (MyProcessorNumber == ProcessorNumber)
       CommunicationBufferedSend(dens_field, size, DataType, 
-				TargetGrid->ProcessorNumber, MPI_SENDREGION_TAG, 
+				TargetGrid->ProcessorNumber, MPI_SENDREGION_TAG,
 				MPI_COMM_WORLD, BUFFER_IN_PLACE);
 
     /* Send/Recv Mode */
 
     if (MyProcessorNumber == TargetGrid->ProcessorNumber &&
-	CommunicationDirection == COMMUNICATION_SEND_RECEIVE)
+	CommunicationDirection == COMMUNICATION_SEND_RECEIVE) {
+      Tag = Return_MPI_Tag(MPI_SENDREGION_TAG, CommunicationGridID, 
+			   CommunicationTags);
       MPI_Recv(dens_field, size, DataType, ProcessorNumber, 
-	       MPI_SENDREGION_TAG, MPI_COMM_WORLD, &status);
+	       Tag, MPI_COMM_WORLD, &status);
+    }
 
     /* Post receive call */
 
     if (MyProcessorNumber == TargetGrid->ProcessorNumber &&
 	CommunicationDirection == COMMUNICATION_POST_RECEIVE) {
+      Tag = Return_MPI_Tag(MPI_SENDREGION_TAG, CommunicationGridID,
+			   CommunicationTags);
       MPI_Irecv(dens_field, size, DataType, ProcessorNumber, 
-	        MPI_SENDREGION_TAG, MPI_COMM_WORLD, 
+	        Tag, MPI_COMM_WORLD, 
 	        CommunicationReceiveMPI_Request+CommunicationReceiveIndex);
       CommunicationReceiveBuffer[CommunicationReceiveIndex] = dens_field;
       CommunicationReceiveDependsOn[CommunicationReceiveIndex] =
@@ -288,8 +305,10 @@ int grid::DepositBaryons(grid *TargetGrid, FLOAT DepositTime)
       CommunicationReceiveIndex++;
     }
  
-    double time3 = MPI_Wtime();
+    } // END omp critical
  
+    double time3 = MPI_Wtime();
+
     CommunicationTime += time3 - time1;
  
 #endif /* USE_MPI */

@@ -82,6 +82,7 @@ int grid::TransferSubgridParticles(grid* Subgrids[], int NumberOfSubgrids,
     int *subgrid = NULL;
     subgrid = new int[NumberOfParticles];
 
+#pragma omp parallel for schedule(static) private(i0,j0,k0,index)
     for (i = 0; i < NumberOfParticles; i++) {
 
       /* Compute index of particle position. */
@@ -102,6 +103,14 @@ int grid::TransferSubgridParticles(grid* Subgrids[], int NumberOfSubgrids,
 	 count. */
  
       subgrid[i] = nint(BaryonField[NumberOfBaryonFields][index])-1;
+      if (subgrid[i] < -1 || subgrid[i] > NumberOfSubgrids-1) {
+	ENZO_VFAIL("particle subgrid (%"ISYM"/%"ISYM") out of range\n", 
+		subgrid[i], NumberOfSubgrids)
+      }
+      
+    } // ENDFOR particles
+
+    for (i = 0; i < NumberOfParticles; i++)
       if (subgrid[i] >= 0) {
 	if (KeepLocal)
 	  proc = MyProcessorNumber;
@@ -109,12 +118,6 @@ int grid::TransferSubgridParticles(grid* Subgrids[], int NumberOfSubgrids,
 	  proc = Subgrids[subgrid[i]]->ReturnProcessorNumber();
 	NumberToMove[proc]++;
       }
-      if (subgrid[i] < -1 || subgrid[i] > NumberOfSubgrids-1) {
-	ENZO_VFAIL("particle subgrid (%"ISYM"/%"ISYM") out of range\n", 
-		subgrid[i], NumberOfSubgrids)
-      }
-      
-    } // ENDFOR particles
 
     /* Allocate space. */
  
@@ -226,6 +229,9 @@ int grid::TransferSubgridParticles(grid* Subgrids[], int NumberOfSubgrids,
 
     /* Copy this grid's particles to the new space. */
 
+#pragma omp parallel private(dim,j)
+    {
+#pragma omp for nowait schedule(static)
     for (i = 0; i < NumberOfParticles; i++) {
       Mass[i] = ParticleMass[i];
       Number[i] = ParticleNumber[i];
@@ -233,42 +239,46 @@ int grid::TransferSubgridParticles(grid* Subgrids[], int NumberOfSubgrids,
     }
 
     for (dim = 0; dim < GridRank; dim++)
+#pragma omp for nowait schedule(static)
       for (i = 0; i < NumberOfParticles; i++) {
 	Position[dim][i] = ParticlePosition[dim][i];
 	Velocity[dim][i] = ParticleVelocity[dim][i];
       }
 	
     for (j = 0; j < NumberOfParticleAttributes; j++)
+#pragma omp for nowait schedule(static)
       for (i = 0; i < NumberOfParticles; i++)
 	  Attribute[j][i] = ParticleAttribute[j][i];
  
     /* Copy new particles */
 
-    int n = NumberOfParticles;
+    int n;
 
+#pragma omp for nowait schedule(static) private(n)
     for (i = StartIndex; i < EndIndex; i++) {
+      n = NumberOfParticles + i - StartIndex;
       Mass[n] = List[i].mass;
       Number[n] = List[i].id;
       Type[n] = List[i].type;
-      n++;
     }
 
     for (dim = 0; dim < GridRank; dim++) {
-      n = NumberOfParticles;
+#pragma omp for nowait schedule(static) private(n)
       for (i = StartIndex; i < EndIndex; i++) {
+	n = NumberOfParticles + i - StartIndex;
 	Position[dim][n] = List[i].pos[dim];
 	Velocity[dim][n] = List[i].vel[dim];
-	n++;
       }
     }
       
     for (j = 0; j < NumberOfParticleAttributes; j++) {
-      n = NumberOfParticles;
+#pragma omp for nowait schedule(static) private(n)
       for (i = StartIndex; i < EndIndex; i++) {
+	n = NumberOfParticles + i - StartIndex;
 	Attribute[j][n] = List[i].attribute[j];
-	n++;
       }
     }
+    } // ENDIF #pragma parallel
       
     } // ENDIF TotalNumberOfParticles > 0
 

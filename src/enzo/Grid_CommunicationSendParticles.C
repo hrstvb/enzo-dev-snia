@@ -34,6 +34,7 @@
 
 /* function prototypes */
  
+MPI_Arg Return_MPI_Tag(int tag, int num1[], int num2[3]=0);
 #ifdef USE_MPI
 int CommunicationBufferedSend(void *buffer, int size, MPI_Datatype Type, int Target,
 			      int Tag, MPI_Comm CommWorld, int BufferSize);
@@ -191,6 +192,14 @@ int grid::CommunicationSendParticles(grid *ToGrid, int ToProcessor,
     MPI_Arg Source = ProcessorNumber;
     MPI_Arg Dest = ToProcessor;
     MPI_Arg stat;
+    MPI_Arg Tag;
+
+#ifdef MPI_INSTRUMENTATION
+    starttime = MPI_Wtime();
+#endif
+
+#pragma omp critical
+    {
 
     if (FirstTimeCalled) {
       PCount = sizeof(particle_data);
@@ -201,9 +210,10 @@ int grid::CommunicationSendParticles(grid *ToGrid, int ToProcessor,
       FirstTimeCalled = FALSE;
     }
 
-#ifdef MPI_INSTRUMENTATION
-    starttime = MPI_Wtime();
-#endif
+    if (CommunicationDirection != COMMUNICATION_RECEIVE) {
+      CommunicationGridID[0] = ToGrid->ID;
+      CommunicationGridID[1] = this->ID;
+    }
 
     if (MyProcessorNumber == ProcessorNumber)
       CommunicationBufferedSend(buffer, Count, ParticleDataType,
@@ -212,9 +222,11 @@ int grid::CommunicationSendParticles(grid *ToGrid, int ToProcessor,
 
     if (MyProcessorNumber == ToProcessor) {
 
+      Tag = Return_MPI_Tag(MPI_SENDPART_TAG, CommunicationGridID);
+
       if (CommunicationDirection == COMMUNICATION_POST_RECEIVE) {
 	MPI_Irecv(buffer, Count, ParticleDataType, Source,
-		  MPI_SENDPART_TAG, MPI_COMM_WORLD,
+		  Tag, MPI_COMM_WORLD,
 		  CommunicationReceiveMPI_Request+CommunicationReceiveIndex);
 
 //	printf("Posting receive from P%"ISYM" for %"ISYM" particles in "
@@ -236,9 +248,11 @@ int grid::CommunicationSendParticles(grid *ToGrid, int ToProcessor,
 
       if (CommunicationDirection == COMMUNICATION_SEND_RECEIVE)
 	MPI_Recv(buffer, Count, ParticleDataType, Source,
-		 MPI_SENDPART_TAG, MPI_COMM_WORLD, &status);
+		 Tag, MPI_COMM_WORLD, &status);
 
     } // ENDIF (MyProcessorNumber == ToProcessor)
+
+    } // END omp critical
  
 #ifdef MPI_INSTRUMENTATION
     endtime = MPI_Wtime();

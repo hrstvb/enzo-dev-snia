@@ -24,7 +24,16 @@
 #include "macros_and_parameters.h"
 #include "typedefs.h"
 #include "global_data.h" 
+#include "Fluxes.h"
+#include "GridList.h"
+#include "ExternalBoundary.h"
+#include "Grid.h"
+#include "TopGridData.h"
+#include "Hierarchy.h"
+#include "LevelHierarchy.h"
+#include "communication.h"
 void my_exit(int status);
+MPI_Arg Return_MPI_Tag(int tag, int num1[], int num2[3]=0);
 /* Records the number of times we've been called. */
  
 static int CallCount = 0;
@@ -192,7 +201,13 @@ int CommunicationBufferedSend(void *buffer, int size, MPI_Datatype Type, int Tar
 
   MPI_Arg Count = size;
   MPI_Arg Dest = Target;
-  MPI_Arg Mtag = Tag;
+  //MPI_Arg Mtag = Tag;
+  MPI_Arg Mtag;
+  
+  if (Tag == MPI_RECEIVEREGION_TAG || Tag == MPI_SENDREGION_TAG)
+    Mtag = Return_MPI_Tag(Tag, CommunicationGridID, CommunicationTags);
+  else
+    Mtag = Return_MPI_Tag(Tag, CommunicationGridID);
  
   stat = MPI_Isend(buffer_send, Count, Type, Dest, Mtag, CommWorld, RequestHandle+index);
     if( stat != MPI_SUCCESS ){my_exit(EXIT_FAILURE);}

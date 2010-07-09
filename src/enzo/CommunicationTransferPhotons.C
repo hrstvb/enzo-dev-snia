@@ -32,6 +32,7 @@
 #include "LevelHierarchy.h"
 #include "GroupPhotonList.h"
 #include "PhotonCommunication.h"
+#include "communication.h"
 
 PhotonPackageEntry* DeletePhotonPackage(PhotonPackageEntry *PP);
 int GenerateGridArray(LevelHierarchyEntry *LevelArray[], int level,
@@ -301,6 +302,11 @@ int CommunicationTransferPhotons(LevelHierarchyEntry *LevelArray[],
   local_transport = (localCounter > 0);
   MPI_Type_size(MPI_PhotonList, &SizeOfGroupPhotonList);
   //SizeOfGroupPhotonList = sizeof(GroupPhotonList);
+
+  /* Not used here */
+  
+  CommunicationGridID[0] = 0;
+  CommunicationGridID[1] = 0;
 
   /* First stage: check for any received nPhoton messages.  For the
      completed messages, post receive calls from all processors with

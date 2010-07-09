@@ -49,12 +49,27 @@ int SetLevelTimeStep(HierarchyEntry *Grids[], int NumberOfGrids, int level,
  
     /* Compute the mininum timestep for all grids. */
  
-    *dtThisLevel = huge_number;
-    for (grid1 = 0; grid1 < NumberOfGrids; grid1++) {
-      dtGrid      = Grids[grid1]->GridData->ComputeTimeStep();
-      *dtThisLevel = min(*dtThisLevel, dtGrid);
-    }
-    *dtThisLevel = CommunicationMinValue(*dtThisLevel);
+      *dtThisLevel = huge_number;
+#ifdef _OPENMP
+      // No reduction method for MIN, so we have to do it manually.
+#pragma omp parallel
+      {
+	float dtThread = huge_number;
+#pragma omp for nowait schedule(static) private(dtGrid)
+	for (grid1 = 0; grid1 < NumberOfGrids; grid1++) {
+	  dtGrid = Grids[grid1]->GridData->ComputeTimeStep();
+	  dtThread = min(dtThread, dtGrid);
+	}
+#pragma omp critical
+	*dtThisLevel = min(*dtThisLevel, dtThread);
+      }
+#else
+      for (grid1 = 0; grid1 < NumberOfGrids; grid1++) {
+	dtGrid      = Grids[grid1]->GridData->ComputeTimeStep();
+	*dtThisLevel = min(*dtThisLevel, dtGrid);
+      }
+#endif
+      *dtThisLevel = CommunicationMinValue(*dtThisLevel);
 
     dtActual = *dtThisLevel;
 

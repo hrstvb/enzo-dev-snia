@@ -31,6 +31,7 @@
 #include "LevelHierarchy.h"
 #include "communication.h"
 void my_exit(int status);
+MPI_Arg Return_MPI_Tag(int tag, int num1[], int num2[3]=0);
  
  
  
@@ -76,13 +77,14 @@ int CommunicationReceiveFluxes(fluxes *Fluxes, int FromProc,
 
   MPI_Arg Count = TotalSize;
   MPI_Arg Source = FromProc;
+  MPI_Arg Tag = Return_MPI_Tag(MPI_FLUX_TAG, CommunicationGridID);
 
   /* If in post-receive mode, then register the receive buffer to be filled
      when the data actually arrives. */
   
   if (CommunicationDirection == COMMUNICATION_POST_RECEIVE) {
     MPI_Irecv(buffer, Count, DataType, Source, 
-	      MPI_FLUX_TAG, MPI_COMM_WORLD,
+	      Tag, MPI_COMM_WORLD,
 	      CommunicationReceiveMPI_Request+CommunicationReceiveIndex);
     CommunicationReceiveBuffer[CommunicationReceiveIndex] = buffer;
     CommunicationReceiveDependsOn[CommunicationReceiveIndex] =
@@ -94,7 +96,7 @@ int CommunicationReceiveFluxes(fluxes *Fluxes, int FromProc,
   /* If in send-receive mode, then wait for the data to arrive now. */
 
   if (CommunicationDirection == COMMUNICATION_SEND_RECEIVE)
-    if (MPI_Recv(buffer, Count, DataType, Source, MPI_FLUX_TAG, 
+    if (MPI_Recv(buffer, Count, DataType, Source, Tag,
 		 MPI_COMM_WORLD, &status) != MPI_SUCCESS) {
       ENZO_VFAIL("Proc %d MPI_Recv error %d\n", MyProcessorNumber,
 	      status.MPI_ERROR)

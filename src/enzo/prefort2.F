@@ -73,6 +73,7 @@ c
 c
 c        Copy real data into complex temporary
 c
+c$omp parallel do private(i,j) schedule(static)
          do k = 1, dim3
             do j = 1, dim2
                do i = 1, dim1
@@ -95,6 +96,7 @@ c
 c
 c        Copy unique part of complex temporary back to buffer.
 c
+c$omp parallel do private(i,j) schedule(static)
          do k = 1, dim3
             do j = 1, dim2
                do i = 1, dim1+2
@@ -109,6 +111,7 @@ c
 c
 c        Recreate the other half of the complex data.
 c
+c$omp parallel do private(i,j,i1,j1,k1) schedule(static)
          do k = 1, dim3
             do j = 1, dim2
 c
@@ -150,6 +153,7 @@ c
 
 !        factor = 1.0/real(dim1*dim2*dim3)
 
+c$omp parallel do private(i,j) schedule(static)
          do k = 1, dim3
             do j = 1, dim2
                do i = 1, dim1

@@ -27,6 +27,7 @@ int FinalizeFluxes(HierarchyEntry *Grids[],fluxes **SubgridFluxesEstimate[],
 		   int NumberOfGrids,int NumberOfSubgrids[]){
   
   int grid1,subgrid;
+#pragma omp parallel for schedule(static) private(subgrid)
   for (grid1 = 0; grid1 < NumberOfGrids; grid1++) {
     
     // Only deallocate fluxes for local grids

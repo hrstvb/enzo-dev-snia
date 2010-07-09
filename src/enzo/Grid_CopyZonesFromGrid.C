@@ -25,6 +25,7 @@
 #ifdef USE_MPI
 #include "mpi.h"
 #endif /* USE_MPI */
+#include "omp.h"
  
 #include <stdio.h>
 #include <math.h>
@@ -217,20 +218,9 @@ int grid::CopyZonesFromGrid(grid *OtherGrid, FLOAT EdgeOffset[MAX_DIMENSION])
     if (isShearing && dim==ShearingVelocityDirection)
       ShearingCommunicationDims[dim] = Dim[dim] + 1;
   }
-  
-  /* If posting a receive, then record details of call. */
 
-#ifdef USE_MPI
-  if (CommunicationDirection == COMMUNICATION_POST_RECEIVE &&
-      MyProcessorNumber == ProcessorNumber) {
-    CommunicationReceiveGridOne[CommunicationReceiveIndex]  = this;
-    CommunicationReceiveGridTwo[CommunicationReceiveIndex]  = OtherGrid;
-    CommunicationReceiveCallType[CommunicationReceiveIndex] = 2;
-    for (dim = 0; dim < GridRank; dim++)
-      CommunicationReceiveArgument[dim][CommunicationReceiveIndex] = 
-	EdgeOffset[dim];
-  }
-#endif /* USE_MPI */
+  int CommType = 2;
+  int Zero3Int[] = {0,0,0};
 
   /* Copy data from other processor if needed (modify OtherDim and
      StartOther to reflect the fact that we are only coping part of
@@ -239,12 +229,13 @@ int grid::CopyZonesFromGrid(grid *OtherGrid, FLOAT EdgeOffset[MAX_DIMENSION])
   if (traceMPI) 
     fprintf(tracePtr, "CopyZones SendRegion from %"ISYM" to %"ISYM"\n", 
 	    ProcessorNumber, OtherGrid->ProcessorNumber);
- 
-  
+
   if (ProcessorNumber != OtherGrid->ProcessorNumber) {
     OtherGrid->CommunicationSendRegion(OtherGrid, ProcessorNumber,
 				       ALL_FIELDS, NEW_ONLY, StartOther, 
-				       ShearingCommunicationDims);
+				       ShearingCommunicationDims, CommType,
+				       this, OtherGrid, EdgeOffset,
+				       Zero3Int);
     
     if (CommunicationDirection == COMMUNICATION_POST_RECEIVE ||
 	CommunicationDirection == COMMUNICATION_SEND)
@@ -291,7 +282,7 @@ int grid::CopyZonesFromGrid(grid *OtherGrid, FLOAT EdgeOffset[MAX_DIMENSION])
   /* Copy zones */
 
  
-
+  int field,i,j,k;
   int addDim[3] = {1, OtherDim[0], OtherDim[0]*OtherDim[1]};
   int velocityTypes[3]={Velocity1, Velocity2, Velocity3};
   int Zero[3] = {0,0,0};

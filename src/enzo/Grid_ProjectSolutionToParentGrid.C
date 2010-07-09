@@ -207,19 +207,12 @@ int grid::ProjectSolutionToParentGrid(grid &ParentGrid)
 
     /* If posting a receive, then record details of call. */
 
-#ifdef USE_MPI
-    if (CommunicationDirection == COMMUNICATION_POST_RECEIVE) {
-      CommunicationReceiveGridOne[CommunicationReceiveIndex]  = this;
-      CommunicationReceiveGridTwo[CommunicationReceiveIndex]  = &ParentGrid;
-      CommunicationReceiveCallType[CommunicationReceiveIndex] = 12;
-    }
-#endif /* USE_MPI */
-
     int ParentRegionDim[MAX_DIMENSION];
     for (dim = 0; dim < MAX_DIMENSION; dim++)
       ParentRegionDim[dim] = ParentEndIndex[dim] - ParentStartIndex[dim] + 1;
     ParentGrid.CommunicationReceiveRegion(&ParentGrid, ProcessorNumber,
-	      ALL_FIELDS, NEW_ONLY, ParentStartIndex, ParentRegionDim, TRUE);
+	  ALL_FIELDS, NEW_ONLY, ParentStartIndex, ParentRegionDim, TRUE,
+					  12, this, &ParentGrid);
 
     /* Return if only posting the receive, not actually getting the data. */
 

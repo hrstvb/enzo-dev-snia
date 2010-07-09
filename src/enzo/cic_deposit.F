@@ -132,6 +132,9 @@ c     3D
 c
       if (ndim .eq. 3) then
 c
+c    !$omp parallel do
+c    !$omp& private(xpos,ypos,zpos,i1,j1,k1,dx,dy,dz)
+c    !$omp& schedule(static)
          do n=1, npositions
 c
 c           Compute the position of the central cell

@@ -87,17 +87,10 @@ int grid::InterpolateAccelerations(grid *FromGrid)
       ENZO_VFAIL("GridOffset[%"ISYM"] = %"GSYM" < 0.\n", dim, GridOffset[dim])
     }
   }
- 
-  /* If posting a receive, then record details of call. */
 
-#ifdef USE_MPI
-  if (CommunicationDirection == COMMUNICATION_POST_RECEIVE &&
-      ProcessorNumber != FromGrid->ProcessorNumber) {
-    CommunicationReceiveGridOne[CommunicationReceiveIndex]  = this;
-    CommunicationReceiveGridTwo[CommunicationReceiveIndex]  = FromGrid;
-    CommunicationReceiveCallType[CommunicationReceiveIndex] = 10;
-  }
-#endif /* USE_MPI */
+  int CommType = 10;
+  FLOAT Zero3[] = {0,0,0};
+  int Zero3Int[] = {0,0,0};
 
   /* Copy data from other processor if needed (modify GridDim and
      GridStartIndex to reflect the fact that we are only coping part
@@ -105,7 +98,8 @@ int grid::InterpolateAccelerations(grid *FromGrid)
  
   if (ProcessorNumber != FromGrid->ProcessorNumber) {
     FromGrid->CommunicationSendRegion(FromGrid, ProcessorNumber,
-	    ACCELERATION_FIELDS, NEW_ONLY, GridStart, GridActiveDim);
+	    ACCELERATION_FIELDS, NEW_ONLY, GridStart, GridActiveDim,
+			      CommType, this, FromGrid, Zero3, Zero3Int);
     if (CommunicationDirection == COMMUNICATION_POST_RECEIVE ||
 	CommunicationDirection == COMMUNICATION_SEND)
       return SUCCESS;

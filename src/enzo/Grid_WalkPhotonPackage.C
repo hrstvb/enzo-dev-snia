@@ -133,8 +133,8 @@ int grid::WalkPhotonPackage(PhotonPackageEntry **PP,
   /***********************************************************************/
 
   for (dim = 0; dim < GridRank; dim++) {
-    DomainWidth[dim] = DomainRightEdge[dim] - DomainLeftEdge[dim];
     CellVolume *= CellWidth[dim][0];
+    DomainWidth[dim] = DomainRightEdge[dim] - DomainLeftEdge[dim];
     s[dim] = (*PP)->SourcePosition[dim];
     u[dim] = dir_vec[dim];
     u_sign[dim] = sign(u[dim]);
@@ -208,7 +208,7 @@ int grid::WalkPhotonPackage(PhotonPackageEntry **PP,
   float xx, heat_factor = 1.0;
   float ion2_factor[] = {1.0, 1.0, 1.0};
 
-  if ((*PP)->Type == iHI || (*PP)->Type == iHeI || (*PP)->Type == iHeII) {
+  if ((*PP)->Type <= iHeII) {
     for (i = 0; i <= (*PP)->Type; i++)
       if (i == (*PP)->Type)
 	sigma[i] = (*PP)->CrossSection * LengthUnits;
@@ -512,7 +512,7 @@ int grid::WalkPhotonPackage(PhotonPackageEntry **PP,
 	BaryonField[gammaNum][index] += dP1*factor2[i];
 
 	// Exit the loop if everything's been absorbed
-	if (tau > 2.e1) break;
+	if (tau > OPTICALLY_THICK) break;
 
       } // ENDFOR absorbers
 
@@ -707,6 +707,8 @@ int grid::WalkPhotonPackage(PhotonPackageEntry **PP,
     /* Keep track of the maximum hydrogen photo-ionization rate in the
        I-front, so we can calculate the maximum ionization timescale
        for timestepping purposes. */
+
+    (*PP)->ColumnDensity += dN;
 
     if (RadiativeTransferHIIRestrictedTimestep)
       if (type == iHI || type == 4) {
