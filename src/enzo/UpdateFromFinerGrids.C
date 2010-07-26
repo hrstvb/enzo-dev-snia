@@ -111,7 +111,7 @@ int UpdateFromFinerGrids(int level, HierarchyEntry *Grids[], int NumberOfGrids,
  
 	NextGrid->GridData->
 	  GetProjectedBoundaryFluxes(Grids[grid1]->GridData, grid1, subgrid,
-				     SubgridFluxesRefined, FALSE);
+				     SubgridFluxesRefined);
  
 	NextGrid = NextGrid->NextGridThisLevel;
 	subgrid++;
@@ -128,7 +128,7 @@ int UpdateFromFinerGrids(int level, HierarchyEntry *Grids[], int NumberOfGrids,
 
 	  NextEntry->GridData->GetProjectedBoundaryFluxes
 	    (Grids[grid1]->GridData, grid1, NumberOfSubgrids[grid1]-1,
-	     SubgridFluxesRefined, TRUE);
+	     SubgridFluxesRefined);
 
 	} // ENDIF not proper subgrid
 	NextEntry = NextEntry->NextGridThisLevel;
@@ -155,7 +155,7 @@ int UpdateFromFinerGrids(int level, HierarchyEntry *Grids[], int NumberOfGrids,
 
 	NextGrid->GridData->
 	  GetProjectedBoundaryFluxes(Grids[grid1]->GridData, 0, 0, 
-				     SubgridFluxesRefined, 0);
+				     SubgridFluxesRefined);
 
 	/* Correct this grid for the refined fluxes (step #19)
 	   (this also deletes the fields in SubgridFluxesRefined). 
@@ -194,7 +194,7 @@ int UpdateFromFinerGrids(int level, HierarchyEntry *Grids[], int NumberOfGrids,
 	  /* Project subgrid's refined fluxes to the level of this grid. */
 
 	  NextEntry->GridData->GetProjectedBoundaryFluxes
-	    (Grids[grid1]->GridData, 0, 0, SubgridFluxesRefined, 0);
+	    (Grids[grid1]->GridData, 0, 0, SubgridFluxesRefined);
  
 	  /* Correct this grid for the refined fluxes (step #19)
 	     (this also deletes the fields in SubgridFluxesRefined). */

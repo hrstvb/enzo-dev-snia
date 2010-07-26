@@ -229,7 +229,7 @@ int grid::TransportPhotonPackages(int level, ListOfPhotonsToMove **PhotonsToMove
     if (RadiativeTransferAdaptiveTimestep)
       EndTime = PhotonTime+LightCrossingTime;
     else
-      EndTime = PhotonTime+dtPhoton-ROUNDOFF;
+      EndTime = PhotonTime+dtPhoton-PFLOAT_EPSILON;
 
     while (ThreadPP != NULL) {
 
@@ -266,13 +266,6 @@ int grid::TransportPhotonPackages(int level, ListOfPhotonsToMove **PhotonsToMove
 	fprintf(stdout, "photon #%"ISYM" %x %x %x\n",
 		tcount,  ThreadPP,  PhotonPackages, 
 		MoveToGrid); 
-
-      if (NewEntry->ToProcessor >= NumberOfProcessors ||
-	  NewEntry->ToProcessor < 0) {
-	PP->PrintInfo();
-	ENZO_VFAIL("Grid %d, Invalid ToProcessor P%d", GridNum, 
-		   NewEntry->ToProcessor)
-      }
 
       if (PauseMe == TRUE) {
 	if (DEBUG > 1) fprintf(stdout, "paused photon %x\n", ThreadPP);

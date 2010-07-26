@@ -135,9 +135,11 @@ int EvolvePhotons(TopGridData *MetaData, LevelHierarchyEntry *LevelArray[],
   }
 #endif
 
-  int lvl;
+  int lvl, NumberOfGrids;
   grid *Helper;
+  HierarchyEntry **Grids;
   LevelHierarchyEntry *Temp;
+  
     
   //while (GridTime >= PhotonTime) {
   while (GridTime > PhotonTime) {

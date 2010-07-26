@@ -189,9 +189,14 @@ int grid::InterpolateRadiationFromParent(grid *ParentGrid, int Field)
      ParentStartIndex to reflect the fact that we are only coping part of
      the grid. */
  
+  int CommType = -1;
+  FLOAT Zero3[] = {0,0,0};
+  int Zero3Int[] = {0,0,0};
+
   if (ProcessorNumber != ParentGrid->ProcessorNumber) {
     ParentGrid->CommunicationSendRegion(ParentGrid, ProcessorNumber,
-			FieldNum, NEW_ONLY, ParentStartIndex, ParentTempDim);
+       FieldNum, NEW_ONLY, ParentStartIndex, ParentTempDim,
+       CommType, NULL, NULL, Zero3, Zero3Int);
     for (dim = 0; dim < GridRank; dim++) {
       ParentDim[dim] = ParentTempDim[dim];
       ParentStartIndex[dim] = 0;

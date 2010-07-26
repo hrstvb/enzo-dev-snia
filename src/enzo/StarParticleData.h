@@ -9,9 +9,6 @@
 /  PURPOSE:
 /
 ************************************************************************/
-#ifndef STAR_PARTICLE_DATA_DEFINED__
-#define STAR_PARTICLE_DATA_DEFINED__
-
 #ifndef __STARPARTICLEDATA_H
 #define __STARPARTICLEDATA_H
 

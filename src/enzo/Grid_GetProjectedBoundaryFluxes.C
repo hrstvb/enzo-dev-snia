@@ -186,6 +186,7 @@ int grid::GetProjectedBoundaryFluxes(grid *ParentGrid, int grid_num,
     CommunicationReceiveCallType[CommunicationReceiveIndex] = 11;
     CommunicationReceiveArgumentInt[0][CommunicationReceiveIndex] = grid_num;
     CommunicationReceiveArgumentInt[1][CommunicationReceiveIndex] = subgrid_num;
+    CommunicationReceiveArgumentInt[2][CommunicationReceiveIndex] = IsSubling;
   }
 #endif /* USE_MPI */
 

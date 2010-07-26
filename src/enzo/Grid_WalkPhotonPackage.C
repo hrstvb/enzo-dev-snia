@@ -512,7 +512,7 @@ int grid::WalkPhotonPackage(PhotonPackageEntry **PP,
 	BaryonField[gammaNum][index] += dP1*factor2[i];
 
 	// Exit the loop if everything's been absorbed
-	if (tau > OPTICALLY_THICK) break;
+	if (tau > 20.0) break;
 
       } // ENDFOR absorbers
 

@@ -175,10 +175,10 @@ int grid::SetParticleMassFlaggingField(int StartProc, int EndProc, int level,
 
   } // ENDIF: COMMUNICATION_SEND
 
+#ifdef USE_MPI
 #pragma omp critical
   {
 
-#ifdef USE_MPI
   if (CommunicationDirection == COMMUNICATION_RECEIVE) {
 
     /* Receive the data and sum it */
