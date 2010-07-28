@@ -62,7 +62,6 @@ int CommunicationMergeStarParticle(HierarchyEntry *Grids[],
 {
   //printf("CommunicationMergeStarParticle running......................\n");
 #ifdef USE_MPI
-  double time1 = ReturnWallTime();
 
   /* count particles on this processor */
 
@@ -254,7 +253,6 @@ int CommunicationMergeStarParticle(HierarchyEntry *Grids[],
   delete [] MergeFlagList;
   delete [] NewList;
 
-  //  PerformanceTimers[34] += ReturnWallTime() - time1;
 #endif /* MPI */
 
   return SUCCESS;

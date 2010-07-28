@@ -81,7 +81,7 @@
 void DeleteFluxes(fluxes *Fluxes);
 int  RebuildHierarchy(TopGridData *MetaData,
 		      LevelHierarchyEntry *LevelArray[], int level);
-int  ReportMemoryUsage(char *header = NULL);
+int  ReportMemoryUsage(const char *header = NULL);
 int  UpdateParticlePositions(grid *Grid);
 int  CheckEnergyConservation(HierarchyEntry *Grids[], int grid,
 			     int NumberOfGrids, int level, float dt);

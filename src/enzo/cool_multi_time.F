@@ -98,14 +98,14 @@
 
 !  Locals
 
-      integer i, j, k, n
+      integer i, j, k
       real comp1, comp2, energy
 
 !  Slice locals
  
       integer indixe(ijk)
       real t1(ijk), t2(ijk), logtem(ijk), tdef(ijk), p2d(ijk),
-     &     dtit(ijk), ttot(ijk), tgas(ijk), tgasold(ijk)
+     &     tgas(ijk), tgasold(ijk)
       double precision edot(ijk)
 
 !  Cooling/heating slice locals

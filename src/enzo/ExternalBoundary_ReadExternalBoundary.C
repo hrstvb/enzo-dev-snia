@@ -53,7 +53,7 @@ int ExternalBoundary::ReadExternalBoundary(FILE *fptr, int ReadText, int ReadDat
  
   int Dims[MAX_DIMENSION], index, size, i;
   int BoundaryValuePresent[2*MAX_DIMENSION];
-  int dim, field, TempInt, j;
+  int dim, field, j;
  
   float32 *buffer;
  
@@ -75,7 +75,6 @@ int ExternalBoundary::ReadExternalBoundary(FILE *fptr, int ReadText, int ReadDat
   herr_t      h5_status;
   herr_t      h5_error = -1;
  
-  hsize_t     OutDims[MAX_DIMENSION];
   hsize_t     mem_size, file_size;
  
   const char *dname_type = "BoundaryDimensionType";

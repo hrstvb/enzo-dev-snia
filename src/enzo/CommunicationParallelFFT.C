@@ -32,7 +32,7 @@ int CommunicationTranspose(region *FromRegion, int NumberOfFromRegions,
 			   int TransposeOrder);
 int FastFourierTransform(float *buffer, int Rank, int DimensionReal[],
 			 int Dimension[], int direction, int type);
-void PrintMemoryUsage(char *str);
+void PrintMemoryUsage(const char *str);
  
 int CommunicationParallelFFT(region *InRegion, int NumberOfInRegions,
 			     region **OutRegion, int *NumberOfOutRegions,

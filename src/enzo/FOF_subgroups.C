@@ -23,8 +23,6 @@ void find_subgroups(FOFData &D)
   float  *r2list;
   int    *ngblist;
   int    i,j,k,ind,signal;
-  float  maxdens;
-  int    maxindex;
   int    *listofdifferent;
   int    head, head_attach, head_s, head_p, ss;
   int    ndiff;
@@ -137,7 +135,7 @@ void find_subgroups(FOFData &D)
 	ss = head_attach;
 	do {
 	  D.Head[ss] = head;
-	} while(ss = D.Next[ss]);
+	} while((ss = D.Next[ss]) == TRUE);
       }
 	  
       D.Head[D.Index[i]]   = head;

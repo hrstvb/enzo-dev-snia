@@ -28,7 +28,7 @@ float ngb_treefind(FOF_particle_data *P, double xyz[3], int desngb, float hguess
   void   ngb_treesearch(NODE *THIS, FOF_particle_data *P);
   float  selectb(unsigned long k, unsigned long n, float arr[],int ind[]);
   float  sr,sr2,h2max;  /* search radius */
-  int    i,ind,ni,j,subnode,fak,k,rep=0;
+  int    i,ind,j,subnode,fak,k,rep=0;
   float  dx,dy,dz,r2;
   NODE  *th,*nn;
 
@@ -45,7 +45,7 @@ float ngb_treefind(FOF_particle_data *P, double xyz[3], int desngb, float hguess
 	if (xyz[j] > th->center[j])
 	  subnode+=fak;
 
-      if (nn = th->suns[subnode])
+      if ((nn = th->suns[subnode]))
 	if (nn->count > 200)
 	  th = nn;
 	else
@@ -147,7 +147,7 @@ void ngb_treesearch(NODE *THIS, FOF_particle_data *P)
     }
     else {
       for (k = 0; k < 8; k++) 
-	if (nn = THIS->suns[k])
+	if ((nn = THIS->suns[k]))
 	  ngb_treesearch(nn, P);
     } // ENDELSE
 
@@ -214,7 +214,7 @@ void ngb_treefree(void)
 void ngb_treebuild(FOFData &D, int Npart) 
 {
   int    i,j,k,subp,subi,p,ni,subnode,fak;
-  float xmin[3],xmax[3],len,x;
+  float xmin[3],xmax[3],len;
   NODE *nfree,*th,*nn; 
 
 
@@ -266,8 +266,6 @@ void ngb_treebuild(FOFData &D, int Npart)
 
   /* insert all other particles */
 
-  // Breaks at i=544979 for 26Apr09_EvoTest
-  int idebug = 544979;
   for (i = 2; i <= Npart; i++) {
     th = _TopData.nodes;
     while (1) {
@@ -281,7 +279,7 @@ void ngb_treebuild(FOFData &D, int Npart)
 	if(D.P[i].Pos[j] > th->center[j])
 	  subnode += fak;
 
-      if (nn = th->suns[subnode])
+      if ((nn = th->suns[subnode]))
 	th = nn;
       else
 	break;

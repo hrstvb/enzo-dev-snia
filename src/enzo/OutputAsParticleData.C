@@ -15,7 +15,7 @@
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
-
+#include <string.h>
  
 
 
@@ -39,7 +39,8 @@ void my_exit(int status);
  
 // function prototypes
  
-int WriteStringAttr(hid_t dset_id, char *Alabel, char *String, FILE *log_fptr);
+int WriteStringAttr(hid_t dset_id, const char *Alabel, 
+		    const char *String, FILE *log_fptr);
  
 int  DepositParticleMassField(HierarchyEntry *Grid, FLOAT Time = -1.0);
 int  CopyOverlappingZones(grid* CurrentGrid, TopGridData *MetaData,
@@ -57,7 +58,7 @@ int OutputAsParticleData(TopGridData &MetaData,
 			 int RegionStart[], int RegionEnd[],
 			 FLOAT RegionStartCoordinate[],
 			 FLOAT RegionEndCoordinate[], int RegionLevel,
-			 char *OutputFileName)
+			 const char *OutputFileName)
 {
  
   int i, j, k, dim, level, part, TotalRefineBy = 1;
@@ -82,10 +83,8 @@ int OutputAsParticleData(TopGridData &MetaData,
   hsize_t    mem_offset;
   hsize_t    file_offset[2];
  
-  char *dset_name;
- 
   int         io_log = 1;
- 
+  char       *dset_name = new char[MAX_LINE_LENGTH];
  
   int_type_id = HDF5_INT;
  
@@ -348,8 +347,6 @@ int OutputAsParticleData(TopGridData &MetaData,
  
       /* Set dimensions of HDF field */
  
-      int TempInt = TotalNumberOfParticles[i];
- 
       Slab_Rank = 2;
       Slab_Dims[0] = MetaData.TopGridRank;
       Slab_Dims[1] = TotalNumberOfParticles[i];
@@ -385,11 +382,9 @@ int OutputAsParticleData(TopGridData &MetaData,
  
       float32 *buffer = new float32[TotalNumberOfParticles[i]];
  
-      int ret;
- 
       /* Write positions to HDF file. */
  
-      dset_name = "ParticlePosition";
+      strcpy(dset_name, "ParticlePosition");
  
       if (io_log) fprintf(log_fptr, "H5Dcreate with Name = %s\n", dset_name);
  
@@ -461,7 +456,7 @@ int OutputAsParticleData(TopGridData &MetaData,
  
       /* write velocities (note replication in baryons), sigh. */
  
-      dset_name = "ParticleVelocity";
+      strcpy(dset_name, "ParticleVelocity");
  
       Slab_Dims[0] = MetaData.TopGridRank;
  
@@ -539,7 +534,7 @@ int OutputAsParticleData(TopGridData &MetaData,
  
       /* write radius. */
  
-      dset_name = "ParticleRadius";
+      strcpy(dset_name, "ParticleRadius");
  
       Slab_Dims[0] = 1;
  
@@ -593,7 +588,7 @@ int OutputAsParticleData(TopGridData &MetaData,
       if (FullList.NumberOfValues > 0)
       {
  
-      dset_name = "ParticleValue";
+      strcpy(dset_name, "ParticleValue");
  
       Slab_Dims[0] = FullList.NumberOfValues;
  
@@ -692,7 +687,7 @@ int OutputAsParticleData(TopGridData &MetaData,
  
       if (i >= 1) {
  
-      dset_name = "ParticleIndex";
+      strcpy(dset_name, "ParticleIndex");
  
       Slab_Dims[0] = 1;
  
@@ -751,6 +746,7 @@ int OutputAsParticleData(TopGridData &MetaData,
   } // end: loop over dark matter/baryon particle lists
  
   fclose(log_fptr);
+  delete [] dset_name;
  
   return SUCCESS;
 }

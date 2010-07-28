@@ -48,11 +48,10 @@ int CalcEmiss(int *nx, int *ny, int *nz,
              float *mp, float *tdp, float *tcp, float *metalf,
 	      float *justburn, float *EmissivityArray, float dtLevelAbove) {
 
-  int i, j, k, n;
-  float mform, tfactor, uv_energy, 
-        minitial, xv1, xv2, dratio;
+  int i, j, k, n, ijk;
+  float mform, uv_energy, minitial, xv1, xv2;
   float clight = 3e10;
-  float msolar_e51 = 1800.0;
+  //float msolar_e51 = 1800.0;
 
   /* uv_param taken from upper limits of
      Razoumov and Norman 2002 June 20 The Astrophysical Journal */
@@ -160,7 +159,9 @@ int CalcEmiss(int *nx, int *ny, int *nz,
 	     Skip star formation and emissivity update if too 
 	     little mass is formed 
 	  */
-	  if (mform/d[i,j,k] >= 1.0e-10) {
+
+	  ijk = i + *nx*(j + k* *ny);
+	  if (mform/d[ijk] >= 1.0e-10) {
 	    //printf("if loop 4\n");
 
 	    /* Subtract ejected mass from particle (due to winds, supernovae) */
@@ -192,9 +193,11 @@ int CalcEmiss(int *nx, int *ny, int *nz,
 
 
 	    /* update the Emissivity_Array with <UV energy weighted by time> */
-	    printf("before %i %i %i was %22.16e\n", EmissivityArray[i + *nx * (j + *ny * k)],i,j,k);
-	    EmissivityArray[i + *nx * (j + *ny * k)] += uv_energy;
-	    printf("after %i %i %i is %22.16e\n", EmissivityArray[i + *nx * (j + *ny * k)],i,j,k);
+	    printf("before %"ISYM" %"ISYM" %"ISYM" was %22.16e\n", 
+		   i,j,k,EmissivityArray[ijk]);
+	    EmissivityArray[ijk] += uv_energy;
+	    printf("after %"ISYM" %"ISYM" %"ISYM" is %22.16e\n", 
+		   i,j,k,EmissivityArray[ijk]);
 	  }
 	}
 	else {

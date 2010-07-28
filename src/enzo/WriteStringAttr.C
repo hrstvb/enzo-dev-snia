@@ -29,7 +29,8 @@ void my_exit(int status);
  
  
  
-int WriteStringAttr(hid_t dset_id, char *Alabel, char *String, FILE *log_fptr)
+int WriteStringAttr(hid_t dset_id, const char *Alabel, const char *String, 
+		    FILE *log_fptr)
 {
  
   hid_t       attr_id;

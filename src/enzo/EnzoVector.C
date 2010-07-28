@@ -318,7 +318,7 @@ EnzoVector* EnzoVector::clone(float **userdata) const
 
 
 //  Write vector species to a given file (no ghosts)
-int EnzoVector::write(char *outfile, int species) const
+int EnzoVector::write(const char *outfile, int species) const
 {
   if ((species<0) || (species >= Nspecies)) {
     fprintf(stderr,"EnzoVector::write ERROR, illegal species %"ISYM"\n",
@@ -352,7 +352,7 @@ int EnzoVector::write(char *outfile, int species) const
 
 
 //  Write vector species to a given file (with ghosts)
-int EnzoVector::writeall(char *outfile, int species) const
+int EnzoVector::writeall(const char *outfile, int species) const
 {
   if ((species<0) || (species >= Nspecies)) {
     fprintf(stderr,"EnzoVector::writeall ERROR, illegal species %"ISYM"\n",

@@ -150,7 +150,7 @@ C      $                    d(i,j+1,k), d(i,j,k-1), d(i,j,k+1)
 C                      write(6,1000) dt1,d(i,j,k),
 C      &                    p(i,j,k),u(i,j,k),v(i,j,k),w(i,j,k)
 C                   end if
- 1000             format('calc_dt (small dt): dt,d,p,uvw=',1p,6e12.3)
+c 1000             format('calc_dt (small dt): dt,d,p,uvw=',1p,6e12.3)
                enddo
 c
                if (ihydro .eq. 2) then

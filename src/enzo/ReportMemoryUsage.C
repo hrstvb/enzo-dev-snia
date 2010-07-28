@@ -31,7 +31,7 @@ extern void *LargestAddress;
 #endif /* OVERLOAD_NEW */
  
  
-int ReportMemoryUsage(char *header = NULL)
+int ReportMemoryUsage(const char *header = NULL)
 {
  
 #ifdef OVERLOAD_NEW

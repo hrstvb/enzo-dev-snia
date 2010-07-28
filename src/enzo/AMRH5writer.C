@@ -60,9 +60,10 @@ void AMRHDF5Writer::AMRHDF5Create( const char*      fileName,
     {"particle_type", "particle_index", "particle_mass"};
   /*  const char *ParticleAttributeLabel[] = {"creation_time", "dynamical_time",
       "metallicity_fraction", "alpha_fraction", "p5", "p6"}; */
-  char *ParticleAttributeLabel[] = {"creation_time", "dynamical_time",
-				    "metallicity_fraction", 
-				    "particle_jet_x", "particle_jet_y", "particle_jet_z", "alpha_fraction"};
+  const char *ParticleAttributeLabel[] = 
+    {"creation_time", "dynamical_time", "metallicity_fraction", 
+     "particle_jet_x", "particle_jet_y", "particle_jet_z", 
+     "alpha_fraction"};
 
   int i;
     
@@ -94,7 +95,6 @@ void AMRHDF5Writer::AMRHDF5Create( const char*      fileName,
 
   /* Create a string array that has the field names */
 
-  char buf[80];
   int NumberOfParticleFields = (ParticlesOn == TRUE) ? 9+nParticleAttr : 0;
   int NumberOfAllFields = nFields + NumberOfParticleFields;
   int iField = 0;
@@ -214,8 +214,6 @@ herr_t AMRHDF5Writer::WriteTextures(  const int    timeStep,
   hid_t gridGrp, dataspace, dataset;
   hsize_t hdims[2] = { dims[0], dims[1] };
   int err = 0;
-  int size = dims[0]*dims[1];
-  int totalSize = 0;
   int i;
 
   /* Write index entry */
@@ -331,7 +329,6 @@ herr_t AMRHDF5Writer::WriteFlat(  const int    timeStep,
   hid_t gridGrp, dataspace, dataset;
   hsize_t hdims[3] = { dims[2], dims[1], dims[0] };
   int err = 0;
-  int size = dims[0] * dims[1] * dims[2];
   char level8bit = (char) levelIndex;
   short shortdims[3] = { dims[0], dims[1], dims[2] };
 
@@ -428,9 +425,10 @@ herr_t AMRHDF5Writer::writeParticles ( const int nPart,
      {"particle_position_x", "particle_position_y", "particle_position_z"};
   const char *ParticleVelocityLabel[] = 
      {"particle_velocity_x", "particle_velocity_y", "particle_velocity_z"};
-  char *ParticleAttributeLabel[] = {"creation_time", "dynamical_time",
-				    "metallicity_fraction", 
-				    "particle_jet_x", "particle_jet_y", "particle_jet_z", "alpha_fraction"};
+  const char *ParticleAttributeLabel[] = 
+    {"creation_time", "dynamical_time", "metallicity_fraction", 
+     "particle_jet_x", "particle_jet_y", "particle_jet_z", 
+     "alpha_fraction"};
 
   /*  const char *ParticleAttributeLabel[] = {"creation_time", "dynamical_time",
       "metallicity_fraction", "alpha_fraction", "p5", "p6"}; */
@@ -593,9 +591,9 @@ herr_t AMRHDF5Writer::writeParticles2( const int nPart,
      {"particle_position_x", "particle_position_y", "particle_position_z"};
   const char *ParticleVelocityLabel[] = 
      {"particle_velocity_x", "particle_velocity_y", "particle_velocity_z"};
-  char *ParticleAttributeLabel[] = {"creation_time", "dynamical_time",
-				    "metallicity_fraction", 
-				    "particle_jet_x", "particle_jet_y", "particle_jet_z", "alpha_fraction"};
+  const char *ParticleAttributeLabel[] = 
+    {"creation_time", "dynamical_time", "metallicity_fraction", 
+     "particle_jet_x", "particle_jet_y", "particle_jet_z", "alpha_fraction"};
 
   /*  const char *ParticleAttributeLabel[] = {"creation_time", "dynamical_time",
       "metallicity_fraction", "alpha_fraction", "p5", "p6"}; */
@@ -840,9 +838,9 @@ void AMRHDF5Writer::AMRHDF5CreateSeparateParticles( const char*      fileName,
     {"particle_type", "particle_index", "particle_mass"};
   /*  const char *ParticleAttributeLabel[] = {"creation_time", "dynamical_time",
       "metallicity_fraction", "alpha_fraction", "p5", "p6"}; */
-  char *ParticleAttributeLabel[] = {"creation_time", "dynamical_time",
-				    "metallicity_fraction", 
-				    "particle_jet_x", "particle_jet_y", "particle_jet_z", "alpha_fraction"};
+  const char *ParticleAttributeLabel[] = 
+    {"creation_time", "dynamical_time", "metallicity_fraction", 
+     "particle_jet_x", "particle_jet_y", "particle_jet_z", "alpha_fraction"};
 
   int i;
     
@@ -865,7 +863,6 @@ void AMRHDF5Writer::AMRHDF5CreateSeparateParticles( const char*      fileName,
 
   /* Create a string array that has the field names */
 
-  char buf[80];
   int NumberOfParticleFields = (ParticlesOn == TRUE) ? 9+nParticleAttr : 0;
   int iField = 0;
   char **HDF5_FieldNames = new char*[NumberOfParticleFields];
@@ -933,9 +930,9 @@ herr_t AMRHDF5Writer::writeSeparateParticles ( const int nPart,
      {"particle_position_x", "particle_position_y", "particle_position_z"};
   const char *ParticleVelocityLabel[] = 
      {"particle_velocity_x", "particle_velocity_y", "particle_velocity_z"};
-  char *ParticleAttributeLabel[] = {"creation_time", "dynamical_time",
-				    "metallicity_fraction", 
-				    "particle_jet_x", "particle_jet_y", "particle_jet_z", "alpha_fraction"};
+  const char *ParticleAttributeLabel[] = 
+    {"creation_time", "dynamical_time", "metallicity_fraction", 
+     "particle_jet_x", "particle_jet_y", "particle_jet_z", "alpha_fraction"};
   /*  const char *ParticleAttributeLabel[] = {"creation_time", "dynamical_time",
       "metallicity_fraction", "alpha_fraction", "p5", "p6"}; */
 

@@ -556,7 +556,6 @@ int CommunicationPartitionGrid(HierarchyEntry *Grid, int gridnum)
 	/* Set processor number of new grid.  Cyclic distribution. */
  
         int NewProc = gridcounter % NumberOfProcessors;
-        int ProcMap = ABS(NewProc - NumberOfProcessors) % NumberOfProcessors;
  
         if(NewGrid->ReturnGridInfo(&Rank, Dims, LeftEdge, RightEdge) == FAIL) {
           ENZO_FAIL("Error in grid->ReturnGridInfo.");
@@ -575,6 +574,7 @@ int CommunicationPartitionGrid(HierarchyEntry *Grid, int gridnum)
 #endif
 
 #ifdef USE_PERMUTED_CPU_DISTRIBUTION
+        int ProcMap = ABS(NewProc - NumberOfProcessors) % NumberOfProcessors;
 	if (!ParallelRootGridIO)
 	  NewGrid->CommunicationMoveGrid(ProcMap);
 	else

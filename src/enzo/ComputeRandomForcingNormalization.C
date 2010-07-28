@@ -111,8 +111,9 @@ int ComputeRandomForcingNormalization(LevelHierarchyEntry *LevelArray[],
 	MetaData->CycleNumber % MetaData->CycleSkipGlobalDataDump == 0.0) {
       FILE * Fptr;
       if ((Fptr = fopen("randomForcing.out", "a")) == NULL)
-	ERROR_MESSAGE;
-      fprintf( Fptr, "%"ISYM" %9.6"FSYM" %9.6"FSYM" %9.6"FSYM" %9.6"FSYM" %9.6"FSYM" %9.6"FSYM" %9.6"FSYM" %10.5"FSYM"\n",
+	ENZO_FAIL("Error opening randomForcing.out");
+      fprintf( Fptr, "%"ISYM" %9.6"FSYM" %9.6"FSYM" %9.6"FSYM" %9.6"FSYM" %9.6"
+	       FSYM" %9.6"FSYM" %9.6"FSYM" %10.5"FSYM"\n",
 	       MetaData->CycleNumber,
 	       MetaData->Time,
 	       0.50*GlobVal[4]/numberOfGridZones,   // kinetic energy

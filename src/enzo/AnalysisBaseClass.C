@@ -272,7 +272,7 @@ void AnalysisBaseClass::InitializeFastFind(){
     delete [] FastFindCellWidth;    
   }
 
-  int i, j, num_cells = 1;
+  int i, num_cells = 1;
 
   HierarchyEntry *this_grid, *next_level;
   

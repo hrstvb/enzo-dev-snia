@@ -102,7 +102,7 @@ int gFLDProblem::WriteParameters(FILE *fptr)
   // if doing a Marshak-type problem (20 <= Model < 30), 
   // output additional Marshak parameters 
   if ( Model >= 20 && Model <= 29 ) {
-    fprintf(fptr, "SuOlsonGreyEps = %22.16e", &MarshakParms[0]);
+    fprintf(fptr, "SuOlsonGreyEps = %22.16e", MarshakParms[0]);
   }
 
   // output relevant units: although these aren't required for restart, 

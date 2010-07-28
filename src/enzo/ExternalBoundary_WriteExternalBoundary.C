@@ -52,9 +52,8 @@ int READ_BV(float         *bv_buffer, int field, int dim, int face, int slabsize
 int ExternalBoundary::WriteExternalBoundary(FILE *fptr, char *hdfname)
 {
  
-  int dim, field, i, j, index, ret, size;
+  int dim, field, i, j, index, size;
   int BoundaryValuePresent[MAX_DIMENSION*2], Temp[MAX_DIMENSION];
-  int file_status;
   float32 *buffer;
  
   FILE *log_fptr;
@@ -84,9 +83,8 @@ int ExternalBoundary::WriteExternalBoundary(FILE *fptr, char *hdfname)
   const char *dname_type = "BoundaryDimensionType";
   const char *dname_value = "BoundaryDimensionValue";
 
-  int SimpleConstantBoundaryType = periodic;
-
 #ifdef OOC_BOUNDARY
+  int SimpleConstantBoundaryType = periodic;
   boundary_type *bt_buffer;
   float *bv_buffer;
 

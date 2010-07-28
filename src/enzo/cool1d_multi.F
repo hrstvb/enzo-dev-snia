@@ -111,11 +111,10 @@
 
 !  Locals
 
-      integer i, j1, iter, iradfield
-      real dom, qq, vibl, logtem0, logtem9, dlogtem, energy, zr
-      real dt2, ttmin, comp1, comp2, scoef, acoef, HIdot,
-     &     hdlte1, hdlow1, gamma2, x, nH2, nother, fudge, fH2,
-     &     gphdl1, factor, dom_inv
+      integer i, iter, iradfield
+      real dom, logtem0, logtem9, dlogtem, zr
+      real comp1, comp2, hdlte1, hdlow1, gamma2, x, nH2, nother, 
+     &     fudge, gphdl1, factor, dom_inv
       double precision coolunit, dbase1, tbase1, xbase1, rtunits
 
 !  Slice locals
@@ -140,7 +139,7 @@
 
       integer xe_idx, tcmb_idx
       real logxe0, logxe1, dlogxea, xe, log_xe, xe1, dlogT, dlogxe, xi
-      real logTcmb, dlogTcmb, metalc_cmb, xe_max, metalfree
+      real logTcmb, dlogTcmb, metalc_cmb, xe_max
       real xe_slope, xe_logtem0, xe_min
       parameter (xe_slope = 5.0, xe_logtem0 = 9.7859)  ! e^9.78 = 10^4.25 K
       parameter (xe_min = -9.21)  ! e^-9.21 = 1e-4

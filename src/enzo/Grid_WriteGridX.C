@@ -42,7 +42,8 @@ void my_exit(int status);
  
 void WriteListOfFloats(FILE *fptr, int N, FLOAT floats[]);
 void WriteListOfInts(FILE *fptr, int N, int nums[]);
-int WriteStringAttr(hid_t dset_id, char *Alabel, char *String, FILE *log_fptr);
+int WriteStringAttr(hid_t dset_id, const char *Alabel, 
+		    const char *String, FILE *log_fptr);
  
  
  

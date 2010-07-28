@@ -22,7 +22,7 @@ static int groupid;
 
 void walk_tree_and_unbind(FOFData &D)
 {
-  int i,j,p,len,start;
+  int i,j,len,start;
   int *saveptr;
 
 
@@ -122,7 +122,6 @@ void walk_tree_and_unbind(FOFData &D)
 void unbind_node(FOFData &D, int k)
 {
   int flagleft, flagright;
-  int i, p;
 
   while(k >= 1) {
     if (D.GroupTree[k].leftlen < D.GroupTree[k].rightlen)
@@ -157,17 +156,12 @@ int number_of_unbound(FOFData &D, int head, int len)
 int unbind(FOFData &D, int head, int len)  
 {
   
-  int    i,j,k,ind,p;
-  int    ii,pp;
+  int    i,j,p;
   int    first, last, num;
-  float  *r2list;
-  int    *ngblist;
-  double s[3], dx[3], v[3], dv[3], r2, rmax;
-  int    numinbox;
-  double maxenergy,minenergy,energy,minpot;
-  int    maxindex,minindex;
-  int    headid;
-  int    max_remove_per_step, count_removed;
+  double s[3], dx[3], v[3], dv[3];
+  double minpot;
+  int    minindex;
+  int    max_remove_per_step;
   int    iter,flag,newnum;
   float  sqa, H_of_a;
   void sort2_flt_int(unsigned long n, float arr[], int brr[]);

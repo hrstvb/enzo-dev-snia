@@ -27,10 +27,9 @@ void subfind(FOFData &D, int CycleNumber, FLOAT EnzoTime)
   hid_t  file_id, dset_id, dspace_id, group_id;
   hsize_t hdims[2];
 
-  int    i, k, Index, dim, gr, task, head, len, nsubs, offset;
+  int    i, k, Index, dim, gr, task, head, len, nsubs;
   int    start=0;
-  int    parent, ntot;
-  char   ctype;
+  int    parent;
   float  cm[3], cmv[3], AM[3], mtot, mstars, redshift, spin, vrms;
   float  mvir, rvir;
   float  corner[3];
@@ -38,7 +37,7 @@ void subfind(FOFData &D, int CycleNumber, FLOAT EnzoTime)
   int    *sublen, *suboffset, *bufsublen, *bufsuboffset;
   int    *fsuboffset, *fbufsuboffset;
 
-  char   *FOF_dirname = "FOF";
+  const char *FOF_dirname = "FOF";
   char   catalogue_fname[200];
   char   particle_fname[200];
   char   halo_name[200];

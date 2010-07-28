@@ -53,8 +53,7 @@ int CommunicationTransferSubgridParticles(LevelHierarchyEntry *LevelArray[],
 					  TopGridData *MetaData, int level)
 {
 
-  int proc, i, j, k, jstart, jend;
-  int particle_data_size, star_data_size;
+  int i, j, jstart, jend;
   int Zero = 0;
 
   HierarchyEntry **Grids;

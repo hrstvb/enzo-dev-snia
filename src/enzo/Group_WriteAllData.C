@@ -60,7 +60,7 @@ void my_exit(int status);
 int GenerateGridArray(LevelHierarchyEntry *LevelArray[], int level,
 		      HierarchyEntry **Grids[]);
 
-int SysMkdir(char *startdir, char *directory);
+int SysMkdir(const char *startdir, char *directory);
  
 void AddLevel(LevelHierarchyEntry *Array[], HierarchyEntry *Grid, int level);
 int WriteDataCubes(HierarchyEntry *TopGrid, int TDdims[], char *gridbasename, int &GridID, FLOAT WriteTime);

@@ -66,7 +66,7 @@ int CommunicationSyncNumberOfPhotons(LevelHierarchyEntry *LevelArray[]);
 int RadiativeTransferComputeTimestep(LevelHierarchyEntry *LevelArray[],
 				     TopGridData *MetaData, float dtLevelAbove,
 				     int level);
-void PrintMemoryUsage(char *str);
+void PrintMemoryUsage(const char *str);
 void fpcol(Eflt64 *x, int n, int m, FILE *log_fptr);
 double ReturnWallTime();
 

@@ -43,7 +43,7 @@ void AddLevel(LevelHierarchyEntry *LevelArray[], HierarchyEntry *Grid,
 int FindSubgrids(HierarchyEntry *Grid, int level, int &TotalFlaggedCells,
 		 int &FlaggedGrids);
 void WriteListOfInts(FILE *fptr, int N, int nums[]);
-int ReportMemoryUsage(char *header = NULL);
+int ReportMemoryUsage(const char *header = NULL);
 int DepositParticleMassFlaggingField(LevelHierarchyEntry* LevelArray[],
 				     int level, bool AllLocal);
 int CommunicationShareGrids(HierarchyEntry *GridHierarchyPointer[], int grids,

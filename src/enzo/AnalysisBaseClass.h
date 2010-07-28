@@ -75,18 +75,19 @@ class AnalysisBaseClass{
 			char *dset_name,
 			int rank, hsize_t dims[], 
 			float *data,
-			char *units = NULL);
+			const char *units = NULL);
   void HDF5MakeDataset( hid_t group_id, 
 			char *dset_name,
 			int rank, hsize_t dims[], 
 			int *data,
-			char *units = NULL);
+			const char *units = NULL);
 
   void HDF5ReadDataset( hid_t group_id,
 			char *dset_name,
 			float *data );
  
-  void HDF5WriteStringAttr(hid_t dset_id, char *Alabel, char *String);
+  void HDF5WriteStringAttr(hid_t dset_id, const char *Alabel, 
+			   const char *String);
 
   HierarchyEntry *ContainingGrid( HierarchyEntry *Grid, float *point);
 

@@ -100,7 +100,7 @@ c
 c  local declarations
 c
       integer i, j, n
-      real      alpha      ,    c0(ijkn),    cb(ijkn),  cbar(ijkn),
+      real         c0(ijkn),  cbar(ijkn),
      &             d0(ijkn),    db(ijkn),  dbar(ijkn),   dnu(ijkn),
      &            dub(ijkn),  duub(ijkn),  duvb(ijkn),  duwb(ijkn),
      &           dueb(ijkn),    eb(ijkn),    l0(ijkn),  lbar(ijkn),
@@ -109,8 +109,8 @@ c
      &             u0(ijkn),    ub(ijkn),   upb(ijkn),    vb(ijkn),
      &             wb(ijkn),    z0(ijkn),
      &           uold(ijkn), pcent(ijkn),eratio(ijkn),  frac      ,
-     &           dadx(ijkn),  dddx(ijkn), colb(ijkn,MAX_COLOR)
-      real dele, delu, uleft, uright, uadvect, eold
+     &           colb(ijkn,MAX_COLOR)
+      real eold
 c
 c\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\/////////////////////////////////
 c=======================================================================

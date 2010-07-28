@@ -215,7 +215,7 @@ int EnzoVector::exchange_end_component(int ivar)
 #ifdef USE_MPI
 
   // some local variables
-  int i, j, k, l, idx;
+  int i, j, k, idx;
   MPI_Arg myrank;
   int x0len = Nx0 + Ng0l + Ng0r;
   int x1len = Nx1 + Ng1l + Ng1r;

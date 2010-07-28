@@ -10,7 +10,7 @@
  
 #define MAX_TOKEN 512
  
-int SysMkdir (char *startDir, char *directory)
+int SysMkdir (const char *startDir, char *directory)
 {
     int status;
     int startLen;
