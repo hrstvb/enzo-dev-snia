@@ -74,6 +74,6 @@ int SetParameterDefaults(parmstruct *Parameters)
 
   Parameters->RefineBy = 2;
   Parameters->MaximumInitialRefinementLevel = INT_UNDEFINED;
- 
+  Parameters->SubgridBuffer = 1;
   return SUCCESS;
 }
