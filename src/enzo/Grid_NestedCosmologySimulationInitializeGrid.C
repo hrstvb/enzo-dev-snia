@@ -29,6 +29,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <math.h>
+#include <assert.h>
 
 #include "ErrorExceptions.h"
 #include "macros_and_parameters.h"
@@ -48,8 +49,6 @@ void my_exit(int status);
  
 #define DEFAULT_MU 0.6  // for temperature field
 #define DENSITY_FLOOR 0.01
- 
-#define READFILE ReadFile
  
 // Function prototypes
  
@@ -301,7 +300,7 @@ int grid::NestedCosmologySimulationInitializeGrid(
     for (dim = 0; dim < GridRank; dim++) {
       //      SubDomainLeftEdge[dim] = TopGridStart[dim] * (DomainRightEdge[dim]-DomainLeftEdge[dim])/((float) TopGridDims[dim]);
       //      SubDomainRightEdge[dim] = (TopGridEnd[dim]+1) * (DomainRightEdge[dim]-DomainLeftEdge[dim])/((float) TopGridDims[dim]);
-      SubCellWidth[dim] = (SubDomainRightEdge[dim]-SubDomainLeftEdge[dim])/((float) field_dims_attr[dim]);
+      SubCellWidth[dim] = (SubDomainRightEdge[dim]-SubDomainLeftEdge[dim])/((float) field_dims_attr[GridRank-dim-1]);
     }
  
     for (dim = 0; dim < GridRank; dim++)
@@ -442,7 +441,7 @@ int grid::NestedCosmologySimulationInitializeGrid(
       // Read the density field
  
       if (CosmologySimulationDensityName != NULL && ReadData) {
-	if (READFILE(CosmologySimulationDensityName, GridRank, GridDimension,
+	if (ReadFile(CosmologySimulationDensityName, GridRank, GridDimension,
 		     GridStartIndex, GridEndIndex, Offset, BaryonField[0],
 		     &tempbuffer, 0, 1) == FAIL) {
 	  fprintf(stderr, "Error reading density field.\n");
@@ -456,7 +455,7 @@ int grid::NestedCosmologySimulationInitializeGrid(
       // Read the total energy field
  
       if (CosmologySimulationTotalEnergyName != NULL && ReadData)
-	if (READFILE(CosmologySimulationTotalEnergyName, GridRank,
+	if (ReadFile(CosmologySimulationTotalEnergyName, GridRank,
 		     GridDimension, GridStartIndex, GridEndIndex, Offset,
 		     BaryonField[1], &tempbuffer, 0, 1) == FAIL) {
 	  fprintf(stderr, "Error reading total energy field.\n");
@@ -466,7 +465,7 @@ int grid::NestedCosmologySimulationInitializeGrid(
       // Read the gas energy field
  
       if (CosmologySimulationGasEnergyName != NULL && DualEnergyFormalism && ReadData)
-	if (READFILE(CosmologySimulationGasEnergyName, GridRank, GridDimension,
+	if (ReadFile(CosmologySimulationGasEnergyName, GridRank, GridDimension,
 		     GridStartIndex, GridEndIndex, Offset, BaryonField[2],
 		     &tempbuffer, 0, 1) == FAIL) {
 	  fprintf(stderr, "Error reading gas energy field.\n");
@@ -492,7 +491,7 @@ int grid::NestedCosmologySimulationInitializeGrid(
 	    ndim = 3;
 	    idim = dim;
 	  }
-	  if (READFILE(CosmologySimulationVelocityNames[dim], GridRank,
+	  if (ReadFile(CosmologySimulationVelocityNames[dim], GridRank,
 		       GridDimension, GridStartIndex, GridEndIndex, Offset,
 		       BaryonField[vel+dim], &tempbuffer, idim, ndim) == FAIL) {
 	    fprintf(stderr, "Error reading velocity field %"ISYM".\n", dim);
@@ -1302,7 +1301,7 @@ int grid::NestedCosmologySimulationInitializeGrid(
 	// Read particle positions
  
 	for (dim = 0; dim < GridRank; dim++) {
-	  if (READFILE(CosmologySimulationParticlePositionName, 1, Dim,
+	  if (ReadFile(CosmologySimulationParticlePositionName, 1, Dim,
 		       Start, End, Offset, NULL, &tempbuffer, dim, 3) == FAIL) {
 	    fprintf(stderr, "Error reading particle position %"ISYM".\n", dim);
 	    ENZO_FAIL("");
@@ -1319,7 +1318,7 @@ int grid::NestedCosmologySimulationInitializeGrid(
  
 	if (CosmologySimulationParticleVelocityName != NULL)
 	  for (dim = 0; dim < GridRank; dim++) {
-	    if (READFILE(CosmologySimulationParticleVelocityName, 1, Dim,
+	    if (ReadFile(CosmologySimulationParticleVelocityName, 1, Dim,
 			 Start, End, Offset, ParticleVelocity[dim], &tempbuffer, dim, 3) == FAIL) {
 	      fprintf(stderr, "Error reading particle velocity %"ISYM".\n", dim);
 	      ENZO_FAIL("");
@@ -1330,7 +1329,7 @@ int grid::NestedCosmologySimulationInitializeGrid(
 	// Read particle mass
  
 	if (CosmologySimulationParticleMassName != NULL) {
-	  if (READFILE(CosmologySimulationParticleMassName, 1, Dim, Start, End,
+	  if (ReadFile(CosmologySimulationParticleMassName, 1, Dim, Start, End,
 		       Offset, ParticleMass, &tempbuffer, 0, 1) == FAIL) {
 	    fprintf(stderr, "Error reading particle masses.\n");
 	    ENZO_FAIL("");
@@ -1456,7 +1455,8 @@ int grid::NestedCosmologySimulationInitializeGrid(
 	} else {
 	  for (i = 0; i < NumberOfParticles; i++)
 	    ParticleNumber[i] = CurrentParticleNumber + i + Offset[0]; // Unique ID's calculated here!
-	  CurrentParticleNumber = TotalParticleCount; // set this so the calling routine knows the total number of particles on this level
+          printf("P(%d): CurrentParticleNumber = %d  Offset = %d\n", MyProcessorNumber, CurrentParticleNumber, Offset[0]);
+	  CurrentParticleNumber += TotalParticleCount; // set this so the calling routine knows the total number of particles on this level
 	}
       } else {
 	for (i = 0; i < NumberOfParticles; i++)

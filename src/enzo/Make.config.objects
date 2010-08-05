@@ -367,7 +367,9 @@ OBJS_CONFIG_LIB = \
         Grid_MoveSubgridParticles.o \
         Grid_MoveSubgridStars.o \
         Grid_MultiSpeciesHandler.o \
-        Grid_NestedCosmologySimulationInitializeGrid.o \
+        Grid_MustRefineParticlesFlagInRegion.o \
+	Grid_MustRefineParticlesFlagFromList.o \
+	Grid_NestedCosmologySimulationInitializeGrid.o \
         Grid_NohInitializeGrid.o \
         Grid_OutputAsParticleData.o \
         Grid_OutputStarParticleInformation.o \

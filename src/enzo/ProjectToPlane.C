@@ -281,9 +281,9 @@ int ProjectToPlane(TopGridData &MetaData, LevelHierarchyEntry *LevelArray[],
       if (level > 0) {
 	Temp->GridData->InterpolateBoundaryFromParent
 	                   (Temp->GridHierarchyEntry->ParentGrid->GridData);
-	CopyOverlappingZones(Temp->GridData, &MetaData, LevelArray, level);
       } else
 	Temp->GridData->SetExternalBoundaryValues(Exterior);
+      CopyOverlappingZones(Temp->GridData, &MetaData, LevelArray, level);
  
       /* Set old parent field for children's interpolation (and set the time
 	 an arbitrary factor (20%) ahead so interpolation doesn't error). */
