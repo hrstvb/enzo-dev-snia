@@ -472,6 +472,17 @@ EXTERN float JeansRefinementColdTemperature;
 
 EXTERN int   MustRefineParticlesRefineToLevel;
 
+/* For CellFlaggingMethod = 8,
+   region in which particles are flagged as MustRefine particles */
+
+EXTERN FLOAT MustRefineParticlesLeftEdge[MAX_DIMENSION], 
+             MustRefineParticlesRightEdge[MAX_DIMENSION];
+
+/* For CellFlaggingMethod = 8,
+   binary switch that allows must refine particles to be created by the 
+   routines MustRefineParticlesFlagFromList or MustRefineParticlesFlagInRegion*/
+EXTERN int MustRefineParticlesCreateParticles;
+
 /* For CellFlaggingMethod = 9,   
    The minimum shear (roughly, dv accross two zones) required for 
    refinement.    */

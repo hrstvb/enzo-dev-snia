@@ -536,6 +536,22 @@ int CosmologySimulationInitialize(FILE *fptr, FILE *Outfptr,
       fprintf(stderr, "Error in grid->CosmologySimulationInitializeGrid.\n");
       ENZO_FAIL("");
     }
+
+    // Initialize MustRefine particles if MustRefineParticlesCreateParticles is set.
+
+    if (ParallelRootGridIO != TRUE && MustRefineParticlesCreateParticles == 1) {
+      if (MustRefineParticlesRefineToLevel != -1){
+	if (MustRefineParticlesRightEdge[0] != 0.0 ||
+	    MustRefineParticlesRightEdge[1] != 0.0 ||
+	    MustRefineParticlesRightEdge[2] != 0.0)
+	  GridsList[gridnum]->GridData->MustRefineParticlesFlagInRegion();
+	if (MustRefineParticlesRightEdge[0] == 0.0 &&
+	    MustRefineParticlesRightEdge[1] == 0.0 &&
+	    MustRefineParticlesRightEdge[2] == 0.0)
+	  GridsList[gridnum]->GridData->MustRefineParticlesFlagFromList();
+      }
+    }
+
  
     // Set boundary conditions if necessary
  
@@ -818,6 +834,22 @@ int CosmologySimulationReInitialize(HierarchyEntry *TopGrid,
       ENZO_FAIL("");
     }
  
+    //Initialize MustRefine particles if MustRefineParticlesCreateParticles is set.
+     
+      if (MustRefineParticlesCreateParticles == 1) {
+      if (MustRefineParticlesRefineToLevel != -1){
+	if (MustRefineParticlesRightEdge[0] != 0.0 ||
+	    MustRefineParticlesRightEdge[1] != 0.0 ||
+	    MustRefineParticlesRightEdge[2] != 0.0)
+	  Temp->GridData->MustRefineParticlesFlagInRegion();
+	if (MustRefineParticlesRightEdge[0] == 0.0 &&
+	    MustRefineParticlesRightEdge[1] == 0.0 &&
+	    MustRefineParticlesRightEdge[2] == 0.0)
+	  Temp->GridData->MustRefineParticlesFlagFromList();
+      }
+    }
+
+
     Temp = Temp->NextGridThisLevel;
   }
 

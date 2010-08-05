@@ -43,6 +43,9 @@ int grid::SetFlaggingField(int &NumberOfFlaggedCells, int level)
 
   int method;
   for (method = 0; method < MAX_FLAGGING_METHODS; method++) {
+    if(level >= MustRefineParticlesRefineToLevel ||
+       CellFlaggingMethod[method] == 4 ||
+       MustRefineParticlesCreateParticles != 1){
  
   switch (CellFlaggingMethod[method]) {
  
@@ -228,15 +231,19 @@ int grid::SetFlaggingField(int &NumberOfFlaggedCells, int level)
     ENZO_FAIL("");
  
   }
-
+    }
   } // ENDFOR methods
  
   /* End of Cell flagging criterion routine                              */
   /***********************************************************************/
+
+  
+    
+
  
   if (NumberOfFlaggedCells == INT_UNDEFINED) {
     ENZO_FAIL("No valid CellFlaggingMethod specified.");
-  }
+    }
  
 #ifdef MPI_INSTRUMENTATION
   counter[4]++;

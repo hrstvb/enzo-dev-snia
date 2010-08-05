@@ -85,7 +85,8 @@ static  int   CosmologySimulationGridDimension[MAX_INITIAL_GRIDS][MAX_DIMENSION]
 static  int   CosmologySimulationGridLevel[MAX_INITIAL_GRIDS];
 static  FLOAT CosmologySimulationGridLeftEdge[MAX_INITIAL_GRIDS][MAX_DIMENSION];
 static  FLOAT CosmologySimulationGridRightEdge[MAX_INITIAL_GRIDS][MAX_DIMENSION];
- 
+
+extern int MustCollectParticlesToLevelZero; 
  
 int NestedCosmologySimulationInitialize(FILE *fptr, FILE *Outfptr,
 			       		HierarchyEntry &TopGrid, TopGridData &MetaData)
@@ -556,6 +557,22 @@ int NestedCosmologySimulationInitialize(FILE *fptr, FILE *Outfptr,
       fprintf(stderr, "Error in grid->NestedCosmologySimulationInitializeGrid.\n");
       ENZO_FAIL("");
     }
+
+    // Initialize MustRefine particles if MustRefineParticlesCreateParticles is set.
+
+    if (ParallelRootGridIO != TRUE && MustRefineParticlesCreateParticles == 1) {
+      if (MustRefineParticlesRefineToLevel != -1){
+	if (MustRefineParticlesRightEdge[0] != 0.0 ||
+	    MustRefineParticlesRightEdge[1] != 0.0 ||
+	    MustRefineParticlesRightEdge[2] != 0.0)
+	  GridsList[gridnum]->GridData->MustRefineParticlesFlagInRegion();
+	if (MustRefineParticlesRightEdge[0] == 0.0 &&
+	    MustRefineParticlesRightEdge[1] == 0.0 &&
+	    MustRefineParticlesRightEdge[2] == 0.0)
+	  GridsList[gridnum]->GridData->MustRefineParticlesFlagFromList();
+      }
+    }
+
  
     // Set boundary conditions if necessary
  
@@ -769,7 +786,7 @@ int NestedCosmologySimulationReInitialize(HierarchyEntry *TopGrid,
 
   /* Loop over initial grids and reinitialize each one. */
 
-  PINT ParticleCount = 0, ParticleTempCount;
+  PINT ParticleCount = 0;
   for (gridnum = 0; gridnum < CosmologySimulationNumberOfInitialGrids; gridnum++) {
  
     if (MyProcessorNumber == ROOT_PROCESSOR)
@@ -841,7 +858,6 @@ int NestedCosmologySimulationReInitialize(HierarchyEntry *TopGrid,
  
     Temp = CurrentGrid;
     while (Temp != NULL) {
-      ParticleTempCount = ParticleCount; // set particle count to beginning of this level (not used for ring IO)
       if (Temp->GridData->NestedCosmologySimulationInitializeGrid(gridnum,
 			     CosmologySimulationOmegaBaryonNow,
 			       CosmologySimulationOmegaCDMNow,
@@ -859,7 +875,7 @@ int NestedCosmologySimulationReInitialize(HierarchyEntry *TopGrid,
 			     CosmologySimulationInitialFractionH2I,
 			     CosmologySimulationInitialFractionH2II,
 			     CosmologySimulationUseMetallicityField,
-			     ParticleTempCount,
+			     ParticleCount,
 			     CosmologySimulationManuallySetParticleMassRatio,
 			     CosmologySimulationManualParticleMassRatio,
 			     CosmologySimulationCalculatePositions,
@@ -869,15 +885,25 @@ int NestedCosmologySimulationReInitialize(HierarchyEntry *TopGrid,
 	fprintf(stderr, "Error in grid->NestedCosmologySimulationInitializeGrid.\n");
 	ENZO_FAIL("");
       }
+
+      //Initialize MustRefine particles if MustRefineParticlesCreateParticles is set.
+     
+      if (MustRefineParticlesCreateParticles == 1) {
+      if (MustRefineParticlesRefineToLevel != -1){
+	if (MustRefineParticlesRightEdge[0] != 0.0 ||
+	    MustRefineParticlesRightEdge[1] != 0.0 ||
+	    MustRefineParticlesRightEdge[2] != 0.0)
+	  Temp->GridData->MustRefineParticlesFlagInRegion();
+	if (MustRefineParticlesRightEdge[0] == 0.0 &&
+	    MustRefineParticlesRightEdge[1] == 0.0 &&
+	    MustRefineParticlesRightEdge[2] == 0.0)
+	  Temp->GridData->MustRefineParticlesFlagFromList();
+      }
+    }
+
  
       Temp = Temp->NextGridThisLevel;
     } // end: loop over grids on this level
-
-    /* Once we have read in all the grids, update the current particle count
-       by the number returned, which is the total number of particles on that level
-       (this only works for one initial sub-region per level). */
-
-    ParticleCount = ParticleTempCount; // set particle count (not used for ring IO)
 
     // Go down to the grid(s) on the next level
  
@@ -950,6 +976,14 @@ int NestedCosmologySimulationReInitialize(HierarchyEntry *TopGrid,
     ParticleCount = 0;
  
     NestedRecursivelySetParticleCount(Temp, &ParticleCount);
+
+  } else {
+
+    /* This forces RebuildHierarchy to collect the particles the first
+       time it is called. Otherwise, particles are not in their correct
+       processor and Rebuild fails. */
+
+    MustCollectParticlesToLevelZero = TRUE;
 
   }
  

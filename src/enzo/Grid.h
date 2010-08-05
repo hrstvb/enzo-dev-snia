@@ -790,6 +790,13 @@ public:
 
    int FlagCellsToBeRefinedByMustRefineParticles();
 
+/* Flag particles within the MustRefineParticles region as MustRefine Particles */
+   int MustRefineParticlesFlagInRegion();
+
+/* Flag MustRefine Particles from list */
+
+   int MustRefineParticlesFlagFromList();
+
 /* Flag all cells which are within a user-specified refinement region. */
 
    int FlagCellsToBeRefinedByMustRefineRegion(int level);
