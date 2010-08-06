@@ -125,6 +125,7 @@ OBJS_CONFIG_LIB = \
         DepositParticleMassFlaggingField.o \
 	DetermineNumberOfNodes.o \
 	DetermineParallelism.o \
+	DetermineSubgridSizeExtrema.o \
         DoubleMachInitialize.o \
         E_ColumnFormat.o \
         ealFloat.o \
@@ -863,6 +864,7 @@ POBJS_CONFIG_LIB = \
 	Grid_CommunicationSendPhotonPackages.o \
         Grid_ComputePhotonTimestep.o \
         Grid_ComputePhotonTimestepHII.o \
+        Grid_ComputePhotonTimestepTau.o \
         Grid_ConvertToCellCenteredRadiation.o \
         Grid_CorrectRadiationIncompleteness.o \
 	Grid_CreateEmissivityLW.o \
