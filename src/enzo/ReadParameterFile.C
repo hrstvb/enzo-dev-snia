@@ -296,6 +296,9 @@ int ReadParameterFile(FILE *fptr, TopGridData &MetaData, float *Initialdt)
     ret += sscanf(line, "ConservativeInterpolation = %"ISYM,
 		  &ConservativeInterpolation);
     ret += sscanf(line, "MinimumEfficiency      = %"FSYM, &MinimumEfficiency);
+    ret += sscanf(line, "SubgridSizeAutoAdjust  = %"ISYM, &SubgridSizeAutoAdjust);
+    ret += sscanf(line, "OptimalSubgridsPerProcessor = %"ISYM, 
+		  &OptimalSubgridsPerProcessor);
     ret += sscanf(line, "MinimumSubgridEdge     = %"ISYM, &MinimumSubgridEdge);
     ret += sscanf(line, "MaximumSubgridSize     = %"ISYM, &MaximumSubgridSize);
     ret += sscanf(line, "NumberOfBufferZones    = %"ISYM, &NumberOfBufferZones);
@@ -640,7 +643,8 @@ int ReadParameterFile(FILE *fptr, TopGridData &MetaData, float *Initialdt)
  
     if (sscanf(line, "VersionNumber = %"FSYM, &TempFloat) == 1) {
       ret++;
-      if (fabs(TempFloat - VERSION) >= 1.0e-3)
+      if (fabs(TempFloat - VERSION) >= 1.0e-3 &&
+	  MyProcessorNumber == ROOT_PROCESSOR)
 	fprintf(stderr, "Warning: Incorrect version number.\n");
     }
  
@@ -692,6 +696,8 @@ int ReadParameterFile(FILE *fptr, TopGridData &MetaData, float *Initialdt)
 		  &PopIIIInitialMassFunction);
     ret += sscanf(line, "PopIIIInitialMassFunctionSeed = %"ISYM, 
 		  &PopIIIInitialMassFunctionSeed);
+    ret += sscanf(line, "PopIIIInitialMassFunctionCalls = %"ISYM, 
+		  &PopIIIInitialMassFunctionCalls);
     ret += sscanf(line, "PopIIIMassRange = %"FSYM" %"FSYM,
 		  &PopIIILowerMassCutoff, &PopIIIUpperMassCutoff);
     ret += sscanf(line, "PopIIIInitialMassFunctionSlope = %"FSYM, 
@@ -913,9 +919,20 @@ int ReadParameterFile(FILE *fptr, TopGridData &MetaData, float *Initialdt)
     if (strstr(line, "CoolingTest")) ret++;
     if (strstr(line, "ShearingBox")) ret++;
     if (strstr(line, "PoissonSolverTest")) ret++;
+    /* 7.22.10 - CBH: Added 5 following lines to avoid runtime warnings from 
+    extra params previously added to code (but not read_params) by others.*/
+    if (strstr(line, "Cloudy")              ) ret++;
+    if (strstr(line, "IsothermalSoundSpeed")) ret++;
+    if (strstr(line, "dtPhoton")            ) ret++;
+    if (strstr(line, "CurrentTimeIdentifier")) ret++;
+    if (strstr(line, "MetaDataRestart")     ) ret++;
+    if (strstr(line, "MustRefine") ) ret++;
+    if (strstr(line, "AccretionKernal")     ) ret++;
+    if (strstr(line, "PopIII")              ) ret++;
 #ifdef TRANSFER
     if (strstr(line, "Radiative")           ) ret++;
     if (strstr(line, "PhotonTest")          ) ret++;
+
 #endif
 
     if (strstr(line, "\"\"\"")              ) comment_count++;
