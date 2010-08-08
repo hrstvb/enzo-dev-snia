@@ -24,6 +24,18 @@
 #endif
 #endif
 
+#ifdef SHARED_LIBRARY
+#define private public
+#endif
+
+#include "message.h"
+
+#ifdef CONFIG_THROW_ABORT
+#define ENZO_FAIL(A) raise(SIGABRT);
+#else
+#define ENZO_FAIL(A) throw(EnzoFatalException(A, __FILE__, __LINE__));
+#endif
+
 /* Modifiable Parameters */
 
 #define MAX_NUMBER_OF_TASKS             16384

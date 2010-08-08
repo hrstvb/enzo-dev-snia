@@ -228,8 +228,14 @@ void PrintMemoryUsage(char *str);
  
 //  ENZO Main Program
 
+#ifdef SHARED_LIBRARY
+#define MAIN_NAME enzo_main
+#else
+#define MAIN_NAME main
+#endif
+
  
-Eint32 main(Eint32 argc, char *argv[])
+Eint32 MAIN_NAME(Eint32 argc, char *argv[])
 {
 
 

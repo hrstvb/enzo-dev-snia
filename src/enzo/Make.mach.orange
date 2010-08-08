@@ -89,6 +89,7 @@ MACH_FFLAGS   = -ffixed-line-length-132
 #MACH_FFLAGS   = -132
 MACH_F90FLAGS = 
 MACH_LDFLAGS  = -Wl 
+MACH_SHARED_FLAGS = -fPIC
 # -static 
 
 #-----------------------------------------------------------------------

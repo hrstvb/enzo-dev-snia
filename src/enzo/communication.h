@@ -90,6 +90,7 @@ EXTERN int CommunicationReceiveIndex;
 
 #ifdef USE_MPI
 
+class grid;
 EXTERN int          CommunicationReceiveCallType[MAX_RECEIVE_BUFFERS];
 EXTERN MPI_Request  CommunicationReceiveMPI_Request[MAX_RECEIVE_BUFFERS];
 EXTERN float       *CommunicationReceiveBuffer[MAX_RECEIVE_BUFFERS];

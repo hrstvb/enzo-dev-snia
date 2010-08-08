@@ -28,6 +28,7 @@ typedef int gravity_boundary_type;
 typedef int interpolation_type;
 typedef int hydro_method;
 typedef int star_type;
+typedef int enzo_int;
 typedef int enum_type;
 typedef int staggering;
 typedef int fieldtype;
@@ -40,10 +41,32 @@ typedef long_int gravity_boundary_type;
 typedef long_int interpolation_type;
 typedef long_int hydro_method;
 typedef long_int star_type;
+typedef long_int enzo_int;
 typedef long_int enum_type;
 typedef long_int staggering;
 typedef long_int fieldtype;
 #endif
+
+#ifdef CONFIG_PFLOAT_4
+typedef Eflt32 enzo_pfloat;
+#endif
+
+#ifdef CONFIG_PFLOAT_8
+typedef double enzo_pfloat;
+#endif
+
+#ifdef CONFIG_PFLOAT_16
+typedef long_double enzo_pfloat;
+#endif
+
+#ifdef CONFIG_BFLOAT_4
+typedef Eflt32 enzo_bfloat;
+#endif
+
+#ifdef CONFIG_BFLOAT_8
+typedef double enzo_bfloat;
+#endif
+
 
 const field_type 
   Density         = 0,
