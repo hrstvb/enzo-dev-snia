@@ -59,6 +59,7 @@ MACH_CXXFLAGS =
 MACH_FFLAGS   = -fno-second-underscore
 MACH_F90FLAGS = -fno-second-underscore
 MACH_LDFLAGS  = 
+MACH_SHARED_FLAGS = -fPIC -shared
 
 #-----------------------------------------------------------------------
 # Precision-related flags
