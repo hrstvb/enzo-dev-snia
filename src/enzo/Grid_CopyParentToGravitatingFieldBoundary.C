@@ -95,9 +95,8 @@ int grid::CopyParentToGravitatingFieldBoundary(grid *ParentGrid)
     size *= GravitatingMassFieldDimension[dim];
     if (ParentStartIndex[dim] < 0 ||
 	ParentStartIndex[dim]+ParentTempDim[dim] > ParentDim[dim]) {
-      fprintf(stderr, "ParentStartIndex[%"ISYM"] = %"ISYM" ParentTempDim = %"ISYM"(%"ISYM").\n",
-	      dim, ParentStartIndex[dim], ParentTempDim[dim], ParentDim[dim]);
-      ENZO_FAIL("");
+      ENZO_VFAIL("ParentStartIndex[%"ISYM"] = %"ISYM" ParentTempDim = %"ISYM"(%"ISYM").\n",
+	      dim, ParentStartIndex[dim], ParentTempDim[dim], ParentDim[dim])
     }
   }
  
@@ -151,6 +150,7 @@ int grid::CopyParentToGravitatingFieldBoundary(grid *ParentGrid)
  
   /* Interpolate (nearest neighbour) */
  
+  if(ParentGrid->GravitatingMassField == NULL) ENZO_FAIL("NO GMF in PARENT");
   int iparent, jparent, kparent, parentindex;
   for (k = 0; k < GravitatingMassFieldDimension[2]; k++) {
     kparent = nint((k + ParentOffset[2])/Refinement[2]);
@@ -174,7 +174,7 @@ int grid::CopyParentToGravitatingFieldBoundary(grid *ParentGrid)
   /* Clean up parent. */
  
   if (MyProcessorNumber != ParentGrid->ProcessorNumber) {
-    delete ParentGrid->GravitatingMassField;
+    delete [] ParentGrid->GravitatingMassField;
     ParentGrid->GravitatingMassField = NULL;
   }
  
@@ -195,6 +195,7 @@ int grid::CopyParentToGravitatingFieldBoundary(grid *ParentGrid)
 	                GravitatingMassFieldDimension[0]
 	           + SubGridExtra[0];
       //      if (j == GravitatingMassFieldDimension[1]/2 &&
+
       //	  k == GravitatingMassFieldDimension[2]/2)
       //	for (i = 0; i < GravitatingMassFieldDimension[0]; i++)
       //	  printf("%"ISYM" %"GSYM"\n", i,

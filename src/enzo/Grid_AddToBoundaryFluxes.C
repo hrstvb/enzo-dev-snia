@@ -41,9 +41,14 @@ int grid::AddToBoundaryFluxes(fluxes *BoundaryFluxesToBeAdded)
   /* Error check */
  
   if (BoundaryFluxes == NULL) {
-    fprintf(stderr, "grid->AddToBoundarFluxes BoundaryFluxes not defined.\n");
-    ENZO_FAIL("");
+    ENZO_FAIL("grid->AddToBoundarFluxes BoundaryFluxes not defined.\n");
   }
+
+  if (BoundaryFluxesToBeAdded == NULL) {
+    ENZO_FAIL("grid->AddToBoundarFluxes BoundaryFluxesToBeAdded not defined.\n");
+
+  }
+
  
   /* add the fluxes of the structure pointed to by the argument to
      the fluxes of this grid. */

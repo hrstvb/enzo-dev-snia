@@ -4,7 +4,7 @@
 /
 /  written by: Greg Bryan
 /  date:       November, 1994
-/  modified1:  Robert Harkness / Biran O'Shea
+/  modified1:  Robert Harkness / Brian O'Shea
 /  date:       4th June 2006
 /
 /  PURPOSE:
@@ -42,16 +42,11 @@ int grid::CopyBaryonFieldToOldBaryonField()
   if (ProcessorNumber != MyProcessorNumber)
     return SUCCESS;
  
-  JBPERF_START("grid_CopyBaryonFieldToOldBaryonField");
+  LCAPERF_START("grid_CopyBaryonFieldToOldBaryonField");
 
   /* compute the field size */
  
   int size = 1;
-
-/* BUG reported 4th June 2006
-  for (int dim = 0; dim < GridDimension[dim]; dim++)
-    size *= GridDimension[dim];
-*/
 
   for (int dim = 0; dim < GridRank; dim++) {
     size *= GridDimension[dim];
@@ -64,10 +59,9 @@ int grid::CopyBaryonFieldToOldBaryonField()
     /* Check to make sure BaryonField exists. */
  
     if (BaryonField[field] == NULL) {
-      fprintf(stderr, "BaryonField missing.\n");
-      ENZO_FAIL("");
+      ENZO_FAIL("BaryonField missing.\n");
     }
- 
+
     /* Create OldBaryonField if necessary. */
  
     if ((OldBaryonField[field] == NULL))
@@ -101,8 +95,8 @@ int grid::CopyBaryonFieldToOldBaryonField()
 
       }else{
 
-        fprintf(stderr,"Error-- in CopyBF to Old, no AccelerationField.\n");
-        ENZO_FAIL("");
+        ENZO_FAIL("Error-- in CopyBF to Old, no AccelerationField.\n");
+
 
       }
 
@@ -112,7 +106,7 @@ int grid::CopyBaryonFieldToOldBaryonField()
 
 #endif /* SAB */
  
-  JBPERF_STOP("grid_CopyBaryonFieldToOldBaryonField");
+  LCAPERF_STOP("grid_CopyBaryonFieldToOldBaryonField");
   return SUCCESS;
  
 }

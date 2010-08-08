@@ -20,6 +20,7 @@
 #include <math.h>
 #include <hdf5.h>
 #include "h5utilities.h"
+#include "performance.h"
 
 #include "ErrorExceptions.h"
 #include "macros_and_parameters.h"
@@ -42,30 +43,41 @@
 void FOF_Initialize(TopGridData *MetaData, 
 		    LevelHierarchyEntry *LevelArray[], 
 		    FOFData &D, bool SmoothData);
+void FOF_Finalize(FOFData &D, LevelHierarchyEntry *LevelArray[], 
+		  TopGridData *MetaData);
 /************************************************************************/
 
-int FOF(TopGridData *MetaData, LevelHierarchyEntry *LevelArray[])
+int FOF(TopGridData *MetaData, LevelHierarchyEntry *LevelArray[], 
+	int WroteData)
 {
 
   if (!InlineHaloFinder)
     return SUCCESS;
 
-  if (HaloFinderCycleSkip == 0 && HaloFinderTimestep < 0)
-    return SUCCESS;
+  // Always run if we've just outputted and HaloFinderRunAfterOutput is on.
+  if (!(WroteData && HaloFinderRunAfterOutput)) {
 
-  if (HaloFinderCycleSkip > 0)
-    if (MetaData->CycleNumber % HaloFinderCycleSkip != 0)
+    if (HaloFinderCycleSkip == 0 && HaloFinderTimestep < 0)
       return SUCCESS;
 
-  if (HaloFinderTimestep > 0 &&
-      MetaData->Time - HaloFinderLastTime < HaloFinderTimestep)
-    return SUCCESS;
+    if (HaloFinderCycleSkip > 0)
+      if (MetaData->CycleNumber % HaloFinderCycleSkip != 0)
+	return SUCCESS;
 
-  if (NumberOfProcessors & 1 && NumberOfProcessors > 1) {
-    fprintf(stdout, "FOF: Number of processors (in parallel) must be EVEN to run "
-	    "inline halo finder.\n");
-    return SUCCESS;
-  }
+    if (HaloFinderTimestep > 0 &&
+	MetaData->Time - HaloFinderLastTime < HaloFinderTimestep)
+      return SUCCESS;
+
+    if (NumberOfProcessors & 1 && NumberOfProcessors > 1) {
+      fprintf(stdout, "FOF: Number of processors (in parallel) must be "
+	      "EVEN to run inline halo finder.  Turning OFF.\n");
+      InlineHaloFinder = FALSE;
+      return SUCCESS;
+    }
+
+  } // ENDIF force run
+
+  LCAPERF_START("InlineHaloFinder");
 
   if (!ComovingCoordinates)
     fprintf(stdout, "FOF: Warning -- you're running the halo finder on a"
@@ -119,9 +131,12 @@ int FOF(TopGridData *MetaData, LevelHierarchyEntry *LevelArray[])
   if (HaloFinderSubfind)
     subfind(AllVars, MetaData->CycleNumber, MetaData->Time);
 
+  FOF_Finalize(AllVars, LevelArray, MetaData);
   deallocate_all_memory(AllVars);
 
   HaloFinderLastTime = MetaData->Time;
+
+  LCAPERF_STOP("InlineHaloFinder");
 
 }
 
@@ -143,8 +158,7 @@ void set_units(FOFData &AllVars) {
 
   if (AllVars.DesDensityNgb > AllVars.GroupMinLen) {
     if (MyProcessorNumber == ROOT_PROCESSOR)
-      fprintf(stderr, "Must have DesDensityNgb <= GroupMinLen\n");
-    ENZO_FAIL("");
+    ENZO_FAIL("Must have DesDensityNgb <= GroupMinLen\n");
   }
 
   AllVars.UnitTime_in_s	= AllVars.UnitLength_in_cm / 
@@ -187,7 +201,7 @@ void save_groups(FOFData &AllVars, int CycleNumber, FLOAT EnzoTime)
   float cm[3], cmv[3], AM[3], vrms, spin, mtot, mstars, redshift;
   float mvir, rvir;
   double *temp;
-  int   *TempInt;
+  PINT   *TempPINT;
 
   FOF_particle_data *Pbuf;
   char   *FOF_dirname = "FOF";
@@ -293,13 +307,13 @@ void save_groups(FOFData &AllVars, int CycleNumber, FLOAT EnzoTime)
       if (HaloFinderOutputParticleList && !HaloFinderSubfind) {
 
 	temp = new double[3*len];
-	TempInt = new int[len];
+	TempPINT = new PINT[len];
 	index = 0;
 	for (dim = 0; dim < 3; dim++)
 	  for (i = 0; i < len; i++, index++)
 	    temp[index] = Pbuf[i].Pos[dim] / AllVars.BoxSize;
 	for (i = 0; i < len; i++)
-	  TempInt[i] = Pbuf[i].PartID;
+	  TempPINT[i] = Pbuf[i].PartID;
 
 	sprintf(halo_name, "Halo%8.8d", AllVars.NgroupsAll-1-gr);
 	group_id = H5Gcreate(file_id, halo_name, 0);
@@ -323,16 +337,16 @@ void save_groups(FOFData &AllVars, int CycleNumber, FLOAT EnzoTime)
 	hdims[0] = (hsize_t) len;
 	hdims[1] = 1;
 	dspace_id = H5Screate_simple(1, hdims, NULL);
-	dset_id = H5Dcreate(group_id, "Particle ID", HDF5_INT, dspace_id,
+	dset_id = H5Dcreate(group_id, "Particle ID", HDF5_PINT, dspace_id,
 			    H5P_DEFAULT);
-	H5Dwrite(dset_id, HDF5_INT, H5S_ALL, H5S_ALL, H5P_DEFAULT, (VOIDP) TempInt);
+	H5Dwrite(dset_id, HDF5_PINT, H5S_ALL, H5S_ALL, H5P_DEFAULT, (VOIDP) TempPINT);
 	H5Sclose(dspace_id);
 	H5Dclose(dset_id);
 
 	H5Gclose(group_id);
 
 	delete [] temp;
-	delete [] TempInt;
+	delete [] TempPINT;
 	
       } // ENDIF output particle list
 
@@ -462,8 +476,7 @@ int get_particles(int dest, int minid, int len, FOF_particle_data *buf,
   delete [] localbuf;
 
   if (MyProcessorNumber == dest && nlocal != len) {
-    fprintf(stderr, "local= %"ISYM"  len=%"ISYM"\n", nlocal, len);
-    ENZO_FAIL("");
+    ENZO_VFAIL("local= %"ISYM"  len=%"ISYM"\n", nlocal, len)
   }
 
   return len;
@@ -741,7 +754,8 @@ void stitch_together(FOFData &AllVars)
   FOF_particle_data *buftoleft, *buftoright, *buffer;
   int    i, slab, nl, nr, nbuf, len;
   int    leftTask, rightTask;
-  int    pp, newid;
+  int    pp;
+  PINT newid;
   idmin_data *iddat;
 
 
@@ -924,19 +938,17 @@ void exchange_shadow(FOFData &AllVars, int TopGridResolution, bool SmoothData)
   } // ENDFOR particles
 
   if (nl != AllVars.NtoLeft[MyProcessorNumber]) {
-    fprintf(stderr, "[proc %"ISYM"] error: shadows don't match! "
+    ENZO_VFAIL("[proc %"ISYM"] error: shadows don't match! "
 	    "nl = %"ISYM", NtoLeft[%"ISYM"] = %"ISYM"\n", 
 	    MyProcessorNumber, nl, MyProcessorNumber, 
-	    AllVars.NtoLeft[MyProcessorNumber]);
-    ENZO_FAIL("");
+	    AllVars.NtoLeft[MyProcessorNumber])
   }
   
   if (nr != AllVars.NtoRight[MyProcessorNumber]) {
-    fprintf(stderr, "[proc %"ISYM"] error: shadows don't match! "
+    ENZO_VFAIL("[proc %"ISYM"] error: shadows don't match! "
 	    "nr = %"ISYM", NtoRight[%"ISYM"] = %"ISYM"\n",
 	    MyProcessorNumber, nr, MyProcessorNumber, 
-	    AllVars.NtoRight[MyProcessorNumber]);
-    ENZO_FAIL("");
+	    AllVars.NtoRight[MyProcessorNumber])
   }
 
   rightTask = MyProcessorNumber + 1;
@@ -1365,9 +1377,8 @@ void *mymalloc(size_t size)
   p = malloc(size);
   
   if (!p) {
-    fprintf(stderr, "Failed to alloc %"ISYM" bytes on process %"ISYM".\n", 
-	    (int) size, MyProcessorNumber);
-    ENZO_FAIL("");
+    ENZO_VFAIL("Failed to alloc %"ISYM" bytes on process %"ISYM".\n", 
+	    (int) size, MyProcessorNumber)
   }
   return p;
 }
@@ -1386,6 +1397,7 @@ void write_ascii_catalog(char *catalogue_fname, char *fofprop_fname,
   float RootBoxSize[3];
 
   if (MyProcessorNumber == 0) {
+
 
     for (i = 0; i < 3; i++)
       RootBoxSize[i] = BoxSize / (rightEdge[i] - leftEdge[i]);

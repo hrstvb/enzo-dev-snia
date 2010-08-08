@@ -25,6 +25,8 @@
 int RadiativeTransferWriteParameters(FILE *fptr)
 {
 
+  fprintf(fptr, "dtPhoton                                  = %"GOUTSYM"\n",
+	  dtPhoton);
   fprintf(fptr, "RadiativeTransferRadiationPressure        = %"ISYM"\n", 
 	  RadiationPressure);
   fprintf(fptr, "RadiativeTransferSourceRadius             = %"GSYM"\n", 
@@ -37,6 +39,8 @@ int RadiativeTransferWriteParameters(FILE *fptr)
 	  RadiativeTransferCoupledRateSolver);
   fprintf(fptr, "RadiativeTransferOpticallyThinH2          = %"ISYM"\n", 
 	  RadiativeTransferOpticallyThinH2);
+  fprintf(fptr, "RadiativeTransferFLDCallOnLevel           = %"ISYM"\n", 
+	  RadiativeTransferFLDCallOnLevel);
   fprintf(fptr, "RadiativeTransferPeriodicBoundary         = %"ISYM"\n", 
 	  RadiativeTransferPeriodicBoundary);
   fprintf(fptr, "RadiativeTransferSplitPhotonRadius        = %"FSYM"\n", 
@@ -53,8 +57,20 @@ int RadiativeTransferWriteParameters(FILE *fptr)
 	  RadiativeTransferInterpolateField);
   fprintf(fptr, "RadiativeTransferSourceClustering         = %"ISYM"\n", 
 	  RadiativeTransferSourceClustering);
-  fprintf(fptr, "RadiativeTransferPhotonMergeRadius        = %"FSYM"\n\n", 
+  fprintf(fptr, "RadiativeTransferPhotonMergeRadius        = %"FSYM"\n", 
 	  RadiativeTransferPhotonMergeRadius);
-  
+  fprintf(fptr, "RadiativeTransferSourceBeamAngle          = %"FSYM"\n", 
+	  RadiativeTransferSourceBeamAngle);
+  fprintf(fptr, "RadiativeTransferHIIRestrictedTimestep    = %"ISYM"\n", 
+	  RadiativeTransferHIIRestrictedTimestep);
+  fprintf(fptr, "RadiativeTransferAdaptiveTimestep         = %"ISYM"\n",
+	  RadiativeTransferAdaptiveTimestep);
+  fprintf(fptr, "RadiativeTransferHydrogenOnly             = %"ISYM"\n", 
+	  RadiativeTransferHydrogenOnly);
+  fprintf(fptr, "RadiativeTransferTraceSpectrum            = %"ISYM"\n", 
+	  RadiativeTransferTraceSpectrum);
+  fprintf(fptr, "RadiativeTransferTraceSpectrumTable       = %s\n\n", 
+	  RadiativeTransferTraceSpectrumTable);
+
   return SUCCESS;
 }

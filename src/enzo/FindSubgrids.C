@@ -84,9 +84,9 @@ int FindSubgrids(HierarchyEntry *Grid, int level, int &TotalFlaggedCells,
   TotalFlaggedCells += NumberOfFlaggedCells;
   if (NumberOfFlaggedCells > 0)
     FlaggedGrids++;
-//  if (debug)
-//    printf("RebuildHierarchy[%"ISYM"]: NumberOfFlaggedCells = %"ISYM".\n",
-//	   level, NumberOfFlaggedCells);
+  if (debug1)
+    printf("RebuildHierarchy[%"ISYM"]: NumberOfFlaggedCells = %"ISYM".\n",
+	   level, NumberOfFlaggedCells);
  
 #ifdef MPI_INSTRUMENTATION
   Grid->GridData->CollectGridInformation
@@ -101,6 +101,8 @@ int FindSubgrids(HierarchyEntry *Grid, int level, int &TotalFlaggedCells,
  
     int NumberOfSubgrids = 1;
     SubgridList[0] = new ProtoSubgrid;
+    
+    SubgridList[0]->SetLevel(level+1);
  
     /* Copy the flagged zones into the ProtoSubgrid. */
  
@@ -121,8 +123,7 @@ int FindSubgrids(HierarchyEntry *Grid, int level, int &TotalFlaggedCells,
     HierarchyEntry *PreviousGrid = Grid, *ThisGrid;
 
     if ( NumberOfSubgrids > MAX_NUMBER_OF_SUBGRIDS ) {
-      fprintf(stderr, "PE %"ISYM" NumberOfSubgrids > MAX_NUMBER_OF_SUBGRIDS\n", MyProcessorNumber);
-      ENZO_FAIL("");
+      ENZO_VFAIL("PE %"ISYM" NumberOfSubgrids > MAX_NUMBER_OF_SUBGRIDS\n", MyProcessorNumber)
     }
  
     for (i = 0; i < NumberOfSubgrids; i++) {
@@ -166,6 +167,7 @@ int FindSubgrids(HierarchyEntry *Grid, int level, int &TotalFlaggedCells,
  
       LevelHierarchyEntry *Temp2 = new LevelHierarchyEntry;
       if (*ListOfNewGrids != NULL)
+
 	Temp2->NextGridThisLevel = (*ListOfNewGrids)->NextGridThisLevel;
       else
 	Temp2->NextGridThisLevel = NULL;

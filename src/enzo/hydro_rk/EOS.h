@@ -9,6 +9,8 @@ inline void EOS(float &p, float &rho, float &e, float &h, float &cs, float &dpdr
      eostype: 
        0: ideal gas
        1: polytropic EOS
+       2: another polytropic EOS
+       3: isothermal 
      mode:  
        1: given p and rho, calculate others.
        2: given rho and e, calculate others.
@@ -42,7 +44,7 @@ inline void EOS(float &p, float &rho, float &e, float &h, float &cs, float &dpdr
     GetUnits(&denu, &lenu, &tempu, &tu, &velu, 1);
     double c_s = EOSSoundSpeed;
     double rho_cr = EOSCriticalDensity;
-    c_s /= velu;
+    //    c_s /= velu;
     rho_cr /= denu;
 
     cs = c_s*sqrt(1.0 + EOSGamma*pow(rho/rho_cr, EOSGamma-1.0));
@@ -59,7 +61,7 @@ inline void EOS(float &p, float &rho, float &e, float &h, float &cs, float &dpdr
     GetUnits(&denu, &lenu, &tempu, &tu, &velu, 1);
     double c_s = EOSSoundSpeed;
     double rho_cr = EOSCriticalDensity;
-    c_s /= velu;
+    //    c_s /= velu;
     rho_cr /= denu;
     
     if (rho <= rho_cr) {
@@ -78,8 +80,8 @@ inline void EOS(float &p, float &rho, float &e, float &h, float &cs, float &dpdr
   }
 
   if (eostype == 3) { // straight isothermal
-    double c_s = EOSSoundSpeed;
-    p = rho*c_s*c_s;
+    cs = EOSSoundSpeed;
+    p = rho*cs*cs;
     e = p / ((Gamma-1.0)*rho);
     dpdrho = 1;
     dpde = 1;

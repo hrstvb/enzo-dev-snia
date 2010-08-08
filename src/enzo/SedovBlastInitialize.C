@@ -68,8 +68,7 @@ int SedovBlastInitialize(FILE *fptr, FILE *Outfptr, HierarchyEntry &TopGrid,
   /* make sure this is 2D or 3D */
 
   if (MetaData.TopGridRank < 2 || MetaData.TopGridRank > 3) {
-    printf("Cannot model SedovBlast in %"ISYM" dimension(s)\n", MetaData.TopGridRank);
-    ENZO_FAIL("");
+    ENZO_VFAIL("Cannot model SedovBlast in %"ISYM" dimension(s)\n", MetaData.TopGridRank)
   }    
 
   /* There are four parameters:
@@ -110,13 +109,13 @@ int SedovBlastInitialize(FILE *fptr, FILE *Outfptr, HierarchyEntry &TopGrid,
     /* read parameters */
 
     ret += sscanf(line, "SedovBlastFullBox  = %"ISYM, &SedovBlastFullBox);
-    ret += sscanf(line, "SedovBlastInitialTime  = %"FSYM, &SedovBlastInitialTime);
+    ret += sscanf(line, "SedovBlastInitialTime  = %"PSYM, &SedovBlastInitialTime);
     ret += sscanf(line, "SedovBlastDensity  = %"FSYM, &SedovBlastDensity);
     ret += sscanf(line, "SedovBlastPressure = %"FSYM, &SedovBlastPressure);
     ret += sscanf(line, "SedovBlastEnergy   = %"FSYM, &SedovBlastEnergy);
-    ret += sscanf(line, "SedovBlastSubgridLeft = %"FSYM, 
+    ret += sscanf(line, "SedovBlastSubgridLeft = %"PSYM, 
 		        &SedovBlastSubgridLeft);
-    ret += sscanf(line, "SedovBlastSubgridRight = %"FSYM, 
+    ret += sscanf(line, "SedovBlastSubgridRight = %"PSYM, 
 		        &SedovBlastSubgridRight);
 
     /* if the line is suspicious, issue a warning */
@@ -315,6 +314,7 @@ int SedovBlastInitialize(FILE *fptr, FILE *Outfptr, HierarchyEntry &TopGrid,
   /* Write parameters to parameter output file */
 
   if (MyProcessorNumber == ROOT_PROCESSOR) {
+
     fprintf(Outfptr, "SedovBlastFullBox         = %"ISYM"\n"  , SedovBlastFullBox);
     fprintf(Outfptr, "SedovBlastDensity         = %"FSYM"\n"  , SedovBlastDensity);
     fprintf(Outfptr, "SedovBlastPressure        = %"FSYM"\n"  , SedovBlastPressure);

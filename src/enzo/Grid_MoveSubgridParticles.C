@@ -24,7 +24,7 @@
  
 int grid::MoveSubgridParticles(grid* FromGrid,
                                int *Counter,
-                               int *X_Number,
+                               PINT *X_Number,
                                int *X_Type,
                                float *X_Mass,
                                FLOAT *X_Position[],
@@ -40,8 +40,7 @@ int start;
   /* Error check. */
  
   if (ProcessorNumber != FromGrid->ProcessorNumber) {
-    fprintf(stderr, "This routine not parallelized.\n");
-    ENZO_FAIL("");
+    ENZO_FAIL("This routine not parallelized.\n");
   }
  
   /* If there are no particles to move, we're done. */
@@ -156,6 +155,7 @@ int start;
   for (i = 0; i < FromGrid->NumberOfParticles; i++)
  
     if (MoveParticle[i] == TRUE) {
+
  
 //      Mass[j + NumberOfParticles] = (FromGrid->ParticleMass[i]) * MassIncrease;
 //      Number[j + NumberOfParticles] = FromGrid->ParticleNumber[i];

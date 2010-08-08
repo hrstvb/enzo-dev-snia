@@ -33,7 +33,6 @@
 #include "Grid.h"
 #include "Hierarchy.h"
 #include "TopGridData.h"
-#include "StarParticleData.h"
  
 // Function prototypes
  
@@ -45,11 +44,12 @@ int WriteParameterFile(FILE *fptr, TopGridData &MetaData);
 void ConvertTotalEnergyToGasEnergy(HierarchyEntry *Grid);
 int SetDefaultGlobalValues(TopGridData &MetaData);
 int CommunicationPartitionGrid(HierarchyEntry *Grid, int gridnum);
-int CommunicationBroadcastValue(int *Value, int BroadcastProcessor);
+int CommunicationBroadcastValue(PINT *Value, int BroadcastProcessor);
  
 // Initialization function prototypes
  
-int ShockTubeInitialize(FILE *fptr, FILE *Outfptr, HierarchyEntry &TopGrid);
+int HydroShockTubesInitialize(FILE *fptr, FILE *Outfptr,
+			      HierarchyEntry &TopGrid, TopGridData &MetaData);
 int WavePoolInitialize(FILE *fptr, FILE *Outfptr, HierarchyEntry &TopGrid,
 		       TopGridData &MetaData);
 int ShockPoolInitialize(FILE *fptr, FILE *Outfptr, HierarchyEntry &TopGrid,
@@ -95,14 +95,14 @@ int TestGravityMotion(FILE *fptr, FILE *Outfptr, HierarchyEntry &TopGrid,
 int SupernovaRestartInitialize(FILE *fptr, FILE *Outfptr,
 			       HierarchyEntry &TopGrid, TopGridData &MetaData,
 			       ExternalBoundary &Exterior);
+int PutSinkRestartInitialize(FILE *fptr, FILE *Outfptr,
+			       HierarchyEntry &TopGrid, TopGridData &MetaData,
+			       ExternalBoundary &Exterior);
 int ProtostellarCollapseInitialize(FILE *fptr, FILE *Outfptr,
 				   HierarchyEntry &TopGrid,
 				   TopGridData &MetaData);
 int CoolingTestInitialize(FILE *fptr, FILE *Outfptr, 
-			  HierarchyEntry &TopGrid, TopGridData &MetaData);
-int CoolingTestInitialize_BDS(FILE *fptr, FILE *Outfptr, 
-			  HierarchyEntry &TopGrid, TopGridData &MetaData);
- 
+			  HierarchyEntry &TopGrid, TopGridData &MetaData); 
 int CosmologySimulationInitialize(FILE *fptr, FILE *Outfptr,
                                   HierarchyEntry &TopGrid,
                                   TopGridData &MetaData);
@@ -126,17 +126,49 @@ int TracerParticleCreation(FILE *fptr, HierarchyEntry &TopGrid,
 
 int ShearingBoxInitialize(FILE *fptr, FILE *Outfptr, HierarchyEntry &TopGrid,
                         TopGridData &MetaData);
-
+int ShearingBox2DInitialize(FILE *fptr, FILE *Outfptr, HierarchyEntry &TopGrid,
+                        TopGridData &MetaData);
+int ShearingBoxStratifiedInitialize(FILE *fptr, FILE *Outfptr, HierarchyEntry &TopGrid,
+                        TopGridData &MetaData);
 #ifdef TRANSFER
 int PhotonTestInitialize(FILE *fptr, FILE *Outfptr, 
 			 HierarchyEntry &TopGrid, TopGridData &MetaData);
+int FSMultiSourceInitialize(FILE *fptr, FILE *Outfptr,
+			    HierarchyEntry &TopGrid,
+			    TopGridData &MetaData, int local);
+
+int RadHydroConstTestInitialize(FILE *fptr, FILE *Outfptr,
+				HierarchyEntry &TopGrid,
+				TopGridData &MetaData, int local);
+int RadHydroGreyMarshakWaveInitialize(FILE *fptr, FILE *Outfptr,
+				      HierarchyEntry &TopGrid,
+				      TopGridData &MetaData, int local);
+int RadHydroPulseTestInitialize(FILE *fptr, FILE *Outfptr,
+				HierarchyEntry &TopGrid,
+				TopGridData &MetaData, int local);
+int RadHydroRadShockInitialize(FILE *fptr, FILE *Outfptr,
+			       HierarchyEntry &TopGrid,
+			       TopGridData &MetaData, int local);
+int RadHydroStreamTestInitialize(FILE *fptr, FILE *Outfptr,
+				 HierarchyEntry &TopGrid,
+				 TopGridData &MetaData, int local);
+int RHIonizationTestInitialize(FILE *fptr, FILE *Outfptr,
+			       HierarchyEntry &TopGrid,
+			       TopGridData &MetaData, int local);
+int RHIonizationClumpInitialize(FILE *fptr, FILE *Outfptr,
+				HierarchyEntry &TopGrid,
+				TopGridData &MetaData, int local);
+int RHIonizationSteepInitialize(FILE *fptr, FILE *Outfptr,
+				HierarchyEntry &TopGrid,
+				TopGridData &MetaData, int local);
+int CosmoIonizationInitialize(FILE *fptr, FILE *Outfptr,
+			      HierarchyEntry &TopGrid,
+			      TopGridData &MetaData, int local);
 #endif /* TRANSFER */
 
 
-int Hydro1DTestInitialize(FILE *fptr, FILE *Outfptr,
-			  HierarchyEntry &TopGrid, TopGridData &MetaData);
 int TurbulenceInitialize(FILE *fptr, FILE *Outfptr, 
-			 HierarchyEntry &TopGrid, TopGridData &MetaData);
+			 HierarchyEntry &TopGrid, TopGridData &MetaData, int SetBaryonFields);
 int Collapse3DInitialize(FILE *fptr, FILE *Outfptr,
 			 HierarchyEntry &TopGrid, TopGridData &MetaData);
 int Collapse1DInitialize(FILE *fptr, FILE *Outfptr,
@@ -150,7 +182,7 @@ int MHD3DTestInitialize(FILE *fptr, FILE *Outfptr,
 int CollapseMHD3DInitialize(FILE *fptr, FILE *Outfptr, 
 			    HierarchyEntry &TopGrid, TopGridData &MetaData);
 int MHDTurbulenceInitialize(FILE *fptr, FILE *Outfptr, 
-			    HierarchyEntry &TopGrid, TopGridData &MetaData);
+			    HierarchyEntry &TopGrid, TopGridData &MetaData, int SetBaryonFields);
 int GalaxyDiskInitialize(FILE *fptr, FILE *Outfptr, 
 			 HierarchyEntry &TopGrid, TopGridData &MetaData);
 int AGNDiskInitialize(FILE *fptr, FILE *Outfptr, 
@@ -161,12 +193,13 @@ int FreeExpansionInitialize(FILE *fptr, FILE *Outfptr, HierarchyEntry &TopGrid,
 int PoissonSolverTestInitialize(FILE *fptr, FILE *Outfptr, 
 				HierarchyEntry &TopGrid, TopGridData &MetaData);
 
+void PrintMemoryUsage(char *str);
+
+int GetUnits(float *DensityUnits, float *LengthUnits,
+	     float *TemperatureUnits, float *TimeUnits,
+	     float *VelocityUnits, double *MassUnits, FLOAT Time);
 
 
-
-#ifdef MEM_TRACE
-Eint64 mused(void);
-#endif
  
 // Character strings
  
@@ -188,10 +221,6 @@ int InitializeNew(char *filename, HierarchyEntry &TopGrid,
   float Dummy[MAX_DIMENSION];
   int dim, i;
 
-#ifdef MEM_TRACE
-    Eint64 MemInUse;
-#endif
- 
  
   for (dim = 0; dim < MAX_DIMENSION; dim++)
     Dummy[dim] = 0.0;
@@ -199,16 +228,14 @@ int InitializeNew(char *filename, HierarchyEntry &TopGrid,
   // Open parameter file
  
   if ((fptr = fopen(filename, "r")) == NULL) {
-    fprintf(stderr, "Error opening parameter file.\n");
-    ENZO_FAIL("");
+    ENZO_FAIL("Error opening parameter file.");
   }
  
   // Open output file
  
   if (MyProcessorNumber == ROOT_PROCESSOR)
     if ((Outfptr = fopen(outfilename, "w")) == NULL) {
-      fprintf(stderr, "Error opening parameter output file %s\n", outfilename);
-      ENZO_FAIL("");
+      ENZO_VFAIL("Error opening parameter output file %s\n", outfilename)
     }
  
   // set the default MetaData values
@@ -218,12 +245,9 @@ int InitializeNew(char *filename, HierarchyEntry &TopGrid,
   // Read the MetaData/global values from the Parameter file
  
   if (ReadParameterFile(fptr, MetaData, Initialdt) == FAIL) {
-    fprintf(stderr, "Error in ReadParameterFile.\n");
-    ENZO_FAIL("");
+    ENZO_FAIL("Error in ReadParameterFile.");
   }
 
- 
- 
   // Set the number of particle attributes, if left unset
  
   if (NumberOfParticleAttributes == INT_UNDEFINED)
@@ -239,10 +263,6 @@ int InitializeNew(char *filename, HierarchyEntry &TopGrid,
       RefineRegionLeftEdge[dim]   = DomainLeftEdge[dim];
     if (RefineRegionRightEdge[dim] == FLOAT_UNDEFINED)
       RefineRegionRightEdge[dim]  = DomainRightEdge[dim];
-    if (MetaData.MovieRegionLeftEdge[dim] == FLOAT_UNDEFINED)
-      MetaData.MovieRegionLeftEdge[dim]   = DomainLeftEdge[dim];
-    if (MetaData.MovieRegionRightEdge[dim] == FLOAT_UNDEFINED)
-      MetaData.MovieRegionRightEdge[dim]  = DomainRightEdge[dim];
   }
  
   // If the problem reads in a restart dump, then skip over the following
@@ -251,73 +271,67 @@ int InitializeNew(char *filename, HierarchyEntry &TopGrid,
  
   // Error check the rank
  
-  if (MetaData.TopGridRank < 0 || MetaData.TopGridRank > 3) {
-    fprintf(stderr, "TopGridRank = %"ISYM" ill defined.\n", MetaData.TopGridRank);
-    ENZO_FAIL("");
-  }
+    if (MetaData.TopGridRank < 0 || MetaData.TopGridRank > 3) {
+      ENZO_VFAIL("TopGridRank = %"ISYM" ill defined.\n", MetaData.TopGridRank)
+    }
  
   // Error check the dimensions and at the same time add ghost zones
  
-  for (dim = 0; dim < MetaData.TopGridRank; dim++) {
-    if (MetaData.TopGridDims[dim] < 1 || MetaData.TopGridDims[dim] > 8192) {
-      fprintf(stderr, "TopGridDims[%"ISYM"] = %"ISYM" ill defined.\n", dim,
-	      MetaData.TopGridDims[dim]);
-      ENZO_FAIL("");
+    for (dim = 0; dim < MetaData.TopGridRank; dim++) {
+      if (MetaData.TopGridDims[dim] < 1 || MetaData.TopGridDims[dim] > 8192) {
+	ENZO_VFAIL("TopGridDims[%"ISYM"] = %"ISYM" ill defined.\n", dim,
+		   MetaData.TopGridDims[dim])
+      }
+      MetaData.TopGridDims[dim] = (MetaData.TopGridDims[dim] > 1) ?
+	MetaData.TopGridDims[dim] + 2*DEFAULT_GHOST_ZONES : 1;
     }
-    MetaData.TopGridDims[dim] = (MetaData.TopGridDims[dim] > 1) ?
-                     MetaData.TopGridDims[dim] + 2*DEFAULT_GHOST_ZONES : 1;
-  }
  
-  // Create the top grid, prepare it, set the time and parameters
- 
-  TopGrid.GridData = new grid;
- 
-  TopGrid.GridData->PrepareGrid(MetaData.TopGridRank, MetaData.TopGridDims,
-				DomainLeftEdge, DomainRightEdge,
-				MetaData.NumberOfParticles);
-  TopGrid.GridData->SetTime(MetaData.Time);
-  TopGrid.GridData->SetHydroParameters(MetaData.CourantSafetyNumber,
-				       MetaData.PPMFlatteningParameter,
-				       MetaData.PPMDiffusionParameter,
-				       MetaData.PPMSteepeningParameter);
-  TopGrid.GridData->SetGravityParameters(MetaData.GravityBoundary);
- 
-  // Repair TopGridDims (subtract ghost zones added earlier)
- 
-  for (dim = 0; dim < MetaData.TopGridRank; dim++)
-    MetaData.TopGridDims[dim] = max(MetaData.TopGridDims[dim] -
-				    2*DEFAULT_GHOST_ZONES, 1);
- 
-  // Set TopGrid Hierarchy Entry
- 
-  TopGrid.NextGridThisLevel = NULL;  // always true
-  TopGrid.ParentGrid        = NULL;  // always true
-  TopGrid.NextGridNextLevel = NULL;  // can be reset by initializer
- 
+    // Create the top grid, prepare it, set the time and parameters
+    
+    TopGrid.GridData = new grid;
+    
+    TopGrid.GridData->PrepareGrid(MetaData.TopGridRank, MetaData.TopGridDims,
+				  DomainLeftEdge, DomainRightEdge,
+				  MetaData.NumberOfParticles);
+    TopGrid.GridData->SetTime(MetaData.Time);
+    TopGrid.GridData->SetHydroParameters(MetaData.CourantSafetyNumber,
+					 MetaData.PPMFlatteningParameter,
+					 MetaData.PPMDiffusionParameter,
+					 MetaData.PPMSteepeningParameter);
+    TopGrid.GridData->SetGravityParameters(MetaData.GravityBoundary);
+    
+    // Repair TopGridDims (subtract ghost zones added earlier)
+    
+    for (dim = 0; dim < MetaData.TopGridRank; dim++)
+      MetaData.TopGridDims[dim] = max(MetaData.TopGridDims[dim] -
+				      2*DEFAULT_GHOST_ZONES, 1);
+    
+    // Set TopGrid Hierarchy Entry
+    
+    TopGrid.NextGridThisLevel = NULL;  // always true
+    TopGrid.ParentGrid        = NULL;  // always true
+    TopGrid.NextGridNextLevel = NULL;  // can be reset by initializer
+    
   } // end: if (ProblemType != 40)
- 
+  
   // Call problem initializer
 
-#ifdef MEM_TRACE
-    MemInUse = mused();
-    fprintf(memtracePtr, "Call problem init  %16"ISYM" \n", MemInUse);
-#endif
+  PrintMemoryUsage("Call problem init");
  
   if (ProblemType == 0) {
-    fprintf(stderr, "No problem specified.\n");
-    ENZO_FAIL("");
+    ENZO_FAIL("No problem specified.");
   }
  
   int ret = INT_UNDEFINED;
  
   if (debug)
     printf("InitializeNew: Starting problem initialization.\n");
- 
+  
   // 1) Shocktube problem
  
   if (ProblemType == 1)
-    ret = ShockTubeInitialize(fptr, Outfptr, TopGrid);
- 
+    ret = HydroShockTubesInitialize(fptr, Outfptr, TopGrid, MetaData);
+  
   // 2) Wave pool
  
   if (ProblemType == 2)
@@ -430,7 +444,7 @@ int InitializeNew(char *filename, HierarchyEntry &TopGrid,
       ret = CosmologySimulationInitialize(fptr, Outfptr, TopGrid, MetaData);
     }
   }
-
+  
   
  
   // 31) GalaxySimulation
@@ -440,15 +454,19 @@ int InitializeNew(char *filename, HierarchyEntry &TopGrid,
 
 // 35) Shearing Box Simulation
   if (ProblemType == 35) 
-      ret = ShearingBoxInitialize(fptr, Outfptr, TopGrid, MetaData);
+    ret = ShearingBoxInitialize(fptr, Outfptr, TopGrid, MetaData);
+  if (ProblemType == 36) 
+    ret = ShearingBox2DInitialize(fptr, Outfptr, TopGrid, MetaData);
+  if (ProblemType == 37) 
+    ret = ShearingBoxStratifiedInitialize(fptr, Outfptr, TopGrid, MetaData);
   
-   
+  
   // 40) Supernova Explosion from restart
- 
+  
   if (ProblemType == 40)
     ret = SupernovaRestartInitialize(fptr, Outfptr, TopGrid, MetaData,
 				     Exterior);
- 
+  
   // 50) Photon Test
 
 #ifdef TRANSFER
@@ -457,46 +475,45 @@ int InitializeNew(char *filename, HierarchyEntry &TopGrid,
 #endif /* TRANSFER */
 
   // 60) Turbulence Simulation.
- 
+  
   if (ProblemType == 60)
     ret = TurbulenceSimulationInitialize(fptr, Outfptr, TopGrid, MetaData);
-
+  
   // 61) Protostellar Collapse
   if (ProblemType == 61)
     ret = ProtostellarCollapseInitialize(fptr, Outfptr, TopGrid, MetaData);
-
+  
   // 62) Cooling test problem
   if (ProblemType == 62)
     ret = CoolingTestInitialize(fptr, Outfptr, TopGrid, MetaData);
-
+  
   // Insert new problem intializer here...
-
-    if (ProblemType ==300) {
+  
+  if (ProblemType ==300) {
     ret = PoissonSolverTestInitialize(fptr, Outfptr, TopGrid, MetaData);
   }
-
-
-
-
-  /* 100) 1D HD Test */
-  if (ProblemType == 100) {
-    ret = Hydro1DTestInitialize(fptr, Outfptr, TopGrid, MetaData);
-  }
-
+  
   /* 101) 3D Collapse */
   if (ProblemType == 101) {
     ret = Collapse3DInitialize(fptr, Outfptr, TopGrid, MetaData);
   }
-
+  
   /* 102) 1D Spherical Collapse */
   if (ProblemType == 102) {
     ret = Collapse1DInitialize(fptr, Outfptr, TopGrid, MetaData);
   }
-
-
+  
+  /* 106) Hydro and MHD Turbulence problems/Star Formation */
   if (ProblemType == 106) {
-    ret = TurbulenceInitialize(fptr, Outfptr, TopGrid, MetaData);
+    ret = TurbulenceInitialize(fptr, Outfptr, TopGrid, MetaData, 0);
   }
+  
+  // 107) Put Sink from restart
+ 
+  if (ProblemType == 107)
+    ret = PutSinkRestartInitialize(fptr, Outfptr, TopGrid, MetaData,
+				     Exterior);
+ 
 
   /* 200) 1D MHD Test */
   if (ProblemType == 200) {
@@ -515,7 +532,7 @@ int InitializeNew(char *filename, HierarchyEntry &TopGrid,
 
   /* 203) MHD Turbulence Collapse */
   if (ProblemType == 203) {
-    ret = MHDTurbulenceInitialize(fptr, Outfptr, TopGrid, MetaData);
+    ret = MHDTurbulenceInitialize(fptr, Outfptr, TopGrid, MetaData, 0);
   }
 
   /* 204) 3D MHD Test */
@@ -533,17 +550,67 @@ int InitializeNew(char *filename, HierarchyEntry &TopGrid,
     ret = AGNDiskInitialize(fptr, Outfptr, TopGrid, MetaData);
   }
 
+  /* ???? */
+  if (ProblemType ==300) {
+    ret = PoissonSolverTestInitialize(fptr, Outfptr, TopGrid, MetaData);
+  }
+
+
+#ifdef TRANSFER
+  // 400) Radiation-Hydrodynamics test 1 -- constant fields
+  if ((ProblemType == 400) || (ProblemType == 416))
+    ret = RadHydroConstTestInitialize(fptr, Outfptr, TopGrid, MetaData, 0);
+
+  // 401) Radiation-Hydrodynamics test 2 -- stream test
+  if (ProblemType == 401)
+    ret = RadHydroStreamTestInitialize(fptr, Outfptr, TopGrid, MetaData, 0);
+
+  // 402) Radiation-Hydrodynamics test 3 -- pulse test
+  if (ProblemType == 402)
+    ret = RadHydroPulseTestInitialize(fptr, Outfptr, TopGrid, MetaData, 0);
+
+  // 403) Radiation-Hydrodynamics test 4 -- grey Marshak test
+  if (ProblemType == 403)
+    ret = RadHydroGreyMarshakWaveInitialize(fptr, Outfptr, TopGrid, MetaData, 0);
+
+  // 404/405) Radiation-Hydrodynamics test 5 -- radiating shock test
+  if ( (ProblemType == 404) || (ProblemType == 405) )
+    ret = RadHydroRadShockInitialize(fptr, Outfptr, TopGrid, MetaData, 0);
+
+  // 410/411) Radiation-Hydrodynamics tests 10 & 11 -- HI ionization (static)
+  if ((ProblemType == 410) || (ProblemType == 411))
+    ret = RHIonizationTestInitialize(fptr, Outfptr, TopGrid, MetaData, 0);
+
+  // 412) Radiation-Hydrodynamics test 12 -- HI ionization of a clump
+  if (ProblemType == 412)
+    ret = RHIonizationClumpInitialize(fptr, Outfptr, TopGrid, MetaData, 0);
+
+  // 413) Radiation-Hydrodynamics test 13 -- HI ionization of a steep region
+  if (ProblemType == 413)
+    ret = RHIonizationSteepInitialize(fptr, Outfptr, TopGrid, MetaData, 0);
+
+  // 414/415) Radiation-Hydrodynamics tests 14 & 15 -- Cosmological HI ioniz.
+  if ((ProblemType == 414) || (ProblemType == 415))
+    ret = CosmoIonizationInitialize(fptr, Outfptr, TopGrid, MetaData, 0);
+
+
+  // 450-452) Free-streaming radiation tests
+  if ((ProblemType == 450) || (ProblemType == 451) || (ProblemType == 452))
+    ret = FSMultiSourceInitialize(fptr, Outfptr, TopGrid, MetaData, 0);
+#endif /* TRANSFER */
+
+
+  // Insert new problem intializer here...
+
 
  
   
   if (ret == INT_UNDEFINED) {
-    fprintf(stderr, "Problem Type %"ISYM" undefined.\n", ProblemType);
-    ENZO_FAIL("");
+    ENZO_VFAIL("Problem Type %"ISYM" undefined.\n", ProblemType)
   }
  
   if (ret == FAIL) {
-    fprintf(stderr, "Error in problem initialization.\n");
-    ENZO_FAIL("");
+    ENZO_FAIL("Error in problem initialization.");
   }
  
   if (debug)
@@ -553,136 +620,132 @@ int InitializeNew(char *filename, HierarchyEntry &TopGrid,
 
   InitializeMovieFile(MetaData, TopGrid);
  
-  // Do some error checking
+  /* Do some error checking */
  
-  if (MetaData.StopTime == FLOAT_UNDEFINED) {
-    fprintf(stderr, "StopTime never set.\n");
-    ENZO_FAIL("");
+  if (MetaData.StopTime == FLOAT_UNDEFINED)
+    ENZO_FAIL("StopTime never set.");
+
+  int nFields = TopGrid.GridData->ReturnNumberOfBaryonFields();
+  if (nFields >= MAX_NUMBER_OF_BARYON_FIELDS) {
+    ENZO_VFAIL("NumberOfBaryonFields (%"ISYM") + 1 exceeds "
+	       "MAX_NUMBER_OF_BARYON_FIELDS (%"ISYM").\n", 
+	       nFields, MAX_NUMBER_OF_BARYON_FIELDS)
   }
 
-#ifdef MEM_TRACE
-    MemInUse = mused();
-    fprintf(memtracePtr, "1st Initialization done %16"ISYM" \n", MemInUse);
-#endif
-
- 
+  PrintMemoryUsage("1st Initialization done");
+  
+  
   if (debug)
     printf("Initialize Exterior\n");
- 
+  
   // Initialize the exterior (unless it was set in the problem initializer)
- 
+  
   if (Exterior.AmIPrepared() == FALSE) {
-
+    
     Exterior.Prepare(TopGrid.GridData);   // set rank and dims
-
+    
     if (MetaData.BoundaryConditionName != NULL) {
-
+      
       if ((BCfptr = fopen(MetaData.BoundaryConditionName, "r")) == NULL) {
-	fprintf(stderr, "Error opening BC file: %s\n",
-		MetaData.BoundaryConditionName);
-	ENZO_FAIL("");
+	ENZO_VFAIL("Error opening BC file: %s\n",
+		   MetaData.BoundaryConditionName)
       }
-
+      
       fprintf(stderr, "Opened BC file mode r\n");
 
       if (Exterior.ReadExternalBoundary(BCfptr) == FAIL) {
-	fprintf(stderr, "Error in ReadExternalBoundary.\n");
-	ENZO_FAIL("");
+	ENZO_FAIL("Error in ReadExternalBoundary.");
       }
       fclose(BCfptr);
     } else 
       {
-      if (debug) 
-        fprintf(stderr, "InitializeExternalBoundaryFace\n");
-
-      SimpleConstantBoundary = TRUE;
-
-      for (dim = 0; dim < MetaData.TopGridRank; dim++) {
-        if (MetaData.LeftFaceBoundaryCondition[dim] != periodic ||
-            MetaData.RightFaceBoundaryCondition[dim] != periodic) {
-          SimpleConstantBoundary = FALSE;
-        }
-      }
-
-      if (debug) {
-        if (SimpleConstantBoundary) {
-          fprintf(stderr, "SimpleConstantBoundary TRUE\n");
-        } else {
-          fprintf(stderr, "SimpleConstantBoundary FALSE\n");
-        }
-      }
-        
-      for (dim = 0; dim < MetaData.TopGridRank; dim++)
-	if (Exterior.InitializeExternalBoundaryFace(dim,
-				    MetaData.LeftFaceBoundaryCondition[dim],
-				    MetaData.RightFaceBoundaryCondition[dim],
-				    Dummy, Dummy)
-	    == FAIL) {
-	  fprintf(stderr, "Error in InitializeExternalBoundaryFace.\n");
-	  ENZO_FAIL("");
+	if (debug) 
+	  fprintf(stderr, "InitializeExternalBoundaryFace\n");
+	
+	SimpleConstantBoundary = TRUE;
+	
+	for (dim = 0; dim < MetaData.TopGridRank; dim++) {
+	  if (MetaData.LeftFaceBoundaryCondition[dim] != periodic ||
+	      MetaData.RightFaceBoundaryCondition[dim] != periodic) {
+	    SimpleConstantBoundary = FALSE;
+	  }
 	}
- 
-      // Initialize particle boundary conditions
- 
-      Exterior.InitializeExternalBoundaryParticles(
-					  MetaData.ParticleBoundaryType);
- 
-    }  // end: if (MetaData.BoundaryConditionName != NULL)
- 
+	
+	if (debug) {
+	  if (SimpleConstantBoundary) {
+	    fprintf(stderr, "SimpleConstantBoundary TRUE\n");
+	  } else {
+	    fprintf(stderr, "SimpleConstantBoundary FALSE\n");
+	  }
+	}
+        
+	for (dim = 0; dim < MetaData.TopGridRank; dim++)
+	  if (Exterior.InitializeExternalBoundaryFace(dim,
+						      MetaData.LeftFaceBoundaryCondition[dim],
+						      MetaData.RightFaceBoundaryCondition[dim],
+						      Dummy, Dummy)
+	      == FAIL) {
+	    ENZO_FAIL("Error in InitializeExternalBoundaryFace.");
+	  }
+	
+	// Initialize particle boundary conditions
+	
+	Exterior.InitializeExternalBoundaryParticles(
+						     MetaData.ParticleBoundaryType);
+	
+      }  // end: if (MetaData.BoundaryConditionName != NULL)
+    
   }  // end of set Exterior
-
-
-
-#ifdef MEM_TRACE
-    MemInUse = mused();
-    fprintf(memtracePtr, "Exterior set  %16"ISYM" \n", MemInUse);
-#endif
-
+  
+  
+  PrintMemoryUsage("Exterior set");
+  
   if (debug) {
     fprintf(stderr, "End of set exterior\n");
   }
- 
+  
   // Set values that were left undefined (above)
- 
+  
   if (MetaData.TimeLastDataDump == FLOAT_UNDEFINED)
     MetaData.TimeLastDataDump = MetaData.Time - MetaData.dtDataDump*1.00001;
   if (MetaData.TimeLastHistoryDump == FLOAT_UNDEFINED)
     MetaData.TimeLastHistoryDump = MetaData.Time - MetaData.dtHistoryDump;
- 
+  
   if (MetaData.TimeLastTracerParticleDump == FLOAT_UNDEFINED)
     MetaData.TimeLastTracerParticleDump =
-                           MetaData.Time - MetaData.dtTracerParticleDump;
- 
+      MetaData.Time - MetaData.dtTracerParticleDump;
+  
   if (MetaData.CycleLastDataDump == INT_UNDEFINED)
     MetaData.CycleLastDataDump = MetaData.CycleNumber -
-                                 MetaData.CycleSkipDataDump;
+      MetaData.CycleSkipDataDump;
   if (MetaData.CycleLastHistoryDump == INT_UNDEFINED)
     MetaData.CycleLastHistoryDump = MetaData.CycleNumber -
-                                    MetaData.CycleSkipHistoryDump;
- 
+      MetaData.CycleSkipHistoryDump;
+  
   // Make changes required for Zeus solver, and turn the TotalEnergy
   // variable (should be renamed just Energy) into GasEnergy
- 
+  
   if (HydroMethod == Zeus_Hydro &&
       ProblemType != 10 &&  // BWO (Rotating cylinder)
       ProblemType != 11 &&  // BWO (radiating shock)
+      ProblemType != 13 &&  // BWO (Rotating Sphere)
       ProblemType != 20 &&
       ProblemType != 27 &&
       ProblemType != 30 &&
       ProblemType != 31 &&  // BWO (isolated galaxies)
-      ProblemType != 60) //AK
+      ProblemType != 60 &&
+      ProblemType != 106 ) //AK
     ConvertTotalEnergyToGasEnergy(&TopGrid);
- 
+  
   // If using StarParticles, set the number to zero 
   // (assuming it hasn't already been set)
   if (NumberOfStarParticles == NULL)
     if (StarParticleCreation || StarParticleFeedback)
       NumberOfStarParticles = 0;
- 
+  
   // Convert minimum initial overdensity for refinement to mass
   // (unless MinimumMass itself was actually set)
-
-
+  
   for (i = 0; i < MAX_FLAGGING_METHODS; i++)
     if (MinimumMassForRefinement[i] == FLOAT_UNDEFINED) {
       MinimumMassForRefinement[i] = MinimumOverDensityForRefinement[i];
@@ -691,58 +754,56 @@ int InitializeNew(char *filename, HierarchyEntry &TopGrid,
 	  (DomainRightEdge[dim]-DomainLeftEdge[dim])/
 	  float(MetaData.TopGridDims[dim]);
     }
- 
+  
   // Check for the creation of tracer particles
   // Tracer particles will not be created at this point if ||rgio in ON
- 
+  
   if (TracerParticleCreation(fptr, TopGrid, MetaData) == FAIL) {
-    fprintf(stderr, "Error in TracerParticleCreation\n");
-    ENZO_FAIL("");
+    ENZO_FAIL("Error in TracerParticleCreation");
   }
- 
+  
   // Write the MetaData/global values to the Parameter file
- 
+  
   if (MyProcessorNumber == ROOT_PROCESSOR)
     if (WriteParameterFile(Outfptr, MetaData) == FAIL) {
-      fprintf(stderr, "Error in WriteParameterFile.\n");
-      ENZO_FAIL("");
+      ENZO_FAIL("Error in WriteParameterFile.");
     }
- 
+  
   if (debug)
     printf("InitializeNew: Initial grid hierarchy set\n");
- 
+  
   // Walk the grids
- 
+  
   HierarchyEntry *CurrentGrid;
   FLOAT WT = -1.0;
   int GP = 1;
   int gridcounter = 0;
- 
+  
   CurrentGrid = &TopGrid;
 
 
  
   while (CurrentGrid != NULL) {
- 
+    
     // WriteHierarchyStuff(stderr, CurrentGrid, "UUUU", GP, WT);
- 
+    
     if (debug)
       printf("InitializeNew: Partition Initial Grid %"ISYM"\n", gridcounter);
- 
+    
     CommunicationPartitionGrid(CurrentGrid, gridcounter);
- 
+    
     gridcounter++;
-
+    
     if (PartitionNestedGrids)
       CurrentGrid = CurrentGrid->NextGridNextLevel;
     else
       CurrentGrid = NULL;
- 
+    
   }
- 
+  
   // For problem 30, using ParallelGridIO,
   // read in data only after partitioning the grid
- 
+  
   if (debug)
     if (ParallelRootGridIO == TRUE && ProblemType == 30) {
       if (PartitionNestedGrids) {
@@ -751,62 +812,61 @@ int InitializeNew(char *filename, HierarchyEntry &TopGrid,
         printf("InitializeNew: Re-initialize CosmologySimulation\n");
       }
     }
-
-#ifdef MEM_TRACE
-    MemInUse = mused();
-    fprintf(memtracePtr, "Before 2nd pass  %16"ISYM" \n", MemInUse);
-#endif
- 
+  
+  PrintMemoryUsage("Before 2nd pass");
+  
   if (ParallelRootGridIO == TRUE && ProblemType == 30) {
     if (PartitionNestedGrids) {
       if (NestedCosmologySimulationReInitialize(&TopGrid, MetaData) == FAIL) {
-        fprintf(stderr, "Error in NestedCosmologySimulationReInitialize.\n");
-        ENZO_FAIL("");
+	ENZO_FAIL("Error in NestedCosmologySimulationReInitialize.");
       }
     } else {
       if (CosmologySimulationReInitialize(&TopGrid, MetaData) == FAIL) {
-        fprintf(stderr, "Error in CosmologySimulationReInitialize.\n");
-        ENZO_FAIL("");
+	ENZO_FAIL("Error in CosmologySimulationReInitialize.");
       }
     }
   }
- 
-#ifdef MEM_TRACE
-    MemInUse = mused();
-    fprintf(memtracePtr, "After 2nd pass  %16"ISYM" \n", MemInUse);
-#endif
- 
+  
+  PrintMemoryUsage("After 2nd pass");
+  
   // For problem 60, using ParallelGridIO, read in data only after
   // partitioning grid.
  
   if (ParallelRootGridIO == TRUE && ProblemType == 60)
     if (TurbulenceSimulationReInitialize(&TopGrid, MetaData) == FAIL) {
-      fprintf(stderr, "Error in TurbulenceSimulationReInitialize.\n");
-      ENZO_FAIL("");
+      ENZO_FAIL("Error in TurbulenceSimulationReInitialize.");
     }
- 
- 
-
   
- 
+  if (ProblemType == 106){
+    if (TurbulenceInitialize(fptr, Outfptr, TopGrid, MetaData, 1)
+	== FAIL) {
+      ENZO_FAIL("Error in TurbulenceReInitialize.\n");
+    }
+    //  if (HydroMethod == Zeus_Hydro) ConvertTotalEnergyToGasEnergy(&TopGrid);
+  }
+  
+  // For ProblemType 203 (Turbulence Simulation we only initialize the data
+  // once the topgrid has been split.
+  if (ProblemType == 203)
+    if (MHDTurbulenceInitialize(fptr, Outfptr, TopGrid, MetaData, 1)
+	== FAIL) {
+      ENZO_FAIL("Error in MHDTurbulenceReInitialize.\n");
+    }
+  
+  
   // Close parameter files
- 
+  
   fclose(fptr);
- 
+  
   if (MyProcessorNumber == ROOT_PROCESSOR)
     fclose(Outfptr);
 
-#ifdef MEM_TRACE
-    MemInUse = mused();
-    fprintf(memtracePtr, "Exit X_Init  %16"ISYM" \n", MemInUse);
-#endif
+  PrintMemoryUsage("Exit X_Init");
 
-#ifdef MISCOUNT
   // 2006-12-11 Skory bug fix for star particle miscounts
   // Added the following line:
 
   CommunicationBroadcastValue(&MetaData.NumberOfParticles, ROOT_PROCESSOR);
-#endif
  
   MetaData.FirstTimestepAfterRestart = FALSE;
   
@@ -822,6 +882,7 @@ int InitializeNew(char *filename, HierarchyEntry &TopGrid,
 void ConvertTotalEnergyToGasEnergy(HierarchyEntry *Grid)
 {
   if (Grid != NULL) {
+
     Grid->GridData->ConvertTotalEnergyToGasEnergy();
     ConvertTotalEnergyToGasEnergy(Grid->NextGridThisLevel);
     ConvertTotalEnergyToGasEnergy(Grid->NextGridNextLevel);

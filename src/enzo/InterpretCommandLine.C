@@ -28,12 +28,15 @@ int InterpretCommandLine(int argc, char *argv[], char *myname,
 			 int &InformationOutput,
 			 int &OutputAsParticleData,
 			 int &project, int &ProjectionDimension,
-			 int &ProjectionSmooth,
+			 int &ProjectionSmooth, int &velanyl,
 			 char *ParameterFile[],
 			 int RegionStart[], int RegionEnd[],
 			 FLOAT RegionStartCoordinate[],
 			 FLOAT RegionEndCoordinate[],
-			 int &RegionLevel, int MyProcessorNumber)
+			 int &RegionLevel, int &HaloFinderOnly,
+			 int &WritePotentialOnly,
+			 int &SmoothedDarkMatterOnly,
+			 int MyProcessorNumber)
 {
  
   int dim;
@@ -64,8 +67,7 @@ int InterpretCommandLine(int argc, char *argv[], char *myname,
 	  argc--;
 	  if (sscanf((*++argv), "%"PSYM, &RegionStartCoordinate[dim++]) != 1) {
 	    if (MyProcessorNumber == ROOT_PROCESSOR)
-	      fprintf(stderr, "%s: error reading Begin coordinates\n", myname);
-	    ENZO_FAIL("");
+	    ENZO_VFAIL("%s: error reading Begin coordinates\n", myname)
 	  }
 	  while (*(argv[0]+1))
 	    ++argv[0];
@@ -87,8 +89,7 @@ int InterpretCommandLine(int argc, char *argv[], char *myname,
 	  argc--;
 	  if (sscanf((*++argv), "%"ISYM, &RegionEnd[dim++]) != 1) {
 	    if (MyProcessorNumber == ROOT_PROCESSOR)
-	      fprintf(stderr, "%s: error reading End indexes.\n", myname);
-	    ENZO_FAIL("");
+	    ENZO_VFAIL("%s: error reading End indexes.\n", myname)
 	  }
 	  while (*(argv[0]+1))
 	    ++argv[0];
@@ -103,12 +104,21 @@ int InterpretCommandLine(int argc, char *argv[], char *myname,
 	  argc--;
 	  if (sscanf((*++argv), "%"PSYM, &RegionEndCoordinate[dim++]) != 1) {
 	    if (MyProcessorNumber == ROOT_PROCESSOR)
-	      fprintf(stderr, "%s: error reading Finish coordinates\n",myname);
-	    ENZO_FAIL("");
+	    ENZO_VFAIL("%s: error reading Finish coordinates\n",myname)
 	  }
 	  while (*(argv[0]+1))
 	    ++argv[0];
 	}
+	break;
+
+	/* FOF halo finder only */
+
+      case 'F':
+	HaloFinderOnly = TRUE;
+	break;
+
+      case 'g':
+	WritePotentialOnly = TRUE;
 	break;
  
 	/* help */
@@ -131,16 +141,14 @@ int InterpretCommandLine(int argc, char *argv[], char *myname,
 	if (--argc > 0) {
 	  if (sscanf((*++argv), "%"ISYM, &RegionLevel) != 1) {
 	    if (MyProcessorNumber == ROOT_PROCESSOR)
-	      fprintf(stderr, "%s: error reading level.\n", myname);
-	    ENZO_FAIL("");
+	    ENZO_VFAIL("%s: error reading level.\n", myname)
 	  }
 	  while (*(argv[0]+1))
 	    ++argv[0];
 	}
 	else {
 	  if (MyProcessorNumber == ROOT_PROCESSOR)
-	    fprintf(stderr, "%s: Need to specify level.\n", myname);
-	  ENZO_FAIL("");
+	  ENZO_VFAIL("%s: Need to specify level.\n", myname)
 	}
 	break;
  
@@ -148,6 +156,12 @@ int InterpretCommandLine(int argc, char *argv[], char *myname,
  
       case 'm':
 	ProjectionSmooth = TRUE;
+	break;
+
+	/* Write smoothed dark matter field */
+
+      case 'M':
+	SmoothedDarkMatterOnly = TRUE;
 	break;
  
 	/* Output as particle data */
@@ -162,19 +176,34 @@ int InterpretCommandLine(int argc, char *argv[], char *myname,
 	if (--argc > 0) {
 	  if (sscanf((*++argv), "%"ISYM, &ProjectionDimension) != 1) {
 	    if (MyProcessorNumber == ROOT_PROCESSOR)
-	      fprintf(stderr, "%s: error reading ProjectionDimension.\n",
-		      myname);
-	    ENZO_FAIL("");
+	    ENZO_VFAIL("%s: error reading ProjectionDimension.\n",
+		      myname)
 	  }
 	  while (*(argv[0]+1))
 	    ++argv[0];
 	}
 	else {
 	  if (MyProcessorNumber == ROOT_PROCESSOR)
-	    fprintf(stderr, "%s: Need to specify level.\n", myname);
-	  ENZO_FAIL("");
+	  ENZO_VFAIL("%s: Need to specify dimension.\n", myname)
 	}
-	project = TRUE;
+	project = 1;
+	break;
+
+      case 'P':
+	if (--argc > 0) {
+	  if (sscanf((*++argv), "%"ISYM, &ProjectionDimension) != 1) {
+	    if (MyProcessorNumber == ROOT_PROCESSOR)
+	    ENZO_VFAIL("%s: error reading ProjectionDimension.\n",
+		      myname)
+	  }
+	  while (*(argv[0]+1))
+	    ++argv[0];
+	}
+	else {
+	  if (MyProcessorNumber == ROOT_PROCESSOR)
+	  ENZO_VFAIL("%s: Need to specify dimension.\n", myname)
+	}
+	project = 2;
 	break;
  
 	/* restart file. */
@@ -191,8 +220,7 @@ int InterpretCommandLine(int argc, char *argv[], char *myname,
 	  argc--;
 	  if (sscanf((*++argv), "%"ISYM, &RegionStart[dim++]) != 1) {
 	    if (MyProcessorNumber == ROOT_PROCESSOR)
-	      fprintf(stderr, "%s: error reading Start indexes.\n", myname);
-	    ENZO_FAIL("");
+	    ENZO_VFAIL("%s: error reading Start indexes.\n", myname)
 	  }
 	  while (*(argv[0]+1))
 	    ++argv[0];
@@ -205,12 +233,15 @@ int InterpretCommandLine(int argc, char *argv[], char *myname,
 	extract = TRUE;
 	break;
  
+      case 'v':
+	velanyl = TRUE;
+	break;
+
 	/* Unknown */
  
       default:
 	if (MyProcessorNumber == ROOT_PROCESSOR)
-	  fprintf(stderr, "%s: unknown command-line option: -%s.\n",myname,&c);
-	ENZO_FAIL("");
+	ENZO_VFAIL("%s: unknown command-line option: -%s.\n",myname,&c)
 	
       } // end of switch(c)
  
@@ -218,8 +249,9 @@ int InterpretCommandLine(int argc, char *argv[], char *myname,
  
   if (argc != 1) {
     if (MyProcessorNumber == ROOT_PROCESSOR)
+
       PrintUsage(myname);
-    ENZO_FAIL("");
+    my_exit(EXIT_SUCCESS);
   }
   *ParameterFile = argv[0];
  
@@ -238,8 +270,12 @@ void PrintUsage(char *myname)
 	          "      -x(extract)\n"
 	          "         -l(evel_of_extract) level\n"
 	          "      -p(roject_to_plane) dimension\n"
+	          "      -P(roject_to_plane version 2) dimension\n"
                   "         -m(smooth projection)\n"
 	          "      -o(utput as particle data)\n"
+	          "      -g (Write Potential field only)\n"
+	          "      -M (Write smoothed DM field only)\n"
+	          "      -F(riends-of-friends halo finder only)\n"
                   "      -h(elp)\n"
 	          "      -i(nformation output)\n"
 	          "      -s(tart  index region) dim0 [dim1] [dim2]\n"

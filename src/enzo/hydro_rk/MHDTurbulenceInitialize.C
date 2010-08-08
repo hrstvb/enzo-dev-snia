@@ -8,10 +8,14 @@
 /
 /
 ************************************************************************/
+#ifdef USE_MPI
+#include <mpi.h>
+#endif /* USE_MPI */
 
 #include <string.h>
 #include <stdio.h>
 #include <math.h>
+#include "ErrorExceptions.h"
 #include "macros_and_parameters.h"
 #include "typedefs.h"
 #include "global_data.h"
@@ -22,6 +26,8 @@
 #include "Hierarchy.h"
 #include "LevelHierarchy.h"
 #include "TopGridData.h"
+#include "CommunicationUtilities.h"
+
 
 void WriteListOfFloats(FILE *fptr, int N, float floats[]);
 void WriteListOfFloats(FILE *fptr, int N, FLOAT floats[]);
@@ -31,10 +37,9 @@ int RebuildHierarchy(TopGridData *MetaData,
 int GetUnits(float *DensityUnits, float *LengthUnits,
 		      float *TemperatureUnits, float *TimeUnits,
 		      float *VelocityUnits, FLOAT Time);
-int CommunicationPartitionGrid(HierarchyEntry *Grid, int gridnum);
 
 int MHDTurbulenceInitialize(FILE *fptr, FILE *Outfptr, 
-			    HierarchyEntry &TopGrid, TopGridData &MetaData)
+			    HierarchyEntry &TopGrid, TopGridData &MetaData, int SetBaryonFields)
 {
   char *DensName = "Density";
   char *TEName   = "TotalEnergy";
@@ -60,25 +65,30 @@ int MHDTurbulenceInitialize(FILE *fptr, FILE *Outfptr,
   float rho_medium=1.0, cs=1.0, mach=1.0, Bnaught=0.0;
 
   /* read input from file */
-
+  rewind(fptr);
   while (fgets(line, MAX_LINE_LENGTH, fptr) != NULL) {
 
     ret = 0;
 
     /* read parameters */
 
-    ret += sscanf(line, "RefineAtStart = %d", &RefineAtStart);
-    ret += sscanf(line, "Density = %f", &rho_medium);
-    ret += sscanf(line, "SoundVelocity = %f", &cs);
-    ret += sscanf(line, "MachNumber = %f", &mach);
-    ret += sscanf(line, "InitialBfield = %f", &Bnaught);
-    ret += sscanf(line, "RandomSeed = %d", &RandomSeed);
+    ret += sscanf(line, "RefineAtStart = %"ISYM, &RefineAtStart);
+    ret += sscanf(line, "Density = %"FSYM, &rho_medium);
+    ret += sscanf(line, "SoundVelocity = %"FSYM, &cs);
+    ret += sscanf(line, "MachNumber = %"FSYM, &mach);
+    ret += sscanf(line, "InitialBfield = %"FSYM, &Bnaught);
+    ret += sscanf(line, "RandomSeed = %"ISYM, &RandomSeed);
 
   } // end input from parameter file
+
+  /* Convert to code units */
   
+  printf(" RAW:  rho_medium = %"GSYM",cs = %"GSYM", mach = %"GSYM", Bnaught = %"GSYM" \n",rho_medium,cs,mach,Bnaught);
+
   float rhou = 1.0, lenu = 1.0, tempu = 1.0, tu = 1.0, velu = 1.0, 
     presu = 1.0, bfieldu = 1.0;
-  GetUnits(&rhou, &lenu, &tempu, &tu, &velu, MetaData.Time);
+  if (UsePhysicalUnit) 
+    GetUnits(&rhou, &lenu, &tempu, &tu, &velu, MetaData.Time);
   presu = rhou*lenu*lenu/tu/tu;
   bfieldu = sqrt(presu*4.0*M_PI);
     
@@ -86,42 +96,47 @@ int MHDTurbulenceInitialize(FILE *fptr, FILE *Outfptr,
   cs /= velu;
   Bnaught /= bfieldu;
 
-  printf("rhou=%g,velu=%g,lenu=%g,tu=%g,presu=%g,bfieldu=%g, tempu=%g\n", 
+  printf("rhou=%"GSYM",velu=%"GSYM",lenu=%"GSYM",tu=%"GSYM",presu=%"GSYM",bfieldu=%"GSYM", tempu=%"GSYM"\n", 
 	 rhou, velu,lenu,tu,presu,bfieldu, tempu);
-  printf("rho_medium=%g, cs=%g, Bnaught=%g\n", rho_medium, cs, Bnaught);
+  printf("rho_medium=%"GSYM", cs=%"GSYM", Bnaught=%"GSYM"\n", rho_medium, cs, Bnaught);
 
 
-//   if (ParallelRootGridIO == TRUE && NumberOfProcessors > 1) {
-//     HierarchyEntry *CurrentGrid;
-//     CurrentGrid = &TopGrid;
-//     int gridcounter=0;
-//     while (CurrentGrid != NULL) {
-//       if (debug)
-// 	printf("MHDTurbulenceInitialize: Partition Initial Grid %"ISYM"\n", gridcounter);
-//       CommunicationPartitionGrid(CurrentGrid, gridcounter);
-//       gridcounter++;
-//       CurrentGrid = CurrentGrid->NextGridNextLevel;
-//     }
-    
-//     CurrentGrid = &TopGrid;
-    
-//     while (CurrentGrid != NULL) {
-//       if (CurrentGrid->GridData->MHDTurbulenceInitializeGrid(rho_medium, cs, mach, 
-// 						      Bnaught, RandomSeed, level) == FAIL) {
-// 	fprintf(stderr, "Error in MHDTurbulenceInitializeGrid.\n");
-// 	return FAIL;
-//       }
-//       CurrentGrid = CurrentGrid->NextGridThisLevel;
-//     }
-//   } else { // only one grid:
-    if (TopGrid.GridData->MHDTurbulenceInitializeGrid(rho_medium, cs, mach, 
-						      Bnaught, RandomSeed, 0) == FAIL) {
+  HierarchyEntry *CurrentGrid;
+
+  CurrentGrid = &TopGrid;
+  while (CurrentGrid != NULL) {
+    if (CurrentGrid->GridData->MHDTurbulenceInitializeGrid(rho_medium, cs, mach, 
+				   Bnaught, RandomSeed, 0, SetBaryonFields) == FAIL) {
       fprintf(stderr, "Error in MHDTurbulenceInitializeGrid.\n");
       return FAIL;
     }
-    //  }
 
+    CurrentGrid = CurrentGrid->NextGridThisLevel;
+  }
 
+  if (SetBaryonFields) {
+    // Compute Normalization
+    double v_rms  = 0;
+    double Volume = 0;
+    Eflt fac = 1;    
+
+    CurrentGrid = &TopGrid;
+    while (CurrentGrid != NULL) {
+      if (CurrentGrid->GridData->PrepareVelocityNormalization(&v_rms, &Volume) == FAIL) {
+	fprintf(stderr, "Error in PrepareVelocityNormalization.\n");
+	return FAIL;
+      }
+      CurrentGrid = CurrentGrid->NextGridThisLevel;
+      fprintf(stderr, "v_rms, Volume: %"GSYM"  %"GSYM"\n", v_rms, Volume);
+    }
+    
+#ifdef USE_MPI
+    CommunicationAllReduceValues(&v_rms, 1, MPI_SUM);
+    CommunicationAllReduceValues(&Volume, 1, MPI_SUM);
+#endif
+    fprintf(stderr, "v_rms, Volume: %"GSYM"  %"GSYM"\n", v_rms, Volume);
+    // Carry out the Normalization
+    
   /* Convert minimum initial overdensity for refinement to mass
      (unless MinimumMass itself was actually set). */
 
@@ -147,7 +162,7 @@ int MHDTurbulenceInitialize(FILE *fptr, FILE *Outfptr,
        and re-initialize the level after it is created. */
 
     for (level = 0; level < MaximumRefinementLevel; level++) {
-      printf("In level %i\n", level);
+      printf("In level %"ISYM"\n", level);
       if (RebuildHierarchy(&MetaData, LevelArray, level) == FAIL) {
 	fprintf(stderr, "Error in RebuildHierarchy.\n");
 	return FAIL;
@@ -157,14 +172,30 @@ int MHDTurbulenceInitialize(FILE *fptr, FILE *Outfptr,
 
       LevelHierarchyEntry *Temp = LevelArray[level+1];
       while (Temp != NULL) {
-	if (Temp->GridData->MHDTurbulenceInitializeGrid(rho_medium, cs, mach, 
-							Bnaught, RandomSeed, level) == FAIL) {
+	if (Temp->GridData->MHDTurbulenceInitializeGrid(rho_medium, cs, fac, 
+							Bnaught, RandomSeed, level, SetBaryonFields) == FAIL) {
 	  fprintf(stderr, "Error in MHDTurbulenceInitializeGrid.\n");
 	  return FAIL;
 	}
 	Temp = Temp->NextGridThisLevel;
       }
     } // end: loop over levels
+
+
+    // Normalize Velocities now
+    v_rms = sqrt(v_rms/Volume); // actuall v_rms
+    fac = cs*mach/v_rms;
+
+    for (level = MaximumRefinementLevel; level >= 0; level--) {
+      LevelHierarchyEntry *Temp = LevelArray[level];
+      while (Temp != NULL) {
+	if (Temp->GridData->NormalizeVelocities(fac) == FAIL) {
+	  fprintf(stderr, "Error in grid::NormalizeVelocities.\n");
+	  return FAIL;
+	}
+	Temp = Temp->NextGridThisLevel;
+      }
+    }
 
     /* Loop back from the bottom, restoring the consistency among levels. */
 
@@ -183,7 +214,6 @@ int MHDTurbulenceInitialize(FILE *fptr, FILE *Outfptr,
   } // end: if (RefineAtStart)
 
   /* set up field names and units */
-
   int count = 0;
   DataLabel[count++] = DensName;
   DataLabel[count++] = Vel1Name;
@@ -205,11 +235,11 @@ int MHDTurbulenceInitialize(FILE *fptr, FILE *Outfptr,
     DataLabel[count++] = Drive3Name;
   }
 
-
-
   for (i = 0; i < count; i++) {
     DataUnits[i] = NULL;
   }
+
+  } // endif SetBaryonFields
 
   return SUCCESS;
 

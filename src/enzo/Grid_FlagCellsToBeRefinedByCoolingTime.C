@@ -64,7 +64,7 @@ int grid::FlagCellsToBeRefinedByCoolingTime()
  
   float *cooling_time = new float[size];
   if (this->ComputeCoolingTime(cooling_time) == FAIL) {
-    fprintf(stderr, "Error in grid->ComputeTemperature.\n");
+    fprintf(stderr, "Error in grid->ComputeCoolingTime.\n");
     return -1;
   }
  
@@ -73,8 +73,7 @@ int grid::FlagCellsToBeRefinedByCoolingTime()
   int DensNum, GENum, TENum, Vel1Num, Vel2Num, Vel3Num;
   if (this->IdentifyPhysicalQuantities(DensNum, GENum, Vel1Num, Vel2Num,
 				       Vel3Num, TENum) == FAIL) {
-    fprintf(stderr, "Error in IdentifyPhysicalQuantities.\n");
-    ENZO_FAIL("");
+    ENZO_FAIL("Error in IdentifyPhysicalQuantities.\n");
   }
  
   /* Loop over grid, looking for cells for which tcool/tsound < 1
@@ -111,6 +110,7 @@ int grid::FlagCellsToBeRefinedByCoolingTime()
   int NumberOfFlaggedCells = 0;
   for (i = 0; i < size; i++)
     if (FlaggingField[i] > 0)
+
       NumberOfFlaggedCells++;
  
   return NumberOfFlaggedCells;

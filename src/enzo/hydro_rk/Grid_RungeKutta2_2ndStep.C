@@ -11,6 +11,8 @@
 
 #include <stdio.h>
 #include <math.h>
+
+#include "ErrorExceptions.h"
 #include "macros_and_parameters.h"
 #include "typedefs.h"
 #include "global_data.h"
@@ -26,7 +28,7 @@ int HydroTimeUpdate_CUDA(float **Prim, int GridDimension[], int GridStartIndex[]
 		          float dtdx, float dt);
 
 
-int grid::RungeKutta2_2ndStep(int CycleNumber, fluxes *SubgridFluxes[], 
+int grid::RungeKutta2_2ndStep(fluxes *SubgridFluxes[], 
 			      int NumberOfSubgrids, int level,
 			      ExternalBoundary *Exterior)
   /*
@@ -46,16 +48,9 @@ int grid::RungeKutta2_2ndStep(int CycleNumber, fluxes *SubgridFluxes[],
   double time1 = ReturnWallTime();
 
   float *Prim[NEQ_HYDRO+NSpecies+NColor];
-
-  int size = 1;
-  for (int dim = 0; dim < GridRank; dim++)
-    size *= GridDimension[dim];
-  
-  int activesize = 1;
-  for (int dim = 0; dim < GridRank; dim++)
-    activesize *= (GridDimension[dim] - 2*DEFAULT_GHOST_ZONES);
-
-  this->ReturnHydroRKPointers(Prim);
+  float *OldPrim[NEQ_HYDRO+NSpecies+NColor];
+  this->ReturnHydroRKPointers(Prim, false); 
+  this->ReturnOldHydroRKPointers(OldPrim, false); 
 
 #ifdef ECUDA
   if (UseCUDA == 1) {
@@ -70,13 +65,13 @@ int grid::RungeKutta2_2ndStep(int CycleNumber, fluxes *SubgridFluxes[],
     
     double time2 = ReturnWallTime();
 
-    for (int field = ivx; field <= ietot; field++) {
+    for (int field = ivx; field <= ietot; field++) {   
       for (int k = GridStartIndex[2]; k <= GridEndIndex[2]; k++) {
 	for (int j = GridStartIndex[1]; j <= GridEndIndex[1]; j++) {
 	  for (int i = GridStartIndex[0]; i <= GridEndIndex[0]; i++) {
 	    int igrid =i + (j + k*GridDimension[1])*GridDimension[0];
-	    BaryonField[field][igrid] *= BaryonField[iden][igrid];
-	    OldBaryonField[field][igrid] *= OldBaryonField[iden][igrid];
+	    Prim[field][igrid] *= Prim[iden][igrid];
+	    OldPrim[field][igrid] *= OldPrim[iden][igrid];
 	  }
 	}
       }
@@ -87,19 +82,19 @@ int grid::RungeKutta2_2ndStep(int CycleNumber, fluxes *SubgridFluxes[],
 	for (int j = GridStartIndex[1]; j <= GridEndIndex[1]; j++) {
 	  for (int i = GridStartIndex[0]; i <= GridEndIndex[0]; i++) {
 	    int igrid =i + (j + k*GridDimension[1])*GridDimension[0];
-	    BaryonField[field][igrid] = 0.5*(OldBaryonField[field][igrid] + BaryonField[field][igrid]);
+	    Prim[field][igrid] = 0.5*(OldPrim[field][igrid] + Prim[field][igrid]);
 	  }
 	}
       }
     }
 
-    for (int field = ivx; field <= ietot; field++) {
+    for (int field = ivx; field <= ietot; field++) {   
       for (int k = GridStartIndex[2]; k <= GridEndIndex[2]; k++) {
 	for (int j = GridStartIndex[1]; j <= GridEndIndex[1]; j++) {
 	  for (int i = GridStartIndex[0]; i <= GridEndIndex[0]; i++) {
 	    int igrid = i + (j + k*GridDimension[1])*GridDimension[0];
-	    BaryonField[field][igrid] /= BaryonField[iden][igrid];
-	    OldBaryonField[field][igrid] /= OldBaryonField[iden][igrid];
+	    Prim[field][igrid] /= Prim[iden][igrid];
+	    OldPrim[field][igrid] /= OldPrim[iden][igrid];
 	  }
 	}
       }
@@ -110,6 +105,14 @@ int grid::RungeKutta2_2ndStep(int CycleNumber, fluxes *SubgridFluxes[],
   } // if UseCUDA == 1
 #endif /* ECUDA */
 
+  int size = 1;
+  for (int dim = 0; dim < GridRank; dim++)
+    size *= GridDimension[dim];
+  
+  int activesize = 1;
+  for (int dim = 0; dim < GridRank; dim++)
+    activesize *= (GridDimension[dim] - 2*DEFAULT_GHOST_ZONES);
+
   float *dU[NEQ_HYDRO+NSpecies+NColor];
   for (int field = 0; field < NEQ_HYDRO+NSpecies+NColor; field++) {
     dU[field] = new float[activesize];
@@ -118,8 +121,10 @@ int grid::RungeKutta2_2ndStep(int CycleNumber, fluxes *SubgridFluxes[],
     }
   }
 
-  int fallback = 0;
+  this->ReturnHydroRKPointers(Prim, true);  //##### added! because Hydro3D needs fractions for species
 
+  // compute dU
+  int fallback = 0;
   if (this->Hydro3D(Prim, dU, dtFixed, SubgridFluxes, NumberOfSubgrids, 
 		    0.5, fallback) == FAIL) {
     return FAIL;

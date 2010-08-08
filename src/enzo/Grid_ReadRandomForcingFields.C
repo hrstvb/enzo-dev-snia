@@ -185,8 +185,7 @@ int grid::ReadRandomForcingFields(FILE *fptr)
     int DensNum, GENum, Vel1Num, Vel2Num, Vel3Num, TENum;
     if (this->IdentifyPhysicalQuantities(DensNum, GENum, Vel1Num, Vel2Num,
                                          Vel3Num, TENum) == FAIL) {
-      fprintf(stderr, "GRRFF: Error in IdentifyPhysicalQuantities.\n");
-      ENZO_FAIL("");
+      ENZO_FAIL("GRRFF: Error in IdentifyPhysicalQuantities.\n");
     }
     int vel = Vel1Num;
     printf("RandomForcing: Fields %"ISYM" %"ISYM" %"ISYM" %"ISYM" %"ISYM" \n",
@@ -237,7 +236,7 @@ int grid::ReadRandomForcingFields(FILE *fptr)
       h5_status = H5Dread(dset_id, float_type_id, H5S_ALL, H5S_ALL, H5P_DEFAULT, (VOIDP) temp);
       if (io_log) fprintf(log_fptr, "H5Dread: %"ISYM"\n", h5_status);
       if( h5_status == h5_error ){my_exit(EXIT_FAILURE);}
-      //      JBPERF_COUNT_READ(dset_id, float_type_id, H5S_ALL);
+      //      LCAPERF_COUNT_READ(dset_id, float_type_id, H5S_ALL);
  
       h5_status = H5Sclose(file_dsp_id);
       if (io_log) fprintf(log_fptr, "H5Sclose: %"ISYM"\n", h5_status);
@@ -318,6 +317,7 @@ int grid::ReadRandomForcingFields(FILE *fptr)
   /* Set the file position indicator. */
  
   if (fsetpos(fptr, &position) != 0)
+
     WARNING_MESSAGE;
  
   return SUCCESS;

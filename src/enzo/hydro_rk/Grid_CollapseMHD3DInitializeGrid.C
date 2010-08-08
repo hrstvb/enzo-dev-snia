@@ -12,6 +12,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
+#include "ErrorExceptions.h"
 #include "macros_and_parameters.h"
 #include "typedefs.h"
 #include "global_data.h"
@@ -20,7 +21,6 @@
 #include "ExternalBoundary.h"
 #include "Grid.h"
 #include "CosmologyParameters.h"
-#include "StarParticleData.h"
 #include "EOS.h"
 
 int GetUnits(float *DensityUnits, float *LengthUnits,
@@ -93,15 +93,18 @@ int grid::CollapseMHD3DInitializeGrid(int n_sphere,
     size *= GridDimension[dim];
   }
 
+  int count=0;
   for (field = 0; field < NumberOfBaryonFields; field++) {
     if (BaryonField[field] == NULL) {
       BaryonField[field] = new float[size];
+      count++;
     }
   }
+  printf("Allocated %"ISYM" Baryonfields\n", count);
 
-  printf("rho_sphere=%g, cs_sphere=%g, rho_medium=%g, p_medium=%g\n",
+  printf("rho_sphere=%"GSYM", cs_sphere=%"GSYM", rho_medium=%"GSYM", p_medium=%"GSYM"\n",
 	 rho_sphere[0], cs_sphere[0], rho_medium, p_medium);
-
+  printf("r_sphere: %"GSYM"\n", r_sphere[0]);
   // if use BE sphere, read in the BE sphere density profile
 
   char *filename = "be.dat";
@@ -117,7 +120,7 @@ int grid::CollapseMHD3DInitializeGrid(int n_sphere,
         printf("BE sphere data not enough\n");
         return FAIL;
       }
-      sscanf(line, "%g %g", &radius[i], &rho_be[i]);
+      sscanf(line, "%"GSYM" %"GSYM, &radius[i], &rho_be[i]);
     }
     fclose(fptr);
   }
@@ -139,10 +142,10 @@ int grid::CollapseMHD3DInitializeGrid(int n_sphere,
         printf("SIT data not enough\n");
         return FAIL;
       }
-      sscanf(line, "%g %g %g %g", &theta_sit[i], &R_sit[i], &phi_sit[i], &dphi_sit[i]);
+      sscanf(line, "%"GSYM" %"GSYM" %"GSYM" %"GSYM, &theta_sit[i], &R_sit[i], &phi_sit[i], &dphi_sit[i]);
     }
     fgets(line, MAX_LINE_LENGTH, fptr);
-    sscanf(line, "%g", &v_sit);
+    sscanf(line, "%"GSYM, &v_sit);
     fclose(fptr);
   }
 
@@ -204,11 +207,28 @@ int grid::CollapseMHD3DInitializeGrid(int n_sphere,
 	    
 	    /* 0. uniform sphere */
 	    
+	    if (sphere_type[sphere] == 0) { // set field along x for this problem
+	      Bx = Bnaught;
+	      By = 0.0;
+	      Bz = 0.0;
+	    };
+
+
 	    if (sphere_type[sphere] == 0) {
 	      rho  = rho_sphere[sphere];
 	      FLOAT cos2phi = cosphi*cosphi -sinphi*sinphi;
-	      rho *= (1.0 + 0.2*cos2phi);
-	      eint = pow(cs_sphere[sphere], 2)/(Gamma-1.0);
+	      //	      rho *= (1.0 + 0.2*cos2phi);
+	      // Burkert & Bodenheimer (1993) m=2 perturbation: 	      
+	      float m2mode = 1. + 0.1*cos(2.*phi);
+	      rho *= m2mode;
+	      // BUT keep the pressure constant everywhere
+	      // to avoid discontinuities at the sphere boundaries
+	      eint = pow(cs_sphere[sphere], 2)/(Gamma-1.0)/m2mode;
+	      // for the B-field we put it along x to slow the 
+	      // collapse along the z direction
+	      Bx = Bnaught;
+	      By = 0;
+	      Bz = 0;
               vel[0] = -omega_sphere[sphere]*ypos;
               vel[1] = omega_sphere[sphere]*xpos;
 	    }

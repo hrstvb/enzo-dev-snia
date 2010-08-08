@@ -44,8 +44,9 @@ OUTPUT   = out.compile
 
 ENZO_DIR = .
 MODULES  = 
+VERBOSE  = 0
 
-SVN      = svn
+SVN      = hg
 
 #-----------------------------------------------------------------------
 # Make.config.settings is used for setting default values to all compile-time 
@@ -103,7 +104,7 @@ include Make.config.objects
 # MAKE ENZO BY DEFAULT
 #-----------------------------------------------------------------------
 
-all: $(EXE).exe
+all: MACHNOTES $(EXE).exe
 
 # I believe this has to be done here, as it is target-specific.
 lib: CFLAGS   += $(MACH_SHARED_FLAGS) 
@@ -114,21 +115,31 @@ lib: LDFLAGS  += $(MACH_SHARED_FLAGS)
 lib: lib$(EXE)_p$(ASSEMBLE_PARTICLE_NUMBER)_b$(ASSEMBLE_PRECISION_NUMBER).$(MACH_SHARED_EXT)
 
 #-----------------------------------------------------------------------
-# MAIN AN EXECUTABLE
+# MAKE AN EXECUTABLE
 #-----------------------------------------------------------------------
 
-%.exe: $(MODULES) autogen dep %.o $(OBJS_LIB)
+MACHNOTES: 
+	@echo -e $(MACHINE_NOTES)
+
+%.exe: $(MODULES) autogen dep %.o $(OBJS_LIB) MACHNOTES
 	@rm -f $@
-	@echo "Linking"
-	-@$(LD) $(LDFLAGS) -o $*.exe $*.o $(OBJS_LIB) $(LIBS) >& $(OUTPUT)
-	@(if [ -e $@ ]; then \
-	   echo "Success!"; \
+	@echo "Linking enzo executable. Type  cat $(OUTPUT)  in case it fails."
+	@(if [ $(VERBOSE) -eq 0 ]; then \
+		$(LD) $(LDFLAGS) -o $*.exe $*.o $(OBJS_LIB) $(LIBS) >& $(OUTPUT) ; \
 	else \
-	   echo "$(LD) $(LDFLAGS) -o $*.exe $*.o $(OBJS_LIB) $(LIBS)" >> temp1; \
-	   cat temp1 $(OUTPUT) > temp2; \
-	   rm -f temp1; \
-	   mv -f temp2 $(OUTPUT); \
-	   echo "Failed! See $(OUTPUT) for error messages"; \
+		$(LD) $(LDFLAGS) -o $*.exe $*.o $(OBJS_LIB) $(LIBS) >> $(OUTPUT) \
+		2>&1 ; \
+	fi)  
+	@(if [ -e $@ ] ; then  \
+		echo "Success!" ; \
+                if [ ! -e $(TOP_DIR)/bin ]; then mkdir $(TOP_DIR)/bin; fi; \
+                cp $(EXE).exe $(TOP_DIR)/bin/$(EXE); \
+	else \
+		echo "$(LD) $(LDFLAGS) -o $*.exe $*.o $(OBJS_LIB) $(LIBS)" > temp1; \
+		cat temp1 $(OUTPUT) > temp2 ;\
+		mv -f temp2 $(OUTPUT); \
+		rm -f temp1 temp2; \
+		echo "Failed! See $(OUTPUT) for error messages"; \
 	fi)
 
 lib%.$(MACH_SHARED_EXT): $(MODULES) autogen dep enzo.o $(OBJS_LIB)
@@ -146,91 +157,140 @@ lib%.$(MACH_SHARED_EXT): $(MODULES) autogen dep enzo.o $(OBJS_LIB)
 	fi)
 
 #-----------------------------------------------------------------------
+# WRITE ALL COMPILER OUTPUT TO FILE
+#-----------------------------------------------------------------------
+
+.PHONY: verbose
+verbose: VERBOSE = 1
+#verbose:
+#	@rm -fv $(OUTPUT)
+#	@echo "Writing all compiler output to $(OUTPUT)"
+verbose: $(EXE).exe
+
+#-----------------------------------------------------------------------
 # Implicit rules
 #-----------------------------------------------------------------------
 
-.SUFFIXES: .c .C .src .src90 .f .f90 .o .cu
+.SUFFIXES: .c .C .F .F90 .o .cu
 
 # Inhibit removing any *.o files after compiling
 
 .PRECIOUS: %.o
 
-.src.f:
-	@$(CPP) $(DEFINES) $(CPPFLAGS) $*.src > $*.f
-.f.o:
+#.src.f:
+#	@$(CPP) $(DEFINES) $(CPPFLAGS) $*.src > $*.f
+.F.o:
 	@echo "Compiling $<"
 	@rm -f $@
-	-@($(FC) -c -o $@ $(FFLAGS) $*.f) >& $(OUTPUT)
-	@(if [ -e $@ ]; then \
-             rm -f $*.f; \
-          else \
+	@(if [ $(VERBOSE) -eq 0 ]; then \
+	  $(FC) -c -o $@ $(FFLAGS) $(DEFINES) $*.F >& $(OUTPUT) ; \
+	  if [ ! -e $@ ]; then \
              echo; \
-             echo "$(CPP) $(DEFINES) $(CPPFLAGS) $*.src > $*.f"; \
-             echo "$(FC) -c -o $@ $(FFLAGS) $*.f"; \
+             echo "$(FC) -c -o $@ $(FFLAGS) $(DEFINES) $*.F"; \
              echo; \
-             $(CPP) $(DEFINES) $(CPPFLAGS) $*.src > $*.f; \
-             $(FC) -c -o $@ $(FFLAGS) $*.f; \
+             $(FC) -c -o $@ $(FFLAGS) $(DEFINES) $*.F; \
              echo; \
              exit 1; \
-          fi)
+          fi ; \
+	else \
+	  $(FC) -c -o $@ $(FFLAGS)  $(DEFINES) $*.f >> $(OUTPUT) 2>&1 ; \
+	  if [ ! -e $@ ]; then \
+	     echo "See $(OUTPUT) for error messages"; \
+	     exit 1; \
+	  fi ; \
+	fi)
 
-.src90.f90:
-	@echo "Compiling $<"
-	@$(CPP) $(DEFINES) $(CPPFLAGS) $*.src90 > $*.f90
-.f90.o:
+#.src90.f90:
+#	@echo "Compiling $<"
+#	@$(CPP) $(DEFINES) $(CPPFLAGS) $*.src90 > $*.f90
+.F90.o:
 	@rm -f $@
-	-@($(F90) -c -o $@ $(F90FLAGS) $*.f90) >& $(OUTPUT)
-	@(if [ -e $@ ]; then \
-             rm -f $*.f90; \
-          else \
+	@(if [ $(VERBOSE) -eq 0 ]; then \
+	  $(F90) -c -o $@ $(F90FLAGS) $(DEFINES) $*.F90 >& $(OUTPUT) ; \
+	  if [ ! -e $@ ]; then \
              echo; \
-             echo "$(CPP) $(DEFINES) $(CPPFLAGS) $*.src90 > $*.f90"; \
-             echo "$(F90) -c -o $@ $(F90FLAGS) $*.f90"; \
+             echo "$(F90) -c -o $@ $(DEFINES) $(F90FLAGS) $*.F90"; \
              echo; \
-             $(CPP) $(DEFINES) $(CPPFLAGS) $*.src90 > $*.f90; \
-             $(F90) -c -o $@ $(F90FLAGS) $*.f90; \
+             $(F90) -c -o $@ $(F90FLAGS) $*.F90; \
              echo; \
              exit 1; \
-          fi)
+	  fi ; \
+	else \
+	  $(F90) -c -o $@ $(F90FLAGS) $(DEFINES) $*.F90 >> $(OUTPUT) 2>&1 ; \
+	  if [ ! -e $@ ]; then \
+	     echo "See $(OUTPUT) for error messages"; \
+	     exit 1; \
+	  fi ; \
+	fi)
 
 .c.o:
 	@rm -f $@
 	@echo "Compiling $<"
-	-@($(CC) -c -o $@ $(DEFINES) $(CFLAGS) $(INCLUDES) $*.c) >& $(OUTPUT)
-	@(if [ ! -e $@ ]; then \
+	@(if [ $(VERBOSE) -eq 0 ]; then \
+	  $(CC) -c -o $@ $(DEFINES) $(CFLAGS) $(INCLUDES) $*.c \
+	    >& $(OUTPUT) ; \
+	  if [ ! -e $@ ]; then \
              echo; \
-             echo "$(CXX) -c -o $@ $(DEFINES) $(CXXFLAGS) $(INCLUDES) $*.c"; \
+             echo "$(CC) -c -o $@ $(DEFINES) $(CFLAGS) $(INCLUDES) $*.c"; \
              echo; \
-             $(CXX) -c -o $@ $(DEFINES) $(CXXFLAGS) $(INCLUDES) $*.c;\
+             $(CC) -c -o $@ $(DEFINES) $(CFLAGS) $(INCLUDES) $*.c;\
              echo; \
              exit 1; \
-          fi)
+          fi ; \
+	else \
+	  $(CC) -c -o $@ $(DEFINES) $(CFLAGS) $(INCLUDES) $*.c \
+	    >> $(OUTPUT) 2>&1 ; \
+	  if [ ! -e $@ ]; then \
+	     echo "See $(OUTPUT) for error messages"; \
+	     exit 1; \
+	  fi ; \
+	fi)
 
 .C.o:
 	@rm -f $@
 	@echo "Compiling $<"
-	-@($(CXX) -c -o $@ $(DEFINES) $(CXXFLAGS) $(INCLUDES) $*.C) >& $(OUTPUT)
-	@(if [ ! -e $@ ]; then \
+	@(if [ $(VERBOSE) -eq 0 ]; then \
+	  $(CXX) -c -o $@ $(DEFINES) $(CXXFLAGS) $(INCLUDES) $*.C \
+	    >& $(OUTPUT) ; \
+	  if [ ! -e $@ ]; then \
              echo; \
              echo "$(CXX) -c -o $@ $(DEFINES) $(CXXFLAGS) $(INCLUDES) $*.C"; \
              echo; \
              $(CXX) -c -o $@ $(DEFINES) $(CXXFLAGS) $(INCLUDES) $*.C;\
              echo; \
              exit 1; \
-          fi)
+          fi ; \
+	else \
+	  $(CXX) -c -o $@ $(DEFINES) $(CXXFLAGS) $(INCLUDES) $*.C \
+	    >> $(OUTPUT) 2>&1 ; \
+	  if [ ! -e $@ ]; then \
+	     echo "See $(OUTPUT) for error messages"; \
+	     exit 1; \
+	  fi ; \
+	fi)
 
 .cu.o: 
 	@rm -f $@
 	@echo "Compiling $<"
-	-@($(CUDACOMPILER) -c -o $@ $(DEFINES)  $(INCLUDES) $*.cu) >& $(OUTPUT)
-	@(if [ ! -e $@ ]; then \
+	@(if [ $(VERBOSE) -eq 0 ]; then \
+	  $(CUDACOMPILER) -c -o $@ $(DEFINES) $(CUDACOMPFLAGS) \
+	    $(INCLUDES) $*.cu >& $(OUTPUT) ; \
+	  if [ ! -e $@ ]; then \
 	     echo; \
-             echo "$(CUDACOMPILER) -c -o $@ $(DEFINES) $(INCLUDES) $*.cu"; \
+             echo "$(CUDACOMPILER) -c -o $@ $(DEFINES) $(CUDACOMPFLAGS) $(INCLUDES) $*.cu"; \
              echo; \
-             $(CUDACOMPILER) -c -o $@ $(DEFINES) $(INCLUDES) $*.cu;\
+             $(CUDACOMPILER)  -c -o $@ $(DEFINES) $(CUDACOMPFLAGS) $(INCLUDES) $*.cu;\
              echo; \
              exit 1; \
-          fi)
+          fi ; \
+	else \
+	  $(CUDACOMPILER) -c -o $@ $(DEFINES) $(CUDACOMPFLAGS) \
+	    $(INCLUDES) $*.cu >> $(OUTPUT) 2>&1 ; \
+	  if [ ! -e $@ ]; then \
+	     echo "See $(OUTPUT) for error messages"; \
+	     exit 1; \
+	  fi ; \
+	fi)
 
 #-----------------------------------------------------------------------
 # Generate all make-generated source files
@@ -267,20 +327,13 @@ auto_show_version.C:
 # Force update of svn_version.def
 .PHONY: svn_version.def
 svn_version.def:
-	-@$(SVN) info -R $(TOP_DIR) | grep Revision | sort | uniq | tail -1 | \
-           awk '{print "#define ENZO_SVN_REVISION",$$2}' > svn_version.def
-	-@$(SVN) info $(TOP_DIR) | awk '/URL/{print "#define ENZO_SVN_BRANCH","\""$$2"\""};' >> svn_version.def 
+	-@$(SVN) identify -i | \
+           awk '{print "#define ENZO_SVN_REVISION","\""$$1"\""}' > svn_version.def
+	-@$(SVN) identify -b | awk '{print "#define ENZO_SVN_BRANCH","\""$$1"\""};' >> svn_version.def 
 	-@if [ ! -s svn_version.def ]; then \
 	printf "#define ENZO_SVN_REVISION 0\n" > svn_version.def; \
 	printf "#define ENZO_SVN_BRANCH \"\"\n" >> svn_version.def; \
 	fi
-
-# Determine Enzo version
-
-.PHONY: get-version
-get-version:
-	@$(SVN) info $(TOP_DIR) | awk '/URL/{print $$2}'      > $(TOP_DIR)/BRANCH
-	@$(SVN) info $(TOP_DIR) | awk '/Revision/{print $$2}' > $(TOP_DIR)/REVISION
 
 #-----------------------------------------------------------------------
 # Generate dependency file
@@ -289,7 +342,7 @@ get-version:
 .PHONY: dep
 dep:
 	@echo "Updating DEPEND"
-	-@(makedepend $(DEFINES) $(INCLUDES) -fDEPEND -o.o -m -- -- *.C *.c *.src *src90 *.h) >& out.make.DEPEND
+	-@(makedepend $(DEFINES) $(INCLUDES) -fDEPEND -o.o -m -- -- *.C *.c *.F *.F90 *.h) >& out.make.DEPEND
 
 include DEPEND
 
@@ -304,26 +357,6 @@ include DEPEND
 #photon:
 #	@echo "Making radiative transfer module"
 #	+(cd photons/ ; make photon)
-
-#-----------------------------------------------------------------------
-# INSTALL TARGET
-#-----------------------------------------------------------------------
-
-install: $(TOP_DIR)/bin
-	if [ ! -e $(TOP_DIR)/bin ]; then mkdir $(TOP_DIR)/bin; fi
-	-@cp $(EXE).exe $(TOP_DIR)/bin/$(EXE)
-	-@cp gridtests.exe $(TOP_DIR)/bin/gridtests
-	-@cp ealfloattests.exe $(TOP_DIR)/bin/ealfloattests
-	-@cp ealinttests.exe $(TOP_DIR)/bin/ealinttests
-	-@cp readgridtests.exe $(TOP_DIR)/bin/readgridtests
-	-@cp analysisbaseclasstests.exe $(TOP_DIR)/bin/analysisbaseclasstests
-	-$(MAKE) -s show-flags   >& $(TOP_DIR)/bin/$(EXE).show-flags
-	-$(MAKE) -s show-config  >& $(TOP_DIR)/bin/$(EXE).show-config
-	-$(MAKE) -s show-version >& $(TOP_DIR)/bin/$(EXE).show-version
-	-$(MAKE) -s show-diff    >& $(TOP_DIR)/bin/$(EXE).show-diff
-
-$(TOP_DIR)/bin:
-	mkdir $(TOP_DIR)/bin
 
 #-----------------------------------------------------------------------
 # HELP TARGET
@@ -341,8 +374,8 @@ help:
 	@echo "   gmake clean          Remove object files, executable, etc."
 	@echo "   gmake dep            Create make dependencies in DEPEND file"
 	@echo
-	@echo "   gmake get-version    Generate version-related files"
-	@echo "   gmake show-version   Display Subversion branch and revision"
+	@echo "   gmake show-version   Display revision control system branch and revision"
+	@echo "   gmake show-diff      Display local file modifications"
 	@echo
 	@echo "   gmake help-config    Display detailed help on configuration make targets"
 	@echo "   gmake show-config    Display the configuration settings"
@@ -353,11 +386,13 @@ help:
 #-----------------------------------------------------------------------
 
 clean:
-	-@rm -f *.so *.o *.mod *.f *.f90 DEPEND.bak *~ $(OUTPUT) *.exe \
-          auto_show*.C svn_version.def hydro_rk/*.o
+	-@rm -f *.so *.o uuid/*.o *.mod *.f *.f90 DEPEND.bak *~ $(OUTPUT) *.exe \
+          auto_show*.C svn_version.def hydro_rk/*.o *.oo hydro_rk/*.oo \
+          uuid/*.oo
 
 #-----------------------------------------------------------------------
 # Include configuration targets
 #-----------------------------------------------------------------------
 
 include $(ENZO_DIR)/Make.config.targets
+# DO NOT DELETE

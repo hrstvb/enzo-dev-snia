@@ -18,16 +18,17 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <string>
+#include <string.h>
 
 #include <hdf5.h>
+
+typedef int nativeTypeId;
+const nativeTypeId NTID_unknown = -1, NTID_float = 0, NTID_double = 1, 
+  NTID_int16 = 2, NTID_int32 = 3, NDTI_uint8 = 4, NTID_uint16 = 5;
 
 ////////////////////////////////////////////////////
 ///// HDF5 wrapper functionality
 ////////////////////////////////////////////////////
-
-
-typedef enum nativeTypeId { NTID_unknown=-1, NTID_float=0, NTID_double, NTID_int16, NTID_int32, NDTI_uint8, NTID_uint16 } nativeTypeId;
 
 int checkErr( int err, const char* name, const bool callAssert=false );
 
@@ -48,6 +49,13 @@ int writeScalarAttribute( hid_t       loc_id,
 int writeArrayAttribute( hid_t         loc_id, 
 			 hid_t         type_id, 
 			 const hsize_t dims, 
+			 const char*   attrName,
+			 const void*   buffer  );
+
+int writeArrayDataset( hid_t         loc_id, 
+			 hid_t         type_id, 
+             int ndims,
+			 hsize_t *dims, 
 			 const char*   attrName,
 			 const void*   buffer  );
 

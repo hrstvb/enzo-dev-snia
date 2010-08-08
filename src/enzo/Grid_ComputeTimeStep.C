@@ -29,7 +29,6 @@
 #include "GridList.h"
 #include "ExternalBoundary.h"
 #include "Grid.h"
-#include "StarParticleData.h"
 #include "RadiativeTransferParameters.h"
 #include "hydro_rk/EOS.h"
 #include "hydro_rk/tools.h"
@@ -41,7 +40,7 @@ int CosmologyComputeExpansionFactor(FLOAT time, FLOAT *a, FLOAT *dadt);
 int GetUnits(float *DensityUnits, float *LengthUnits,
 	     float *TemperatureUnits, float *TimeUnits,
 	     float *VelocityUnits, FLOAT Time);
-extern "C" void FORTRAN_NAME(calc_dt)(
+extern "C" void PFORTRAN_NAME(calc_dt)(
                   int *rank, int *idim, int *jdim, int *kdim,
                   int *i1, int *i2, int *j1, int *j2, int *k1, int *k2,
 			     hydro_method *ihydro, float *C2,
@@ -120,7 +119,7 @@ float grid::ComputeTimeStep()
  
     /* Call fortran routine to do calculation. */
  
-    FORTRAN_NAME(calc_dt)(&GridRank, GridDimension, GridDimension+1,
+    PFORTRAN_NAME(calc_dt)(&GridRank, GridDimension, GridDimension+1,
                                GridDimension+2,
 //                        Zero, TempInt, Zero+1, TempInt+1, Zero+2, TempInt+2,
                           GridStartIndex, GridEndIndex,
@@ -288,7 +287,7 @@ float grid::ComputeTimeStep()
     //    v_dt*VelocityUnits/1e5, ca/1e5, LengthUnits/(dxinv*ca)/yr*CourantSafetyNumber);
     // }
 
-  }
+  } // HydroMethod = MHD_RK
 
  
   /* 2) Calculate dt from particles. */
@@ -351,8 +350,7 @@ float grid::ComputeTimeStep()
 
   if (GetUnits(&DensityUnits, &LengthUnits, &TemperatureUnits,
 	       &TimeUnits, &VelocityUnits, Time) == FAIL) {
-    fprintf(stderr, "Error in GetUnits.\n");
-    ENZO_FAIL("");
+    ENZO_FAIL("Error in GetUnits.\n");
   }
 
   float mindtNOstars;  // Myr
@@ -365,7 +363,7 @@ float grid::ComputeTimeStep()
     mindtNOstars = 10;  // Myr
 
   if (STARFEED_METHOD(POP3_STAR) || STARFEED_METHOD(STAR_CLUSTER))
-    if (TotalNumberOfStars > 0 && minStarLifetime < 1e6)
+    if (G_TotalNumberOfStars > 0 && minStarLifetime < 1e6)
       dtStar = minStarLifetime/NumberOfStepsInLifetime;
     else
       dtStar = 3.1557e13*mindtNOstars/TimeUnits;
@@ -384,8 +382,7 @@ float grid::ComputeTimeStep()
     int RPresNum1, RPresNum2, RPresNum3;
     if (IdentifyRadiationPressureFields(RPresNum1, RPresNum2, RPresNum3) 
 	== FAIL) {
-      fprintf(stdout, "Error in IdentifyRadiationPressureFields.\n");
-      ENZO_FAIL("");
+      ENZO_FAIL("Error in IdentifyRadiationPressureFields.\n");
     }
 
     for (i = 0; i < size; i++)
@@ -410,6 +407,11 @@ float grid::ComputeTimeStep()
       (TimestepSafetyVelocity*1e5 / VelocityUnits);    // parameter in km/s
 
   dt = min(dt, dtSafetyVelocity);
+
+
+  /* 9) FLD Radiative Transfer timestep limitation */
+  if (RadiativeTransferFLD)
+    dt = min(dt, MaxRadiationDt);
   
 #endif /* TRANSFER */
  
@@ -417,10 +419,10 @@ float grid::ComputeTimeStep()
  
   if (debug1) {
     printf("ComputeTimeStep = %"FSYM" (", dt);
-    if (NumberOfBaryonFields > 0)
+    if (HydroMethod != MHD_RK && NumberOfBaryonFields > 0)
       printf("Bar = %"FSYM" ", dtBaryons);
     if (HydroMethod == MHD_RK)
-      printf("dtMHD = %"FSYM" ", dtMHD);
+      printf("dtMHD = %e ", dtMHD);
     if (HydroMethod == Zeus_Hydro)
       printf("Vis = %"FSYM" ", dtViscous);
     if (ComovingCoordinates)
@@ -428,6 +430,7 @@ float grid::ComputeTimeStep()
     if (dtAcceleration != huge_number)
       printf("Acc = %"FSYM" ", dtAcceleration);
     if (NumberOfParticles)
+
       printf("Part = %"FSYM" ", dtParticles);
     printf(")\n");
   }

@@ -28,18 +28,18 @@
  
 /* function prototypes */
  
-extern "C" void FORTRAN_NAME(cic_flag)(FLOAT *posx, FLOAT *posy,
-			FLOAT *posz, int *ndim, int *npositions,
+extern "C" void PFORTRAN_NAME(cic_flag)(FLOAT *posx, FLOAT *posy,
+			FLOAT *posz, float *partmass, int *ndim, int *npositions,
                         int *itype, int *ffield, FLOAT *leftedge,
                         int *dim1, int *dim2, int *dim3, FLOAT *cellsize,
-			int *imatch);
+			int *imatch1, int *imatch2, float *minmassmust, int *buffersize);
  
  
 int grid::FlagCellsToBeRefinedByMustRefineParticles()
 {
   /* declarations */
  
-  int i, dim, ParticleTypeToMatch, size = 1;
+  int i, dim, ParticleTypeToMatch1, ParticleTypeToMatch2, buffersize = 16, size = 1;
   FLOAT LeftEdge[MAX_DIMENSION], CellSize;
  
   /* error check */
@@ -55,17 +55,20 @@ int grid::FlagCellsToBeRefinedByMustRefineParticles()
     LeftEdge[dim] = CellLeftEdge[dim][0];
     size *= GridDimension[dim];
   }
-  ParticleTypeToMatch = PARTICLE_TYPE_MUST_REFINE;
+  ParticleTypeToMatch1 = PARTICLE_TYPE_MUST_REFINE;
+  ParticleTypeToMatch2 = PARTICLE_TYPE_MBH;
   CellSize = float(CellWidth[0][0]);
- 
+  printf("MustRefineParticlesMinimumMass = %g \n", MustRefineParticlesMinimumMass);
+
   /* Loop over all the particles, using only particles marked as
      must-refine particles. */
  
-  FORTRAN_NAME(cic_flag)(
-           ParticlePosition[0], ParticlePosition[1], ParticlePosition[2],
+  PFORTRAN_NAME(cic_flag)(
+	   ParticlePosition[0], ParticlePosition[1], ParticlePosition[2], ParticleMass,
 	   &GridRank, &NumberOfParticles, ParticleType, FlaggingField,
 	   LeftEdge, GridDimension, GridDimension+1, GridDimension+2,
-	   &CellSize, &ParticleTypeToMatch);
+	   &CellSize, &ParticleTypeToMatch1, &ParticleTypeToMatch2, &MustRefineParticlesMinimumMass, 
+	   &buffersize);
  
   /* Count number of flagged Cells. */
  

@@ -27,13 +27,15 @@
 #include "Grid.h"
 #include "Hierarchy.h"
 #include "TopGridData.h"
+#include "BinaryHierarchy.h"
  
 /* function prototypes */
  
  
  
 int Group_WriteDataHierarchy(FILE *fptr, TopGridData &MetaData, HierarchyEntry *Grid,
-		            char* base_name, int &GridID, FLOAT WriteTime, hid_t file_id)
+		            char* base_name, int &GridID, FLOAT WriteTime, hid_t file_id,
+                    int CheckpointDump = FALSE)
 {
  
   int OriginalID, NextGridThisLevelID, NextGridNextLevelID;
@@ -43,20 +45,29 @@ int Group_WriteDataHierarchy(FILE *fptr, TopGridData &MetaData, HierarchyEntry *
   if (MyProcessorNumber == ROOT_PROCESSOR)
     fprintf(fptr, "\nGrid = %"ISYM"\n", GridID);
   OriginalID = GridID;
- 
+
   /* Write out grid data for this grid (if WriteTime is < 0 then output
      at the grid's time, otherwise interpolate to WriteTime and output). */
+
+#ifndef NEW_GRID_IO
+  if(CheckpointDump == TRUE) {
+    fprintf(stderr, "Sorry, you need the new Grid IO to use checkpoints.\n");
+    return SUCCESS;
+   }
+#endif
  
-  if (WriteTime < 0) {
-    if (Grid->GridData->Group_WriteGrid(fptr, base_name, GridID, file_id) == FAIL) {
-      fprintf(stderr, "Error in grid->Group_WriteGrid.\n");
-      ENZO_FAIL("");
+  if ((WriteTime < 0) || (CheckpointDump == TRUE)) {
+    if (Grid->GridData->Group_WriteGrid(fptr, base_name, GridID, file_id
+#ifdef NEW_GRID_IO
+            , CheckpointDump
+#endif
+        ) == FAIL) {
+      ENZO_FAIL("Error in grid->Group_WriteGrid.\n");
     }
   }
   else
     if (Grid->GridData->Group_WriteGridInterpolate(WriteTime, fptr, base_name, GridID, file_id) == FAIL) {
-      fprintf(stderr, "Error in grid->Group_WriteGridInterpolate.\n");
-      ENZO_FAIL("");
+      ENZO_FAIL("Error in grid->Group_WriteGridInterpolate.\n");
     }
  
   /* Write out pointer information for the next grid this level */
@@ -69,9 +80,9 @@ int Group_WriteDataHierarchy(FILE *fptr, TopGridData &MetaData, HierarchyEntry *
  
   if (NextGridThisLevelID != 0) {
     GridID++;
-    if (Group_WriteDataHierarchy(fptr, MetaData, Grid->NextGridThisLevel, base_name, GridID, WriteTime, file_id) == FAIL) {
-      fprintf(stderr, "Error in Group_WriteDataHierarchy(1).\n");
-      ENZO_FAIL("");
+    if (Group_WriteDataHierarchy(fptr, MetaData, Grid->NextGridThisLevel,
+            base_name, GridID, WriteTime, file_id, CheckpointDump) == FAIL) {
+      ENZO_FAIL("Error in Group_WriteDataHierarchy(1).\n");
     }
   }
  
@@ -84,10 +95,12 @@ int Group_WriteDataHierarchy(FILE *fptr, TopGridData &MetaData, HierarchyEntry *
 	    NextGridNextLevelID);
  
   if (NextGridNextLevelID != 0) {
+    HierarchyArrays.current_parent = OriginalID;
     GridID++;
-    if (Group_WriteDataHierarchy(fptr, MetaData, Grid->NextGridNextLevel, base_name, GridID, WriteTime, file_id) == FAIL) {
-      fprintf(stderr, "Error in Group_WriteDataHierarchy(1).\n");
-      ENZO_FAIL("");
+    if (Group_WriteDataHierarchy(fptr, MetaData, Grid->NextGridNextLevel,
+                base_name, GridID, WriteTime, file_id, CheckpointDump) == FAIL) {
+      ENZO_FAIL("Error in Group_WriteDataHierarchy(1).\n");
+
     }
   }
  

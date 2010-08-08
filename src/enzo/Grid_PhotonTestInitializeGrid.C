@@ -14,6 +14,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <math.h>
 #include "ErrorExceptions.h"
 #include "macros_and_parameters.h"
@@ -59,6 +60,10 @@ int grid::PhotonTestInitializeGrid(int NumberOfSpheres,
                              float SphereAng2[MAX_SPHERES],
                              int   SphereNumShells[MAX_SPHERES],
 			     int   SphereType[MAX_SPHERES],
+			     float SphereHII[MAX_SPHERES],
+			     float SphereHeII[MAX_SPHERES],
+			     float SphereHeIII[MAX_SPHERES],
+			     float SphereH2I[MAX_SPHERES],
 			     int   SphereUseParticles,
 			     float UniformVelocity[MAX_DIMENSION],
 			     int   SphereUseColour,
@@ -69,15 +74,16 @@ int grid::PhotonTestInitializeGrid(int NumberOfSpheres,
 			     float PhotonTestInitialFractionHM,
 			     float PhotonTestInitialFractionH2I, 
 			     float PhotonTestInitialFractionH2II,
-			     int RefineByOpticalDepth)
+			     int RefineByOpticalDepth,
+			     char *DensityFilename)
 {
   /* declarations */
 
-  int dim, i, j, k, m, field, sphere, size, index;
+  int dim, i, j, k, m, field, sphere, size, active_size, index, cindex;
   int DeNum, HINum, HIINum, HeINum, HeIINum, HeIIINum, HMNum, H2INum, H2IINum,
-    DINum, DIINum, HDINum,  kphHINum, gammaHINum, kphHeINum, gammaHeINum,
-    kphHeIINum, gammaHeIINum, kdissH2INum, RPresNum1, RPresNum2, RPresNum3; 
-
+    DINum, DIINum, HDINum,  kphHINum, gammaNum, kphHeINum,
+    kphHeIINum, kdissH2INum, RPresNum1, RPresNum2, RPresNum3; 
+  float *density_field = NULL;
 
   /* create fields */
   NumberOfBaryonFields = 0;
@@ -114,19 +120,18 @@ int grid::PhotonTestInitializeGrid(int NumberOfSpheres,
     FieldType[NumberOfBaryonFields++] = Metallicity; /* fake it with metals */
 
   if (RadiativeTransfer && (MultiSpecies < 1)) {
-    fprintf(stderr, "Grid_PhotonTestInitialize: Radiative Transfer but not MultiSpecies set");
-    ENZO_FAIL("");
+    ENZO_FAIL("Grid_PhotonTestInitialize: Radiative Transfer but not MultiSpecies set");
   }
 
   //   Allocate fields for photo ionization and heating rates
   if (RadiativeTransfer)
     if (MultiSpecies) {
       FieldType[kphHINum    = NumberOfBaryonFields++] = kphHI;
-      FieldType[gammaHINum  = NumberOfBaryonFields++] = gammaHI;
-      FieldType[kphHeINum   = NumberOfBaryonFields++] = kphHeI;
-      FieldType[gammaHeINum = NumberOfBaryonFields++] = gammaHeI;
-      FieldType[kphHeIINum  = NumberOfBaryonFields++] = kphHeII;
-      FieldType[gammaHeIINum= NumberOfBaryonFields++] = gammaHeII;
+      FieldType[gammaNum    = NumberOfBaryonFields++] = PhotoGamma;
+      if (RadiativeTransferHydrogenOnly == FALSE) {
+	FieldType[kphHeINum   = NumberOfBaryonFields++] = kphHeI;
+	FieldType[kphHeIINum  = NumberOfBaryonFields++] = kphHeII;
+      }
       if (MultiSpecies > 1) 
 	FieldType[kdissH2INum    = NumberOfBaryonFields++] = kdissH2I;
     } 
@@ -241,8 +246,13 @@ int grid::PhotonTestInitializeGrid(int NumberOfSpheres,
   /* Set up the baryon field. */
   /* compute size of fields */
   size = 1;
-  for (dim = 0; dim < GridRank; dim++)
+  active_size = 1;
+  int ActiveDims[MAX_DIMENSION];
+  for (dim = 0; dim < GridRank; dim++) {
     size *= GridDimension[dim];
+    ActiveDims[dim] = GridEndIndex[dim] - GridStartIndex[dim] + 1;
+    active_size *= ActiveDims[dim];
+  }
 
   /* allocate fields */
   if (SetupLoopCount == 0)
@@ -255,13 +265,37 @@ int grid::PhotonTestInitializeGrid(int NumberOfSpheres,
   /* Initialize radiation fields */
 
   if (this->InitializeRadiativeTransferFields() == FAIL) {
-    fprintf(stderr, "\nError in InitializeRadiativeTransferFields.\n");
-    ENZO_FAIL("");
+    ENZO_FAIL("\nError in InitializeRadiativeTransferFields.\n");
   }
+
+  /* Read density field, if given */
+
+  if (DensityFilename != NULL) {
+    char *data_filename, *dataset_name;
+    hsize_t OutDims[MAX_DIMENSION];
+    herr_t h5error;
+    hid_t file_id;
+
+    // Parse DensityFilename into filename and dataset name
+    char *delim = "/";
+    data_filename = strtok(DensityFilename, delim);
+    dataset_name = strtok(NULL, delim);
+
+    file_id = H5Fopen(data_filename, H5F_ACC_RDONLY, H5P_DEFAULT);
+    if (file_id == -1) ENZO_FAIL("Error closing density field.");
+    for (dim = 0; dim < MAX_DIMENSION; dim++)
+      OutDims[GridRank-dim-1] = GridEndIndex[dim] - GridStartIndex[dim] + 1;
+    density_field = new float[active_size];
+    this->read_dataset(GridRank, OutDims, dataset_name, file_id,
+		       HDF5_REAL, density_field, FALSE, NULL, NULL);
+    h5error = H5Fclose(file_id);
+    if (h5error == -1) ENZO_FAIL("Error closing density field.");
+  } // ENDIF DensityFilename
 
   /* Loop over the mesh. */
   float density, dens1, Velocity[MAX_DIMENSION],
     temperature, temp1, sigma, sigma1, colour;
+  float HII_Fraction, HeII_Fraction, HeIII_Fraction, H2I_Fraction;
   FLOAT r, x, y = 0, z = 0;
   int n = 0;
 
@@ -339,12 +373,27 @@ int grid::PhotonTestInitializeGrid(int NumberOfSpheres,
 
 	/* Loop over spheres. */
 
-	density = 1.0;
+	if (density_field != NULL && 
+	    i >= GridStartIndex[0] && i <= GridEndIndex[0] &&
+	    j >= GridStartIndex[1] && j <= GridEndIndex[1] &&
+	    k >= GridStartIndex[2] && k <= GridEndIndex[2]) {
+	  cindex = (i-GridStartIndex[0]) + ActiveDims[0] *
+	    ((j-GridStartIndex[1]) + (k-GridStartIndex[2])*ActiveDims[1]);
+	  density = density_field[cindex];
+	} else {
+	  density = 1.0;
+	}
+
 	temperature = temp1 = InitialTemperature;
 	sigma = sigma1 = 0;
 	colour = 1.0e-10;
 	for (dim = 0; dim < MAX_DIMENSION; dim++)
 	  Velocity[dim] = 0;
+	HII_Fraction = PhotonTestInitialFractionHII;
+	HeII_Fraction = PhotonTestInitialFractionHeII;
+	HeIII_Fraction = PhotonTestInitialFractionHeIII;
+	H2I_Fraction = PhotonTestInitialFractionH2I;
+
 	for (sphere = 0; sphere < NumberOfSpheres; sphere++) {
 
 	  /* Find distance from center. */
@@ -436,7 +485,7 @@ int grid::PhotonTestInitializeGrid(int NumberOfSpheres,
 	    /* 4) Gaussian */
 	    if (SphereType[sphere] == 4) {
 	      dens1 = SphereDensity[sphere]*
-                      exp(-0.5*pow(r/SphereCoreRadius[sphere], 2));
+                      PEXP(-0.5*pow(r/SphereCoreRadius[sphere], 2));
 	    }
 
 	    /* 5) r^-2 power law with core radius */
@@ -493,7 +542,7 @@ int grid::PhotonTestInitializeGrid(int NumberOfSpheres,
 		/* Compute density (Kruit & Searle 1982). */
 
 		if (dim == 0)
-		  dens1 = SphereDensity[sphere]*exp(-drad/ScaleHeightR)/
+		  dens1 = SphereDensity[sphere]*PEXP(-drad/ScaleHeightR)/
 		    pow(cosh(zheight/max(ScaleHeightz, CellWidth[0][0])), 2);
 
 		if (dens1 < density)
@@ -548,6 +597,10 @@ int grid::PhotonTestInitializeGrid(int NumberOfSpheres,
 		  Velocity[dim] = SphereVelocity[sphere][dim];
 	      if (sphere == 0)
 		colour = dens1; /* only mark first sphere */
+	      HII_Fraction = SphereHII[sphere];
+	      HeII_Fraction = SphereHeII[sphere];
+	      HeIII_Fraction = SphereHeIII[sphere];
+	      H2I_Fraction = SphereH2I[sphere];
 	    }
 
 	  } // end: if (r < SphereRadius)
@@ -560,11 +613,11 @@ int grid::PhotonTestInitializeGrid(int NumberOfSpheres,
 	/* If doing multi-species (HI, etc.), set these. */
 
 	if (MultiSpecies > 0) {
-	  BaryonField[HIINum][n] = PhotonTestInitialFractionHII *
+	  BaryonField[HIINum][n] = HII_Fraction *
 	    CoolData.HydrogenFractionByMass * BaryonField[0][n];
-	  BaryonField[HeIINum][n] = PhotonTestInitialFractionHeII*
+	  BaryonField[HeIINum][n] = HeII_Fraction *
 	    BaryonField[0][n] * 4.0 * (1.0-CoolData.HydrogenFractionByMass);
-	  BaryonField[HeIIINum][n] = PhotonTestInitialFractionHeIII*
+	  BaryonField[HeIIINum][n] = HeIII_Fraction *
 	    BaryonField[0][n] * 4.0 * (1.0-CoolData.HydrogenFractionByMass);
 	  BaryonField[HeINum][n] = 
 	    (1.0 - CoolData.HydrogenFractionByMass)*BaryonField[0][n] -
@@ -575,7 +628,7 @@ int grid::PhotonTestInitializeGrid(int NumberOfSpheres,
 	    BaryonField[HIINum][n]* pow(temperature,float(0.88));
 	  BaryonField[H2IINum][n] = PhotonTestInitialFractionH2II*
 	    2.0*BaryonField[HIINum][n]* pow(temperature,float(1.8));
-	  BaryonField[H2INum][n] = PhotonTestInitialFractionH2I*
+	  BaryonField[H2INum][n] = H2I_Fraction *
 	    BaryonField[0][n]*CoolData.HydrogenFractionByMass*pow(301.0,5.1)*
 	    pow(OmegaMatterNow, float(1.5))/
 	    (OmegaMatterNow*BaryonMeanDensity)/
@@ -718,6 +771,9 @@ int grid::PhotonTestInitializeGrid(int NumberOfSpheres,
   if (SphereUseParticles && debug)
     printf("PhotonTestInitialize: DM NumberOfParticles = %"ISYM"\n", 
 	   NumberOfParticles);
+
+  if (density_field != NULL)
+    delete [] density_field;
   
   return SUCCESS;
 }
@@ -733,6 +789,7 @@ float ph_gasdev()
 {
   float v1, v2, r = 0, fac, ph_gasdev_ret;
   if (ph_gasdev_iset == 0) {
+
     while (r >= 1 || r == 0) {
       v1 = 2.0*float(rand())/(float(RAND_MAX)) - 1.0;
       v2 = 2.0*float(rand())/(float(RAND_MAX)) - 1.0;

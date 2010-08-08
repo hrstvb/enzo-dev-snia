@@ -54,7 +54,7 @@ int grid::PreparePotentialField(grid *ParentGrid)
 {
  
   if (ParentGrid == NULL)
-    ENZO_FAIL("");
+    ENZO_FAIL("Undefined ParentGrid!\n");
  
   /* Return if this doesn't involve us. */
  
@@ -75,7 +75,7 @@ int grid::PreparePotentialField(grid *ParentGrid)
   // Only done in COMMUNICATION_SEND because
   // CommunicationMethodShouldExit() will exit in other modes when the
   // grids are on the same processor.
-  if (ProcessorNumber == ProcessorNumber &&
+  if (MyProcessorNumber == ProcessorNumber &&
       CommunicationDirection != COMMUNICATION_POST_RECEIVE) {
     if (PotentialField != NULL)
       delete [] PotentialField;
@@ -113,9 +113,8 @@ int grid::PreparePotentialField(grid *ParentGrid)
     ParentDim[dim] = ParentGrid->GravitatingMassFieldDimension[dim];
     if (ParentStartIndex[dim] < 0 ||
 	ParentStartIndex[dim]+ParentTempDim[dim] > ParentDim[dim]) {
-      fprintf(stderr, "ParentStartIndex[%"ISYM"] = %"ISYM" ParentTempDim = %"ISYM"(%"ISYM").\n",
-	      dim, ParentStartIndex[dim], ParentTempDim[dim], ParentDim[dim]);
-      ENZO_FAIL("");
+      ENZO_VFAIL("ParentStartIndex[%"ISYM"] = %"ISYM" ParentTempDim = %"ISYM"(%"ISYM").\n",
+	      dim, ParentStartIndex[dim], ParentTempDim[dim], ParentDim[dim])
     }
   }
  
@@ -188,10 +187,26 @@ int grid::PreparePotentialField(grid *ParentGrid)
  
 #endif /* SPLINE */
  
+#ifdef POTENTIALDEBUGOUTPUT
+  for (int i=0;i<GridDimension[0]+6; i++) {
+    int igrid = GRIDINDEX_NOGHOST(i,(6+GridDimension[0])/2,(6+GridDimension[0])/2);
+    int igrid2 =  ( 18 * (*(ParentDim+1)) + 18 ) * (*ParentDim)+i;
+    printf("i: %i \tParent %g  \t Sub %g\n", i, ParentGrid->PotentialField[igrid2], PotentialField[igrid]);
+  }
+
+  float maxPot=-1e30, minPot=1e30;    
+  for (int i=0;i<size; i++) {
+    maxPot = max(maxPot,PotentialField[i]);
+    minPot = min(minPot,PotentialField[i]);
+  }
+  if (debug1) printf("PreparePotential: Potential minimum: %g \t maximum: %g\n", minPot, maxPot);
+#endif
+
   /* Clean up parent. */
  
   if (MyProcessorNumber != ParentGrid->ProcessorNumber) {
-    delete ParentGrid->PotentialField;
+
+    delete [] ParentGrid->PotentialField;
     ParentGrid->PotentialField = NULL;
   }
  

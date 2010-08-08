@@ -30,6 +30,7 @@
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include "h5utilities.h"
 
 #include "ErrorExceptions.h"
 #include "macros_and_parameters.h"
@@ -47,12 +48,12 @@ void my_exit(int status);
 // HDF5 function prototypes
 
 
- 
 /* function prototypes */
  
 int Group_ReadDataHierarchy(FILE *fptr, HierarchyEntry *TopGrid, int GridID,
 			    HierarchyEntry *ParentGrid, hid_t file_id,
-			    int NumberOfRootGrids, int *RootGridProcessors);
+			    int NumberOfRootGrids, int *RootGridProcessors,
+			    bool ReadParticlesOnly=false);
 int ReadParameterFile(FILE *fptr, TopGridData &MetaData, float *Initialdt);
 int ReadStarParticleData(FILE *fptr);
 int ReadRadiationData(FILE *fptr);
@@ -70,7 +71,8 @@ extern char CPUSuffix[];
 
  
 int Group_ReadAllData(char *name, HierarchyEntry *TopGrid, TopGridData &MetaData,
-		      ExternalBoundary *Exterior)
+		      ExternalBoundary *Exterior, float *Initialdt,
+		      bool ReadParticlesOnly)
  
 {
  
@@ -106,27 +108,16 @@ int Group_ReadAllData(char *name, HierarchyEntry *TopGrid, TopGridData &MetaData
   // store the original parameter file name, in case we need it later
   strcpy(PrevParameterFileName, name);
 
-#ifdef USE_MPI
-  double io_start, io_stop;
-  char io_logfile[MAX_NAME_LENGTH];
-  FILE *xptr;
-#endif /* USE_MPI */
   char pid[MAX_TASK_TAG_SIZE];
 
-//  Start I/O timing
-
-#ifdef USE_MPI
   CommunicationBarrier();
-  io_start = MPI_Wtime();
-#endif /* USE_MPI */
  
   /* Read TopGrid data. */
  
   if ((fptr = fopen(name, "r")) == NULL) {
-    fprintf(stderr, "Error opening input file %s.\n", name);
-    ENZO_FAIL("");
+    ENZO_VFAIL("Error opening input file %s.\n", name)
   }
-  if (ReadParameterFile(fptr, MetaData, &dummy) == FAIL) {
+  if (ReadParameterFile(fptr, MetaData, Initialdt) == FAIL) {
         ENZO_FAIL("Error in ReadParameterFile.");
   }
  
@@ -199,8 +190,7 @@ int Group_ReadAllData(char *name, HierarchyEntry *TopGrid, TopGridData &MetaData
 
 #ifdef TASKMAP
   if ((mptr = fopen(memorymapname, "r")) == NULL) {
-    fprintf(stderr, "Error opening MemoryMap file %s.\n", memorymapname);
-    ENZO_FAIL("");
+    ENZO_VFAIL("Error opening MemoryMap file %s.\n", memorymapname)
   }
 
   Eint64 GridIndex[MAX_NUMBER_OF_TASKS], OldPN, Mem[MAX_NUMBER_OF_TASKS];
@@ -227,8 +217,7 @@ int Group_ReadAllData(char *name, HierarchyEntry *TopGrid, TopGridData &MetaData
   /* scan data hierarchy for maximum task number */
  
   if ((fptr = fopen(hierarchyname, "r")) == NULL) {
-    fprintf(stderr, "Error opening hierarchy file %s.\n", hierarchyname);
-    ENZO_FAIL("");
+    ENZO_VFAIL("Error opening hierarchy file %s.\n", hierarchyname)
   }
 
   while (fgets(line, MAX_LINE_LENGTH, fptr) != NULL)
@@ -239,6 +228,9 @@ int Group_ReadAllData(char *name, HierarchyEntry *TopGrid, TopGridData &MetaData
 
   /* If we're load balancing only within nodes, count level-1 cells in
      each level-0 grid and load balance the entire nodes. */
+
+  if (ResetLoadBalancing)
+    LoadBalancing = 1;
 
   int *RootGridProcessors = NULL, NumberOfRootGrids = 1;
   InitialLoadBalanceRootGrids(fptr, MetaData.TopGridRank, MetaData.TopGridDims[0], 
@@ -276,6 +268,7 @@ int Group_ReadAllData(char *name, HierarchyEntry *TopGrid, TopGridData &MetaData
 #else
 
     if (debug) fprintf(stdout, "OPEN data hierarchy %s\n", hierarchyname);
+    //printf("P%d: OPEN data hierarchy %s\n", MyProcessorNumber, hierarchyname);
     file_id = h5_error;
 
 #endif /* SINGLE OPEN */
@@ -283,14 +276,56 @@ int Group_ReadAllData(char *name, HierarchyEntry *TopGrid, TopGridData &MetaData
 
   GridID = 1;
   if (Group_ReadDataHierarchy(fptr, TopGrid, GridID, NULL, file_id,
-			      NumberOfRootGrids, RootGridProcessors) == FAIL) {
+			      NumberOfRootGrids, RootGridProcessors,
+			      ReadParticlesOnly) == FAIL) {
     fprintf(stderr, "Error in ReadDataHierarchy (%s).\n", hierarchyname);
     return FAIL;
   }
+
+  //printf("P%d: out of Group_RDH\n", MyProcessorNumber);
+  //CommunicationBarrier();
   
   if(LoadGridDataAtStart){
     // can close HDF5 file here
 
+    if(CheckpointRestart == TRUE) {
+#ifndef SINGLE_HDF5_OPEN_ON_INPUT
+
+    file_id = H5Fopen(groupfilename, H5F_ACC_RDONLY, H5P_DEFAULT);
+    if(file_id == h5_error)ENZO_VFAIL("Could not open %s", groupfilename)
+
+#endif
+      // Now we load our metadata back in
+      hid_t metadata_group;
+    H5E_BEGIN_TRY{
+      metadata_group = H5Gopen(file_id, "Metadata");
+    }H5E_END_TRY
+    if(metadata_group != h5_error) {
+      readAttribute(metadata_group, HDF5_INT, "LevelCycleCount",
+          LevelCycleCount, TRUE);
+      if(CheckpointRestart == TRUE) { // We only need these in a checkpoint
+        FLOAT dtThisLevelCopy[MAX_DEPTH_OF_HIERARCHY];
+        FLOAT dtThisLevelSoFarCopy[MAX_DEPTH_OF_HIERARCHY];
+        readAttribute(metadata_group, HDF5_PREC, "dtThisLevel",
+            dtThisLevelCopy, TRUE);
+        readAttribute(metadata_group, HDF5_PREC, "dtThisLevelSoFar",
+            dtThisLevelSoFarCopy, TRUE);
+        for (int level = 0; level < MAX_DEPTH_OF_HIERARCHY; level++) {
+            dtThisLevel[level] = dtThisLevelCopy[level];
+            dtThisLevelSoFar[level] = dtThisLevelSoFarCopy[level];
+        }
+        readAttribute(metadata_group, HDF5_PREC, "Time",
+            &MetaData.Time, TRUE);
+      }
+    } else if(CheckpointRestart == TRUE) {
+      ENZO_FAIL("Couldn't open Metadata!");
+    }
+    H5Gclose(metadata_group);
+
+#ifndef SINGLE_HDF5_OPEN_ON_INPUT
+      H5Fclose(file_id);
+#endif
+    }
 #ifdef SINGLE_HDF5_OPEN_ON_INPUT
 
     h5_status = H5Fclose(file_id);
@@ -336,13 +371,13 @@ int Group_ReadAllData(char *name, HierarchyEntry *TopGrid, TopGridData &MetaData
  
   /* Create radiation name and read radiation data. */
  
-  if (RadiationFieldType >= 10 && RadiationFieldType <= 11) {
+  if ((RadiationFieldType >= 10 && RadiationFieldType <= 11) || 
+      RadiationData.RadiationShield == TRUE) {
     FILE *Radfptr;
     strcpy(radiationname, name);
     strcat(radiationname, RadiationSuffix);
     if ((Radfptr = fopen(radiationname, "r")) == NULL) {
-      fprintf(stderr, "Error opening radiation file %s.\n", name);
-      ENZO_FAIL("");
+      ENZO_VFAIL("Error opening radiation file %s.\n", name)
     }
     if (ReadRadiationData(Radfptr) == FAIL) {
             ENZO_FAIL("Error in ReadRadiationData.");
@@ -357,20 +392,13 @@ int Group_ReadAllData(char *name, HierarchyEntry *TopGrid, TopGridData &MetaData
 
   AddParticleAttributes = FALSE;
 
-//  Stop I/O timing
+  /* If we're reseting load balancing (i.e. the host processors), turn
+     off the reset flag because we've already done this and don't want
+     it to propagate to later datadumps. */
 
-#ifdef USE_MPI
-  io_stop = MPI_Wtime();
-#endif /* USE_MPI */
+  if (ResetLoadBalancing)
 
-#ifdef USE_MPI
-  sprintf(pid, "%"TASK_TAG_FORMAT""ISYM, MyProcessorNumber);
-  strcpy(io_logfile, "IN_perf.");
-  strcat(io_logfile, pid);
-  xptr = fopen(io_logfile, "a");
-  fprintf(xptr, "IN %12.4e  %s\n", (io_stop-io_start), name);
-  fclose(xptr);
-#endif /* USE_MPI */
+    ResetLoadBalancing = FALSE;
 
   delete [] RootGridProcessors;
 

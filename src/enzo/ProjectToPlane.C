@@ -18,11 +18,6 @@
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
-
- 
-
-
- 
 #include "ErrorExceptions.h"
 #include "macros_and_parameters.h"
 #include "typedefs.h"
@@ -53,7 +48,6 @@ int  CopyOverlappingParticleMassFields(grid* CurrentGrid,
 				      int level);
  
 #define NUMBER_OF_PROJECTED_FIELDS 9
- 
  
  
  
@@ -211,8 +205,7 @@ int ProjectToPlane(TopGridData &MetaData, LevelHierarchyEntry *LevelArray[],
   /* Error check. */
  
   if (ProjectionDimension < 0 || ProjectionDimension > MetaData.TopGridRank) {
-    fprintf(stderr, "Invalid ProjectionDimension (%"ISYM").\n",ProjectionDimension);
-    ENZO_FAIL("");
+    ENZO_VFAIL("Invalid ProjectionDimension (%"ISYM").\n",ProjectionDimension)
   }
  
   /* Check to see if the file ProjectParameters exists.  If it does, read
@@ -603,6 +596,7 @@ int ProjectToPlane(TopGridData &MetaData, LevelHierarchyEntry *LevelArray[],
   h5_status = H5Fclose(file_id);
     if (io_log) fprintf(log_fptr, "H5Fclose: %"ISYM"\n", h5_status);
     if( h5_status == h5_error ){my_exit(EXIT_FAILURE);}
+
  
   fclose(log_fptr);
  

@@ -38,58 +38,50 @@ int grid::ConvertToCellCenteredRadiation()
 
   /* Find radiative transfer fields. */
 
-  int kphHINum, gammaHINum, kphHeINum, gammaHeINum, kphHeIINum, gammaHeIINum,
-    kdissH2INum;
-  if (IdentifyRadiativeTransferFields(kphHINum, gammaHINum, kphHeINum, 
-				      gammaHeINum, kphHeIINum, gammaHeIINum, 
-				      kdissH2INum) == FAIL) {
-    fprintf(stdout, "Error in grid->IdentifyRadiativeTransferFields.\n");
-    ENZO_FAIL("");
-  }
+  int kphHINum, gammaNum, kphHeINum, kphHeIINum, kdissH2INum;
+  IdentifyRadiativeTransferFields(kphHINum, gammaNum, kphHeINum, 
+				  kphHeIINum, kdissH2INum);
 
   int rkph, rgamma, field;
 
   for (field = 0; field < NumberOfBaryonFields; field++)
     if (FieldsToInterpolate[field] == TRUE) {
+      rkph = FieldUndefined;
+      rgamma = FieldUndefined;
       switch (FieldType[field]) {
       case HIDensity:
 	rkph = kphHINum;
-	rgamma = gammaHINum;
+	rgamma = gammaNum;
 	break;
       case HeIDensity:
-	rkph = kphHeINum;
-	rgamma = gammaHeINum;
+	if (RadiativeTransferHydrogenOnly == FALSE)
+	  rkph = kphHeINum;
 	break;
       case HeIIDensity:
-	rkph = kphHeIINum;
-	rgamma = gammaHeIINum;
+	if (RadiativeTransferHydrogenOnly == FALSE)
+	  rkph = kphHeIINum;
 	break;
       } // ENDSWITCH field
 
       if (InterpolatedField[rkph] == NULL) {
-	fprintf(stderr, "InterpolatedField[%"ISYM"] not allocated.\n", rkph);
-	ENZO_FAIL("");
+	ENZO_VFAIL("InterpolatedField[%"ISYM"] not allocated.\n", rkph)
       }
       if (InterpolatedField[rgamma] == NULL) {
-	fprintf(stderr, "InterpolatedField[%"ISYM"] not allocated.\n", rgamma);
-	ENZO_FAIL("");
+	ENZO_VFAIL("InterpolatedField[%"ISYM"] not allocated.\n", rgamma)
       }
 
-      if (this->ComputeCellCenteredField(rkph) == FAIL) {
-	fprintf(stderr, "Error in grid->ComputeCellCenteredField.\n");
-	ENZO_FAIL("");
-      }
+      if (rkph != FieldUndefined)
+	this->ComputeCellCenteredField(rkph);
 
-      if (this->ComputeCellCenteredField(rgamma) == FAIL) {
-	fprintf(stderr, "Error in grid->ComputeCellCenteredField.\n");
-	ENZO_FAIL("");
-      }
+      if (rgamma != FieldUndefined)
+	this->ComputeCellCenteredField(rgamma);
 
     } // ENDIF fields to interpolate
 
   /* Clean up :: these are defined in ComputeCellCenteredField */
 
   if (BaryonField[NumberOfBaryonFields] != NULL) {
+
     delete [] BaryonField[NumberOfBaryonFields];
     delete [] InterpolatedField[NumberOfBaryonFields];
     BaryonField[NumberOfBaryonFields] = NULL;

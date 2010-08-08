@@ -328,7 +328,7 @@ int grid::CollapseTestInitializeGrid(int NumberOfSpheres,
 	  ERF(SphereRadius[sphere]/SphereCoreRadius[sphere]);
 	term2 = 0.25 * SphereRadius[sphere] *
 	  pow(SphereCoreRadius[sphere], 2) *
-	  exp(-0.5 * pow((SphereRadius[sphere]/SphereCoreRadius[sphere]), 2));
+	  PEXP(-0.5 * pow((SphereRadius[sphere]/SphereCoreRadius[sphere]), 2));
 	SphereMass = (4*pi*SphereDensity[sphere]*DensityUnits) * 
 	  pow(LengthUnits, 3) * (term1 - term2);
 	break;
@@ -575,7 +575,7 @@ int grid::CollapseTestInitializeGrid(int NumberOfSpheres,
 
 	      if (SphereType[sphere] == 4) {
 		dens1 = SphereDensity[sphere]*
-		  exp(-0.5*pow(r/SphereCoreRadius[sphere], 2));
+		  PEXP(-0.5*pow(r/SphereCoreRadius[sphere], 2));
 	      }
 
 	      /* 5) r^-2 power law with core radius */
@@ -653,7 +653,7 @@ int grid::CollapseTestInitializeGrid(int NumberOfSpheres,
 		
 	      } // ENDIF type 9
 	    
-	      /* 10) disk (ok, it's not a sphere, so shoot me) */
+	      /* 10) disk (ok, it's not a sphere, ... ) */
 
 	      if (SphereType[sphere] == 10) {
 
@@ -691,10 +691,10 @@ int grid::CollapseTestInitializeGrid(int NumberOfSpheres,
 		  //		if (zheight > max(5.0*ScaleHeightz, 2.0*CellWidth[0][0]))
 		  //		  continue;
 
-		  /* Compute density (Kruit & Searle 1982). */
+		  /* Compute density (van der Kruit & Searle 1982  1982A&A...110...61V ). */
 
 		  if (dim == 0)
-		    dens1 = SphereDensity[sphere]*exp(-drad/ScaleHeightR)/
+		    dens1 = SphereDensity[sphere]*PEXP(-drad/ScaleHeightR)/
 		      pow(cosh(zheight/max(ScaleHeightz, CellWidth[0][0])), 2);
 
 		  //		if (dens1 < density)

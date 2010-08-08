@@ -42,6 +42,7 @@ int grid::SetParticleMassFlaggingField(int StartProc, int EndProc, int level,
 				       int NumberOfSends)
 {
 
+  //printf("grid::SetParticleMassFlaggingField called \n");
   int i, irecv, dim, size, proc, MPI_Tag;
 
   /* Return if we're not needed here */
@@ -49,6 +50,8 @@ int grid::SetParticleMassFlaggingField(int StartProc, int EndProc, int level,
 //  if (MyProcessorNumber == ProcessorNumber &&
 //      CommunicationDirection == COMMUNICATION_SEND)
 //    return SUCCESS;
+
+  //printf("    grid::SetParticleMassFlaggingField   \n");
 
   if (MyProcessorNumber != ProcessorNumber &&
       (CommunicationDirection == COMMUNICATION_RECEIVE ||
@@ -95,7 +98,7 @@ int grid::SetParticleMassFlaggingField(int StartProc, int EndProc, int level,
     /* Allocate and clear mass flagging field. */
  
     this->ClearParticleMassFlaggingField();
- 
+
     for (method = 0; method < MAX_FLAGGING_METHODS; method++) {
 
       /***********************************************************************/
@@ -117,8 +120,7 @@ int grid::SetParticleMassFlaggingField(int StartProc, int EndProc, int level,
  
 	if (this->DepositParticlePositionsLocal(this->ReturnTime(),
 					PARTICLE_MASS_FLAGGING_FIELD) == FAIL) {
-	  fprintf(stderr, "Error in grid->DepositParticlePositions.\n");
-	  ENZO_FAIL("");
+	  ENZO_FAIL("Error in grid->DepositParticlePositions.\n");
 	}
 
 	DepositParticleMaximumParticleMass = 0;
@@ -132,9 +134,9 @@ int grid::SetParticleMassFlaggingField(int StartProc, int EndProc, int level,
 	if (level < MustRefineParticlesRefineToLevel) {
 	  NumberOfFlaggedCells = 
 	    this->DepositMustRefineParticles(ParticleMassMethod, level);
+	  //printf(" Level <  MustRefineParticlesRefineToLevel = %d   \n",MustRefineParticlesRefineToLevel );
 	  if (NumberOfFlaggedCells < 0) {
-	    fprintf(stderr, "Error in grid->DepositMustRefineParticles.\n");
-	    ENZO_FAIL("");
+	    ENZO_FAIL("Error in grid->DepositMustRefineParticles.\n");
 	  }
 	}
 	
@@ -237,6 +239,7 @@ void InitializeParticleMassFlaggingFieldCommunication(void)
   for (i = 0; i < MAX_REQUEST_HANDLES; i++) {
     FlagRequestHandle[i] = NULL;
     if (FlagBuffer[i] != NULL)
+
       delete [] FlagBuffer[i];
     FlagBuffer[i] = NULL;
   }

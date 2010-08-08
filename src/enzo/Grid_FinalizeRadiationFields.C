@@ -49,20 +49,14 @@ int grid::FinalizeRadiationFields(void)
       DINum, DIINum, HDINum;
   if (IdentifySpeciesFields(DeNum, HINum, HIINum, HeINum, HeIINum, HeIIINum,
                       HMNum, H2INum, H2IINum, DINum, DIINum, HDINum) == FAIL) {
-    fprintf(stdout, "Error in grid->IdentifySpeciesFields.\n");
-    ENZO_FAIL("");
+    ENZO_FAIL("Error in grid->IdentifySpeciesFields.\n");
   }
 
   /* Find radiative transfer fields. */
 
-  int kphHINum, gammaHINum, kphHeINum, gammaHeINum, kphHeIINum, gammaHeIINum,
-    kdissH2INum;
-  if (IdentifyRadiativeTransferFields(kphHINum, gammaHINum, kphHeINum, 
-				      gammaHeINum, kphHeIINum, gammaHeIINum, 
-				      kdissH2INum) == FAIL) {
-    fprintf(stdout, "Error in grid->IdentifyRadiativeTransferFields.\n");
-    ENZO_FAIL("");
-  }
+  int kphHINum, gammaNum, kphHeINum, kphHeIINum, kdissH2INum;
+  IdentifyRadiativeTransferFields(kphHINum, gammaNum, kphHeINum, 
+				  kphHeIINum, kdissH2INum);
 
   /* Get units. */
 
@@ -70,26 +64,38 @@ int grid::FinalizeRadiationFields(void)
     DensityUnits; 
   if (GetUnits(&DensityUnits, &LengthUnits, &TemperatureUnits,
 	       &TimeUnits, &VelocityUnits, PhotonTime) == FAIL) {
-    fprintf(stdout, "Error in GetUnits.\n");
-    ENZO_FAIL("");
+    ENZO_FAIL("Error in GetUnits.\n");
   }
 
   float DensityConversion = DensityUnits / 1.673e-24;
   float factor = DensityConversion * CellVolume;
+  float Volume_inv = 1.0 / CellVolume;
 
   for (k = GridStartIndex[2]; k <= GridEndIndex[2]; k++)
     for (j = GridStartIndex[1]; j <= GridEndIndex[1]; j++) {
       index = GRIDINDEX_NOGHOST(GridStartIndex[0],j,k);
       for (i = GridStartIndex[0]; i <= GridEndIndex[0]; i++, index++) {
-	BaryonField[kphHINum][index] /= (factor * BaryonField[HINum][index]);
-	BaryonField[gammaHINum][index] /= (factor * BaryonField[HINum][index]);
-	BaryonField[kphHeINum][index] /= (factor * BaryonField[HeINum][index]);
-	BaryonField[gammaHeINum][index] /= (factor * BaryonField[HeINum][index]);
-	//BaryonField[kphHeIINum][index] /= (factor * BaryonField[HeIINum][index]);
-	BaryonField[gammaHeIINum][index] /= (factor * BaryonField[HeIINum][index]);
+	BaryonField[kphHINum][index] /= factor * BaryonField[HINum][index];
+	BaryonField[gammaNum][index] /= factor * BaryonField[HINum][index]; //divide by N_HI = n_HI*(dx)^3
       } // ENDFOR i
     } // ENDFOR j
+
+  if (RadiativeTransferHydrogenOnly == FALSE)
+    for (k = GridStartIndex[2]; k <= GridEndIndex[2]; k++)
+      for (j = GridStartIndex[1]; j <= GridEndIndex[1]; j++) {
+	index = GRIDINDEX_NOGHOST(GridStartIndex[0],j,k);
+	for (i = GridStartIndex[0]; i <= GridEndIndex[0]; i++, index++) {
+	  BaryonField[kphHeINum][index] /= 
+	    0.25 * factor * BaryonField[HeINum][index];
+	  BaryonField[kphHeIINum][index] /= 
+	    0.25 * factor * BaryonField[HeIINum][index];
+	} // ENDFOR i
+      } // ENDFOR j
   
+  if (RadiativeTransferHIIRestrictedTimestep &&
+
+      this->IndexOfMaximumkph >= 0)
+    this->MaximumkphIfront /= (factor * BaryonField[HINum][IndexOfMaximumkph]);
 
 #endif /* TRANSFER */  
   

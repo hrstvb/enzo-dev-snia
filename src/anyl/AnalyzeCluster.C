@@ -14,17 +14,21 @@
 /
 ************************************************************************/
 
-#include <math.h>
 #include <stdio.h>
+#include <math.h>
 #include <stdlib.h>
 #include <string.h>
+#ifdef USE_HDF4
 #include <df.h>
+#endif /* USE_HDF4 */
 #ifdef USE_MPI
 #include "mpi.h"
 #endif /* USE_MPI */
-#include "../enzo/macros_and_parameters.h"
-#include "../enzo/typedefs.h"
 #define DEFINE_STORAGE
+#include "../enzo/ErrorExceptions.h"
+#include "../enzo/macros_and_parameters.h"
+#include "../enzo/units.h"
+#include "../enzo/typedefs.h"
 #include "../enzo/global_data.h"
 #include "../enzo/Fluxes.h"
 #include "../enzo/GridList.h"
@@ -34,9 +38,7 @@
 #include "../enzo/LevelHierarchy.h"
 #include "../enzo/TopGridData.h"
 #include "../enzo/CosmologyParameters.h"  
-#include "../enzo/StarParticleData.h"
 #include "../enzo/communication.h"
-#include "../enzo/units.h"
 #include "../enzo/flowdefs.h"
 #include "../enzo/PhotonCommunication.h"
 
@@ -45,11 +47,11 @@
 #define MAX_BINS 200
 
 /* function prototypes */
-
 int ReadAllData(char *filename, HierarchyEntry *TopGrid, TopGridData &tgd,
-		    ExternalBoundary *Exterior);
+		ExternalBoundary *Exterior, float *Inititaldt);
 int Group_ReadAllData(char *filename, HierarchyEntry *TopGrid, TopGridData &tgd,
-		    ExternalBoundary *Exterior);
+              ExternalBoundary *Exterior, float *Initialdt,
+              bool ReadParticlesOnly=false);
 void AddLevel(LevelHierarchyEntry *Array[], HierarchyEntry *Grid, int level);
 int SetDefaultGlobalValues(TopGridData &MetaData);
 int CopyOverlappingZones(grid* CurrentGrid, TopGridData *MetaData, 
@@ -69,10 +71,16 @@ int SetBoundaryConditions(HierarchyEntry *Grids[], int NumberOfGrids,
 			  SiblingGridList SiblingList[],
 			  int level, TopGridData *MetaData, 
 			  ExternalBoundary *Exterior, LevelHierarchyEntry *Level);
-int CommunicationInitialize(int *argc, char **argv[]);
+int CommunicationInitialize(Eint32 *argc, char **argv[]);
 int CommunicationFinalize();
 int CommunicationSumValues(FLOAT *values, int number);
 int CommunicationAllSumValues(FLOAT *values, int number);
+void FindVirialRadius(LevelHierarchyEntry *LevelArray[], float &rvir, float &r500,
+		      float critical_density, float BoxSize,
+		      FLOAT *Center, FLOAT OuterEdge, float MeanVelocity[MAX_DIMENSION][3], 
+		      int NumberOfPoints, float *ProfileRadius, float ProfileValue[][MAX_PROFILES],
+		      float ProfileWeight[][MAX_PROFILES], char *ProfileName[MAX_PROFILES],
+		      AnalyzeClusterParameters *parameters);
 void my_exit(int status);
 int FastSiblingLocatorInitialize(ChainingMeshStructure *Mesh, int Rank,
 				 int TopGridDims[]);
@@ -85,7 +93,7 @@ int GetUnits(float *DensityUnits, float *LengthUnits,
               float *VelocityUnits, FLOAT Time);
 int CosmologyComputeExpansionFactor(FLOAT time, FLOAT *a, FLOAT *dadt);
 
-main(int argc, char *argv[])
+main(Eint32 argc, char *argv[])
 {
   CommunicationInitialize(&argc, &argv);
 
@@ -110,6 +118,7 @@ main(int argc, char *argv[])
   char Name[MAX_LINE_LENGTH], DiskImageName[MAX_LINE_LENGTH];
   LevelHierarchyEntry *Temp2, *Temp;
   HierarchyEntry **Grids;
+  float DiskVector[3];
 
   for (level = 0; level < MAX_DEPTH_OF_HIERARCHY; level++)
     LevelArray[level] = NULL;
@@ -126,16 +135,16 @@ main(int argc, char *argv[])
   SetDefaultGlobalValues(MetaData); 
 
   // First expect to read in packed-HDF5
-
+  float dummy;
 #ifdef USE_HDF5_GROUPS
-    if (Group_ReadAllData(argv[1], &TopGrid, MetaData, &Exterior) == FAIL) {
+  if (Group_ReadAllData(argv[1], &TopGrid, MetaData, &Exterior, &dummy) == FAIL) {
       if (MyProcessorNumber == ROOT_PROCESSOR) {
 	fprintf(stderr, "Error in Group_ReadAllData %s\n", argv[1]);
 	fprintf(stderr, "Probably not in a packed-HDF5 format. Trying other read routines.\n");
       }
 #endif
       // If not packed-HDF5, then try usual HDF5 or HDF4
-      if (ReadAllData(argv[1], &TopGrid, MetaData, &Exterior) == FAIL) {
+      if (ReadAllData(argv[1], &TopGrid, MetaData, &Exterior, &dummy) == FAIL) {
 	if (MyProcessorNumber == ROOT_PROCESSOR) {
 	  fprintf(stderr, "Error in ReadAllData %s.\n", argv[1]);
 	}
@@ -174,7 +183,7 @@ main(int argc, char *argv[])
   /* From the time, compute the current redshift. */
 
   FLOAT a=1, dadt, CurrentRedshift = 0.0;
-  float OmegaCurvatureNow = 0.0, Esquared;
+  float OmegaCurvatureNow = 0.0, Esquared, average_dens, critical_density = 1.0;
   if (ComovingCoordinates) {
     if (CosmologyComputeExpansionFactor(LevelArray[0]->GridData->ReturnTime(),
 					&a, &dadt) == FAIL) {
@@ -202,6 +211,10 @@ main(int argc, char *argv[])
 	my_exit(EXIT_FAILURE);
       }
     }
+
+    average_dens = 2.78e11*OmegaMatterNow*pow(HubbleConstantNow, 2) *
+      pow((1+InitialRedshift)/a, 3);
+    critical_density = 2.78e11*pow(HubbleConstantNow, 2) * Esquared;
 
   } // end: if (ComovingCoordinates)
 
@@ -330,8 +343,10 @@ main(int argc, char *argv[])
       debug = FALSE;
       printf("Computing center %d\n", center);
     }
-    for (dim = 0; dim < MAX_DIMENSION; dim++)
+    for (dim = 0; dim < MAX_DIMENSION; dim++) {
       Center[dim] = CenterList[dim][center];
+      //fprintf(stderr, "Center[dim] = %g, CenterList[dim][0] = %g", Center[dim], CenterList[dim][center]);
+    }
 
     /* Set base name. */
 
@@ -449,90 +464,54 @@ main(int argc, char *argv[])
       MeanVelocity[i][1] = 0;
     }
 
-    for (level = 0; level < MAX_DEPTH_OF_HIERARCHY; level++) {
+    float rvir = 0, mvir = 0, mvir_gas = 0, spin_gas = 0, spin_dm = 0, mvir_star = 0, r500 = 0;
 
-      printf("level %d\n", level);
-      LevelHierarchyEntry *Temp = LevelArray[level];
-      while (Temp != NULL) {
-	if (Temp->GridData->AddToRadialProfile(Center, OuterEdge, MeanVelocity, 
-					       NumberOfPoints, ProfileRadius,
-					       ProfileValue, ProfileWeight,
-					       ProfileName, &parameters) 
-	    == FAIL) {
-	  fprintf(stderr, "Error in grid->AddToRadialProfile.\n");
-	  exit(EXIT_FAILURE);
-	}
-	Temp = Temp->NextGridThisLevel;
-      }
-    }
-    CommunicationAllSumValues(&ProfileValue[0][0], MAX_BINS*MAX_PROFILES);
-    CommunicationAllSumValues(&ProfileWeight[0][0], MAX_BINS*MAX_PROFILES);
+    FindVirialRadius(LevelArray, rvir, r500,
+                     critical_density, BoxSize, Center, OuterEdge, MeanVelocity,
+                     NumberOfPoints, ProfileRadius, ProfileValue, ProfileWeight, ProfileName,
+                     &parameters);
 
-    /* Compute rvir based on critical density (as of Feb 21/2000). */
-
-    float rvir = 0, mvir = 0, mvir_gas = 0, spin_gas = 0, spin_dm = 0, mvir_star = 0, r500 = 0,
-      average_dens = 2.78e11*OmegaMatterNow*pow(HubbleConstantNow, 2) * pow((1+InitialRedshift)/a, 3),
-      critical_dens = 2.78e11*pow(HubbleConstantNow, 2) * Esquared; 
-    
-    for (j = 0; j < NumberOfPoints; j++) {
-
-      /* Compute the mass (gas+dm+star), in M(solar), within this annulus. */  
-
-      ProfileValue[j][38] = ProfileValue[j][0] + ProfileValue[j][30] +  
-	                    ProfileValue[j][60];
-
-      /* Keep a running sum of the total mass within radius j+1. */
-
-      if (j > 0)
-	ProfileValue[j][38] += ProfileValue[j-1][38];
-
-      /* Compute the average overdensity within the sphere with radius [j+1].*/
-
-      ProfileValue[j][39] = ProfileValue[j][38] / 
-	(pow(ProfileRadius[j+1]*BoxSize, 3) * 4.0*pi/3.0) / critical_dens;   
-    }
-
-    /* Find the radius at which the cumulative overdensity goes through 
-       virial_dens (typically 200); also compute r500 while we're at it. */  
-
-    int j1 = 1;
-    while (ProfileValue[j1][39] < 1e-19 && j1 < NumberOfPoints)
-      j1++;
-    for (j = j1; j < NumberOfPoints; j++) {
-
-      /* Check to see if the overdensity has dropped below 500. */
-
-      if (ProfileValue[j][39] <= 500 && r500 == 0) {
-	r500 = log(ProfileRadius[j]) +
-          (log(ProfileRadius[j+1])     - log(ProfileRadius[j])     ) *
-	  (log(500.0)                  - log(ProfileValue[j-1][39])) /
-	  (log(ProfileValue[j][39])    - log(ProfileValue[j-1][39]) + 
-	                                                    tiny_number);
-	r500 = exp(r500);
-      }
-
-      /* Check to see if the overdesnity has dropped below virial_dens. */   
-
-      if (ProfileValue[j][39] <= parameters.virial_dens) {
-
-	/* interpolate in log-space since overdensity ~ r^alpha */
-
-	rvir = log(ProfileRadius[j]) +
-          (log(ProfileRadius[j+1])     - log(ProfileRadius[j])     ) *
-	  (log(parameters.virial_dens) - log(ProfileValue[j-1][39])) /
-	  (log(ProfileValue[j][39])    - log(ProfileValue[j-1][39]) + 
-	                                                    tiny_number);
-	rvir = exp(rvir);
-
-	break;
-      }
-    }
     if (rvir > OuterEdge || rvir == 0) {
       printf("warning: rvir (%0.9e) > OuterEdge (%0.9e)\n", rvir, OuterEdge); 
       rvir = OuterEdge;
     }
-    j1 = j;
-    mvir = pow(rvir*BoxSize, 3)*4.0/3.0*pi*critical_dens*
+
+    FLOAT NewCenter[MAX_DIMENSION], NewCenterWeight;
+    float rnew = rvir;
+
+// Loop 100 times to find the centroid of the halo.
+#define MAX_ITERATIONS 100
+    for (i = 0; i < MAX_ITERATIONS; i++) {
+      rnew = 0.90*rnew;
+      printf("NewCenter(%d) = %f %f %f  r = %g\n", i, Center[0], Center[1], Center[2],rnew);
+      for (dim = 0; dim < MAX_DIMENSION; dim++)
+	    NewCenter[dim] = 0;
+      NewCenterWeight = 0;
+      for (level = 0; level < MAX_DEPTH_OF_HIERARCHY; level++) {
+	    LevelHierarchyEntry *Temp = LevelArray[level];
+	    while (Temp != NULL) {
+	      Temp->GridData->FindMeanVelocityAndCenter(Center, rnew, NewCenter, NewCenterWeight,
+						    MeanVelocity, MeanVelocityWeight);
+	      Temp = Temp->NextGridThisLevel;
+	    }
+      }
+      CommunicationAllSumValues(NewCenter, MAX_DIMENSION);
+      CommunicationAllSumValues(&NewCenterWeight, 1);
+
+      for (dim = 0; dim < MAX_DIMENSION; dim++)
+	if (NewCenterWeight > 0) {
+	  NewCenter[dim] /= NewCenterWeight;
+	  Center[dim] += NewCenter[dim];
+	}
+//      printf("shift = %g %g %g  weight = %g\n", NewCenter[0], NewCenter[1], NewCenter[2], NewCenterWeight);
+    }
+
+    FindVirialRadius(LevelArray, rvir, r500, 
+		     critical_density, BoxSize, Center, OuterEdge, MeanVelocity,
+		     NumberOfPoints, ProfileRadius, ProfileValue, ProfileWeight, ProfileName,
+		     &parameters);
+    
+    mvir = pow(rvir*BoxSize, 3)*4.0/3.0*pi*critical_density*
            parameters.virial_dens;
 
     /* ------------------------------------------------------------ */
@@ -550,8 +529,9 @@ main(int argc, char *argv[])
     for (level = 0; level < MAX_DEPTH_OF_HIERARCHY; level++) {
       LevelHierarchyEntry *Temp = LevelArray[level];
       while (Temp != NULL) {
-	Temp->GridData->FindMeanVelocity(Center, MeanVelocityOuterEdge,
-					 MeanVelocity, MeanVelocityWeight);
+	Temp->GridData->FindMeanVelocityAndCenter(Center, MeanVelocityOuterEdge,
+						  NewCenter, NewCenterWeight,
+						  MeanVelocity, MeanVelocityWeight);
 	Temp = Temp->NextGridThisLevel;
       }
     }
@@ -632,13 +612,13 @@ main(int argc, char *argv[])
       /* Compute the average overdensity within the sphere with radius [j+1].*/
       
       ProfileValue[j][39] = ProfileValue[j][38] / 
-	(pow(ProfileRadius[j+1]*BoxSize, 3) * 4.0*pi/3.0) / critical_dens;   
+	(pow(ProfileRadius[j+1]*BoxSize, 3) * 4.0*pi/3.0) / critical_density;   
 
       /* Compute the dynamical time within the sphere with radius j+1. */
 
       ProfileValue[j][22] = sqrt(3*pi/(16*GravConst*
 				       max(ProfileValue[j][39],1e-20)*
-				       critical_dens*SolarMass/(Mpc*Mpc*Mpc)));
+				       critical_density*SolarMass/(Mpc*Mpc*Mpc)));
     }
 
     ProfileName[22] = "T_dyn (s)";
@@ -845,8 +825,7 @@ main(int argc, char *argv[])
 
       /* Compute unit disk vector. */
 
-      float DiskVector[3], length;
-      length = sqrt(RvirValue[0][80]*RvirValue[0][80] +
+     float length = sqrt(RvirValue[0][80]*RvirValue[0][80] +
 		    RvirValue[0][81]*RvirValue[0][81] +
 		    RvirValue[0][82]*RvirValue[0][82]);
       for (dim = 0; dim < 3; dim++)
@@ -892,9 +871,10 @@ main(int argc, char *argv[])
 	  if (ProfileWeight[j][i] > 0) 
 	    ProfileValue[j][i] /= ProfileWeight[j][i];  
 
+#ifdef USE_HDF4
       /* Save disk image. */
 
-      int32 OutDims[2];
+      Eint32 OutDims[2];
       OutDims[0] = OutDims[1] = parameters.DiskImageSize;
       if (DFSDsetdims(2, OutDims) == HDF_FAIL) {
 	fprintf(stderr, "Error in DFSDsetdims.\n");
@@ -925,6 +905,7 @@ main(int argc, char *argv[])
       /* Clean up. */
 
       delete float_temp;
+#endif  //USE_HDF4
 
       } // end: if (MyProcessorNumber == ROOT_PROCESSOR)
 
@@ -996,7 +977,7 @@ main(int argc, char *argv[])
        file 3: Name.DarkMatter
        file 4: Name.StarParticles
        file 5: Name.Disk            
-       file 6: NAme.Vertical */
+       file 6: Name.Vertical */
 
     if (MyProcessorNumber == ROOT_PROCESSOR) {
     
@@ -1062,6 +1043,8 @@ main(int argc, char *argv[])
       ProfileFile[profile] = 2;
     for (profile = 150; profile < 190; profile++)  
       ProfileFile[profile] = 6;
+    for (profile = 191; profile < 194; profile++)  
+      ProfileFile[profile] = 0;
 
     /* Output global values. */
 
@@ -1083,6 +1066,8 @@ main(int argc, char *argv[])
 	    RvirValue[0][17], RvirValue[0][18], RvirValue[0][19]);
     fprintf(fptrs[0], "# L (dm)             = %"GOUTSYM" %"GOUTSYM" %"GOUTSYM" (Mpc km/s)\n",
 	    RvirValue[0][35], RvirValue[0][36], RvirValue[0][37]);
+    fprintf(fptrs[0], "# L (star)           = %"GOUTSYM" %"GOUTSYM" %"GOUTSYM" (Mpc km/s)\n",
+	    RvirValue[0][65], RvirValue[0][66], RvirValue[0][67]);
     fprintf(fptrs[0], "# InnerEdge = %g Mpc  OuterEdge = %g Mpc\n\n",    
 	  InnerEdge*BoxSize, OuterEdge*BoxSize);
 
@@ -1118,15 +1103,21 @@ main(int argc, char *argv[])
     }
     fprintf(fptrs[0], "# ColdTempCutoff (K) = %g\n\n", 
 	    parameters.ColdTemperatureCutoff);
+    if (parameters.ComputeDiskInformation)
+        fprintf(fptrs[0], "# Disk Vector = %f %f %f\n", DiskVector[0], DiskVector[1], DiskVector[2]);
 
     for (i = 0; i < NUMBER_OF_FILES; i++)
       if (fptrs[i] != NULL)
 	fprintf(fptrs[i], "#");
 
     for (profile = 0; profile < MAX_PROFILES; profile++)
-      if (ProfileName[profile] != NULL)
+      if (ProfileName[profile] != NULL) {
+	    if (debug) {
+          fprintf(stderr,"point %i Rvir: %g \n ", profile, RvirValue[0]);
+        }
       	fprintf(fptrs[ProfileFile[profile]], "%"GOUTSYM" ", RvirValue[0][profile]); 
-
+      }
+    
     for (i = 0; i < NUMBER_OF_FILES; i++)
       if (fptrs[i] != NULL)
 	fprintf(fptrs[i], "\n#\n");
@@ -1164,9 +1155,6 @@ main(int argc, char *argv[])
       if (fptrs[i] != NULL)
 	fprintf(fptrs[i], "\n");
 
-
-    double AverageGasSurfaceDensity = 0.0;  
-
     /* Loop over all radial bins, printing each. */
 
     for (j = 0; j < NumberOfPoints; j++) {
@@ -1189,7 +1177,7 @@ main(int argc, char *argv[])
 	      POW(BoxSize, 3) * 4.0*pi/3.0),
 	      ProfileWeight[j][30]);
 
-      /* Printing vertical profile using ProfileRadius2.  Ji-hoon Kim in Dec./2007 */
+      /* Print vertical profile using ProfileRadius2.  JHK in Dec.2007 */
 
       if ((fptrs[6] != NULL) && (parameters.LinearProfileRadiusForVertical)) {
 	FLOAT rmid = 0.5*(ProfileRadius2[j]+ProfileRadius2[j+1])*BoxSize;                   
@@ -1197,47 +1185,11 @@ main(int argc, char *argv[])
 		rmid, ProfileRadius2[j+1]*BoxSize); 
       }
 
-      /* Printing radially-averaged gas surface density.  This is useful for Local Kennicutt-Schmidt law.  
-	 This will create unwanted files, so caveat emptor!  Ji-hoon Kim in Nov./2007 */
-
-#define DO_NOT_PRINT_SURFACE_PROFILE
-#ifdef PRINT_SURFACE_PROFILE
-      FILE *fpGasSurfDen;
-      fpGasSurfDen = fopen("GasSurfDen.txt","a");      
-      fprintf(fpGasSurfDen, "%"GOUTSYM" \n", 
-	      (ProfileValue[j][106] == 0) ? 
-	      tiny_number : ProfileValue[j][106]/1e12); //in unit of Msun/pc^2
-      AverageGasSurfaceDensity += ProfileValue[j][106]*(2*pi*ProfileRadius[j]*BoxSize)
-	      *(ProfileRadius[j]-ProfileRadius[j-1])*BoxSize;
-      fclose(fpGasSurfDen);
-#endif 
-
       for (i = 0; i < NUMBER_OF_FILES; i++)
 	if (fptrs[i] != NULL)
 	  fprintf(fptrs[i], "\n");
 
     }//end of j
-
-    /* Printing disk-averaged gas surface density.  This is useful for Global Kennicutt-Schmidt law of multiple epochs. 
-       This will create unwanted files, so again, caveat emptor!  Ji-hoon Kim in Nov./2007 */
-    /* As a bonus, this also prints the evolution of m_vir  (order: z, rvir, mvir(total, gas, dm, star)) */
-
-#ifdef PRINT_SURFACE_PROFILE
-    FILE *fpAveGasSurfDen;
-    FILE *fpVirialMassEvolution;
-
-    fpAveGasSurfDen = fopen("../AveGasSurfDen.txt","a");
-    fprintf(fpAveGasSurfDen, "%"GOUTSYM"\n", 
-	    AverageGasSurfaceDensity/pi/POW((ProfileRadius[j]*BoxSize),2)/1e12); //in unit of Msun/pc^2 
-    
-    fpVirialMassEvolution = fopen("../VirialMassEvolution.txt","a");
-    fprintf(fpVirialMassEvolution, "%"GOUTSYM" %g  %g  %g  %g  %g  %g \n", 
-	    CurrentRedshift, MetaData.Time, rvir*BoxSize, 
-	    mvir, mvir_gas, mvir - mvir_gas - mvir_star, mvir_star);   
-
-    fclose(fpAveGasSurfDen);
-    fclose(fpVirialMassEvolution);
-#endif
 
     /* close files */
 
@@ -1245,11 +1197,69 @@ main(int argc, char *argv[])
       if (fptrs[i] != NULL)
 	fclose(fptrs[i]);
 
+
+    /* Print additional info for Kennicutt-Schmidt relations, JHK in Nov.2007 */
+
+    if (parameters.PrintGlobalProfileValues) { 
+
+      FILE *fpLKS, *fpGKS, *fpSSD;
+      double AverageGasSurfaceDensity = 0.0;  
+      double AverageSFRSurfaceDensity = 0.0;  
+      FLOAT ObservableDiskRadiusForKS = ProfileRadius[NumberOfPoints-1];
+
+      fpLKS = fopen("local_KS.dat","w");      
+      fpGKS = fopen("global_KS.dat","a");
+      fpSSD = fopen("stellar_surface_density.dat", "a");
+//      fprintf(fpGKS, "# time  Sigma_gas  Sigma_SFR  R_vir  M_vir  M_vir_star  M_vir_gas  M_vir_DM\n");
+
+      /* Print gas surface density and SFR surface density for local K-S law.  
+	 Msun/pc^2 vs. Msun/yr/kpc^2 */
+
+      for (j = 1; j < NumberOfPoints; j++) {
+
+	fprintf(fpLKS, "%"GOUTSYM"   %"GOUTSYM"   %"GOUTSYM" \n", ProfileRadius[j],
+		log10( (ProfileValue[j][106] == 0) ? tiny_number : ProfileValue[j][106]/POW(1e6, 2) ),
+		log10( (ProfileValue[j][116] == 0) ? tiny_number : ProfileValue[j][116]/POW(1e3, 2) )); 
+
+	AverageGasSurfaceDensity += ProfileValue[j][106]*ProfileWeight[j][106];//weights are annuli
+	AverageSFRSurfaceDensity += ProfileValue[j][116]*ProfileWeight[j][116];
+
+      }
+
+      /* Print disk-averaged gas surface density and disk-averaged SFR surface
+	 density for global K-S law.  Msun/pc^2 vs. Msun/yr/kpc^2  */
+
+      fprintf(fpGKS, "%g   %"GOUTSYM"   %"GOUTSYM"    %g    %g    %g    %g    %g\n", 
+	      MetaData.Time,
+	      log10( AverageGasSurfaceDensity/pi/POW((ObservableDiskRadiusForKS*BoxSize),2)/POW(1e6, 2) ),
+	      log10( AverageSFRSurfaceDensity/pi/POW((ObservableDiskRadiusForKS*BoxSize),2)/POW(1e3, 2) ),
+	      rvir*BoxSize, mvir, mvir_star, mvir_gas, mvir - mvir_gas - mvir_star); 
+
+      /* Print stellar/gas/SFR surface density w.r.t. time and radius (in Msun/pc^2, Msun/yr/kpc^2) */
+
+      for (j = 1; j < NumberOfPoints; j++) {
+
+	if (ProfileValue[j][114] != 0)
+	  fprintf(fpSSD, "%g   %"GOUTSYM"   %"GOUTSYM"   %"GOUTSYM"   %"GOUTSYM"\n", 
+		  MetaData.Time, ProfileRadius[j],
+		  log10( (ProfileValue[j][114] == 0) ? tiny_number : ProfileValue[j][114]/POW(1e6, 2) ),
+		  log10( (ProfileValue[j][106] == 0) ? tiny_number : ProfileValue[j][106]/POW(1e6, 2) ),
+		  log10( (ProfileValue[j][116] == 0) ? tiny_number : ProfileValue[j][116]/POW(1e3, 2) ));
+
+      }
+
+      fclose(fpLKS);
+      fclose(fpGKS);
+      fclose(fpSSD);
+      
+    } // end: if (parameters.PrintGlobalProfileValues)
+
     } // end: if (MyProcessorNumber == ROOT_PROCESSOR)
 
   } // end: loop over centers
 
   my_exit(EXIT_SUCCESS);
+
 }
 
 
@@ -1257,4 +1267,103 @@ void my_exit(int status)
 {
   CommunicationFinalize();
   exit(status);
+}
+
+void FindVirialRadius(LevelHierarchyEntry *LevelArray[], float &rvir, float &r500,
+		      float critical_density, float BoxSize,
+		      FLOAT *Center, FLOAT OuterEdge, float MeanVelocity[MAX_DIMENSION][3], 
+		      int NumberOfPoints, float *ProfileRadius, float ProfileValue[][MAX_PROFILES],
+		      float ProfileWeight[][MAX_PROFILES], char *ProfileName[MAX_PROFILES],
+		      AnalyzeClusterParameters *parameters)
+{
+  int i, j, level;
+  const float pi = 3.14159;
+
+
+  for (i = 0; i < MAX_PROFILES; i++) {
+    for (j = 0; j < MAX_BINS; j++) {
+      ProfileValue[j][i] = 0.0;
+      ProfileWeight[j][i] = 0.0;
+    }
+    ProfileName[i] = NULL;
+  }
+
+
+  for (level = 0; level < MAX_DEPTH_OF_HIERARCHY; level++) {
+    printf("level %d\n", level);
+    LevelHierarchyEntry *Temp = LevelArray[level];
+    while (Temp != NULL) {
+      if (Temp->GridData->AddToRadialProfile(Center, OuterEdge, MeanVelocity,
+					     NumberOfPoints, ProfileRadius,
+					     ProfileValue, ProfileWeight,
+					     ProfileName, parameters) == FAIL) {
+	fprintf(stderr, "Error in grid->AddToRadialProfile.\n");
+	exit(EXIT_FAILURE);
+      }
+      Temp = Temp->NextGridThisLevel;
+    }
+  }
+  CommunicationAllSumValues(&ProfileValue[0][0], MAX_BINS*MAX_PROFILES);
+  CommunicationAllSumValues(&ProfileWeight[0][0], MAX_BINS*MAX_PROFILES);
+
+  /* Compute rvir based on critical density (as of Feb 21/2000). */
+
+  for (j = 0; j < NumberOfPoints; j++) {
+
+    /* Compute the mass (gas+dm+star), in M(solar), within this annulus. */
+    
+    ProfileValue[j][38] = ProfileValue[j][0] + ProfileValue[j][30] +
+	                  ProfileValue[j][60];
+
+    /* Keep a running sum of the total mass within radius j+1. */
+
+    if (j > 0)
+      ProfileValue[j][38] += ProfileValue[j-1][38];
+
+    /* Compute the average overdensity within the sphere with radius [j+1].*/
+
+    ProfileValue[j][39] = ProfileValue[j][38] / 
+	(pow(ProfileRadius[j+1]*BoxSize, 3) * 4.0*pi/3.0) / critical_density;
+  }
+
+
+  /* Find the radius at which the cumulative overdensity goes through 
+     virial_dens (typically 200); also compute r500 while we're at it.
+     Update: 06.01.2010 CBH - Start from outside and move into center 
+     to calculate rvir.  This assure you have sufficient mass in center
+     (even if you aren't *right* on a halo). */
+
+    if (ProfileValue[NumberOfPoints-1][39] >= parameters->virial_dens) {
+        fprintf(stderr, "Error: Choose a larger OuterEdge; rvir > OuterEdge (%g)\n", OuterEdge);
+        my_exit(EXIT_FAILURE);
+    }
+    for (j = NumberOfPoints-1; j >= 0; j--) {
+
+    /* Check to see if the overdensity has increased beyond virial_dens. */
+    if (ProfileValue[j][39] >= parameters->virial_dens && rvir == 0) {
+
+        /* interpolate in log-space since overdensity ~ r^alpha */
+
+        rvir = log(ProfileRadius[j+1]) +
+            (log(ProfileRadius[j+2])     - log(ProfileRadius[j+1])     ) *
+            (log(parameters->virial_dens) - log(ProfileValue[j][39])) /
+            (log(ProfileValue[j+1][39])    - log(ProfileValue[j][39]) +
+            tiny_number);
+
+        rvir = exp(rvir);
+    }
+
+    /* Check to see if the overdensity has increased beyond 500. */
+
+    if (ProfileValue[j][39] >= 500 && r500 == 0) {
+        r500 = log(ProfileRadius[j+1]) +
+               (log(ProfileRadius[j+2])     - log(ProfileRadius[j+1])     ) *
+               (log(500.0)                  - log(ProfileValue[j][39])) /
+               (log(ProfileValue[j+1][39])    - log(ProfileValue[j][39]) +
+                tiny_number);
+        r500 = exp(r500);
+        break;
+    }
+  }
+  return;
 }

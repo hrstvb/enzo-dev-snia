@@ -45,11 +45,9 @@
 void WriteListOfFloats(FILE *fptr, int N, float floats[]);
 void WriteListOfFloats(FILE *fptr, int N, FLOAT floats[]);
 void WriteListOfInts(FILE *fptr, int N, int nums[]);
-int CommunicationBroadcastValue(int *Value, int BroadcastProcessor);
+void PrintMemoryUsage(char *str);
+int InitializeRateData(FLOAT Time);
 
-#ifdef MEM_TRACE
-Eint64 mused(void);
-#endif
 
 // Cosmology Parameters (that need to be shared)
  
@@ -68,7 +66,6 @@ static char *CosmologySimulationVelocityNames[MAX_DIMENSION];
 static char *CosmologySimulationParticleVelocityNames[MAX_DIMENSION];
 
 static int   CosmologySimulationSubgridsAreStatic    = TRUE;
-static int   CosmologySimulationNumberOfInitialGrids = 1;
  
 static float CosmologySimulationInitialFractionHII   = 1.2e-5;
 static float CosmologySimulationInitialFractionHeII  = 1.0e-14;
@@ -82,6 +79,10 @@ static int CosmologySimulationManuallySetParticleMassRatio = FALSE;
 static float CosmologySimulationManualParticleMassRatio = 1.0;
 
 static int   CosmologySimulationCalculatePositions   = FALSE; 
+
+#ifdef TRANSFER
+static float RadHydroInitialRadiationEnergy = 1.0e-32;
+#endif
 
 #define MAX_INITIAL_GRIDS 10
  
@@ -111,9 +112,21 @@ int CosmologySimulationInitialize(FILE *fptr, FILE *Outfptr,
   char *HDIName   = "HDI_Density";
   char *MetalName = "Metal_Density";
   char *GPotName  = "Grav_Potential";
+  char *ForbidName  = "ForbiddenRefinement";
+  char *MachName   = "Mach";
+  char *CRName     = "CR_Density";
+  char *PSTempName = "PreShock_Temperature";
+  char *PSDenName  = "PreShock_Density";
   char *ExtraNames[2] = {"Z_Field1", "Z_Field2"};
+
+#ifdef TRANSFER
+  char *RadName    = "Grey_Radiation_Energy";
+#endif
+#ifdef EMISSIVITY
+  char *EtaName    = "Emissivity";
+#endif
  
- 
+
   char line[MAX_LINE_LENGTH];
   int i, j, dim, gridnum, ret, SubgridsAreStatic, region;
   HierarchyEntry *Subgrid;
@@ -149,8 +162,7 @@ int CosmologySimulationInitialize(FILE *fptr, FILE *Outfptr,
   CosmologySimulationGridLevel[0] = 0;
  
   if (!ComovingCoordinates) {
-    fprintf(stderr, "ComovingCoordinates must be TRUE!\n");
-    ENZO_FAIL("");
+    ENZO_FAIL("ComovingCoordinates must be TRUE!\n");
   }
  
   if (DualEnergyFormalism == FALSE && HydroMethod != Zeus_Hydro)
@@ -204,7 +216,7 @@ int CosmologySimulationInitialize(FILE *fptr, FILE *Outfptr,
       CosmologySimulationParticleVelocityNames[1] = dummy;
     if (sscanf(line, "CosmologySimulationParticleVelocity3Name = %s", dummy) == 1)
       CosmologySimulationParticleVelocityNames[2] = dummy;    
- 
+
     ret += sscanf(line, "CosmologySimulationNumberOfInitialGrids = %"ISYM,
 		  &CosmologySimulationNumberOfInitialGrids);
     ret += sscanf(line, "CosmologySimulationSubgridsAreStatic = %"ISYM,
@@ -268,25 +280,52 @@ int CosmologySimulationInitialize(FILE *fptr, FILE *Outfptr,
       fprintf(stderr, "warning: the following parameter line was not interpreted:\n%s\n", line);
  
   }
+
+#ifdef TRANSFER
+  // if using FLD-based solver for radiation, initialize the relevant fields
+  if (RadiativeTransferFLD > 1) {
+    // Read RadHydro input from secondary input file
+    if (MetaData.RadHydroParameterFname != NULL) {
+      FILE *RHfptr;
+      if ((RHfptr = fopen(MetaData.RadHydroParameterFname, "r")) != NULL) {
+	while (fgets(line, MAX_LINE_LENGTH, RHfptr) != NULL) {
+	  ret = 0;
+	  // read relevant problem parameters
+	  ret += sscanf(line, "RadHydroRadiationEnergy = %"FSYM, 
+			&RadHydroInitialRadiationEnergy);
+	} // end input from parameter file
+	fclose(RHfptr);
+      }
+    }
+    
+    // set up CoolData object if not already set up
+    if (CoolData.ceHI == NULL) 
+      if (InitializeRateData(MetaData.Time) == FAIL) {
+	fprintf(stderr,"Error in InitializeRateData.\n");
+	return FAIL;
+      }
+  }
+
+#endif
  
   // More error checking
  
   if (CosmologySimulationDensityName == NULL &&
       (CosmologySimulationParticlePositionName == NULL &&
        !CosmologySimulationCalculatePositions)) {
-    fprintf(stderr, "Missing initial data.\n");
-    ENZO_FAIL("");
+    ENZO_FAIL("Missing initial data.\n");
   }
  
   if (CosmologySimulationDensityName != NULL && CellFlaggingMethod[0] != 2)
+    if (MyProcessorNumber == ROOT_PROCESSOR)
       fprintf(stderr, "CosmologySimulation: check CellFlaggingMethod.\n");
  
   if (CosmologySimulationDensityName == NULL && CellFlaggingMethod[0] != 4)
+    if (MyProcessorNumber == ROOT_PROCESSOR)
       fprintf(stderr, "CosmologySimulation: check CellFlaggingMethod.\n");
  
   if (CosmologySimulationNumberOfInitialGrids > MAX_INITIAL_GRIDS) {
-    fprintf(stderr, "Too many InitialGrids! increase MAX_INITIAL_GRIDS\n");
-    ENZO_FAIL("");
+    ENZO_FAIL("Too many InitialGrids! increase MAX_INITIAL_GRIDS\n");
   }
  
   if (CosmologySimulationDensityName == NULL &&
@@ -297,9 +336,8 @@ int CosmologySimulationInitialize(FILE *fptr, FILE *Outfptr,
 
   if (CosmologySimulationParticleVelocityNames[0] != NULL &&
       !CosmologySimulationCalculatePositions) {
-    fprintf(stderr, "CosmologySimulation: 1-component files only valid for use with "
+    ENZO_FAIL("CosmologySimulation: 1-component files only valid for use with "
 	    "CosmologySimualtionCalculatePositions.\n");
-    ENZO_FAIL("");
   }
  
   // If temperature is left unset, set it assuming that T=550 K at z=200
@@ -335,8 +373,7 @@ int CosmologySimulationInitialize(FILE *fptr, FILE *Outfptr,
 	}
  
     if (ParentGrid == INT_UNDEFINED) {
-      fprintf(stderr, "Grid %"ISYM" has no valid parent.\n", gridnum);
-      ENZO_FAIL("");
+      ENZO_VFAIL("Grid %"ISYM" has no valid parent.\n", gridnum)
     }
  
     // Insert this grid at the appropriate position in the subgrid chain
@@ -375,7 +412,7 @@ int CosmologySimulationInitialize(FILE *fptr, FILE *Outfptr,
 	fprintf(stderr, " subgrid: %"GOUTSYM" -> %"GOUTSYM", CellSize = %"GOUTSYM"\n",
 	      CosmologySimulationGridLeftEdge[gridnum][dim],
 	      CosmologySimulationGridRightEdge[gridnum][dim], SubgridCellSize);
-	ENZO_FAIL("");
+	ENZO_FAIL("Subgrid Inconsistency!");
       }
  
       // Check if left/right edge fall on Parent cell boundary
@@ -389,7 +426,7 @@ int CosmologySimulationInitialize(FILE *fptr, FILE *Outfptr,
 	fprintf(stderr, "Subgrid inconsistency: grid %"ISYM", dim %"ISYM"\n",
 		gridnum, dim);
 	fprintf(stderr, "left or right edges are not on parent cell edge.\n");
-	ENZO_FAIL("");
+	ENZO_FAIL("Subgrid Inconsistency!");
       }
  
       // Add ghost zones
@@ -427,8 +464,7 @@ int CosmologySimulationInitialize(FILE *fptr, FILE *Outfptr,
 	  break;
 	}
       if (region == MAX_STATIC_REGIONS) {
-	fprintf(stderr, "Out of static refine regions\n");
-	ENZO_FAIL("");
+	ENZO_FAIL("Out of static refine regions\n");
       }
     }
  
@@ -524,14 +560,16 @@ int CosmologySimulationInitialize(FILE *fptr, FILE *Outfptr,
 			     CosmologySimulationInitialFractionHM,
 			     CosmologySimulationInitialFractionH2I,
 			     CosmologySimulationInitialFractionH2II,
+#ifdef TRANSFER
+			     RadHydroInitialRadiationEnergy,
+#endif
 			     CosmologySimulationUseMetallicityField,
 			     MetaData.NumberOfParticles,
 			     CosmologySimulationManuallySetParticleMassRatio,
 			     CosmologySimulationManualParticleMassRatio,
 			     CosmologySimulationCalculatePositions
 						       ) == FAIL) {
-      fprintf(stderr, "Error in grid->CosmologySimulationInitializeGrid.\n");
-      ENZO_FAIL("");
+      ENZO_FAIL("Error in grid->CosmologySimulationInitializeGrid.\n");
     }
  
     // Set boundary conditions if necessary
@@ -571,6 +609,10 @@ int CosmologySimulationInitialize(FILE *fptr, FILE *Outfptr,
   DataLabel[i++] = Vel1Name;
   DataLabel[i++] = Vel2Name;
   DataLabel[i++] = Vel3Name;
+#ifdef TRANSFER
+  if (RadiativeTransferFLD > 1)
+    DataLabel[i++] = RadName;
+#endif
   if (MultiSpecies) {
     DataLabel[i++] = ElectronName;
     DataLabel[i++] = HIName;
@@ -589,7 +631,6 @@ int CosmologySimulationInitialize(FILE *fptr, FILE *Outfptr,
       DataLabel[i++] = HDIName;
     }
   }
- 
   if (CosmologySimulationUseMetallicityField) {
     DataLabel[i++] = MetalName;
     if(MultiMetals){
@@ -597,9 +638,26 @@ int CosmologySimulationInitialize(FILE *fptr, FILE *Outfptr,
       DataLabel[i++] = ExtraNames[1];
     }
   }
+  if(STARMAKE_METHOD(COLORED_POP3_STAR)){
+    DataLabel[i++] = ForbidName;
+  }
  
   if (WritePotential)
-    DataLabel[i++] = GPotName;
+    DataLabel[i++] = GPotName;  
+
+  if (CRModel) {
+    DataLabel[i++] = MachName;
+    if(StorePreShockFields){
+      DataLabel[i++] = PSTempName;
+      DataLabel[i++] = PSDenName;
+    }
+    DataLabel[i++] = CRName;
+  } 
+
+#ifdef EMISSIVITY
+  if (StarMakerEmissivityField > 0)
+    DataLabel[i++] = EtaName;
+#endif
  
   for (j = 0; j < i; j++)
     DataUnits[j] = NULL;
@@ -687,7 +745,7 @@ int CosmologySimulationInitialize(FILE *fptr, FILE *Outfptr,
 }
  
  
-void RecursivelySetParticleCount(HierarchyEntry *GridPoint, int *Count);
+void RecursivelySetParticleCount(HierarchyEntry *GridPoint, PINT *Count);
  
 // Re-call the initializer on level zero grids.
 // Used in case of ParallelRootGridIO.
@@ -704,10 +762,6 @@ int CosmologySimulationReInitialize(HierarchyEntry *TopGrid,
     *ParticleMassName = NULL, *VelocityNames[MAX_DIMENSION],
     *ParticleTypeName = NULL, *ParticleVelocityNames[MAX_DIMENSION];
   
-#ifdef MEM_TRACE
-  Eint64 MemInUse;
-#endif
- 
   for (dim = 0; dim < MAX_DIMENSION; dim++) {
     ParticleVelocityNames[dim] = NULL;
     VelocityNames[dim] = NULL;
@@ -778,10 +832,7 @@ int CosmologySimulationReInitialize(HierarchyEntry *TopGrid,
  
   HierarchyEntry *Temp = TopGrid;
 
-#ifdef MEM_TRACE
-    MemInUse = mused();
-    fprintf(memtracePtr, "Call G_CSIG  %16"ISYM" \n", MemInUse);
-#endif
+  PrintMemoryUsage("Call G_CSIG");
  
   while (Temp != NULL) {
  
@@ -801,28 +852,26 @@ int CosmologySimulationReInitialize(HierarchyEntry *TopGrid,
 			     CosmologySimulationInitialFractionHM,
 			     CosmologySimulationInitialFractionH2I,
 			     CosmologySimulationInitialFractionH2II,
+#ifdef TRANSFER
+			     RadHydroInitialRadiationEnergy,
+#endif
 			     CosmologySimulationUseMetallicityField,
 			     MetaData.NumberOfParticles,
 			     CosmologySimulationManuallySetParticleMassRatio,
 			     CosmologySimulationManualParticleMassRatio,
 			     CosmologySimulationCalculatePositions
 						       ) == FAIL) {
-      fprintf(stderr, "Error in grid->CosmologySimulationInitializeGrid.\n");
-      ENZO_FAIL("");
+      ENZO_FAIL("Error in grid->CosmologySimulationInitializeGrid.\n");
     }
  
     Temp = Temp->NextGridThisLevel;
   }
 
-#ifdef MEM_TRACE
-    MemInUse = mused();
-    fprintf(memtracePtr, "Called G_CSIG  %16"ISYM" \n", MemInUse);
-#endif
- 
+  PrintMemoryUsage("Called G_CSIG");
  
     //  Create tracer particles
 
-    int DummyNumberOfParticles = 0;
+    PINT DummyNumberOfParticles = 0;
  
     Temp = TopGrid;
  
@@ -832,8 +881,7 @@ int CosmologySimulationReInitialize(HierarchyEntry *TopGrid,
 		TracerParticleCreationRightEdge,
 		TracerParticleCreationSpacing,
 		DummyNumberOfParticles) == FAIL) {
-	fprintf(stderr, "Error in grid->TracerParticleCreateParticles\n");
-	ENZO_FAIL("");
+	ENZO_FAIL("Error in grid->TracerParticleCreateParticles\n");
       }
       
       Temp = Temp->NextGridThisLevel;
@@ -861,40 +909,30 @@ int CosmologySimulationReInitialize(HierarchyEntry *TopGrid,
     Temp = Temp->NextGridThisLevel;
   }
  
-#ifdef MEM_TRACE
-    MemInUse = mused();
-    fprintf(memtracePtr, "Local pc set %16"ISYM" \n", MemInUse);
-#endif
+  PrintMemoryUsage("Local pc set");
  
  
   // Loop over grids and set particle ID number
  
   Temp = TopGrid;
-  int ParticleCount = 0;
+  PINT ParticleCount = 0;
   RecursivelySetParticleCount(Temp, &ParticleCount);
   if (debug)
     printf("FinalParticleCount = %"ISYM"\n", ParticleCount);
 
-#ifdef MISCOUNT
   // 2006-12-11 Skory bug fix for star particle miscounts
   // Removed the following line:
   // MetaData.NumberOfParticles = 0;
   // Added the following line:
   MetaData.NumberOfParticles = ParticleCount;
-#else
-  MetaData.NumberOfParticles = 0;
-#endif
 
-#ifdef MEM_TRACE
-    MemInUse = mused();
-    fprintf(memtracePtr, "Recursive pc set %16"ISYM" \n", MemInUse);
-#endif
+  PrintMemoryUsage("Recursive pc set");
 
  
   return SUCCESS;
 }
  
-void RecursivelySetParticleCount(HierarchyEntry *GridPoint, int *Count)
+void RecursivelySetParticleCount(HierarchyEntry *GridPoint, PINT *Count)
 {
   // Add Count to the particle id's on this grid (which start from zero
   // since we are doing a parallel root grid i/o)
@@ -907,6 +945,7 @@ void RecursivelySetParticleCount(HierarchyEntry *GridPoint, int *Count)
     RecursivelySetParticleCount(GridPoint->NextGridThisLevel, Count);
  
   if (GridPoint->NextGridNextLevel != NULL)
+
     RecursivelySetParticleCount(GridPoint->NextGridNextLevel, Count);
  
   return;

@@ -47,27 +47,16 @@ int grid::ElectronFractionEstimate(float dt)
   int DensNum, GENum, TENum, Vel1Num, Vel2Num, Vel3Num;
   int DeNum, HINum, HIINum, HeINum, HeIINum, HeIIINum, HMNum, H2INum, H2IINum,
       DINum, DIINum, HDINum;
-  int kphHINum, kphHeINum, kphHeIINum, kdissH2INum;
-  int gammaHINum, gammaHeINum, gammaHeIINum;
+  int kphHINum, kphHeINum, kphHeIINum, kdissH2INum, gammaNum;
 
-  if (this->IdentifyPhysicalQuantities(DensNum, GENum, Vel1Num, Vel2Num, 
-				       Vel3Num, TENum) == FAIL) {
-    fprintf(stderr, "Error in IdentifyPhysicalQuantities.\n");
-    ENZO_FAIL("");
-  }
+  IdentifyPhysicalQuantities(DensNum, GENum, Vel1Num, Vel2Num, 
+			     Vel3Num, TENum);
 
-  if (IdentifySpeciesFields(DeNum, HINum, HIINum, HeINum, HeIINum, HeIIINum,
-                      HMNum, H2INum, H2IINum, DINum, DIINum, HDINum) == FAIL) {
-    fprintf(stderr, "Error in grid->IdentifySpeciesFields.\n");
-    ENZO_FAIL("");
-  }
+  IdentifySpeciesFields(DeNum, HINum, HIINum, HeINum, HeIINum, HeIIINum,
+			HMNum, H2INum, H2IINum, DINum, DIINum, HDINum);
 
-  if (IdentifyRadiativeTransferFields(kphHINum, gammaHINum, kphHeINum, 
-				      gammaHeINum, kphHeIINum, gammaHeIINum, 
-				      kdissH2INum) == FAIL) {
-    fprintf(stderr, "Error in grid->IdentifyRadiativeTransferFields.\n");
-    ENZO_FAIL("");
-  }
+  IdentifyRadiativeTransferFields(kphHINum, gammaNum, kphHeINum, 
+				  kphHeIINum, kdissH2INum);
 
   /* If using cosmology, get units. */
 
@@ -77,15 +66,13 @@ int grid::ElectronFractionEstimate(float dt)
 
   if (GetUnits(&DensityUnits, &LengthUnits, &TemperatureUnits,
 	       &TimeUnits, &VelocityUnits, Time) == FAIL) {
-    fprintf(stderr, "Error in GetUnits.\n");
-    ENZO_FAIL("");
+    ENZO_FAIL("Error in GetUnits.\n");
   }
 
   if (ComovingCoordinates) {
 
     if (CosmologyComputeExpansionFactor(Time, &a, &dadt) == FAIL) {
-      fprintf(stderr, "Error in CosmologyComputeExpansionFactors.\n");
-      ENZO_FAIL("");
+      ENZO_FAIL("Error in CosmologyComputeExpansionFactors.\n");
     }
 
     aUnits = 1.0/(1.0 + InitialRedshift);
@@ -223,7 +210,7 @@ int grid::ElectronFractionEstimate(float dt)
 
 	  //	  printf("edot[0] = %"GSYM"\n", edot);
 
-	  edotplus = CoolData.ipiht * BaryonField[gammaHINum][index] * rtunits
+	  edotplus = CoolData.ipiht * BaryonField[gammaNum][index] * rtunits
 	    * proper_hi / dom;
 	  edotplus = min(edotplus, max_edotplus);
 
@@ -232,13 +219,14 @@ int grid::ElectronFractionEstimate(float dt)
 	  //	  printf("edotplus = %"GSYM" (%"GSYM")\n", edotplus, max_edotplus);
 
 	  if (DualEnergyFormalism)
+
 	    BaryonField[GENum][index] += edot / proper_d * dt;
 	  BaryonField[TENum][index] += edot / proper_d * dt;
 #endif /* UNUSED */
 
 //	  printf("(%"ISYM" %"ISYM" %"ISYM") tem=%.2g, gg=%.2g, edot=%.2g, "
 //		 "ge=%.2g\n",
-//		 i, j, k, temperature, BaryonField[gammaHINum][index],
+//		 i, j, k, temperature, BaryonField[gammaNum][index],
 //		 edot, BaryonField[GENum][index]);
 
 	  /* Estimate ionization fraction */

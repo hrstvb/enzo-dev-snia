@@ -36,12 +36,12 @@
  
 /* function prototypes */
  
-extern "C" void FORTRAN_NAME(cic_deposit)(FLOAT *posx, FLOAT *posy,
+extern "C" void PFORTRAN_NAME(cic_deposit)(FLOAT *posx, FLOAT *posy,
 			FLOAT *posz, int *ndim, int *npositions,
                         float *densfield, float *field, FLOAT *leftedge,
                         int *dim1, int *dim2, int *dim3, float *cellsize);
  
-extern "C" void FORTRAN_NAME(smooth_deposit)(FLOAT *posx, FLOAT *posy,
+extern "C" void PFORTRAN_NAME(smooth_deposit)(FLOAT *posx, FLOAT *posy,
 			FLOAT *posz, int *ndim, int *npositions,
                         float *densfield, float *field, FLOAT *leftedge,
                         int *dim1, int *dim2, int *dim3, float *cellsize,
@@ -134,8 +134,7 @@ int grid::DepositParticlePositions(grid *TargetGrid, FLOAT DepositTime,
   /* 5) error */
  
   else {
-    fprintf(stderr, "DepositField = %"ISYM" not recognized.\n", DepositField);
-    ENZO_FAIL("");
+    ENZO_VFAIL("DepositField = %"ISYM" not recognized.\n", DepositField)
   }  
 
   /* If on different processors, generate a temporary field to hold
@@ -181,8 +180,7 @@ int grid::DepositParticlePositions(grid *TargetGrid, FLOAT DepositTime,
 		MyProcessorNumber, (int(GridLeftEdge[dim]/CellSize)-2)*CellSize, 
 		int(GridLeftEdge[dim]/CellSize));
 
-	fprintf(stderr, "Offset[%d] = %d < 0\n", dim, Offset[dim]);
-	ENZO_FAIL("");
+	ENZO_VFAIL("Offset[%d] = %d < 0\n", dim, Offset[dim])
       }
       Dimension[dim] = int((GridRightEdge[dim] - LeftEdge[dim])/CellSize) + 3;
       size *= Dimension[dim];
@@ -264,13 +262,13 @@ int grid::DepositParticlePositions(grid *TargetGrid, FLOAT DepositTime,
  
     /* Deposit particles. */
 
-    if (DepositPositionsParticleSmoothRadius < CellSize) {
+    if (DepositPositionsParticleSmoothRadius <= CellSize) {
 
     /* Deposit to field using CIC. */
  
       //  fprintf(stderr, "------DP Call Fortran cic_deposit with CellSize = %"GSYM"\n", CellSize);
  
-      FORTRAN_NAME(cic_deposit)
+      PFORTRAN_NAME(cic_deposit)
 	(ParticlePosition[0], ParticlePosition[1], ParticlePosition[2], 
 	 &GridRank, &NumberOfParticles, ParticleMassPointer, DepositFieldPointer, 
 	 LeftEdge, Dimension, Dimension+1, Dimension+2, &CellSize);
@@ -282,7 +280,7 @@ int grid::DepositParticlePositions(grid *TargetGrid, FLOAT DepositTime,
  
       //  fprintf(stderr, "------DP Call Fortran smooth_deposit with DPPSmoothRadius = %"GSYM"\n", DepositPositionsParticleSmoothRadius);
  
-      FORTRAN_NAME(smooth_deposit)
+      PFORTRAN_NAME(smooth_deposit)
 	(ParticlePosition[0], ParticlePosition[1], ParticlePosition[2], &GridRank,
 	 &NumberOfParticles, ParticleMassPointer, DepositFieldPointer, LeftEdge, 
 	 Dimension, Dimension+1, Dimension+2, &CellSize, 
@@ -367,6 +365,7 @@ int grid::DepositParticlePositions(grid *TargetGrid, FLOAT DepositTime,
     /* If necessary, delete the particle mass temporary. */
 
     if (MassFactor != 1.0)
+
       delete [] ParticleMassTemp;
 
     /* Return particles to positions at Time. */

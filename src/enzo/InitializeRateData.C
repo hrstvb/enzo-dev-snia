@@ -4,7 +4,7 @@
 /
 /  written by: Greg Bryan
 /  date:       October, 1996
-/  modified1:
+/  modified1:  Dan Reynolds, July 2010; added case-B recombination rates
 /
 /  PURPOSE:
 /    For multi-species runs (with cooling), initialize both the
@@ -32,20 +32,20 @@ int ReadMetalCoolingRates(float TemperatureUnits, float LengthUnits,
 			  float aye);
 extern "C" void FORTRAN_NAME(calc_rates)(
      int *nratec, float *aye, float *temstart, float *temend, float *alpha0,
-        float *f3, int *iradtype,
+     float *f3, int *iradtype, int *casebrates, int *threebody,
      float *utem, float *uxyz, float *uaye, float *urho, float *utim,
      float *ceHIa, float *ceHeIa, float *ceHeIIa, float *ciHIa, float *ciHeIa,
      float *ciHeISa, float *ciHeIIa, float *reHIIa, float *reHeII1a,
-     float *reHeII2a, float *reHeIIIa, float *brema, float *compa,
+     float *reHeII2a, float *reHeIIIa, float *brema, float *compa, float *gammaha,
      float *piHI, float *piHeI, float *piHeII,
      float *hyd01ka, float *h2k01a, float *vibha, float *rotha, float *rotla,
-     float *gpldl, float *gphdl, float *hdlte, float *hdlow,
+     float *gpldl, float *gphdl, float *hdlte, float *hdlow, float *hdcool, float *cieco,
      float *gaHIa, float *gaH2a, float *gaHea, float *gaHpa, float *gaela,
      float *k1a, float *k2a, float *k3a, float *k4a, float *k5a, float *k6a,
         float *k7a, float *k8a, float *k9a, float *k10a,
      float *k11a, float *k12a, float *k13a, float *k13dda, float *k14a,
         float *k15a, float *k16a, float *k17a, float *k18a,
-     float *k19a, float *k20a, float *k21a, float *k22,
+     float *k19a, float *k20a, float *k21a, float *k22, float *k23,
      float *k24, float *k25, float *k26, float *k27, float *k28, float *k29,
         float *k30, float *k31,
      float *k50, float *k51, float *k52, float *k53, float *k54, float *k55,
@@ -84,6 +84,7 @@ int InitializeRateData(FLOAT Time)
   CoolData.TemperatureEnd          = 1.0e8;
   CoolData.comp_xray               = 0;
   CoolData.temp_xray               = 0;
+  RateData.CaseBRecombination      = 0;   // default to case A rates
 
 
   // over-write defaults if CoolData Parameter file is provided
@@ -132,6 +133,8 @@ int InitializeRateData(FLOAT Time)
 		      &CoolData.comp_xray);
 	ret += sscanf(line, "CoolDataTempXray = %"FSYM,
 		      &CoolData.temp_xray);
+	ret += sscanf(line, "RateDataCaseBRecombination = %"ISYM,
+		      &RateData.CaseBRecombination);
       }
 
       // clean up
@@ -170,6 +173,8 @@ int InitializeRateData(FLOAT Time)
   CoolData.GP99HighDensityLimit = new float[CoolData.NumberOfTemperatureBins];
   CoolData.HDlte   = new float[CoolData.NumberOfTemperatureBins];
   CoolData.HDlow   = new float[CoolData.NumberOfTemperatureBins];
+  CoolData.HDcool  = new float[CoolData.NumberOfTemperatureBins*5];
+  CoolData.cieco   = new float[CoolData.NumberOfTemperatureBins];
   CoolData.GAHI    = new float[CoolData.NumberOfTemperatureBins];
   CoolData.GAH2    = new float[CoolData.NumberOfTemperatureBins];
   CoolData.GAHe    = new float[CoolData.NumberOfTemperatureBins];
@@ -210,6 +215,7 @@ int InitializeRateData(FLOAT Time)
   RateData.k20 = new float[RateData.NumberOfTemperatureBins];
   RateData.k21 = new float[RateData.NumberOfTemperatureBins];
   RateData.k22 = new float[RateData.NumberOfTemperatureBins];
+  RateData.k23 = new float[RateData.NumberOfTemperatureBins];
   RateData.k50 = new float[RateData.NumberOfTemperatureBins];
   RateData.k51 = new float[RateData.NumberOfTemperatureBins];
   RateData.k52 = new float[RateData.NumberOfTemperatureBins];
@@ -225,16 +231,14 @@ int InitializeRateData(FLOAT Time)
  
   if (GetUnits(&DensityUnits, &LengthUnits, &TemperatureUnits,
 	       &TimeUnits, &VelocityUnits, Time) == FAIL) {
-    fprintf(stderr, "Error in GetUnits.\n");
-    ENZO_FAIL("");
+    ENZO_FAIL("Error in GetUnits.\n");
   }
 
   if (ComovingCoordinates) {
  
     if (CosmologyComputeExpansionFactor(Time, &a, &dadt)
 	== FAIL) {
-      fprintf(stderr, "Error in CosmologyComputeExpansionFactors.\n");
-      ENZO_FAIL("");
+      ENZO_FAIL("Error in CosmologyComputeExpansionFactors.\n");
     }
  
     aUnits = 1.0/(1.0 + InitialRedshift);
@@ -248,25 +252,25 @@ int InitializeRateData(FLOAT Time)
   FORTRAN_NAME(calc_rates)(
      &CoolData.NumberOfTemperatureBins, &afloat, &CoolData.TemperatureStart,
         &CoolData.TemperatureEnd, &CoolData.alpha0, &CoolData.f3,
-        &RadiationFieldType,
+        &RadiationFieldType, &RateData.CaseBRecombination, &ThreeBodyRate,
      &TemperatureUnits, &LengthUnits, &aUnits, &DensityUnits, &TimeUnits,
      CoolData.ceHI, CoolData.ceHeI, CoolData.ceHeII, CoolData.ciHI,
         CoolData.ciHeI,
      CoolData.ciHeIS, CoolData.ciHeII, CoolData.reHII,
         CoolData.reHeII1,
-     CoolData.reHeII2, CoolData.reHeIII, CoolData.brem, &CoolData.comp,
+     CoolData.reHeII2, CoolData.reHeIII, CoolData.brem, &CoolData.comp, &CoolData.gammah,
      &CoolData.piHI, &CoolData.piHeI, &CoolData.piHeII,
      CoolData.hyd01k, CoolData.h2k01, CoolData.vibh, CoolData.roth,
         CoolData.rotl,
      CoolData.GP99LowDensityLimit, CoolData.GP99HighDensityLimit,
-        CoolData.HDlte, CoolData.HDlow,
+        CoolData.HDlte, CoolData.HDlow, CoolData.HDcool, CoolData.cieco,
      CoolData.GAHI, CoolData.GAH2, CoolData.GAHe, CoolData.GAHp,
         CoolData.GAel,
      RateData.k1, RateData.k2, RateData.k3, RateData.k4, RateData.k5,
         RateData.k6, RateData.k7, RateData.k8, RateData.k9, RateData.k10,
      RateData.k11, RateData.k12, RateData.k13, RateData.k13dd, RateData.k14,
         RateData.k15, RateData.k16, RateData.k17, RateData.k18,
-     RateData.k19, RateData.k20, RateData.k21, RateData.k22,
+     RateData.k19, RateData.k20, RateData.k21, RateData.k22, RateData.k23,
      &RateData.k24, &RateData.k25, &RateData.k26, &RateData.k27, &RateData.k28,
         &RateData.k29, &RateData.k30, &RateData.k31,
      RateData.k50, RateData.k51, RateData.k52, RateData.k53, RateData.k54,
@@ -277,9 +281,8 @@ int InitializeRateData(FLOAT Time)
   if (MyProcessorNumber == ROOT_PROCESSOR) {
     FILE *outfptr;
     if ((outfptr = fopen(outfilename, "a")) == NULL) {
-      fprintf(stderr,"Error opening parameter output file %s.\n", 
-	      outfilename);
-      ENZO_FAIL("");
+      ENZO_VFAIL("Error opening parameter output file %s.\n", 
+	      outfilename)
     }
 
     fprintf(outfptr,"RadiationSpectrumNormalization = %"FSYM"\n",
@@ -319,8 +322,8 @@ int InitializeRateData(FLOAT Time)
   if (MetalCooling == JHW_METAL_COOLING)
     if (ReadMetalCoolingRates(TemperatureUnits, LengthUnits, aUnits, 
 			      DensityUnits, TimeUnits, afloat) == FAIL) {
-      fprintf(stderr, "Error in ReadMetalCoolingRates.\n");
-      ENZO_FAIL("");
+      ENZO_FAIL("Error in ReadMetalCoolingRates.\n");
+
     }
 
   return SUCCESS;

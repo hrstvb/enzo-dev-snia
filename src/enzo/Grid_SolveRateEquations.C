@@ -53,8 +53,8 @@ extern "C" void FORTRAN_NAME(solve_rate)(
 	float *HM, float *H2I, float *H2II, float *DI, float *DII, float *HDI,
 	int *iradshield, float *avgsigh, float *avgsighe, float *avgsighe2,
 	int *iradfield, float *piHI, float *piHeI,
-	int *iradtrans, float *kphHI, float *kphHeI, float *kphHeII, 
-	float *kdissH2I);
+	int *iradtrans, int *irt_honly, float *kphHI, float *kphHeI, 
+	float *kphHeII, float *kdissH2I);
  
  
 int grid::SolveRateEquations()
@@ -84,20 +84,15 @@ int grid::SolveRateEquations()
  
   if (IdentifySpeciesFields(DeNum, HINum, HIINum, HeINum, HeIINum, HeIIINum,
                       HMNum, H2INum, H2IINum, DINum, DIINum, HDINum) == FAIL) {
-    fprintf(stderr, "Error in grid->IdentifySpeciesFields.\n");
-    ENZO_FAIL("");
+    ENZO_FAIL("Error in grid->IdentifySpeciesFields.\n");
   }
  
   /* Find photo-ionization fields */
 
   int kphHINum, kphHeINum, kphHeIINum, kdissH2INum;
-  int gammaHINum, gammaHeINum, gammaHeIINum;
-  if (IdentifyRadiativeTransferFields(kphHINum, gammaHINum, kphHeINum, 
-				      gammaHeINum, kphHeIINum, gammaHeIINum, 
-				      kdissH2INum) == FAIL) {
-    fprintf(stderr, "Error in grid->IdentifyRadiativeTransferFields.\n");
-    ENZO_FAIL("");
-  }
+  int gammaNum;
+  IdentifyRadiativeTransferFields(kphHINum, gammaNum, kphHeINum, 
+				  kphHeIINum, kdissH2INum);
 
   /* Find the density field. */
  
@@ -118,16 +113,14 @@ int grid::SolveRateEquations()
 
   if (GetUnits(&DensityUnits, &LengthUnits, &TemperatureUnits,
 	       &TimeUnits, &VelocityUnits, Time) == FAIL) {
-    fprintf(stderr, "Error in GetUnits.\n");
-    ENZO_FAIL("");
+    ENZO_FAIL("Error in GetUnits.\n");
   }
 
   if (ComovingCoordinates) {
  
     if (CosmologyComputeExpansionFactor(Time+0.5*dtFixed, &a, &dadt)
 	== FAIL) {
-      fprintf(stderr, "Error in CosmologyComputeExpansionFactors.\n");
-      ENZO_FAIL("");
+      ENZO_FAIL("Error in CosmologyComputeExpansionFactors.\n");
     }
  
     aUnits = 1.0/(1.0 + InitialRedshift);
@@ -138,13 +131,10 @@ int grid::SolveRateEquations()
   /* Calculate the rates due to the radiation field. */
  
   if (RadiationFieldCalculateRates(Time+0.5*dtFixed) == FAIL) {
-    fprintf(stderr, "Error in RadiationFieldCalculateRates.\n");
-    ENZO_FAIL("");
+    ENZO_FAIL("Error in RadiationFieldCalculateRates.\n");
   }
  
   /* Set up information for rates which depend on the radiation field. */
- 
-  int RadiationShield = (RadiationFieldType == 11) ? TRUE : FALSE;
  
   /* Precompute factors for self shielding (this is the cross section * dx).
      The factor ToCGS convert code number densities to real number densites
@@ -156,8 +146,7 @@ int grid::SolveRateEquations()
                    double(LengthUnits) * CellWidth[0][0] * ToCGS;
   float HeIShieldFactor = RadiationData.HeIAveragePhotoionizationCrossSection*
                     double(LengthUnits) * CellWidth[0][0] * ToCGS;
-  float HeIIShieldFactor =
-                     RadiationData.HeIIAveragePhotoionizationCrossSection *
+  float HeIIShieldFactor = RadiationData.HeIIAveragePhotoionizationCrossSection *
                      double(LengthUnits) * CellWidth[0][0] * ToCGS;
  
   /* Allocate space for the temperature and compute it. */
@@ -165,8 +154,8 @@ int grid::SolveRateEquations()
   int size = GridDimension[0]*GridDimension[1]*GridDimension[2];
   float *temperature = new float[size];
   if (this->ComputeTemperatureField(temperature) == FAIL) {
-    fprintf(stderr, "Error in grid->ComputeTemperatureField.\n");
-    ENZO_FAIL("");
+    ENZO_FAIL("Error in grid->ComputeTemperatureField.\n");
+
   }
  
   /* Call the fortran routine to solve cooling equations. */
@@ -195,9 +184,10 @@ int grid::SolveRateEquations()
           RateData.k54, RateData.k55, RateData.k56,
        BaryonField[HMNum], BaryonField[H2INum], BaryonField[H2IINum],
           BaryonField[DINum], BaryonField[DIINum], BaryonField[HDINum],
-       &RadiationShield, &HIShieldFactor, &HeIShieldFactor, &HeIIShieldFactor,
+       &RadiationData.RadiationShield, &HIShieldFactor, &HeIShieldFactor, &HeIIShieldFactor,
        &RadiationFieldType, &CoolData.piHI, &CoolData.piHeI,
-       &RadiativeTransfer, BaryonField[kphHINum], BaryonField[kphHeINum], 
+       &RadiativeTransfer, &RadiativeTransferHydrogenOnly,
+       BaryonField[kphHINum], BaryonField[kphHeINum], 
        BaryonField[kphHeIINum], BaryonField[kdissH2INum]);
  
   /* deallocate temporary space for solver */

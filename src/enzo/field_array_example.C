@@ -8,8 +8,8 @@
 #include <math.h> 
 #include <hdf5.h>
 
-#ifdef RAD_HYDRO
-#include "gFLDProblem_preincludes.h"
+#ifdef TRANSFER
+#include "preincludes.h"
 #endif
 #include "svn_version.def"
 #include "performance.h"
@@ -29,12 +29,7 @@
 #include "TopGridData.h"
 #include "CosmologyParameters.h"
 #include "StarParticleData.h"
-#ifdef RAD_HYDRO
-#include "gFLDProblem.h"
-#endif
 #undef DEFINE_STORAGE
-
-#include <stdio.h>
 
 #ifndef USE_MPI
 #define MyProcessorNumber 0

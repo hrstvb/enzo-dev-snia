@@ -4,7 +4,8 @@
 /
 /  written by: John Wise
 /  date:       March, 2009
-/  modified1:
+/  modified1: Ji-hoon Kim
+/             September, 2009
 /
 /  NOTES:
 /
@@ -24,30 +25,61 @@
 #include "TopGridData.h"
 #include "LevelHierarchy.h"
 
-int StarParticleAccretion(Star *&AllStars)
+int GetUnits(float *DensityUnits, float *LengthUnits,
+	     float *TemperatureUnits, float *TimeUnits,
+	     float *VelocityUnits, FLOAT Time);
+
+int StarParticleAccretion(TopGridData *MetaData, 
+			  LevelHierarchyEntry *LevelArray[], int level, 
+			  Star *&AllStars)
 {
 
 #define NOT_SEDOV_TEST
-#ifdef SEDOV_TEST
+#define NOT_HII_REGION_TEST
+
+#if defined(SEDOV_TEST) || defined(HII_REGION_TEST)
   return SUCCESS;
 #endif
 
   Star *ThisStar;
+  FLOAT Time;
+  LevelHierarchyEntry *Temp;
 
-  /* Add accreted mass to star particles */
+  Temp = LevelArray[level];
+  Time = Temp->GridData->ReturnTime();
+
+  /* Set the units. */
+
+  float DensityUnits, LengthUnits, TemperatureUnits, TimeUnits, 
+    VelocityUnits;
+  GetUnits(&DensityUnits, &LengthUnits, &TemperatureUnits,
+	   &TimeUnits, &VelocityUnits, Time);
+
 
   for (ThisStar = AllStars; ThisStar; ThisStar = ThisStar->NextStar) {
 
+    // Must be the finest level for any feedback except star formation
+    if (ThisStar->ReturnFeedbackFlag() != FORMATION &&
+	LevelArray[level+1] != NULL)
+      continue;
+
     if (ThisStar->CalculateMassAccretion() == FAIL) {
-      fprintf(stderr, "Error in star::CalculateMassAccretion.\n");
-      ENZO_FAIL("");
+      ENZO_FAIL("Error in star::CalculateMassAccretion.\n");
     }
 
+    /* Add accreted mass to star particles */
+
     if (ThisStar->Accrete() == FAIL) {
-      fprintf(stderr, "Error in star::Accrete.\n");
-      ENZO_FAIL("");
+      ENZO_FAIL("Error in star::Accrete.\n");
     }
-    
+
+    /* Add accreted angular momentum to star particles */
+
+    if (ThisStar->AccreteAngularMomentum() == FAIL) {
+      ENZO_FAIL("Error in star::AccreteAngularMomentum.\n");
+
+    }
+
   }
 
   return SUCCESS;

@@ -9,7 +9,10 @@
 /  PURPOSE:
 /
 ************************************************************************/
- 
+
+#ifdef USE_MPI
+#include "mpi.h"
+#endif 
 #include <stdio.h>
 #include "ErrorExceptions.h"
 #include "macros_and_parameters.h"
@@ -22,17 +25,14 @@
 #include "Hierarchy.h"
 #include "TopGridData.h"
 #include "LevelHierarchy.h"
+#include "CommunicationUtilities.h"
  
 int CommunicationTranspose(region *FromRegion, int NumberOfFromRegions,
 			   region *ToRegion, int NumberOfToRegions,
 			   int TransposeOrder);
 int FastFourierTransform(float *buffer, int Rank, int DimensionReal[],
 			 int Dimension[], int direction, int type);
- 
-#ifdef MEM_TRACE
-Eint64 mused(void);
-#endif
- 
+void PrintMemoryUsage(char *str);
  
 int CommunicationParallelFFT(region *InRegion, int NumberOfInRegions,
 			     region **OutRegion, int *NumberOfOutRegions,
@@ -45,14 +45,7 @@ int CommunicationParallelFFT(region *InRegion, int NumberOfInRegions,
   int i, j, k, dim, size;
   float x, DomainCellSize[MAX_DIMENSION];
 
-#ifdef MEM_TRACE
-    Eint64 MemInUse;
-#endif
-
-#ifdef MEM_TRACE
-    MemInUse = mused();
-    fprintf(memtracePtr, "Enter FFT  %16"ISYM" \n", MemInUse);
-#endif
+  PrintMemoryUsage("Enter FFT");
 
   for (dim = 0; dim < MAX_DIMENSION; dim++)
     DomainCellSize[dim] = (DomainRightEdge[dim]-DomainLeftEdge[dim])/float(DomainDim[dim]);
@@ -103,8 +96,7 @@ int CommunicationParallelFFT(region *InRegion, int NumberOfInRegions,
 //    fprintf(stderr, "FFT(%"ISYM"): initial -> strip1\n", MyProcessorNumber);
     if (CommunicationTranspose(InRegion, NumberOfInRegions, strip1,
 			       NumberOfProcessors, NORMAL_ORDER) == FAIL) {
-      fprintf(stderr, "Error in CommunicationTranspose.\n");
-      ENZO_FAIL("");
+      ENZO_FAIL("Error in CommunicationTranspose.\n");
     }
  
     /* Compute the size of the each FFT 'slice', and the actual dimensions,
@@ -125,8 +117,7 @@ int CommunicationParallelFFT(region *InRegion, int NumberOfInRegions,
 	if (FastFourierTransform(strip1[MyProcessorNumber].Data+j, LastIndex,
 				 strip1[MyProcessorNumber].RegionDim, TempInts,
 				 direction, REAL_TO_COMPLEX) == FAIL) {
-	  fprintf(stderr, "Error in forward ParallelFFT call.\n");
-	  ENZO_FAIL("");
+	  ENZO_FAIL("Error in forward ParallelFFT call.\n");
 	}
 	j += size;
       } // end: loop over last dims
@@ -138,8 +129,7 @@ int CommunicationParallelFFT(region *InRegion, int NumberOfInRegions,
 //      fprintf(stderr, "FFT(%"ISYM"): strip1 -> strip0\n", MyProcessorNumber);
       if (CommunicationTranspose(strip1, NumberOfProcessors, strip0,
 			      NumberOfProcessors, TRANSPOSE_FORWARD) == FAIL) {
-	fprintf(stderr, "Error in CommunicationTranspose (forward).\n");
-	ENZO_FAIL("");
+	ENZO_FAIL("Error in CommunicationTranspose (forward).\n");
       }
  
       /* FFT last dim (complex to complex).  Note that the data has been
@@ -155,8 +145,7 @@ int CommunicationParallelFFT(region *InRegion, int NumberOfInRegions,
 	if (FastFourierTransform(strip0[MyProcessorNumber].Data+j*fft_size*2,
 				 1, &fft_size, &fft_size, direction,
 				 COMPLEX_TO_COMPLEX) == FAIL) {
-	  fprintf(stderr, "Error in forward ParallelFFT call.\n");
-	  ENZO_FAIL("");
+	  ENZO_FAIL("Error in forward ParallelFFT call.\n");
 	}
  
     } // end: if (Rank > 1)
@@ -174,8 +163,7 @@ int CommunicationParallelFFT(region *InRegion, int NumberOfInRegions,
 				InRegion, NumberOfInRegions,
 				((Rank>1) ? TRANSPOSE_REVERSE : NORMAL_ORDER))
 	  == FAIL) {
-	fprintf(stderr, "Error in CommunicationTranspose.\n");
-	ENZO_FAIL("");
+	ENZO_FAIL("Error in CommunicationTranspose.\n");
       }
       *OutRegion = InRegion;
       *NumberOfOutRegions = NumberOfInRegions;
@@ -195,8 +183,7 @@ int CommunicationParallelFFT(region *InRegion, int NumberOfInRegions,
 			     ((Rank>1) ? strip0 : strip1), NumberOfProcessors,
 			     ((Rank>1) ? TRANSPOSE_FORWARD : NORMAL_ORDER) )
 	  == FAIL) {
-	fprintf(stderr, "Error in CommunicationTranspose.\n");
-	ENZO_FAIL("");
+	ENZO_FAIL("Error in CommunicationTranspose.\n");
       }
     } else {
  
@@ -223,16 +210,14 @@ int CommunicationParallelFFT(region *InRegion, int NumberOfInRegions,
 	if (FastFourierTransform(strip0[MyProcessorNumber].Data+j*fft_size*2,
 				 1, &fft_size, &fft_size, direction,
 				 COMPLEX_TO_COMPLEX) == FAIL) {
-	  fprintf(stderr, "Error in forward ParallelFFT call.\n");
-	  ENZO_FAIL("");
+	  ENZO_FAIL("Error in forward ParallelFFT call.\n");
 	}
  
       /* Transpose to striped0 regions (reverse order within blocks). */
  
       if (CommunicationTranspose(strip0, NumberOfProcessors, strip1,
 			      NumberOfProcessors, TRANSPOSE_REVERSE) == FAIL) {
-	fprintf(stderr, "Error in CommunicationTranspose (reverse).\n");
-	ENZO_FAIL("");
+	ENZO_FAIL("Error in CommunicationTranspose (reverse).\n");
       }
  
     } // end: if (Rank > 1)
@@ -250,8 +235,7 @@ int CommunicationParallelFFT(region *InRegion, int NumberOfInRegions,
 	if (FastFourierTransform(strip1[MyProcessorNumber].Data+j, LastIndex,
 				 strip1[MyProcessorNumber].RegionDim, TempInts,
 				 direction, REAL_TO_COMPLEX) == FAIL) {
-	  fprintf(stderr, "Error in forward ParallelFFT call.\n");
-	  ENZO_FAIL("");
+	  ENZO_FAIL("Error in forward ParallelFFT call.\n");
 	}
 	j += size;
       } // end: loop over last dims
@@ -261,8 +245,7 @@ int CommunicationParallelFFT(region *InRegion, int NumberOfInRegions,
     if (CommunicationTranspose(strip1, NumberOfProcessors,
 			       InRegion, NumberOfInRegions,
 			       NORMAL_ORDER) == FAIL) {
-      fprintf(stderr, "Error in CommunicationTranspose.\n");
-      ENZO_FAIL("");
+      ENZO_FAIL("Error in CommunicationTranspose.\n");
     }
     *OutRegion = InRegion;
     *NumberOfOutRegions = NumberOfProcessors;
@@ -274,12 +257,10 @@ int CommunicationParallelFFT(region *InRegion, int NumberOfInRegions,
   if (*OutRegion != strip1)
     delete [] strip1;
   if (*OutRegion != strip0)
+
     delete [] strip0;
 
-#ifdef MEM_TRACE
-    MemInUse = mused();
-    fprintf(memtracePtr, "Exit FFT  %16"ISYM" \n", MemInUse);
-#endif
+  PrintMemoryUsage("Exit FFT");
  
   return SUCCESS;
 }

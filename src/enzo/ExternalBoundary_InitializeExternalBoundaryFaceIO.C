@@ -73,8 +73,7 @@ int ExternalBoundary::InitializeExternalBoundaryFace(int dim,
   /* Error check */
  
   if (dim > BoundaryRank) {
-    fprintf(stderr, "Dimension %"ISYM" > BoundaryRank %"ISYM".\n", dim, BoundaryRank);
-    ENZO_FAIL("");
+    ENZO_VFAIL("Dimension %"ISYM" > BoundaryRank %"ISYM".\n", dim, BoundaryRank)
   }
  
   /* compute size of entire mesh */
@@ -121,6 +120,9 @@ int ExternalBoundary::InitializeExternalBoundaryFace(int dim,
 
     for (field = 0; field < NumberOfBaryonFields; field++) {
 
+      if (debug) 
+	printf("InitializeBoundary: field %d, allocating %d bytes\n",
+	       field, 2*sizeof(boundary_type)*size/BoundaryDimension[dim]);
       BoundaryType[field][dim][0] =
 	new boundary_type[size/BoundaryDimension[dim]];
       BoundaryType[field][dim][1] =
@@ -181,6 +183,7 @@ int ExternalBoundary::InitializeExternalBoundaryFace(int dim,
       }
  
       if (RightBoundaryType == inflow) {
+
 	BoundaryValue[field][dim][1] = new float[size/BoundaryDimension[dim]];
 	for (index = 0; index < size/BoundaryDimension[dim]; index++)
 	  BoundaryValue[field][dim][1][index] = RightBoundaryValue[field];

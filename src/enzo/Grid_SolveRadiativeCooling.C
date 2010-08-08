@@ -50,24 +50,11 @@ int GadgetCalculateCooling(float *d, float *e, float *ge,
                  float *uaye, float *urho, float *utim,
                  float *gamma);
 
-int multi_CloudyCooling(float *density,float *totalenergy,float *gasenergy,
-			float *velocity1,float *velocity2,float *velocity3,
-			float *De,float *HI,float *HII,
-			float *HeI,float *HeII,float *HeIII,
-			float *HM,float *H2I,float *H2II,
-			float *DI,float *DII,float *HDI,
-			float *metalDensity,
-			int *GridDimension,int GridRank,float dtFixed,
-			float afloat,float TemperatureUnits,float LengthUnits,
-			float aUnits,float DensityUnits,float TimeUnits,
-			int RadiationShield,float HIShieldFactor,
-			float HeIShieldFactor,float HeIIShieldFactor);
-
 extern "C" void FORTRAN_NAME(multi_cool)(
 	float *d, float *e, float *ge, float *u, float *v, float *w, float *de,
 	   float *HI, float *HII, float *HeI, float *HeII, float *HeIII,
 	int *in, int *jn, int *kn, int *nratec, int *iexpand,
-           hydro_method *imethod,
+	hydro_method *imethod, int *igammah,
         int *idual, int *ispecies, int *imetal, int *imcool, int *idim,
 	int *is, int *js, int *ks, int *ie, int *je, int *ke, int *ih2co,
 	   int *ipiht,
@@ -77,7 +64,7 @@ extern "C" void FORTRAN_NAME(multi_cool)(
 	float *ceHIa, float *ceHeIa, float *ceHeIIa, float *ciHIa,
 	   float *ciHeIa,
 	float *ciHeISa, float *ciHeIIa, float *reHIIa, float *reHeII1a,
-	float *reHeII2a, float *reHeIIIa, float *brema, float *compa,
+	float *reHeII2a, float *reHeIIIa, float *brema, float *compa, float *gammaha,
 	float *comp_xraya, float *comp_temp,
            float *piHI, float *piHeI, float *piHeII,
 	float *HM, float *H2I, float *H2II, float *DI, float *DII, float *HDI,
@@ -89,17 +76,21 @@ extern "C" void FORTRAN_NAME(multi_cool)(
 	float *metala, int *n_xe, float *xe_start, float *xe_end,
 	float *inutot, int *iradtype, int *nfreq, int *imetalregen,
 	int *iradshield, float *avgsighp, float *avgsighep, float *avgsighe2p,
-	int *iradtrans, float *gammaHI, float *gammaHeI, float *gammaHeII);
+	int *iradtrans, float *photogamma,
+ 	int *icmbTfloor, int *iClHeat, int *iClMMW,
+ 	float *clMetNorm, float *clEleFra, int *clGridRank, int *clGridDim,
+ 	float *clPar1, float *clPar2, float *clPar3, float *clPar4, float *clPar5,
+ 	int *clDataSize, float *clCooling, float *clHeating, float *clMMW);
  
 extern "C" void FORTRAN_NAME(solve_cool)(
 	float *d, float *e, float *ge, float *u, float *v, float *w,
 	int *in, int *jn, int *kn, int *nratec, int *iexpand,
-           hydro_method *imethod, int *idual, int *idim,
+	hydro_method *imethod, int *idual, int *idim, int *igammah,
 	int *is, int *js, int *ks, int *ie, int *je, int *ke,
 	float *dt, float *aye, float *temstart, float *temend,
 	   float *fh,
 	float *utem, float *uxyz, float *uaye, float *urho, float *utim,
-	float *eta1, float *eta2, float *gamma, float *coola);
+	float *eta1, float *eta2, float *gamma, float *coola, float *gammaha);
  
  
 int grid::SolveRadiativeCooling()
@@ -127,41 +118,34 @@ int grid::SolveRadiativeCooling()
  
   /* Compute size (in floats) of the current grid. */
  
-  int size = 1;
-  for (int dim = 0; dim < GridRank; dim++)
+  int i, dim, size = 1;
+  for (dim = 0; dim < GridRank; dim++)
     size *= GridDimension[dim];
  
   /* Find fields: density, total energy, velocity1-3. */
  
   if (this->IdentifyPhysicalQuantities(DensNum, GENum, Vel1Num, Vel2Num,
 				       Vel3Num, TENum, B1Num, B2Num, B3Num ) == FAIL) {
-    fprintf(stderr, "Error in IdentifyPhysicalQuantities.\n");
-    ENZO_FAIL("");
+    ENZO_FAIL("Error in IdentifyPhysicalQuantities.\n");
   }
  
   /* Find Multi-species fields. */
  
-  // Cloudy cooling takes these as arguments even if not being used.
   DeNum = HINum = HIINum = HeINum = HeIINum = HeIIINum = HMNum = H2INum = 
     H2IINum = DINum = DIINum = HDINum = 0;
  
   if (MultiSpecies)
     if (IdentifySpeciesFields(DeNum, HINum, HIINum, HeINum, HeIINum, HeIIINum,
                       HMNum, H2INum, H2IINum, DINum, DIINum, HDINum) == FAIL) {
-      fprintf(stderr, "Error in grid->IdentifySpeciesFields.\n");
-      ENZO_FAIL("");
+      ENZO_FAIL("Error in grid->IdentifySpeciesFields.\n");
     }
  
   /* Find photo-ionization fields */
 
   int kphHINum, kphHeINum, kphHeIINum, kdissH2INum;
-  int gammaHINum, gammaHeINum, gammaHeIINum;
-  if (IdentifyRadiativeTransferFields(kphHINum, gammaHINum, kphHeINum, 
-				      gammaHeINum, kphHeIINum, gammaHeIINum, 
-				      kdissH2INum) == FAIL) {
-    fprintf(stderr, "Error in grid->IdentifyRadiativeTransferFields.\n");
-    ENZO_FAIL("");
-  }
+  int gammaNum;
+  IdentifyRadiativeTransferFields(kphHINum, gammaNum, kphHeINum, 
+				  kphHeIINum, kdissH2INum);
 
   /* Get easy to handle pointers for each variable. */
  
@@ -192,16 +176,14 @@ int grid::SolveRadiativeCooling()
 
   if (GetUnits(&DensityUnits, &LengthUnits, &TemperatureUnits,
 	       &TimeUnits, &VelocityUnits, Time) == FAIL) {
-    fprintf(stderr, "Error in GetUnits.\n");
-    ENZO_FAIL("");
+    ENZO_FAIL("Error in GetUnits.\n");
   }
 
   if (ComovingCoordinates) {
  
     if (CosmologyComputeExpansionFactor(Time+0.5*dtFixed, &a, &dadt)
 	== FAIL) {
-      fprintf(stderr, "Error in CosmologyComputeExpansionFactors.\n");
-      ENZO_FAIL("");
+      ENZO_FAIL("Error in CosmologyComputeExpansionFactors.\n");
     }
  
     aUnits = 1.0/(1.0 + InitialRedshift);
@@ -212,45 +194,43 @@ int grid::SolveRadiativeCooling()
  
   /* Metal cooling codes. */
 
-  int MetalCoolingType = FALSE, MetalNum = 0;
+  int MetalNum = 0, SNColourNum = 0;
   int MetalFieldPresent = FALSE;
 
   // First see if there's a metal field (so we can conserve species in
   // the solver)
-  if ((MetalNum = FindField(Metallicity, FieldType, NumberOfBaryonFields)) == -1)
-    MetalNum = FindField(SNColour, FieldType, NumberOfBaryonFields);
-  MetalFieldPresent = (MetalNum != -1);
+  MetalNum = FindField(Metallicity, FieldType, NumberOfBaryonFields);
+  SNColourNum = FindField(SNColour, FieldType, NumberOfBaryonFields);
+  MetalFieldPresent = (MetalNum != -1 || SNColourNum != -1);
 
   // Double check if there's a metal field when we have metal cooling
-  if (MetalCooling == JHW_METAL_COOLING) {
-    if (MetalNum != -1)
-      MetalCoolingType = JHW_METAL_COOLING;
-    else {
-      fprintf(stderr, 
-	      "Warning: No metal field found.  Turning OFF MetalCooling.\n");
-      MetalCooling = FALSE;
-      MetalNum = 0;
-    }
+  if (MetalCooling && MetalFieldPresent == FALSE) {
+    if (debug)
+      fprintf(stderr, "Warning: No metal field found.  Turning OFF MetalCooling.\n");
+    MetalCooling = FALSE;
+    MetalNum = 0;
   }
-  if (MetalCooling == CEN_METAL_COOLING)
-    if (MetalNum != 1)
-      MetalCoolingType = CEN_METAL_COOLING;
-    else {
-      fprintf(stderr, 
-	      "Warning: No metal field found.  Turning OFF MetalCooling.\n");
-      MetalCooling = FALSE;
-      MetalNum = 0;
-    }
 
-  if (MetalCooling == CLOUDY_METAL_COOLING) {
-    if ((MetalNum = FindField(Metallicity, FieldType, NumberOfBaryonFields)) != -1)
-      MetalCoolingType = CLOUDY_METAL_COOLING;
-    else
-      MetalNum = 0;
-  }
+  /* If both metal fields (Pop I/II and III) exist, create a field
+     that contains their sum */
+
+  float *MetalPointer;
+  float *TotalMetals = NULL;
+
+  if (MetalNum != -1 && SNColourNum != -1) {
+    TotalMetals = new float[size];
+    for (i = 0; i < size; i++)
+      TotalMetals[i] = BaryonField[MetalNum][i] + BaryonField[SNColourNum][i];
+    MetalPointer = TotalMetals;
+  } // ENDIF both metal types
+  else {
+    if (MetalNum != -1)
+      MetalPointer = BaryonField[MetalNum];
+    else if (SNColourNum != -1)
+      MetalPointer = BaryonField[SNColourNum];
+  } // ENDELSE both metal types
 
   /* Calculate the rates due to the radiation field. */
- 
  
   /* Calculate the rates due to the radiation field, but ONLY if
      you are NOT using Gadget cooling (it's taken care of in that
@@ -262,11 +242,8 @@ int grid::SolveRadiativeCooling()
     }
   }
 
-  /* Set up information for rates which depend on the radiation field. */
- 
-  int RadiationShield = (RadiationFieldType == 11) ? TRUE : FALSE;
- 
-  /* Precompute factors for self shielding (this is the cross section * dx). */
+  /* Set up information for rates which depend on the radiation field. 
+     Precompute factors for self shielding (this is the cross section * dx). */
  
   float HIShieldFactor = RadiationData.HIAveragePhotoHeatingCrossSection *
                          double(LengthUnits) * CellWidth[0][0];
@@ -277,27 +254,7 @@ int grid::SolveRadiativeCooling()
  
   /* Call the appropriate routine to solve cooling equations. */
 
-  if (MetalCooling == CLOUDY_METAL_COOLING) {
-
-    /* Hybrid multispecies/Cloudy cooling routine. */
-
-    if (multi_CloudyCooling(density,totalenergy,gasenergy,
-			    velocity1,velocity2,velocity3,
-			    BaryonField[DeNum],BaryonField[HINum],BaryonField[HIINum],
-			    BaryonField[HeINum],BaryonField[HeIINum],BaryonField[HeIIINum],
-			    BaryonField[HMNum],BaryonField[H2INum],BaryonField[H2IINum],
-			    BaryonField[DINum],BaryonField[DIINum],BaryonField[HDINum],
-			    BaryonField[MetalNum],
-			    GridDimension,GridRank,dtFixed,
-			    afloat,TemperatureUnits,LengthUnits,
-			    aUnits,DensityUnits,TimeUnits,
-			    RadiationShield,HIShieldFactor,
-			    HeIShieldFactor,HeIIShieldFactor) == FAIL) {
-	fprintf(stderr,"Error in multi_CloudyCooling.\n");
-	ENZO_FAIL("");
-    }
-
-  } else if (MultiSpecies) {
+  if (MultiSpecies) {
 
     // Multispecies cooling
 
@@ -307,8 +264,8 @@ int grid::SolveRadiativeCooling()
        BaryonField[HeINum], BaryonField[HeIINum], BaryonField[HeIIINum],
        GridDimension, GridDimension+1, GridDimension+2,
           &CoolData.NumberOfTemperatureBins, &ComovingCoordinates,
-          &HydroMethod,
-       &DualEnergyFormalism, &MultiSpecies, &MetalFieldPresent, &MetalCoolingType, 
+       &HydroMethod, &PhotoelectricHeating,
+       &DualEnergyFormalism, &MultiSpecies, &MetalFieldPresent, &MetalCooling, 
        &GridRank, GridStartIndex, GridStartIndex+1, GridStartIndex+2,
           GridEndIndex, GridEndIndex+1, GridEndIndex+2,
           &CoolData.ih2co, &CoolData.ipiht,
@@ -319,12 +276,12 @@ int grid::SolveRadiativeCooling()
           CoolData.ciHeI,
        CoolData.ciHeIS, CoolData.ciHeII, CoolData.reHII,
           CoolData.reHeII1,
-       CoolData.reHeII2, CoolData.reHeIII, CoolData.brem, &CoolData.comp,
+       CoolData.reHeII2, CoolData.reHeIII, CoolData.brem, &CoolData.comp, &CoolData.gammah,
        &CoolData.comp_xray, &CoolData.temp_xray,
           &CoolData.piHI, &CoolData.piHeI, &CoolData.piHeII,
        BaryonField[HMNum], BaryonField[H2INum], BaryonField[H2IINum],
           BaryonField[DINum], BaryonField[DIINum], BaryonField[HDINum],
-          BaryonField[MetalNum],
+          MetalPointer,
        CoolData.hyd01k, CoolData.h2k01, CoolData.vibh,
           CoolData.roth, CoolData.rotl,
        CoolData.GP99LowDensityLimit, CoolData.GP99HighDensityLimit,
@@ -336,9 +293,22 @@ int grid::SolveRadiativeCooling()
        RadiationData.Spectrum[0], &RadiationFieldType,
           &RadiationData.NumberOfFrequencyBins,
           &RadiationFieldRecomputeMetalRates,
-       &RadiationShield, &HIShieldFactor, &HeIShieldFactor, &HeIIShieldFactor,
-       &RadiativeTransfer, BaryonField[gammaHINum], BaryonField[gammaHeINum], 
-       BaryonField[gammaHeIINum]);
+       &RadiationData.RadiationShield, &HIShieldFactor, &HeIShieldFactor, &HeIIShieldFactor,
+       &RadiativeTransfer, BaryonField[gammaNum],
+       &CloudyCoolingData.CMBTemperatureFloor,
+       &CloudyCoolingData.IncludeCloudyHeating, &CloudyCoolingData.IncludeCloudyMMW,
+       &CloudyCoolingData.CloudyMetallicityNormalization,
+       &CloudyCoolingData.CloudyElectronFractionFactor,
+       &CloudyCoolingData.CloudyCoolingGridRank,
+       CloudyCoolingData.CloudyCoolingGridDimension,
+       CloudyCoolingData.CloudyCoolingGridParameters[0],
+       CloudyCoolingData.CloudyCoolingGridParameters[1],
+       CloudyCoolingData.CloudyCoolingGridParameters[2],
+       CloudyCoolingData.CloudyCoolingGridParameters[3],
+       CloudyCoolingData.CloudyCoolingGridParameters[4],
+       &CloudyCoolingData.CloudyDataSize,
+       CloudyCoolingData.CloudyCooling, CloudyCoolingData.CloudyHeating,
+       CloudyCoolingData.CloudyMeanMolecularWeight);
   } else if (GadgetEquilibriumCooling==1) {
 
     // Gadget cooling
@@ -367,14 +337,14 @@ int grid::SolveRadiativeCooling()
        GridDimension, GridDimension+1, GridDimension+2,
           &CoolData.NumberOfTemperatureBins, &ComovingCoordinates,
           &HydroMethod,
-       &DualEnergyFormalism, &GridRank,
+       &DualEnergyFormalism, &GridRank, &PhotoelectricHeating,
        GridStartIndex, GridStartIndex+1, GridStartIndex+2,
           GridEndIndex, GridEndIndex+1, GridEndIndex+2,
        &dtFixed, &afloat, &CoolData.TemperatureStart,
           &CoolData.TemperatureEnd, &CoolData.HydrogenFractionByMass,
        &TemperatureUnits, &LengthUnits, &aUnits, &DensityUnits, &TimeUnits,
        &DualEnergyFormalismEta1, &DualEnergyFormalismEta2, &Gamma,
-          CoolData.EquilibriumRate);
+          CoolData.EquilibriumRate, &CoolData.gammah);
   }
 
   if (HydroMethod == MHD_RK) {
@@ -385,6 +355,7 @@ int grid::SolveRadiativeCooling()
       /* Always trust gas energy in cooling routine */
 
       if (DualEnergyFormalism) {
+
 	v2 = pow(BaryonField[Vel1Num][n],2) + 
 	  pow(BaryonField[Vel2Num][n],2) + pow(BaryonField[Vel3Num][n],2);
 	BaryonField[TENum][n] = gasenergy[n] + 0.5*v2 + 0.5*B2/BaryonField[DensNum][n];
@@ -397,6 +368,8 @@ int grid::SolveRadiativeCooling()
     
     delete totalenergy;
   }
+
+  delete [] TotalMetals;
  
   return SUCCESS;
  

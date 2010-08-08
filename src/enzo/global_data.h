@@ -21,6 +21,9 @@
 #define GLOBAL_DATA_DEFINED__
 
 #include <stdio.h>
+#ifdef MEMORY_POOL
+#include "MemoryPool.h"
+#endif
 #ifdef DEFINE_STORAGE
 # define EXTERN
 #else /* DEFINE_STORAGE */
@@ -34,13 +37,18 @@
 */
 EXTERN int LoadBalancing;
 EXTERN int LoadBalancingCycleSkip;
+EXTERN int ResetLoadBalancing;
 EXTERN int CoresPerNode;
 EXTERN int PreviousMaxTask;
+EXTERN int LoadBalancingMinLevel;
+EXTERN int LoadBalancingMaxLevel;
 
 /* FileDirectedOutput checks for file existence: 
    stopNow (writes, stops),   outputNow, subgridcycleCount */
 EXTERN int FileDirectedOutput;
-
+/* This governs whether or not we'll be writing out a supplemental binary
+   hierarchy file in HDF5. */
+EXTERN int WriteBinaryHierarchy;
 
 /* debugging, extraction flags */
 
@@ -64,10 +72,11 @@ EXTERN int extract;
 	    51 = ThermalPancake test
 	    60 = TurbulenceSimulation
 	                                                                  */
+EXTERN int CheckpointRestart;
 EXTERN int ProblemType;
 
 /* Hydrodynamics method:
-       0 - PPM_DE      1 - PPM_LR (not working)    2 - ZEUS        */
+       0 - PPM_DE      1 - PPM_LR (not working)    2 - ZEUS    3 - RK hydro   4 - RK MHD    */
 
 EXTERN hydro_method HydroMethod;
 
@@ -93,6 +102,7 @@ EXTERN int RefineBy;
 EXTERN int MaximumRefinementLevel;
 EXTERN int MaximumGravityRefinementLevel;
 EXTERN int MaximumParticleRefinementLevel;
+EXTERN int FastSiblingLocatorEntireDomain;
 
 /* Cell Flagging method:  0 = None
                           1 = FlagCellsToBeRefinedBySlope
@@ -104,6 +114,7 @@ EXTERN int MaximumParticleRefinementLevel;
                           7 = FlagCellsToBeRefinedByCoolingTime
                           8 = FlagCellsToBeRefinedByMustRefineParticles
                           9 = FlagCellsToBeRefinedByShear
+			 11 = FlagCellsToBeRefinedByResistiveLength
                          12 = FlagCellsToBeRefinedByMustRefineRegion
 			 13 = FlagCellsToBeRefinedByMetallicity
  */
@@ -126,9 +137,9 @@ EXTERN int MustRefineRegionMinRefinementLevel;
    will refine up to (does not prevent refinement to higher levels) */
 EXTERN int MetallicityRefinementMinLevel;
 
-/* threshold metallicity for FlagGridCellsToBeRefinedByMetallicity */
+/* threshold metallicity and density for FlagGridCellsToBeRefinedByMetallicity */
 EXTERN float MetallicityRefinementMinMetallicity;
-
+EXTERN float MetallicityRefinementMinDensity;
 
 /* Velocity to limit timesteps */
 
@@ -147,6 +158,13 @@ EXTERN int ConservativeInterpolation;
    order to be considered better than the two grids from which it formed. */
 
 EXTERN float MinimumEfficiency;
+
+/* This flag will automatically adjust MinimumSubgridEdge and
+   MaximumSubgridSize.  It will select MaximumSubgridSize from
+   OptimalSubgridPerProcessor. */
+
+EXTERN int SubgridSizeAutoAdjust;
+EXTERN int OptimalSubgridsPerProcessor;
 
 /* This is the minimum allowable edge size for a new subgrid (>=4) */
 
@@ -195,6 +213,8 @@ EXTERN float PointSourceGravityCoreRadius;
 /* SelfGravity (TRUE or FALSE) */
 
 EXTERN int SelfGravity;
+EXTERN int SelfGravityGasOff;
+EXTERN int AccretionKernal;
 
 /* CopyGravPotential (TRUE or FALSE) */
 
@@ -287,6 +307,8 @@ EXTERN fpos_t  BaryonFileNamePosition;
 /* Multi-species rate equation flag and associated data. */
 
 EXTERN int MultiSpecies;
+EXTERN int PrimordialChemistrySolver;
+EXTERN int ThreeBodyRate;
 EXTERN RateDataType RateData;
 
 /* Glover chemistry/cooling network flags */
@@ -297,6 +319,24 @@ EXTERN int GloverOpticalDepth; // 0: opticaly thin, 1: single-cell
 /* Multi-element metallicity field flag and count. */
 
 EXTERN int MultiMetals;
+
+/* Cosmic Ray Model 
+ * 0: Off - default
+ * 1: On, Let CRs accululate on Grid
+ * 2: On, Zero out CRs each step to only look at instantaneous acceleration
+ * 3: Highly experimental, takes energy out of gas.  Unstable.
+ */
+EXTERN int CRModel; 
+/* Shock Finding Method: Always on when CRModel nonzero
+ * 0: temperature unsplit - default
+ * 1: temperature split 
+ * 2: velocity unsplit
+ * 3: velocity split
+ */
+EXTERN int ShockMethod; 
+EXTERN CosmicRayDataType CosmicRayData;
+EXTERN float ShockTemperatureFloor;
+EXTERN int StorePreShockFields;
 
 /* Type of radiation field. 
    0 - none,                    1 - Haardt & Madau alpha=-1.5
@@ -310,6 +350,11 @@ EXTERN float SetHeIIHeatingScale;
 EXTERN RadiationFieldDataType RadiationData;
 EXTERN int RadiationFieldLevelRecompute;
 EXTERN int RadiationXRaySecondaryIon;
+EXTERN int RadiationXRayComptonHeating;
+
+/* Photoelectric cooling turn on/off */
+
+EXTERN int PhotoelectricHeating;
 
 /* Output cooling time with grid data. */
 
@@ -324,6 +369,10 @@ EXTERN int OutputTemperature;
 EXTERN int OutputSmoothedDarkMatter;
 EXTERN int SmoothedDarkMatterNeighbors;
 
+/* Output gridded star particle fields. */
+
+EXTERN int OutputGriddedStarParticle;
+
 /* ZEUS Hydro artificial viscosity parameters (C1, C2 of Stone & Norman). */
 
 EXTERN float ZEUSLinearArtificialViscosity;
@@ -335,10 +384,16 @@ EXTERN int UseMinimumPressureSupport;
 EXTERN float MinimumPressureSupportParameter;
 
 /* Parameters for statically refined regions. */
-
 EXTERN FLOAT StaticRefineRegionLeftEdge[MAX_STATIC_REGIONS][MAX_DIMENSION];
 EXTERN FLOAT StaticRefineRegionRightEdge[MAX_STATIC_REGIONS][MAX_DIMENSION];
 EXTERN int   StaticRefineRegionLevel[MAX_STATIC_REGIONS];
+
+/* Evolving refinement region. */
+EXTERN char *RefineRegionFile;
+EXTERN int RefineRegionTimeType; // 0=time 1=redshift
+EXTERN FLOAT EvolveRefineRegionTime[MAX_REFINE_REGIONS]; // time bins
+EXTERN FLOAT EvolveRefineRegionLeftEdge[MAX_REFINE_REGIONS][3]; // left corners
+EXTERN FLOAT EvolveRefineRegionRightEdge[MAX_REFINE_REGIONS][3]; // right corners
 
 /* Processor identifier for this thread/processor */
 
@@ -354,9 +409,20 @@ EXTERN int ParallelParticleIO;
 EXTERN int Unigrid;
 EXTERN int CubeDumpEnabled;
 EXTERN int PartitionNestedGrids;
+EXTERN int StaticPartitionNestedGrids;
 EXTERN int ExtractFieldsOnly;
 EXTERN int First_Pass;
 EXTERN int UnigridTranspose;
+EXTERN int NumberOfRootGridTilesPerDimensionPerProcessor;
+EXTERN int CosmologySimulationNumberOfInitialGrids;
+
+/* Parameters that control density dex output */
+
+EXTERN int OutputOnDensity;
+EXTERN float StartDensityOutputs;
+EXTERN float CurrentDensityOutput;
+EXTERN float CurrentMaximumDensity;
+EXTERN float IncrementDensityOutput;
 
 /* Parameter(s) for embedded python execution */
 EXTERN int PythonSubcycleSkip;
@@ -368,6 +434,7 @@ EXTERN int HaloFinderSubfind;
 EXTERN int HaloFinderOutputParticleList;
 EXTERN int HaloFinderMinimumSize;
 EXTERN int HaloFinderCycleSkip;
+EXTERN int HaloFinderRunAfterOutput;
 EXTERN float HaloFinderLinkingLength;
 EXTERN float HaloFinderTimestep;
 EXTERN FLOAT HaloFinderLastTime;
@@ -405,16 +472,29 @@ EXTERN float MinimumPressureJumpForRefinement, MinimumEnergyRatioForRefinement;
 
 EXTERN float RefineByJeansLengthSafetyFactor;
 
+/* If > 0, this will be used instead of the temperature at all locations */
+
+EXTERN float JeansRefinementColdTemperature;
+
 /* For CellFlaggingMethod = 8,
    The level to which the must refine particles apply */
 
 EXTERN int   MustRefineParticlesRefineToLevel;
 
+/* For CellFlaggingMethod = 8,
+   The physical length (in pc) to which the must refine particles apply 
+   The above parameter will be automatically adjusted to match this length */
+
+EXTERN int   MustRefineParticlesRefineToLevelAutoAdjust;
+
+/* For CellFlaggingMethod = 8,
+   For new particle system only refine around particles above the minimum mass */
+
+EXTERN float MustRefineParticlesMinimumMass;
+
 /* For CellFlaggingMethod = 9,   
    The minimum shear (roughly, dv accross two zones) required for 
    refinement.    */
-
-
 
 EXTERN float MinimumShearForRefinement;
 
@@ -424,6 +504,12 @@ EXTERN float MinimumShearForRefinement;
 
 EXTERN float RefineByResistiveLengthSafetyFactor;
 
+/* For CellFlaggingMethod = 14,   
+   Minimum mach number required for refinement.    */
+
+EXTERN float ShockwaveRefinementMinMach;
+EXTERN float ShockwaveRefinementMinVelocity;
+EXTERN float ShockwaveRefinementMaxLevel;
 
 /* Noh problem switch: Upper-Right quadrant or full domain */
 
@@ -440,6 +526,9 @@ EXTERN int   StarParticleCreation;
 EXTERN int   StarParticleFeedback;
 EXTERN int   NumberOfParticleAttributes;
 EXTERN int   AddParticleAttributes;
+EXTERN int   BigStarFormation;
+EXTERN float BigStarSeparation;
+
 
 /* Parameters governing certain time or redshift-dependent actions. */
 
@@ -482,6 +571,9 @@ EXTERN int LoadGridDataAtStart;
 /* cpu and grid file names */
 EXTERN char PrevParameterFileName[MAX_NAME_LENGTH];
 
+/* MetaData identifier string */
+EXTERN char *MetaDataIdentifier;
+
 /* Zhiling Lan's modified code */
 
 #ifdef MPI_INSTRUMENTATION
@@ -492,9 +584,6 @@ EXTERN double timer[MAX_COUNTERS];
 EXTERN int counter[MAX_COUNTERS];
 EXTERN FILE *filePtr;
 EXTERN char tracename[MAX_NAME_LENGTH];
-EXTERN char memtracename[MAX_NAME_LENGTH];
-EXTERN FILE *memtracePtr;
-EXTERN int traceMEM;
 EXTERN double starttime, endtime;
 EXTERN double Start_Wall_Time, End_Wall_Time, WallTime;
 EXTERN int flagging_count, in_count, out_count, moving_count;
@@ -503,6 +592,11 @@ EXTERN float flagging_pct, moving_pct;
 EXTERN char name[MAX_NAME_LENGTH];
 EXTERN FILE *tracePtr;
 EXTERN int traceMPI;
+#ifdef MEM_TRACE
+EXTERN FILE *memtracePtr;
+EXTERN int traceMEM;
+EXTERN char memtracename[MAX_NAME_LENGTH];
+#endif
 
 /* New Movie Data */
 
@@ -550,6 +644,7 @@ EXTERN int NEQ_HYDRO;
 EXTERN int NEQ_MHD;
 EXTERN int ReconstructionMethod;
 EXTERN int RiemannSolver;
+EXTERN int ConservativeReconstruction;
 EXTERN int EOSType;
 EXTERN float EOSSoundSpeed;
 EXTERN float EOSCriticalDensity;
@@ -563,13 +658,13 @@ EXTERN int ExternalGravity;
 EXTERN int StringKick;
 EXTERN int UseFloor;
 EXTERN int UseViscosity;
+EXTERN float ViscosityCoefficient;
 EXTERN int UseAmbipolarDiffusion;
 EXTERN int UseResistivity;
 
 /* Chemistry & cooling parameters */
 
 EXTERN int UseH2OnDust;
-EXTERN double PhotoelectricHeating;
 EXTERN float CoolingCutOffDensity1;
 EXTERN float CoolingCutOffDensity2;
 EXTERN float CoolingPowerCutOffDensity1;
@@ -593,22 +688,25 @@ EXTERN int UseDivergenceCleaning;
 EXTERN int DivergenceCleaningBoundaryBuffer;
 EXTERN float DivergenceCleaningThreshold;
 EXTERN float PoissonApproximationThreshold;
+EXTERN int PoissonBoundaryType;
 
 
 
 /* Star Particle paramters */
 
 EXTERN int ShiningParticleID;
-EXTERN double SinkMergeDistance;
+EXTERN float SinkMergeDistance;
 EXTERN float SinkMergeMass;
 EXTERN float TotalSinkMass;
 EXTERN int StellarWindFeedback;
 EXTERN float StellarWindTurnOnMass;
+EXTERN float MSStellarWindTurnOnMass;
 EXTERN int NBodyDirectSummation;
 
 /* Turbulence simulation parameters */
 EXTERN int UseDrivingField;
 EXTERN float DrivingEfficiency;
+
 /* Parameters to use CUDA extensions */ 
 EXTERN int UseCUDA;
 
@@ -619,12 +717,16 @@ EXTERN int UseCUDA;
 
 EXTERN int ran1_init;
 
+/* random number initialization flag */
+
+EXTERN int rand_init;
+
 /* test problem stuff */
 EXTERN TestProblemDataType TestProblemData;
 
 /* Memory Limit */
 
-EXTERN int MemoryLimit;
+EXTERN long_int MemoryLimit;
 
 /* Staged input */
 
@@ -650,9 +752,10 @@ EXTERN char *MetalCoolingTable;
 EXTERN int CIECooling;
 EXTERN int H2OpticalDepthApproximation;
 
-//   1 - Adaptive ray tacing transfer
+//   1 - Adaptive ray tracing transfer
 //   0 - none
 EXTERN int RadiativeTransfer;
+EXTERN int RadiativeTransferHydrogenOnly;
 #ifdef TRANSFER
 EXTERN long *pix2x;
 EXTERN long *pix2y;
@@ -665,6 +768,9 @@ EXTERN float dtPhoton;
 EXTERN RadiationSourceEntry *GlobalRadiationSources;
 EXTERN SuperSourceEntry *SourceClusteringTree;
 EXTERN SuperSourceEntry *OldSourceClusteringTree;
+#ifdef MEMORY_POOL
+EXTERN MPool::MemoryPool *PhotonMemoryPool;
+#endif
 
 /* [0]: Emitted photons
    [1]: escaped past 0.5 RadiativeTransferPhotonEscapeRadius
@@ -676,13 +782,39 @@ EXTERN double TotalEscapedPhotonCount[4];
 EXTERN char *PhotonEscapeFilename;
 EXTERN int FieldsToInterpolate[MAX_NUMBER_OF_BARYON_FIELDS];
 
+#include "RadiativeTransferSpectrumTable.h"
+EXTERN RadiativeTransferSpectrumTableType RadiativeTransferSpectrumTable;
+
 #endif /* TRANSFER  */
 
-/* Coupled radiative transfer, cooling, and rate solver */
+EXTERN int LevelCycleCount[MAX_DEPTH_OF_HIERARCHY];
+EXTERN float dtThisLevelSoFar[MAX_DEPTH_OF_HIERARCHY];
+EXTERN float dtThisLevel[MAX_DEPTH_OF_HIERARCHY];
 
+/* Coupled radiative transfer, cooling, and rate solver */
 EXTERN int RadiativeTransferCoupledRateSolver;
 
 
+//   2 - FLD radiation transfer only (no ray-tracing at all)
+//   1 - FLD radiation transfer (for optically-thin LW radiation)
+//   0 - none
+EXTERN int RadiativeTransferFLD;
+
+
+/* Implicit problem decision flag (only 0 through 3 work for now)
+      0 => do not use any implicit solver
+      1 => use the gFLDProblem module for single-group coupled FLD
+      2 => use the FSProb module for free-streaming FLD radiation 
+      3 => use the gFLDSplit module for single-group split FLD
+      4 => use the MFProb, multi-frequency fully implicit module
+      5 => use the MFSplit, multi-frequency split implicit module
+*/
+EXTERN int ImplicitProblem;
+
+/* Star-Maker emissivity field generator and uv_param used in calculating Geoffrey's Emissivity0 baryon field */
+
+EXTERN int StarMakerEmissivityField;
+EXTERN float uv_param;
 
 /* Shearing Boundary Conditions */
 
@@ -697,5 +829,34 @@ EXTERN int ShearingBoxProblemType; // 0 = advecting sphere; 1 = shearing box; 2 
 
 EXTERN float IsothermalSoundSpeed;
 EXTERN int RefineByJeansLengthUnits;
+
+
+
+EXTERN int MoveParticlesBetweenSiblings;
+
+/* Particle Splitter */
+
+EXTERN int ParticleSplitterIterations;
+EXTERN float ParticleSplitterChildrenParticleSeparation;
+
+/* Magnetic Field Resetter */
+
+EXTERN int ResetMagneticField;
+EXTERN float ResetMagneticFieldAmplitude[MAX_DIMENSION];
+
+/* Star Class MBH Particle IO (PARTICLE_TYPE_MBH) */
+
+EXTERN int MBHParticleIO;
+EXTERN char *MBHParticleIOFilename;
+EXTERN double MBHParticleIOTemp[30][5+MAX_DIMENSION];
+EXTERN char *MBHInsertLocationFilename;
+EXTERN int OutputWhenJetsHaveNotEjected;
+
+/* Vorticity Calculations */
+
+EXTERN int VelAnyl;
+EXTERN int BAnyl;
+
+EXTERN char current_error[255];
 
 #endif

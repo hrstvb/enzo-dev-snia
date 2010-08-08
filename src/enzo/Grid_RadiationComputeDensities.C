@@ -60,8 +60,7 @@ int grid::RadiationComputeDensities(int level)
       DINum, DIINum, HDINum;
   if (IdentifySpeciesFields(DeNum, HINum, HIINum, HeINum, HeIINum, HeIIINum,
                       HMNum, H2INum, H2IINum, DINum, DIINum, HDINum) == FAIL) {
-    fprintf(stderr, "Error in grid->IdentifySpeciesFields.\n");
-    ENZO_FAIL("");
+    ENZO_FAIL("Error in grid->IdentifySpeciesFields.\n");
   }
  
   /* Get units. */
@@ -71,8 +70,7 @@ int grid::RadiationComputeDensities(int level)
 
   if (GetUnits(&DensityUnits, &LengthUnits, &TemperatureUnits,
 	       &TimeUnits, &VelocityUnits, Time) == FAIL) {
-    fprintf(stderr, "Error in GetUnits.\n");
-    ENZO_FAIL("");
+    ENZO_FAIL("Error in GetUnits.\n");
   }
  
   float factor = double(LengthUnits)*CellWidth[0][0]*
@@ -121,7 +119,9 @@ int grid::RadiationComputeDensities(int level)
 	  /* mean HI, etc. densities.  If RadiationFieldType == 11 then
 	     use an approximate self-shielding. */
  
-	  if (RadiationFieldType == 11) {
+	  if (RadiationData.RadiationShield == TRUE) {
+	  //	  if (RadiationFieldType == 11) {
+
 	    RadiationData.HIMeanDensity[level] += nHI*Volume*
 	      exp(-RadiationData.HIAveragePhotoionizationCrossSection*
 		   nHI*factor);

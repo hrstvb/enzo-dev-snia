@@ -1,5 +1,4 @@
 
-
 //
 // CreateFluxes
 // David Collins, June 11 2009
@@ -39,7 +38,7 @@ int CreateFluxes(HierarchyEntry *Grids[],fluxes **SubgridFluxesEstimate[],
     /* For each grid, create the subgrid list. */
 
 
-    JBPERF_START("CreateFluxes"); // create subgrid list
+    LCAPERF_START("CreateFluxes"); // create subgrid list
     int grid1, counter,subgrid;
     HierarchyEntry *NextGrid;
     int RefinementFactors[MAX_DIMENSION];
@@ -53,8 +52,7 @@ int CreateFluxes(HierarchyEntry *Grids[],fluxes **SubgridFluxesEstimate[],
       while (NextGrid != NULL) {
 	NextGrid = NextGrid->NextGridThisLevel;
 	if (++counter > MAX_NUMBER_OF_SUBGRIDS) {
-	  fprintf(stderr, "More subgrids than MAX_NUMBER_OF_SUBGRIDS.\n");
-	  ENZO_FAIL("");
+	  ENZO_FAIL("More subgrids than MAX_NUMBER_OF_SUBGRIDS.\n");
 	}
       }
       NumberOfSubgrids[grid1] = counter + 1;
@@ -81,6 +79,7 @@ int CreateFluxes(HierarchyEntry *Grids[],fluxes **SubgridFluxesEstimate[],
       // Only allocate fluxes for local grids: saves a *lot* of storage
       
       if (MyProcessorNumber ==
+
           Grids[grid1]->GridData->ReturnProcessorNumber()) {
 	
 	NextGrid = Grids[grid1]->NextGridNextLevel;
@@ -107,6 +106,6 @@ int CreateFluxes(HierarchyEntry *Grids[],fluxes **SubgridFluxesEstimate[],
       
     } // end loop over grids (create Subgrid list)
     // dcc flux cut stop
-    JBPERF_STOP("CreateFluxes"); // create subgrid list
+    LCAPERF_STOP("CreateFluxes"); // create subgrid list
     return SUCCESS;
 }

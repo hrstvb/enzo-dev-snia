@@ -31,10 +31,8 @@ int grid::MoveAllPhotonPackages(int NumberOfGrids, grid* FromGrid[])
 {
 
   if (NumberOfGrids < 1) {
-    fprintf(stderr, 
-	    "grid::MoveAllPhotonPackages: NumberOfGrids(%"ISYM") must be > 0.\n", 
-	    NumberOfGrids);
-    ENZO_FAIL("");
+    ENZO_VFAIL("grid::MoveAllPhotonPackages: NumberOfGrids(%"ISYM") must be > 0.\n", 
+	    NumberOfGrids)
   }
 
   /* Determine total number of particles. */
@@ -59,13 +57,16 @@ int grid::MoveAllPhotonPackages(int NumberOfGrids, grid* FromGrid[])
   /* Error check number of photons.  If a bad value, reset photons */
 
   if (NumberOfPhotonPackages < 0) {
-    printf("MoveAllPackages: WARNING. Resetting photons.\n");
+    printf("MoveAllPackages: WARNING. Resetting photons. "
+	   "NumberOfPhotons = %"ISYM"\n", NumberOfPhotonPackages);
     NumberOfPhotonPackages = 0;
     TotalNumberOfPackages = 0;
     while (PP != NULL) {
       PP = DeletePhotonPackage(PP);
       PP = PP->NextPackage;
+      TotalNumberOfPackages++;
     }
+    printf("MoveAllPackages: deleted %"ISYM" photons\n", TotalNumberOfPackages);
     return SUCCESS;
   }
 
@@ -145,11 +146,11 @@ int grid::MoveAllPhotonPackages(int NumberOfGrids, grid* FromGrid[])
 	if (FromGrid[gridcount]->CommunicationSendPhotonPackages(this, 
 	       ProcessorNumber, NumberOfPhotonPackages, 
                FromGrid[gridcount]->NumberOfPhotonPackages, &PP) == FAIL) {
-	  fprintf(stderr, "Error in grid->CommunicationSendPhotonPackages.\n");
-	  ENZO_FAIL("");
+	  ENZO_FAIL("Error in grid->CommunicationSendPhotonPackages.\n");
 	}
 	count += FromGrid[gridcount]->ReturnNumberOfPhotonPackages();
 	if (DEBUG)
+
 	  printf("MoveAllPackages: (COMM) counted %"ISYM" PhotonPackages. "
 		 "grid #%"ISYM" of %"ISYM".\n", count, gridcount, NumberOfGrids);      
       }

@@ -6,7 +6,7 @@
 /  date:       April, 2009
 /  modified1:
 /
-/ PURPOSE:
+/  PURPOSE:
 /
 ************************************************************************/
 
@@ -37,7 +37,8 @@ int AdjustRefineRegion(LevelHierarchyEntry *LevelArray[],
 		       TopGridData *MetaData, int EL_level)
 {
 
-  if (!(RefineRegionAutoAdjust && EL_level == 0))
+//if (!(RefineRegionAutoAdjust && EL_level == 0))
+  if (!(RefineRegionAutoAdjust >= 1 && EL_level == RefineRegionAutoAdjust-1)) 
     return SUCCESS;
 
   if (RefineRegionLeftEdge[0] == DomainLeftEdge[0] &&
@@ -59,10 +60,9 @@ int AdjustRefineRegion(LevelHierarchyEntry *LevelArray[],
   for (level = 0; level < MAX_DEPTH_OF_HIERARCHY; level++)
     for (Temp = LevelArray[level]; Temp; Temp = Temp->NextGridThisLevel)
       if (Temp->GridData->FindMinimumParticleMass(MinParticleMass, level) == FAIL) {
-	fprintf(stderr, "Error in grid::FindMinimumParticleMass.\n");
-	ENZO_FAIL("");
+	ENZO_FAIL("Error in grid::FindMinimumParticleMass.\n");
       }
-  CommunicationMinValue(MinParticleMass);
+  MinParticleMass = CommunicationMinValue(MinParticleMass);
 
   /* 
      Now we look for the bounding box that contains ONLY these high
@@ -110,8 +110,7 @@ int AdjustRefineRegion(LevelHierarchyEntry *LevelArray[],
     for (Temp = LevelArray[level]; Temp; Temp = Temp->NextGridThisLevel)
       if (Temp->GridData->FindMassiveParticles(MinParticleMass, level, 
 				ParticlePos, NumberOfParticles, TRUE) == FAIL) {
-	fprintf(stderr, "Error in grid::FindMassiveParticles(count).\n");
-	ENZO_FAIL("");
+	ENZO_FAIL("Error in grid::FindMassiveParticles(count).\n");
       }
 
   for (dim = 0; dim < MAX_DIMENSION; dim++)
@@ -122,8 +121,7 @@ int AdjustRefineRegion(LevelHierarchyEntry *LevelArray[],
     for (Temp = LevelArray[level]; Temp; Temp = Temp->NextGridThisLevel)
       if (Temp->GridData->FindMassiveParticles(MinParticleMass, level, 
 				ParticlePos, NumberOfParticles, FALSE) == FAIL) {
-	fprintf(stderr, "Error in grid::FindMassiveParticles.\n");
-	ENZO_FAIL("");
+	ENZO_FAIL("Error in grid::FindMassiveParticles.\n");
       }
 
   // Define some convenient variables, such as (1) a flagging field
@@ -164,7 +162,10 @@ int AdjustRefineRegion(LevelHierarchyEntry *LevelArray[],
 
   nRemoveTotal = INT_UNDEFINED;
   ParticlesLeft = TotalNumberOfParticles;
-  srand( time(NULL) );
+  if (rand_init == 0) {
+    srand( time(NULL) );
+    rand_init = 1;
+  }
 
   while (ParticlesLeft > 0) {
 
@@ -300,7 +301,7 @@ int AdjustRefineRegion(LevelHierarchyEntry *LevelArray[],
 	  fprintf(stderr, "RefineRegionRightEdgeCell = %"ISYM" %"ISYM" %"ISYM"\n", 
 		  RefineRegionRightEdgeCell[0], RefineRegionRightEdgeCell[1], 
 		  RefineRegionRightEdgeCell[2]);
-	  ENZO_FAIL("");
+	  ENZO_FAIL("Refine region collapsed to nothing!\n");
 	}
 
     } // ENDFOR region faces
@@ -319,6 +320,7 @@ int AdjustRefineRegion(LevelHierarchyEntry *LevelArray[],
   }
   
   if (MyProcessorNumber == ROOT_PROCESSOR && TotalNumberOfParticles > 0) {
+
     printf("AdjustRefineRegion: Changed RefineRegionLeftEdge to "
 	   "[%"FSYM" %"FSYM" %"FSYM"]\n", 
 	   RefineRegionLeftEdge[0], RefineRegionLeftEdge[1], 

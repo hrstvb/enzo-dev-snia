@@ -25,7 +25,6 @@
 #include "Hierarchy.h"
 #include "TopGridData.h"
 #include "LevelHierarchy.h"
-#include "StarParticleData.h"
 
 #ifdef USE_MPI
 static int FirstTimeCalled = TRUE;
@@ -130,7 +129,7 @@ int FindSinkParticles(LevelHierarchyEntry *LevelArray[])
 #endif /* USE_MPI */
 
   if (debug)
-    printf("FindShiningParticles: found %d shining particles\n", 
+    printf("FindShiningParticles: found %"ISYM" shining particles\n", 
 	   NumberOfShineParticles);
   
   return SUCCESS;

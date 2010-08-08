@@ -23,21 +23,29 @@
 #    CONFIG_TASKMAP
 #    CONFIG_PACKED_AMR
 #    CONFIG_PACKED_MEM
-#    CONFIG_JBPERF
+#    CONFIG_LCAPERF
 #    CONFIG_PYTHON
 #    CONFIG_PAPI
 #    CONFIG_OOC_BOUNDARY
 #    CONFIG_OPT
 #    CONFIG_TESTING
 #    CONFIG_TPVEL
+#    CONFIG_PHOTON
+#    CONFIG_HYPRE
+#    CONFIG_EMISSIVITY
+#    CONFIG_NEW_GRID_IO
+#    CONFIG_FAST_SIB
+#    CONFIG_FLUX_FIX
 #    CONFIG_USE_HDF4	
+#    CONFIG_BITWISE_IDENTICALITY
+#    CONFIG_USE_ECUDA
 #
 #=======================================================================
 
     PARAMETER_MAX_SUBGRIDS       = 100000
     PARAMETER_MAX_BARYONS        = 20
     PARAMETER_MAX_TASKS_PER_NODE = 8
-
+    PARAMETER_MEMORY_POOL_SIZE   = 100000
 
 #=======================================================================
 # CONFIG_INTEGERS
@@ -47,6 +55,15 @@
 #-----------------------------------------------------------------------
 
      CONFIG_INTEGERS = 64
+
+#=======================================================================
+# CONFIG_PARTICLE_IDS
+#=======================================================================
+#    32            use 32-bit integers for particle IDs
+#    64            use 64-bit integers for particle IDs
+#-----------------------------------------------------------------------
+
+     CONFIG_PARTICLE_IDS = 64
 
 #=======================================================================
 # CONFIG_PRECISION
@@ -131,19 +148,19 @@
      CONFIG_PACKED_MEM = no
 
 #=======================================================================
-# CONFIG_JBPERF
+# CONFIG_LCAPERF
 #=======================================================================
-#    yes           use jbPerf performance profiling package
-#    no            don't use jbPerf performance profiling package
+#    yes           use lcaperf performance profiling package
+#    no            don't use lcaperf performance profiling package
 #-----------------------------------------------------------------------
 
-     CONFIG_JBPERF = no
+     CONFIG_LCAPERF = no
 
 #=======================================================================
 # CONFIG_PAPI
 #=======================================================================
-#    yes           use PAPI hardware counter package with jbPerf
-#    no            don't use PAPI hardware counter package with jbPerf
+#    yes           use PAPI hardware counter package with lcaperf
+#    no            don't use PAPI hardware counter package with lcaperf
 #-----------------------------------------------------------------------
 
      CONFIG_PAPI = no
@@ -171,6 +188,7 @@
 #=======================================================================
 #    warn          Write out verbose warnings when compiling
 #    debug         Compile for debugging
+#    cudadebug     Use device emulation to debug cuda code
 #    high          Use conservative but high optimization
 #    aggressive    Use aggressive optimization
 #-----------------------------------------------------------------------
@@ -205,6 +223,33 @@
      CONFIG_PHOTON = yes
 
 #=======================================================================
+# CONFIG_HYPRE
+#=======================================================================
+#    yes           Include HYPRE bindings for implicit solvers
+#    no            Do not include HYPRE bindings
+#-----------------------------------------------------------------------
+
+     CONFIG_HYPRE = no
+
+#=======================================================================
+# CONFIG_EMISSIVITY
+#=======================================================================
+#    yes           Include emissivity field allocation
+#    no            Do not include emissivity field allocation
+#-----------------------------------------------------------------------
+
+     CONFIG_EMISSIVITY = no
+
+#=======================================================================
+# CONFIG_NEW_GRID_IO
+#=======================================================================
+#    yes           Use the new, simpler Grid IO routines
+#    no            Original (no checkpointing, more obtuse) Grid IO
+#-----------------------------------------------------------------------
+
+     CONFIG_NEW_GRID_IO = yes
+
+#=======================================================================
 # CONFIG_FAST_SIB
 #=======================================================================
 #    yes           Include the Fast Sibling Locator
@@ -232,6 +277,15 @@
      CONFIG_USE_HDF4 = no
 
 #======================================================================= 
+# CONFIG_BITWISE_IDENTICALITY
+#======================================================================= 
+#    yes           Use blocking potential solves in the gravity solver
+#    no            Allow non-blocking, potentially divergent summations
+#----------------------------------------------------------------------- 
+ 
+     CONFIG_BITWISE_IDENTICALITY = yes
+
+#======================================================================= 
 # CONFIG_ECUDA
 #======================================================================= 
 #    yes           For some architectures (CUDA-GPU computing)
@@ -239,3 +293,12 @@
 #----------------------------------------------------------------------- 
  
      CONFIG_ECUDA = no
+
+#======================================================================= 
+# CONFIG_GRAVITY_4S
+#======================================================================= 
+#    yes           Use new 4th-order gravity 
+#    no            Use enzo standard gravity 
+#----------------------------------------------------------------------- 
+ 
+     CONFIG_GRAVITY_4S = no

@@ -75,6 +75,7 @@ int AnalyzeClusterReadParameterFile(char *filename, int &NumberOfCenters,
   parm->MetaData               = NULL;
   parm->DiskRadiusCutoff       = BoxSize;
   parm->LinearProfileRadiusForVertical = TRUE; 
+  parm->PrintGlobalProfileValues = FALSE; 
 
   for (dim = 0; dim < MAX_DIMENSION; dim++)
     center[dim] = FLOAT_UNDEFINED;
@@ -93,11 +94,11 @@ int AnalyzeClusterReadParameterFile(char *filename, int &NumberOfCenters,
 
     ret = 0;
 
-    ret += sscanf(line, "Rinner = %f", &parm->rinner);
-    ret += sscanf(line, "Router = %f", &parm->router);
-    ret += sscanf(line, "CenterPosition = %"FSYM" %"FSYM" %"FSYM, 
-		  center, center+1, center+2);
-    ret += sscanf(line, "NumberOfPoints = %d", &parm->npoints);
+    ret += sscanf(line, "Rinner = %"PSYM, &parm->rinner);
+    ret += sscanf(line, "Router = %"PSYM, &parm->router);
+    ret += sscanf(line, "CenterPosition = %"PSYM" %"PSYM" %"PSYM, 
+		  &center[0], &center[1], &center[2]);
+    ret += sscanf(line, "NumberOfPoints = %"ISYM, &parm->npoints);
     ret += sscanf(line, "VirialDensity = %f", &parm->virial_dens);
     ret += sscanf(line, "MeanVelocityVirialFraction = %f",
 		  &parm->MeanVelocityVirialFraction);
@@ -124,6 +125,8 @@ int AnalyzeClusterReadParameterFile(char *filename, int &NumberOfCenters,
     ret += sscanf(line, "DiskRadiusCutoff = %f", &parm->DiskRadiusCutoff);
     ret += sscanf(line, "LinearProfileRadiusForVertical = %d", 
 		  &parm->LinearProfileRadiusForVertical);
+    ret += sscanf(line, "PrintGlobalProfileValues = %d", 
+		  &parm->PrintGlobalProfileValues);
 
     if (sscanf(line, "CenterListName = %s", char_dummy) == 1) 
       CenterListName = char_dummy;
@@ -149,12 +152,12 @@ int AnalyzeClusterReadParameterFile(char *filename, int &NumberOfCenters,
   }
 
   /* Error check. */ 
-  /*
-    if (parm->rinner/BoxSize > 1 || parm->router/BoxSize > 1) {    
-    fprintf(stderr, "Rinner or Router > BoxSize.\n");
+
+    if (parm->rinner/BoxSize > 1 || parm->router/BoxSize > 1 || (parm->router-parm->rinner <= 0.)) {    
+    fprintf(stderr, "Rinner or Router > BoxSize.\n  %g %g", parm->rinner, parm->router);
     exit(EXIT_FAILURE);
   }  
-  */
+
 
   /* Close file. */
 
@@ -168,6 +171,7 @@ int AnalyzeClusterReadParameterFile(char *filename, int &NumberOfCenters,
     for (dim = 0; dim < MAX_DIMENSION; dim++) {
       CenterList[dim] = new FLOAT[1];
       CenterList[dim][0] = center[dim];
+      //fprintf(stderr, "CenterList[dim][0] = %g, center[dim] = %g", CenterList[dim][0], center[dim]);
     }
     NumberOfCenters = 1;
 
@@ -183,7 +187,7 @@ int AnalyzeClusterReadParameterFile(char *filename, int &NumberOfCenters,
     /* Count lines and allocate space. */
 	
     NumberOfCenters = 0;
-    while (fscanf(fptr, "%"FSYM, &float_dummy) > 0) {
+    while (fscanf(fptr, "%"PSYM, &float_dummy) > 0) {
       NumberOfCenters++;
       fgets(char_dummy, MAX_LINE_LENGTH, fptr);
     }
@@ -195,7 +199,7 @@ int AnalyzeClusterReadParameterFile(char *filename, int &NumberOfCenters,
     /* Read data. */
 
     j = 0;
-    while (fscanf(fptr, "%"FSYM" %"FSYM" %"FSYM, CenterList[0]+j, 
+    while (fscanf(fptr, "%"PSYM" %"PSYM" %"PSYM, CenterList[0]+j, 
 		  CenterList[1]+j, CenterList[2]+j) == 3) {
       fgets(char_dummy, MAX_LINE_LENGTH, fptr);  // get rid of rest of line
       j++;

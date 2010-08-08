@@ -12,6 +12,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
+#include "ErrorExceptions.h"
 #include "macros_and_parameters.h"
 #include "typedefs.h"
 #include "global_data.h"
@@ -27,6 +28,7 @@ int GetUnits(float *DensityUnits, float *LengthUnits,
 	     float *VelocityUnits, FLOAT Time);
 
 int grid::MHD2DTestInitializeGrid(int MHD2DProblemType,
+				  float RampWidth,
 				  float rhol, float rhou,
 				  float vxl,  float vxu,
 				  float vyl,  float vyu,
@@ -98,69 +100,73 @@ int grid::MHD2DTestInitializeGrid(int MHD2DProblemType,
   int igrid;
   FLOAT x, y;
 
-  /* MHD2DProblemType == 1: Rayleigh-Taylor problem */
+  /* MHD2DProblemType == 0: Rayleigh-Taylor problem */
 
   if (MHD2DProblemType == 0) { 
 
-  float pres, eintl, eintu, h, cs, dpdrho, dpde;
-  for (int j = 0; j < GridDimension[1]; j++) {
-    for (int i = 0; i < GridDimension[0]; i++) {
-      /* Compute position */
-      igrid = i + j*GridDimension[0];
-      
-      x = CellLeftEdge[0][i] + 0.5*CellWidth[0][i];
-      y = CellLeftEdge[1][j] + 0.5*CellWidth[1][j];
-      if (y <= 0.) {
-	if (MHD2DProblemType == 0) { 
+    float pres, eintl, eintu, h, cs, dpdrho, dpde;
+    float delx=0.00005; // range in y over which to apply the ramp
+    for (int j = 0; j < GridDimension[1]; j++) {
+      for (int i = 0; i < GridDimension[0]; i++) {
+	/* Compute position */
+	igrid = i + j*GridDimension[0];
+	
+	x = CellLeftEdge[0][i] + 0.5*CellWidth[0][i];
+	y = CellLeftEdge[1][j] + 0.5*CellWidth[1][j];
+	float ramp,rho;
+	ramp =  1./((1.+exp(-2/delx*(y-0.))));
+	rho = rhol + ramp*(rhou-rhol);
+	if (y <= 0.) {
 	  // Rayleigh-Taylor problem, calculate pressure from hydro equilibrium
 	  float g = ConstantAcceleration[1];
 	  pres = pl+g*rhol*(y);
-	  EOS(pres, rhol, eintl, h, cs, dpdrho, dpde, 0, 1);
+	  EOS(pres, rho, eintl, h, cs, dpdrho, dpde, 0, 1);
 	  // impose mode perturbation
-	  vyl = 0.01 * (1.0+cos(4.0*M_PI*(x))) * (1.0+cos(2.0/1.5*M_PI*(y))) * 0.25;
-	  etotl = eintl + 0.5*(vxl*vxl + vyl*vyl) + 0.5*(Bxl*Bxl+Byl*Byl)/rhol;
-	}
-
-	BaryonField[iden ][igrid] = rhol;
-	BaryonField[ivx  ][igrid] = vxl;
-	BaryonField[ivy  ][igrid] = vyl;
-	BaryonField[ivz  ][igrid] = 0.0;
-
-	BaryonField[ietot][igrid] = etotl;
-	if (DualEnergyFormalism) {
-	  BaryonField[ieint][igrid] = pl / ((Gamma-1.0)*rhol);
-	}
-	BaryonField[iBx  ][igrid] = Bxl;
-	BaryonField[iBy  ][igrid] = Byl;
-	BaryonField[iBz  ][igrid] = 0.0;
-	BaryonField[iPhi ][igrid] = 0.0;
-      } else {
-	if (MHD2DProblemType == 0) { 
+	  vyl = .01 * (1.0+cos(4.0*M_PI*(x))) * (1.0+cos(2.0/1.5*M_PI*(y))) * 0.25;
+	  etotl = eintl + 0.5*(vxl*vxl + vyl*vyl) + 0.5*(Bxl*Bxl+Byl*Byl)/rho;
+	  
+	  BaryonField[iden ][igrid] = rho;
+	  BaryonField[ivx  ][igrid] = vxl;
+	  BaryonField[ivy  ][igrid] = vyl;
+	  BaryonField[ivz  ][igrid] = 0.0;
+	  
+	  BaryonField[ietot][igrid] = etotl;
+	  if (DualEnergyFormalism) {
+	    BaryonField[ieint][igrid] = pl / ((Gamma-1.0)*rho);
+	  }
+	  if (HydroMethod == MHD_RK) {
+	    BaryonField[iBx  ][igrid] = Bxl;
+	    BaryonField[iBy  ][igrid] = Byl;
+	    BaryonField[iBz  ][igrid] = 0.0;
+	    BaryonField[iPhi ][igrid] = 0.0;
+	  }
+	} else {  // endif y<0
 	  /* calculate pressure from hydro equilibrium */
 	  float g = ConstantAcceleration[1];
-	  pres = pl+g*rhou*(y);
-	  EOS(pres, rhou, eintu, h, cs, dpdrho, dpde, 0, 1);
+	  pres = pl+g*rho*(y);
+	  EOS(pres, rho, eintu, h, cs, dpdrho, dpde, 0, 1);
 	  /* impose mode perturbation */
 	  vyu = 0.01 * (1.0+cos(4.0*M_PI*(x))) * (1.0+cos(2.0/1.5*M_PI*(y))) * 0.25;
-	  etotu = eintu + 0.5*(vxu*vxu + vyu*vyu) + 0.5*(Bxu*Bxu+Byu*Byu)/rhou;
+	  etotu = eintu + 0.5*(vxu*vxu + vyu*vyu) + 0.5*(Bxu*Bxu+Byu*Byu)/rho;
+	  BaryonField[iden ][igrid] = rho;
+	  BaryonField[ivx  ][igrid] = vxu;
+	  BaryonField[ivy  ][igrid] = vyu;
+	  BaryonField[ivz  ][igrid] = 0.0;
+	  BaryonField[ietot][igrid] = etotu;
+	  if (DualEnergyFormalism) {
+	    BaryonField[ieint][igrid] = pu / ((Gamma-1.0)*rho);
+	  }
+	  if (HydroMethod == MHD_RK) {
+	    BaryonField[iBx  ][igrid] = Bxu;
+	    BaryonField[iBy  ][igrid] = Byu;
+	    BaryonField[iBz  ][igrid] = 0.0;
+	    BaryonField[iPhi ][igrid] = 0.0;
+	  }
 	}
-	BaryonField[iden ][igrid] = rhou;
-	BaryonField[ivx  ][igrid] = vxu;
-	BaryonField[ivy  ][igrid] = vyu;
-	BaryonField[ivz  ][igrid] = 0.0;
-	BaryonField[ietot][igrid] = etotu;
-	if (DualEnergyFormalism) {
-	  BaryonField[ieint][igrid] = pu / ((Gamma-1.0)*rhou);
-	}
-	BaryonField[iBx  ][igrid] = Bxu;
-	BaryonField[iBy  ][igrid] = Byu;
-	BaryonField[iBz  ][igrid] = 0.0;
-	BaryonField[iPhi ][igrid] = 0.0;
-      }
-    }
-  }  
-  }
-
+      } // endfor i
+    } // endfor j 
+  } // if MHD2DProblemType == 0 
+  
   /* MHD2DProblemType = 1: MHD rotor 
    Reference: G. Toth, J. Comput. Phys. 161 (2000) 605. */
 
@@ -169,7 +175,8 @@ int grid::MHD2DTestInitializeGrid(int MHD2DProblemType,
     FLOAT r;
     FLOAT r0 = 0.1, r1 = 0.115;
     float eint, h, cs, dpdrho, dpde, etot;
-    float rho0 = 10.0, rho1 = 1.0, pres = 1.0, v0 = 2.0, Bx0 = 5.;
+//  float rho0 = 10.0, rho1 = 1.0, pres = 1.0, v0 = 2.0, Bx0 = 5.;
+    float rho0 = 10.0, rho1 = 1.0, pres = 1.0, v0 = 2.0, Bx0 = 5./sqrt(4.*M_PI);
 
     for (int j = 0; j < GridDimension[1]; j++) {
       for (int i = 0; i < GridDimension[0]; i++) {
@@ -250,17 +257,22 @@ int grid::MHD2DTestInitializeGrid(int MHD2DProblemType,
 
   if (MHD2DProblemType == 2) { 
     FLOAT r;
-    FLOAT r0 = 0.1;
     float eint, h, cs, dpdrho, dpde, etot;
+    /*
+    FLOAT r0 = 0.1;
     float rho0 = 1.0, pres0 = 10.0, pres1 = 1.0, Bx0 = 1.0/sqrt(2), By0 = 1.0/sqrt(2);
+    */
+    FLOAT r0 = 0.125;
+    float rho0 = 1.0, pres0 = 100.0, pres1 = 1.0, Bx0 = 10.0/sqrt(2), By0 = 10.0/sqrt(2);
+
     
     for (int j = 0; j < GridDimension[1]; j++) {
       for (int i = 0; i < GridDimension[0]; i++) {
 	
 	igrid = i + j*GridDimension[0];
 	
-	x = CellLeftEdge[0][i] + 0.5 * CellWidth[0][i];
-	y = CellLeftEdge[1][j] + 0.5 * CellWidth[1][j];	
+	x = CellLeftEdge[0][i] + 0.5 * CellWidth[0][i] -0.5;
+	y = CellLeftEdge[1][j] + 0.5 * CellWidth[1][j] -0.5;	
 	r = sqrt(pow(x , 2) + pow(y , 2));
 
 	BaryonField[iden][igrid] = rho0;
@@ -545,6 +557,7 @@ int grid::MHD2DTestInitializeGrid(int MHD2DProblemType,
 
   /* MHD2DProblemType 6: Sedov-Taylor Blast Wave 
    * Reference: Fryxell et al, 2000, ApJS, 131, 273
+   * (I don't think this could be used in 2D test - comments by Ji-hoon Kim, Apr.2010)
    */
 
   if (MHD2DProblemType == 6) { 
@@ -597,25 +610,28 @@ int grid::MHD2DTestInitializeGrid(int MHD2DProblemType,
 
   /* MHD2DProblemType 7: Cylindrical Sedov-Taylor Blast Wave 
    * Reference: Fryxell et al, 2000, ApJS, 131, 273
+   * (I don't think this could be used in 2D test - comments by
+   *  Ji-hoon Kim, Apr.2010)
+   * (Some parameters fixed - comments by Ji-hoon Kim, Jul.2010)
    */
 
   if (MHD2DProblemType == 7) { 
 
     float E0 = 1.0;
-    //const FLOAT r0 = 0.06;
-    const FLOAT r0 = 0.1;
+    const FLOAT r0 = 0.02;
+    //    const FLOAT r0 = 0.1;
     float P0 = 3.0*(Gamma-1.0)*E0/(3.0*M_PI*pow(r0,2));
     float rho0 = 1.0;
     float P1 = 1e-5;
     float eint, h, cs, dpdrho, dpde;
 
     for (int j = 0; j < GridDimension[1]; j++) {
-      FLOAT y = CellLeftEdge[1][j] + 0.5 * CellWidth[1][j];	
+      FLOAT y = CellLeftEdge[1][j] + 0.5 * CellWidth[1][j] -0.5;	
       for (int i = 0; i < GridDimension[0]; i++) {
 	
 	int igrid = i + j*GridDimension[0];
-	FLOAT x = CellLeftEdge[0][i] + 0.5 * CellWidth[0][i];
-	FLOAT r = sqrt(pow(x-0.5,2) + pow(y-0.5,2));
+	FLOAT x = CellLeftEdge[0][i] + 0.5 * CellWidth[0][i] -0.5;
+	FLOAT r = sqrt(x*x + y*y);
 
 	if (r <= r0) {
 	  BaryonField[iden][igrid] = rho0;
@@ -638,8 +654,8 @@ int grid::MHD2DTestInitializeGrid(int MHD2DProblemType,
 	}
 
 	if (HydroMethod == MHD_RK) {
-	  BaryonField[iBx ][igrid] = 0.0;
-	  BaryonField[iBy ][igrid] = 0.0;
+	  BaryonField[iBx ][igrid] = Bxl;
+	  BaryonField[iBy ][igrid] = Byl;
 	  BaryonField[iBz ][igrid] = 0.0;
 	  BaryonField[iPhi][igrid] = 0.0;
 	}
@@ -710,7 +726,8 @@ int grid::MHD2DTestInitializeGrid(int MHD2DProblemType,
   if (MHD2DProblemType == 9) {
     FLOAT x,y;
     int n=0;
-    float omega=0.1;
+    float omega=vyu; // reusing UpperVelocityY as perturbation amplitude
+
     float ramp,eint;
     float delx=0.05; // range in y over which to apply the ramp
 
@@ -727,12 +744,12 @@ int grid::MHD2DTestInitializeGrid(int MHD2DProblemType,
 	ramp =  1./((1.+exp(-2/delx*(y-0.25)))*(1.+exp(-2/delx*(0.75-y))));
 	BaryonField[iden ][igrid] = rhou + ramp*(rhol-rhou);
 	BaryonField[ivx  ][igrid] = vxu  + ramp*(vxl-vxu);
-	BaryonField[ivy  ][igrid] = vyu  + ramp*(vyl-vyu);
+	BaryonField[ivy  ][igrid] = 0.0;
 	BaryonField[ivz  ][igrid] = 0.0;
 	
 	// y-velocity perturbation: 
 	BaryonField[ivy][igrid]  += omega*sin(2.*M_PI*x);
-	
+
 	eint = (pu + ramp*(pl-pu)) / ((Gamma-1.0)*BaryonField[iden][igrid]);
 	BaryonField[ietot][igrid] = eint + 
 	  0.5*(pow(BaryonField[ivx  ][igrid],2)+
@@ -749,7 +766,206 @@ int grid::MHD2DTestInitializeGrid(int MHD2DProblemType,
 	}
       }
     }
-  }
+  } // endif MHD2DProblemType == 9 
+
+  /* MHD2DProblemType == 10: Modified Rayleigh-Taylor problem */
+  /* Domain goes from 0 0.1 to 0.5 0.9 */
+  if (MHD2DProblemType == 10) { 
+
+    float pres, eintl, eintu, h, cs, dpdrho, dpde;
+    float delx=0.05; // range in y over which to apply the ramp
+    for (int j = 0; j < GridDimension[1]; j++) {
+      for (int i = 0; i < GridDimension[0]; i++) {
+	/* Compute position */
+	igrid = i + j*GridDimension[0];
+	
+	x = CellLeftEdge[0][i] + 0.5*CellWidth[0][i];
+	y = CellLeftEdge[1][j] + 0.5*CellWidth[1][j];
+	float ramp,rho;
+	ramp =  1./((1.+exp(-2/delx*(y-0.5))));
+	rho = rhol + ramp*(rhou-rhol);
+	if (y <= 0.5) {
+	  // Rayleigh-Taylor problem, calculate pressure from hydro equilibrium
+	  float g = ConstantAcceleration[1];
+	  pres = pl+g*rho*(y-0.5);
+	  EOS(pres, rho, eintl, h, cs, dpdrho, dpde, 0, 1);
+	  // impose mode perturbation
+	  vyl = 0.7 * (1.0+cos(4.0*M_PI*(x+.25))) * (1.0+cos(2.0/.8*M_PI*(y-0.5))) * 0.25;
+	  etotl = eintl + 0.5*(vxl*vxl + vyl*vyl) + 0.5*(Bxl*Bxl+Byl*Byl)/rho;
+	  
+	  BaryonField[iden ][igrid] = rho;
+	  BaryonField[ivx  ][igrid] = vxl;
+	  BaryonField[ivy  ][igrid] = vyl;
+	  BaryonField[ivz  ][igrid] = 0.0;
+	  
+	  BaryonField[ietot][igrid] = etotl;
+	  if (DualEnergyFormalism) {
+	    BaryonField[ieint][igrid] = pl / ((Gamma-1.0)*rho);
+	  }
+	  if (HydroMethod == MHD_RK) {
+	    BaryonField[iBx  ][igrid] = Bxl;
+	    BaryonField[iBy  ][igrid] = Byl;
+	    BaryonField[iBz  ][igrid] = 0.0;
+	    BaryonField[iPhi ][igrid] = 0.0;
+	  }
+	} else {  // endif y<0
+	  /* calculate pressure from hydro equilibrium */
+	  float g = ConstantAcceleration[1];
+	  pres = pl+g*rho*(y-0.5);
+	  EOS(pres, rho, eintu, h, cs, dpdrho, dpde, 0, 1);
+	  /* impose mode perturbation */
+	  vyu = 0.7 * (1.0+cos(4.0*M_PI*(x+.25))) * (1.0+cos(2.0/.8*M_PI*(y-0.5))) * 0.25;
+	  etotu = eintu + 0.5*(vxu*vxu + vyu*vyu) + 0.5*(Bxu*Bxu+Byu*Byu)/rho;
+	  BaryonField[iden ][igrid] = rho;
+	  BaryonField[ivx  ][igrid] = vxu;
+	  BaryonField[ivy  ][igrid] = vyu;
+	  BaryonField[ivz  ][igrid] = 0.0;
+	  BaryonField[ietot][igrid] = etotu;
+	  if (DualEnergyFormalism) {
+	    BaryonField[ieint][igrid] = pu / ((Gamma-1.0)*rho);
+	  }
+	  if (HydroMethod == MHD_RK) {
+	    BaryonField[iBx  ][igrid] = Bxu;
+	    BaryonField[iBy  ][igrid] = Byu;
+	    BaryonField[iBz  ][igrid] = 0.0;
+	    BaryonField[iPhi ][igrid] = 0.0;
+	  }
+	}
+      } // endfor i
+    } // endfor j 
+  } // if MHD2DProblemType == 10
+
+  /* MHD2DProblemType == 11: Uniform density with a sinusoidal shear velocity */
+  /* Domain goes from 0 0 to 1 1 */
+  // Absolutely nothing happens inthis test case. Compare to SPH ... 
+  if (MHD2DProblemType == 11) { 
+
+    float pres, eintl, eintu, h, cs, dpdrho, dpde;
+
+    for (int j = 0; j < GridDimension[1]; j++) {
+      for (int i = 0; i < GridDimension[0]; i++) {
+	/* Compute position */
+	igrid = i + j*GridDimension[0];
+	
+	x = CellLeftEdge[0][i] + 0.5*CellWidth[0][i];
+	y = CellLeftEdge[1][j] + 0.5*CellWidth[1][j];
+	float rho;
+	rho = 1.;
+	pres = rho/Gamma; // sound speed = 1
+	EOS(pres, rho, eintl, h, cs, dpdrho, dpde, 0, 1);
+	// impose mode perturbation
+	vxl = 0.5*cos(2.0*M_PI*y);
+	vyl = 0.;
+	etotl = eintl + 0.5*(vxl*vxl + vyl*vyl) + 0.5*(Bxl*Bxl+Byl*Byl)/rho;
+	BaryonField[iden ][igrid] = rho;
+	BaryonField[ivx  ][igrid] = vxl;
+	BaryonField[ivy  ][igrid] = vyl;
+	BaryonField[ivz  ][igrid] = 0.0;
+	
+	BaryonField[ietot][igrid] = etotl;
+	if (DualEnergyFormalism) {
+	  BaryonField[ieint][igrid] = pl / ((Gamma-1.0)*rho);
+	}
+	if (HydroMethod == MHD_RK) {
+	  BaryonField[iBx  ][igrid] = Bxl;
+	  BaryonField[iBy  ][igrid] = Byl;
+	  BaryonField[iBz  ][igrid] = 0.0;
+	  BaryonField[iPhi ][igrid] = 0.0;
+	}
+      } // endfor i
+    } // endfor j 
+  } // if MHD2DProblemType == 11
+
+  /* MHD2DProblemType == 12: Uniform density with two spherical central
+   overpressured regions launching sound waves. Perioidc boundaries. */
+  /* Domain goes from 0 0 to 1 1 */
+  if (MHD2DProblemType == 12) { 
+    float pres, eintl, eintu, h, cs, dpdrho, dpde;
+    for (int j = 0; j < GridDimension[1]; j++) {
+      for (int i = 0; i < GridDimension[0]; i++) {
+	/* Compute position */
+	igrid = i + j*GridDimension[0];
+	
+	x = CellLeftEdge[0][i] + 0.5*CellWidth[0][i];
+	y = CellLeftEdge[1][j] + 0.5*CellWidth[1][j];
+
+	float rho,ramp,rad,r0=0.05, P0;
+	rad = sqrt(pow(y-0.5,2)+pow(x-0.3,2));
+	ramp = 1./((1. + exp((-2*( rad - r0)/RampWidth))));
+	rad = sqrt(pow(y-0.5,2)+pow(x-0.7,2));
+	ramp *= 1./((1. + exp((-2*( rad - r0)/RampWidth))));
+	rho = 1.;
+	// reused pu below as a fractional perturbation keeping sound speed =1 
+	// everywhere but the central perturbations
+	P0 = rho/Gamma ; // sound speed = 1
+	pres = pu*P0 + ramp*(P0 - pu*P0);
+	EOS(pres, rho, eintl, h, cs, dpdrho, dpde, 0, 1);
+	// impose mode perturbation
+	vxl = 0.5*cos(2.0*M_PI*y);
+	vyl = 0.;
+	etotl = eintl + 0.5*(vxl*vxl + vyl*vyl) + 0.5*(Bxl*Bxl+Byl*Byl)/rho;
+	BaryonField[iden ][igrid] = rho;
+	BaryonField[ivx  ][igrid] = vxl;
+	BaryonField[ivy  ][igrid] = vyl;
+	BaryonField[ivz  ][igrid] = 0.0;
+	
+	BaryonField[ietot][igrid] = etotl;
+	if (DualEnergyFormalism) {
+	  BaryonField[ieint][igrid] = pl / ((Gamma-1.0)*rho);
+	}
+	if (HydroMethod == MHD_RK) {
+	  BaryonField[iBx  ][igrid] = Bxl;
+	  BaryonField[iBy  ][igrid] = Byl;
+	  BaryonField[iBz  ][igrid] = 0.0;
+	  BaryonField[iPhi ][igrid] = 0.0;
+	}
+      } // endfor i
+    } // endfor j 
+  } // if MHD2DProblemType == 12
+
+
+  /* MHD2DProblemType == 13: A Blob Test (not finished yet) */
+  /* Spherical Cloud gets overrun by Mach 10 shock */
+  /* Domain goes from 0 0 to 2 1 */
+  if (MHD2DProblemType == 13) { 
+
+    float pres, eintl, eintu, h, cs, dpdrho, dpde,ramp,rhot;
+
+    for (int j = 0; j < GridDimension[1]; j++) {
+      for (int i = 0; i < GridDimension[0]; i++) {
+	/* Compute position */
+	igrid = i + j*GridDimension[0];
+	
+	x = CellLeftEdge[0][i] + 0.5*CellWidth[0][i];
+	y = CellLeftEdge[1][j] + 0.5*CellWidth[1][j];
+	float rho,rad,r0=0.075, vx, vy;
+	rad = sqrt(pow(y-0.5,2)+pow(x-0.5,2));
+	ramp = 1./((1. + exp((-2*( rad - r0)/RampWidth))));
+	rho = rhol+ramp*(rhou-rhol);
+	pres = rhol/Gamma; // sound speed = 1 in medium
+	EOS(pres, rho, eintl, h, cs, dpdrho, dpde, 0, 1);
+	// impose mode perturbation
+	vx= vxl + ramp*(vxu-vxl);
+	vy = vyl*(x-0.5);
+	etotl = eintl + 0.5*(vx*vx + vy*vy) + 0.5*(Bxl*Bxl+Byl*Byl)/rho;
+	BaryonField[iden ][igrid] = rho;
+	BaryonField[ivx  ][igrid] = vx;
+	BaryonField[ivy  ][igrid] = vy;
+	BaryonField[ivz  ][igrid] = 0.0;
+	
+	BaryonField[ietot][igrid] = etotl;
+	if (DualEnergyFormalism) {
+	  BaryonField[ieint][igrid] = pres / ((Gamma-1.0)*rho);
+	}
+	if (HydroMethod == MHD_RK) {
+	  BaryonField[iBx  ][igrid] = Bxl;
+	  BaryonField[iBy  ][igrid] = Byl;
+	  BaryonField[iBz  ][igrid] = 0.0;
+	  BaryonField[iPhi ][igrid] = 0.0;
+	}
+      } // endfor i
+    } // endfor j 
+  } // if MHD2DProblemType == 13
 
 
 

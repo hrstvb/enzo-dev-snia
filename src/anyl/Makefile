@@ -59,7 +59,7 @@ include $(ENZO_DIR)/Make.config.settings
 # Make.config.machine is used for setting which Make.mach.* file to use
 #-----------------------------------------------------------------------
 
-MAKE_CONFIG_MACHINE  = $(ENZO_DIR)/Make.config.machine
+#MAKE_CONFIG_MACHINE  = $(ENZO_DIR)/Make.config.machine
 include $(ENZO_DIR)/Make.config.machine
 
 #-----------------------------------------------------------------------
@@ -72,15 +72,12 @@ include $(ENZO_DIR)/Make.config.machine
 MAKE_CONFIG_OVERRIDE = $(ENZO_DIR)/Make.config.override
 include $(MAKE_CONFIG_OVERRIDE)
 
-#:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-# ANYL ONLY: override the override, These I found are needed 
-# for smooth compiling, but you may want to try other options.
-
-CONFIG_PRECISION = 32
-CONFIG_INTEGERS  = 32
+# These may be necessary, so we manually override them here.
 CONFIG_USE_MPI   = yes
 CONFIG_PHOTON    = yes
 CONFIG_FAST_SIB  = yes
+CONFIG_LCAPERF   = no
+
 #:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 
 #-----------------------------------------------------------------------
@@ -95,7 +92,8 @@ include $(ENZO_DIR)/Make.config.assemble
 # Make.mach.<machine-name> defines all machine-dependent settings.
 #-----------------------------------------------------------------------
 
-include $(ENZO_DIR)/Make.mach.$(CONFIG_MACHINE)
+-include $(ENZO_DIR)/Make.mach.$(CONFIG_MACHINE)
+-include $(HOME)/.enzo/Make.mach.$(CONFIG_MACHINE)
 
 #=======================================================================
 # OBJECT FILES
@@ -111,11 +109,11 @@ $(EXE).exe: $(MODULES) dep $(OBJS_ANYL_LIB) purge_main
 	@rm -f $@
 	@echo "Linking"
 	-@$(LD) $(LDFLAGS) -o $(EXE).exe $(OBJS_ANYL_LIB) $(ENZO_DIR)/*.o \
-             $(ENZO_DIR)/hydro_rk/*.o $(LIBS) >& $(OUTPUT)
+             $(ENZO_DIR)/hydro_rk/*.o $(ENZO_DIR)/uuid/*.o $(LIBS) >& $(OUTPUT)
 	@(if [ -e $@ ]; then \
              echo "Success!"; \
          else \
-             echo "$(LD) $(LDFLAGS) -o $(EXE).exe $(OBJS_ANYL_LIB) $(ENZO_DIR)/*.o $(ENZO_DIR)/hydro_rk/*.o $(LIBS)" >> temp1; \
+             echo "$(LD) $(LDFLAGS) -o $(EXE).exe $(OBJS_ANYL_LIB) $(ENZO_DIR)/*.o $(ENZO_DIR)/hydro_rk/*.o $(ENZO_DIR)/uuid/*.o $(LIBS)" >> temp1; \
              cat temp1 $(OUTPUT) > temp2; \
              rm -f temp1; \
              mv -f temp2 $(OUTPUT); \

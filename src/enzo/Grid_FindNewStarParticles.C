@@ -41,7 +41,8 @@ int grid::FindNewStarParticles(int level)
     if (ParticleType[i] == -PARTICLE_TYPE_SINGLE_STAR ||
 	ParticleType[i] == -PARTICLE_TYPE_BLACK_HOLE ||
 	ParticleType[i] == -PARTICLE_TYPE_CLUSTER ||
-	ParticleType[i] == -PARTICLE_TYPE_MBH) {
+	ParticleType[i] == -PARTICLE_TYPE_COLOR_STAR ||
+	ABS(ParticleType[i]) == PARTICLE_TYPE_MBH) {
 
       // Check if it already exists (wasn't activated on the last
       // timestep, usually because of insufficient mass)
@@ -54,6 +55,15 @@ int grid::FindNewStarParticles(int level)
 
       if (!exists) {
 	NewStar = new Star(this, i, level);
+
+	// If using an IMF for Pop III stars, assign the mass here
+	// before communicating the stars with all processors.
+	if (ParticleType[i] == -PARTICLE_TYPE_SINGLE_STAR)
+	  if (PopIIIInitialMassFunction == TRUE)
+	    NewStar->AssignFinalMassFromIMF();
+	  else
+	    NewStar->AssignFinalMass(PopIIIStarMass);
+
 	InsertStarAfter(Stars, NewStar);
 	NumberOfStars++;
       }

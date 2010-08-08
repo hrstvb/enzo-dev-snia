@@ -21,7 +21,6 @@
 #include "Hierarchy.h"
 #include "TopGridData.h"
 #include "LevelHierarchy.h"
-#include "StarParticleData.h"
 
 int GetUnits(float *DensityUnits, float *LengthUnits,
 	     float *TemperatureUnits, float *TimeUnits,
@@ -52,14 +51,27 @@ void Star::MirrorToParticle(void)
       break;
     }
 
-  assert(place >= 0);
+  if (place < 0) {
+    printf("star::MTP: CurrentGrid->NumberOfParticles = %d, level = %d, "
+	   "place =%d, Mass = %d, GridID = %d\n", 
+	   CurrentGrid->NumberOfParticles, level, place, Mass, GridID); 
+    printf("star::MTP: LeftEdge // RightEdge = %"PSYM" %"PSYM" %"PSYM
+	   " // %"PSYM" %"PSYM" %"PSYM"\n",
+	   CurrentGrid->GridLeftEdge[0], CurrentGrid->GridLeftEdge[1], 
+	   CurrentGrid->GridLeftEdge[2], 
+	   CurrentGrid->GridRightEdge[0], CurrentGrid->GridRightEdge[1], 
+	   CurrentGrid->GridRightEdge[2]);
+    this->PrintInfo();
+    ENZO_FAIL("Cannot find matching particle for this star.");
+  }
+  //assert(place >= 0);
 
   // Change all particle data in favor of updated Star particle
   for (dim = 0; dim < MAX_DIMENSION; dim++) {
     CurrentGrid->ParticlePosition[dim][place] = this->pos[dim];
     CurrentGrid->ParticleVelocity[dim][place] = this->vel[dim];
   }
-  CurrentGrid->ParticleMass[place] = this->Mass / MassConversion;
+  CurrentGrid->ParticleMass[place] = (float)(this->Mass) / MassConversion;
   CurrentGrid->ParticleType[place] = this->type;
   CurrentGrid->ParticleAttribute[0][place] = this->BirthTime;
   CurrentGrid->ParticleAttribute[1][place] = this->LifeTime;

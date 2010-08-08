@@ -99,8 +99,7 @@ int grid::InterpolateBoundaryFromParent(grid *ParentGrid)
 
     if(AccelerationHack != TRUE) {  //this code is also used to set the acceleration field.
       if ((densfield=FindField(Density, FieldType, NumberOfBaryonFields)) < 0) {
-        fprintf(stderr, "No density field!\n");
-        ENZO_FAIL("");
+        ENZO_FAIL("No density field!\n");
       }
     }
  
@@ -140,8 +139,7 @@ int grid::InterpolateBoundaryFromParent(grid *ParentGrid)
     float coef1 = 0, coef2 = 1;
     if (Time != ParentGrid->Time) {
       if (ParentGrid->Time <= ParentGrid->OldTime) {
-	fprintf(stderr, "ParentGrid fields are at the same time or worse.\n");
-	ENZO_FAIL("");
+	ENZO_FAIL("ParentGrid fields are at the same time or worse.\n");
       }
       coef1 = max((ParentGrid->Time -                Time)/
                   (ParentGrid->Time - ParentGrid->OldTime), 0.0);
@@ -205,10 +203,7 @@ int grid::InterpolateBoundaryFromParent(grid *ParentGrid)
       if (ParentStartIndex[dim] < 0 ||
           ParentStartIndex[dim]+ParentTempDim[dim] >
           ParentGrid->GridDimension[dim]) {
-        fprintf(stderr, "Parent grid not big enough for interpolation.\n");
-        fprintf(stderr, " ParentStartIndex[%"ISYM"] = %"ISYM"  ParentTempDim = %"ISYM"\n",
-                dim, ParentStartIndex[dim], ParentTempDim[dim]);
-        ENZO_FAIL("");
+        ENZO_VFAIL("Parent grid not big enough for interpolation!  ParentStartIndex[%"ISYM"] = %"ISYM"  ParentTempDim = %"ISYM"ParentGrid->GridDimension = %"ISYM"\n",dim, ParentStartIndex[dim], ParentTempDim[dim], ParentGrid->GridDimension[dim])
       }
  
       /* Compute the dimensions of the current grid temporary field. */
@@ -303,12 +298,21 @@ int grid::InterpolateBoundaryFromParent(grid *ParentGrid)
  
     if (ConservativeInterpolation)
       for (field = 0; field < NumberOfBaryonFields; field++)
-	if (FieldTypeIsDensity(FieldType[field]) == FALSE)
+	if (FieldTypeIsDensity(FieldType[field]) == FALSE &&
+	    FieldType[field] != Bfield1 &&
+	    FieldType[field] != Bfield2 &&
+	    FieldType[field] != Bfield3 &&
+	    FieldType[field] != PhiField &&
+	    FieldType[field] != DrivingField1 &&
+	    FieldType[field] != DrivingField2 &&
+	    FieldType[field] != DrivingField3 &&
+	    FieldType[field] != GravPotential) {
 	  FORTRAN_NAME(mult3d)(ParentTemp[densfield], ParentTemp[field],
 			       &ParentTempSize, &One, &One,
 			       &ParentTempSize, &One, &One,
 			       &Zero, &Zero, &Zero, &Zero, &Zero, &Zero);
- 
+	}
+    
     /* Do the interpolation for the density field. */
  
     if (HydroMethod == Zeus_Hydro)
@@ -323,7 +327,7 @@ int grid::InterpolateBoundaryFromParent(grid *ParentGrid)
 			      TemporaryDensityField, TempDim, ZeroVector, Work,
 			      &InterpolationMethod,
 			      &SecondOrderBFlag[densfield]);
- 
+
     /* Loop over all the fields. */
  
     for (field = 0; field < NumberOfBaryonFields; field++) {
@@ -335,7 +339,7 @@ int grid::InterpolateBoundaryFromParent(grid *ParentGrid)
       /* Interpolating from the ParentTemp field to a Temporary field.  This
 	 is done for the entire current grid, not just it's boundaries.
 	 (skip density since we did it already) */
- 
+
       if (FieldType[field] != Density)
 	FORTRAN_NAME(interpolate)(&GridRank,
 				  ParentTemp[field], ParentTempDim,
@@ -361,7 +365,7 @@ int grid::InterpolateBoundaryFromParent(grid *ParentGrid)
  
       if (FieldType[field] == Density)
 	FieldPointer = TemporaryDensityField;
-      else
+      else if (FieldTypeNoInterpolate(FieldType[field]) == FALSE)
 	FieldPointer = TemporaryField;
  
       /* Copy needed portion of temp field to current grid. */
@@ -416,9 +420,9 @@ int grid::InterpolateBoundaryFromParent(grid *ParentGrid)
 	  for (i = 0; i < GridDimension[0]; i++, fieldindex++, tempindex++)
 	    BaryonField[field][fieldindex] = FieldPointer[tempindex];
 	}
- 
+
     } // end loop over fields
- 
+  
     delete [] Work;
     delete [] TemporaryField;
     delete [] TemporaryDensityField;
@@ -435,8 +439,7 @@ int grid::InterpolateBoundaryFromParent(grid *ParentGrid)
 #endif 
     if (DualEnergyFormalism)
       if (this->RestoreEnergyConsistency(ONLY_BOUNDARY) == FAIL) {
-	fprintf(stderr, "Error in grid->RestoreEnergyConsisitency.\n");
-	ENZO_FAIL("");
+	ENZO_FAIL("Error in grid->RestoreEnergyConsisitency.\n");
       }
  
   } // end: if (NumberOfBaryonFields > 0)
@@ -446,6 +449,7 @@ int grid::InterpolateBoundaryFromParent(grid *ParentGrid)
   /* Clean up if we have transfered data. */
 
   if (MyProcessorNumber != ParentGrid->ProcessorNumber)
+
     ParentGrid->DeleteAllFields();
  
   return SUCCESS;

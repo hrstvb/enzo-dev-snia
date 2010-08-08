@@ -49,7 +49,7 @@ int grid::SolveForPotential(int level, FLOAT PotentialTime)
   if (MyProcessorNumber != ProcessorNumber)
     return SUCCESS;
 
-  JBPERF_START("grid_SolveForPotential");
+  LCAPERF_START("grid_SolveForPotential");
  
   /* declarations */
  
@@ -65,8 +65,7 @@ int grid::SolveForPotential(int level, FLOAT PotentialTime)
   FLOAT a = 1, dadt;
   if (ComovingCoordinates)
     if (CosmologyComputeExpansionFactor(PotentialTime, &a, &dadt) == FAIL) {
-      fprintf(stderr, "Error in CosmologyComputeExpansionFactor.\n");
-      ENZO_FAIL("");
+      ENZO_FAIL("Error in CosmologyComputeExpansionFactor.\n");
     }
  
   /* Compute right hand side. */
@@ -125,8 +124,7 @@ int grid::SolveForPotential(int level, FLOAT PotentialTime)
   if (MultigridSolver(rhs, PotentialField, GridRank,
 		      GravitatingMassFieldDimension, norm, mean,
 		      GravitySmooth, tol_dim, MAX_ITERATION) == FAIL) {
-    fprintf(stderr, "Error in MultigridDriver.\n");
-    ENZO_FAIL("");
+    ENZO_FAIL("Error in MultigridDriver.\n");
   }
  
 #ifdef UNUSED
@@ -134,13 +132,11 @@ int grid::SolveForPotential(int level, FLOAT PotentialTime)
     if (MultigridSolver(rhs, PotentialField, GridRank,
 			GravitatingMassFieldDimension, norm, mean,
 			GravitySmooth) == FAIL) {
-      fprintf(stderr, "Error in MultigridDriver.\n");
-      ENZO_FAIL("");
+      ENZO_FAIL("Error in MultigridDriver.\n");
     }
     printf("%"ISYM" %"GSYM"\n", iteration, norm/mean);
     if (iteration++ > MAX_ITERATION) {
-      fprintf(stderr, "exceeding iteration count (%"ISYM")\n", iteration);
-      ENZO_FAIL("");
+      ENZO_VFAIL("exceeding iteration count (%"ISYM")\n", iteration)
     }
   }
 #endif /* UNUSED */
@@ -148,8 +144,22 @@ int grid::SolveForPotential(int level, FLOAT PotentialTime)
   /* Clean up. */
  
   delete [] rhs;
+
+#ifdef POTENTIALDEBUGOUTPUT
+  for (int i=0;i<GridDimension[0]; i++) {
+    int igrid = GRIDINDEX_NOGHOST(i,(GridEndIndex[0]+GridStartIndex[0])/2,(GridEndIndex[0]+GridStartIndex[0])/2);
+    printf("i: %i \t SolvedSub %g\n", i, PotentialField[igrid]);
+  }
+  float maxPot=-1e30, minPot=1e30;    
+  for (int i=0;i<size; i++) {
+    maxPot = max(maxPot,PotentialField[i]);
+    minPot = min(minPot,PotentialField[i]);
+  }
+  if (debug1) printf("SolvedPotential: Potential minimum: %g \t maximum: %g\n", minPot, maxPot);
+
+#endif
  
-  JBPERF_STOP("grid_SolveForPotential");
+  LCAPERF_STOP("grid_SolveForPotential");
   return SUCCESS;
 }
  

@@ -7,6 +7,8 @@
 /  modified1:  May, 2009 by John Wise
 /                Works with local particle storage in RebuildHierarchy,
 /                which appropriately distributes memory usage.
+/  modified2:  Sep, 2009 by Ji-hoon Kim
+/                Now PARTICLE_TYPE_MBH also has the MUST_REFINE feature
 /
 /  PURPOSE:
 /
@@ -25,20 +27,26 @@
  
 /* function prototypes */
  
-extern "C" void FORTRAN_NAME(cic_flag)(FLOAT *posx, FLOAT *posy,
-			FLOAT *posz, int *ndim, int *npositions,
+extern "C" void PFORTRAN_NAME(cic_flag)(FLOAT *posx, FLOAT *posy,
+			FLOAT *posz, float *partmass, int *ndim, int *npositions,
                         int *itype, int *ffield, FLOAT *leftedge,
                         int *dim1, int *dim2, int *dim3, FLOAT *cellsize,
-			int *imatch);
+		       	int *imatch1, int *imatch2, float *minmassmust, int *buffersize);
  
  
 int grid::DepositMustRefineParticles(int pmethod, int level)
 {
   /* declarations */
- 
-  int i, dim, ParticleTypeToMatch, size = 1;
+  //printf("grid::DepositMustRefineParticles called \n");
+  int i, dim, size = 1, ParticleTypeToMatch1, ParticleTypeToMatch2;
   FLOAT LeftEdge[MAX_DIMENSION], CellSize;
- 
+  int ParticleBufferSize;
+
+  ParticleBufferSize = 1;
+  if (ProblemType == 106 || ProblemType ==107)
+    ParticleBufferSize = 16;
+
+
   /* error check */
  
   if (ParticleMassFlaggingField == NULL) {
@@ -46,13 +54,21 @@ int grid::DepositMustRefineParticles(int pmethod, int level)
     return -1;
   }
 
+  /* If refining region before supernova (to be safe in its last 5% of
+     the lifetime), temporarily set particle type of star to
+     PARTICLE_TYPE_MUST_REFINE. */
+
+  if (PopIIISupernovaMustRefine == TRUE)
+    this->ChangeParticleTypeBeforeSN(PARTICLE_TYPE_MUST_REFINE, level,
+				     &ParticleBufferSize);
+
   /* Set Left edge of grid. */
  
   for (dim = 0; dim < GridRank; dim++) {
     LeftEdge[dim] = CellLeftEdge[dim][0];
     size *= GridDimension[dim];
   }
-  ParticleTypeToMatch = PARTICLE_TYPE_MUST_REFINE;
+
   CellSize = float(CellWidth[0][0]);
 
   /* Temporarily set the flagging field, then we will increase the
@@ -64,12 +80,16 @@ int grid::DepositMustRefineParticles(int pmethod, int level)
 
   /* Loop over all the particles, using only particles marked as
      must-refine particles. */
+
+  ParticleTypeToMatch1 = PARTICLE_TYPE_MUST_REFINE;
+  ParticleTypeToMatch2 = PARTICLE_TYPE_MBH;
  
-  FORTRAN_NAME(cic_flag)(
-           ParticlePosition[0], ParticlePosition[1], ParticlePosition[2],
+  PFORTRAN_NAME(cic_flag)(
+	   ParticlePosition[0], ParticlePosition[1], ParticlePosition[2], ParticleMass,
 	   &GridRank, &NumberOfParticles, ParticleType, FlaggingField,
 	   LeftEdge, GridDimension, GridDimension+1, GridDimension+2,
-	   &CellSize, &ParticleTypeToMatch);
+	   &CellSize, &ParticleTypeToMatch1, &ParticleTypeToMatch2, 
+	   &MustRefineParticlesMinimumMass, &ParticleBufferSize);
 
   /* Increase particle mass flagging field for definite refinement */
 
@@ -86,7 +106,12 @@ int grid::DepositMustRefineParticles(int pmethod, int level)
       NumberOfFlaggedCells++;
     }
 
- 
+  /* If refining region before supernova, change particle type back to
+     its original value. */
+
+  if (PopIIISupernovaMustRefine == TRUE)
+    this->ChangeParticleTypeBeforeSN(PARTICLE_TYPE_RESET, level);
+
   /* Clean up */
 
   delete [] FlaggingField;

@@ -24,8 +24,8 @@ int WritePhotonSources(FILE *fptr, FLOAT CurrentTime)
     VelocityUnits;
   if (GetUnits(&DensityUnits, &LengthUnits, &TemperatureUnits,
 	       &TimeUnits, &VelocityUnits, CurrentTime) == FAIL) {
-    fprintf(stderr, "Error in GetUnits.\n");
-    ENZO_FAIL("");
+    ENZO_FAIL("Error in GetUnits.\n");
+
   }
 
   RadiationSourceEntry *RS = GlobalRadiationSources->NextSource;
@@ -48,7 +48,6 @@ int WritePhotonSources(FILE *fptr, FLOAT CurrentTime)
     fprintf(fptr, "PhotonTestSourceLifeTime[%"ISYM"]     = %"GSYM"\n", i, RS->LifeTime);
     fprintf(fptr, "PhotonTestSourceCreationTime[%"ISYM"] = %"GSYM"\n", i, 
 	    RS->CreationTime);
-    fprintf(fptr, "PhotonTestSourceLifeTime[%"ISYM"]     = %"GSYM"\n", i, RS->LifeTime);
     fprintf(fptr, "PhotonTestSourceRampTime[%"ISYM"]     = %"GSYM"\n", i, RS->RampTime);
     fprintf(fptr, "PhotonTestSourceEnergyBins[%"ISYM"]   = %"ISYM"\n", i, RS->EnergyBins);
     fprintf(fptr, "PhotonTestSourceSED[%"ISYM"]          = ", i);

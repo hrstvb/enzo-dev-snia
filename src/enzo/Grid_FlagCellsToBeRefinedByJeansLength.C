@@ -59,6 +59,11 @@ int grid::FlagCellsToBeRefinedByJeansLength()
       fprintf(stderr, "Error in grid->ComputeTemperature.\n");
       return -1;
     }
+    /* This is less efficient, but it avoids too many conditionals */
+    if(JeansRefinementColdTemperature > 0.0){
+      for (i = 0; i < size; i++) temperature[i] =
+        JeansRefinementColdTemperature;
+    }
   }
  
   /* Find fields: density, total energy, velocity1-3. */
@@ -66,8 +71,7 @@ int grid::FlagCellsToBeRefinedByJeansLength()
   int DensNum, GENum, TENum, Vel1Num, Vel2Num, Vel3Num;
   if (this->IdentifyPhysicalQuantities(DensNum, GENum, Vel1Num, Vel2Num,
 				       Vel3Num, TENum) == FAIL) {
-    fprintf(stderr, "Error in IdentifyPhysicalQuantities.\n");
-    ENZO_FAIL("");
+    ENZO_FAIL("Error in IdentifyPhysicalQuantities.\n");
   }
  
   /* Get density units. */
@@ -77,8 +81,7 @@ int grid::FlagCellsToBeRefinedByJeansLength()
 
   if (GetUnits(&DensityUnits, &LengthUnits, &TemperatureUnits,
 	       &TimeUnits, &VelocityUnits, Time) == FAIL) {
-    fprintf(stderr, "Error in GetUnits.\n");
-    ENZO_FAIL("");
+    ENZO_FAIL("Error in GetUnits.\n");
   }
  
   /* Compute constant for Jean's length computation.
@@ -121,6 +124,7 @@ int grid::FlagCellsToBeRefinedByJeansLength()
   /* clean up */
  
   if (ProblemType != 60 && ProblemType != 61) //AK
+
     delete temperature;
  
   /* Count number of flagged Cells. */

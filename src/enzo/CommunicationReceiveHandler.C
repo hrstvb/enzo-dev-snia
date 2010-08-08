@@ -54,7 +54,7 @@ int CommunicationReceiveHandler(fluxes **SubgridFluxesEstimate[],
 //  	 CommunicationReceiveIndex);
 
   MPI_Arg NumberOfCompleteRequests, TotalReceives;
-  int ReceivesCompletedToDate = 0, index, errcode,
+  int ReceivesCompletedToDate = 0, index, errcode, SUBling, level,
     igrid, isubgrid, dim, FromStart, FromNumber, ToStart, ToNumber;
   int GridDimension[MAX_DIMENSION];
   FLOAT EdgeOffset[MAX_DIMENSION];
@@ -85,8 +85,7 @@ int CommunicationReceiveHandler(fluxes **SubgridFluxesEstimate[],
 
 #if 0
     if (NumberOfCompleteRequests == MPI_UNDEFINED) {
-      fprintf(stderr, "Error in MPI_Waitsome\n");
-      ENZO_FAIL("");
+      ENZO_FAIL("Error in MPI_Waitsome\n");
     }
 #endif
 
@@ -119,11 +118,12 @@ int CommunicationReceiveHandler(fluxes **SubgridFluxesEstimate[],
       if (CommunicationReceiveGridOne[index] != NULL &&
 	  CommunicationReceiveMPI_Request[index] == MPI_REQUEST_NULL) {
 
-//	fprintf(stdout, "%d %d %d %d %d\n", index, 
-//		CommunicationReceiveCallType[index],
-//		CommunicationReceiveGridOne[index],
-//		CommunicationReceiveMPI_Request[index],
-//		CommunicationReceiveDependsOn[index]);
+// 	if(CommunicationReceiveCallType[index]==2)
+// 	  fprintf(stdout, "%d %d %d %d %d\n", index, 
+// 		CommunicationReceiveCallType[index],
+// 		CommunicationReceiveGridOne[index],
+// 		CommunicationReceiveMPI_Request[index],
+// 		CommunicationReceiveDependsOn[index]);
 
 	/* If this depends on an un-processed receive, then skip it. */
 
@@ -196,30 +196,30 @@ int CommunicationReceiveHandler(fluxes **SubgridFluxesEstimate[],
 
 	  if (grid_one->GetProjectedBoundaryFluxes(grid_two, 
 					       SubgridFluxesRefined) == FAIL) {
-	    fprintf(stderr, "Error in grid->GetProjectedBoundaryFluxes.\n");
-	    ENZO_FAIL("");
+	    ENZO_FAIL("Error in grid->GetProjectedBoundaryFluxes.\n");
 	  }
 	
 	  /* Correct this grid for the refined fluxes (step #19)
 	     (this also deletes the fields in SubgridFluxesRefined). */
 
+	  // For SUBlings, the subgrid number is flagged by setting it to negative
+
 	  igrid = CommunicationReceiveArgumentInt[0][index];
 	  isubgrid = CommunicationReceiveArgumentInt[1][index];
-#ifdef FLUX_FIX	  
+	  SUBling = CommunicationReceiveArgumentInt[2][index];
+#ifdef FLUX_FIX
 	  if ((errcode = grid_two->CorrectForRefinedFluxes
 	      (SubgridFluxesEstimate[igrid][isubgrid], &SubgridFluxesRefined, 
 	       SubgridFluxesEstimate[igrid][NumberOfSubgrids[igrid] - 1],
-	       FluxFlag, MetaData)) == FAIL) {
-	    fprintf(stderr, "Error in grid->CorrectForRefinedFluxes.\n");
-	    ENZO_FAIL("");
+	       SUBling, MetaData)) == FAIL) {
+	    ENZO_FAIL("Error in grid->CorrectForRefinedFluxes.\n");
 	  }
 #else
 	  if ((errcode = grid_two->CorrectForRefinedFluxes
 	      (SubgridFluxesEstimate[igrid][isubgrid], &SubgridFluxesRefined, 
 	       SubgridFluxesEstimate[igrid][NumberOfSubgrids[igrid] - 1]     ))
 	      == FAIL) {
-	    fprintf(stderr, "Error in grid->CorrectForRefinedFluxes.\n");
-	    ENZO_FAIL("");
+	    ENZO_FAIL("Error in grid->CorrectForRefinedFluxes.\n");
 	  }
 #endif
 	  break;
@@ -268,19 +268,25 @@ int CommunicationReceiveHandler(fluxes **SubgridFluxesEstimate[],
 						     MyProcessorNumber);
 	  break;
 
+#ifdef TRANSFER
+	case 19:
+	  level = CommunicationReceiveArgumentInt[0][index];
+	  errcode = grid_one->SetSubgridMarkerFromParent(grid_two, level);
+	  break;
+#endif
+
 	default:
-	  fprintf(stderr, "Unrecognized call type %"ISYM"\n", 
-		  CommunicationReceiveCallType[index]);
-	  ENZO_FAIL("");
+	  ENZO_VFAIL("Unrecognized call type %"ISYM"\n", 
+		  CommunicationReceiveCallType[index])
 
 	} // end: switch on call type
 
 	/* Report error if there has been one in any of the above calls. */
 
 	if (errcode == FAIL) {
-	  fprintf(stderr, "Error in CommunicationReceiveHandler, method %"ISYM"\n",
-		  CommunicationReceiveCallType[index]);
-	  ENZO_FAIL("");
+	  ENZO_VFAIL("Error in CommunicationReceiveHandler, method %"ISYM"\n",
+		  CommunicationReceiveCallType[index])
+
 	}
 
 	/* Mark this receive complete. */

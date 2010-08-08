@@ -73,6 +73,8 @@ include $(MAKE_CONFIG_OVERRIDE)
 # INITS ONLY: override the override, since we don't want to compile with MPI
 
 CONFIG_USE_MPI = no
+CONFIG_LCAPERF = no
+
 #:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 
 #-----------------------------------------------------------------------
@@ -106,6 +108,8 @@ $(EXE).exe: $(MODULES) dep $(OBJS_LIB)
 	-@$(LD) $(LDFLAGS) -o $(EXE).exe $(OBJS_LIB) $(LIBS) >& $(OUTPUT)
 	@(if [ -e $@ ]; then \
              echo "Success!"; \
+             if [ ! -e $(TOP_DIR)/bin ]; then mkdir $(TOP_DIR)/bin; fi; \
+             cp $(EXE).exe $(TOP_DIR)/bin/$(EXE); \
          else \
              echo "$(LD) $(LDFLAGS) -o $(EXE).exe $(OBJS_LIB) $(LIBS)" >> temp1; \
              cat temp1 $(OUTPUT) > temp2; \

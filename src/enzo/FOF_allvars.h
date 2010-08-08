@@ -42,32 +42,32 @@ struct FOF_particle_data
 {
   double  	Pos[3];
   float  	Vel[3];
-  int    	Type;
-  int    	ID;
-  int    	MinID;
-  int    	GrLen;
+  char    	Type;
+  PINT    	ID;
+  PINT    	MinID;
+  Eint32    	GrLen;
   float  	Mass;
-  //float  	Attr[MAX_NUMBER_OF_PARTICLE_ATTRIBUTES];
+  float  	Attr[MAX_NUMBER_OF_PARTICLE_ATTRIBUTES];
   float  	Energy;
   float  	Rho;
-  int    	PartID;
-  int           slab;
+  PINT    	PartID;
+  Eint32        slab;
   //int           level;
   //int           GridID;
 };
 
 struct id_data 
 {
-  int    ID;
-  int    index;
+  PINT    ID;
+  PINT    index;
 };
  
 
 struct idmin_data 
 {
-  int    minID;
-  int    index;
-  int    len;
+  PINT    minID;
+  PINT    index;
+  int     len;
 };
 
 struct grouptree_data
@@ -96,12 +96,12 @@ struct FOFData {
 
   double  SearchRadius;
 
-  int     NumPart;   /* total particle number */
+  PINT    NumPart;   /* total particle number */
 
-  int     *Nslab, *Nshadow;
-  int     Nlocal, *Noffset;
-  int     Nlocal_in_file;
-  int     *NtoLeft, *NtoRight;
+  PINT    *Nslab, *Nshadow;
+  PINT    Nlocal, *Noffset;
+  PINT    Nlocal_in_file;
+  PINT    *NtoLeft, *NtoRight;
 
   int     Ncontrib, *ContribID, *ContribHead;
 

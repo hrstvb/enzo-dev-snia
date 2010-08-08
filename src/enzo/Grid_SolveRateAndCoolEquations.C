@@ -48,7 +48,7 @@ extern "C" void FORTRAN_NAME(solve_rate_cool)(
            hydro_method *imethod,
         int *idual, int *ispecies, int *imetal, int *imcool, int *idim,
 	int *is, int *js, int *ks, int *ie, int *je, int *ke, int *ih2co, 
-	   int *ipiht,
+	int *ipiht, int *igammah,
 	float *dt, float *aye, float *temstart, float *temend,
 	float *utem, float *uxyz, float *uaye, float *urho, float *utim,
 	float *eta1, float *eta2, float *gamma, float *fh, float *dtoh,
@@ -64,7 +64,7 @@ extern "C" void FORTRAN_NAME(solve_rate_cool)(
 	float *ceHIa, float *ceHeIa, float *ceHeIIa, float *ciHIa, 
 	   float *ciHeIa, 
 	float *ciHeISa, float *ciHeIIa, float *reHIIa, float *reHeII1a, 
-	float *reHeII2a, float *reHeIIIa, float *brema, float *compa,
+	float *reHeII2a, float *reHeIIIa, float *brema, float *compa, float *gammaha,
 	float *comp_xraya, float *comp_temp, 
            float *piHI, float *piHeI, float *piHeII,
 	float *HM, float *H2I, float *H2II, float *DI, float *DII, float *HDI,
@@ -76,10 +76,16 @@ extern "C" void FORTRAN_NAME(solve_rate_cool)(
 	float *inutot, int *iradtype, int *nfreq, int *imetalregen,
 	int *iradshield, float *avgsighp, float *avgsighep, float *avgsighe2p,
 	int *iradtrans, int *iradcoupled, int *iradstep, int *ierr,
+	int *irt_honly,
 	float *kphHI, float *kphHeI, float *kphHeII, 
-	float *kdissH2I, float *gammaHI, float *gammaHeI, float *gammaHeII);
+	float *kdissH2I, float *photogamma,
+ 	int *icmbTfloor, int *iClHeat, int *iClMMW,
+ 	float *clMetNorm, float *clEleFra, int *clGridRank, int *clGridDim,
+ 	float *clPar1, float *clPar2, float *clPar3, float *clPar4, float *clPar5,
+ 	int *clDataSize, float *clCooling, float *clHeating, float *clMMW);
 
-int grid::SolveRateAndCoolEquations()
+
+int grid::SolveRateAndCoolEquations(int RTCoupledSolverIntermediateStep)
 {
   /* Return if this doesn't concern us. */
   if (!(MultiSpecies && RadiativeCooling)) return SUCCESS;
@@ -119,17 +125,14 @@ int grid::SolveRateAndCoolEquations()
   /* Find photo-ionization fields */
 
   int kphHINum, kphHeINum, kphHeIINum, kdissH2INum;
-  int gammaHINum, gammaHeINum, gammaHeIINum;
-  if (IdentifyRadiativeTransferFields(kphHINum, gammaHINum, kphHeINum, 
-				      gammaHeINum, kphHeIINum, gammaHeIINum, 
-				      kdissH2INum) == FAIL) {
-        ENZO_FAIL("Error in grid->IdentifyRadiativeTransferFields.");
-}
+  int gammaNum;
+  IdentifyRadiativeTransferFields(kphHINum, gammaNum, kphHeINum, 
+				  kphHeIINum, kdissH2INum);
 
   /* Compute size of the current grid. */
 
-  int size = 1;
-  for (int dim = 0; dim < GridRank; dim++) {
+  int i, dim, size = 1;
+  for (dim = 0; dim < GridRank; dim++) {
     size *= GridDimension[dim];
   }
 
@@ -181,35 +184,41 @@ int grid::SolveRateAndCoolEquations()
 
   /* Metal cooling codes. */
 
-  int MetalCoolingType = FALSE, MetalNum = 0;
+  int MetalNum = 0, SNColourNum = 0;
   int MetalFieldPresent = FALSE;
 
   // First see if there's a metal field (so we can conserve species in
   // the solver)
-  if ((MetalNum = FindField(Metallicity, FieldType, NumberOfBaryonFields)) == -1)
-    MetalNum = FindField(SNColour, FieldType, NumberOfBaryonFields);
-  MetalFieldPresent = (MetalNum != -1);
+  MetalNum = FindField(Metallicity, FieldType, NumberOfBaryonFields);
+  SNColourNum = FindField(SNColour, FieldType, NumberOfBaryonFields);
+  MetalFieldPresent = (MetalNum != -1 || SNColourNum != -1);
 
   // Double check if there's a metal field when we have metal cooling
-  if (MetalCooling == JHW_METAL_COOLING) {
-    if (MetalNum != -1)
-      MetalCoolingType = JHW_METAL_COOLING;
-    else {
-      fprintf(stderr, 
-	      "Warning: No metal field found.  Turning OFF MetalCooling.\n");
-      MetalCooling = FALSE;
-      MetalNum = 0;
-    }
+  if (MetalCooling && MetalFieldPresent == FALSE) {
+    if (debug)
+      fprintf(stderr, "Warning: No metal field found.  Turning OFF MetalCooling.\n");
+    MetalCooling = FALSE;
+    MetalNum = 0;
   }
-  if (MetalCooling == CEN_METAL_COOLING)
-    if (MetalNum != 1)
-      MetalCoolingType = CEN_METAL_COOLING;
-    else {
-      fprintf(stderr, 
-	      "Warning: No metal field found.  Turning OFF MetalCooling.\n");
-      MetalCooling = FALSE;
-      MetalNum = 0;
-    }
+
+  /* If both metal fields (Pop I/II and III) exist, create a field
+     that contains their sum */
+
+  float *MetalPointer;
+  float *TotalMetals = NULL;
+
+  if (MetalNum != -1 && SNColourNum != -1) {
+    TotalMetals = new float[size];
+    for (i = 0; i < size; i++)
+      TotalMetals[i] = BaryonField[MetalNum][i] + BaryonField[SNColourNum][i];
+    MetalPointer = TotalMetals;
+  } // ENDIF both metal types
+  else {
+    if (MetalNum != -1)
+      MetalPointer = BaryonField[MetalNum];
+    else if (SNColourNum != -1)
+      MetalPointer = BaryonField[SNColourNum];
+  } // ENDELSE both metal types
 
   /* Calculate the rates due to the radiation field. */
 
@@ -219,11 +228,8 @@ int grid::SolveRateAndCoolEquations()
     }
   }
 
-  /* Set up information for rates which depend on the radiation field. */
-
-  int RadiationShield = (RadiationFieldType == 11) ? TRUE : FALSE;
-
-  /* Precompute factors for self shielding (this is the cross section * dx). */
+  /* Set up information for rates which depend on the radiation field. 
+     Precompute factors for self shielding (this is the cross section * dx). */
 
   float HIShieldFactor = RadiationData.HIAveragePhotoHeatingCrossSection * 
                          double(LengthUnits) * CellWidth[0][0];
@@ -232,10 +238,14 @@ int grid::SolveRateAndCoolEquations()
   float HeIIShieldFactor = RadiationData.HeIIAveragePhotoHeatingCrossSection * 
                            double(LengthUnits) * CellWidth[0][0];
 
+  float dtCool = dtFixed;
+#ifdef TRANSFER
+  dtCool = (RTCoupledSolverIntermediateStep == TRUE) ? dtPhoton : dtFixed;
+#endif
+
   /* Call the fortran routine to solve cooling equations. */
 
   int ierr = 0;
-  int RTCoupledSolverIntermediateStep = FALSE;
 
   FORTRAN_NAME(solve_rate_cool)(
     density, totalenergy, gasenergy, velocity1, velocity2, velocity3,
@@ -243,11 +253,11 @@ int grid::SolveRateAndCoolEquations()
        BaryonField[HeINum], BaryonField[HeIINum], BaryonField[HeIIINum], 
     GridDimension, GridDimension+1, GridDimension+2, 
        &CoolData.NumberOfTemperatureBins, &ComovingCoordinates, &HydroMethod, 
-    &DualEnergyFormalism, &MultiSpecies, &MetalFieldPresent, &MetalCoolingType, 
+    &DualEnergyFormalism, &MultiSpecies, &MetalFieldPresent, &MetalCooling, 
     &GridRank, GridStartIndex, GridStartIndex+1, GridStartIndex+2, 
        GridEndIndex, GridEndIndex+1, GridEndIndex+2,
-       &CoolData.ih2co, &CoolData.ipiht,
-    &dtFixed, &afloat, &CoolData.TemperatureStart, &CoolData.TemperatureEnd,
+    &CoolData.ih2co, &CoolData.ipiht, &PhotoelectricHeating,
+    &dtCool, &afloat, &CoolData.TemperatureStart, &CoolData.TemperatureEnd,
     &TemperatureUnits, &LengthUnits, &aUnits, &DensityUnits, &TimeUnits,
     &DualEnergyFormalismEta1, &DualEnergyFormalismEta2, &Gamma,
        &CoolData.HydrogenFractionByMass, &CoolData.DeuteriumToHydrogenRatio,
@@ -263,12 +273,12 @@ int grid::SolveRateAndCoolEquations()
     CoolData.ceHI, CoolData.ceHeI, CoolData.ceHeII, CoolData.ciHI,
        CoolData.ciHeI, 
     CoolData.ciHeIS, CoolData.ciHeII, CoolData.reHII, CoolData.reHeII1, 
-    CoolData.reHeII2, CoolData.reHeIII, CoolData.brem, &CoolData.comp,
+    CoolData.reHeII2, CoolData.reHeIII, CoolData.brem, &CoolData.comp, &CoolData.gammah,
     &CoolData.comp_xray, &CoolData.temp_xray,
        &CoolData.piHI, &CoolData.piHeI, &CoolData.piHeII,
     BaryonField[HMNum], BaryonField[H2INum], BaryonField[H2IINum],
        BaryonField[DINum], BaryonField[DIINum], BaryonField[HDINum],
-       BaryonField[MetalNum],
+       MetalPointer,
     CoolData.hyd01k, CoolData.h2k01, CoolData.vibh, CoolData.roth,CoolData.rotl,
     CoolData.GP99LowDensityLimit, CoolData.GP99HighDensityLimit, 
        CoolData.HDlte, CoolData.HDlow,
@@ -279,22 +289,35 @@ int grid::SolveRateAndCoolEquations()
     RadiationData.Spectrum[0], &RadiationFieldType, 
           &RadiationData.NumberOfFrequencyBins, 
           &RadiationFieldRecomputeMetalRates,
-    &RadiationShield, &HIShieldFactor, &HeIShieldFactor, &HeIIShieldFactor,
+    &RadiationData.RadiationShield, &HIShieldFactor, &HeIShieldFactor, &HeIIShieldFactor,
     &RadiativeTransfer, &RadiativeTransferCoupledRateSolver,
     &RTCoupledSolverIntermediateStep, &ierr,
+    &RadiativeTransferHydrogenOnly,
     BaryonField[kphHINum], BaryonField[kphHeINum], BaryonField[kphHeIINum], 
-    BaryonField[kdissH2INum], BaryonField[gammaHINum], BaryonField[gammaHeINum], 
-    BaryonField[gammaHeIINum]);
+    BaryonField[kdissH2INum], BaryonField[gammaNum],
+    &CloudyCoolingData.CMBTemperatureFloor,
+    &CloudyCoolingData.IncludeCloudyHeating, &CloudyCoolingData.IncludeCloudyMMW,
+    &CloudyCoolingData.CloudyMetallicityNormalization,
+    &CloudyCoolingData.CloudyElectronFractionFactor,
+    &CloudyCoolingData.CloudyCoolingGridRank,
+    CloudyCoolingData.CloudyCoolingGridDimension,
+    CloudyCoolingData.CloudyCoolingGridParameters[0],
+    CloudyCoolingData.CloudyCoolingGridParameters[1],
+    CloudyCoolingData.CloudyCoolingGridParameters[2],
+    CloudyCoolingData.CloudyCoolingGridParameters[3],
+    CloudyCoolingData.CloudyCoolingGridParameters[4],
+    &CloudyCoolingData.CloudyDataSize,
+    CloudyCoolingData.CloudyCooling, CloudyCoolingData.CloudyHeating,
+    CloudyCoolingData.CloudyMeanMolecularWeight);
 
   if (ierr) {
-      fprintf(stdout, "Error in FORTRAN rate/cool solver\n");
       fprintf(stdout, "GridLeftEdge = %"FSYM" %"FSYM" %"FSYM"\n",
 	      GridLeftEdge[0], GridLeftEdge[1], GridLeftEdge[2]);
       fprintf(stdout, "GridRightEdge = %"FSYM" %"FSYM" %"FSYM"\n",
 	      GridRightEdge[0], GridRightEdge[1], GridRightEdge[2]);
       fprintf(stdout, "GridDimension = %"ISYM" %"ISYM" %"ISYM"\n",
 	      GridDimension[0], GridDimension[1], GridDimension[2]);
-      ENZO_FAIL("");
+      ENZO_FAIL("Error in FORTRAN rate/cool solver!\n");
   }
 
   if (HydroMethod == MHD_RK) {
@@ -304,6 +327,7 @@ int grid::SolveRateAndCoolEquations()
 
       /* Always trust gas energy in cooling routine */
       if (DualEnergyFormalism) {
+
 	v2 = pow(BaryonField[Vel1Num][n],2) + 
 	  pow(BaryonField[Vel2Num][n],2) + pow(BaryonField[Vel3Num][n],2);
 	BaryonField[TENum][n] = gasenergy[n] + 0.5*v2 + 0.5*B2/BaryonField[DensNum][n];
@@ -316,6 +340,8 @@ int grid::SolveRateAndCoolEquations()
     
     delete totalenergy;
   }
+
+  delete [] TotalMetals;
 
   return SUCCESS;
 

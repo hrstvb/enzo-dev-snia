@@ -28,7 +28,6 @@
 #include "TopGridData.h"
 #include "Hierarchy.h"
 #include "LevelHierarchy.h"
-#include "RadiativeTransferHealpixRoutines.h"
 
 /* function prototypes */
 
@@ -125,8 +124,7 @@ int CommunicationLoadBalancePhotonGrids(HierarchyEntry *GridHierarchyPointer[],
 	 to the corresponding processor if not there */
 
       if (vec2pix_nest(Nside, r_photon, &ipix) == FAIL) {
-	fprintf(stderr, "Error in vec2pix_nest.\n");
-	ENZO_FAIL("");
+	ENZO_FAIL("Error in vec2pix_nest.\n");
       }
 
       // Group pixels together according to processor number
@@ -156,6 +154,7 @@ int CommunicationLoadBalancePhotonGrids(HierarchyEntry *GridHierarchyPointer[],
   } // ENDFOR grids
 
   if (MyProcessorNumber == ROOT_PROCESSOR) {
+
     printf("LoadBalancePhotons (grids=%"ISYM"): ", NumberOfGrids);
     WriteListOfFloats(stdout, NumberOfProcessors, ProcessorComputeTime);
   }

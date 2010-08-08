@@ -25,7 +25,7 @@
  
 /* function prototypes */
  
-extern "C" void FORTRAN_NAME(cic_interp)(FLOAT *posx, FLOAT *posy,
+extern "C" void PFORTRAN_NAME(cic_interp)(FLOAT *posx, FLOAT *posy,
 			FLOAT *posz, int *ndim, int *npositions,
                         float *sumfield, float *field, FLOAT *leftedge,
                         int *dim1, int *dim2, int *dim3, FLOAT *cellsize);
@@ -45,13 +45,12 @@ int grid::InterpolatePositions(FLOAT *Position[], int dim, float *Field,
   /* Error check. */
  
   if (InterpolationField == NULL) {
-    fprintf(stderr, "AccelerationField[%"ISYM"] absent.\n", dim);
-    ENZO_FAIL("");
+    ENZO_VFAIL("AccelerationField[%"ISYM"] absent.\n", dim)
   }
  
   if (GravitatingMassFieldCellSize <= 0) {
-    fprintf(stderr, "GravitatingMassFieldCellSize undefined.\n");
-    ENZO_FAIL("");
+    ENZO_FAIL("GravitatingMassFieldCellSize undefined.\n");
+
   }
  
   /* Set the left edge of the field. */
@@ -63,7 +62,7 @@ int grid::InterpolatePositions(FLOAT *Position[], int dim, float *Field,
  
   /* Interpolate from field. */
  
-  FORTRAN_NAME(cic_interp)(Position[0], Position[1], Position[2], &GridRank,
+  PFORTRAN_NAME(cic_interp)(Position[0], Position[1], Position[2], &GridRank,
 			   &Number, Field, InterpolationField, LeftEdge,
 			   GridDimension, GridDimension+1, GridDimension+2,
 			   &GravitatingMassFieldCellSize);

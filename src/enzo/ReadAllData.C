@@ -36,7 +36,6 @@
 #include "Grid.h"
 #include "Hierarchy.h"
 #include "TopGridData.h"
-#include "StarParticleData.h"
 #include "CommunicationUtilities.h"
 void my_exit(int status);
  
@@ -57,12 +56,13 @@ extern char MemoryMapSuffix[];
 
 
 int ReadAllData(char *name, HierarchyEntry *TopGrid, TopGridData &MetaData,
-		 ExternalBoundary *Exterior)
+		ExternalBoundary *Exterior, float *Initialdt)
  
 {
  
   /* declarations */
  
+  char pid[MAX_TASK_TAG_SIZE];
   char hierarchyname[MAX_LINE_LENGTH], radiationname[MAX_LINE_LENGTH];
   // Code shrapnel. See comments below. --Rick
   // char taskmapname[MAX_LINE_LENGTH];
@@ -80,27 +80,14 @@ int ReadAllData(char *name, HierarchyEntry *TopGrid, TopGridData &MetaData,
   // store the original parameter file name, in case we need it later
   strcpy(PrevParameterFileName, name);
 
-#ifdef USE_MPI
-  double io_start, io_stop;
-  char io_logfile[MAX_NAME_LENGTH];
-  char pid[MAX_TASK_TAG_SIZE];
-  FILE *xptr;
-#endif /* USE_MPI */
-
-//  Start I/O timing
-
-#ifdef USE_MPI
   CommunicationBarrier();
-  io_start = MPI_Wtime();
-#endif /* USE_MPI */
  
   /* Read TopGrid data. */
  
   if ((fptr = fopen(name, "r")) == NULL) {
-    fprintf(stderr, "Error opening input file %s.\n", name);
-    ENZO_FAIL("");
+    ENZO_VFAIL("Error opening input file %s.\n", name)
   }
-  if (ReadParameterFile(fptr, MetaData, &dummy) == FAIL) {
+  if (ReadParameterFile(fptr, MetaData, Initialdt) == FAIL) {
         ENZO_FAIL("Error in ReadParameterFile.");
   }
  
@@ -120,30 +107,30 @@ int ReadAllData(char *name, HierarchyEntry *TopGrid, TopGridData &MetaData,
   } 
 
   // Try to read external boundaries. If they don't fit grid data we'll set them later below
+  int ReadHDF4B = 0;
 #ifdef USE_HDF4
-  if (BRerr == 0)
-    if (Exterior->ReadExternalBoundaryHDF4(fptr) == FAIL) {  
-      fprintf(stderr, "Error in ReadExternalBoundary using HDF4  (%s).\n",           
-	      MetaData.BoundaryConditionName);                  
-      fprintf(stderr, "Will try HDF5 instead.\n");
-#else
-      if(LoadGridDataAtStart){    
-	if (Exterior->ReadExternalBoundary(fptr) == FAIL) {
-	  fprintf(stderr, "Error in ReadExternalBoundary (%s).\n",
-		  MetaData.BoundaryConditionName);
-	  BRerr = 1;
-	}
-      }else{
-	if (Exterior->ReadExternalBoundary(fptr, TRUE, FALSE) == FAIL) {
-	  fprintf(stderr, "Error in ReadExternalBoundary (%s).\n",
-		  MetaData.BoundaryConditionName);
-	  BRerr = 1;
-	}
+  if (Exterior->ReadExternalBoundaryHDF4(fptr) == FAIL) {  
+    fprintf(stderr, "Error in ReadExternalBoundary using HDF4  (%s).\n",           
+	    MetaData.BoundaryConditionName);                  
+    fprintf(stderr, "Will try HDF5 instead.\n");
+    BRerr = 1;
+  } else ReadHDF4B = 1;
+#endif // HDF4
+  if (ReadHDF4B != 1) 
+    if(LoadGridDataAtStart){    
+      if (Exterior->ReadExternalBoundary(fptr) == FAIL) {
+	fprintf(stderr, "Error in ReadExternalBoundary (%s).\n",
+		MetaData.BoundaryConditionName);
+	BRerr = 1;
       }
-#endif
-#ifdef USE_HDF4
+    }else{
+      if (Exterior->ReadExternalBoundary(fptr, TRUE, FALSE) == FAIL) {
+	fprintf(stderr, "Error in ReadExternalBoundary (%s).\n",
+		MetaData.BoundaryConditionName);
+	BRerr = 1;
+      }
     }
-#endif
+
 
   if (BRerr ==0) strcat(MetaData.BoundaryConditionName, hdfsuffix);
   if ((fptr != NULL) && (BRerr == 0)) fclose(fptr);
@@ -163,8 +150,7 @@ int ReadAllData(char *name, HierarchyEntry *TopGrid, TopGridData &MetaData,
 
 #ifdef TASKMAP
   if ((mptr = fopen(memorymapname, "r")) == NULL) {
-    fprintf(stderr, "Error opening MemoryMap file %s.\n", memorymapname);
-    ENZO_FAIL("");
+    ENZO_VFAIL("Error opening MemoryMap file %s.\n", memorymapname)
   }
 
   Eint64 GridIndex[MAX_NUMBER_OF_TASKS], OldPN, Mem[MAX_NUMBER_OF_TASKS];
@@ -191,13 +177,11 @@ int ReadAllData(char *name, HierarchyEntry *TopGrid, TopGridData &MetaData,
   /* Read Data Hierarchy. */
  
   if ((fptr = fopen(hierarchyname, "r")) == NULL) {
-    fprintf(stderr, "Error opening hierarchy file %s.\n", hierarchyname);
-    ENZO_FAIL("");
+    ENZO_VFAIL("Error opening hierarchy file %s.\n", hierarchyname)
   }
   GridID = 1;
   if (ReadDataHierarchy(fptr, TopGrid, GridID, NULL) == FAIL) {
-    fprintf(stderr, "Error in ReadDataHierarchy (%s).\n", hierarchyname);
-    ENZO_FAIL("");
+    ENZO_VFAIL("Error in ReadDataHierarchy (%s).\n", hierarchyname)
   }
 
   /* If there was trouble reading the boundary file attempt to sanely set them now. */
@@ -257,15 +241,16 @@ int ReadAllData(char *name, HierarchyEntry *TopGrid, TopGridData &MetaData,
  
   /* Create radiation name and read radiation data. */
  
-  if (RadiationFieldType >= 10 && RadiationFieldType <= 11) {
+  if ((RadiationFieldType >= 10 && RadiationFieldType <= 11) || 
+      RadiationData.RadiationShield == TRUE) {
     FILE *Radfptr;
     strcpy(radiationname, name);
     strcat(radiationname, RadiationSuffix);
     if ((Radfptr = fopen(radiationname, "r")) == NULL) {
-      fprintf(stderr, "Error opening radiation file %s.\n", name);
-      ENZO_FAIL("");
+      ENZO_VFAIL("Error opening radiation file %s.\n", name)
     }
     if (ReadRadiationData(Radfptr) == FAIL) {
+
             ENZO_FAIL("Error in ReadRadiationData.");
     }
     fclose(Radfptr);
@@ -278,20 +263,5 @@ int ReadAllData(char *name, HierarchyEntry *TopGrid, TopGridData &MetaData,
 
   AddParticleAttributes = FALSE;
 
-//  Stop I/O timing
-
-#ifdef USE_MPI
-  io_stop = MPI_Wtime();
-#endif /* USE_MPI */
-
-#ifdef USE_MPI
-  sprintf(pid, "%"TASK_TAG_FORMAT""ISYM, MyProcessorNumber);
-  strcpy(io_logfile, "IN_perf.");
-  strcat(io_logfile, pid);
-  xptr = fopen(io_logfile, "a");
-  fprintf(xptr, "IN %12.4e  %s\n", (io_stop-io_start), name);
-  fclose(xptr);
-#endif /* USE_MPI */
- 
   return SUCCESS;
 }

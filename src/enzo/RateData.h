@@ -7,6 +7,7 @@
 struct RateDataType
 {
   int NumberOfTemperatureBins;   
+  int CaseBRecombination;
   float TemperatureStart;        // range of temperature in K
   float TemperatureEnd;
 
@@ -37,6 +38,7 @@ struct RateDataType
   float *k20;  /* currently not used */
   float *k21;  /* currently not used */
   float *k22;  /* 3-body H2 formation */
+  float *k23;  /* H2-H2 dissociation */
 
   float *k13dd;  /* density dependent version of k13 (collisional H2
                     dissociation); actually 7 functions instead of 1. */

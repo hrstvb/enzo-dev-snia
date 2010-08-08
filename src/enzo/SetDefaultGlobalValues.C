@@ -52,8 +52,11 @@ int SetDefaultGlobalValues(TopGridData &MetaData)
   /* declarations */
  
   const float Pi = 3.14159;
-  int dim, i;
+  int dim, i, j;
  
+  huge_number               = 1.0e+20;
+  tiny_number               = 1.0e-20;
+
   /* set the default MetaData values. */
  
   MetaData.CycleNumber     = 0;
@@ -62,12 +65,14 @@ int SetDefaultGlobalValues(TopGridData &MetaData)
   MetaData.CPUTime         = 0.0;
  
   MetaData.StopTime        = FLOAT_UNDEFINED;  // This must be set be the user
-  MetaData.StopCycle       = 10000;            // 10000 timesteps
+  MetaData.StopCycle       = 100000;            // 10000 timesteps
   MetaData.StopSteps       = 10000;            // 10000 timesteps
   MetaData.StopCPUTime     = 720.0*3600.0;     // 30 days
   MetaData.ResubmitOn      = FALSE;
   MetaData.ResubmitCommand = NULL;
  
+  MetaData.MaximumTopGridTimeStep = huge_number;
+
   MetaData.TimeLastRestartDump = 0.0;
   MetaData.dtRestartDump       = FLOAT_UNDEFINED;
   MetaData.TimeLastDataDump    = FLOAT_UNDEFINED;
@@ -76,6 +81,8 @@ int SetDefaultGlobalValues(TopGridData &MetaData)
   MetaData.dtHistoryDump       = 0.0;
   MetaData.TimeLastTracerParticleDump = FLOAT_UNDEFINED;
   MetaData.dtTracerParticleDump       = 0.0;
+  MetaData.TimeLastInterpolatedDataDump    = FLOAT_UNDEFINED;
+  MetaData.dtInterpolatedDataDump          = 0.0;
  
   MetaData.CycleLastRestartDump = 0;
   MetaData.CycleSkipRestartDump = 0;
@@ -102,19 +109,28 @@ int SetDefaultGlobalValues(TopGridData &MetaData)
   MetaData.TracerParticleDumpNumber = 0;
   MetaData.TracerParticleDumpName   = DefaultTracerParticleName;
   MetaData.TracerParticleDumpDir    = DefaultTracerParticleDir;
-//MetaData.RedshiftDumpNumber  = 0;
+  //MetaData.RedshiftDumpNumber  = 0;
   MetaData.RedshiftDumpName    = DefaultRedshiftName;
   MetaData.RedshiftDumpDir     = DefaultRedshiftDir;
- 
+
+  MetaData.MetaDataIdentifier    = NULL;
+  MetaData.SimulationUUID        = NULL;
+  MetaData.RestartDatasetUUID    = NULL;
+  MetaData.InitialConditionsUUID = NULL;
+
   MetaData.LocalDir            = NULL;
   MetaData.GlobalDir           = NULL;
 
   LoadBalancing = 1;     //On, memory equalization method
   LoadBalancingCycleSkip = 10;  // Load balance root grids every 10 cycles
+  ResetLoadBalancing = FALSE;
   CoresPerNode = 1;
   PreviousMaxTask = 0;
+  LoadBalancingMinLevel = 0;     //All Levels
+  LoadBalancingMaxLevel = MAX_DEPTH_OF_HIERARCHY;  //All Levels
 
   FileDirectedOutput = 1;
+  WriteBinaryHierarchy = 0;
 
   for (i = 0; i < MAX_TIME_ACTIONS; i++) {
     TimeActionType[i]      = 0;
@@ -128,6 +144,7 @@ int SetDefaultGlobalValues(TopGridData &MetaData)
   }
  
   MetaData.StaticHierarchy     = TRUE;
+  FastSiblingLocatorEntireDomain = TRUE;
  
   MetaData.TopGridRank = INT_UNDEFINED;
   for (dim = 0; dim < MAX_DIMENSION; dim++) {
@@ -138,6 +155,10 @@ int SetDefaultGlobalValues(TopGridData &MetaData)
   MetaData.BoundaryConditionName = NULL;
  
   MetaData.GravityBoundary        = TopGridPeriodic;
+
+#ifdef TRANSFER
+  MetaData.RadHydroParameterFname = NULL;
+#endif
  
   MetaData.ParticleBoundaryType   = periodic;  // only one implemented!
   MetaData.NumberOfParticles      = 0;         // no particles
@@ -150,11 +171,11 @@ int SetDefaultGlobalValues(TopGridData &MetaData)
   MetaData.FirstTimestepAfterRestart = TRUE;
  
   /* set the default global data. */
-                                                 // Debug flag set in main
+  CheckpointRestart         = 0;
+
+  // Debug flag set in main
   ProblemType               = 0;                 // None
   HydroMethod               = PPM_DirectEuler;   //
-  huge_number               = 1.0e+20;
-  tiny_number               = 1.0e-20;
   Gamma                     = 5.0/3.0;           // 5/3
   PressureFree              = FALSE;             // use pressure (duh)
   RefineBy                  = 4;                 // Refinement factor
@@ -164,12 +185,15 @@ int SetDefaultGlobalValues(TopGridData &MetaData)
   MustRefineRegionMinRefinementLevel = -1;        // unused if negative
   MetallicityRefinementMinLevel = -1;
   MetallicityRefinementMinMetallicity = 1.0e-5;
+  MetallicityRefinementMinDensity = FLOAT_UNDEFINED;
   FluxCorrection            = TRUE;
   InterpolationMethod       = SecondOrderA;      // ?
   ConservativeInterpolation = TRUE;              // true for ppm
   MinimumEfficiency         = 0.2;               // between 0-1, usually ~0.1
-  MinimumSubgridEdge        = 4;                 // min for acceptable subgrid
-  MaximumSubgridSize        = 2000;              // max for acceptable subgrid
+  MinimumSubgridEdge        = 6;                 // min for acceptable subgrid
+  MaximumSubgridSize        = 32768;             // max for acceptable subgrid
+  SubgridSizeAutoAdjust     = FALSE; // true for adjusting maxsize and minedge
+  OptimalSubgridsPerProcessor = 16;    // Subgrids per processor
   NumberOfBufferZones       = 1;
  
   for (i = 0; i < MAX_FLAGGING_METHODS; i++) {
@@ -199,12 +223,26 @@ int SetDefaultGlobalValues(TopGridData &MetaData)
  
   for (i = 0; i < MAX_STATIC_REGIONS; i++)
     StaticRefineRegionLevel[i] = INT_UNDEFINED;
+
+  /* For evolving refinement regions. */
+  RefineRegionFile = NULL;
+  RefineRegionTimeType = -1; /* 0=time bins 1=redshift bins*/
+  for (i = 0; i < MAX_REFINE_REGIONS; i++) {
+    EvolveRefineRegionTime[i] = FLOAT_UNDEFINED;
+    for (j = 0; j < MAX_DIMENSION; j++) {
+      EvolveRefineRegionLeftEdge[i][j]  = FLOAT_UNDEFINED;
+      EvolveRefineRegionRightEdge[i][j] = FLOAT_UNDEFINED;
+    }
+  }
+
  
   ParallelRootGridIO          = FALSE;
   ParallelParticleIO          = FALSE;
   Unigrid                     = FALSE;
   UnigridTranspose            = FALSE;
+  NumberOfRootGridTilesPerDimensionPerProcessor = 1;
   PartitionNestedGrids        = FALSE;
+  StaticPartitionNestedGrids  = TRUE;
   ExtractFieldsOnly           = TRUE;
 
   ExternalBoundaryIO          = FALSE;
@@ -216,6 +254,12 @@ int SetDefaultGlobalValues(TopGridData &MetaData)
   debug2                      = 0;
 
   TracerParticleOn            = 0;
+
+  OutputOnDensity                  = 0;
+  StartDensityOutputs              = 999;
+  CurrentDensityOutput             = 999;
+  IncrementDensityOutput           = 999;
+  CurrentMaximumDensity            = -999;
  
   CubeDumpEnabled             = 0;
 
@@ -227,6 +271,10 @@ int SetDefaultGlobalValues(TopGridData &MetaData)
 
   MemoryLimit                 = 4000000000L;
  
+  ExternalGravity             = FALSE;             // off
+  ExternalGravityDensity      = 0.0;
+  ExternalGravityRadius       = 0.0;
+
   UniformGravity              = FALSE;             // off
   UniformGravityDirection     = 0;                 // x-direction
   UniformGravityConstant      = 1.0;
@@ -236,6 +284,8 @@ int SetDefaultGlobalValues(TopGridData &MetaData)
   PointSourceGravityCoreRadius = 0.0;
 
   SelfGravity                 = FALSE;             // off
+  SelfGravityGasOff           = FALSE;             // off
+  AccretionKernal             = FALSE;             // off
   CopyGravPotential           = FALSE;             // off
   PotentialIterations         = 4;                 // ~4 is reasonable
   GravitationalConstant       = 4*Pi;              // G = 1
@@ -258,25 +308,42 @@ int SetDefaultGlobalValues(TopGridData &MetaData)
   RandomForcingMachNumber     = 0.0;               //AK
   RadiativeCooling            = FALSE;             // off
   GadgetEquilibriumCooling    = FALSE;             // off
+  RadiativeTransfer           = 0;                 // off
+  RadiativeTransferFLD        = 0;                 // off
+  ImplicitProblem             = 0;                 // off
+  StarMakerEmissivityField    = 0;                 // off
+  uv_param                    = 1.0e-5;            // mid-range value from Razoumov Norman 2002
+
   MultiSpecies                = FALSE;             // off
+  PrimordialChemistrySolver   = 0;
+  ThreeBodyRate               = 0;                 // ABN02
+  CIECooling                  = 1;
+  H2OpticalDepthApproximation = 1;
   GloverChemistryModel        = 0;                 // 0ff
   GloverRadiationBackground   = 0;
   GloverOpticalDepth          = 0;
+  CRModel                     = 0;                 // off
+  ShockMethod                 = 0;                 // temperature unsplit
+  ShockTemperatureFloor       = 1.0;               // Set to 1K
+  StorePreShockFields         = 0;
   RadiationFieldType          = 0;
   RadiationFieldLevelRecompute = 0;
+  RadiationData.RadiationShield = 0;
   AdjustUVBackground          = 1;
   SetUVBAmplitude             = 1.0;
   SetHeIIHeatingScale         = 1.8;
   CoolData.alpha0             = 1.5;               // radiation spectral slope
   CoolData.f3                 = 1.0e-21;           // radiation normalization
   CoolData.ParameterFilename  = NULL;
+  PhotoelectricHeating	      = 0;
+  RadiationXRaySecondaryIon   = 0;
+  RadiationXRayComptonHeating = 0;
 
   CloudyCoolingData.CloudyCoolingGridRank          = 0;
   CloudyCoolingData.CloudyCoolingGridFile          = "";
   CloudyCoolingData.IncludeCloudyHeating           = 0;
   CloudyCoolingData.IncludeCloudyMMW               = 0;
   CloudyCoolingData.CMBTemperatureFloor            = 1;         // use CMB floor.
-  CloudyCoolingData.ConstantTemperatureFloor       = 1.0;       // use if higher than T_CMB
   CloudyCoolingData.CloudyMetallicityNormalization = 0.018477;  // calculated using Cloudy 07.02 abundances
   CloudyCoolingData.CloudyElectronFractionFactor = 9.153959e-3; // calculated using Cloudy 07.02 abundances
 
@@ -285,6 +352,8 @@ int SetDefaultGlobalValues(TopGridData &MetaData)
 
   OutputSmoothedDarkMatter = FALSE;
   SmoothedDarkMatterNeighbors = 32;
+
+  OutputGriddedStarParticle = FALSE;
 
   ZEUSLinearArtificialViscosity    = 0.0;
   ZEUSQuadraticArtificialViscosity = 2.0;
@@ -296,12 +365,21 @@ int SetDefaultGlobalValues(TopGridData &MetaData)
   MinimumPressureJumpForRefinement = 0.33;         // As in PPM method paper
   MinimumEnergyRatioForRefinement  = 0.1;          // conservative!
   RefineByJeansLengthSafetyFactor  = 4.0;
+  JeansRefinementColdTemperature  = -1.0;
   RefineByResistiveLengthSafetyFactor  = 2.0;
+  ShockwaveRefinementMinMach = 1.3; // Only above M=1.3
+  ShockwaveRefinementMinVelocity = 1.0e7; //1000 km/s
+  ShockwaveRefinementMaxLevel = 0; 
   MustRefineParticlesRefineToLevel = 0;
+  MustRefineParticlesRefineToLevelAutoAdjust = FALSE;
+  MustRefineParticlesMinimumMass   = 0.0;
   ComovingCoordinates              = FALSE;        // No comoving coordinates
   StarParticleCreation             = FALSE;
   StarParticleFeedback             = FALSE;
+  BigStarFormation                 = FALSE;
+  BigStarSeparation                = 0.25;
   StarMakerOverDensityThreshold    = 100;          // times mean total density
+  StarMakerSHDensityThreshold      = 7e-26;        // cgs density for rho_crit in Springel & Hernquist star_maker5
   StarMakerMassEfficiency          = 1;
   StarMakerMinimumMass             = 1.0e9;        // in solar masses
   StarMakerMinimumDynamicalTime    = 1.0e6;        // in years
@@ -320,6 +398,7 @@ int SetDefaultGlobalValues(TopGridData &MetaData)
   InlineHaloFinder                 = FALSE;
   HaloFinderSubfind                = FALSE;
   HaloFinderOutputParticleList     = FALSE;
+  HaloFinderRunAfterOutput         = TRUE;
   HaloFinderMinimumSize            = 50;
   HaloFinderLinkingLength          = 0.1;
   HaloFinderCycleSkip              = 3;
@@ -327,6 +406,7 @@ int SetDefaultGlobalValues(TopGridData &MetaData)
   HaloFinderLastTime               = 0.0;
 
   StarClusterUseMetalField         = FALSE;
+  StarClusterHeliumIonization      = FALSE;
   StarClusterMinDynamicalTime      = 10e6;         // in years
   StarClusterIonizingLuminosity    = 1e47;         // ph/s / Msun
   StarClusterSNEnergy              = 6.8e48;       // erg / Msun (Woosley&Weaver86)
@@ -340,6 +420,12 @@ int SetDefaultGlobalValues(TopGridData &MetaData)
   }
 
   PopIIIStarMass                   = 100;
+  PopIIIInitialMassFunction        = FALSE;
+  PopIIIInitialMassFunctionSeed    = INT_UNDEFINED;
+  PopIIIHeliumIonization           = FALSE;
+  PopIIILowerMassCutoff            = 1.0;
+  PopIIIUpperMassCutoff            = 300.0;
+  PopIIIInitialMassFunctionSlope   = -1.3;         // high mass slope
   PopIIIBlackHoles                 = FALSE;
   PopIIIBHLuminosityEfficiency     = 0.1;
   PopIIIOverDensityThreshold       = 1e6;          // times mean total density
@@ -347,15 +433,35 @@ int SetDefaultGlobalValues(TopGridData &MetaData)
   PopIIIMetalCriticalFraction      = 1e-4;
   PopIIISupernovaRadius            = 1;            // pc
   PopIIISupernovaUseColour         = FALSE;
+  PopIIISupernovaMustRefine        = FALSE;
+  PopIIISupernovaMustRefineResolution = 32;
+  PopIIIColorDensityThreshold      = 1e6;          // times mean total density
+  PopIIIColorMass                  = 1e6;          // total mass to color
+  IMFData                          = NULL;
 
+  MBHAccretion                     = FALSE;        // 1: Bondi rate, 2: fix temperature, 3: fix rate
+  MBHAccretionRadius               = 50;           // pc
+  MBHAccretingMassRatio            = 1.0;          // 100%, check Star_CalculateMassAccretion.C
+  MBHAccretionFixedTemperature     = 3e5;          // K,       for MBHAccretion = 2
+  MBHAccretionFixedRate            = 1e-3;         // Msun/yr, for MBHAccretion = 3
+  MBHTurnOffStarFormation          = FALSE;        // check Grid_StarParticleHandler.C
+  MBHCombineRadius                 = 50;           // pc
   MBHMinDynamicalTime              = 10e6;         // in years
-  MBHMinimumMass                   = 1e6;          // Msun
-  MBHFeedbackThermal               = FALSE;
-  MBHFeedbackRadius                = 10;           // pc
-  MBHFeedbackRadiativeEfficiency   = 0.1;          // Shakura&Sunyaev (1973)
-  MBHFeedbackThermalCoupling       = 0.05;         // Springel (2005), Di Matteo (2005)
-  MBHCombineRadius                 = 10;           // pc
-  MBHIonizingLuminosity            = 1e47;         // ph/s / Msun
+  MBHMinimumMass                   = 1e3;          // Msun
+
+  MBHFeedback                      = FALSE;        // 1: isotropic thermal, 2: jet along z, 3: jet along L
+  MBHFeedbackRadiativeEfficiency   = 0.1;          // Shakura & Sunyaev (1973)
+  MBHFeedbackEnergyCoupling        = 0.05;         // Springel (2005), Di Matteo (2005)
+  MBHFeedbackMassEjectionFraction  = 0.1;          // 10%, check Star_CalculateFeedbackParameters.C
+  MBHFeedbackMetalYield            = 0.02;         // 2%, check Star_CalculateFeedbackParameters.C
+  MBHFeedbackThermalRadius         = 50;           // pc
+  MBHFeedbackJetsThresholdMass     = 10;           // Msun
+
+  /* Star Class MBH Paricle IO (PARTICLE_TYPE_MBH) */
+  MBHParticleIO                    = FALSE;
+  MBHParticleIOFilename            = (char*) "mbh_particle_io.dat";
+  MBHInsertLocationFilename        = (char*) "mbh_insert_location.in";
+  OutputWhenJetsHaveNotEjected     = FALSE;
 
   NumberOfParticleAttributes       = INT_UNDEFINED;
   AddParticleAttributes            = FALSE;
@@ -369,19 +475,21 @@ int SetDefaultGlobalValues(TopGridData &MetaData)
   NewMovieParticleOn = FALSE;
   Movie3DVolumes  = FALSE;
   MovieVertexCentered = FALSE;
-  MetaData.TimestepCounter      = 0;
+  MetaData.MovieTimestepCounter      = 0;
 
   ran1_init = 0;
+  rand_init = 0;
 
   SinkMergeDistance     = 1e16;
   SinkMergeMass         = 0.1;
   TotalSinkMass         = 0.0;
   StellarWindFeedback   = 0;
   StellarWindTurnOnMass = 0.1;
+  MSStellarWindTurnOnMass = 10.0;
 
   UseHydro		     = 1;
   Coordinate		     = Cartesian;
-  NSpecies		     = 0;
+  NSpecies		     = INT_UNDEFINED;
   NColor		     = INT_UNDEFINED;
   Theta_Limiter		     = 1.5;
   RKOrder		     = 2;
@@ -395,6 +503,7 @@ int SetDefaultGlobalValues(TopGridData &MetaData)
   MaximumAlvenSpeed	     = 1e30;
   RiemannSolver		     = HLL;
   ReconstructionMethod	     = PLM;
+  ConservativeReconstruction = 0;
   EOSType		     = 0;
   EOSSoundSpeed		     = 2.65e4;
   EOSCriticalDensity	     = 1e-13;
@@ -406,10 +515,10 @@ int SetDefaultGlobalValues(TopGridData &MetaData)
   CoolingPowerCutOffDensity1 = 0;
   CoolingPowerCutOffDensity2 = 1e10;
   UseH2OnDust		     = 0;
-  PhotoelectricHeating	     = 0;
   UseCUDA		     = 0;
   UseFloor		     = 0;
   UseViscosity		     = 0;
+  ViscosityCoefficient       = 0.;
   UseAmbipolarDiffusion	     = 0;
   UseResistivity	     = 0;
 
@@ -432,21 +541,14 @@ int SetDefaultGlobalValues(TopGridData &MetaData)
   iEtot = 4;
   iEint = 0;
 
-  EOSType	  = 0;
-  UsePhysicalUnit = 0;
-
   UseDivergenceCleaning		   = 0;
   DivergenceCleaningBoundaryBuffer = 0;
   DivergenceCleaningThreshold	   = 0.001;
   PoissonApproximationThreshold	   = 0.001;
+  PoissonBoundaryType	   = 0;
 
   UseDrivingField   = 0;
   DrivingEfficiency = 1.0;
-
-#ifdef ECUDA
-  UseCUDA = 0;
-#endif
-
 
   /* End of Stanford Hydro additions */
 
@@ -496,14 +598,6 @@ int SetDefaultGlobalValues(TopGridData &MetaData)
   TestProblemData.MultiMetalsField1_Fraction = tiny_number;
   TestProblemData.MultiMetalsField2_Fraction = tiny_number;
 
-  TestProblemData.MinimumHNumberDensity = 1;
-  TestProblemData.MaximumHNumberDensity = 1e6;
-  TestProblemData.MinimumMetallicity    = 1e-6;
-  TestProblemData.MaximumMetallicity    = 1;
-  TestProblemData.MinimumTemperature    = 10;
-  TestProblemData.MaximumTemperature    = 1e7;
-  TestProblemData.ResetEnergies         = 1;
-
   TestProblemData.GloverChemistryModel = 0;
   // This is for the gas in the surrounding medium, for the blast wave problem.
   TestProblemData.CI_Fraction = tiny_number;
@@ -541,6 +635,14 @@ int SetDefaultGlobalValues(TopGridData &MetaData)
   TestProblemData.H2OI_Fraction_Inner = tiny_number;
   TestProblemData.O2I_Fraction_Inner = tiny_number;
 
+  TestProblemData.MinimumHNumberDensity = 1;
+  TestProblemData.MaximumHNumberDensity = 1e6;
+  TestProblemData.MinimumMetallicity    = 1e-6;
+  TestProblemData.MaximumMetallicity    = 1;
+  TestProblemData.MinimumTemperature    = 10;
+  TestProblemData.MaximumTemperature    = 1e7;
+  TestProblemData.ResetEnergies         = 1;
+
   // This should only be false for analysis.
   // It could also be used (cautiously) for other purposes.
   LoadGridDataAtStart = TRUE;
@@ -561,14 +663,37 @@ int SetDefaultGlobalValues(TopGridData &MetaData)
   my_processor = PyLong_FromLong((Eint) MyProcessorNumber);
 #endif
 
+  /* Some stateful variables for EvolveLevel */
+  for(i = 0; i < MAX_DEPTH_OF_HIERARCHY; i++) {
+    LevelCycleCount[i] = 0;
+    dtThisLevelSoFar[i] = dtThisLevel[i] = 0.0;
+  }
+
   /* Shearing Boundary Conditions variables */
 
-  
   AngularVelocity=0.001;
   VelocityGradient=1.0;
   ShearingBoundaryDirection=-1;
   ShearingVelocityDirection=-1;
   ShearingBoxProblemType = 0; 
   useMHD=0;
+
+  MoveParticlesBetweenSiblings = TRUE;
+
+  /* Particle Splitter */
+
+  ParticleSplitterIterations = FALSE;
+  ParticleSplitterChildrenParticleSeparation = 1.0;
+
+  /* Magnetic Field Resetter */
+
+  ResetMagneticField = FALSE;
+  for (dim = 0; dim < MAX_DIMENSION; dim++) {
+    ResetMagneticFieldAmplitude[dim] = 0.0;   // in Gauss
+  }  
+
+  VelAnyl                     = 0;
+  BAnyl                     = 0;
+
   return SUCCESS;
 }

@@ -88,6 +88,7 @@ int grid::InterpolateFieldValues(grid *ParentGrid)
   float *TemporaryField, *TemporaryDensityField, *Work,
         *ParentTemp[MAX_NUMBER_OF_BARYON_FIELDS], *FieldPointer;
  
+  int MyInterpolationMethod = InterpolationMethod;   
   if (NumberOfBaryonFields > 0) {
  
     /* Compute refinement factors and set zero. */
@@ -100,8 +101,7 @@ int grid::InterpolateFieldValues(grid *ParentGrid)
  
     int densfield;
     if ((densfield=FindField(Density, FieldType, NumberOfBaryonFields)) < 0) {
-      fprintf(stderr, "No density field!\n");
-      ENZO_FAIL("");
+      ENZO_FAIL("No density field!\n");
     }
  
     /* Set up array of flags if we are using SecondOrderB interpolation
@@ -181,10 +181,7 @@ int grid::InterpolateFieldValues(grid *ParentGrid)
       if (ParentStartIndex[dim] < 0 ||
           ParentStartIndex[dim]+ParentTempDim[dim] >
           ParentGrid->GridDimension[dim]) {
-        fprintf(stderr, "Parent grid not big enough for interpolation.\n");
-        fprintf(stderr, " ParentStartIndex[%"ISYM"] = %"ISYM"  ParentTempDim = %"ISYM"\n",
-                dim, ParentStartIndex[dim], ParentTempDim[dim]);
-        ENZO_FAIL("");
+        ENZO_VFAIL("Parent grid not big enough for interpolation!  ParentStartIndex[%"ISYM"] = %"ISYM"  ParentTempDim = %"ISYM"\n", dim, ParentStartIndex[dim], ParentTempDim[dim])
       }
  
       /* Compute the dimensions of the current grid temporary field. */
@@ -270,18 +267,28 @@ int grid::InterpolateFieldValues(grid *ParentGrid)
  
     if (ConservativeInterpolation)
       for (field = 0; field < NumberOfBaryonFields; field++)
-	if (FieldTypeIsDensity(FieldType[field]) == FALSE)
+	if (FieldTypeIsDensity(FieldType[field]) == FALSE &&
+	    FieldType[field] != Bfield1 &&
+	    FieldType[field] != Bfield2 &&
+	    FieldType[field] != Bfield3 &&
+	    FieldType[field] != PhiField &&
+	    FieldType[field] != DrivingField1 &&
+	    FieldType[field] != DrivingField2 &&
+	    FieldType[field] != DrivingField3 &&
+	    FieldType[field] != GravPotential)
 	  FORTRAN_NAME(mult3d)(ParentTemp[densfield], ParentTemp[field],
                                &ParentTempSize, &One, &One,
 			       &ParentTempSize, &One, &One,
                                &Zero, &Zero, &Zero, &Zero, &Zero, &Zero);
- 
+    
     /* Do the interpolation for the density field. */
  
     if (HydroMethod == Zeus_Hydro)
       InterpolationMethod = (SecondOrderBFlag[densfield] == 0) ?
 	SecondOrderA : SecondOrderC;
  
+    //    fprintf(stdout, "grid:: InterpolateBoundaryFromParent[3]\n"); 
+
     FORTRAN_NAME(interpolate)(&GridRank,
 			      ParentTemp[densfield], ParentTempDim,
 			      ParentTempStartIndex, ParentTempEndIndex,
@@ -298,10 +305,18 @@ int grid::InterpolateFieldValues(grid *ParentGrid)
        is done for the entire current grid, not just it's boundaries.
        (skip density since we did it already) */
  
-      if (HydroMethod == Zeus_Hydro)
-	InterpolationMethod = (SecondOrderBFlag[field] == 0) ?
-	  SecondOrderA : SecondOrderC;
- 
+      if (FieldTypeNoInterpolate(FieldType[field]) == FALSE){
+        if (HydroMethod == Zeus_Hydro){
+	        InterpolationMethod = (SecondOrderBFlag[field] == 0) ?
+	            SecondOrderA : SecondOrderC;
+        }
+      } else {
+        /* Use nearest grid point interpolation for fields that 
+           shouldn't ever be averaged. */ 
+        MyInterpolationMethod = FirstOrderA; 
+      }
+      //      fprintf(stdout, "grid:: InterpolateBoundaryFromParent[4], field = %d\n", field); 
+
       if (FieldType[field] != Density)
 	FORTRAN_NAME(interpolate)(&GridRank,
 				  ParentTemp[field], ParentTempDim,
@@ -315,28 +330,35 @@ int grid::InterpolateFieldValues(grid *ParentGrid)
          variables (skipping density). */
  
       if (ConservativeInterpolation)
-	if (FieldTypeIsDensity(FieldType[field]) == FALSE)
+	if (FieldTypeIsDensity(FieldType[field]) == FALSE  &&
+	    FieldType[field] != Bfield1 &&
+	    FieldType[field] != Bfield2 &&
+	    FieldType[field] != Bfield3 &&
+	    FieldType[field] != PhiField &&
+	    FieldType[field] != DrivingField1 &&
+	    FieldType[field] != DrivingField2 &&
+	    FieldType[field] != DrivingField3 &&
+	    FieldType[field] != GravPotential)
 	  FORTRAN_NAME(div3d)(TemporaryDensityField, TemporaryField,
 			      &TempSize, &One, &One,
 			      &TempSize, &One, &One,
 			      &Zero, &Zero, &Zero, &Zero, &Zero, &Zero,
 			      &Zero, &Zero, &Zero, &TempSize, &Zero, &Zero);
- 
+      
       /* Set FieldPointer to either the correct field (density or the one we
 	 just interpolated to). */
  
       if (FieldType[field] == Density)
 	FieldPointer = TemporaryDensityField;
-      else
-	FieldPointer = TemporaryField;
+      else 
+	  FieldPointer = TemporaryField;
  
       /* Copy needed portion of temp field to current grid. */
  
       if (BaryonField[field] == NULL)
 	BaryonField[field] = new float[GridSize];
       if (BaryonField[field] == NULL) {
-	fprintf(stderr, "malloc error (out of memory?)\n");
-	ENZO_FAIL("");
+	ENZO_FAIL("malloc error (out of memory?)\n");
       }
       FORTRAN_NAME(copy3d)(FieldPointer, BaryonField[field],
 			   TempDim, TempDim+1, TempDim+2,
@@ -359,8 +381,7 @@ int grid::InterpolateFieldValues(grid *ParentGrid)
  
     if (DualEnergyFormalism)
       if (this->RestoreEnergyConsistency(ENTIRE_REGION) == FAIL) {
-	fprintf(stderr, "Error in grid->RestoreEnergyConsisitency.\n");
-	ENZO_FAIL("");
+	ENZO_FAIL("Error in grid->RestoreEnergyConsisitency.\n");
       }
       //      if (this->RestoreEnergyConsistency(ONLY_BOUNDARY) == FAIL) {
  
@@ -371,6 +392,7 @@ int grid::InterpolateFieldValues(grid *ParentGrid)
   /* Clean up if we have transfered data. */
  
   if (MyProcessorNumber != ParentGrid->ProcessorNumber)
+
     ParentGrid->DeleteAllFields();
  
   return SUCCESS;

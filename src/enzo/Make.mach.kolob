@@ -65,7 +65,7 @@ MACH_DEFINES = -DLINUX -DH5_USE_16_API
 # Compiler flag settings
 #-----------------------------------------------------------------------
 
-MACH_CPP_FLAGS = -P -traditional
+MACH_CPPFLAGS = -P -traditional
 MACH_CFLAGS   = 
 MACH_CXXFLAGS = 
 MACH_FFLAGS   = -132
@@ -117,7 +117,6 @@ MACH_INCLUDES         = $(LOCAL_INCLUDES_HDF5) $(LOCAL_INCLUDES_SPRNG)  $(LOCAL_
 MACH_INCLUDES_PYTHON  = $(LOCAL_INCLUDES_PYTHON)
 MACH_INCLUDES_MPI     = $(LOCAL_INCLUDES_MPI)
 MACH_INCLUDES_HYPRE   = $(LOCAL_INCLUDES_HYPRE)
-MACH_INCLUDES_JBPERF  = $(LOCAL_INCLUDES_JBPERF)
 MACH_INCLUDES_CUDA    = $(LOCAL_INCLUDES_CUDA)
 
 #-----------------------------------------------------------------------

@@ -73,6 +73,13 @@ include $(MAKE_CONFIG_OVERRIDE)
 #
 # include $(ENZO_DIR)/Make.config.override
 
+#:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+# OVERRIDE ENZO CONFIGURE SETTINGS FOR NON-ENZO EXECUTABLES
+
+CONFIG_LCAPERF   = no
+
+#:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+
 #-----------------------------------------------------------------------
 # Make.config.assemble takes the settings in the Make.config.settings
 # and Make.config.override, and generates the appropriate make variables
@@ -85,7 +92,8 @@ include $(ENZO_DIR)/Make.config.assemble
 # Make.mach.<machine-name> defines all machine-dependent settings.
 #-----------------------------------------------------------------------
 
-include $(ENZO_DIR)/Make.mach.$(CONFIG_MACHINE)
+-include $(ENZO_DIR)/Make.mach.$(CONFIG_MACHINE)
+-include $(HOME)/.enzo/Make.mach.$(CONFIG_MACHINE)
 
 #=======================================================================
 # OBJECT FILES

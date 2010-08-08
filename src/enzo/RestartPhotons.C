@@ -30,7 +30,6 @@
 #include "Hierarchy.h"
 #include "TopGridData.h"
 #include "LevelHierarchy.h"
-#include "StarParticleData.h"
 
 #define CONVERGE 0.001
 
@@ -49,7 +48,7 @@ int RestartPhotons(TopGridData *MetaData, LevelHierarchyEntry *LevelArray[],
 
   //MetaData->FirstTimestepAfterRestart = FALSE;
 
-  if (AllStars == NULL)
+  if (GlobalRadiationSources->NextSource == NULL)
     return SUCCESS;
 
   if (!RadiativeTransfer)
@@ -60,20 +59,19 @@ int RestartPhotons(TopGridData *MetaData, LevelHierarchyEntry *LevelArray[],
   float LengthUnits, TimeUnits, TemperatureUnits, VelocityUnits, 
     DensityUnits; 
 
-  if (GetUnits(&DensityUnits, &LengthUnits, &TemperatureUnits,
-	       &TimeUnits, &VelocityUnits, MetaData->Time) == FAIL) {
-    fprintf(stdout, "Error in GetUnits.\n");
-    ENZO_FAIL("");
-  }
+  GetUnits(&DensityUnits, &LengthUnits, &TemperatureUnits,
+	   &TimeUnits, &VelocityUnits, MetaData->Time);
   
   /* Light crossing time */
 
   const float clight = 2.9979e10;
 
-  float LightCrossingTime = VelocityUnits / 
+  float LightCrossingTime = (LengthUnits/TimeUnits) / 
     (clight * RadiativeTransferPropagationSpeedFraction);
   FLOAT SavedPhotonTime = PhotonTime;
+  float SavedPhotonTimestep = dtPhoton;
   PhotonTime -= LightCrossingTime;
+  dtPhoton = 0.1*LightCrossingTime;
 
   if (debug)
     printf("Restarting radiative transfer.  Light-crossing time = %"GSYM"\n", 
@@ -110,11 +108,16 @@ int RestartPhotons(TopGridData *MetaData, LevelHierarchyEntry *LevelArray[],
 #endif /* USE_MPI */    
 
     if (LastPhotonCount > 0)
-      if (float(PhotonCount-LastPhotonCount)/float(LastPhotonCount) < CONVERGE)
+      if (float(PhotonCount-LastPhotonCount)/float(LastPhotonCount) < CONVERGE) {
 	PhotonTime = SavedPhotonTime + dtPhoton*1e-2;
+	break;
+      }
 
-    if (PhotonCount == 0 && LastPhotonCount == 0)
+    if ((PhotonCount == 0 && LastPhotonCount == 0) ||
+	RadiativeTransferAdaptiveTimestep > 0) {
       PhotonTime = SavedPhotonTime + dtPhoton*1e-2;
+      break;
+    }
 
     LastPhotonCount = PhotonCount;
 
@@ -127,10 +130,7 @@ int RestartPhotons(TopGridData *MetaData, LevelHierarchyEntry *LevelArray[],
   if (RadiativeTransferOpticallyThinH2)
     for (level = 0; level < MAX_DEPTH_OF_HIERARCHY; level++)
       for (Temp = LevelArray[level]; Temp; Temp = Temp->NextGridThisLevel)
-	if (Temp->GridData->AddH2Dissociation(AllStars) == FAIL) {
-	  fprintf(stderr, "Error in AddH2Dissociation.\n");
-	  ENZO_FAIL("");
-	}
+	Temp->GridData->AddH2Dissociation(AllStars);
 
   return SUCCESS;
 

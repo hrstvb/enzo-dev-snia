@@ -38,7 +38,7 @@
  
 void WriteListOfFloats(FILE *fptr, int N, FLOAT floats[]);
 int ReadAllData(char *filename, HierarchyEntry *TopGrid, TopGridData &tgd,
-		    ExternalBoundary *Exterior);
+		ExternalBoundary *Exterior, float *Initialdt);
 void AddLevel(LevelHierarchyEntry *Array[], HierarchyEntry *Grid, int level);
 int GetUnits(float *DensityUnits, float *LengthUnits,
 	     float *TemperatureUnits, float *TimeUnits,
@@ -55,7 +55,7 @@ int SupernovaRestartInitialize(FILE *fptr, FILE *Outfptr,
  
   char line[MAX_LINE_LENGTH];
   int dim, level, ret;
- 
+  float dummyf;
   /* Set default supernova parameters. */
  
   float SupernovaRestartEjectaMass   = 1.0;   // in solar masses
@@ -116,8 +116,7 @@ int SupernovaRestartInitialize(FILE *fptr, FILE *Outfptr,
   /* More error checking. */
  
   if (SupernovaRestartName == NULL) {
-    fprintf(stderr, "Missing restart file name.\n");
-    ENZO_FAIL("");
+    ENZO_FAIL("Missing restart file name.\n");
   }
  
   /* -------------------------------------------------------------------- */
@@ -125,11 +124,10 @@ int SupernovaRestartInitialize(FILE *fptr, FILE *Outfptr,
  
   if (debug)
     printf("reading restart parameter file %s\n", SupernovaRestartName);
-  if (ReadAllData(SupernovaRestartName, &TopGrid, MetaData, &Exterior)
+  if (ReadAllData(SupernovaRestartName, &TopGrid, MetaData, &Exterior, &dummyf)
       == FAIL) {
     if (MyProcessorNumber == ROOT_PROCESSOR)
-      fprintf(stderr, "Error in ParameterFile %s.\n", SupernovaRestartName);
-    ENZO_FAIL("");
+    ENZO_VFAIL("Error in ParameterFile %s.\n", SupernovaRestartName)
   }
   if (MyProcessorNumber == ROOT_PROCESSOR)
     fprintf(stderr, "Successfully read restart file %s.\n",
@@ -154,8 +152,7 @@ int SupernovaRestartInitialize(FILE *fptr, FILE *Outfptr,
   FLOAT Time = TopGrid.GridData->ReturnTime();
   if (GetUnits(&DensityUnits, &LengthUnits, &TemperatureUnits,
 	       &TimeUnits, &VelocityUnits, Time) == FAIL) {
-    fprintf(stderr, "Error in GetUnits.\n");
-    ENZO_FAIL("");
+    ENZO_FAIL("Error in GetUnits.\n");
   }
  
   if (ComovingCoordinates) {
@@ -200,8 +197,7 @@ int SupernovaRestartInitialize(FILE *fptr, FILE *Outfptr,
 			       SupernovaRestartEjectaCenter,
 			       SupernovaRestartColourField,
 			       &NumberOfCellsSet) == FAIL) {
-	fprintf(stderr, "Error in grid->SupernovaRestartInitialize\n");
-	ENZO_FAIL("");
+	ENZO_FAIL("Error in grid->SupernovaRestartInitialize\n");
       }
       Temp = Temp->NextGridThisLevel;
     }
@@ -218,8 +214,7 @@ int SupernovaRestartInitialize(FILE *fptr, FILE *Outfptr,
     while (Temp != NULL) {
       if (Temp->GridData->ProjectSolutionToParentGrid(
                 *(Temp->GridHierarchyEntry->ParentGrid->GridData)) == FAIL) {
-	fprintf(stderr, "Error in grid->ProjectSolutionToParentGrid.\n");
-	ENZO_FAIL("");
+	ENZO_FAIL("Error in grid->ProjectSolutionToParentGrid.\n");
       }
       Temp2 = Temp->NextGridThisLevel;
       delete Temp;   // clean up as we go along
@@ -232,6 +227,7 @@ int SupernovaRestartInitialize(FILE *fptr, FILE *Outfptr,
  
  
   if (MyProcessorNumber == ROOT_PROCESSOR) {
+
     fprintf(Outfptr, "SupernovaRestartEjectaMass   = %"FSYM"\n",
 	    SupernovaRestartEjectaMass);
     fprintf(Outfptr, "SupernovaRestartEjectaRadius = %"FSYM"\n",
