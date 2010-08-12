@@ -121,7 +121,7 @@ int grid::CosmologySimulationInitializeGrid(
   int DeNum, HINum, HIINum, HeINum, HeIINum, HeIIINum, HMNum, H2INum, H2IINum,
       DINum, DIINum, HDINum, MetalNum;
 #ifdef TRANSFER
-  int EgNum;
+  int EgNum, kphHINum, kphHeINum, kphHeIINum, gammaNum, kdissH2INum;
 #endif
 #ifdef EMISSIVITY
   int EtaNum;
@@ -234,8 +234,21 @@ int grid::CosmologySimulationInitializeGrid(
     if (GridRank > 2)
       FieldType[NumberOfBaryonFields++] = Velocity3;
 #ifdef TRANSFER
-    if (RadiativeTransferFLD > 1)
+    if (RadiativeTransferFLD > 1) {
       FieldType[EgNum = NumberOfBaryonFields++] = RadiationFreq0;
+      
+      // if using external chemistry/cooling, set rate fields
+      if (RadiativeCooling) {
+	FieldType[kphHINum = NumberOfBaryonFields++] = kphHI;
+	FieldType[gammaNum = NumberOfBaryonFields++] = PhotoGamma;
+	if (RadiativeTransferHydrogenOnly == FALSE) {
+	  FieldType[kphHeINum  = NumberOfBaryonFields++] = kphHeI;
+	  FieldType[kphHeIINum = NumberOfBaryonFields++] = kphHeII;
+	}
+	if (MultiSpecies > 1)
+	  FieldType[kdissH2INum = NumberOfBaryonFields++] = kdissH2I;
+      }
+    }
 #endif
     if (MultiSpecies) {
       FieldType[DeNum    = NumberOfBaryonFields++] = ElectronDensity;
@@ -397,6 +410,18 @@ int grid::CosmologySimulationInitializeGrid(
     float RadScaled = RadHydroRadiation/DensityUnits/VelocityUnits/VelocityUnits;
     for (i=0; i<size; i++)
       BaryonField[EgNum][i] = RadScaled;
+    
+    // if using external chemistry/cooling, set rate fields
+    if (RadiativeCooling) {
+      for (i=0; i<size; i++)  BaryonField[kphHINum][i] = 0.0;
+      for (i=0; i<size; i++)  BaryonField[gammaNum][i] = 0.0;
+      if (RadiativeTransferHydrogenOnly == FALSE) {
+	for (i=0; i<size; i++)  BaryonField[kphHeINum][i]  = 0.0;
+	for (i=0; i<size; i++)  BaryonField[kphHeIINum][i] = 0.0;
+      }
+      if (MultiSpecies > 1)
+	for (i=0; i<size; i++)  BaryonField[kdissH2INum][i] = 0.0;
+    }
   }
 #endif
  

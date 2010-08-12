@@ -25,7 +25,7 @@ RadHydroModel       = 10              // LTE coupling
 RadHydroMaxDt       = 1.0e-13
 RadHydroMinDt       = 1.0e-18
 RadHydroInitDt      = 1.0e-18
-RadHydroDtRadFac    = 0.01            // 1% desired change/step
+RadHydroDtRadFac    = 0.005           // 0.5% desired change/step
 RadHydroMGPreRelax  = 5               // MG pre-relaxation sweeps
 RadHydroMGPostRelax = 5               // MG post-relaxation sweeps
 

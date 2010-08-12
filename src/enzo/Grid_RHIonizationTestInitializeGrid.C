@@ -60,7 +60,8 @@ int grid::RHIonizationTestInitializeGrid(int NumChemicals,
 
   // create necessary baryon fields
   int RhoNum, TENum, IENum, V0Num, V1Num, V2Num, EgNum, DeNum, 
-    HINum, HIINum, HeINum, HeIINum, HeIIINum;
+    HINum, HIINum, HeINum, HeIINum, HeIIINum, kphHINum, kphHeINum, 
+    kphHeIINum, gammaNum, kdissH2INum;
   NumberOfBaryonFields = 0;
   FieldType[RhoNum = NumberOfBaryonFields++] = Density;
   FieldType[TENum = NumberOfBaryonFields++]  = TotalEnergy;
@@ -75,10 +76,21 @@ int grid::RHIonizationTestInitializeGrid(int NumChemicals,
     FieldType[HINum = NumberOfBaryonFields++]    = HIDensity;
     FieldType[HIINum = NumberOfBaryonFields++]   = HIIDensity;
   }
-  if (NumChemicals == 3) {
-    FieldType[HeINum = NumberOfBaryonFields++]   = HeIDensity;
-    FieldType[HeIINum = NumberOfBaryonFields++]  = HeIIDensity;    
+  if ((NumChemicals == 3) || (MultiSpecies == 1)) {
+    FieldType[HeINum   = NumberOfBaryonFields++] = HeIDensity;
+    FieldType[HeIINum  = NumberOfBaryonFields++] = HeIIDensity;    
     FieldType[HeIIINum = NumberOfBaryonFields++] = HeIIIDensity;
+  }
+  // if using external chemistry/cooling, set rate fields
+  if (RadiativeCooling) {
+    FieldType[kphHINum = NumberOfBaryonFields++] = kphHI;
+    FieldType[gammaNum = NumberOfBaryonFields++] = PhotoGamma;
+    if (RadiativeTransferHydrogenOnly == FALSE) {
+      FieldType[kphHeINum  = NumberOfBaryonFields++] = kphHeI;
+      FieldType[kphHeIINum = NumberOfBaryonFields++] = kphHeII;
+    }
+    if (MultiSpecies > 1)
+      FieldType[kdissH2INum = NumberOfBaryonFields++] = kdissH2I;
   }
 
   // set the subgrid static flag (necessary??)
@@ -143,7 +155,7 @@ int grid::RHIonizationTestInitializeGrid(int NumChemicals,
 	BaryonField[HINum][i]    = HIConstant/DensityUnits;
 	BaryonField[HIINum][i]   = HIIConstant/DensityUnits;
       }
-      if (NumChemicals == 3) {
+      if ((NumChemicals == 3) || (MultiSpecies == 1)) {
 	BaryonField[HeINum][i]   = HeIConstant/DensityUnits;
 	BaryonField[HeIINum][i]  = HeIIConstant/DensityUnits;
 	BaryonField[HeIIINum][i] = HeIIIConstant/DensityUnits;
@@ -152,6 +164,19 @@ int grid::RHIonizationTestInitializeGrid(int NumChemicals,
     if (DualEnergyFormalism)
       for (i=0; i<size; i++)
 	BaryonField[IENum][i] = IEConstant/eUnits;
+
+    // if using external chemistry/cooling, set rate fields
+    if (RadiativeCooling) {
+      for (i=0; i<size; i++)  BaryonField[kphHINum][i] = 0.0;
+      for (i=0; i<size; i++)  BaryonField[gammaNum][i] = 0.0;
+      if (RadiativeTransferHydrogenOnly == FALSE) {
+	for (i=0; i<size; i++)  BaryonField[kphHeINum][i]  = 0.0;
+	for (i=0; i<size; i++)  BaryonField[kphHeIINum][i] = 0.0;
+      }
+      if (MultiSpecies > 1)
+	for (i=0; i<size; i++)  BaryonField[kdissH2INum][i] = 0.0;
+    }
+
     
     if (debug) {
       fprintf(stdout,"\n  Initializing constant fields using CGS values:\n");
@@ -168,7 +193,7 @@ int grid::RHIonizationTestInitializeGrid(int NumChemicals,
 	fprintf(stdout,"            nHI = %g\n",HIConstant);
 	fprintf(stdout,"           nHII = %g\n",HIIConstant);
       }
-      if (NumChemicals == 3) {
+      if ((NumChemicals == 3) || (MultiSpecies == 1)) {
 	fprintf(stdout,"           nHeI = %g\n",HeIConstant);
 	fprintf(stdout,"          nHeII = %g\n",HeIIConstant);
 	fprintf(stdout,"         nHeIII = %g\n",HeIIIConstant);
@@ -188,7 +213,7 @@ int grid::RHIonizationTestInitializeGrid(int NumChemicals,
 	fprintf(stdout,"            nHI = %g\n",BaryonField[HINum][1]);
 	fprintf(stdout,"           nHII = %g\n",BaryonField[HIINum][1]);
       }
-      if (NumChemicals == 3) {
+      if ((NumChemicals == 3) || (MultiSpecies == 1)) {
 	fprintf(stdout,"           nHeI = %g\n",BaryonField[HeINum][1]);
 	fprintf(stdout,"          nHeII = %g\n",BaryonField[HeIINum][1]);
 	fprintf(stdout,"         nHeIII = %g\n",BaryonField[HeIIINum][1]);

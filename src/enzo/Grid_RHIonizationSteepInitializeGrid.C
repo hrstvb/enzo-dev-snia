@@ -61,7 +61,7 @@ int grid::RHIonizationSteepInitializeGrid(int NumChemicals,
 
   // create necessary baryon fields
   int RhoNum, TENum, IENum, V0Num, V1Num, V2Num, EgNum, DeNum, 
-    HINum, HIINum;
+    HINum, HIINum, kphHINum, gammaNum;
   NumberOfBaryonFields = 0;
   FieldType[RhoNum = NumberOfBaryonFields++] = Density;
   FieldType[TENum = NumberOfBaryonFields++]  = TotalEnergy;
@@ -74,6 +74,12 @@ int grid::RHIonizationSteepInitializeGrid(int NumChemicals,
   FieldType[DeNum = NumberOfBaryonFields++]  = ElectronDensity;
   FieldType[HINum = NumberOfBaryonFields++]  = HIDensity;
   FieldType[HIINum = NumberOfBaryonFields++] = HIIDensity;
+  // if using external chemistry/cooling, set rate fields
+  if (RadiativeCooling) {
+    FieldType[kphHINum = NumberOfBaryonFields++] = kphHI;
+    FieldType[gammaNum = NumberOfBaryonFields++] = PhotoGamma;
+  }
+
 
   // set the subgrid static flag (necessary??)
   SubgridsAreStatic = FALSE;  // no subgrids
@@ -132,6 +138,12 @@ int grid::RHIonizationSteepInitializeGrid(int NumChemicals,
       for (i=0; i<size; i++)
 	BaryonField[IENum][i] = IEConstant/eUnits;
     
+    // if using external chemistry/cooling, set rate fields
+    if (RadiativeCooling) {
+      for (i=0; i<size; i++)  BaryonField[kphHINum][i] = 0.0;
+      for (i=0; i<size; i++)  BaryonField[gammaNum][i] = 0.0;
+    }
+
     // initialize density-dependent quantities
     // NOTE: energy is not density-dependent since it is *specific* energy 
     //       (per unit mass)

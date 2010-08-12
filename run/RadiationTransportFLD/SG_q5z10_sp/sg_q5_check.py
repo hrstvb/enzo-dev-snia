@@ -10,7 +10,7 @@ import numpy as np
 te = 20
 
 # set the solution tolerance
-tol = 0.01
+tol = 0.015
 
 # set some constants
 q0 = 0.5               # deceleration parameter

@@ -1,0 +1,29 @@
+#
+# gFLDSplit Parameter File:
+#   ODE ionization test problem
+#
+#  Daniel R. Reynolds, reynolds@smu.edu
+#
+#############################
+#
+# Problem-specific initialization parameters
+# 
+RadHydroDensity         = 1.67262171e-27 // density (desired nH=1e-3)
+RadHydroIEnergy         = 1.52e10        // specific internal energy (erg/g)
+RadHydroFSRadiation     = 1.0e-60        // free-streaming radiation energy (erg/cm^3)
+RadHydroRadiationEnergy = 1.0e-60        // grey radiation energy density (erg/cm^3)
+NGammaDot               = 1.0e50         // ionization rate (photons/sec)
+#
+# General module and solver parameters
+# 
+RadHydroMaxDt           = 1.0e-0
+RadHydroMinDt           = 1.0e-3
+RadHydroInitDt          = 1.0e-3
+RadHydroDtRadFac        = 0.001          // 0.1% desired change/step
+RadHydroDtGasFac        = 0.001
+RadHydroDtChemFac       = 0.001
+RadHydroSolTolerance    = 1.0e-5         // linear solver tolerance
+RadHydroMGPreRelax      = 5              // MG pre-relaxation sweeps
+RadHydroMGPostRelax     = 5              // MG post-relaxation sweeps
+
+#############################

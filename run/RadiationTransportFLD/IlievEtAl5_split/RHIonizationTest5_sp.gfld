@@ -1,0 +1,33 @@
+#
+# gFLDSplit Parameter File:
+#   Iliev et al. dynamic ionization test
+#
+#  Daniel R. Reynolds, reynolds@smu.edu
+#
+#############################
+#
+# Problem-specific initialization parameters
+# 
+RadiationBoundaryX0Faces = 2 2            // Neumann
+RadiationBoundaryX1Faces = 2 2
+RadiationBoundaryX2Faces = 2 2
+RadHydroDensity          = 1.67262171e-27 // density (desired nH=1e-3)
+RadHydroTemperature      = 1.0e2          // temperature (K)
+RadHydroRadiationEnergy  = 1.0e-30        // radiation energy (erg/cm^3)
+NGammaDot                = 5.0e48         // ionization rate (photons/sec)
+EtaRadius                = 1.0e0          // source radius (in cells)
+#
+# General module and solver parameters
+# 
+RadHydroMaxDt        = 1.0e-3
+RadHydroMinDt        = 1.0e-8
+RadHydroInitDt       = 1.0e-8
+RadHydroDtRadFac     = 0.001
+RadHydroDtGasFac     = 0.001
+RadHydroDtChemFac    = 0.001
+RadHydroInitialGuess = 5                  // method for initial guess calculation
+RadHydroSolTolerance = 1.0e-7             // linear solver tolerance
+RadHydroMGPreRelax   = 3                  // MG pre-relaxation sweeps
+RadHydroMGPostRelax  = 3                  // MG post-relaxation sweeps
+
+#############################

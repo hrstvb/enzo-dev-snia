@@ -1,0 +1,47 @@
+#
+#  Iliev et al. dynamic ionization multi-frequency test
+#
+#  Daniel R. Reynolds, reynolds@smu.edu
+#
+#############################
+# 
+# problem and general modules 
+# 
+ProblemType                = 460           // MFIonizationTestInitialize
+RadiativeTransferFLD       = 2             // use FLD solver for radiation
+ImplicitProblem            = 5             // use Multi-frequency split solver
+Unigrid                    = 1             // unigrid run
+RadiativeTransferOpticallyThinH2 = 0       // no 1/r^2 LW background
+RadHydroParamfile = RHIonizationMFTest5_sp.mfld
+#
+# grid and boundary 
+#
+TopGridRank                = 3
+LeftFaceBoundaryCondition  = 0 0 0         // reflecting
+RightFaceBoundaryCondition = 0 0 0
+TopGridDimensions          = 32 32 32
+DomainLeftEdge             = 0.0 0.0 0.0
+DomainRightEdge            = 4.62855 4.62855 4.62855   // 15 kpc
+#
+# runtime and I/O
+#
+#StopTime                   = 1.57788       // 500 Myr
+StopTime                   = 1.57788e-2       // 5 Myr
+StopCycle                  = 999999
+#dtDataDump                 = 3.15576e-2    // 10 Myr
+dtDataDump                 = 3.15576e-4    // 0.1 Myr
+# 
+# units
+#
+DensityUnits               = 1.0e-27
+LengthUnits                = 1.0e22
+TimeUnits                  = 1.0e16
+#
+# hydro
+#
+CourantSafetyNumber        = 0.05
+PPMDiffusionParameter      = 0
+PPMFlatteningParameter     = 0
+PPMSteepeningParameter     = 0
+
+#############################

@@ -69,16 +69,19 @@ either a monochromatic radiation energy at the ionization threshold of
 Hydrogen I ($h\nu = 13.6$ eV), or an integrated radiation energy
 density with an assumed radiation spectrum.  This radiation field may
 be coupled to the surrounding matter using either an assumption of
-local thermodynamic equilibrium (no chemical ionization), or a model
-for Hydrogen ionization. 
+local thermodynamic equilibrium (no chemical ionization), an internal
+model for Hydrogen ionization, or through using Enzo's built-in
+chemical ionization and gas heating mechanisms.
 
 The defining characteristic of this solver in comparison
 with the {\tt gFLDProblem} solver is that in a given time step, this
 solver first evolves the radiation, before evolving a gas energy
-correction + Hydrogen evolution system, using an operator-split
+correction + chemical evolution system, using an operator-split
 approach.  The goal in using an operator split solver on this problem
 is to provide for the most robust and computationally efficient
-solver possible for these interacting processes.
+solver possible for these interacting processes.  This approach also
+allows the user to choose between different chemistry and cooling
+solvers, depending on the type of chemistry computations desired.
 
 This guide will only highlight the solvers and equations available in
 this module.  For further details on the equations, numerical methods,
@@ -106,15 +109,13 @@ the current solver, and that are under active development include:
   meshes, in the context of self-gravity solves.  We plan to extend
   this interface to the implicit radiation solve within the 
   {\tt gFLDSplit} module in the near future. 
-\item Increased chemistry -- Due to the use of a single radiation
-  field with an assumed spectrum, our initial solver development
-  focused only on Hydrogen chemistry.  This was based on the fact that
-  multiple chemical species would be best simulated with a radiation
-  approximation that allows spectral variation in space, to allow for
-  spectral hardening and I-front preheating.  However, we plan on
-  extending this single-field solver to work with Helium and molecular
-  chemistry to match Enzo's standard chemistry models, for problems
-  where spectral variation may be less important.
+\item Multi-frequency radiation -- This solver evolves a single radiation
+  field, either monochromatic or frequency-integrated.  As such, it
+  does not currently allow for selective absorption of different
+  radiation frequencies by different chemical fields.  We are
+  currently working on a multi-frequency version of the 
+  {\tt gFLDSplit} module, to enable more realistic simulation of such
+  physical scenarios. 
 \end{itemize}
 
 
@@ -158,7 +159,7 @@ must be set (their default values are in brackets):
   modules).
 \item {\tt ProblemType} [0] -- as usual, this is problem-dependent.
   However, for FLD-based solvers, the value of ProblemType
-  should be within the 400's.
+  is typically within the 400's.
 \item {\tt RadHydroParamfile} [NULL] -- this should contain the filename
   (with path relative to this parameter file) that contains all
   module-specific solver parameters (discussed below).  While the 
@@ -179,10 +180,31 @@ must be set (their default values are in brackets):
 \item {\tt RadiativeTransferOpticallyThinH2} [1] -- this must be set
   to 0.  A nonzero value will attempt to use a $1/r^2$ Lyman-Werner
   radiation field, that is {\em ignored} by the {\tt gFLDSplit} module.
-\item {\tt RadiativeCooling} [0] -- this must be set to 0.  A nonzero
-  value will attempt to use Enzo's built-in explicit subcycled gas
-  cooling modules instead of the coupled radiative-ionization provided
-  by {\tt gFLDSplit}, which has not yet been enabled to work together. 
+\item {\tt RadiativeCooling} [0] -- this is the input parameter that
+  chooses between the {\tt gFLDSplit}-specific Hydrogen chemistry/heating
+  solver and Enzo's built-in chemistry/heating solvers.
+  \begin{itemize}
+  \item 0 $\Rightarrow$ use the {\tt gFLDSplit} chemistry/cooling
+    solver (as described in this document).  We note that this
+    currently handles primordial Hydrogen chemistry only (HI, HII).
+  \item 1 $\Rightarrow$ use Enzo's built-in chemistry/cooling
+    solvers.  A nonzero value here disables {\tt gFLDSplit} from
+    evolving {\em either} the gas energy or chemistry; however, it
+    only turns on Enzo's cooling solver.  
+  \end{itemize}
+\item {\tt Multispecies} [0] -- when {\tt RadiativeCooling} is set to
+  1, a nonzero value for {\tt Multispecies} will turn on Enzo's
+  chemical ionization solvers.  The particular value is used to
+  enable various chemistry models, as described in the main Enzo
+  documentation, 
+\item {\tt RadiativeTransferHydrogenOnly} [0] -- when 
+  {\tt Multispecies} is set to 1, a nonzero value for \\
+  {\tt RadiativeTransferHydrogenOnly} tells Enzo's chemistry modules
+  to evolve only Hydrogen chemistry (no Helium).  Therefore, use of
+  {\tt RadiativeCooling}=1, {\tt Multispecies}=1 and \\
+  {\tt RadiativeTransferHydrogenOnly}=1 forces Enzo's chemistry
+  solvers to emulate the chemistry/cooling solvers built into
+  {\tt gFLDSplit}.
 \end{itemize}
 
 In addition, if a user wishes to set up a new {\tt ProblemType} that
@@ -190,7 +212,13 @@ uses the {\tt gFLDSplit} module, they must allocate a standard Enzo
 baryon field having the {\tt FieldType} set to {\tt RadiationFreq0}.
 It is this baryon field that will be evolved by the {\tt gFLDSplit}
 module, and that a user may access to obtain information on the
-grey radiation field. 
+grey radiation field.  If this new {\tt ProblemType} should allow 
+{\tt gFLDSplit} to work together with Enzo's existing
+chemistry/heating solvers, additional baryon fields must be allocated
+with {\tt FieldType} set to {\tt kphHI} and {\tt PhotoGamma}, as well
+as {\tt kphHeI} and {\tt kphHeII} if Helium is included, and 
+{\tt kdissH2I} if {\tt Multispecies}>1.  All of these fields may be
+initialized to zero.
 
 Furthermore, the {\tt gFLDSplit} module currently computes its own
 emissivity field $\eta(\xvec)$, in the routine \\
@@ -211,7 +239,10 @@ Once a user has enabled the {\tt gFLDSplit} module, they have
 complete control over a variety of internal module parameters.  The
 parameters are given here, with their default values specified in
 brackets, and references to the appropriate equations elsewhere in
-this document. 
+this document.  We note that all of the following chemistry-related
+parameters only affect the ionization/heating solvers built into {\tt
+  gFLDSplit}; if other solvers are used instead, these parameters will
+be ignored.
 \begin{itemize}
 \item {\tt RadHydroESpectrum} [1], this parameter chooses the type of
   assumed radiation energy spectrum from equation \eqref{eq:spectrum}.
@@ -473,28 +504,33 @@ $\text{ce}_{HI}$, $\text{ci}_{HI}$, $\text{re}_{HII}$, $\text{brem}$,
 $\text{comp}_1$, $\text{comp}_2$, $\text{comp}_{X}$ and
 $\text{comp}_{T}$ are all taken from Enzo's built-in rate tables.
 
-The photo-ionization rate is calculated as
-\begin{align}
-  \label{eq:phHI}
-  \Gamma_{HI}^{ph} \ = \ \int_{\nu_{HI}}^{\infty}
-    \frac{c\,E_{\nu}\,\sigma_{HI}}{h\nu}\, d\nu 
-  \ = \ \frac{c\,E}{h} 
-    \left[\int_{\nu_{HI}}^{\infty} \frac{\sigma_{HI}\, \chi_E}{\nu}\,
-      d\nu\right] \bigg/ \left[\int_{\nu_{HI}}^{\infty} \chi_E d\nu\right].
-\end{align}
-Similarly, the frequency-integrated opacity is now chemistry-dependent,
+Moreover, the frequency-integrated opacity is now chemistry-dependent,
 \begin{equation}
 \label{eq:opacityHI}
   \kappa \ = \ 
   \left[\int_{\nu_{HI}}^{\infty} \kappa_{\nu}\,E_{\nu}\,d\nu\right] \bigg/
   \left[\int_{\nu_{HI}}^{\infty} E_{\nu}\,d\nu\right] \ = \ 
-  \mn_{HI} \left[\int_{\nu_{HI}}^{\infty}
+  \left[\mn_{HI} \int_{\nu_{HI}}^{\infty}
     \chi_E\,\sigma_{HI}\,d\nu\right] \bigg/
   \left[\int_{\nu_{HI}}^{\infty} \chi_E\,d\nu\right],
 \end{equation}
 where these integrals with the assumed radiation spectrum $\chi(\nu)$
 handle the change from the original frequency-dependent radiation
 equation to the integrated grey radiation equation.
+
+\subsection{Interface to external Enzo chemistry/cooling solvers}
+\label{sec:chem_model_external}
+
+If {\tt gFLDSplit} is not used to evolve equations
+\eqref{eq:cons_energy_correction} or \eqref{eq:hydrogen_ionization},
+then {\tt gFLDSplit} will instead fill in the spatially-dependent
+coupling terms $G$, $\Gamma_{HI}^{ph}$ and possibly
+$\Gamma_{HeI}^{ph}$ and $\Gamma_{HeII}^{ph}$, for use by external
+ionization/heating solvers.  These are held in the baryon fields 
+{\tt PhotoGamma}, {\tt kphHI}, {\tt kphHeI} and {\tt kphHeII},
+respectively.  We note that since the radiation fields evolved by 
+{\tt gFLDSplit} do not include frequencies below $\nu_{HI}$, the
+baryon field {\tt kdissH2I} is always set to 0.
 
 
 
@@ -510,8 +546,9 @@ which are evolved together.  These solves are coupled to Enzo's
 existing operator-split solver framework in the following manner:
 \begin{itemize}
 \item[(i)] Evolve the radiation implicitly in time [{\tt gFLDSplit}].
-\item[(ii)] Evolve the gas energy correction and Hydrogen I number
-  density implicitly in time [{\tt gFLDSplit}]. 
+\item[(ii)] Evolve the coupled gas energy correction and Hydrogen I
+  number density equations implicitly in time with $O(\dt^2)$-accuracy
+  [{\tt gFLDSplit}].  
 \item[(iii)] Project the dark matter particles onto the finite-volume
   mesh to generate a dark-matter density field $\rho_{dm}$ [Enzo];
 \item[(iv)] Solve for the gravitational potential $\phi$ using a
@@ -522,7 +559,14 @@ existing operator-split solver framework in the following manner:
   second-order explicit method, and have the velocity $\vb$ advect
   both the Hydrogen I number density $\mn_{HI}$ and the grey radiation
   field $E$ [Enzo]; 
+\item[(vii)] Evolve the gas energy correction and chemical ionization
+  states in time using split, linearly-implicit solvers with
+  $O(\dt^{\alpha})$-accuracy ($0<\alpha<1$) [Enzo].
 \end{itemize}
+
+We note that steps (ii) and (vii) are mutually exclusive.  Only one of
+the two is used, but we include them both above to explicitly show the
+order of operations.
 
 The implicit solution approach for step (i) is similar to the one from 
 \cite{ReynoldsHayesPaschosNorman2009}; here we describe only enough
@@ -761,9 +805,9 @@ We wish to remark that the module is not large (one header
 file, 15 C++ files, 6 F90 files), and all files begin with the 
 {\tt gFLDSplit} prefix.  While we have strived to ensure that the
 module is bug-free, there is still work to be done in enabling
-additional physics, including Helium/molecular chemistry and more
-advanced time-stepping interactions with the rest of Enzo (especially
-when ionization sources ``turn on'' abruptly).  
+additional physics, including fully implicit Helium/molecular
+chemistry and more advanced time-stepping interactions with the rest
+of Enzo (especially when ionization sources ``turn on'' abruptly).  
 
 Feedback/suggestions to are welcome.
 

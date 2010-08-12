@@ -197,6 +197,12 @@ subroutine gFLDSplit_RadiationSource(Ersrc, time, a, ProbType, ESpectrum, &
      ! place ionization source in center of subdomain
      Ersrc(int(Nx/2),int(Ny/2),int(Nz/2)) = etaconst
      
+  !   homogeneous emissivity field w/ strength hnu0*NGammaDot/dV
+  elseif (ProbType == 416) then
+
+     ! place ionization source in center of subdomain
+     Ersrc = h_nu0*NGammaDot*specconst/dV
+     
   endif ! ProbType
 
 !!$  write(*,*) 'RadiationSource: individual source is ',etaconst

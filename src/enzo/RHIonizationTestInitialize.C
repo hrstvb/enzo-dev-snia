@@ -44,9 +44,14 @@ int RHIonizationTestInitialize(FILE *fptr, FILE *Outfptr,
 			       TopGridData &MetaData, int local)
 {
 #ifdef TRANSFER
-  if (MyProcessorNumber == ROOT_PROCESSOR)
-    fprintf(stdout,"Entering RHIonizationTestInitialize routine\n");
+//   if (MyProcessorNumber == ROOT_PROCESSOR)
+//     fprintf(stdout,"Entering RHIonizationTestInitialize routine\n");
 
+  char *kphHIName    = "HI_kph";
+  char *kphHeIName   = "HeI_kph";
+  char *kphHeIIName  = "HeII_kph";
+  char *gammaName    = "PhotoGamma";
+  char *kdissH2IName = "H2I_kdiss";
   char *DensName  = "Density";
   char *TEName    = "Total_Energy";
   char *IEName    = "Internal_Energy";
@@ -118,7 +123,7 @@ int RHIonizationTestInitialize(FILE *fptr, FILE *Outfptr,
 	  ret += sscanf(line, "RadHydroHFraction = %"FSYM, 
 			&RadHydroHydrogenMassFraction);
 	}
-	if (RadHydroChemistry == 3) {
+	if ((RadHydroChemistry == 3) || (MultiSpecies == 1)) {
 	  ret += sscanf(line, "RadHydroInitialFractionHeII = %"FSYM, 
 			&RadHydroInitialFractionHeII);
 	  ret += sscanf(line, "RadHydroInitialFractionHeIII = %"FSYM, 
@@ -158,7 +163,7 @@ int RHIonizationTestInitialize(FILE *fptr, FILE *Outfptr,
 	num_dens = HI + HII + ne;
 	mu = RadHydroDensity/num_dens;
       }
-      else if (RadHydroChemistry == 3) {
+      else if ((RadHydroChemistry == 3) || (MultiSpecies == 1)) {
 	nH = RadHydroDensity*RadHydroHydrogenMassFraction;
 	nHe = RadHydroDensity*(1.0 - RadHydroHydrogenMassFraction);
 	HI = nH*(1.0 - RadHydroInitialFractionHII);
@@ -212,10 +217,22 @@ int RHIonizationTestInitialize(FILE *fptr, FILE *Outfptr,
     DataLabel[BaryonField++] = HIName;
     DataLabel[BaryonField++] = HIIName;
   }
-  if (RadHydroChemistry == 3) {
+  if ((RadHydroChemistry == 3) || (MultiSpecies == 1)) {
     DataLabel[BaryonField++] = HeIName;
     DataLabel[BaryonField++] = HeIIName;
     DataLabel[BaryonField++] = HeIIIName;
+  }
+
+  // if using external chemistry/cooling, set rate labels
+  if (RadiativeCooling) {
+    DataLabel[BaryonField++] = kphHIName;
+    DataLabel[BaryonField++] = gammaName;
+    if (RadiativeTransferHydrogenOnly == FALSE) {
+      DataLabel[BaryonField++] = kphHeIName;
+      DataLabel[BaryonField++] = kphHeIIName;
+    }
+    if (MultiSpecies > 1)
+      DataLabel[BaryonField++] = kdissH2IName;
   }
 
   for (int i=0; i<BaryonField; i++) 

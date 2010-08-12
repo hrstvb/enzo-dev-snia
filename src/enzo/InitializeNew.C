@@ -137,6 +137,13 @@ int FSMultiSourceInitialize(FILE *fptr, FILE *Outfptr,
 			    HierarchyEntry &TopGrid,
 			    TopGridData &MetaData, int local);
 
+int MFIonizationTestInitialize(FILE *fptr, FILE *Outfptr,
+			       HierarchyEntry &TopGrid,
+			       TopGridData &MetaData, int local,
+			       float FSRadiation, float Radiation1,
+			       float Radiation2, float Radiation3,
+			       float E1Units, float E2Units, float E3Units);
+
 int RadHydroConstTestInitialize(FILE *fptr, FILE *Outfptr,
 				HierarchyEntry &TopGrid,
 				TopGridData &MetaData, int local);
@@ -597,6 +604,12 @@ int InitializeNew(char *filename, HierarchyEntry &TopGrid,
   // 450-452) Free-streaming radiation tests
   if ((ProblemType == 450) || (ProblemType == 451) || (ProblemType == 452))
     ret = FSMultiSourceInitialize(fptr, Outfptr, TopGrid, MetaData, 0);
+
+
+  // 460-462) Multi-frequency/multi-species tests
+  if ((ProblemType == 460) || (ProblemType == 462))
+    ret = MFIonizationTestInitialize(fptr, Outfptr, TopGrid, MetaData, 0,
+				     0.0, 0.0, 0.0, 0.0, 1.0, 1.0, 1.0);
 #endif /* TRANSFER */
 
 

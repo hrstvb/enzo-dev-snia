@@ -349,18 +349,22 @@ int gFLDSplit::Evolve(HierarchyEntry *ThisGrid, float deltat)
   if (this->EnforceBoundary(U0) == FAIL) 
     ENZO_FAIL("ERROR: EnforceBoundary failure!!");
 
-  //   obtain initial guess for time-evolved solution
-  if (this->InitialGuess(sol) == FAIL) {
-    this->Dump(sol);
-    ENZO_FAIL("ERROR: InitialGuess failure!!");
+  if (RadiativeCooling == 0) {
+    //   obtain initial guess for time-evolved solution
+    if (this->InitialGuess(sol) == FAIL) {
+      this->Dump(sol);
+      ENZO_FAIL("ERROR: InitialGuess failure!!");
+    }
+    
+    // do not use initial guess for radiation equation
+    sol->copy_component(U0,0);
+    
+    //   enforce boundary conditions on new time step initial guess vector
+    if (this->EnforceBoundary(sol) == FAIL) 
+      ENZO_FAIL("ERROR: EnforceBoundary failure!!");
+  } else {
+    sol->copy(U0);
   }
-
-  // do not use initial guess for radiation equation
-  sol->copy_component(U0,0);
-
-  //   enforce boundary conditions on new time step initial guess vector
-  if (this->EnforceBoundary(sol) == FAIL) 
-    ENZO_FAIL("ERROR: EnforceBoundary failure!!");
 
 //   // write out radiation field initial guess
 //   if (debug)  printf("Writing out initial guess to file guess.vec\n");
@@ -572,97 +576,109 @@ int gFLDSplit::Evolve(HierarchyEntry *ThisGrid, float deltat)
   for (i=0; i<ArrDims[0]*ArrDims[1]*ArrDims[2]; i++)  
     Eg_new[i] = max(Eg_new[i],epsilon);
 
+  // if chemistry and cooling handled elsewhere, fill the rates, otherwise
+  // subcycle the chemistry and gas energy equations (if not handled elsewhere)
+  if (RadiativeCooling) {
 
-  // subcycle the chemistry and gas energy equations
-  float thisdt, dtchem2;
-  float tchem = told;
-  float *ecsrc   = extsrc->GetData(1);
-  float *HIsrc   = NULL;
-  float *HeIsrc  = NULL;
-  float *HeIIsrc = NULL;
-  if (Nchem > 0)  HIsrc = extsrc->GetData(2);
-  if (Nchem > 1) {
-    HeIsrc = extsrc->GetData(3);
-    HeIIsrc = extsrc->GetData(4);
-  }
-  float *Opacity_new = Temperature;
-  float *Opacity_old = OpacityE;
-  float *sol_ec   = sol->GetData(1);
-  float *sol_HI   = NULL;
-  float *sol_HeI  = NULL;
-  float *sol_HeII = NULL;
-  if (Nchem > 0)  sol_HI = sol->GetData(2);
-  if (Nchem > 1) {
-    sol_HeI  = sol->GetData(3);
-    sol_HeII = sol->GetData(4);
-  }
-  float *tmp, factor, epsilon2, *eh_tot, *eh_gas;
-  for (int chemstep=0; chemstep<=100; chemstep++) {
+    float *phHI       = ThisGrid->GridData->AccessKPhHI();
+    float *phHeI      = ThisGrid->GridData->AccessKPhHeI();
+    float *phHeII     = ThisGrid->GridData->AccessKPhHeII();
+    float *photogamma = ThisGrid->GridData->AccessPhotoGamma();
+    float *dissH2I    = ThisGrid->GridData->AccessKDissH2I();
+    this->FillRates(sol, U0, phHI, phHeI, phHeII, photogamma, dissH2I);
 
-    // update tchem
-    thisdt = min(dtchem, dt);          // do not exceed radiation dt
-    thisdt = max(thisdt, dt/100);      // take at most 100 steps
-    tchem += thisdt;                   // update chemistry time
-    //    check that we don't exceed radiation time
-    if (tchem >= tnew) {
-      thisdt = tnew - (tchem - thisdt);  // get max time step
-      tchem = tnew;                      // set updated time
-    }
-    if (debug) {
-      printf("  subcycled chem %"ISYM": dt=%7.1e, t=%7.1e (rad dt=%7.1e, t=%7.1e)\n",chemstep,thisdt/TimeUnits,tchem/TimeUnits,dt/TimeUnits,tnew/TimeUnits);
-    }
+  } else {
 
-
-    //   fill in the gas energy and chemistry source terms
-    if (this->GasEnergySource(ecsrc, &tchem) != SUCCESS)
-      ENZO_FAIL("gFLDSplit Evolve: Error in GasEnergySource routine");
-    if (this->ChemistrySource(HIsrc, HeIsrc, HeIIsrc, &tchem) != SUCCESS)
-      ENZO_FAIL("gFLDSplit Evolve: Error in ChemistrySource routine");
-
-    //   solve local chemistry/gas energy systems
-    if (this->AnalyticChemistry(U0, sol, extsrc, thisdt) != SUCCESS) 
-      ENZO_FAIL("gFLDSplit Evolve: Error in AnalyticChemistry routine");
-
-    // update chemistry time step size based on changes to chem+energy
-//     dtchem = (this->ComputeTimeStep(U0,sol,1))*TimeUnits;
-    //   (limit growth at each cycle)
-    dtchem2 = this->ComputeTimeStep(U0,sol,1)*TimeUnits;
-    dtchem = min(dtchem2, 2.0*dtchem);
-
-    // enforce a solution floor on number densities
-    epsilon2 = 0.0;    // put a hard floor of 0 on these fields
-    if (Nchem > 0)
-      for (i=0; i<ArrDims[0]*ArrDims[1]*ArrDims[2]; i++)  
-	sol_HI[i] = min(max(sol_HI[i],epsilon2),rho[i]*HFrac);
+    float thisdt, dtchem2;
+    float tchem = told;
+    float *ecsrc   = extsrc->GetData(1);
+    float *HIsrc   = NULL;
+    float *HeIsrc  = NULL;
+    float *HeIIsrc = NULL;
+    if (Nchem > 0)  HIsrc = extsrc->GetData(2);
     if (Nchem > 1) {
-      for (i=0; i<ArrDims[0]*ArrDims[1]*ArrDims[2]; i++)  
-	sol_HeI[i] = max(sol_HeI[i],epsilon2);
-      for (i=0; i<ArrDims[0]*ArrDims[1]*ArrDims[2]; i++)  
-	sol_HeII[i] = max(sol_HeII[i],epsilon2);
+      HeIsrc = extsrc->GetData(3);
+      HeIIsrc = extsrc->GetData(4);
     }
+    float *Opacity_new = Temperature;
+    float *Opacity_old = OpacityE;
+    float *sol_ec   = sol->GetData(1);
+    float *sol_HI   = NULL;
+    float *sol_HeI  = NULL;
+    float *sol_HeII = NULL;
+    if (Nchem > 0)  sol_HI = sol->GetData(2);
+    if (Nchem > 1) {
+      sol_HeI  = sol->GetData(3);
+      sol_HeII = sol->GetData(4);
+    }
+    float *tmp, factor, epsilon2, *eh_tot, *eh_gas;
+    for (int chemstep=0; chemstep<=100; chemstep++) {
+      
+      // update tchem
+      thisdt = min(dtchem, dt);          // do not exceed radiation dt
+      thisdt = max(thisdt, dt/100);      // take at most 100 steps
+      tchem += thisdt;                   // update chemistry time
+      //    check that we don't exceed radiation time
+      if (tchem >= tnew) {
+	thisdt = tnew - (tchem - thisdt);  // get max time step
+	tchem = tnew;                      // set updated time
+      }
+      if (debug) {
+	printf("  subcycled chem %"ISYM": dt=%7.1e, t=%7.1e (rad dt=%7.1e, t=%7.1e)\n",chemstep,thisdt/TimeUnits,tchem/TimeUnits,dt/TimeUnits,tnew/TimeUnits);
+      }
+      
+      
+      //   fill in the gas energy and chemistry source terms
+      if (this->GasEnergySource(ecsrc, &tchem) != SUCCESS)
+	ENZO_FAIL("gFLDSplit Evolve: Error in GasEnergySource routine");
+      if (this->ChemistrySource(HIsrc, HeIsrc, HeIIsrc, &tchem) != SUCCESS)
+	ENZO_FAIL("gFLDSplit Evolve: Error in ChemistrySource routine");
+      
+      //   solve local chemistry/gas energy systems
+      if (this->AnalyticChemistry(U0, sol, extsrc, thisdt) != SUCCESS) 
+	ENZO_FAIL("gFLDSplit Evolve: Error in AnalyticChemistry routine");
+      
+      // update chemistry time step size based on changes to chem+energy
+//       dtchem = (this->ComputeTimeStep(U0,sol,1))*TimeUnits;
+      //   (limit growth at each cycle)
+      dtchem2 = this->ComputeTimeStep(U0,sol,1)*TimeUnits;
+      dtchem = min(dtchem2, 2.0*dtchem);
 
-    //   Add fluid correction to fluid energy field (with floor)
-    eh_tot = ThisGrid->GridData->AccessTotalEnergy();
-    for (i=0; i<ArrDims[0]*ArrDims[1]*ArrDims[2]; i++)
-      eh_tot[i] = max(eh_tot[i]+sol_ec[i]*ecScale,tiny_number);
-    if (DualEnergyFormalism) {
-      eh_gas = ThisGrid->GridData->AccessGasEnergy();
+      // enforce a solution floor on number densities
+      epsilon2 = 0.0;    // put a hard floor of 0 on these fields
+      if (Nchem > 0)
+	for (i=0; i<ArrDims[0]*ArrDims[1]*ArrDims[2]; i++)  
+	  sol_HI[i] = min(max(sol_HI[i],epsilon2),rho[i]*HFrac);
+      if (Nchem > 1) {
+	for (i=0; i<ArrDims[0]*ArrDims[1]*ArrDims[2]; i++)  
+	  sol_HeI[i] = max(sol_HeI[i],epsilon2);
+	for (i=0; i<ArrDims[0]*ArrDims[1]*ArrDims[2]; i++)  
+	  sol_HeII[i] = max(sol_HeII[i],epsilon2);
+      }
+      
+      //   Add fluid correction to fluid energy field (with floor)
+      eh_tot = ThisGrid->GridData->AccessTotalEnergy();
       for (i=0; i<ArrDims[0]*ArrDims[1]*ArrDims[2]; i++)
-	eh_gas[i] = max(eh_gas[i]+sol_ec[i]*ecScale,tiny_number);
+	eh_tot[i] = max(eh_tot[i]+sol_ec[i]*ecScale,tiny_number);
+      if (DualEnergyFormalism) {
+	eh_gas = ThisGrid->GridData->AccessGasEnergy();
+	for (i=0; i<ArrDims[0]*ArrDims[1]*ArrDims[2]; i++)
+	  eh_gas[i] = max(eh_gas[i]+sol_ec[i]*ecScale,tiny_number);
+      }
+
+      //   Update Enzo chemistry arrays with new values
+      if (Nchem > 0)  
+	U0->copy_component(sol, 2);  // HI
+      if (Nchem > 1) {
+	U0->copy_component(sol, 3);  // HeI
+	U0->copy_component(sol, 4);  // HeII
+      }
+
+      // break out of time-stepping loop if we've reached the end
+      if (tchem >= tnew)  break;
+
     }
-
-    //   Update Enzo chemistry arrays with new values
-    if (Nchem > 0)  
-      U0->copy_component(sol, 2);  // HI
-    if (Nchem > 1) {
-      U0->copy_component(sol, 3);  // HeI
-      U0->copy_component(sol, 4);  // HeII
-    }
-
-    // break out of time-stepping loop if we've reached the end
-    if (tchem >= tnew)  break;
-
-  }
+  }  // if (RadiativeCooling == 0)
 
 
 //   // output typical/maximum values

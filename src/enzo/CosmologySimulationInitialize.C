@@ -120,7 +120,12 @@ int CosmologySimulationInitialize(FILE *fptr, FILE *Outfptr,
   char *ExtraNames[2] = {"Z_Field1", "Z_Field2"};
 
 #ifdef TRANSFER
-  char *RadName    = "Grey_Radiation_Energy";
+  char *RadName      = "Grey_Radiation_Energy";
+  char *kphHIName    = "HI_kph";
+  char *kphHeIName   = "HeI_kph";
+  char *kphHeIIName  = "HeII_kph";
+  char *gammaName    = "PhotoGamma";
+  char *kdissH2IName = "H2I_kdiss";
 #endif
 #ifdef EMISSIVITY
   char *EtaName    = "Emissivity";
@@ -610,8 +615,21 @@ int CosmologySimulationInitialize(FILE *fptr, FILE *Outfptr,
   DataLabel[i++] = Vel2Name;
   DataLabel[i++] = Vel3Name;
 #ifdef TRANSFER
-  if (RadiativeTransferFLD > 1)
+  if (RadiativeTransferFLD > 1) {
     DataLabel[i++] = RadName;
+    
+    // if using external chemistry/cooling, set rate labels
+    if (RadiativeCooling) {
+      DataLabel[i++] = kphHIName;
+      DataLabel[i++] = gammaName;
+      if (RadiativeTransferHydrogenOnly == FALSE) {
+	DataLabel[i++] = kphHeIName;
+	DataLabel[i++] = kphHeIIName;
+      }
+      if (MultiSpecies > 1)
+	DataLabel[i++] = kdissH2IName;
+    }
+  }
 #endif
   if (MultiSpecies) {
     DataLabel[i++] = ElectronName;

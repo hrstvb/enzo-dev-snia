@@ -1942,6 +1942,17 @@ int zEulerSweep(int j, int NumberOfSubgrids, fluxes *SubgridFluxes[],
 				  float V1Const, float V2Const, float TEConst, 
 				  float RadConst, int local);
 
+  /* Multi-frequency ionization test problem: initialize grid (SUCCESS or FAIL) */
+  int MFIonizationTestInitializeGrid(int NumChem, float DensityConst, 
+				     float V0Const, float V1Const, 
+				     float V2Const, float IEConst, 
+				     float FSConst, float E1Const, 
+				     float E2Const, float E3Const, 
+				     float E1Scale, float E2Scale, 
+				     float E3Scale, float HMassFrac, 
+				     float InitFracHII, float InitFracHeII,
+				     float InitFracHeIII, int local);
+
   /* FLD Radiation test problem: initialize grid (SUCCESS or FAIL) */
   int RadHydroConstTestInitializeGrid(int NumChem, float DensityConst, 
 				      float V0Const, float V1Const, 

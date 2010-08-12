@@ -2,6 +2,8 @@
 #
 ##########################################################
 
+
+
 from yt.mods import *
 
 min_output_number = 273
@@ -32,7 +34,7 @@ for i in range(min_output_number, max_output_number+1, skip):
 
     frb = raven.FixedResolutionBuffer(proj, (0.0, 1.0, 0.0, 1.0), (res, res))
 
-    cgsGrey = frb[field]*convD*convV*convV # convert values from code units to CGS
+    cgsGrey = frb[field]*convD*convV*convV
 
     z = pf["CosmologyCurrentRedshift"]
     yr = pf["InitialTime"] * pf["years"]

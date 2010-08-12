@@ -1,0 +1,5 @@
+#
+# COOLING/HEATING/CHEMISTRY PARAMETER FILE
+#
+HydrogenFractionByMass = 1.0                 // typically 0.76
+RateDataCaseBRecombination = 1               // use case-B rates

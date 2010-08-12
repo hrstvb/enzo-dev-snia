@@ -71,7 +71,7 @@ int grid::RHIonizationClumpInitializeGrid(int NumChemicals,
 
   // create necessary baryon fields
   int RhoNum, TENum, IENum, V0Num, V1Num, V2Num, EgNum, DeNum, 
-    HINum, HIINum, HeINum, HeIINum, HeIIINum;
+    HINum, HIINum, kphHINum, gammaNum;
   NumberOfBaryonFields = 0;
   FieldType[RhoNum = NumberOfBaryonFields++] = Density;
   FieldType[TENum = NumberOfBaryonFields++]  = TotalEnergy;
@@ -84,6 +84,11 @@ int grid::RHIonizationClumpInitializeGrid(int NumChemicals,
   FieldType[DeNum = NumberOfBaryonFields++]    = ElectronDensity;
   FieldType[HINum = NumberOfBaryonFields++]    = HIDensity;
   FieldType[HIINum = NumberOfBaryonFields++]   = HIIDensity;
+  // if using external chemistry/cooling, set rate fields
+  if (RadiativeCooling) {
+    FieldType[kphHINum = NumberOfBaryonFields++] = kphHI;
+    FieldType[gammaNum = NumberOfBaryonFields++] = PhotoGamma;
+  }
 
   // set the subgrid static flag (necessary??)
   SubgridsAreStatic = FALSE;  // no subgrids
@@ -147,6 +152,11 @@ int grid::RHIonizationClumpInitializeGrid(int NumChemicals,
       BaryonField[V1Num][i]  = VyConst/VelocityUnits;
       BaryonField[V2Num][i]  = VzConst/VelocityUnits;
       BaryonField[EgNum][i]  = EgConst/EUnits;
+    }
+    // if using external chemistry/cooling, set rate fields
+    if (RadiativeCooling) {
+      for (i=0; i<size; i++)  BaryonField[kphHINum][i] = 0.0;
+      for (i=0; i<size; i++)  BaryonField[gammaNum][i] = 0.0;
     }
     
     // initialize clump-dependent quantities

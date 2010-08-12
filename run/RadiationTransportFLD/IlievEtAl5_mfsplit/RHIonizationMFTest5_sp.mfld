@@ -1,0 +1,50 @@
+#
+# MFSplit Parameter File:
+#   Iliev et al. dynamic ionization test
+#
+#  Daniel R. Reynolds, reynolds@smu.edu
+#
+#############################
+#
+# Problem-specific initialization parameters
+# 
+RadiationBoundaryX0Faces   = 2 2      // Neumann
+RadiationBoundaryX1Faces   = 2 2
+RadiationBoundaryX2Faces   = 2 2
+FSRadiationBoundaryX0Faces = 2 2
+FSRadiationBoundaryX1Faces = 2 2
+FSRadiationBoundaryX2Faces = 2 2
+RadHydroDensity      = 1.67262171e-27 // density (desired nH=1e-3)
+RadHydroTemperature  = 1.0e2          // temperature (K)
+RadHydroFSRadiation  = 1.0e-50        // free-streaming radiation energy (erg/cm^3)
+NGammaDot            = 5.0e48         // ionization rate (photons/sec)
+EtaRadius            = 1.0e0          // radius for emissivity source (in cells)
+FSRadiationNGammaDot = 5.0e48         // FS ionization rate (photons/sec)
+FSRadiationEtaRadius = 1.0e0          // radius for FS emissivity source (in cells)
+#
+# General module and solver parameters
+# 
+RadHydroChemistry    = 1              // Hydrogen only
+RadHydroHFraction    = 1.0            // matter is all Hydrogen 
+RadHydroLimiterType  = 2              // Larsen n=2 limiter
+RadHydroMaxDt        = 1.0e-3
+RadHydroMinDt        = 1.0e-6
+RadHydroInitDt       = 1.0e-6
+RadHydroDtRadFac     = 0.005
+RadHydroDtGasFac     = 0.005
+RadHydroDtChemFac    = 0.005
+RadHydroSolTolerance = 1.0e-7         // nonlinear solver tolerance
+RadHydroMGPreRelax   = 3              // MG pre-relaxation sweeps
+RadHydroMGPostRelax  = 3              // MG post-relaxation sweeps
+#
+# Free-streaming sub-module solver parameters
+# 
+FSRadiationScaling      = 1.0e0
+FSRadiationTheta        = 1.0
+FSRadiationOpacity      = 1.0e-31
+FSRadiationTolerance    = 1.0e-7
+FSRadiationMGRelaxType  = 2
+FSRadiationMGPreRelax   = 5
+FSRadiationMGPostRelax  = 5
+
+#############################

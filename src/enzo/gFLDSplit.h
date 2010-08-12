@@ -206,6 +206,8 @@ class gFLDSplit : public virtual ImplicitProblemABC {
   int ComputeRadiationIntegrals();
   int AnalyticInitGuess(EnzoVector *u, float dt);
   int AnalyticChemistry(EnzoVector *u0, EnzoVector *u, EnzoVector *src, float dt);
+  int FillRates(EnzoVector *u, EnzoVector *u0, float *phHI, float *phHeI, 
+		float *phHeII, float *PhotoGamma, float *dissH2I);
 
 
  public:

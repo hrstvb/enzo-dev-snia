@@ -501,12 +501,15 @@ int gFLDSplit::Initialize(HierarchyEntry &TopGrid, TopGridData &MetaData)
 
 //   if (debug)  printf("  Initialize: setting up CoolData object\n");
 
-  // ensure that CoolData object has been set up
+  // ensure that CoolData object has been set up, and reset Hydrogen fraction
   if (CoolData.ceHI == NULL) 
     if (InitializeRateData(MetaData.Time) == FAIL) 
       ENZO_FAIL("Error in InitializeRateData.");
-  // un-scale rates for use within RadHydro solver (handles its own units)
-  {
+  CoolData.HydrogenFractionByMass = HFrac;
+
+  // if performing chemistry in this module, un-scale rates for use 
+  // within RadHydro solver (handles its own units) 
+  if (RadiativeCooling == 0) {
     float mp = 1.67262171e-24;   // Mass of a proton [g]
     float tbase1 = TimeUnits;
     float xbase1 = LenUnits/(a*aUnits);

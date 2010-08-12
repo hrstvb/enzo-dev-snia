@@ -1,0 +1,30 @@
+function f = GamfunHI(nu)
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Usage: f = GamfunHI(nu)
+%
+% Inputs: nu - frequency to evaluate function
+% Output: f  - integrand for computing the photo-ionization 
+%              rate
+%
+% Daniel R. Reynolds
+% 10.15.2009
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% set some parameters
+hp = 6.6260693e-27;            % Planck's constant (ergs*s)
+ev2erg = 1.60217653e-12;       % conversion constant from eV to ergs
+c = 2.99792458e10;             % speed of light (cm/s)
+nu0_HI   = 13.6*ev2erg/hp;     % ionization threshold of HI (hz)
+nu0_HeI  = 24.6*ev2erg/hp;     % ionization threshold of HeI (hz)
+nu0_HeII = 54.4*ev2erg/hp;     % ionization threshold of HeII (hz)
+
+% evaluate E
+E = Erad(nu);
+
+% evaluate cross-section
+sig = sigHI(nu);
+
+% combine integrand
+f = c.*sig.*E./hp./nu;
+
+% end of function

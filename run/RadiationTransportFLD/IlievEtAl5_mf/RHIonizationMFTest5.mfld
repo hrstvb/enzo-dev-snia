@@ -1,0 +1,42 @@
+#
+# MFProb Parameter File:
+#   Iliev et al. dynamic ionization test
+#
+#  Daniel R. Reynolds, reynolds@smu.edu
+#
+#############################
+#
+# Problem-specific initialization parameters
+# 
+RadiationBoundaryX0Faces   = 2 2      // Neumann
+RadiationBoundaryX1Faces   = 2 2
+RadiationBoundaryX2Faces   = 2 2
+FSRadiationBoundaryX0Faces = 2 2
+FSRadiationBoundaryX1Faces = 2 2
+FSRadiationBoundaryX2Faces = 2 2
+RadHydroDensity      = 1.67262171e-27 // density (desired nH=1e-3)
+RadHydroTemperature  = 1.0e2          // temperature (K)
+RadHydroFSRadiation  = 1.0e-30        // free-streaming radiation energy (erg/cm^3)
+NGammaDot            = 5.0e48         // ionization rate (photons/sec)
+EtaRadius            = 1.0e0          // source radius (in cells)
+FSRadiationNGammaDot = 5.0e48         // FS ionization rate (photons/sec)
+FSEtaRadius          = 1.0e0          // source radius (in cells)
+#
+# General module and solver parameters
+# 
+RadiationScaling      = 1.0e3
+RadHydroMaxDt         = 1.0e-2
+RadHydroMinDt         = 1.0e-5
+RadHydroInitDt        = 1.0e-7
+RadHydroDtRadFac      = 0.1
+RadHydroDtGasFac      = 0.1
+RadHydroDtChemFac     = 0.1
+RadHydroTheta         = 0.51         // centered time integration
+RadHydroInitialGuess  = 1            // method for initial guess calculation
+RadHydroINConst       = 1.0e-2       // Inexact Newton constant
+RadHydroNewtTolerance = 1.0e-5       // nonlinear solver tolerance
+RadHydroMinLinesearch = 1.0e-10      // minimum allowed linesearch length
+RadHydroMGPreRelax    = 3            // MG pre-relaxation sweeps
+RadHydroMGPostRelax   = 3            // MG post-relaxation sweeps
+
+#############################

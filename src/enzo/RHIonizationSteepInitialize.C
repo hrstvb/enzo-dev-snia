@@ -45,9 +45,11 @@ int RHIonizationSteepInitialize(FILE *fptr, FILE *Outfptr,
 				TopGridData &MetaData, int local)
 {
 #ifdef TRANSFER
-  if (MyProcessorNumber == ROOT_PROCESSOR)
-    fprintf(stdout,"Entering RHIonizationSteepInitialize routine\n");
+//   if (MyProcessorNumber == ROOT_PROCESSOR)
+//     fprintf(stdout,"Entering RHIonizationSteepInitialize routine\n");
 
+  char *kphHIName = "HI_kph";
+  char *gammaName = "PhotoGamma";
   char *DensName  = "Density";
   char *TEName    = "Total_Energy";
   char *IEName    = "Internal_Energy";
@@ -166,6 +168,15 @@ int RHIonizationSteepInitialize(FILE *fptr, FILE *Outfptr,
   DataLabel[BaryonField++] = DeName;
   DataLabel[BaryonField++] = HIName;
   DataLabel[BaryonField++] = HIIName;
+
+  // if using external chemistry/cooling, set rate labels and update params
+  if (RadiativeCooling) {
+    DataLabel[BaryonField++] = kphHIName;
+    DataLabel[BaryonField++] = gammaName;
+
+    RadiativeTransferHydrogenOnly = FALSE;
+    if (MultiSpecies > 1)  MultiSpecies == 1;
+  }
 
   for (int i=0; i<BaryonField; i++) 
     DataUnits[i] = NULL;

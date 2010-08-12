@@ -1,0 +1,20 @@
+chibar = quadl('chifun',nu0,100*nu1)
+   6.7579e+05
+
+chi0 = chifun(nu0)
+   5.7144e-11
+
+chi1 = chifun(nu1)
+   7.9464e-11
+
+chi2 = chifun(nu2)
+   2.5547e-11
+
+chi0/chibar
+   8.4559e-17
+
+chi1/chibar
+   1.1759e-16
+
+chi2/chibar
+   3.7803e-17

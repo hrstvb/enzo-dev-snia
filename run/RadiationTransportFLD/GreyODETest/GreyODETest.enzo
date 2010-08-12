@@ -1,0 +1,39 @@
+#
+#  Grey solver ODE test
+#
+#  Daniel R. Reynolds, reynolds@smu.edu
+#
+#############################
+#
+# problem and general modules 
+# 
+ProblemType                = 416           // RadHydroConstTestInitialize init
+RadiativeTransferFLD       = 2             // use FLD solver for radiation
+ImplicitProblem            = 3             // use Grey split solver
+UseHydro                   = 0             // no hydro
+Unigrid                    = 1             // unigrid run
+RadiativeTransferOpticallyThinH2 = 0       // no 1/r^2 LW background
+RadHydroParamfile = GreyODETest.gfld
+#
+# grid and boundary 
+#
+TopGridRank                = 3
+LeftFaceBoundaryCondition  = 0 0 0         // reflecting
+RightFaceBoundaryCondition = 0 0 0
+TopGridDimensions          = 8 8 8
+DomainLeftEdge             = 0.0 0.0 0.0
+DomainRightEdge            = 1.0 1.0 1.0
+#
+# runtime and I/O
+#
+StopTime                   = 1.0
+StopCycle                  = 99999
+dtDataDump                 = 0.01
+# 
+# units
+#
+DensityUnits               = 1.0e-27
+LengthUnits                = 1.0e21
+TimeUnits                  = 1.0e10
+
+#############################
