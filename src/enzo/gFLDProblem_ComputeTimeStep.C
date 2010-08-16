@@ -66,7 +66,7 @@ float gFLDProblem::ComputeTimeStep(EnzoVector *uold, EnzoVector *unew,
   //       p - norm choice (input), 0->max norm, otherwise the p-norm
   //           **all p-norms here divide by the total number of cells**
   //       dtfac - desired relative change per step (input)
-  //       atol - 1e-3 (assumes units are all normalized)
+  //       atol - 0.1 (assumes units are all normalized)
   //    For the gas energy correction, this is different since we do 
   //    not have uold: 
   //       relerr_fac = || unew / w ||_p
@@ -93,7 +93,7 @@ float gFLDProblem::ComputeTimeStep(EnzoVector *uold, EnzoVector *unew,
     if (dtfac[0] != huge_number) {
       float *Eold = uold->GetData(0);
       float *Enew = unew->GetData(0);
-      atol = 0.001; // assumes values are normalized
+      atol = 0.1; // assumes values are normalized
       if (dtnorm > 0.0) {
 	for (k=ghZl; k<Nz+ghZl; k++) 
 	  for (j=ghYl; j<Ny+ghYl; j++)
@@ -126,7 +126,7 @@ float gFLDProblem::ComputeTimeStep(EnzoVector *uold, EnzoVector *unew,
     loc_est[1] = 0.0;
     if (dtfac[1] != huge_number) {
       float *ec = unew->GetData(1);
-      atol = 0.001; // assumes values are normalized
+      atol = 0.1; // assumes values are normalized
       if (dtnorm > 0.0) {
 	for (k=ghZl; k<Nz+ghZl; k++) 
 	  for (j=ghYl; j<Ny+ghYl; j++)
@@ -160,7 +160,7 @@ float gFLDProblem::ComputeTimeStep(EnzoVector *uold, EnzoVector *unew,
       if (dtfac[2] != huge_number) {
 	niold = uold->GetData(l);
 	ninew = unew->GetData(l);
-	atol = 0.001; // assumes values are normalized
+	atol = 0.1; // assumes values are normalized
 	if (dtnorm > 0.0) {
 	  for (k=ghZl; k<Nz+ghZl; k++) 
 	    for (j=ghYl; j<Ny+ghYl; j++)
