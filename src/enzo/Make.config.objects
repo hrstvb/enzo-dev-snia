@@ -33,6 +33,7 @@ OBJS_CONFIG_LIB = \
         calcdiss.o \
         calc_dt.o \
         calc_dt_c.o \
+	calc_eigen.o \
         calc_photo_rates.o \
         calc_rad.o \
         calc_rates.o \
@@ -175,6 +176,9 @@ OBJS_CONFIG_LIB = \
         FindSubgrids.o \
         flow.o \
         FluxFix_Grid_CorrectForRefinedFluxes.o \
+	flux_hll.o \
+	flux_hllc.o \
+	flux_twoshock.o \
         FOF.o \
         FOF_allocate.o \
         FOF_cmpfunc.o \
@@ -592,6 +596,8 @@ OBJS_CONFIG_LIB = \
         int_lin3d.o \
         intrmp.o \
         int_spline.o \
+	intpos.o \
+	intprim.o \
         intvar.o \
         Isdigit.o \
         KHInitialize.o \
