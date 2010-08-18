@@ -67,6 +67,10 @@ c
       real    chi1, chi2, chi3, 
      &        delf0, delf1, delf1new, delf2, delf2new, delf3, delf3new,
      &        fbar, frac, fx(ijkn), fy(ijkn), fz(ijkn), s, sprime
+      real    r1, r2, r3, r1_inv, r2_inv, r3_inv
+      real    fi(refine1), fj(refine2), fk(refine3)
+c      real    i1r(refine1), i2r(refine2), i3r(refine3)
+      real    dcorner(8)
 c
       real    fbar_save(ijkn)
       integer nneg
@@ -93,6 +97,24 @@ c
       pstart1 = (start1-1)/refine1
       pstart2 = (start2-1)/refine2
       pstart3 = (start3-1)/refine3
+c
+c     Precompute some constants
+c
+      r1 = real(refine1)
+      r2 = real(refine2)
+      r3 = real(refine3)
+      r1_inv = 1.0/r1
+      r2_inv = 1.0/r2
+      r3_inv = 1.0/r3
+      do i = 1, refine1
+         fi(i) = (real(i) + 0.5 - 0.5*r1)*r1_inv
+      enddo
+      do i = 1, refine2
+         fj(i) = (real(i) + 0.5 - 0.5*r2)*r2_inv
+      enddo
+      do i = 1, refine3
+         fk(i) = (real(i) + 0.5 - 0.5*r3)*r3_inv
+      enddo
 c
 c     Interpolate values from cell centers to cell corners
 c
@@ -136,29 +158,30 @@ c
 c
 c              Compute the minimum delta f across all four diagonals
 c
-               delf0 =     min(abs(fbar - work(i  , j  , k  )),
-     &                         abs(fbar - work(i+1, j+1, k+1)) )*
-     &                  sign(1.0, (fbar - work(i  , j  , k  )))
-               if ((work(i+1, j+1, k+1) - fbar) *
-     &             (fbar - work(i  , j  , k  )  ) .le. 0.0) delf0 = 0.0
+               dcorner(1) = fbar - work(i  ,j  ,k  )
+               dcorner(3) = fbar - work(i+1,j  ,k  )
+               dcorner(5) = fbar - work(i  ,j+1,k  )
+               dcorner(8) = fbar - work(i+1,j+1,k  )
+               dcorner(7) = fbar - work(i  ,j  ,k+1)
+               dcorner(6) = fbar - work(i+1,j  ,k+1)
+               dcorner(4) = fbar - work(i  ,j+1,k+1)
+               dcorner(2) = fbar - work(i+1,j+1,k+1)
+
+               delf0 = min(abs(dcorner(1)), abs(dcorner(2)) )*
+     &              sign(1.0, dcorner(1))
+               if (dcorner(1) * dcorner(2) .ge. 0.0) delf0 = 0.0
 c
-               delf1 =     min(abs(fbar - work(i+1, j  , k  )),
-     &                         abs(fbar - work(i  , j+1, k+1)) )*
-     &                  sign(1.0, (fbar - work(i+1, j  , k  )))
-               if ((work(i  , j+1, k+1) - fbar) *
-     &             (fbar - work(i+1, j  , k  )  ) .le. 0.0) delf1 = 0.0
+               delf1 = min(abs(dcorner(3)), abs(dcorner(4))) * 
+     $              sign(1.0, dcorner(3))
+               if (dcorner(3) * dcorner(4) .ge. 0.0) delf1 = 0.0
 c
-               delf2 =     min(abs(fbar - work(i  , j+1, k  )),
-     &                         abs(fbar - work(i+1, j  , k+1)) )*
-     &                  sign(1.0, (fbar - work(i  , j+1, k  )))
-               if ((work(i+1, j  , k+1) - fbar) *
-     &             (fbar - work(i  , j+1, k  )  ) .le. 0.0) delf2 = 0.0
+               delf2 = min(abs(dcorner(5)), abs(dcorner(6))) *
+     $              sign(1.0, dcorner(5))
+               if (dcorner(5) * dcorner(6) .ge. 0.0) delf2 = 0.0
 c
-               delf3 =     min(abs(fbar - work(i  , j  , k+1)),
-     &                         abs(fbar - work(i+1, j+1, k  )) )*
-     &                  sign(1.0, (fbar - work(i  , j  , k+1)))
-               if ((work(i+1, j+1, k  ) - fbar) *
-     &             (fbar - work(i  , j  , k+1)  ) .le. 0.0) delf3 = 0.0
+               delf3 = min(abs(dcorner(7)), abs(dcorner(8))) *
+     $              sign(1.0, dcorner(7))
+               if (dcorner(7) * dcorner(8) .ge. 0.0) delf3 = 0.0
 c
 c              Determine s, the resulting scaled value of delf0 and contain
 c                sprime within the range 0 to 1
@@ -203,17 +226,17 @@ c
      &                                    + (1.0-chi3)*delf3 ) /
      &           (chi1*delf1 + chi2*delf2 + chi3*delf3 + 1.0e-35)
 c
-               frac = min(frac, 1.0)
-               if (chi1+chi2+chi3 .eq. 0) frac = 0.0
+               frac = max(min(frac, 1.0), 0.0)
+c               if (chi1+chi2+chi3 .eq. 0) frac = 0.0
 c
-               frac = max(frac, 0.0)
-               if (frac .lt. 0.0) then
-                  write(6,*) "INTERP3D: frac = ", frac
-                  write(6,*) chi1,chi2,chi3
-                  write(6,*) delf0,delf1,delf2,delf3
-                  write(6,*) sprime,fbar
-                  ERROR_MESSAGE
-               endif
+c               frac = max(frac, 0.0)
+c               if (frac .lt. 0.0) then
+c                  write(6,*) "INTERP3D: frac = ", frac
+c                  write(6,*) chi1,chi2,chi3
+c                  write(6,*) delf0,delf1,delf2,delf3
+c                  write(6,*) sprime,fbar
+c                  ERROR_MESSAGE
+c               endif
 c
 c              Compute the new delf# according to the adjustment fraction.
 c
@@ -283,10 +306,9 @@ c
                      do i = 1, pdim1
                         grid(gstart1+(i-1)*refine1+i1,
      &                       gstart2+(j-1)*refine2+j1,
-     &                       gstart3+(k-1)*refine3+k1) = (fbar_save(i) +
-     &            (real(i1)+0.5-0.5*real(refine1))/real(refine1)*fx(i) +
-     &            (real(j1)+0.5-0.5*real(refine2))/real(refine2)*fy(i) +
-     &            (real(k1)+0.5-0.5*real(refine3))/real(refine3)*fz(i) )
+     &                       gstart3+(k-1)*refine3+k1) = fbar_save(i) +
+     &                       fi(i1+1)*fx(i) + fj(j1+1)*fy(i) + 
+     &                       fk(k1+1)*fz(i)
                      enddo
                   enddo
                enddo

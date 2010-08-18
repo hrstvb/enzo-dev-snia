@@ -87,7 +87,7 @@ void fpcol(Eflt64 *x, int n, int m, FILE *log_fptr);
 bool _first = true;
 static double RHperf[16];
 
-#define NO_RH_PERF
+#define RH_PERF
 
 
 /* RebuildHierarchy function */
