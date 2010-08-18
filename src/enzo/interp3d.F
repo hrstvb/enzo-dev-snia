@@ -68,7 +68,7 @@ c
      &        delf0, delf1, delf1new, delf2, delf2new, delf3, delf3new,
      &        fbar, frac, fx(ijkn), fy(ijkn), fz(ijkn), s, sprime
       real    r1, r2, r3, r1_inv, r2_inv, r3_inv
-      real    fi(refine1), fj(refine2), fk(refine3)
+      real    fi(0:refine1-1), fj(0:refine2-1), fk(0:refine3-1)
 c      real    i1r(refine1), i2r(refine2), i3r(refine3)
       real    dcorner(8)
 c
@@ -106,13 +106,13 @@ c
       r1_inv = 1.0/r1
       r2_inv = 1.0/r2
       r3_inv = 1.0/r3
-      do i = 1, refine1
+      do i = 0, refine1-1
          fi(i) = (real(i) + 0.5 - 0.5*r1)*r1_inv
       enddo
-      do i = 1, refine2
+      do i = 0, refine2-1
          fj(i) = (real(i) + 0.5 - 0.5*r2)*r2_inv
       enddo
-      do i = 1, refine3
+      do i = 0, refine3-1
          fk(i) = (real(i) + 0.5 - 0.5*r3)*r3_inv
       enddo
 c
@@ -226,10 +226,10 @@ c
      &                                    + (1.0-chi3)*delf3 ) /
      &           (chi1*delf1 + chi2*delf2 + chi3*delf3 + 1.0e-35)
 c
-               frac = max(min(frac, 1.0), 0.0)
-c               if (chi1+chi2+chi3 .eq. 0) frac = 0.0
+               frac = min(frac, 1.0)
+               if (chi1+chi2+chi3 .eq. 0) frac = 0.0
 c
-c               frac = max(frac, 0.0)
+               frac = max(frac, 0.0)
 c               if (frac .lt. 0.0) then
 c                  write(6,*) "INTERP3D: frac = ", frac
 c                  write(6,*) chi1,chi2,chi3
@@ -307,8 +307,8 @@ c
                         grid(gstart1+(i-1)*refine1+i1,
      &                       gstart2+(j-1)*refine2+j1,
      &                       gstart3+(k-1)*refine3+k1) = fbar_save(i) +
-     &                       fi(i1+1)*fx(i) + fj(j1+1)*fy(i) + 
-     &                       fk(k1+1)*fz(i)
+     &                       fi(i1)*fx(i) + fj(j1)*fy(i) + 
+     &                       fk(k1)*fz(i)
                      enddo
                   enddo
                enddo
