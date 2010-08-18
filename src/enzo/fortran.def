@@ -24,3 +24,26 @@
 #define JHW_METALS_NORMZ 0.1
 #define NSPECIES 13
 #define CORRECTIONSTEPS 30
+
+#ifdef USE_MKL
+#ifdef CONFIG_BFLOAT_4
+#define MKL_ADD(a,b,c,d)  vsAdd(a,b,c,d)
+#define MKL_SUB(a,b,c,d)  vsSub(a,b,c,d)
+#define MKL_SQR(a,b,c)    vsSqr(a,b,c)
+#define MKL_MUL(a,b,c,d)  vsMul(a,b,c,d)
+#define MKL_DIV(a,b,c,d)  vsDiv(a,b,c,d)
+#define MKL_INV(a,b,c)    vsInv(a,b,c)
+#define MKL_SQRT(a,b,c)   vsSqrt(a,b,c)
+#define MKL_ABS(a,b,c)    vsAbs(a,b,c)
+#endif
+#ifdef CONFIG_BFLOAT_8
+#define MKL_ADD(a,b,c,d)  vdAdd(a,b,c,d)
+#define MKL_SUB(a,b,c,d)  vdSub(a,b,c,d)
+#define MKL_SQR(a,b,c)    vdSqr(a,b,c)
+#define MKL_MUL(a,b,c,d)  vdMul(a,b,c,d)
+#define MKL_DIV(a,b,c,d)  vdDiv(a,b,c,d)
+#define MKL_INV(a,b,c)    vdInv(a,b,c)
+#define MKL_SQRT(a,b,c)   vdSqrt(a,b,c)
+#define MKL_ABS(a,b,c)    vdAbs(a,b,c)
+#endif
+#endif
