@@ -1,4 +1,4 @@
-#ifndef USE_MKL
+c#ifndef USE_MKL
 #include "fortran.def"
 c=======================================================================
 c///////////////////////  SUBROUTINE INTVAR  \\\\\\\\\\\\\\\\\\\\\\\\\\\
@@ -152,4 +152,4 @@ c
       return
       end
 
-#endif /* !USE_MKL */
+c#endif /* !USE_MKL */

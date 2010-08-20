@@ -66,6 +66,9 @@ c
 c-----------------------------------------------------------------------
 c
       implicit NONE
+#ifdef USE_MKL
+#include "mkl_vml.f77"
+#endif
 c
       integer ijkn
       parameter (ijkn=MAX_ANY_SINGLE_DIRECTION)
@@ -90,8 +93,8 @@ c
 c
 c  local declarations
 c
-      integer i, j, ic
-      real steepen(ijkn),tmp1(ijkn),tmp2(ijkn),tmp3(ijkn),tmp4(ijkn)
+      integer i, j, ic, ni
+      real steepen(ijkn),tmp1(idim),tmp2(idim),tmp3(idim),tmp4(idim)
       real qa,qb,qc,qd,qe,s1,s2,f1
       real  c1(ijkn), c2(ijkn), c3(ijkn), c4(ijkn), c5(ijkn), c6(ijkn)
      &    ,dp(ijkn),pl(ijkn),pr(ijkn),p6(ijkn)
@@ -182,8 +185,18 @@ c
 c
 c     Precompute left and right characteristic distances
 c
+c#ifdef USE_MKL
+c      ni = i2-i1+3
+c      call MKL_DIV(ni, pslice(i1-1,j), dslice(i1-1,j), tmp1(i1-1))
+c      do i=i1-1,i2+1
+c         cs(i) = gamma*tmp1(i)
+c      enddo
+c      call MKL_SQRT(ni, cs(i1-1), cs(i1-1))
+c#endif
       do i=i1-1,i2+1
+c#ifndef USE_MKL
          cs(i) = sqrt(gamma*pslice(i,j)/dslice(i,j))
+c#endif
          if (ipresfree .eq. 1) cs(i) = tiny
          char1(i) = max(0.0, dt*(uslice(i,j)+cs(i)))*dx2i(i)
          char2(i) = max(0.0,-dt*(uslice(i,j)-cs(i)))*dx2i(i)
@@ -266,19 +279,41 @@ c
 c
 c     Compute correction terms (3.7)
 c
+#ifdef UNUSED!USE_MKL
+      ni = i2-i1+2
+      do i = i1, i2+1
+         cla(i) = max(gamma*pla(i)*dla(i), 0.0)
+         cra(i) = max(gamma*pra(i)*dra(i), 0.0)
+      enddo
+      call MKL_SQRT(ni, cla, cla)
+      call MKL_SQRT(ni, cra, cra)
+#else
       do i = i1, i2+1
          cla(i) = sqrt(max(gamma*pla(i)*dla(i), 0.0))
          cra(i) = sqrt(max(gamma*pra(i)*dra(i), 0.0))
       enddo
+#endif
 c
 c     a) left side
 c
+#ifdef UNUSED !USE_MKL
+      ni = i2-i1+2
+      call MKL_INV(ni, cla(i1), tmp1(i1))
+      call MKL_INV(ni, dla(i1), tmp2(i1))
+      call MKL_INV(ni, dl0(i1), tmp3(i1))
+      do i = i1, i2+1
+         betalp(i) = (ula(i)-ulp(i)) + (pla(i)-plp(i))*tmp1(i)
+         betalm(i) = (ula(i)-ulm(i)) - (pla(i)-plm(i))*tmp1(i)
+         betal0(i) = (pla(i)-pl0(i))*tmp1(i)**2 + tmp2(i) - tmp3(i)
+      enddo
+#else
       do i = i1, i2+1
          f1 = 1.0/cla(i)
          betalp(i) = (ula(i)-ulp(i)) + (pla(i)-plp(i))*f1
          betalm(i) = (ula(i)-ulm(i)) - (pla(i)-plm(i))*f1
          betal0(i) = (pla(i)-pl0(i))*f1**2 + 1.0/dla(i) - 1.0/dl0(i)
       enddo
+#endif
 c
 c     Add gravity component
 c      
@@ -306,12 +341,24 @@ c
 c
 c     b) right side
 c
+#ifdef UNUSED !USE_MKL
+      ni = i2-i1+2
+      call MKL_INV(ni, cra(i1), tmp1(i1))
+      call MKL_INV(ni, dra(i1), tmp2(i1))
+      call MKL_INV(ni, dr0(i1), tmp3(i1))
+      do i = i1, i2+1
+         betarp(i) = (ura(i)-urp(i)) + (pra(i)-prp(i))*tmp1(i)
+         betarm(i) = (ura(i)-urm(i)) - (pra(i)-prm(i))*tmp1(i)
+         betar0(i) = (pra(i)-pr0(i))*tmp1(i)**2 + tmp2(i) - tmp3(i)
+      enddo
+#else
       do i = i1, i2+1
          f1 = 1.0/cra(i)
          betarp(i) = (ura(i)-urp(i)) + (pra(i)-prp(i))*f1
          betarm(i) = (ura(i)-urm(i)) - (pra(i)-prm(i))*f1
          betar0(i) = (pra(i)-pr0(i))*f1**2 + 1.0/dra(i) - 1.0/dr0(i)
       enddo
+#endif
 c
 c     Add gravity component
 c      
@@ -339,6 +386,11 @@ c
 c
 c     Finally, combine to create corrected left/right states (eq. 3.6)
 c
+c#ifdef USE_MKL
+c      ni = i2-i1+2
+c      call MKL_INV(ni, dla(i1), tmp1(i1))
+c      call MKL_INV(ni, dra(i1), tmp2(i1))
+c#endif
       do i=i1,i2+1
          pls(i,j) = pla(i) + (betalp(i)+betalm(i))*cla(i)**2
          prs(i,j) = pra(i) + (betarp(i)+betarm(i))*cra(i)**2
@@ -346,9 +398,18 @@ c
          uls(i,j) = ula(i) + (betalp(i)-betalm(i))*cla(i)
          urs(i,j) = ura(i) + (betarp(i)-betarm(i))*cra(i)
 c
+c#ifdef USE_MKL
+c         dls(i,j) = tmp1(i) - (betal0(i)+betalp(i)+betalm(i))
+c         drs(i,j) = tmp2(i) - (betar0(i)+betarp(i)+betarm(i))
+c#else
          dls(i,j) = 1.0/(1.0/dla(i) - (betal0(i)+betalp(i)+betalm(i)))
          drs(i,j) = 1.0/(1.0/dra(i) - (betar0(i)+betarp(i)+betarm(i)))
+c#endif
       enddo
+c#ifdef USE_MKL
+c      call MKL_INV(ni, dls(i1,j), dls(i1,j))
+c      call MKL_INV(ni, drs(i1,j), drs(i1,j))
+c#endif
 c
 c     Take the appropriate state from the advected variables
 c

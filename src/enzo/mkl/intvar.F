@@ -1,4 +1,5 @@
-#ifdef USE_MKL
+c#ifdef USE_MKL
+#ifdef UNUSED
 #include "../fortran.def"
 c=======================================================================
 c///////////////////////  SUBROUTINE INTVAR  \\\\\\\\\\\\\\\\\\\\\\\\\\\
@@ -47,6 +48,7 @@ c
 c-----------------------------------------------------------------------
 c
       implicit NONE
+#include "mkl_vml.f77"
 c
 c  argument declarations
 c
@@ -88,13 +90,13 @@ c         endif
 c      enddo
 c
       ni = i2-i1+5
-      MKL_SUB(ni, qslice(i1-1), qslice(i1-2), qdiff(i1-2))
-      MKL_MUL(ni, c1(i1-2), qdiff(i1-1), temp1(i1-2))
-      MKL_MUL(ni, c2(i1-2), qdiff(i1-2), temp2(i1-2))
-      MKL_ADD(ni, temp1(i1-2), temp2(i1-2), dq(i1-2))
-      MKL_MUL(ni, qdiff(i1-1), qdiff(i1-2), temp3(i1-2))
+      call MKL_SUB(ni, qslice(i1-1), qslice(i1-2), qdiff(i1-2))
+      call MKL_MUL(ni, c1(i1-2), qdiff(i1-1), temp1(i1-2))
+      call MKL_MUL(ni, c2(i1-2), qdiff(i1-2), temp2(i1-2))
+      call MKL_ADD(ni, temp1(i1-2), temp2(i1-2), dq(i1-2))
+      call MKL_MUL(ni, qdiff(i1-1), qdiff(i1-2), temp3(i1-2))
       do i = i1-2, i2+2
-         if (temp3 .gt. 0) then
+         if (temp3(i) .gt. 0) then
             dq(i) = temp1(i) * sign(1.0, dq(i))
          else
             dq(i) = 0.0
@@ -110,16 +112,16 @@ c         qr(i-1) = ql(i)
 c      enddo
 c
       ni = i2-i1+4
-      MKL_MUL(ni, c3(i1-1), qslice(i1-2), temp1)
-      MKL_MUL(ni, c4(i1-1), qslice(i1-1), temp2)
-      MKL_MUL(ni, c5(i1-1), dq(i1-2), temp3)
-      MKL_MUL(ni, c6(i1-1), dq(i1-1), temp4)
+      call MKL_MUL(ni, c3(i1-1), qslice(i1-2), temp1)
+      call MKL_MUL(ni, c4(i1-1), qslice(i1-1), temp2)
+      call MKL_MUL(ni, c5(i1-1), dq(i1-2), temp3)
+      call MKL_MUL(ni, c6(i1-1), dq(i1-1), temp4)
       do i = i1-1, i2+2
          ql(i) = 0.0
       enddo
-      MKL_ADD(ni, temp1,    temp2, ql(i1-1))
-      MKL_ADD(ni, ql(i1-1), temp3, ql(i1-1))
-      MKL_ADD(ni, ql(i1-1), temp4, ql(i1-1))
+      call MKL_ADD(ni, temp1,    temp2, ql(i1-1))
+      call MKL_ADD(ni, ql(i1-1), temp3, ql(i1-1))
+      call MKL_ADD(ni, ql(i1-1), temp4, ql(i1-1))
       do i = i1-1, i2+2
          qr(i-1) = ql(i)
       enddo
@@ -141,21 +143,21 @@ c
 c      do i=i1-1,i2+1
 c         temp1 = (qr(i)-qslice(i))*(qslice(i)-ql(i))
 
-      MKL_SUB(ni, qr(i1-1), qslice(i1-1), tempa)
-      MKL_SUB(ni, qslice(i1-1), ql(i1-1), tempb)
-      MKL_MUL(ni, tempa, tempb, temp1(i1-1))
+      call MKL_SUB(ni, qr(i1-1), qslice(i1-1), tempa)
+      call MKL_SUB(ni, qslice(i1-1), ql(i1-1), tempb)
+      call MKL_MUL(ni, tempa, tempb, temp1(i1-1))
 
 c         temp2 = qr(i)-ql(i)
 
-      MKL_SUB(ni, qr(i1-1), ql(i1-1), temp2(i1-1))
+      call MKL_SUB(ni, qr(i1-1), ql(i1-1), temp2(i1-1))
 
 c         temp3 = 6.0*(qslice(i)-0.5*(qr(i)+ql(i)))
 
-      MKL_ADD(ni, qr(i1-1), ql(i1-1), tempa)
+      call MKL_ADD(ni, qr(i1-1), ql(i1-1), tempa)
       do i=1,ni-1
          tempa(i) = 0.5 * tempa(i)
       enddo
-      MKL_SUB(ni, qslice(i1-1), tempa, temp3(i1-1))
+      call MKL_SUB(ni, qslice(i1-1), tempa, temp3(i1-1))
       do i=i1-1,i2+1
          temp3(i) = 6.0 * tempa(i)
       enddo
@@ -175,8 +177,8 @@ c         endif
 c         temp22 = temp2**2
 c         temp23 = temp2*temp3
 
-      MKL_SQR(ni, temp2(i1-1), temp22(i1-1))
-      MKL_MUL(ni, temp2(i1-1), temp3(i1-1), temp23(i1-1))
+      call MKL_SQR(ni, temp2(i1-1), temp22(i1-1))
+      call MKL_MUL(ni, temp2(i1-1), temp3(i1-1), temp23(i1-1))
 
 c         if (temp22 .lt. temp23)
 c     &        ql(i) = 3.0*qslice(i) - 2.0*qr(i)
@@ -208,11 +210,11 @@ c
 c      do i = i1-1, i2+1
 c         q6(i) = 6.0*(qslice(i)-0.5*(ql(i)+qr(i)))
 
-      MKL_ADD(ni, qr(i1-1), ql(i1-1), tempa)
+      call MKL_ADD(ni, qr(i1-1), ql(i1-1), tempa)
       do i=1,ni-1
          tempa(i) = 0.5 * tempa(i)
       enddo
-      MKL_SUB(ni, qslice(i1-1), tempa, q6(i1-1))
+      call MKL_SUB(ni, qslice(i1-1), tempa, q6(i1-1))
       do i=i1-1,i2+1
          q6(i) = 6.0 * q6(i)
       enddo
@@ -220,7 +222,7 @@ c         q6(i) = 6.0*(qslice(i)-0.5*(ql(i)+qr(i)))
 c         dq(i) = qr(i) - ql(i)
 c      enddo
 
-      MKL_SUB(ni, qr(i1-1), ql(i1-1), dq)
+      call MKL_SUB(ni, qr(i1-1), ql(i1-1), dq)
 c
 c
       ni = i2-i1+2
@@ -230,10 +232,10 @@ c        qla(i)= qr(i-1)-char1(i-1)*(dq(i-1)-(1.0-ft*char1(i-1))*q6(i-1))
       do i = i1, i2+1
          temp1(i) = 1.0 - ft * char1(i-1)
       enddo
-      MKL_SUB(ni, dq(i1-1), temp1(i1), temp2(i1))
-      MKL_MUL(ni, char1(i1-1), temp2(i1), temp3(i1))
-      MKL_MUL(ni, temp3(i1), q6(i1-1), temp4(i1))
-      MKL_SUB(ni, qr(i1-1), temp4(i1), qla(i1))
+      call MKL_SUB(ni, dq(i1-1), temp1(i1), temp2(i1))
+      call MKL_MUL(ni, char1(i1-1), temp2(i1), temp3(i1))
+      call MKL_MUL(ni, temp3(i1), q6(i1-1), temp4(i1))
+      call MKL_SUB(ni, qr(i1-1), temp4(i1), qla(i1))
 
 c        qra(i)= ql(i  )+char2(i  )*(dq(i  )+(1.0-ft*char2(i  ))*q6(i  ))
 c      enddo
@@ -241,10 +243,10 @@ c      enddo
       do i = i1, i2+1
          temp1(i) = 1.0 - ft * char2(i)
       enddo
-      MKL_SUB(ni, dq(i1), temp1(i1), temp2(i1))
-      MKL_MUL(ni, char2(i1), temp2(i1), temp3(i1))
-      MKL_MUL(ni, temp3(i1), q6(i1), temp4(i1))
-      MKL_ADD(ni, ql(i1), temp4(i1), qra(i1))
+      call MKL_SUB(ni, dq(i1), temp1(i1), temp2(i1))
+      call MKL_MUL(ni, char2(i1), temp2(i1), temp3(i1))
+      call MKL_MUL(ni, temp3(i1), q6(i1), temp4(i1))
+      call MKL_ADD(ni, ql(i1), temp4(i1), qra(i1))
 
 c
 c      do i=i1,i2+1
@@ -253,10 +255,10 @@ c         ql0(i) = qr(i-1)-c0(i-1)*(dq(i-1)-(1.0-ft*c0(i-1))*q6(i-1))
       do i = i1, i2+1
          temp1(i) = 1.0 - ft * c0(i-1)
       enddo
-      MKL_SUB(ni, dq(i1-1), temp1(i1), temp2(i1))
-      MKL_MUL(ni, c0(i1-1), temp2(i1), temp3(i1))
-      MKL_MUL(ni, temp3(i1), q6(i1-1), temp4(i1))
-      MKL_SUB(ni, qr(i1-1), temp4(i1), ql0(i1))
+      call MKL_SUB(ni, dq(i1-1), temp1(i1), temp2(i1))
+      call MKL_MUL(ni, c0(i1-1), temp2(i1), temp3(i1))
+      call MKL_MUL(ni, temp3(i1), q6(i1-1), temp4(i1))
+      call MKL_SUB(ni, qr(i1-1), temp4(i1), ql0(i1))
 
 c         qr0(i) = ql(i  )-c0(i  )*(dq(i  )+(1.0+ft*c0(i  ))*q6(i  ))
 c      enddo
@@ -264,10 +266,10 @@ c      enddo
       do i = i1, i2+1
          temp1(i) = 1.0 + ft * c0(i)
       enddo
-      MKL_SUB(ni, dq(i1), temp1(i1), temp2(i1))
-      MKL_MUL(ni, c0(i1), temp2(i1), temp3(i1))
-      MKL_MUL(ni, temp3(i1), q6(i1), temp4(i1))
-      MKL_SUB(ni, ql(i1), temp4(i1), qr0(i1))
+      call MKL_SUB(ni, dq(i1), temp1(i1), temp2(i1))
+      call MKL_MUL(ni, c0(i1), temp2(i1), temp3(i1))
+      call MKL_MUL(ni, temp3(i1), q6(i1), temp4(i1))
+      call MKL_SUB(ni, ql(i1), temp4(i1), qr0(i1))
 
 c
       return
