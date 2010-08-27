@@ -177,13 +177,16 @@ Star::Star(StarBuffer buffer)
 /* No need to delete the accretion arrays because the pointers are
    stored in the copies located in the grid class. */
 
-//Star::~Star(void)
-//{
-//  if (accretion_rate != NULL)
-//    delete [] accretion_rate;
-//  if (accretion_time != NULL)
-//    delete [] accretion_time;
-//}
+Star::~Star(void)
+{
+  if (accretion_rate != NULL)
+    delete [] accretion_rate;
+  if (accretion_time != NULL)
+    delete [] accretion_time;
+  NextStar = NULL;
+  PrevStar = NULL;
+  CurrentGrid = NULL;
+}
 
 /***************
 
@@ -462,8 +465,8 @@ void Star::DeleteCopyInGrid(void)
 
 void Star::PrintInfo(void)
 {
-  printf("Star %"ISYM": pos = %"PSYM" %"PSYM" %"PSYM", vel = %"FSYM" %"FSYM" %"FSYM"\n",
-	 Identifier, pos[0], pos[1], pos[2], vel[0], vel[1], vel[2]);
+  printf("[P%d] Star %"ISYM": pos = %"PSYM" %"PSYM" %"PSYM", vel = %"FSYM" %"FSYM" %"FSYM"\n",
+	 MyProcessorNumber, Identifier, pos[0], pos[1], pos[2], vel[0], vel[1], vel[2]);
   printf("\t delta_vel = %"FSYM" %"FSYM" %"FSYM"\n", delta_vel[0], delta_vel[1],
 	 delta_vel[2]);
   printf("\t naccr = %"ISYM, naccretions);
@@ -479,7 +482,7 @@ void Star::PrintInfo(void)
   printf("\t FeedbackFlag = %"ISYM"\n", FeedbackFlag);
   printf("\t accreted_angmom = %"FSYM" %"FSYM" %"FSYM"\n", accreted_angmom[0],
 	 accreted_angmom[1], accreted_angmom[2]);
-  printf("\t this = %x, NextStar = %x\n", this, NextStar);
+  printf("\t this = %x, PrevStar = %x, NextStar = %x\n", this, PrevStar, NextStar);
   return;
 }
 
@@ -495,11 +498,16 @@ RadiationSourceEntry* Star::RadiationSourceInitialize(void)
   source->Type           = type;
   source->LifeTime       = LifeTime;
   source->CreationTime   = BirthTime;
-  source->Position       = new FLOAT[3];
-  source->Position[0]    = pos[0]; 
-  source->Position[1]    = pos[1]; 
-  source->Position[2]    = pos[2]; 
   source->AddedEmissivity = false;
+  source->Position       = new FLOAT[3];
+  for (int dim = 0; dim < MAX_DIMENSION; dim++) {
+    if (pos[dim] < DomainLeftEdge[dim])
+      source->Position[dim] = pos[dim] + DomainRightEdge[dim] - DomainLeftEdge[dim];
+    else if (pos[dim] > DomainRightEdge[dim])
+      source->Position[dim] = pos[dim] - DomainRightEdge[dim] + DomainLeftEdge[dim];
+    else
+      source->Position[dim] = pos[dim];
+  }
   return source;
 }
 #endif
