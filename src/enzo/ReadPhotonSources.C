@@ -16,6 +16,7 @@
 
 #define RT_ENERGY_BINS 4
 
+int CommunicationBroadcastValue(int *Value, int BroadcastProcessor);
 int GetUnits(float *DensityUnits, float *LengthUnits,
 	     float *TemperatureUnits, float *TimeUnits,
 	     float *VelocityUnits, FLOAT Time);
@@ -56,6 +57,9 @@ int ReadPhotonSources(FILE *fptr, FLOAT CurrentTime)
     }
   }
 
+  RadiativeTransfer = 1;
+  CommunicationBroadcastValue(&RadiativeTransfer, MyProcessorNumber);
+
   float DensityUnits, LengthUnits, TemperatureUnits, TimeUnits, 
     VelocityUnits;
   if (GetUnits(&DensityUnits, &LengthUnits, &TemperatureUnits,
@@ -69,13 +73,14 @@ int ReadPhotonSources(FILE *fptr, FLOAT CurrentTime)
   char *value;
   int count;
   bool EnergyBinsDefined = false;
+  printf("MAX_LINE_LENGTH = "ISYM"\n",MAX_LINE_LENGTH);
 
   /* read input from file */
   while (fgets(line, MAX_LINE_LENGTH, fptr) != NULL) {
-    ret = 0;
+     ret = 0;
     ret += sscanf(line, "PhotonTestNumberOfSources = %"ISYM,
 		  &PhotonTestNumberOfSources);
-    if (sscanf(line, "PhotonTestSourceType[%"ISYM"]", &source) > 0) {
+     if (sscanf(line, "PhotonTestSourceType[%"ISYM"]", &source) > 0) {
       ret += sscanf(line, "PhotonTestSourceType[%"ISYM"] = %"ISYM, &source,
 		    &PhotonTestSourceType[source]);
       if (debug)
@@ -140,6 +145,7 @@ int ReadPhotonSources(FILE *fptr, FLOAT CurrentTime)
 		" interpreted:\n%s\n", line);
     
   } // ENDWHILE line
+
 
   // Set default SED and energies if not user-defined
 
