@@ -62,6 +62,9 @@ LOCAL_ACML_INSTALL   = /share/apps/intel10_1/acml/4.1.0/ifort64
 # Compiler settings
 #-----------------------------------------------------------------------
 
+MACH_CDEF      = -D
+MACH_FDEF      = -D
+
 MACH_CPP       = /usr/bin/cpp
 
 # With MPI
@@ -84,9 +87,9 @@ MACH_LD_NOMPI  = mpicxx
 # Machine-dependent defines
 #-----------------------------------------------------------------------
 
-#MACH_DEFINES   = -DXT3 -DNO_IO_LOG -DSYSCALL -DENZO_ANALYSIS
-#MACH_DEFINES   = -DXT3 -DNO_IO_LOG -DSYSCALL -DHAVE_SPRNG
-MACH_DEFINES   = -DLINUX -DNO_IO_LOG -DSYSCALL -DHAVE_SPRNG -DSFGEN_PERF
+#MACH_DEFINES   = XT3 NO_IO_LOG SYSCALL ENZO_ANALYSIS
+#MACH_DEFINES   = XT3 NO_IO_LOG SYSCALL HAVE_SPRNG
+MACH_DEFINES   = LINUX NO_IO_LOG SYSCALL HAVE_SPRNG SFGEN_PERF
 
 #-----------------------------------------------------------------------
 # Compiler flag settings

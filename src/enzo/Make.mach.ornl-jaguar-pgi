@@ -40,6 +40,9 @@ LOCAL_HYPRE_INSTALL  =
 # Compiler settings
 #-----------------------------------------------------------------------
 
+MACH_CDEF      = -D
+MACH_FDEF      = -D
+
 MACH_CPP       = /lib/cpp 
 
 # With MPI
@@ -62,7 +65,7 @@ MACH_LD_NOMPI  = CC
 # Machine-dependent defines
 #-----------------------------------------------------------------------
 
-MACH_DEFINES   = -DXT3 -DSYSCALL -DH5_USE_16_API
+MACH_DEFINES   = XT3 SYSCALL H5_USE_16_API
 
 #-----------------------------------------------------------------------
 # Compiler flag settings

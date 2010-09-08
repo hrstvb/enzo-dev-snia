@@ -33,6 +33,9 @@ LOCAL_CUDA_INSTALL   = /usr/local/cuda
 # Compiler settings
 #-----------------------------------------------------------------------
 
+MACH_CDEF      = -D
+MACH_FDEF      = -D
+
 MACH_CPP       = /usr/bin/cpp 
 
 # With MPI
@@ -56,10 +59,10 @@ MACH_LD_NOMPI  = /usr/bin/gcc
 # Machine-dependent defines
 #-----------------------------------------------------------------------
 
-#MACH_DEFINES   = -DXT3 -DNO_IO_LOG -DSYSCALL -DENZO_ANALYSIS
-#MACH_DEFINES   = -DXT3 -DNO_IO_LOG -DSYSCALL -DHAVE_SPRNG
-#MACH_DEFINES   = -DXT3 -DNO_IO_LOG -DSYSCALL -DSFGEN_PERF -DHAVE_SPRNG -DUSE_STOCHASTIC_FORCING
-MACH_DEFINES = -DLINUX -DH5_USE_16_API 
+#MACH_DEFINES   = XT3 NO_IO_LOG SYSCALL ENZO_ANALYSIS
+#MACH_DEFINES   = XT3 NO_IO_LOG SYSCALL HAVE_SPRNG
+#MACH_DEFINES   = XT3 NO_IO_LOG SYSCALL SFGEN_PERF HAVE_SPRNG USE_STOCHASTIC_FORCING
+MACH_DEFINES = LINUX H5_USE_16_API 
 
 #-----------------------------------------------------------------------
 # Compiler flag settings

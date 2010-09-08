@@ -18,6 +18,9 @@ MACH_FILE  = Make.mach.unknown
 # Compiler settings
 #-----------------------------------------------------------------------
 
+MACH_CDEF      = # preceding string denoting a C/C++ preprocessor directive
+MACH_FDEF      = # preceding string denoting a F77/F90 preprocessor directive
+
 MACH_CPP       = # C preprocessor command
 
 # With MPI
@@ -42,9 +45,9 @@ MACH_LD_NOMPI  = # Linker when not using MPI
 
 # Note: When compiling against HDF5 version 1.8 or greater, you need to
 # compile HDF5 with --with-default-api-version=v16, or Enzo with
-# -DH5_USE_16_API.
+# H5_USE_16_API.
 
-MACH_DEFINES   = -DH5_USE_16_API # Defines for the architecture; e.g. -DSUN, -DLINUX, etc.
+MACH_DEFINES   = H5_USE_16_API # Defines for the architecture; e.g. SUN, LINUX, etc.
 
 #-----------------------------------------------------------------------
 # Compiler flag settings

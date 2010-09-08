@@ -34,6 +34,9 @@ LOCAL_PYTHON_INSTALL = /scinet/gpc/tools/Python/Python262/
 # Compiler settings
 #-----------------------------------------------------------------------
 
+MACH_CDEF      = -D
+MACH_FDEF      = -D
+
 #MACH_CPP       = $(LOCAL_MPI_INSTALL)/bin/mpicc 
 MACH_CPP        = /usr/bin/cpp
 
@@ -63,10 +66,10 @@ MACH_LD_NOMPI  = icc
 # Machine-dependent defines
 #-----------------------------------------------------------------------
 
-#MACH_DEFINES   = -DXT3 -DNO_IO_LOG -DSYSCALL -DENZO_ANALYSIS
-#MACH_DEFINES   = -DXT3 -DNO_IO_LOG -DSYSCALL -DHAVE_SPRNG
-#MACH_DEFINES   = -DXT3 -DNO_IO_LOG -DSYSCALL -DSFGEN_PERF -DHAVE_SPRNG -DUSE_STOCHASTIC_FORCING
-MACH_DEFINES = -DLINUX -DH5_USE_16_API -DWINDS -DIO_LOG -DOMPI_SKIP_MPICXX
+#MACH_DEFINES   = XT3 NO_IO_LOG SYSCALL ENZO_ANALYSIS
+#MACH_DEFINES   = XT3 NO_IO_LOG SYSCALL HAVE_SPRNG
+#MACH_DEFINES   = XT3 NO_IO_LOG SYSCALL SFGEN_PERF HAVE_SPRNG USE_STOCHASTIC_FORCING
+MACH_DEFINES = LINUX H5_USE_16_API WINDS IO_LOG OMPI_SKIP_MPICXX
 
 #-----------------------------------------------------------------------
 # Compiler flag settings

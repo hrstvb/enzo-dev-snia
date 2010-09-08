@@ -27,6 +27,9 @@ LOCAL_HDF5_INSTALL = /usr/local/hdf5/1.8.2s
 # Compiler settings
 #-----------------------------------------------------------------------
 
+MACH_CDEF      = -D
+MACH_FDEF      = -D
+
 MACH_CPP       = cpp # C preprocessor command
 
 # With MPI
@@ -49,9 +52,9 @@ MACH_LD_NOMPI  = g++ # Linker when not using MPI
 # Machine-dependent defines
 #-----------------------------------------------------------------------
 
-MACH_DEFINES   = -DLINUX -DH5_USE_16_API -DFAST_SIB \
-	        -DSTATIC_SIBLING_LIST -DFLUX_FIX -DNO_IO_LOG \
-		-DENABLE_LOAD_BALANCE -DOPTIMIZED_CTP
+MACH_DEFINES   = LINUX H5_USE_16_API FAST_SIB \
+	        STATIC_SIBLING_LIST FLUX_FIX NO_IO_LOG \
+		ENABLE_LOAD_BALANCE OPTIMIZED_CTP
 
 #-----------------------------------------------------------------------
 # Compiler flag settings

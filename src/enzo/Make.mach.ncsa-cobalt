@@ -34,6 +34,9 @@ LOCAL_PAPI_INSTALL   = /usr/apps/tools/papi3
 # Compiler settings
 #-----------------------------------------------------------------------
 
+MACH_CDEF      = -D
+MACH_FDEF      = -D
+
 MACH_CPP       = /usr/bin/cpp
 
 # With MPI
@@ -56,7 +59,7 @@ MACH_LD_NOMPI  = $(LOCAL_INTEL_INSTALL)/bin/icpc
 # Machine-dependent defines
 #-----------------------------------------------------------------------
 
-MACH_DEFINES   = -DIA64
+MACH_DEFINES   = IA64
 
 #-----------------------------------------------------------------------
 # Compiler flag settings
