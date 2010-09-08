@@ -550,15 +550,14 @@ subroutine MFSplit_SetupSystem_3D(mat, rhs, rhsnorm, E, E0, HI, HI0, HeI, &
            nHI_avg = nHI_avg + HI(i,j,k)
 
            ! set the matrix entries
-           mat(:,i,j,k) = (/  &
-                -dtfac*dzi*dzi*D_zl, &       ! z-left
-                -dtfac*dyi*dyi*D_yl, &       ! y-left
-                -dtfac*dxi*dxi*D_xl, &       ! x-left
-                1.d0 + dtfac*(c*kap + dxi*dxi*(D_xl+D_xr)          &  ! self
-                     + dyi*dyi*(D_yl+D_yr) + dzi*dzi*(D_zl+D_zr)), &
-                -dtfac*dxi*dxi*D_xr, &       ! x-right
-                -dtfac*dyi*dyi*D_yr, &       ! y-right
-                -dtfac*dzi*dzi*D_zr /)       ! z-right
+           mat(1,i,j,k) = -dtfac*dzi*dzi*D_zl     ! z-left
+           mat(2,i,j,k) = -dtfac*dyi*dyi*D_yl     ! y-left
+           mat(3,i,j,k) = -dtfac*dxi*dxi*D_xl     ! x-left
+           mat(4,i,j,k) = 1.d0 + dtfac*(c*kap + dxi*dxi*(D_xl+D_xr) &
+                     + dyi*dyi*(D_yl+D_yr) + dzi*dzi*(D_zl+D_zr))     ! self
+           mat(5,i,j,k) = -dtfac*dxi*dxi*D_xr     ! x-right
+           mat(6,i,j,k) = -dtfac*dyi*dyi*D_yr     ! y-right
+           mat(7,i,j,k) = -dtfac*dzi*dzi*D_zr     ! z-right
                 
            ! set the rhs entries
            rhs(i,j,k) = ( (dtfac + dtfac0)*src(i,j,k)                   &
@@ -968,13 +967,12 @@ subroutine MFSplit_SetupSystem_2D(mat, rhs, rhsnorm, E, E0, HI, HI0, HeI, &
         kap0 = (sHI*HI0(i,j) + sHeI*HeI0(i,j) + sHeII*HeII0(i,j))*nUn0
         
         ! set the matrix entries
-        mat(:,i,j) = (/  &
-             -dtfac*dyi*dyi*D_yl, &       ! y-left
-             -dtfac*dxi*dxi*D_xl, &       ! x-left
-             1.d0 + dtfac*(c*kap + dxi*dxi*(D_xl+D_xr)  &  ! self
-                  + dyi*dyi*(D_yl+D_yr)), &
-             -dtfac*dxi*dxi*D_xr, &       ! x-right
-             -dtfac*dyi*dyi*D_yr /)       ! y-right
+        mat(1,i,j) = -dtfac*dyi*dyi*D_yl     ! y-left
+        mat(2,i,j) = -dtfac*dxi*dxi*D_xl     ! x-left
+        mat(3,i,j) = 1.d0 + dtfac*(c*kap + dxi*dxi*(D_xl+D_xr)  & 
+                   + dyi*dyi*(D_yl+D_yr))    ! self
+        mat(4,i,j) = -dtfac*dxi*dxi*D_xr     ! x-right
+        mat(5,i,j) = -dtfac*dyi*dyi*D_yr     ! y-right
                 
         ! set the rhs entries
         rhs(i,j) = ( (dtfac + dtfac0)*src(i,j)                       &
@@ -1231,10 +1229,9 @@ subroutine MFSplit_SetupSystem_1D(mat, rhs, rhsnorm, E, E0, HI, HI0, HeI, &
      kap0 = (sHI*HI0(i) + sHeI*HeI0(i) + sHeII*HeII0(i))*nUn0
      
      ! set the matrix entries
-     mat(:,i) = (/  &
-          -dtfac*dxi*dxi*D_xl, &       ! x-left
-          1.d0 + dtfac*(c*kap + dxi*dxi*(D_xl+D_xr)),  &  ! self
-          -dtfac*dxi*dxi*D_xr /)       ! x-right
+     mat(1,i) = -dtfac*dxi*dxi*D_xl     ! x-left
+     mat(2,i) = 1.d0 + dtfac*(c*kap + dxi*dxi*(D_xl+D_xr))    ! self
+     mat(3,i) = -dtfac*dxi*dxi*D_xr     ! x-right
                 
      ! set the rhs entries
      rhs(i) = ( (dtfac + dtfac0)*src(i)                         &
