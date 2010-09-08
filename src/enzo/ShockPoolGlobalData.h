@@ -11,11 +11,13 @@
 /
 ************************************************************************/
 
+#ifndef SPEXTERN
 #ifdef DEFINE_STORAGE
 # define SPEXTERN
 #else /* DEFINE_STORAGE */
 # define SPEXTERN extern
 #endif /* DEFINE_STORAGE */
+#endif /* SPEXTERN */
 
 /* Angle of the vector of propogation with respect to the x-axis.  */
 

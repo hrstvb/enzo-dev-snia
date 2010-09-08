@@ -11,11 +11,13 @@
 /
 ************************************************************************/
 
+#ifndef SPEXTERN
 #ifdef DEFINE_STORAGE
 # define SPEXTERN
 #else /* DEFINE_STORAGE */
 # define SPEXTERN extern
 #endif /* DEFINE_STORAGE */
+#endif /* SPEXTERN */
 
 /* Density and total energy in the ambient medium. */
 

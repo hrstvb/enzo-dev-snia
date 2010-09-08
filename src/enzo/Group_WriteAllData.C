@@ -17,8 +17,10 @@
 /  PURPOSE:
 /
 ************************************************************************/
+#ifndef SYSCALL
 #define SYSCALL
- 
+#endif
+
 // This function writes out the data hierarchy (TopGrid), the External
 //   Boundary (Exterior), the TopGridData, and the global_data.
 #include "preincludes.h"
