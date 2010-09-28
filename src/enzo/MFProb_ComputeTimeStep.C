@@ -241,7 +241,7 @@ float MFProb::ComputeTimeStep(EnzoVector *unew)
 		ne_old = nHII/nUnits0;
 		w = dtfac[2]*(sqrt(fabs(ne_new*ne_old))	+ atol);
 		diff = ne_new - ne_old;
-		tmp = abs(diff/w);
+		tmp = fabs(diff/w);
 		loc_est[4] += POW(tmp,dtnorm);
 	      }
 	}
@@ -296,7 +296,7 @@ float MFProb::ComputeTimeStep(EnzoVector *unew)
 		ne_old = (nHII + 0.25*nHeII + 0.5*nHeIII)/nUnits0;
 		w = dtfac[2]*(sqrt(fabs(ne_new*ne_old))	+ atol);
 		diff = ne_new - ne_old;
-		tmp = abs(diff/w);
+		tmp = fabs(diff/w);
 		loc_est[4] += POW(tmp,dtnorm);
 	      }
 	}
