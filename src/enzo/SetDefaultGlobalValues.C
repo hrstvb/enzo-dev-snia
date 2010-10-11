@@ -410,6 +410,7 @@ int SetDefaultGlobalValues(TopGridData &MetaData)
   HaloFinderLastTime               = 0.0;
 
   StarClusterUseMetalField         = FALSE;
+  StarClusterUnresolvedModel       = FALSE;
   StarClusterHeliumIonization      = FALSE;
   StarClusterMinDynamicalTime      = 10e6;         // in years
   StarClusterIonizingLuminosity    = 1e47;         // ph/s / Msun
@@ -426,6 +427,7 @@ int SetDefaultGlobalValues(TopGridData &MetaData)
   PopIIIStarMass                   = 100;
   PopIIIInitialMassFunction        = FALSE;
   PopIIIInitialMassFunctionSeed    = INT_UNDEFINED;
+  PopIIIInitialMassFunctionCalls   = 0;
   PopIIIHeliumIonization           = FALSE;
   PopIIILowerMassCutoff            = 1.0;
   PopIIIUpperMassCutoff            = 300.0;
@@ -505,8 +507,10 @@ int SetDefaultGlobalValues(TopGridData &MetaData)
   SmallEint		     = 1e-30;
   SmallT		     = 1e-10;
   MaximumAlvenSpeed	     = 1e30;
-  RiemannSolver		     = HLL;
-  ReconstructionMethod	     = PLM;
+  RiemannSolver		     = INT_UNDEFINED;
+  RiemannSolverFallback      = FALSE;
+  ReconstructionMethod	     = INT_UNDEFINED;
+  PositiveReconstruction     = FALSE;
   ConservativeReconstruction = 0;
   EOSType		     = 0;
   EOSSoundSpeed		     = 2.65e4;

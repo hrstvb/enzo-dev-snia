@@ -36,6 +36,8 @@
 
 /* function prototypes */
 
+int LoadBalanceHilbertCurve(grid *GridPointers[], int NumberOfGrids, 
+			    float *InputGridWork, int *NewProcessorNumber);
 int CommunicationReceiveHandler(fluxes **SubgridFluxesEstimate[] = NULL,
 				int NumberOfSubgrids[] = NULL,
 				int FluxFlag = FALSE,
@@ -72,29 +74,29 @@ int CommunicationLoadBalancePhotonGrids(HierarchyEntry **Grids[], int *NumberOfG
 
   /* Initialize */
 
-  float *ComputeTime[MAX_DEPTH_OF_HIERARCHY];
-  int *NewProcessorNumber[MAX_DEPTH_OF_HIERARCHY];
-  char *MoveFlag[MAX_DEPTH_OF_HIERARCHY];
+  float *NonZeroComputeTime, *ComputeTime;
+  int *NewProcessorNumber, *NonZeroList;
+  grid **NonZeroGrids;
+  char *MoveFlag;
 
-  int i, index, lvl, dim, proc, GridsMoved, TotalNumberOfGrids;
-  int NumberOfBaryonFields;
+  int i, index, index2, lvl, dim, proc, GridsMoved, TotalNumberOfGrids;
+  int NumberOfBaryonFields, Nonzero;
   int FieldTypes[MAX_NUMBER_OF_BARYON_FIELDS];
   float AxialRatio, GridVolume;
   float *ProcessorComputeTime = new float[NumberOfProcessors];
   Eflt32 *SortedComputeTime = new Eflt32[NumberOfProcessors];
 
   GridsMoved = 0;
-  for (i = 0; i < NumberOfProcessors; i++)
-    ProcessorComputeTime[i] = 0;
 
   TotalNumberOfGrids = 0;
   for (lvl = MIN_LEVEL; lvl < MAX_DEPTH_OF_HIERARCHY; lvl++)
-    if (NumberOfGrids[lvl] > 0) {
-      ComputeTime[lvl] = new float[NumberOfGrids[lvl]];
-      NewProcessorNumber[lvl] = new int[NumberOfGrids[lvl]];
-      MoveFlag[lvl] = new char[NumberOfGrids[lvl]];
-      TotalNumberOfGrids += NumberOfGrids[lvl];
-    }
+    TotalNumberOfGrids += NumberOfGrids[lvl];
+
+  /* Allocate memory */
+
+  ComputeTime = new float[TotalNumberOfGrids];
+  MoveFlag = new char[TotalNumberOfGrids];
+  NewProcessorNumber = new int[TotalNumberOfGrids];
   
   /* Compute work for each grid. */
 
@@ -103,58 +105,67 @@ int CommunicationLoadBalancePhotonGrids(HierarchyEntry **Grids[], int *NumberOfG
   Grids[0][0]->GridData->ReturnFieldType(FieldTypes);
   int RaySegNum = FindField(RaySegments, FieldTypes, NumberOfBaryonFields);
 
+  index = 0;
+  Nonzero = 0;
   for (lvl = MIN_LEVEL; lvl < MAX_DEPTH_OF_HIERARCHY; lvl++)
-    for (i = 0; i < NumberOfGrids[lvl]; i++) {
+    for (i = 0; i < NumberOfGrids[lvl]; i++, index++) {
 
       proc = Grids[lvl][i]->GridData->ReturnProcessorNumber();
       Grids[lvl][i]->GridData->SetOriginalProcessorNumber(proc);
-      if (MyProcessorNumber == proc)
-	ComputeTime[lvl][i] = Grids[lvl][i]->GridData->
+      if (MyProcessorNumber == proc) {
+	ComputeTime[index] = Grids[lvl][i]->GridData->
 	  ReturnTotalNumberOfRaySegments(RaySegNum);
-      else
-	ComputeTime[lvl][i] = 0.0;
+	if (ComputeTime[index] > 0) Nonzero++;
+      } else
+	ComputeTime[index] = 0.0;
 
-      MoveFlag[lvl][i] = FALSE;
-      NewProcessorNumber[lvl][i] = proc;
+      MoveFlag[index] = FALSE;
+      NewProcessorNumber[index] = proc;
 
   } // ENDFOR grids
 
   /* Get total compute time over all processors */
 
-  float *buffer = new float[TotalNumberOfGrids];
+  CommunicationSumValues(ComputeTime, TotalNumberOfGrids);
+  CommunicationSumValues(&Nonzero, 1);
 
-  for (lvl = MIN_LEVEL, index = 0; lvl < MAX_DEPTH_OF_HIERARCHY; lvl++)
+  if (MyProcessorNumber == ROOT_PROCESSOR) {
+
+  /* Find grids with non-zero amount of work and only load balance
+     those grids.  Construct a contiguous grid list with work. */
+
+  NonZeroComputeTime = new float[Nonzero];
+  NonZeroList = new int[Nonzero];
+  for (i = 0, index = 0; i < TotalNumberOfGrids; i++)
+    if (ComputeTime[i] > 0) {
+      NonZeroComputeTime[index] = ComputeTime[i];
+      NonZeroList[index++] = i;
+    } // ENDIF
+
+  NonZeroGrids = new grid*[Nonzero];
+  index = 0;
+  index2 = 0;
+  for (lvl = MIN_LEVEL; lvl < MAX_DEPTH_OF_HIERARCHY; lvl++)
     for (i = 0; i < NumberOfGrids[lvl]; i++, index++)
-      buffer[index] = ComputeTime[lvl][i];
-
-  CommunicationAllSumValues(buffer, TotalNumberOfGrids);
-
-  for (lvl = MIN_LEVEL, index = 0; lvl < MAX_DEPTH_OF_HIERARCHY; lvl++)
-    for (i = 0; i < NumberOfGrids[lvl]; i++, index++) {
-      ComputeTime[lvl][i] = buffer[index];
-      ProcessorComputeTime[NewProcessorNumber[lvl][i]] += buffer[index];
-    }
-
-  delete [] buffer;
-
-//  if (debug)
-//    fpcol(ProcessorComputeTime, NumberOfProcessors, 8, stdout);
+      if (ComputeTime[index] > 0)
+	NonZeroGrids[index2++] = Grids[lvl][i]->GridData;
 
   /* Transfer grids from heavily-loaded processors. */
 
-  bool BreakLoop;
-  int Done = FALSE, MinProc, MaxProc = 0;
-  while (!Done) {
+  int *NonZeroProcs = new int[Nonzero];
+  LoadBalanceHilbertCurve(NonZeroGrids, Nonzero, NonZeroComputeTime,
+			  NonZeroProcs);
 
-    /* Find min and max */
+  // Change processor number in list.
+  for (i = 0; i < Nonzero; i++)
+    NewProcessorNumber[NonZeroList[i]] = NonZeroProcs[i];
 
-    int FirstNonZero;
-    float MaxVal = 0, MinVal = huge_number;
-    float Mean, Median;
+  delete [] NonZeroComputeTime;
+  delete [] NonZeroList;
+  delete [] NonZeroGrids;
+  delete [] NonZeroProcs;
 
-    MaxProc = -1;
-    MinProc = -1;
-    Mean = 0;
+  } // ENDIF ROOT_PROCESSOR
 
     for (i = 0; i < NumberOfProcessors; i++) {
       Mean += ProcessorComputeTime[i];
@@ -238,6 +249,7 @@ int CommunicationLoadBalancePhotonGrids(HierarchyEntry **Grids[], int *NumberOfG
 //    fpcol(ProcessorComputeTime, NumberOfProcessors, 8, stdout);
 //  }
 
+
   /* Now we know where the grids are going, transfer them. */
 
   /* Post receives */
@@ -246,29 +258,32 @@ int CommunicationLoadBalancePhotonGrids(HierarchyEntry **Grids[], int *NumberOfG
   CommunicationReceiveCurrentDependsOn = COMMUNICATION_NO_DEPENDENCE;
   CommunicationDirection = COMMUNICATION_POST_RECEIVE;
 
+  index = 0;
   for (lvl = MIN_LEVEL; lvl < MAX_DEPTH_OF_HIERARCHY; lvl++)
-    for (i = 0; i < NumberOfGrids[lvl]; i++) 
+    for (i = 0; i < NumberOfGrids[lvl]; i++, index++) 
       if (Grids[lvl][i]->GridData->ReturnProcessorNumber() !=
-	  NewProcessorNumber[lvl][i]) {
+	  NewProcessorNumber[index]) {
       Grids[lvl][i]->GridData->
-	CommunicationMoveGrid(NewProcessorNumber[lvl][i], FALSE, FALSE);
-      MoveFlag[lvl][i] = TRUE;
+	CommunicationMoveGrid(NewProcessorNumber[index], FALSE, FALSE);
+      MoveFlag[index] = TRUE;
+      GridsMoved++;
     } else {
-      MoveFlag[lvl][i] = FALSE;
+      MoveFlag[index] = FALSE;
     }
 
   /* Send grids */
 
   CommunicationDirection = COMMUNICATION_SEND;
 
+  index = 0;
   for (lvl = MIN_LEVEL; lvl < MAX_DEPTH_OF_HIERARCHY; lvl++)
-  for (i = 0; i < NumberOfGrids[lvl]; i++)
+    for (i = 0; i < NumberOfGrids[lvl]; i++, index++)
     if (Grids[lvl][i]->GridData->ReturnProcessorNumber() !=
-	NewProcessorNumber[lvl][i]) {
+	NewProcessorNumber[index]) {
       if (RandomForcing)  //AK
 	Grids[lvl][i]->GridData->AppendForcingToBaryonFields();
       Grids[lvl][i]->GridData->
-	CommunicationMoveGrid(NewProcessorNumber[lvl][i], FALSE, FALSE);
+	CommunicationMoveGrid(NewProcessorNumber[index], FALSE, FALSE);
     }
 
   /* Receive grids */
@@ -277,28 +292,14 @@ int CommunicationLoadBalancePhotonGrids(HierarchyEntry **Grids[], int *NumberOfG
     ENZO_FAIL("CommunicationReceiveHandler() failed!\n");
 
   /* Update processor numbers */
-  
+
+  index = 0;
   for (lvl = MIN_LEVEL; lvl < MAX_DEPTH_OF_HIERARCHY; lvl++)
-  for (i = 0; i < NumberOfGrids[lvl]; i++) {
-    Grids[lvl][i]->GridData->SetProcessorNumber(NewProcessorNumber[lvl][i]);
-    if (RandomForcing)  //AK
-      Grids[lvl][i]->GridData->RemoveForcingFromBaryonFields();
+    for (i = 0; i < NumberOfGrids[lvl]; i++, index++) {
+      Grids[lvl][i]->GridData->SetProcessorNumber(NewProcessorNumber[index]);
+      if (RandomForcing)  //AK
+	Grids[lvl][i]->GridData->RemoveForcingFromBaryonFields();
   }
-
-  /* Delete the SubgridMarker buffers on the original processors */
-
-  for (lvl = MIN_LEVEL; lvl < MAX_DEPTH_OF_HIERARCHY; lvl++)
-    for (i = 0; i < NumberOfGrids[lvl]; i++)
-      Grids[lvl][i]->GridData->DeleteSubgridMarker();
-
-  /* Unpack the SubgridMarker buffers into grid pointers */
-
-#ifdef UNUSED
-  for (i = 0; i < NumberOfGrids; i++)
-    if (MoveFlag[i])
-      GridHierarchyPointer[i]->GridData->SubgridMarkerPostParallel
-	(AllGrids, AllNumberOfGrids);
-#endif
 
   CommunicationBarrier();
 
@@ -310,15 +311,9 @@ int CommunicationLoadBalancePhotonGrids(HierarchyEntry **Grids[], int *NumberOfG
 
   /* Cleanup */
 
-  delete [] ProcessorComputeTime;
-  delete [] SortedComputeTime;
-
-  for (lvl = MIN_LEVEL; lvl < MAX_DEPTH_OF_HIERARCHY; lvl++)
-    if (NumberOfGrids[lvl] > 0) {
-      delete [] ComputeTime[lvl];
-      delete [] NewProcessorNumber[lvl];
-      delete [] MoveFlag[lvl];
-    }
+  delete [] ComputeTime;
+  delete [] MoveFlag;
+  delete [] NewProcessorNumber;
 
 #endif /* TRANSFER */
 
