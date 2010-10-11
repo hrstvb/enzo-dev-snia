@@ -4,7 +4,7 @@
 /
 /  written by: Greg Bryan
 /  date:       November, 1994
-/  modified1:
+/  modified1: 2010 Tom Abel, added MHD part 
 /
 /  PURPOSE:
 /
@@ -32,6 +32,7 @@
 #include "RadiativeTransferParameters.h"
 #include "hydro_rk/EOS.h"
 #include "hydro_rk/tools.h"
+#include "phys_constants.h"
  
 /* function prototypes */
  
@@ -69,6 +70,7 @@ float grid::ComputeTimeStep()
   float dtExpansion    = huge_number;
   float dtAcceleration = huge_number;
   float dtMHD          = huge_number;
+  float dtConduction   = huge_number;
   int dim, i, result;
  
   /* Compute the field size. */
@@ -96,6 +98,13 @@ float grid::ComputeTimeStep()
 					 Vel3Num, TENum) == FAIL) {
       fprintf(stderr, "ComputeTimeStep: IdentifyPhysicalQuantities error.\n");
       exit(FAIL);
+    }
+
+    /* For one-zone free-fall test, just compute free-fall time. */
+    if (ProblemType == 63) {
+      dt = TestProblemData.OneZoneFreefallTimestepFraction * 
+	POW(((3 * pi) / (32 * GravitationalConstant * BaryonField[DensNum][0])), 0.5);
+      return dt;
     }
  
     /* Compute the pressure. */
@@ -154,9 +163,9 @@ float grid::ComputeTimeStep()
       exit(FAIL);
     }
 
-    FLOAT dxinv = 1.0 / CellWidth[0][0];
-    FLOAT dyinv = (GridRank > 1) ? 1.0 / CellWidth[1][0] : 0.0;
-    FLOAT dzinv = (GridRank > 2) ? 1.0 / CellWidth[2][0] : 0.0;
+    FLOAT dxinv = 1.0 / CellWidth[0][0]/a;
+    FLOAT dyinv = (GridRank > 1) ? 1.0 / CellWidth[1][0]/a : 0.0;
+    FLOAT dzinv = (GridRank > 2) ? 1.0 / CellWidth[2][0]/a : 0.0;
     float dt_temp = 1.e-20, dt_ltemp, dt_x, dt_y, dt_z;
     float rho, p, vx, vy, vz, v2, eint, etot, h, cs, dpdrho, dpde,
       v_signal_x, v_signal_y, v_signal_z;
@@ -180,9 +189,11 @@ float grid::ComputeTimeStep()
 
 	  EOS(p, rho, eint, h, cs, dpdrho, dpde, EOSType, 2);
 
+	  v_signal_y = v_signal_z = 0;
+
 	  v_signal_x = (cs + fabs(vx));
-	  v_signal_y = (cs + fabs(vy));
-	  v_signal_z = (cs + fabs(vz));
+	  if (GridRank > 1) v_signal_y = (cs + fabs(vy));
+	  if (GridRank > 2) v_signal_z = (cs + fabs(vz));
 
 	  dt_x = v_signal_x * dxinv;
 	  dt_y = v_signal_y * dyinv;
@@ -213,9 +224,9 @@ float grid::ComputeTimeStep()
       return FAIL;
     }
 
-    FLOAT dxinv = 1.0 / CellWidth[0][0];
-    FLOAT dyinv = (GridRank > 1) ? 1.0 / CellWidth[1][0] : 0.0;
-    FLOAT dzinv = (GridRank > 2) ? 1.0 / CellWidth[2][0] : 0.0;
+    FLOAT dxinv = 1.0 / CellWidth[0][0]/a;
+    FLOAT dyinv = (GridRank > 1) ? 1.0 / CellWidth[1][0]/a : 0.0;
+    FLOAT dzinv = (GridRank > 2) ? 1.0 / CellWidth[2][0]/a : 0.0;
     float vxm, vym, vzm, Bm, rhom;
     float dt_temp = 1.e-20, dt_ltemp, dt_x, dt_y, dt_z;
     float rho, p, vx, vy, vz, v2, eint, etot, h, cs, cs2, dpdrho, dpde,
@@ -243,6 +254,8 @@ float grid::ComputeTimeStep()
 	    eint = etot - 0.5*v2 - 0.5*B2/rho;
 	  }
 
+	  v_signal_y = v_signal_z = 0;
+
 	  EOS(p, rho, eint, h, cs, dpdrho, dpde, EOSType, 2);
 	  cs2 = cs*cs;
 	  temp1 = cs2 + B2/rho;
@@ -252,15 +265,19 @@ float grid::ComputeTimeStep()
 	  cf = sqrt(cf2);
 	  v_signal_x = (cf + fabs(vx));
 
-	  ca2 = By*By/rho;
-	  cf2 = 0.5 * (temp1 + sqrt(temp1*temp1 - 4.0*cs2*ca2));
-	  cf = sqrt(cf2);
-	  v_signal_y = (cf + fabs(vy));
+	  if (GridRank > 1) {
+	    ca2 = By*By/rho;
+	    cf2 = 0.5 * (temp1 + sqrt(temp1*temp1 - 4.0*cs2*ca2));
+	    cf = sqrt(cf2);
+	    v_signal_y = (cf + fabs(vy));
+	  }
 
-	  ca2 = Bz*Bz/rho;
-	  cf2 = 0.5 * (temp1 + sqrt(temp1*temp1 - 4.0*cs2*ca2));
-	  cf = sqrt(cf2);
-	  v_signal_z = (cf + fabs(vz));
+	  if (GridRank > 2) {
+	    ca2 = Bz*Bz/rho;
+	    cf2 = 0.5 * (temp1 + sqrt(temp1*temp1 - 4.0*cs2*ca2));
+	    cf = sqrt(cf2);
+	    v_signal_z = (cf + fabs(vz));
+	  }
 
 	  dt_x = v_signal_x * dxinv;
 	  dt_y = v_signal_y * dyinv;
@@ -280,7 +297,7 @@ float grid::ComputeTimeStep()
       }
     }
     dtMHD = CourantSafetyNumber / dt_temp;
-
+    //    fprintf(stderr, "ok %g %g %g\n", dt_x,dt_y,dt_z);
     //    if (dtMHD*TimeUnits/yr < 5) {
     //float ca = B_dt/sqrt(rho_dt)*VelocityUnits;
     //printf("dt=%g, rho=%g, B=%g\n, v=%g, ca=%g, dt=%g", dtMHD*TimeUnits/yr, rho_dt*DensityUnits, B_dt*MagneticUnits, 
@@ -332,14 +349,26 @@ float grid::ComputeTimeStep()
     if (dtAcceleration != huge_number)
       dtAcceleration *= 0.5;
   }
- 
-  /* 5) calculate minimum timestep */
+
+  /* 5) Calculate minimum dt due to thermal conduction. */
+
+  if(Conduction){
+    if (this->ComputeConductionTimeStep(dtConduction) == FAIL) {
+      fprintf(stderr, "Error in ComputeConductionTimeStep.\n");
+      return FAIL;
+    }
+    dtConduction *= ConductionCourantSafetyNumber;  // for stability
+    dtConduction *= float(DEFAULT_GHOST_ZONES);     // for subcycling 
+  }
+
+  /* 6) calculate minimum timestep */
  
   dt = min(dtBaryons, dtParticles);
   dt = min(dt, dtMHD);
   dt = min(dt, dtViscous);
   dt = min(dt, dtAcceleration);
   dt = min(dt, dtExpansion);
+  dt = min(dt, dtConduction);
 
 #ifdef TRANSFER
 
@@ -430,8 +459,9 @@ float grid::ComputeTimeStep()
     if (dtAcceleration != huge_number)
       printf("Acc = %"FSYM" ", dtAcceleration);
     if (NumberOfParticles)
-
       printf("Part = %"FSYM" ", dtParticles);
+    if (Conduction)
+      printf("Cond = %"FSYM" ",(dtConduction));
     printf(")\n");
   }
  
