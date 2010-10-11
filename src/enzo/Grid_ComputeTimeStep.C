@@ -4,7 +4,7 @@
 /
 /  written by: Greg Bryan
 /  date:       November, 1994
-/  modified1:
+/  modified1: 2010 Tom Abel, added MHD part 
 /
 /  PURPOSE:
 /
@@ -163,9 +163,9 @@ float grid::ComputeTimeStep()
       exit(FAIL);
     }
 
-    FLOAT dxinv = 1.0 / CellWidth[0][0];
-    FLOAT dyinv = (GridRank > 1) ? 1.0 / CellWidth[1][0] : 0.0;
-    FLOAT dzinv = (GridRank > 2) ? 1.0 / CellWidth[2][0] : 0.0;
+    FLOAT dxinv = 1.0 / CellWidth[0][0]/a;
+    FLOAT dyinv = (GridRank > 1) ? 1.0 / CellWidth[1][0]/a : 0.0;
+    FLOAT dzinv = (GridRank > 2) ? 1.0 / CellWidth[2][0]/a : 0.0;
     float dt_temp = 1.e-20, dt_ltemp, dt_x, dt_y, dt_z;
     float rho, p, vx, vy, vz, v2, eint, etot, h, cs, dpdrho, dpde,
       v_signal_x, v_signal_y, v_signal_z;
@@ -189,9 +189,11 @@ float grid::ComputeTimeStep()
 
 	  EOS(p, rho, eint, h, cs, dpdrho, dpde, EOSType, 2);
 
+	  v_signal_y = v_signal_z = 0;
+
 	  v_signal_x = (cs + fabs(vx));
-	  v_signal_y = (cs + fabs(vy));
-	  v_signal_z = (cs + fabs(vz));
+	  if (GridRank > 1) v_signal_y = (cs + fabs(vy));
+	  if (GridRank > 2) v_signal_z = (cs + fabs(vz));
 
 	  dt_x = v_signal_x * dxinv;
 	  dt_y = v_signal_y * dyinv;
@@ -222,9 +224,9 @@ float grid::ComputeTimeStep()
       return FAIL;
     }
 
-    FLOAT dxinv = 1.0 / CellWidth[0][0];
-    FLOAT dyinv = (GridRank > 1) ? 1.0 / CellWidth[1][0] : 0.0;
-    FLOAT dzinv = (GridRank > 2) ? 1.0 / CellWidth[2][0] : 0.0;
+    FLOAT dxinv = 1.0 / CellWidth[0][0]/a;
+    FLOAT dyinv = (GridRank > 1) ? 1.0 / CellWidth[1][0]/a : 0.0;
+    FLOAT dzinv = (GridRank > 2) ? 1.0 / CellWidth[2][0]/a : 0.0;
     float vxm, vym, vzm, Bm, rhom;
     float dt_temp = 1.e-20, dt_ltemp, dt_x, dt_y, dt_z;
     float rho, p, vx, vy, vz, v2, eint, etot, h, cs, cs2, dpdrho, dpde,
@@ -252,6 +254,8 @@ float grid::ComputeTimeStep()
 	    eint = etot - 0.5*v2 - 0.5*B2/rho;
 	  }
 
+	  v_signal_y = v_signal_z = 0;
+
 	  EOS(p, rho, eint, h, cs, dpdrho, dpde, EOSType, 2);
 	  cs2 = cs*cs;
 	  temp1 = cs2 + B2/rho;
@@ -261,15 +265,19 @@ float grid::ComputeTimeStep()
 	  cf = sqrt(cf2);
 	  v_signal_x = (cf + fabs(vx));
 
-	  ca2 = By*By/rho;
-	  cf2 = 0.5 * (temp1 + sqrt(temp1*temp1 - 4.0*cs2*ca2));
-	  cf = sqrt(cf2);
-	  v_signal_y = (cf + fabs(vy));
+	  if (GridRank > 1) {
+	    ca2 = By*By/rho;
+	    cf2 = 0.5 * (temp1 + sqrt(temp1*temp1 - 4.0*cs2*ca2));
+	    cf = sqrt(cf2);
+	    v_signal_y = (cf + fabs(vy));
+	  }
 
-	  ca2 = Bz*Bz/rho;
-	  cf2 = 0.5 * (temp1 + sqrt(temp1*temp1 - 4.0*cs2*ca2));
-	  cf = sqrt(cf2);
-	  v_signal_z = (cf + fabs(vz));
+	  if (GridRank > 2) {
+	    ca2 = Bz*Bz/rho;
+	    cf2 = 0.5 * (temp1 + sqrt(temp1*temp1 - 4.0*cs2*ca2));
+	    cf = sqrt(cf2);
+	    v_signal_z = (cf + fabs(vz));
+	  }
 
 	  dt_x = v_signal_x * dxinv;
 	  dt_y = v_signal_y * dyinv;
@@ -289,7 +297,7 @@ float grid::ComputeTimeStep()
       }
     }
     dtMHD = CourantSafetyNumber / dt_temp;
-
+    //    fprintf(stderr, "ok %g %g %g\n", dt_x,dt_y,dt_z);
     //    if (dtMHD*TimeUnits/yr < 5) {
     //float ca = B_dt/sqrt(rho_dt)*VelocityUnits;
     //printf("dt=%g, rho=%g, B=%g\n, v=%g, ca=%g, dt=%g", dtMHD*TimeUnits/yr, rho_dt*DensityUnits, B_dt*MagneticUnits, 
