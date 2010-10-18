@@ -26,8 +26,8 @@ MACHINE_NOTES = "BlueDrop prototype for BlueWaters at UIUC/NCSA."
 #-----------------------------------------------------------------------
 
 LOCAL_MPI_INSTALL   = 
-LOCAL_HDF5_INSTALL  = /opt/hdf5-1.8.4-patch1-64bit
-LOCAL_HDF4_INSTALL  = /opt/hdf4-4.2.5-at64
+LOCAL_HDF5_INSTALL  = /opt/hdf5-1.8.4-patch1-xl64/
+LOCAL_HDF4_INSTALL  = 
 LOCAL_HDF4_INSTALL  = 
 LOCAL_SPRNG_INSTALL = 
 LOCAL_PNG_INSTALL   = 
@@ -45,11 +45,11 @@ MACH_CPP       = /usr/bin/cpp
 
 # With MPI
 
-MACH_CC_MPI    = xlc_r
-MACH_CXX_MPI   = xlC_r
-MACH_FC_MPI    = xlf_r
-MACH_F90_MPI   = xlf95_r
-MACH_LD_MPI    = xlC_r
+MACH_CC_MPI    = mpCC
+MACH_CXX_MPI   = mpCC
+MACH_FC_MPI    = mpfort -compiler xlf90_r
+MACH_F90_MPI   = mpfort -compiler xlf90_r
+MACH_LD_MPI    = mpCC
 # MACH_CC_MPI    = gcc
 # MACH_CXX_MPI   = g++
 # MACH_FC_MPI    = gfortran
@@ -61,7 +61,7 @@ MACH_LD_MPI    = xlC_r
 MACH_CC_NOMPI  = xlc_r
 MACH_CXX_NOMPI = xlC_r
 MACH_FC_NOMPI  = xlf_r
-MACH_F90_NOMPI = xlf95_r
+MACH_F90_NOMPI = xlf90_r
 MACH_LD_NOMPI  = xlC_r
 # MACH_CC_NOMPI  = gcc
 # MACH_CXX_NOMPI = g++
@@ -73,18 +73,25 @@ MACH_LD_NOMPI  = xlC_r
 # Machine-dependent defines
 #-----------------------------------------------------------------------
 
-MACH_DEFINES = LINUX NO_IO_LOG SYSCALL NO_MEM_TRACE USE_MPI H5_USE_16_API
+MACH_DEFINES = LINUX_IBM_XL HAVE_GNUPLOT H5_USE_16_API NO_IO_LOG
 
 #-----------------------------------------------------------------------
 # Compiler flag settings
 #-----------------------------------------------------------------------
 
 MACH_CPPFLAGS = -P -traditional
-MACH_CFLAGS   = -I/opt/ibmhpc/ppe.poe/include -L/opt/ibmhpc/ppe.poe.lib/libmpi64
-MACH_CXXFLAGS = -I/opt/ibmhpc/ppe.poe/include -L/opt/ibmhpc/ppe.poe.lib/libmpi64
-MACH_FFLAGS   = -L/opt/ibmhpc/ppe.poe.lib/libmpi64
-MACH_F90FLAGS = -L/opt/ibmhpc/ppe.poe.lib/libmpi64
-MACH_LDFLAGS  = -L/opt/ibmhpc/ppe.poe.lib/libmpi64
+
+#MACH_CFLAGS   = -q64 -qarch=pwr7 -qtune=pwr7 -qaltivec -qreport -qlist -qsmp=omp 
+#MACH_CXXFLAGS = -q64 -qarch=pwr7 -qtune=pwr7 -qaltivec -qreport -qlist -qsmp=omp 
+#MACH_FFLAGS   = -q64 -qarch=pwr7 -qtune=pwr7 -qsmp=omp -qextname 
+#MACH_F90FLAGS = -q64 -qarch=pwr7 -qtune=pwr7 -qfree -qsmp=omp -qextname 
+#MACH_LDFLAGS =  -q64 -qarch=pwr7 -qtune=pwr7 -qsmp=omp 
+
+MACH_CFLAGS   = -qstrict -qarch=pwr7 -qtune=pwr7 -qcache=auto -qthreaded  
+MACH_CXXFLAGS = -qstrict -qarch=pwr7 -qtune=pwr7 -qcache=auto -qthreaded -qsmp=noauto -D__NO_MATH_INLINES 
+MACH_FFLAGS   = -qstrict -qarch=pwr7 -qtune=pwr7 -qcache=auto -qsmp=noauto -qreport=smplist -qmaxmem=1 -qthreaded -qextname -qfixed=132 
+MACH_F90FLAGS = -qstrict -qarch=pwr7 -qtune=pwr7 -qcache=auto -qsmp=noauto -qreport=smplist -qmaxmem=1 -qthreaded -qextname -qfree 
+MACH_LDFLAGS =  -qarch=pwr7 -qtune=pwr7 -qsmp=noauto -qcache=auto -qthreaded
 
 #-----------------------------------------------------------------------
 # Precision-related flags
@@ -94,27 +101,21 @@ MACH_FFLAGS_INTEGER_32 = -qintsize=4
 MACH_FFLAGS_INTEGER_64 = -qintsize=8
 MACH_FFLAGS_REAL_32    = -qrealsize=4
 MACH_FFLAGS_REAL_64    = -qrealsize=8
-# MACH_FFLAGS_INTEGER_32 = -fdefault-integer-4
-# MACH_FFLAGS_INTEGER_64 = -fdefault-integer-8
-# MACH_FFLAGS_REAL_32    = -fdefault-real-4
-# MACH_FFLAGS_REAL_64    = -fdefault-real-8
 
 #-----------------------------------------------------------------------
 # Optimization flags
 #-----------------------------------------------------------------------
 
-MACH_OPT_WARN        = 
-MACH_OPT_DEBUG       = -g -O0
-MACH_OPT_HIGH        = -O2 
+MACH_OPT_WARN        = -Wall -g -qsource
+MACH_OPT_DEBUG       = -g -O0 -p -pg -qsource
+MACH_OPT_HIGH        = -O2 -qsource #-qdebug=nfuse,nsimdcost
 MACH_OPT_AGGRESSIVE  = -O3 
-
-LDR_OPT      = 
 
 #-----------------------------------------------------------------------
 # Includes
 #-----------------------------------------------------------------------
 
-LOCAL_INCLUDES_MPI    = -I/opt/ibmhpc/ppe.poe/include
+LOCAL_INCLUDES_MPI    = 
 LOCAL_INCLUDES_HDF5   = -I$(LOCAL_HDF5_INSTALL)/include
 LOCAL_INCLUDES_HYPRE  = -I$(LOCAL_HYPRE_INSTALL)/include
 LOCAL_INCLUDES_SPRNG  = -I$(LOCAL_SPRNG_INSTALL)/include
@@ -129,15 +130,14 @@ MACH_INCLUDES_HYPRE   = $(LOCAL_INCLUDES_HYPRE)
 #-----------------------------------------------------------------------
 #
 
-LOCAL_LIBS_MPI   = -L/opt/ibmhpc/ppe.poe/lib/libmpi64 -lmpi_ibm
-LOCAL_LIBS_HDF5  = -L$(LOCAL_HDF5_INSTALL)/lib -lhdf5
-LOCAL_LIBS_HDF4  = -L$(LOCAL_HDF4_INSTALL)/lib -lmfhdf -ldf -ljpeg
+LOCAL_LIBS_MPI   = 
+LOCAL_LIBS_HDF5  = -L$(LOCAL_HDF5_INSTALL)/lib -lhdf5 -L/usr/lib64 -lz 
 LOCAL_LIBS_HYPRE = -L$(LOCAL_HYPRE_INSTALL)/lib -lHYPRE
-#LOCAL_LIBS_SPRNG = -L$(LOCAL_SPRNG_INSTALL)/lib -llcg64
-LOCAL_LIBS_PNG   = 
+LOCAL_LIBS_SPRNG = -L$(LOCAL_SPRNG_INSTALL)/lib -llcg64
+LOCAL_LIBS_PNG     = -L$(LOCAL_PNG_INSTALL)/lib -lz -lpng -lfreetype
 
-LOCAL_LIBS_MACH   = 
+LOCAL_LIBS_MACH   = -L/opt/ibmcmp/xlf/13.1/lib64 -lxl -lxlf90_r -lxlfmath -lxlopt -lxlfpad -lxlfpmt4 -lxlfpmt8
 
-MACH_LIBS         = $(LOCAL_LIBS_HDF5) $(LOCAL_LIBS_MACH) $(LOCAL_LIBS_SPRNG)
+MACH_LIBS         = $(LOCAL_LIBS_HDF5) $(LOCAL_LIBS_MACH) #$(LOCAL_LIBS_SPRNG)
 MACH_LIBS_MPI     = $(LOCAL_LIBS_MPI)
 MACH_LIBS_HYPRE   = $(LOCAL_LIBS_HYPRE)
