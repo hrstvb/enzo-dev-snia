@@ -11,13 +11,11 @@
 /
 ************************************************************************/
 
-#ifndef SPEXTERN
 #ifdef DEFINE_STORAGE
 # define SPEXTERN
 #else /* DEFINE_STORAGE */
 # define SPEXTERN extern
 #endif /* DEFINE_STORAGE */
-#endif /* SPEXTERN */
 
 /* Density, pressure and velocity of the surrounding state. */
 
