@@ -89,8 +89,8 @@ MACH_CPPFLAGS = -P -traditional
 
 MACH_CFLAGS   = -qarch=pwr7 -qtune=pwr7 -qcache=auto -qthreaded  
 MACH_CXXFLAGS = -qarch=pwr7 -qtune=pwr7 -qcache=auto -qthreaded -qsmp=noauto -D__NO_MATH_INLINES 
-MACH_FFLAGS   = -qarch=pwr7 -qtune=pwr7 -qcache=auto -qsmp=noauto -qreport=smplist -qmaxmem=1 -qthreaded -qextname -qfixed=132 
-MACH_F90FLAGS = -qarch=pwr7 -qtune=pwr7 -qcache=auto -qsmp=noauto -qreport=smplist -qmaxmem=1 -qthreaded -qextname -qfree 
+MACH_FFLAGS   = -qarch=pwr7 -qtune=pwr7 -qcache=auto -qsmp=noauto -qmaxmem=1 -qthreaded -qextname -qfixed=132 
+MACH_F90FLAGS = -qarch=pwr7 -qtune=pwr7 -qcache=auto -qsmp=noauto -qmaxmem=1 -qthreaded -qextname -qfree 
 MACH_LDFLAGS =  -qarch=pwr7 -qtune=pwr7 -qsmp=noauto -qcache=auto -qthreaded
 
 #-----------------------------------------------------------------------
@@ -109,7 +109,7 @@ MACH_FFLAGS_REAL_64    = -qrealsize=8
 MACH_OPT_WARN        = -Wall -g -qsource -qstrict 
 MACH_OPT_DEBUG       = -g -O0 -p -pg -qsource -qstrict 
 MACH_OPT_HIGH        = -O2 -qsource -qstrict #-qdebug=nfuse,nsimdcost
-MACH_OPT_AGGRESSIVE  = -O3 #-qstrict
+MACH_OPT_AGGRESSIVE  = -O3 -qstrict
 
 #-----------------------------------------------------------------------
 # Includes
