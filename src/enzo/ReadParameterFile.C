@@ -610,6 +610,8 @@ int ReadParameterFile(FILE *fptr, TopGridData &MetaData, float *Initialdt)
     ret += sscanf(line, "StarParticleCreation = %"ISYM, &StarParticleCreation);
     ret += sscanf(line, "BigStarFormation = %"ISYM, &BigStarFormation);
     ret += sscanf(line, "BigStarSeparation = %"FSYM, &BigStarSeparation);
+    ret += sscanf(line, "SimpleQ = %"FSYM, &SimpleQ);
+    ret += sscanf(line, "SimpleRampTime = %"FSYM, &SimpleRampTime);
     ret += sscanf(line, "StarParticleFeedback = %"ISYM, &StarParticleFeedback);
     ret += sscanf(line, "NumberOfParticleAttributes = %"ISYM,
 		  &NumberOfParticleAttributes);
@@ -1035,6 +1037,10 @@ int ReadParameterFile(FILE *fptr, TopGridData &MetaData, float *Initialdt)
       if (MinimumMassForRefinement[i] != FLOAT_UNDEFINED) {
 	MinimumMassForRefinement[i] /= MassUnits;
       }
+    if (GravitationalConstant > 12.49 && GravitationalConstant < 12.61) {
+      GravitationalConstant = 4.0 * 3.1415926 * 6.6726e-8 * DensityUnits * pow(TimeUnits,2);
+      printf("Gravitational Constant recalculated from 4pi to 4piG in code units\n");
+    }
 
   }
 
