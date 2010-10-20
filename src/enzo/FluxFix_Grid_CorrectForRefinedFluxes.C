@@ -352,6 +352,7 @@ int grid::CorrectForRefinedFluxes(fluxes *InitialFluxes,
 		  FieldType[field] != DrivingField2 &&
 		  FieldType[field] != DrivingField3 &&
 		  FieldType[field] != GravPotential &&
+		// TA: double check whether this next condition reall is a good idea (06/09) 
 		(RadiativeCooling == 0 || (FieldType[field] != TotalEnergy && 
 					   FieldType[field] != InternalEnergy))) {
 		for (k = Start[2]; k <= End[2]; k++) {
@@ -376,7 +377,7 @@ int grid::CorrectForRefinedFluxes(fluxes *InitialFluxes,
 	
 	  for (field = 0; field < NumberOfBaryonFields; field++)
 	    if (FieldType[field] >= ElectronDensity &&
-		FieldType[field] < Metallicity &&
+		FieldType[field] < FieldUndefined &&
 		FieldTypeNoInterpolate(FieldType[field]) == FALSE &&
 		FieldTypeIsRadiation(FieldType[field]) == FALSE)
 	      for (k = Start[2]; k <= End[2]; k++)
@@ -400,8 +401,8 @@ int grid::CorrectForRefinedFluxes(fluxes *InitialFluxes,
 	  for (field = 0; field < NumberOfBaryonFields; field++){
 	    if ((FieldTypeNoInterpolate(FieldType[field]) == FALSE) &&
 		(RadiativeCooling == 0 || (FieldType[field] != TotalEnergy &&
-					   FieldType[field] != InternalEnergy)) &&
-		(FieldType[field] < ElectronDensity) && 
+					   FieldType[field] != InternalEnergy))
+		&& (FieldType[field] < ElectronDensity) && 
 		FieldType[field] != DrivingField1 &&
 		FieldType[field] != DrivingField2 &&
 		FieldType[field] != DrivingField3 &&
@@ -741,7 +742,7 @@ int grid::CorrectForRefinedFluxes(fluxes *InitialFluxes,
 	
 	  for (field = 0; field < NumberOfBaryonFields; field++)
 	    if (FieldType[field] >= ElectronDensity &&
-		FieldType[field] < Metallicity &&
+		FieldType[field] < FieldUndefined &&
 		FieldTypeNoInterpolate(FieldType[field]) == FALSE &&
 		FieldTypeIsRadiation(FieldType[field]) == FALSE)
 	      for (k = Start[2]; k <= End[2]; k++)
