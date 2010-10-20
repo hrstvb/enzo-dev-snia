@@ -51,8 +51,7 @@ Star::Star(void)
   NextStar = NULL;
   PrevStar = NULL;
   CurrentGrid = NULL;
-  Mass = FinalMass = DeltaMass = BirthTime = LifeTime = 
-    last_accretion_rate = NotEjectedMass = Metallicity = deltaZ = 0.0;
+  Mass = FinalMass = DeltaMass = BirthTime = LifeTime = last_accretion_rate = NotEjectedMass = 0.0;
   FeedbackFlag = Identifier = level = GridID = type = naccretions = 0;
   AddedEmissivity = false;
 }
@@ -79,7 +78,6 @@ Star::Star(grid *_grid, int _id, int _level)
   AddedEmissivity = false;
   last_accretion_rate = 0.0;
   NotEjectedMass = 0.0;
-  deltaZ = 0.0;
   level = _level;
   FeedbackFlag = NO_FEEDBACK;
 
@@ -89,7 +87,6 @@ Star::Star(grid *_grid, int _id, int _level)
   Mass = FinalMass = (double)(_grid->ParticleMass[_id]);
   BirthTime = _grid->ParticleAttribute[0][_id];
   LifeTime = _grid->ParticleAttribute[1][_id];
-  Metallicity = _grid->ParticleAttribute[2][_id];
   this->ConvertAllMassesToSolar();
 }
 
@@ -120,8 +117,6 @@ Star::Star(StarBuffer *buffer, int n)
   DeltaMass = buffer[n].DeltaMass;
   BirthTime = buffer[n].BirthTime;
   LifeTime = buffer[n].LifeTime;
-  Metallicity = buffer[n].Metallicity;
-  deltaZ = buffer[n].deltaZ;
   last_accretion_rate = buffer[n].last_accretion_rate;
   NotEjectedMass = buffer[n].NotEjectedMass;
   FeedbackFlag = buffer[n].FeedbackFlag;
@@ -161,8 +156,6 @@ Star::Star(StarBuffer buffer)
   DeltaMass = buffer.DeltaMass;
   BirthTime = buffer.BirthTime;
   LifeTime = buffer.LifeTime;
-  Metallicity = buffer.Metallicity;
-  deltaZ = buffer.deltaZ;
   last_accretion_rate = buffer.last_accretion_rate;
   NotEjectedMass = buffer.NotEjectedMass;
   FeedbackFlag = buffer.FeedbackFlag;
@@ -211,8 +204,6 @@ void Star::operator=(Star a)
   DeltaMass = a.DeltaMass;
   BirthTime = a.BirthTime;
   LifeTime = a.LifeTime;
-  Metallicity = a.Metallicity;
-  deltaZ = a.deltaZ;
   last_accretion_rate = a.last_accretion_rate;
   NotEjectedMass = a.NotEjectedMass;
   FeedbackFlag = a.FeedbackFlag;
@@ -277,8 +268,6 @@ Star *Star::copy(void)
   a->DeltaMass = DeltaMass;
   a->BirthTime = BirthTime;
   a->LifeTime = LifeTime;
-  a->Metallicity = Metallicity;
-  a->deltaZ = deltaZ;
   a->last_accretion_rate = last_accretion_rate;
   a->NotEjectedMass = NotEjectedMass;
   a->FeedbackFlag = FeedbackFlag;
@@ -336,7 +325,6 @@ void Star::Merge(Star a)
   double ratio1, ratio2;
   ratio1 = Mass / (Mass + a.Mass);
   ratio2 = 1.0 - ratio1;
-  Metallicity = ratio1 * Metallicity + ratio2 * a.Metallicity;
   for (dim = 0; dim < MAX_DIMENSION; dim++) {
     pos[dim] = ratio1 * pos[dim] + ratio2 * a.pos[dim];
     vel[dim] = ratio1 * vel[dim] + ratio2 * a.vel[dim];
@@ -437,7 +425,6 @@ void Star::CopyFromParticle(grid *_grid, int _id, int _level)
   GridID = _grid->ID;
   BirthTime = _grid->ParticleAttribute[0][_id];
   LifeTime = _grid->ParticleAttribute[1][_id];
-  Metallicity = _grid->ParticleAttribute[2][_id];
 
   // below is removed because we want to keep Star->Mass as double 
   // during the run - Ji-hoon Kim, Dec.2009
@@ -476,7 +463,6 @@ void Star::PrintInfo(void)
   else
     printf("\n");
   printf("\t birthtime = %"FSYM", lifetime = %"FSYM"\n", BirthTime, LifeTime);
-  printf("\t Z = %"GSYM", deltaZ = %"GSYM"\n", Metallicity, deltaZ);
   printf("\t mass = %"GSYM", dmass = %"GSYM", fmass = %"GSYM", type = %"ISYM", grid %"ISYM","
 	 " lvl %"ISYM"\n", Mass, DeltaMass, FinalMass, type, GridID, level);
   printf("\t FeedbackFlag = %"ISYM"\n", FeedbackFlag);
@@ -498,16 +484,11 @@ RadiationSourceEntry* Star::RadiationSourceInitialize(void)
   source->Type           = type;
   source->LifeTime       = LifeTime;
   source->CreationTime   = BirthTime;
-  source->AddedEmissivity = false;
   source->Position       = new FLOAT[3];
-  for (int dim = 0; dim < MAX_DIMENSION; dim++) {
-    if (pos[dim] < DomainLeftEdge[dim])
-      source->Position[dim] = pos[dim] + DomainRightEdge[dim] - DomainLeftEdge[dim];
-    else if (pos[dim] >= DomainRightEdge[dim])
-      source->Position[dim] = pos[dim] - DomainRightEdge[dim] + DomainLeftEdge[dim];
-    else
-      source->Position[dim] = pos[dim];
-  }
+  source->Position[0]    = pos[0]; 
+  source->Position[1]    = pos[1]; 
+  source->Position[2]    = pos[2]; 
+  source->AddedEmissivity = false;
   return source;
 }
 #endif
@@ -542,8 +523,6 @@ StarBuffer* Star::StarListToBuffer(int n)
     result[count].DeltaMass = tmp->DeltaMass;
     result[count].BirthTime = tmp->BirthTime;
     result[count].LifeTime = tmp->LifeTime;
-    result[count].Metallicity = tmp->Metallicity;
-    result[count].deltaZ = tmp->deltaZ;
     result[count].last_accretion_rate = tmp->last_accretion_rate;    
     result[count].NotEjectedMass = tmp->NotEjectedMass;    
     result[count].FeedbackFlag = tmp->FeedbackFlag;

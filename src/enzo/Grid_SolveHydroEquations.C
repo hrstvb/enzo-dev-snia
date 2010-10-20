@@ -420,10 +420,6 @@ int grid::SolveHydroEquations(int CycleNumber, int NumberOfSubgrids,
     int GravityOn = 0, FloatSize = sizeof(float);
     if (SelfGravity || UniformGravity || PointSourceGravity)
       GravityOn = 1;
-#ifdef TRANSFER
-    if (RadiationPressure)
-      GravityOn = 1;
-#endif    
 
     /* Call Solver on this grid.
        Notice that it is hard-wired for three dimensions, but it does
@@ -473,7 +469,6 @@ int grid::SolveHydroEquations(int CycleNumber, int NumberOfSubgrids,
 			   MinimumSupportEnergyCoefficient) == FAIL)
 	ENZO_FAIL("ZeusSolver() failed!\n");
 	
-
 
     /* Clean up allocated fields. */
 

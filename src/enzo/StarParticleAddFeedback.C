@@ -99,7 +99,7 @@ int StarParticleAddFeedback(TopGridData *MetaData,
     cstar->CalculateFeedbackParameters(influenceRadius, RootCellWidth, 
            SNe_dt, EjectaDensity, EjectaThermalEnergy, EjectaMetalDensity, 
 	   DensityUnits, LengthUnits, TemperatureUnits, TimeUnits, 
-           VelocityUnits, dtForThisStar, Time);
+	   VelocityUnits, dtForThisStar);
 
     /* Recalibrate MBHFeedbackThermalRadius if requested */
 
