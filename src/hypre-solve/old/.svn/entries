@@ -1,0 +1,52 @@
+8
+
+dir
+27
+svn://mngrid.ucsd.edu/hypre-solve/trunk/src/old
+svn://mngrid.ucsd.edu/hypre-solve
+
+
+
+2010-03-13T00:10:28.273130Z
+1
+jbordner
+
+
+svn:special svn:externals svn:needs-lock
+
+
+
+
+
+
+
+
+
+
+
+46e4fdfc-2e2a-11df-ac62-e13819f98510
+
+sphere.cpp
+file
+
+
+
+
+2010-07-02T23:18:50.000000Z
+3aa0bd0d9d7693731a732d0978a5886a
+2010-03-13T00:10:28.273130Z
+1
+jbordner
+
+sphere.hpp
+file
+
+
+
+
+2010-07-02T23:18:50.000000Z
+89131492fa30424af35d9392690e1e5b
+2010-03-13T00:10:28.273130Z
+1
+jbordner
+
