@@ -2380,7 +2380,7 @@ int zEulerSweep(int j, int NumberOfSubgrids, fluxes *SubgridFluxes[],
   int InterpolateStarParticlesToGrid(int NumberOfSPFields);  
 
 //------------------------------------------------------------------------
-// new hydro & MHD routines
+// new hydro & MHD routines  **WHERE ARE THE COMMENTS FOR EACH ROUTINE??**
 //------------------------------------------------------------------------
 
   int SetNumberOfColours(void);

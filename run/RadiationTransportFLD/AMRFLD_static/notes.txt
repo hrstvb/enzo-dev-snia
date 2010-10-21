@@ -1,0 +1,11 @@
+This test performs an i-front expansion test using the split grey FLD
+solver on a static AMR hierarchy.  The source is in the center of the
+domain, which is surrounded by the refined region.  We begin with a
+simple 2-level grid, with a factor of 2 refinement, to ensure that the
+solvers function properly.  Both grids use a 32^3 mesh, with the
+subgrid centered in the inner 16^3 cells of the coarse mesh.
+
+The test emulates Iliev et al. #1 (fixed temperature, static
+hydrodynamics), in which we examine only the radiation propagation and
+resulting chemical ionization (see IlievEtAl1_sp test problem).
+
