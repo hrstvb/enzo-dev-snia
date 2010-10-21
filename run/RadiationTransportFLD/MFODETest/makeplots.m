@@ -1,7 +1,7 @@
-function [] = makeplots(te)
+function [tdata] = makeplots(te)
 %
 % Usage:
-%   [] = makeplots(te)
+%   [tdata] = makeplots(te)
 %
 %   Inputs:
 %     te = final time dump
@@ -91,13 +91,13 @@ for tstep=0:te
 	 dUnits = str2num(tmp); frewind(fin); break
       end
    end
-   %    length units
+   %    mass units
    for i=1:1000
       buffer = fgetl(fin);
-      if (findstr(buffer,'LengthUnits'))
+      if (findstr(buffer,'MassUnits'))
 	 [text,buffer] = strtok(buffer,'=');
 	 [text,tmp] = strtok(buffer);
-	 lUnits = str2num(tmp); frewind(fin); break
+	 mUnits = str2num(tmp); frewind(fin); break
       end
    end
    %    time units
@@ -111,6 +111,9 @@ for tstep=0:te
    end
    fclose(fin);
 
+   % compute length units
+   lUnits = (mUnits/dUnits)^(1/3);
+   
    % convert to CGS units
    xL = xL * lUnits;  xR = xR * lUnits;  
    yL = yL * lUnits;  yR = yR * lUnits;  
@@ -167,9 +170,12 @@ for tstep=0:te
    nHI = nHI./rho + 1e-9;
    nHII = nHII./rho + 1e-9;
    rho = rho*dUnits;
-   E1 = E1./Ef;
-   E2 = E2./Ef;
-   E3 = E3./Ef;
+%   E1 = E1./Ef;
+%   E2 = E2./Ef;
+%   E3 = E3./Ef;
+%   E1 = E1*E1Un;
+%   E2 = E2*E2Un;
+%   E3 = E3*E3Un;
    Ef = Ef*lUnits/tUnits*lUnits/tUnits*dUnits;
    etot = etot*lUnits/tUnits*lUnits/tUnits;
 
@@ -316,7 +322,7 @@ saveas(h,'etot.png');
 %   radiation1 vs time
 h = figure(7);
 semilogy(tdata(:,1),tdata(:,8));
-title('Radiation 1 fraction evolution','FontSize',14);
+title('Radiation 1 evolution','FontSize',14);
 xlabel('tstep','FontSize',12);  ylabel('E1','FontSize',12);
 set(gca,'FontSize',12);
 grid on
@@ -325,7 +331,7 @@ saveas(h,'E1.png');
 %   radiation2 vs time
 h = figure(8);
 semilogy(tdata(:,1),tdata(:,9));
-title('Radiation 2 fraction evolution','FontSize',14);
+title('Radiation 2 evolution','FontSize',14);
 xlabel('tstep','FontSize',12);  ylabel('E2','FontSize',12);
 set(gca,'FontSize',12);
 grid on
@@ -334,7 +340,7 @@ saveas(h,'E2.png');
 %   radiation3 vs time
 h = figure(9);
 semilogy(tdata(:,1),tdata(:,10));
-title('Radiation 3 fraction evolution','FontSize',14);
+title('Radiation 3 evolution','FontSize',14);
 xlabel('tstep','FontSize',12);  ylabel('E3','FontSize',12);
 set(gca,'FontSize',12);
 grid on

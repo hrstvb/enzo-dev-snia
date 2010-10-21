@@ -47,8 +47,10 @@ class gFLDSplit : public virtual ImplicitProblemABC {
 
  private:
   
-  // overall time spent in solver
+  // overall time spent in solver and components
   float RTtime;
+  float HYPREtime;
+  float ChemTime;
   
   // HYPRE Struct-specific data
   Eint32 mattype;                // HYPRE matrix type for solve

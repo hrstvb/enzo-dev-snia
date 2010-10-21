@@ -63,7 +63,7 @@ int gFLDSplit::Evolve(HierarchyEntry *ThisGrid, float deltat)
   int MPI_COMM_WORLD = 0;
 #endif
 
-  // start MPI timer
+  // start MPI timer for overall solver
 #ifdef USE_MPI
   float stime = MPI_Wtime();
 #else
@@ -423,6 +423,14 @@ int gFLDSplit::Evolve(HierarchyEntry *ThisGrid, float deltat)
   if (this->SetupSystem(matentries, rhsentries, &rhsnorm, RadiationEnergy, Eg_new, 
 			OpacityE, Temperature, Temperature0, RadSrc) != SUCCESS) 
     ENZO_FAIL("FSProb Solve: Error in SetupSystem routine");
+
+  // start MPI timer for HYPRE solver (doesn't include matrix computation time)
+#ifdef USE_MPI
+  float stime2 = MPI_Wtime();
+#else
+  float stime2 = 0.0;
+#endif
+
   HYPRE_StructMatrixSetBoxValues(P, ilower, iupper, stSize, entries, matentries); 
     
   //       assemble matrix
@@ -556,6 +564,14 @@ int gFLDSplit::Evolve(HierarchyEntry *ThisGrid, float deltat)
   //       destroy HYPRE solver structures
   HYPRE_StructPCGDestroy(solver);
   HYPRE_StructPFMGDestroy(preconditioner);
+
+  // stop MPI timer for HYPRE solver, increment total
+#ifdef USE_MPI
+  float ftime2 = MPI_Wtime();
+#else
+  float ftime2 = 0.0;
+#endif
+  HYPREtime += ftime2-stime2;
   
 #else  // ifdef USE_HYPRE
 
@@ -588,6 +604,13 @@ int gFLDSplit::Evolve(HierarchyEntry *ThisGrid, float deltat)
     this->FillRates(sol, U0, phHI, phHeI, phHeII, photogamma, dissH2I);
 
   } else {
+
+    // start MPI timer for chemistry/gas solver
+#ifdef USE_MPI
+    float stime3 = MPI_Wtime();
+#else
+    float stime3 = 0.0;
+#endif
 
     float thisdt, dtchem2;
     float tchem = told;
@@ -678,6 +701,15 @@ int gFLDSplit::Evolve(HierarchyEntry *ThisGrid, float deltat)
       if (tchem >= tnew)  break;
 
     }
+
+    // stop MPI timer for chemistry/gas solver, increment total
+#ifdef USE_MPI
+    float ftime3 = MPI_Wtime();
+#else
+    float ftime3 = 0.0;
+#endif
+    ChemTime += ftime3-stime3;
+
   }  // if (RadiativeCooling == 0)
 
 
@@ -769,7 +801,8 @@ int gFLDSplit::Evolve(HierarchyEntry *ThisGrid, float deltat)
   float ftime = 0.0;
 #endif
   RTtime += ftime-stime;
-  if (debug)  printf("RadHydro cumulative wall time = %g\n\n",RTtime);
+  if (debug)  printf("RadHydro cumulative time = %g (HYPRE = %g,  Chem = %g)\n\n",
+		     RTtime, HYPREtime, ChemTime);
 
   // Return
   return SUCCESS;
