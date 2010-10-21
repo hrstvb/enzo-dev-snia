@@ -6,10 +6,6 @@ SHELL = /bin/bash
 # LCAPERF
 #--------------------------------
 
-#LCAPERF_DEF = -DUSE_LCAPERF
-#LCAPERF_INC = -I $(HOME)/lcaperf/include 
-#LCAPERF_LIB = -L $(HOME)/lcaperf/lib -ljbperf
-
 LCAPERF_DEF = 
 LCAPERF_INC = 
 LCAPERF_LIB = 
@@ -20,31 +16,23 @@ LCAPERF_LIB =
 
 HYPRE_DEF = 
 HYPRE_INC = -I$(HYPRE_PATH)/include
-HYPRE_LIB = -L$(HYPRE_PATH)/lib -lHYPRE $(LAPACK_LIBS)
+HYPRE_LIB = -L$(HYPRE_PATH)/lib -lHYPRE -L$(LAPACK_PATH)/lib -llapack -latlas
 
 #--------------------------------
 # LIBPNG
 #--------------------------------
 
 PNG_DEF = -DNO_FREETYPE
-PNG_INC = 
-PNG_LIB = -lpng
-
-#--------------------------------
-# LIBZ
-#--------------------------------
-
-LIBZ_DEF = 
-LIBZ_INC = -I$(LIBZ_PATH)/include
-LIBZ_LIB = -L$(LIBZ_PATH)/lib -lz
+PNG_INC = -I$(PNG_PATH)/include
+PNG_LIB = -L$(PNG_PATH)/lib -lpng
 
 #--------------------------------
 # HDF5
 #--------------------------------
 
 HDF5_DEF = 
-HDF5_INC = -I$(HDF5_PATH)/include $(LIBZ_INC)
-HDF5_LIB = -L$(HDF5_PATH)/lib -lhdf5 $(LIBZ_LIB)
+HDF5_INC = -I$(HDF5_PATH)/include
+HDF5_LIB = -L$(HDF5_PATH)/lib -lhdf5 -lz
 
 #--------------------------------
 # CELLO
@@ -97,23 +85,23 @@ EXES = \
 all: $(EXES)
 
 hypre-init: hypre-init.o
-	$(CXX) -o hypre-init hypre-init.o $(HYPRE_ALL) $(LIB)
+	$(LD) $(LD_FLAGS) -o hypre-init hypre-init.o $(HYPRE_ALL) $(LIB)
 plot-amr: plot-amr.o grid.o mpi.o domain.o faces.o pngwriter.o
-	$(CXX_MPI) -o plot-amr plot-amr.o grid.o mpi.o domain.o faces.o pngwriter.o $(LIB)
+	$(LD) $(LD_FLAGS) -o plot-amr plot-amr.o grid.o mpi.o domain.o faces.o pngwriter.o $(LIB)
 hypre-test: hypre-test.o
-	$(CXX_MPI) -o hypre-test hypre-test.o $(HYPRE_ALL) $(LIB)
+	$(LD) $(LD_FLAGS) -o hypre-test hypre-test.o $(HYPRE_ALL) $(LIB)
 hypre-solve: hypre-solve.o $(OBJS_ALL)
-	$(CXX_MPI) -o hypre-solve hypre-solve.o $(OBJS_ALL) $(HYPRE_ALL) $(LIB)
+	$(LD) $(LD_FLAGS) -o hypre-solve hypre-solve.o $(OBJS_ALL) $(HYPRE_ALL) $(LIB)
 test-mem: test-mem.o $(OBJS_ALL)
-	$(CXX_MPI) -o test-mem test-mem.o $(OBJS_ALL) $(HYPRE_ALL) $(LIB)
+	$(LD) $(LD_FLAGS) -o test-mem test-mem.o $(OBJS_ALL) $(HYPRE_ALL) $(LIB)
 hypre-png: hypre-png.o grid.o mpi.o domain.o faces.o pngwriter.o
-	$(CXX_MPI) -o hypre-png hypre-png.o grid.o mpi.o domain.o faces.o pngwriter.o $(HYPRE_ALL) $(LIB)
+	$(LD) $(LD_FLAGS) -o hypre-png hypre-png.o grid.o mpi.o domain.o faces.o pngwriter.o $(HYPRE_ALL) $(LIB)
 debug-matrix: debug-matrix.o
-	$(CXX) -o debug-matrix $(HYPRE_ALL) debug-matrix.o
+	$(LD) $(LD_FLAGS) -o debug-matrix $(HYPRE_ALL) debug-matrix.o
 enzo2hypre: enzo2hypre.o
-	$(CXX) -o enzo2hypre enzo2hypre.o $(HYPRE_ALL) $(INC) $(LIB)
+	$(LD) $(LD_FLAGS) -o enzo2hypre enzo2hypre.o $(HYPRE_ALL) $(INC) $(LIB)
 enzo-reduce: enzo-reduce.o
-	$(CXX_MPI) -o enzo-reduce enzo-reduce.o $(CXX_FLAGS) -lm $(HDF5_LIB)
+	$(LD) $(LD_FLAGS) -o enzo-reduce enzo-reduce.o $(CXX_FLAGS) -lm $(HDF5_LIB)
 
 BIN = ../bin
 .PHONY: install
@@ -122,7 +110,7 @@ install: $(EXES)
 	cp $(EXES)  $(BIN)
 
 .cpp.o:
-	$(CXX_MPI) -c -o $*.o $*.cpp $(CXX_FLAGS) $(INC) $(DEF)
+	$(CXX) -c -o $*.o $*.cpp $(CXX_FLAGS) $(INC) $(DEF)
 
 .PHONY: dep
 dep:
