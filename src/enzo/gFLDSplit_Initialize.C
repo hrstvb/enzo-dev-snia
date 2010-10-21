@@ -24,6 +24,9 @@
 #ifdef TRANSFER
 #include "gFLDSplit.h"
 #include "CosmologyParameters.h"
+#ifdef _OPENMP
+#include <omp.h>
+#endif
 
 // character strings
 EXTERN char outfilename[];
@@ -83,6 +86,15 @@ int gFLDSplit::Initialize(HierarchyEntry &TopGrid, TopGridData &MetaData)
 	   MyProcessorNumber);
     ENZO_FAIL("Error in gFLDSplit_Initialize");
   }
+
+  
+#ifdef _OPENMP
+  // output number of OpenMP threads that will be used in this run
+  int nthreads = omp_get_max_threads();
+  printf("FLD Initialize: MPI task %"ISYM" has %"ISYM" available OpenMP threads\n",
+	 MyProcessorNumber,nthreads);
+#endif
+
 
 #ifndef MPI_INT
   // in case MPI is not included
@@ -578,6 +590,11 @@ int gFLDSplit::Initialize(HierarchyEntry &TopGrid, TopGridData &MetaData)
 
 #ifdef USE_HYPRE
 
+#ifdef USE_MPI
+  float stime = MPI_Wtime();
+#else
+  float stime = 0.0;
+#endif
   // initialize HYPRE stuff
   //    initialize the diagnostic information
   totIters = 0;
@@ -671,6 +688,13 @@ int gFLDSplit::Initialize(HierarchyEntry &TopGrid, TopGridData &MetaData)
   HYPRE_StructVectorInitialize(rhsvec);
   HYPRE_StructVectorCreate(MPI_COMM_WORLD, grid, &solvec);
   HYPRE_StructVectorInitialize(solvec);
+
+#ifdef USE_MPI
+  float ftime = MPI_Wtime();
+#else
+  float ftime = 0.0;
+#endif
+  HYPREtime += ftime-stime;
 
 #else  // ifdef USE_HYPRE
 
