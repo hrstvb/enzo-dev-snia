@@ -184,11 +184,11 @@ int star_maker9(int *nx, int *ny, int *nz, int *size, float *d, float *te, float
 		CommunicationBroadcastValue(&BigStarFormation, MyProcessorNumber);
 		CommunicationBroadcastValue(&StarParticleCreation, MyProcessorNumber);
 		CommunicationBroadcastValue(&StarParticleFeedback, MyProcessorNumber);
-		printf("BigStarFormation complete: no more star formation from now on. ");
 	    
 		/* Remove mass from grid */
 	    
 		d[index] = maxdens;
+		printf("BigStarFormation: no more star formation from now on. ");
 
 		if (*imethod == 2) {
 		  ugrid = 0.5*(u[index] + u[index+xo]);
