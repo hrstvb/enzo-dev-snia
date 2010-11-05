@@ -70,6 +70,42 @@ int MFSplit::LinearSolve(EnzoVector *sol, EnzoVector *src, float thisdt)
 //   if (debug)  printf("Writing out rhs to file b1.vec\n");
 //   HYPRE_StructVectorPrint("b1.vec",rhsvec,0);
 
+  //       for periodic dims, only coarsen until grid no longer divisible by 2
+  Eint32 max_levels, level=-1;
+  int Ndir;
+  if (BdryType[0][0] == 0) {
+    level = 0;
+    Ndir = GlobDims[0];
+    while ( Ndir%2 == 0 ) {
+      level++;
+      Ndir /= 2;
+    }
+  }
+  max_levels = level;
+  if (rank > 1) {
+    if (BdryType[1][0] == 0) {
+      level = 0;
+      Ndir = GlobDims[0];
+      while ( Ndir%2 == 0 ) {
+	level++;
+	Ndir /= 2;
+      }
+    }
+    max_levels = min(level,max_levels);
+  }
+  if (rank > 2) {
+    if (BdryType[2][0] == 0) {
+      level = 0;
+      Ndir = GlobDims[0];
+      while ( Ndir%2 == 0 ) {
+	level++;
+	Ndir /= 2;
+      }
+    }
+    max_levels = min(level,max_levels);
+  }
+  max_levels = min(level,max_levels);
+
   //       set up the solver [PCG] and preconditioner [PFMG]
   //          create the solver & preconditioner
   HYPRE_StructSolver solver1;
@@ -78,6 +114,8 @@ int MFSplit::LinearSolve(EnzoVector *sol, EnzoVector *src, float thisdt)
   HYPRE_StructPFMGCreate(MPI_COMM_WORLD, &preconditioner1);
 
   //          set preconditioner options
+  if (max_levels > -1) 
+    HYPRE_StructPFMGSetMaxLevels(preconditioner1, max_levels);
   HYPRE_StructPFMGSetMaxIter(preconditioner1, sol_maxit/4);
   HYPRE_StructPFMGSetRelaxType(preconditioner1, sol_rlxtype);
   HYPRE_StructPFMGSetNumPreRelax(preconditioner1, sol_npre);
@@ -211,6 +249,8 @@ int MFSplit::LinearSolve(EnzoVector *sol, EnzoVector *src, float thisdt)
   HYPRE_StructPFMGCreate(MPI_COMM_WORLD, &preconditioner2);
 
   //          set preconditioner options
+  if (max_levels > -1) 
+    HYPRE_StructPFMGSetMaxLevels(preconditioner2, max_levels);
   HYPRE_StructPFMGSetMaxIter(preconditioner2, sol_maxit/4);
   HYPRE_StructPFMGSetRelaxType(preconditioner2, sol_rlxtype);
   HYPRE_StructPFMGSetNumPreRelax(preconditioner2, sol_npre);
@@ -346,6 +386,8 @@ int MFSplit::LinearSolve(EnzoVector *sol, EnzoVector *src, float thisdt)
   HYPRE_StructPFMGCreate(MPI_COMM_WORLD, &preconditioner3);
 
   //          set preconditioner options
+  if (max_levels > -1) 
+    HYPRE_StructPFMGSetMaxLevels(preconditioner3, max_levels);
   HYPRE_StructPFMGSetMaxIter(preconditioner3, sol_maxit/4);
   HYPRE_StructPFMGSetRelaxType(preconditioner3, sol_rlxtype);
   HYPRE_StructPFMGSetNumPreRelax(preconditioner3, sol_npre);
