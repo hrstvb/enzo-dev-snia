@@ -65,6 +65,7 @@ int RadiativeTransferReadParameters(FILE *fptr)
   RadiativeTransferTraceSpectrumTable         = (char*) "spectrum_table.dat";
   RadiativeTransferSourceBeamAngle            = 30.0;
   RadiativeTransferLoadBalance                = FALSE;
+  RadiativeTransferColumnDensityField         = FALSE;
 
   if (MultiSpecies == 0)
     RadiativeTransferOpticallyThinH2 = FALSE;
@@ -121,6 +122,8 @@ int RadiativeTransferReadParameters(FILE *fptr)
 		  &RadiativeTransferTraceSpectrum);
     ret += sscanf(line, "RadiativeTransferLoadBalance = %"ISYM, 
 		  &RadiativeTransferLoadBalance);
+    ret += sscanf(line, "RadiativeTransferColumnDensityField = %"ISYM, 
+		  &RadiativeTransferColumnDensityField);
     if (sscanf(line, "RadiativeTransferTraceSpectrumTable = %s", dummy) == 1)
       RadiativeTransferTraceSpectrumTable = dummy;  
     ret += sscanf(line, "dtPhoton = %"FSYM, &dtPhoton);

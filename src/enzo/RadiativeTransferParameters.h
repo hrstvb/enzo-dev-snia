@@ -98,3 +98,7 @@ EXTERN char *RadiativeTransferTraceSpectrumTable;
 /* Flag for temporary load balancing for the ray tracing */
 
 EXTERN int RadiativeTransferLoadBalance;
+
+/* Flag to create a field for column density (internal) */
+
+EXTERN int RadiativeTransferColumnDensityField;

@@ -257,7 +257,15 @@ int EvolvePhotons(TopGridData *MetaData, LevelHierarchyEntry *LevelArray[],
       }
     }
 
+    /* Error check if calculating column density field.  Only can have
+       one source */
+
     if (debug) fprintf(stdout, "%"ISYM" SRC(s)\n", NumberOfSources);
+
+    if (RadiativeTransferColumnDensityField)
+      if (NumberOfSources > 1)
+	ENZO_FAIL("When computing column density field, only can have "
+		  "one source");
 
     /* Initialize radiation fields */
 

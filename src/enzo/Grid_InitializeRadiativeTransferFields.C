@@ -40,6 +40,7 @@ int grid::InitializeRadiativeTransferFields()
 				  kphHeIINum, kdissH2INum);
 
   int RaySegNum = FindField(RaySegments, FieldType, NumberOfBaryonFields);
+  int ColDensNum = FindField(ColumnDensity, FieldType, NumberOfBaryonFields);
 
   int i,j,k, index;
 
@@ -69,6 +70,14 @@ int grid::InitializeRadiativeTransferFields()
 	index = (k*GridDimension[1] + j)*GridDimension[0] + GridStartIndex[0];
 	for (i = GridStartIndex[0]; i <= GridEndIndex[0]; i++, index++)
 	  BaryonField[kdissH2INum][index] = 0.;
+      }  // loop over grid
+
+  if (RadiativeTransferColumnDensityField)
+    for (k = GridStartIndex[2]; k <= GridEndIndex[2]; k++)
+      for (j = GridStartIndex[1]; j <= GridEndIndex[1]; j++) {
+	index = (k*GridDimension[1] + j)*GridDimension[0] + GridStartIndex[0];
+	for (i = GridStartIndex[0]; i <= GridEndIndex[0]; i++, index++)
+	  BaryonField[ColDensNum][index] = 0.;
       }  // loop over grid
 
   if (RadiationPressure) {

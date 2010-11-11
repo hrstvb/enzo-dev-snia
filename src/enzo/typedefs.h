@@ -161,7 +161,10 @@ const field_type
   /* Number of ray segments for ray tracing load balancing */
   RaySegments     = 95,
 
-  FieldUndefined  = 96;
+/* Column density field for internal use */
+  ColumnDensity   = 96,
+
+  FieldUndefined  = 97;
    
 /*
 enum field_type {Density, TotalEnergy, InternalEnergy, Pressure,
