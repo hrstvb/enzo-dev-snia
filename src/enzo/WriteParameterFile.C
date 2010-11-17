@@ -372,7 +372,7 @@ int WriteParameterFile(FILE *fptr, TopGridData &MetaData)
   fprintf(fptr, "ComputePotential               = %"ISYM"\n", ComputePotential);
   fprintf(fptr, "PotentialIterations            = %"ISYM"\n", PotentialIterations);
   fprintf(fptr, "WritePotential                 = %"ISYM"\n", WritePotential);
-  fprintf(fptr, "BaryonSelfGravityApproximation = %"ISYM"\n\n",
+  fprintf(fptr, "BaryonSelfGravityApproximation = %"ISYM"\n",
 	  BaryonSelfGravityApproximation);
 
   fprintf(fptr, "InlineHaloFinder               = %"ISYM"\n", InlineHaloFinder);
