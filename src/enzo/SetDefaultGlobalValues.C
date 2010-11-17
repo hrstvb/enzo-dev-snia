@@ -294,7 +294,7 @@ int SetDefaultGlobalValues(TopGridData &MetaData)
   ComputePotential            = FALSE;
   WritePotential              = FALSE;
   BaryonSelfGravityApproximation = TRUE;           // less accurate but faster
- 
+
   GreensFunctionMaxNumber     = 1;                 // only one at a time
   GreensFunctionMaxSize       = 1;                 // not used yet
  

@@ -435,6 +435,18 @@ int EvolveLevel_RK2(TopGridData *MetaData, LevelHierarchyEntry *LevelArray[],
       Grids[grid1]->GridData->AddRadiationPressureAcceleration();
 #endif /* TRANSFER */
 
+#ifdef SAB
+    } // End of loop over grids
+    
+    //Ensure the consistency of the AccelerationField
+    SetAccelerationBoundary(Grids, NumberOfGrids,SiblingList,level, MetaData,
+			    Exterior, LevelArray[level], LevelCycleCount[level]);
+    
+    for (grid1 = 0; grid1 < NumberOfGrids; grid1++) {
+#endif //SAB.
+      /* Copy current fields (with their boundaries) to the old fields
+	  in preparation for the new step. */
+
       Grids[grid1]->GridData->CopyBaryonFieldToOldBaryonField();  
 
       if (UseHydro) {
@@ -487,6 +499,16 @@ int EvolveLevel_RK2(TopGridData *MetaData, LevelHierarchyEntry *LevelArray[],
 	Grids[grid1]->GridData->ComputeAccelerationFieldExternal() ;
       } // end: if (SelfGravity)
 
+#ifdef SAB
+    } // End of loop over grids
+    
+    //Ensure the consistency of the AccelerationField
+    SetAccelerationBoundary(Grids, NumberOfGrids,SiblingList,level, MetaData,
+			    Exterior, LevelArray[level], LevelCycleCount[level]);
+    
+    for (grid1 = 0; grid1 < NumberOfGrids; grid1++) {
+#endif //SAB.
+
       if (UseHydro) {
 	if (HydroMethod == HD_RK)
 	  Grids[grid1]->GridData->RungeKutta2_2ndStep
@@ -503,10 +525,9 @@ int EvolveLevel_RK2(TopGridData *MetaData, LevelHierarchyEntry *LevelArray[],
 	  if (UseResistivity) 
 	    Grids[grid1]->GridData->AddResistivity();
 	
-	  time1 = ReturnWallTime();
-	   
-	
 	} // ENDIF MHD_RK
+
+	time1 = ReturnWallTime();
 
       /* Add viscosity */
 
@@ -537,12 +558,11 @@ int EvolveLevel_RK2(TopGridData *MetaData, LevelHierarchyEntry *LevelArray[],
 #endif
         );
  
-
       /* Gravity: clean up AccelerationField. */
 
-	 if (level != MaximumGravityRefinementLevel ||
-	     MaximumGravityRefinementLevel == MaximumRefinementLevel)
-	     Grids[grid1]->GridData->DeleteAccelerationField();
+      if ((level != MaximumGravityRefinementLevel ||
+	   MaximumGravityRefinementLevel == MaximumRefinementLevel))
+	Grids[grid1]->GridData->DeleteAccelerationField();
 
       Grids[grid1]->GridData->DeleteParticleAcceleration();
  
