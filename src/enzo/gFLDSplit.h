@@ -108,8 +108,10 @@ class gFLDSplit : public virtual ImplicitProblemABC {
   // time-stepping related data
   int initial_guess;   // parameter for setting the initial guess:
   float initdt;        // initial radiation time step size
-  float maxdt;         // maximum radiation time step size
-  float mindt;         // minimum radiation time step size
+  float maxdt;         // maximum radiation/chemistry/heating time step size
+  float mindt;         // minimum radiation/chemistry/heating time step size
+  float maxsubcycles;  // max subcycle factor for rad time step within hydro step
+  float maxchemsub;    // max subcycle factor for chem time step within rad step
   float dtfac[3];      // desired relative change in fields per step
   float dtnorm;        // norm choice for computing relative change:
                        //    0 -> max pointwise norm (default)
@@ -117,7 +119,8 @@ class gFLDSplit : public virtual ImplicitProblemABC {
   float tnew;          // new time
   float told;          // old time
   float dt;            // time step size
-  float dtchem;        // chemistry time step size (subcycled)
+  float dtrad;         // radiation time step size (subcycled)
+  float dtchem;        // chemistry/gas time step size (subcycled)
   float theta;         // implicitness parameter (1->BE, 0.5->CN, 0->FE)
   EnzoVector *sol;     // solution vector
   EnzoVector *U0;      // old time-level state
@@ -210,7 +213,10 @@ class gFLDSplit : public virtual ImplicitProblemABC {
   int AnalyticChemistry(EnzoVector *u0, EnzoVector *u, EnzoVector *src, float dt);
   int FillRates(EnzoVector *u, EnzoVector *u0, float *phHI, float *phHeI, 
 		float *phHeII, float *PhotoGamma, float *dissH2I);
-
+  int RadStep(HierarchyEntry *ThisGrid, int eta_set);
+  int ChemStep(HierarchyEntry *ThisGrid, float thisdt, float tcur);
+  int ChemBounds(HierarchyEntry *ThisGrid);
+  
 
  public:
 

@@ -34,7 +34,10 @@ int gFLDSplit::Dump(EnzoVector *ucur)
     fprintf(stderr,"  told = %g\n",told);
     fprintf(stderr,"  tnew = %g\n",tnew);
     fprintf(stderr,"  dt = %g\n",dt);
+    fprintf(stderr,"  dtrad = %g\n",dtrad);
     fprintf(stderr,"  dtchem = %g\n",dtchem);
+    fprintf(stderr,"  maxsubcycles = %g\n",maxsubcycles);
+    fprintf(stderr,"  maxchemsub = %g\n",maxchemsub);
     fprintf(stderr,"  theta = %g\n",theta);
     fprintf(stderr,"  Nchem = %"ISYM"\n",Nchem);
     fprintf(stderr,"  Model = %"ISYM"\n",Model);

@@ -238,33 +238,25 @@ float gFLDSplit::ComputeTimeStep(EnzoVector *uold, EnzoVector *unew, int flag)
     }
 
     // set estimated time step as minimum of component time steps
-    dt_est = maxdt*TimeUnits;    // max time step estimate (physical units)
+    dt_est = maxdt;    // max time step estimate (scaled units)
     for (l=0; l<Nvar; l++) {
       dt_est = min(dt_est, dt_est_var[l]);
     }
-
-    // limit maximum growth per step
-    dt_est = min(dt_est, 1.1*dt);    // time step growth (physical units)
-
-
-    // rescale dt estimates to normalized values
-    dt_est /= TimeUnits;
-    for (l=0; l<Nvar; l++)  dt_est_var[l] /= TimeUnits;
 
     // account for min/max time step size (according to user)
     dt_est = max(dt_est, mindt);
     dt_est = min(dt_est, maxdt);
 
-    if (debug) {
-      printf("  gFLDSplit_ComputeTimestep: (E, e, ni) dt_est = (");
-      for (l=0; l<Nvar; l++) {
-	if (dt_est_var[l] == huge_number/TimeUnits)
-	  printf(" -------- ");
-	else  
-	  printf(" %8.2e ",dt_est_var[l]);
-      }
-      printf(")\n");
-    }
+//     if (debug) {
+//       printf("  gFLDSplit_ComputeTimestep: (E, e, ni) dt_est = (");
+//       for (l=0; l<Nvar; l++) {
+// 	if (dt_est_var[l] == huge_number/TimeUnits)
+// 	  printf(" -------- ");
+// 	else  
+// 	  printf(" %8.2e ",dt_est_var[l]);
+//       }
+//       printf(")\n");
+//     }
   }
 
   // account for min/max time step size (according to user)

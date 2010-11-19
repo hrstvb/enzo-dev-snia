@@ -126,6 +126,8 @@ int gFLDSplit::Initialize(HierarchyEntry &TopGrid, TopGridData &MetaData)
   ESpectrum = 1;        // T=10^5 blackbody spectrum
   HFrac  = 1.0;         // all Hydrogen
   theta  = 1.0;         // backwards euler implicit time discret.
+  maxsubcycles = 100.0; // step ratio between radiation and hydro
+  maxchemsub = 100.0;   // step ratio between chemistry and radiation
   dtnorm = 2.0;         // use 2-norm for time step estimation
   ErScale = 1.0;        // no radiation equation scaling
   ecScale = 1.0;        // no energy equation scaling
@@ -189,6 +191,8 @@ int gFLDSplit::Initialize(HierarchyEntry &TopGrid, TopGridData &MetaData)
 	ret += sscanf(line, "RadHydroMaxDt = %"FSYM, &maxdt);
 	ret += sscanf(line, "RadHydroMinDt = %"FSYM, &mindt);
 	ret += sscanf(line, "RadHydroInitDt = %"FSYM, &initdt);
+	ret += sscanf(line, "RadHydroMaxSubcycles = %"FSYM, &maxsubcycles);
+	ret += sscanf(line, "RadHydroMaxChemSubcycles = %"FSYM, &maxchemsub);
 	ret += sscanf(line, "RadHydroDtNorm = %"FSYM, &dtnorm);
 	ret += sscanf(line, "RadHydroDtRadFac = %"FSYM, &dtfac[0]);
 	ret += sscanf(line, "RadHydroDtGasFac = %"FSYM, &dtfac[1]);
@@ -317,6 +321,22 @@ int gFLDSplit::Initialize(HierarchyEntry &TopGrid, TopGridData &MetaData)
     initdt = huge_number;  // default is no limit
   }
 
+  // maxsubcycles gives the maximum desired ratio between hydro time step 
+  // size and radiation time step size (dt_rad <= dt_hydro)
+  if (maxsubcycles < 1.0) {
+    fprintf(stderr,"gFLDSplit Initialize: illegal RadHydroMaxSubcycles = %g\n",maxsubcycles);
+    fprintf(stderr,"   re-setting to %g\n",1.0);
+    maxsubcycles = 100.0;    // default is to synchronize steps
+  }
+
+  // maxchemsub gives the maximum desired ratio between radiation time step 
+  // size and chemistry time step size (dt_chem <= dt_rad)
+  if (maxchemsub < 1.0) {
+    fprintf(stderr,"gFLDSplit Initialize: illegal RadHydroMaxChemSubcycles = %g\n",maxchemsub);
+    fprintf(stderr,"   re-setting to %g\n",1.0);
+    maxchemsub = 100.0;    // default is to synchronize steps
+  }
+
   // a, adot give cosmological expansion & rate
   a = 1.0;
   a0 = 1.0;
@@ -367,7 +387,7 @@ int gFLDSplit::Initialize(HierarchyEntry &TopGrid, TopGridData &MetaData)
     dtnorm = 2.0;  // default is 2-norm
   }
 
-  // Theta gives the implicit time-stepping method (1->BE, 0.5->CN, 0->FE)
+  // theta gives the implicit time-stepping method (1->BE, 0.5->CN, 0->FE)
   if ((theta < 0.0) || (theta > 1.0)) {
     fprintf(stderr,"gFLDSplit Initialize: illegal theta = %g\n",
 	    theta);
@@ -422,12 +442,15 @@ int gFLDSplit::Initialize(HierarchyEntry &TopGrid, TopGridData &MetaData)
     aUnits = 1.0/(1.0 + InitialRedshift);
   }
 
-  // dt gives the time step size
-  dt = initdt;
-  dtchem = 0.1*initdt*TimeUnits;  // use the radiation dt/10 (raw units)
+  // dt* gives the time step sizes for each piece of physics
+  dtrad  = initdt;                        // use the input value (scaled units)
+  dtchem = max(dtrad/maxchemsub,mindt);   // use the subcycled input value
+
+  // set a bound on the global initial dt as a factor of the radiation timestep
+  dt = initdt*maxsubcycles;
 
   // set initial time step into TopGrid
-  ThisGrid->GridData->SetMaxRadiationDt(initdt);
+  ThisGrid->GridData->SetMaxRadiationDt(dt);
   
   // compute global dimension information
   for (dim=0; dim<rank; dim++)
@@ -1140,6 +1163,8 @@ int gFLDSplit::Initialize(HierarchyEntry &TopGrid, TopGridData &MetaData)
       fprintf(outfptr, "RadHydroMaxDt = %g\n", maxdt);
       fprintf(outfptr, "RadHydroMinDt = %g\n", mindt);
       fprintf(outfptr, "RadHydroInitDt = %g\n", initdt);
+      fprintf(outfptr, "RadHydroMaxSubcycles = %g\n", maxsubcycles);
+      fprintf(outfptr, "RadHydroMaxChemSubcycles = %g\n", maxchemsub);
       fprintf(outfptr, "RadHydroDtNorm = %"FSYM"\n", dtnorm);
       fprintf(outfptr, "RadHydroDtRadFac = %g\n", dtfac[0]);
       fprintf(outfptr, "RadHydroDtGasFac = %g\n", dtfac[1]);

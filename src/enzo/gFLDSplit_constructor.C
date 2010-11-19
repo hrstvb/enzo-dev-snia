@@ -84,6 +84,8 @@ gFLDSplit::gFLDSplit()
   maxdt = 1.0e20;
   mindt = 0.0;
   initdt = 1.0e20;
+  maxsubcycles = 1.0;
+  maxchemsub = 1.0;
   dtfac[0] = 1.0e20;
   dtfac[1] = 1.0e20;
   dtfac[2] = 1.0e20;
@@ -91,6 +93,7 @@ gFLDSplit::gFLDSplit()
   tnew = -1.0;
   told = -1.0;
   dt = -1.0;
+  dtrad = -1.0;
   dtchem = -1.0;
   theta = -1.0;
   sol = NULL;
