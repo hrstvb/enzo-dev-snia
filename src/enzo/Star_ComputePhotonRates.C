@@ -66,7 +66,8 @@ int Star::ComputePhotonRates(int &nbins, float E[], double Q[])
     } // ENDELSE
     break;
 
-    /* Average energy from Schaerer (2003) */
+    /* Average energy and luminosities from Schaerer (2003) and Trac &
+       Cen (2007) */
 
   case PopII:
     nbins = (StarClusterHeliumIonization && 

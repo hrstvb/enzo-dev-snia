@@ -439,8 +439,9 @@ typedef int            HDF5_hid_t;
 #define MPI_SENDSTAR_TAG 21
 #define MPI_SENDPMFLAG_TAG 22
 #define MPI_SENDPART_TAG 23
-#define MPI_SENDMARKER_TAG 24
-#define MPI_SGMARKER_TAG 25
+#define MPI_RECEIVEREGION_TAG 24
+#define MPI_SENDMARKER_TAG 25
+#define MPI_SGMARKER_TAG 26
 
 // There are 5 tags related to this (1000-1004)
 #define MPI_SENDPARTFIELD_TAG 1000

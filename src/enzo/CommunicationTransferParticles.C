@@ -30,7 +30,9 @@
 #include "TopGridData.h"
 #include "Hierarchy.h"
 #include "LevelHierarchy.h"
+#include "communication.h"
 void my_exit(int status);
+MPI_Arg Return_MPI_Tag(int tag, int num1[], int num2[3]=0);
  
 // function prototypes
  
@@ -254,6 +256,9 @@ int CommunicationTransferParticles(grid *GridPointer[], int NumberOfGrids)
 	  Usize = sizeof(float_int);
 	  Xsize = TransferSize;
 
+	  CommunicationGridID[0] = i;
+	  CommunicationGridID[1] = j;
+
           // fprintf(stderr, "sizeof SendCount %"ISYM"\n", sizeof(SendCount));
           // fprintf(stderr, "sizeof MPI_Arg %"ISYM"\n", sizeof(MPI_Arg));
  
@@ -263,10 +268,12 @@ int CommunicationTransferParticles(grid *GridPointer[], int NumberOfGrids)
 	    SendCount = Usize * Xsize;
             Dest = ToProcessor;
 	    Here = MyProcessorNumber;
+	    Tag = Return_MPI_Tag(MPI_TRANSFERPARTICLE_TAG, CommunicationGridID);
 
 	    if( SendCount > 0 ) {
 	    // fprintf(stderr, "P%"ISYM" Sending %"ISYM" bytes to %"ISYM" [%"ISYM" x %"ISYM"]\n", Here, SendCount, Dest, Usize, Xsize); 
-	    stat = MPI_Send(SharedList[j].Pointer[i], SendCount, DataTypeByte, Dest, MPI_TRANSFERPARTICLE_TAG, MPI_COMM_WORLD);
+	    stat = MPI_Send(SharedList[j].Pointer[i], SendCount, DataTypeByte, Dest, 
+			    Tag, MPI_COMM_WORLD);
 	      if( stat != MPI_SUCCESS ){my_exit(EXIT_FAILURE);}
 	    }
 	  }
@@ -280,9 +287,11 @@ int CommunicationTransferParticles(grid *GridPointer[], int NumberOfGrids)
 	    RecvCount = Xsize*Usize;
             Source = FromProcessor;
 	    Here = MyProcessorNumber;
+	    Tag = Return_MPI_Tag(MPI_TRANSFERPARTICLE_TAG, CommunicationGridID);
 
-	    // fprintf(stderr, "P%"ISYM" Post receive %"ISYM" bytes from %"ISYM" [%"ISYM" x %"ISYM"]\n", Here, RecvCount, Source, Usize, Xsize);  
-	    stat = MPI_Recv(SharedList[j].Pointer[i], RecvCount, DataTypeByte, Source, MPI_TRANSFERPARTICLE_TAG, MPI_COMM_WORLD, &Status);
+	    // fprintf(stderr, "P%"ISYM" Post receive %"ISYM" bytes from %"ISYM" [%"ISYM" x %"ISYM"]\n", Here, RecvCount, Source, Usize, Xsize);
+	    stat = MPI_Recv(SharedList[j].Pointer[i], RecvCount, DataTypeByte, 
+			    Source, Tag, MPI_COMM_WORLD, &Status);
 	      if( stat != MPI_SUCCESS ){my_exit(EXIT_FAILURE);}
 	    stat = MPI_Get_count(&Status, DataTypeByte, &RecvCount);
 	      if( stat != MPI_SUCCESS ){my_exit(EXIT_FAILURE);}

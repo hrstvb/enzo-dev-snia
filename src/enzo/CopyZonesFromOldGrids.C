@@ -33,133 +33,101 @@
 #include "CommunicationUtilities.h"
 #include "communication.h"
 
-#define GRIDS_PER_LOOP 100000
-#define CELLS_PER_LOOP 100000000
-
-int CommunicationBufferPurge(void);
+int GenerateGridArray(LevelHierarchyEntry *LevelArray[], int level,
+		      HierarchyEntry **Grids[]);
 int CommunicationReceiveHandler(fluxes **SubgridFluxesEstimate[] = NULL,
 				int NumberOfSubgrids[] = NULL,
 				int FluxFlag = FALSE,
 				TopGridData* MetaData = NULL);
 
-int CopyZonesFromOldGrids(LevelHierarchyEntry *OldGrids, 
+int CopyZonesFromOldGrids(LevelHierarchyEntry *OldGrids,
 			  TopGridData *MetaData,
 			  ChainingMeshStructure ChainingMesh)
 {
 
-  int i, dim, size, NumberOfGrids, gridcount, totalcount, Rank, ncells;
-  int EndGrid, Dims[MAX_DIMENSION];
-  FLOAT Left[MAX_DIMENSION], Right[MAX_DIMENSION];
+  int i, grid1, NumberOfGrids, counter;
   FLOAT ZeroVector[] = {0,0,0};
-  LevelHierarchyEntry *Temp, *FirstGrid;
-  SiblingGridList SiblingList;
-
-  /* Count grids */
+  LevelHierarchyEntry *Temp;
+  LevelHierarchyEntry **GridList;
+  
+  /* For threading, create a grid pointer array.  Can't use
+     GenerateGridArray because GridHierarchyEntry isn't valid
+     anymore. */
 
   NumberOfGrids = 0;
   for (Temp = OldGrids; Temp; Temp = Temp->NextGridThisLevel)
     NumberOfGrids++;
 
-  /* Loop over batches of grids */
+  counter = 0;
+  GridList = new LevelHierarchyEntry*[NumberOfGrids];
+  for (Temp = OldGrids; Temp; Temp = Temp->NextGridThisLevel)
+    GridList[counter++] = Temp;
 
-  totalcount = 0;
-  FirstGrid = OldGrids;
-  while (totalcount < NumberOfGrids && FirstGrid != NULL) {
+  SiblingGridList *SiblingList = new SiblingGridList[NumberOfGrids];
 
-    /* Find how many grids have CELLS_PER_LOOP */
+  /* Find sibling grids for all subgrids */
 
-    for (Temp = FirstGrid, ncells = 0, gridcount = 0;
-	 Temp && ncells < CELLS_PER_LOOP && gridcount < GRIDS_PER_LOOP;
-	 Temp = Temp->NextGridThisLevel, gridcount++) {
-      Temp->GridData->ReturnGridInfo(&Rank, Dims, Left, Right);
-      size = 1;
-      for (dim = 0; dim < Rank; dim++)
-	size *= Dims[dim];
-      ncells += size;
-    }
+//#pragma omp parallel for schedule(static)
+  for (grid1 = 0; grid1 < NumberOfGrids; grid1++)
+    GridList[grid1]->GridData->FastSiblingLocatorFindSiblings
+      (&ChainingMesh, &SiblingList[grid1],
+       MetaData->LeftFaceBoundaryCondition,
+       MetaData->RightFaceBoundaryCondition);
 
-    EndGrid = gridcount;
+  /* Post receives, looping over the old grids */
 
-    /* Post receives, looping over the old grids */
+  CommunicationReceiveIndex = 0;
+  CommunicationReceiveCurrentDependsOn = COMMUNICATION_NO_DEPENDENCE;
+  CommunicationDirection = COMMUNICATION_POST_RECEIVE;
 
-    CommunicationReceiveIndex = 0;
-    CommunicationReceiveCurrentDependsOn = COMMUNICATION_NO_DEPENDENCE;
-    CommunicationDirection = COMMUNICATION_POST_RECEIVE;
-    
-    for (Temp = FirstGrid, gridcount = 0; 
-	 Temp && gridcount < EndGrid; 
-	 Temp = Temp->NextGridThisLevel, gridcount++) {
+#pragma omp parallel for schedule(static) private(i)
+  for (grid1 = 0; grid1 < NumberOfGrids; grid1++) {
 
-      // Find sibling grids
-      Temp->GridData->FastSiblingLocatorFindSiblings
-	(&ChainingMesh, &SiblingList, MetaData->LeftFaceBoundaryCondition, 
-	 MetaData->RightFaceBoundaryCondition);
+    // For each of the sibling grids, copy data.
+    for (i = 0; i < SiblingList[grid1].NumberOfSiblings; i++)
+      SiblingList[grid1].GridList[i]->CopyZonesFromGrid
+	(GridList[grid1]->GridData, ZeroVector);
 
-      // For each of the sibling grids, copy data.
-      for (i = 0; i < SiblingList.NumberOfSiblings; i++)
-	SiblingList.GridList[i]->CopyZonesFromGrid(Temp->GridData, ZeroVector);
+  }
 
-      // Don't delete the old grids yet, we need to copy their data in
-      // the next step.
-    
-      delete [] SiblingList.GridList;
+  /* Send data */
 
-    }
+  CommunicationDirection = COMMUNICATION_SEND;
 
-    /* Send data */
+#pragma omp parallel for schedule(static) private(i)
+  for (grid1 = 0; grid1 < NumberOfGrids; grid1++) {
 
-    CommunicationDirection = COMMUNICATION_SEND;
+    // For each of the sibling grids, copy data.
+    for (i = 0; i < SiblingList[grid1].NumberOfSiblings; i++)
+      SiblingList[grid1].GridList[i]->CopyZonesFromGrid
+	(GridList[grid1]->GridData, ZeroVector);
 
-    for (Temp = FirstGrid, gridcount = 0; 
-	 Temp && gridcount < EndGrid; 
-	 Temp = Temp->NextGridThisLevel, gridcount++) {
+    /* Delete all fields (only on the host processor -- we need
+       BaryonField on the receiving processor) after sending them.  We
+       only delete the grid object on all processors after
+       everything's done. */
 
-      /* Find sibling grids.  Note that we do this twice to save memory.
-	 This step isn't that expensive, so we can afford to compute
-	 this twice.  However this may change in larger simulations. */
+    if (GridList[grid1]->GridData->ReturnProcessorNumber() == MyProcessorNumber)
+      GridList[grid1]->GridData->DeleteAllFields();
 
-      Temp->GridData->FastSiblingLocatorFindSiblings
-	(&ChainingMesh, &SiblingList, MetaData->LeftFaceBoundaryCondition, 
-	 MetaData->RightFaceBoundaryCondition);
+  }
 
-      // For each of the sibling grids, copy data.
-      for (i = 0; i < SiblingList.NumberOfSiblings; i++)
-	SiblingList.GridList[i]->CopyZonesFromGrid(Temp->GridData, ZeroVector);
+  /* Receive data */
 
-      /* Delete all fields (only on the host processor -- we need
-	 BaryonField on the receiving processor) after sending them.  We
-	 only delete the grid object on all processors after
-	 everything's done. */
+  if (CommunicationReceiveHandler() == FAIL)
+    ENZO_FAIL("");
 
-      if (Temp->GridData->ReturnProcessorNumber() == MyProcessorNumber)
-	Temp->GridData->DeleteAllFields();
+  /* Delete old grids */
 
-      delete [] SiblingList.GridList;
+#pragma omp parallel for schedule(static)
+  for (grid1 = 0; grid1 < NumberOfGrids; grid1++) {
+    delete [] SiblingList[grid1].GridList;
+    delete GridList[grid1]->GridData;
+    GridList[grid1]->GridData = NULL;
+  }
 
-    }
-
-    /* Receive data */
-
-    if (CommunicationReceiveHandler() == FAIL)
-      ENZO_FAIL("CommunicationReceiveHandler() failed!\n");
-
-
-    /* Delete old grids and increase total grid count and then advance
-       FirstGrid pointer */
-
-    for (Temp = FirstGrid, gridcount = 0; 
-	 Temp && gridcount < EndGrid; 
-	 Temp = Temp->NextGridThisLevel, gridcount++) {
-      delete Temp->GridData;
-      Temp->GridData = NULL;
-      totalcount++;
-    }
-
-    FirstGrid = Temp;
-#ifdef USE_MPI
-    CommunicationBufferPurge();
-#endif /* USE_MPI */
-  } // ENDWHILE grid batches
+  delete [] GridList;
+  delete [] SiblingList;
 
   return SUCCESS;
 
