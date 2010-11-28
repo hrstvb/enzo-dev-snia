@@ -43,7 +43,8 @@ void DeleteFluxes(fluxes *Fluxes);
  
  
 int grid::GetProjectedBoundaryFluxes(grid *ParentGrid, int grid_num,
-				     int subgrid_num, fluxes &ProjectedFluxes)
+				     int subgrid_num, fluxes &ProjectedFluxes,
+				     int IsSubling)
 {
  
   /* Return if this doesn't involve us. */

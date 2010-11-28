@@ -389,7 +389,8 @@ public:
     (for step #19) */
 
    int GetProjectedBoundaryFluxes(grid *ParentGrid, int grid_num,
-				  int subgrid_num, fluxes &ProjectedFluxes);
+				  int subgrid_num, fluxes &ProjectedFluxes,
+				  int IsSubling=FALSE);
 
 /* Return the refinement factors as compared to the grid in the argument
    (integer version) (for step #19) */

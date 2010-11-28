@@ -125,8 +125,8 @@ int grid::inteuler(int idim,
   jn = GridDimension[jdim];
   is = GridStartIndex[idim];
   ie = GridEndIndex[idim];
-  js = GridStartIndex[jdim];
-  je = GridEndIndex[jdim];
+  js = 0;
+  je = GridDimension[jdim]-1;
 
 //
 // Compute coefficients used in interpolation formulae (from eq. 1.6)
