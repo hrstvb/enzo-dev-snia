@@ -511,12 +511,8 @@ int EvolveLevel(TopGridData *MetaData, LevelHierarchyEntry *LevelArray[],
       Grids[grid1]->GridData->ShocksHandler();
 
       /* Compute and apply thermal conduction. */
-      if(Conduction){
-	if(Grids[grid1]->GridData->ConductHeat() == FAIL){
-	  fprintf(stderr, "Error in grid->ConductHeat.\n");
-	  return FAIL;
-	}
-      }
+      if(Conduction)
+	Grids[grid1]->GridData->ConductHeat();
 
       /* Gravity: clean up AccelerationField. */
 

@@ -79,7 +79,6 @@ int grid::CommunicationMoveGrid(int ToProcessor, int MoveParticles,
       this->CommunicationSendPhotonPackages(this, ToProcessor, 
 					    NumberOfPhotonPackages, 
 					    NumberOfPhotonPackages, &PP);
-  }
 #endif /* TRANSFER */    
 
     /* Delete fields on old grid. */

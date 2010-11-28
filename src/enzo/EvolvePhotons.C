@@ -21,9 +21,6 @@
 #ifdef USE_MPI
 #include "mpi.h"
 #endif /* USE_MPI */
-#ifdef _OPENMP
-#include "omp.h"
-#endif
 #include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
@@ -151,9 +148,8 @@ int EvolvePhotons(TopGridData *MetaData, LevelHierarchyEntry *LevelArray[],
   }
 #endif
 
-  int lvl, NumberOfGrids;
+  int i, lvl, GridNum;
   grid *Helper;
-  HierarchyEntry **Grids;
   LevelHierarchyEntry *Temp;
   RadiationSourceEntry *RS;
 
@@ -213,7 +209,6 @@ int EvolvePhotons(TopGridData *MetaData, LevelHierarchyEntry *LevelArray[],
   /**********************************************************************
                        MAIN RADIATION TRANSPORT LOOP
    **********************************************************************/
->>>>>>> other
     
   while (GridTime > PhotonTime) {
 
@@ -264,30 +259,24 @@ int EvolvePhotons(TopGridData *MetaData, LevelHierarchyEntry *LevelArray[],
 
     if (debug) fprintf(stdout, "%"ISYM" SRC(s)\n", NumberOfSources);
 
-    int Rank, Dims[MAX_DIMENSION];
-    FLOAT Left[MAX_DIMENSION], Right[MAX_DIMENSION];
-  
-    START_PERF();
-    for (lvl = MAX_DEPTH_OF_HIERARCHY-1; lvl >= 0 ; lvl--) {
-      NumberOfGrids = GenerateGridArray(LevelArray, lvl, &Grids);
-
     /* Initialize radiation fields */
 
-#pragma omp parallel for schedule(static)
-      for (GridNum = 0; GridNum < NumberOfGrids; GridNum++) 
-	Grids[GridNum]->GridData->InitializeRadiativeTransferFields();
+    START_PERF();
+    for (lvl = MAX_DEPTH_OF_HIERARCHY-1; lvl >= 0 ; lvl--)
+      for (Temp = LevelArray[lvl]; Temp; Temp = Temp->NextGridThisLevel) 
+	if (Temp->GridData->InitializeRadiativeTransferFields() == FAIL) {
+	  ENZO_FAIL("Error in InitializeRadiativeTransferFields.\n");
+	}
+    END_PERF(0);
 
     /* create temperature fields for Compton heating */  
 
-      if (RadiationXRayComptonHeating)  
-#pragma omp parallel for schedule(static)
-	for (GridNum = 0; GridNum < NumberOfGrids; GridNum++) 
-	  Grids[GridNum]->GridData->InitializeTemperatureFieldForComptonHeating();
-
-      delete [] Grids;
-
-    } // ENDFOR lvl
-    END_PERF(0);
+    if (RadiationXRayComptonHeating)  
+      for (lvl = MAX_DEPTH_OF_HIERARCHY-1; lvl >= 0 ; lvl--)
+	for (Temp = LevelArray[lvl]; Temp; Temp = Temp->NextGridThisLevel) 
+	  if (Temp->GridData->InitializeTemperatureFieldForComptonHeating() == FAIL) {  
+	    ENZO_FAIL("Error in InitializeTemperatureFieldForComptonHeating.\n");
+	  }	
 
     for (i = 0; i < 4; i++)
       EscapedPhotonCount[i] = 0.0;
@@ -342,7 +331,6 @@ int EvolvePhotons(TopGridData *MetaData, LevelHierarchyEntry *LevelArray[],
     /* Evolve all photons by fixed timestep. */
   
     ListOfPhotonsToMove *PhotonsToMove = new ListOfPhotonsToMove;
-    ListOfPhotonsToMove *ThreadMoveList;
     PhotonsToMove->NextPackageToMove = NULL;
 
     int keep_transporting = 1;
@@ -390,25 +378,23 @@ int EvolvePhotons(TopGridData *MetaData, LevelHierarchyEntry *LevelArray[],
       if (local_keep_transporting)
       for (lvl = MAX_DEPTH_OF_HIERARCHY-1; lvl >= 0 ; lvl--) {
 
-	NumberOfGrids = GenerateGridArray(LevelArray, lvl, &Grids);
+	//NumberOfGrids = GenerateGridArray(LevelArray, lvl, &Grids);
+	for (Temp = LevelArray[lvl], GridNum = 0;
+	     Temp; Temp = Temp->NextGridThisLevel, GridNum++) {
+	  //for (GridNum = 0; GridNum < NumberOfGrids; GridNum++) {
 
-	for (GridNum = 0; GridNum < NumberOfGrids; GridNum++) {
-	  if (Grids[GridNum]->ParentGrid != NULL) 
-	    Helper = Grids[GridNum]->ParentGrid->GridData;
+	  if (Temp->GridHierarchyEntry->ParentGrid != NULL) 
+	    Helper = Temp->GridHierarchyEntry->ParentGrid->GridData;
 	  else
 	    Helper = NULL;
 
-	  if (Grids[GridNum]->GridData->TransportPhotonPackages
-	      (lvl, &PhotonsToMove, GridNum, Grids0, 
-	       nGrids0, Helper, Grids[GridNum]->GridData) == FAIL) {
-	    fprintf(stderr, "Error in %"ISYM" th grid. "
-		    "grid->TransportPhotonPackages.\n",GridNum);
-	    ENZO_FAIL("");
-	  }
+	  Temp->GridData->TransportPhotonPackages
+	    (lvl, &PhotonsToMove, GridNum, Grids0, nGrids0, Helper, 
+	     Temp->GridData);
 
 	} // ENDFOR grids
 
-	delete [] Grids;
+	//delete [] Grids;
 
       }                          // loop over levels
 #ifndef NONBLOCKING_RT
@@ -531,62 +517,54 @@ int EvolvePhotons(TopGridData *MetaData, LevelHierarchyEntry *LevelArray[],
 
     // Divide the photo-ionization and photo-heating rates by the
     // number of particles (rho * dx^3)
-
     START_PERF();
-    for (lvl = 0; lvl < MAX_DEPTH_OF_HIERARCHY-1; lvl++) {
-      NumberOfGrids = GenerateGridArray(LevelArray, lvl, &Grids);
-#pragma omp parallel for schedule(static)
-      for (GridNum = 0; GridNum < NumberOfGrids; GridNum++) 
-	if (Grids[GridNum]->GridData->RadiationPresent() == TRUE)
-	  Grids[GridNum]->GridData->FinalizeRadiationFields();
-      delete [] Grids;
-    } // ENDFOR level
+    for (lvl = 0; lvl < MAX_DEPTH_OF_HIERARCHY-1; lvl++)
+      for (Temp = LevelArray[lvl]; Temp; Temp = Temp->NextGridThisLevel)
+	if (Temp->GridData->RadiationPresent() == TRUE)
+	  Temp->GridData->FinalizeRadiationFields();
     END_PERF(8);
 
     START_PERF();
-    for (lvl = 0; lvl < MAX_DEPTH_OF_HIERARCHY-1; lvl++) {
-      NumberOfGrids = GenerateGridArray(LevelArray, lvl, &Grids);
-#pragma omp parallel for schedule(static)
-      for (GridNum = 0; GridNum < NumberOfGrids; GridNum++) 
-	if (Grids[GridNum]->GridData->RadiationPresent() == TRUE) {
+    for (lvl = 0; lvl < MAX_DEPTH_OF_HIERARCHY-1; lvl++)
+      for (Temp = LevelArray[lvl]; Temp; Temp = Temp->NextGridThisLevel)
+	if (Temp->GridData->RadiationPresent() == TRUE) {
 
 	  if (RadiativeTransferCoupledRateSolver && 
 	      RadiativeTransferOpticallyThinH2)
-	    Grids[GridNum]->GridData->AddH2Dissociation(AllStars);
+	    Temp->GridData->AddH2Dissociation(AllStars);
 
 	  if (RadiativeTransferCoupledRateSolver) {
 	    int RTCoupledSolverIntermediateStep = TRUE;
-	    Grids[GridNum]->GridData->SolveRateAndCoolEquations
-	    (RTCoupledSolverIntermediateStep);
+	    Temp->GridData->SolveRateAndCoolEquations(RTCoupledSolverIntermediateStep);
 	  }
 
 	  if (RadiativeTransferCoupledRateSolver &&
 	      RadiativeTransferInterpolateField)
-	    Grids[GridNum]->GridData->DeleteInterpolatedFields();
+	    Temp->GridData->DeleteInterpolatedFields();
 
 	} /* ENDIF radiation */
-      delete [] Grids;
-    } // ENDFOR level
     END_PERF(9);
 
-
-    /* For the non-coupled (i.e. cells without radiation) rate &
-       energy solver, we have to set the H2 dissociation rates.  Also,
-       clean up temperature field */
+    /* For the non-coupled (i.e. cells without radiation) rate & energy
+       solver, we have to set the H2 dissociation rates */
 
     START_PERF();
-    for (lvl = 0; lvl < MAX_DEPTH_OF_HIERARCHY-1; lvl++) {
-      NumberOfGrids = GenerateGridArray(LevelArray, lvl, &Grids);
-#pragma omp parallel for schedule(static)
-      for (GridNum = 0; GridNum < NumberOfGrids; GridNum++) {
-	if (Grids[GridNum]->GridData->RadiationPresent() == FALSE &&
-	    RadiativeTransferOpticallyThinH2)
-	  Grids[GridNum]->GridData->AddH2Dissociation(AllStars);
-	Grids[GridNum]->GridData->FinalizeTemperatureFieldForComptonHeating();
-      } // ENDFOR grids
-      delete [] Grids;
-    } // ENDFOR level
+    if (RadiativeTransferOpticallyThinH2)
+      for (lvl = 0; lvl < MAX_DEPTH_OF_HIERARCHY-1; lvl++)
+	for (Temp = LevelArray[lvl]; Temp; Temp = Temp->NextGridThisLevel)
+	  if (Temp->GridData->RadiationPresent() == FALSE)
+	    Temp->GridData->AddH2Dissociation(AllStars);
+    END_PERF(10);
 
+    /* Clean up temperature field */
+
+    if (RadiationXRayComptonHeating)
+      for (lvl = 0; lvl < MAX_DEPTH_OF_HIERARCHY-1; lvl++)
+	for (Temp = LevelArray[lvl]; Temp; Temp = Temp->NextGridThisLevel)
+	  if (Temp->GridData->FinalizeTemperatureFieldForComptonHeating() == FAIL) {  
+	    ENZO_FAIL("Error in FinalizeTemperatureFieldForComptonHeating.\n");
+	  }	
+    
     debug = debug_store;
 
     /* We don't rely on the count NumberOfPhotonPackages here, so they

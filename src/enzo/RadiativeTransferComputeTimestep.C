@@ -39,8 +39,6 @@ int CosmologyComputeExpansionFactor(FLOAT time, FLOAT *a, FLOAT *dadt);
 int GetUnits(float *DensityUnits, float *LengthUnits,
 	     float *TemperatureUnits, float *TimeUnits,
 	     float *VelocityUnits, FLOAT Time);
-int GenerateGridArray(LevelHierarchyEntry *LevelArray[], int level,
-		      HierarchyEntry **Grids[]);
 
 int RadiativeTransferComputeTimestep(LevelHierarchyEntry *LevelArray[],
 				     TopGridData *MetaData, float dtLevelAbove,
@@ -63,12 +61,10 @@ int RadiativeTransferComputeTimestep(LevelHierarchyEntry *LevelArray[],
   // Restrict the increase in dtPhoton to this factor
   const float MaxDTChange = 3.0;
 
-  HierarchyEntry **Grids;
   LevelHierarchyEntry *Temp;
   bool InitialTimestep;
-
-  int l, maxLevel, NumberOfGrids, grid1;
-  FLOAT OldTime, HydroTime;
+  int l, maxLevel;
+  FLOAT HydroTime;
   float ThisPhotonDT;
   const float unchangedLimit = 0.1*PhotonCourantFactor*huge_number;
 
@@ -104,47 +100,25 @@ int RadiativeTransferComputeTimestep(LevelHierarchyEntry *LevelArray[],
   if (RadiativeTransferHIIRestrictedTimestep || 
       RadiativeTransferAdaptiveTimestep == 2) {
 
-    for (l = 0; l < MAX_DEPTH_OF_HIERARCHY-1; l++) {
-      NumberOfGrids = GenerateGridArray(LevelArray, l, &Grids);
-
-#ifdef _OPENMP // Manual MIN reduction across threads
-#pragma omp parallel
-      {
-	float dtThread = huge_number;
-#pragma omp for nowait schedule(static) private(ThisPhotonDT)
-	for (grid1 = 0; grid1 < NumberOfGrids; grid1++) {
-	  ThisPhotonDT = Grids[grid1]->GridData->
+    // Calculate timestep by limiting to a max change in HII
+    if (RadiativeTransferHIIRestrictedTimestep)
+      for (l = 0; l < MAX_DEPTH_OF_HIERARCHY-1; l++)
+	for (Temp = LevelArray[l]; Temp; Temp = Temp->NextGridThisLevel) {
+	  ThisPhotonDT = Temp->GridData->
 	    ComputePhotonTimestepHII(DensityUnits, LengthUnits, VelocityUnits, 
 				     afloat, MetaData->GlobalMaximumkphIfront);
-	  dtThread = min(dtThread, ThisPhotonDT);
+	  dtPhoton = min(dtPhoton, ThisPhotonDT);
 	}
-#pragma omp critical
-	dtPhoton = min(dtPhoton, dtThread);
-      } // END omp parallel
-
-#else /* NOT _OPENMP */
-      for (grid1 = 0; grid1 < NumberOfGrids; grid1++) {
-	ThisPhotonDT = Grids[grid1]->GridData->
-	  ComputePhotonTimestepHII(DensityUnits, LengthUnits, VelocityUnits, 
-				   afloat, MetaData->GlobalMaximumkphIfront);
-	dtPhoton = min(dtPhoton, ThisPhotonDT);
-      }
-#endif /* _OPENMP */
-      delete [] Grids;
-    } // ENDFOR level
 
   // Calculate timestep by limiting to a max change in intensity
   // (proportional to the I-front speed)
-
-    /* TODO: thread! */
-
     if (RadiativeTransferAdaptiveTimestep == 2)
       for (l = 0; l < MAX_DEPTH_OF_HIERARCHY-1; l++)
 	for (Temp = LevelArray[l]; Temp; Temp = Temp->NextGridThisLevel) {
 	  ThisPhotonDT = Temp->GridData->
 	    ComputePhotonTimestepTau(DensityUnits, LengthUnits, VelocityUnits, 
 				     afloat);
-	  dtThread = min(dtThread, ThisPhotonDT);
+	  dtPhoton = min(dtPhoton, ThisPhotonDT);
 	}
 
     dtPhoton = PhotonCourantFactor * CommunicationMinValue(dtPhoton);
@@ -179,28 +153,11 @@ int RadiativeTransferComputeTimestep(LevelHierarchyEntry *LevelArray[],
   // isn't requested, use hydro timestep on finest level
   if (dtPhoton >= unchangedLimit) {
     if (maxLevel > 0) {
-      NumberOfGrids = GenerateGridArray(LevelArray, maxLevel, &Grids);
-
-#ifdef _OPENMP /* Manual MIN reduction again */
-#pragma omp parallel
-      {
-	float dtThread = huge_number;
-#pragma omp for nowait schedule(static) private(ThisPhotonDT)
-	for (grid1 = 0; grid1 < NumberOfGrids; grid1++) {
-	  ThisPhotonDT = Grids[grid1]->GridData->ComputePhotonTimestep();
-	  dtThread = min(dtThread, ThisPhotonDT);
-	} // ENDFOR grids
-#pragma omp critical
-	dtPhoton = min(dtPhoton, dtThread);
-      } // END omp parallel
-#else /* NOT _OPENMP */
-      for (grid1 = 0; grid1 < NumberOfGrids; grid1++) {
-	ThisPhotonDT = Grids[grid1]->GridData->ComputePhotonTimestep();
+      for (Temp = LevelArray[maxLevel]; Temp; Temp = Temp->NextGridThisLevel) {
+	ThisPhotonDT = Temp->GridData->ComputePhotonTimestep();
 	dtPhoton = min(dtPhoton, ThisPhotonDT);
       } // ENDFOR grids
-#endif
       dtPhoton = CommunicationMinValue(dtPhoton);
-      delete [] Grids;
     } else
       dtPhoton = dtLevelAbove;
 
