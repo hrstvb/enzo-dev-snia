@@ -234,12 +234,16 @@ int PrepareDensityField(LevelHierarchyEntry *LevelArray[],
 #endif
       
 #ifdef FAST_SIB
+#ifndef BITWISE_IDENTICALITY
 #pragma omp parallel for schedule(static)
+#endif
     for (grid1 = StartGrid; grid1 < EndGrid; grid1++)
       PrepareGravitatingMassField2a(Grids[grid1], grid1, SiblingList,
 				    MetaData, level, When);
 #else
+#ifndef BITWISE_IDENTICALITY
 #pragma omp parallel for schedule(static)
+#endif
     for (grid1 = StartGrid; grid1 < EndGrid; grid1++)
       PrepareGravitatingMassField2a(Grids[grid1], MetaData, LevelArray,
 				    level, When);

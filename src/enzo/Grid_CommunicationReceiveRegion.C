@@ -158,7 +158,13 @@ int grid::CommunicationReceiveRegion(grid *FromGrid, int FromProcessor,
 #pragma omp critical
     {
 
-    if (CommunicationDirection != COMMUNICATION_RECEIVE) {
+    if (CommunicationDirection == COMMUNICATION_SEND_RECEIVE) {
+      CommunicationGridID[0] = FromGrid->ID;
+      CommunicationGridID[1] = this->ID;
+      for (dim = 0; dim < MAX_DIMENSION; dim++)
+	CommunicationTags[dim] = FromOffset[dim];
+    }
+    else if (CommunicationDirection != COMMUNICATION_RECEIVE) {
       CommunicationGridID[0] = grid_one->ID;
       CommunicationGridID[1] = grid_two->ID;
       for (dim = 0; dim < MAX_DIMENSION; dim++)

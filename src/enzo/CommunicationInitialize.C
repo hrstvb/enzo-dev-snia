@@ -50,9 +50,12 @@ int CommunicationInitialize(Eint32 *argc, char **argv[])
 #ifdef _OPENMP
   MPI_Arg desired = MPI_THREAD_SERIALIZED;
   MPI_Arg provided;
+  MPI_Arg thread;
   MPI_Init_thread(argc, argv, desired, &provided);
   if (desired != provided) {
-    if (MyProcessorNumber == ROOT_PROCESSOR) {
+    thread = omp_get_thread_num();
+    MPI_Comm_rank(MPI_COMM_WORLD, &mpi_rank);
+    if (mpi_rank == ROOT_PROCESSOR && thread == 0) {
       fprintf(stderr, "desired = %d, provided = %d\n", desired, provided);
       fprintf(stderr, "WARNING: Cannot get proper OpenMP/MPI setting MPI_THREAD_SERIALIZED!\n"
 	      "--> Hybrid MPI/OpenMPI mode may fail.\n"
