@@ -506,8 +506,8 @@ CONFIG_OPENMP-%: suggest-clean
         grep -v CONFIG_OPENMP $(MAKE_CONFIG_OVERRIDE) > $${tmp}; \
         mv $${tmp} $(MAKE_CONFIG_OVERRIDE); \
         echo "CONFIG_OPENMP = $*" >> $(MAKE_CONFIG_OVERRIDE); \
-	$(MAKE)  show-config | grep CONFIG_OPENMP:
-	@echo
+	$(MAKE)  show-config | grep CONFIG_OPENMP; \
+	echo
 
 #-----------------------------------------------------------------------
 
