@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include "ErrorExceptions.h"
 #include "macros_and_parameters.h"
 
 // Return a somewhat-unique MPI tag for communication.
@@ -29,6 +30,15 @@ MPI_Arg Return_MPI_Tag(int tag, int num1[], int num2[])
 
   // Reduce to a 32-bit signed integer
   result = result % (1 << 31);
+
+  if ((MPI_Arg) result < 0) {
+    printf("MPI_Tag < 0 !!! :: result = %d, tag = %d, num1 = %d %d",
+	   result, tag, num1[0], num1[1]);
+    if (num2 != 0)
+      printf(", num2 = %d %d %d", num2[0], num2[1], num2[2]);
+    printf("\n");
+    ENZO_FAIL("");
+  }
 
   return (MPI_Arg) result;
   

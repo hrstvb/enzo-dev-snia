@@ -273,6 +273,7 @@ int grid::Group_ReadGrid(FILE *fptr, int GridID, HDF5_hid_t file_id,
  
     }
  
+  this->ID = GridID;
   sprintf(id, "%"GROUP_TAG_FORMAT""ISYM, GridID);
  
   sprintf(pid, "%"TASK_TAG_FORMAT""ISYM, MyProcessorNumber);
