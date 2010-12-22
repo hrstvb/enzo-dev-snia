@@ -51,7 +51,7 @@ int grid::FlagCellsToAvoidRefinement()
   if (ColorField == -1)
     ENZO_FAIL("Can't avoid refinement without ForbiddenRefinement field!");
   int DensNum = FindField(Density, FieldType, NumberOfBaryonFields); 
-  if (ColorField == -1)
+  if (DensNum == -1)
     ENZO_FAIL("Can't find Density field.");
  
   for (i = 0; i < size; i++)
