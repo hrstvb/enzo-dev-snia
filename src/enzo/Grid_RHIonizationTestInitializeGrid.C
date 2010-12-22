@@ -94,7 +94,7 @@ int grid::RHIonizationTestInitializeGrid(int NumChemicals,
   }
 
   // set the subgrid static flag (necessary??)
-  SubgridsAreStatic = FALSE;  // no subgrids
+  SubgridsAreStatic = FALSE;
 
   // Return if this doesn't concern us.
   if (ProcessorNumber != MyProcessorNumber)
@@ -109,7 +109,7 @@ int grid::RHIonizationTestInitializeGrid(int NumChemicals,
     fprintf(stderr,"Error in GetUnits.\n");
     return FAIL;
   }
-  if (MyProcessorNumber == ROOT_PROCESSOR) {
+  if (debug  &&  NewData) {
     fprintf(stdout,"  Internal Unit Conversion Factors:\n");
     fprintf(stdout,"         length = %g\n",LengthUnits);
     fprintf(stdout,"           mass = %lg\n",MassUnits);
@@ -117,8 +117,9 @@ int grid::RHIonizationTestInitializeGrid(int NumChemicals,
   }
 
   // compute size of fields
+  int dim;
   int size = 1;
-  for (int dim=0; dim<GridRank; dim++)  size *= GridDimension[dim];
+  for (dim=0; dim<GridRank; dim++)  size *= GridDimension[dim];
  
   // allocate fields
   if (NewData == TRUE) {
@@ -178,7 +179,7 @@ int grid::RHIonizationTestInitializeGrid(int NumChemicals,
     }
 
     
-    if (debug) {
+    if (debug  &&  NewData) {
       fprintf(stdout,"\n  Initializing constant fields using CGS values:\n");
       fprintf(stdout,"        density = %g\n",DensityConstant);
       fprintf(stdout,"   total energy = %g\n",TEConstant);

@@ -1,5 +1,5 @@
 #
-#  Iliev et al. isothermal, monochromatic ionization test
+#  Iliev et al. static ionization test
 #
 #  Daniel R. Reynolds, reynolds@smu.edu
 #
@@ -7,27 +7,35 @@
 # 
 # problem and general modules 
 # 
-ProblemType                = 410           // RHIonizationTestInitialize init
+ProblemType                = 410           // RHIonizationTestInitialize 
 RadiativeTransferFLD       = 2             // use FLD solver for radiation
 ImplicitProblem            = 3             // use gFLDSplit module
+MultiSpecies               = 1             // use Enzo chemistry
+RadiativeCooling           = 1             // use Enzo chemistry
 UseHydro                   = 0             // no hydro
-Unigrid                    = 1             // unigrid run
+SelfGravity                = 0             // no gravity
+ComovingCoordinates        = 0             // fixed-space
 RadiativeTransferOpticallyThinH2 = 0       // no 1/r^2 LW background
 RadHydroParamfile = RHIonization1AMR_sp.gfld
+CoolDataParameterFile = CoolDataParameters
 #
 # grid and boundary 
 #
 TopGridRank                = 3
-TopGridDimensions          = 16 16 16
+TopGridDimensions          = 8 8 8
 LeftFaceBoundaryCondition  = 3 3 3         // periodic
 RightFaceBoundaryCondition = 3 3 3
-DomainLeftEdge             = 0.0 0.0 0.0   // (scaled units)
-DomainRightEdge            = 1.0 1.0 1.0
+DomainLeftEdge             = -1.0 -1.0 -1.0   // (scaled units)
+DomainRightEdge            =  1.0  1.0  1.0
+RefineBy                   = 2
+#PartitionNestedGrids       = 1
 #
 # runtime and I/O
 #
-StopTime                   = 1.57788e0     // 500 Myr
-StopCycle                  = 99999
+#StopTime                   = 1.57788e0     // 500 Myr
+StopTime                   = 0.0
+#StopCycle                  = 99999
+StopCycle                  = 0
 dtDataDump                 = 3.15576e-2    // 10 Myr
 ParallelRootGridIO         = 1
 # 

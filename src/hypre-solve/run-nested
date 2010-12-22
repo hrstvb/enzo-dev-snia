@@ -30,7 +30,7 @@ foreach N ($sizes)
 
          rm -f X.?
 
-         mpirun -np $P ./hypre-test $N $solver >& $outfile 
+         mpiexec -n $P ./hypre-test $N $solver >& $outfile 
 
          # Evaluate result
 
