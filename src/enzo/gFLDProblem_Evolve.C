@@ -30,10 +30,17 @@ int RadiationGetUnits(float *RadiationUnits, FLOAT Time);
 
 
 
-int gFLDProblem::Evolve(HierarchyEntry *ThisGrid, float deltat)
+//int gFLDProblem::Evolve(HierarchyEntry *ThisGrid, float deltat)
+int gFLDProblem::Evolve(LevelHierarchyEntry *LevelArray[], int level, float deltat)
 {
 
 //   if (debug)  printf("Entering gFLDProblem::Evolve routine\n");
+
+  // Iterate over all grids on this level
+  LevelHierarchyEntry *Temp;
+  HierarchyEntry* ThisGrid;
+  for (Temp = LevelArray[0]; Temp; Temp = Temp->NextGridThisLevel) {
+    ThisGrid = Temp->GridHierarchyEntry;
 
   // Only continue if we own this grid
   if (MyProcessorNumber != ThisGrid->GridData->ReturnProcessorNumber())
@@ -452,6 +459,8 @@ int gFLDProblem::Evolve(HierarchyEntry *ThisGrid, float deltat)
 #endif
   RTtime += ftime-stime;
   if (debug)  printf("RadHydro cumulative wall time = %g\n",RTtime);
+
+  } // for Temp = ...
 
   // Return
   return SUCCESS;

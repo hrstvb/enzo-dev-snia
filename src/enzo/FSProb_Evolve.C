@@ -41,13 +41,20 @@ int GetUnits(float *DensityUnits, float *LengthUnits,
 
 
 
-int FSProb::Evolve(HierarchyEntry *ThisGrid, float deltat) 
+//int FSProb::Evolve(HierarchyEntry *ThisGrid, float deltat) 
+int FSProb::Evolve(LevelHierarchyEntry *LevelArray[], int level, float deltat) 
 {
   //  if (debug)  printf("Entering FSProb::Evolve routine\n");
 
+  // Iterate over all grids on this level
+  LevelHierarchyEntry *Temp;
+  HierarchyEntry* ThisGrid;
+  for (Temp = LevelArray[0]; Temp; Temp = Temp->NextGridThisLevel) {
+    ThisGrid = Temp->GridHierarchyEntry;
+
   // Only continue if we own this grid
   if (MyProcessorNumber != ThisGrid->GridData->ReturnProcessorNumber())
-    return SUCCESS;
+    break;
 
   // declare some variables
   int i, j, k;
@@ -509,6 +516,8 @@ int FSProb::Evolve(HierarchyEntry *ThisGrid, float deltat)
 
   if (debug)
     printf("  =====================================================================\n");
+
+  } // for Temp = ...
 
   // return success
   return SUCCESS;

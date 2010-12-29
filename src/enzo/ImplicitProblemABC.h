@@ -57,7 +57,8 @@ class ImplicitProblemABC
   
   // Problem-specific Linear solver function 
   //   solves ||J(u)*s - b|| to tolerance delta
-  virtual int Evolve(HierarchyEntry *ThisGrid, float deltat) = 0;
+//  virtual int Evolve(HierarchyEntry *ThisGrid, float deltat) = 0;
+  virtual int Evolve(LevelHierarchyEntry *LevelArray[], int level, float deltat) = 0;
   
 };
   

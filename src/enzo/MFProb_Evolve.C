@@ -30,10 +30,17 @@ int RadiationGetUnits(float *RadiationUnits, FLOAT Time);
 
 
 
-int MFProb::Evolve(HierarchyEntry *ThisGrid, float deltat)
+//int MFProb::Evolve(HierarchyEntry *ThisGrid, float deltat)
+int MFProb::Evolve(LevelHierarchyEntry *LevelArray[], int level, float deltat)
 {
 
 //   if (debug)  printf("Entering MFProb::Evolve routine\n");
+
+  // Iterate over all grids on this level
+  LevelHierarchyEntry *Temp;
+  HierarchyEntry* ThisGrid;
+  for (Temp = LevelArray[0]; Temp; Temp = Temp->NextGridThisLevel) {
+    ThisGrid = Temp->GridHierarchyEntry;
 
   // Only continue if we own this grid
   if (MyProcessorNumber != ThisGrid->GridData->ReturnProcessorNumber())
@@ -380,7 +387,8 @@ int MFProb::Evolve(HierarchyEntry *ThisGrid, float deltat)
   FSSolve->SetEmissivity(FS_NGammaDot);
 
   //   call the free-streaming solver Evolve routine
-  FSSolve->Evolve(ThisGrid, deltat);
+//  FSSolve->Evolve(ThisGrid, deltat);
+  FSSolve->Evolve(LevelArray, level, deltat);
 
   //   obtain initial guess for time-evolved solution to the coupled system
   if (this->InitialGuess(sol) == FAIL) {
@@ -508,6 +516,8 @@ int MFProb::Evolve(HierarchyEntry *ThisGrid, float deltat)
     printf("  Individual timers:\n");
     for (i=0; i<30; i++)  printf("      timer %i = %g\n",i,timers[i]);
   }
+
+  } // for Temp = ...
 
   // Return
   return SUCCESS;

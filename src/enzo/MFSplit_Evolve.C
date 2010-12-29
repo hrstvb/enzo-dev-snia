@@ -30,10 +30,17 @@ int RadiationGetUnits(float *RadiationUnits, FLOAT Time);
 
 
 
-int MFSplit::Evolve(HierarchyEntry *ThisGrid, float deltat)
+//int MFSplit::Evolve(HierarchyEntry *ThisGrid, float deltat)
+int MFSplit::Evolve(LevelHierarchyEntry *LevelArray[], int level, float deltat)
 {
 
   // if (debug)  printf("Entering MFSplit::Evolve routine\n");
+
+  // Iterate over all grids on this level
+  LevelHierarchyEntry *Temp;
+  HierarchyEntry* ThisGrid;
+  for (Temp = LevelArray[0]; Temp; Temp = Temp->NextGridThisLevel) {
+    ThisGrid = Temp->GridHierarchyEntry;
 
   // Only continue if we own this grid
   if (MyProcessorNumber != ThisGrid->GridData->ReturnProcessorNumber())
@@ -417,7 +424,8 @@ int MFSplit::Evolve(HierarchyEntry *ThisGrid, float deltat)
   FSSolve->SetEmissivity(FS_NGammaDot);
 
   //   call the free-streaming solver Evolve routine
-  FSSolve->Evolve(ThisGrid, deltat);
+//  FSSolve->Evolve(ThisGrid, deltat);
+  FSSolve->Evolve(LevelArray, level, deltat);
 
   //   obtain initial guess for time-evolved solution to the coupled system
   if (this->InitialGuess(sol) == FAIL) {
@@ -723,6 +731,8 @@ int MFSplit::Evolve(HierarchyEntry *ThisGrid, float deltat)
   RTtime += ftime-stime;
   if (debug)  printf("  MFSplit cumulative wall time = %g\n\n",RTtime);
   
+  } // for Temp = ...
+
   // Return
   return SUCCESS;
  

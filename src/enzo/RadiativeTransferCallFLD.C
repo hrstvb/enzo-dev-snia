@@ -109,8 +109,9 @@ int RadiativeTransferCallFLD(LevelHierarchyEntry *LevelArray[], int level,
       
       /* Call FLD solver */
       
-      for (Temp = LevelArray[0]; Temp; Temp = Temp->NextGridThisLevel)
-	ImplicitSolver->Evolve(Temp->GridHierarchyEntry, MetaData->dtFLD);
+//       for (Temp = LevelArray[0]; Temp; Temp = Temp->NextGridThisLevel)
+// 	ImplicitSolver->Evolve(Temp->GridHierarchyEntry, MetaData->dtFLD);
+      ImplicitSolver->Evolve(LevelArray, level, MetaData->dtFLD);
       
       /* Delete emissivity fields */
       
@@ -178,9 +179,9 @@ int RadiativeTransferCallFLD(LevelHierarchyEntry *LevelArray[], int level,
 
       
       // Call FLD solver
-      for (Temp = LevelArray[0]; Temp; Temp = Temp->NextGridThisLevel)
-	ImplicitSolver->Evolve(Temp->GridHierarchyEntry, MetaData->dtFLD);
-
+//       for (Temp = LevelArray[0]; Temp; Temp = Temp->NextGridThisLevel)
+// 	ImplicitSolver->Evolve(Temp->GridHierarchyEntry, MetaData->dtFLD);
+      ImplicitSolver->Evolve(LevelArray, level, MetaData->dtFLD);
       
       // If we made an emissivity field earlier, delete it here
 

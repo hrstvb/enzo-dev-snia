@@ -43,10 +43,17 @@ int RadiationGetUnits(float *RadiationUnits, FLOAT Time);
 // Prior to completion, the routine also updates the maximum time step the 
 // overall Grid module can take to meet a maximum subcycling ratio of 
 // radiation to hydrodynamics.
-int gFLDSplit::Evolve(HierarchyEntry *ThisGrid, float dthydro)
+//int gFLDSplit::Evolve(HierarchyEntry *ThisGrid, float dthydro)
+int gFLDSplit::Evolve(LevelHierarchyEntry *LevelArray[], int level, float dthydro)
 {
 
 //   if (debug)  printf("Entering gFLDSplit::Evolve routine\n");
+
+  // Iterate over all grids on this level
+  LevelHierarchyEntry *Temp;
+  HierarchyEntry* ThisGrid;
+  for (Temp = LevelArray[0]; Temp; Temp = Temp->NextGridThisLevel) {
+    ThisGrid = Temp->GridHierarchyEntry;
 
   // Only continue if we own this grid
   if (MyProcessorNumber != ThisGrid->GridData->ReturnProcessorNumber())
@@ -448,6 +455,8 @@ int gFLDSplit::Evolve(HierarchyEntry *ThisGrid, float dthydro)
   RTtime += ftime-stime;
   if (debug)  printf("RadHydro cumulative time = %g (HYPRE = %g,  Chem = %g)\n\n",
 		     RTtime, HYPREtime, ChemTime);
+
+  } // for Temp = ...
 
   // Return
   return SUCCESS;
