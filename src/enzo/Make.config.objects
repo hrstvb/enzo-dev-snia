@@ -19,6 +19,23 @@ OBJS_CONFIG_LIB = \
         AdiabaticExpansionInitialize.o \
         AdjustRefineRegion.o \
         AdjustMustRefineParticlesRefineToLevel.o \
+	AMRFLDSplit_ComputeRadiationIntegrals.o \
+	AMRFLDSplit_ComputeTimeStep.o \
+	AMRFLDSplit_constructor.o \
+	AMRFLDSplit_CrossSections.o \
+	AMRFLDSplit_destructor.o \
+	AMRFLDSplit_Dump.o \
+	AMRFLDSplit_EnforceBoundary.o \
+	AMRFLDSplit_Evolve.o \
+	AMRFLDSplit_FInterface.o \
+	AMRFLDSplit_FillRates.o \
+	AMRFLDSplit_Initialize.o \
+	AMRFLDSplit_Opacity.o \
+	AMRFLDSplit_RadiationSource.o \
+	AMRFLDSplit_RadiationSpectrum.o \
+	AMRFLDSplit_SetupBoundary.o \
+	AMRFLDSplit_SetupSystem.o \
+	AMRFLDSplit_WriteParameters.o \
         AMRH5writer.o \
         AnalysisBaseClass.o \
         AnalysisBaseClass_HDF5Utils.o \

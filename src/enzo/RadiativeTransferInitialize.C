@@ -33,6 +33,7 @@
 #include "FSProb.h"
 #include "MFProb.h"
 #include "MFSplit.h"
+#include "AMRFLDSplit.h"
 #include "NullProblem.h"
 
 int RadiativeTransferReadParameters(FILE *fptr);
@@ -106,6 +107,8 @@ int RadiativeTransferInitialize(char *ParameterFile,
       ImplicitSolver = new MFProb; 
     else if (ImplicitProblem == 5)
       ImplicitSolver = new MFSplit; 
+    else if (ImplicitProblem == 6)
+      ImplicitSolver = new AMRFLDSplit; 
     else
       ImplicitSolver = new NullProblem;
   }

@@ -25,21 +25,19 @@ RadHydroMaxDt           = 1.0e-2
 RadHydroMinDt           = 1.0e-8
 RadHydroInitDt          = 1.0e-8
 RadHydroDtRadFac        = 0.001      // 0.1% desired change/step
-RadHydroDtGasFac        = 0.001
-RadHydroDtChemFac       = 0.001
 RadHydroMGPreRelax      = 2          // MG pre-relaxation sweeps
 RadHydroMGPostRelax     = 2          // MG post-relaxation sweeps
-#
-# AMR grid/refinement parameters
-#
-AMRNumberOfInitialPatches  = 2
-#
-AMRPatchLevel[0]           = 1
-AMRPatchLeftEdge[0]        = -0.5 -0.5 -0.5
-AMRPatchRightEdge[0]       =  0.5  0.5  0.5
-#
-AMRPatchLevel[1]           = 2
-AMRPatchLeftEdge[1]        = -0.25 -0.25 -0.25 
-AMRPatchRightEdge[1]       =  0.25  0.25  0.25
+# #
+# # Initial AMR grid/patch parameters
+# #
+# AMRNumberOfInitialPatches  = 2
+# #
+# AMRPatchLevel[0]           = 1
+# AMRPatchLeftEdge[0]        = -0.5 -0.5 -0.5
+# AMRPatchRightEdge[0]       =  0.5  0.5  0.5
+# #
+# AMRPatchLevel[1]           = 2
+# AMRPatchLeftEdge[1]        = -0.25 -0.25 -0.25 
+# AMRPatchRightEdge[1]       =  0.25  0.25  0.25
 
 #############################

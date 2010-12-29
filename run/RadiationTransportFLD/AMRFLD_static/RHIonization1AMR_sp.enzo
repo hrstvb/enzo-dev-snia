@@ -9,7 +9,8 @@
 # 
 ProblemType                = 410           // RHIonizationTestInitialize 
 RadiativeTransferFLD       = 2             // use FLD solver for radiation
-ImplicitProblem            = 3             // use gFLDSplit module
+#ImplicitProblem            = 3             // use gFLDSplit module
+ImplicitProblem            = 6             // use AMRFLDSplit module
 MultiSpecies               = 1             // use Enzo chemistry
 RadiativeCooling           = 1             // use Enzo chemistry
 UseHydro                   = 0             // no hydro
@@ -22,20 +23,20 @@ CoolDataParameterFile = CoolDataParameters
 # grid and boundary 
 #
 TopGridRank                = 3
-TopGridDimensions          = 8 8 8
+TopGridDimensions          = 16 16 16
 LeftFaceBoundaryCondition  = 3 3 3         // periodic
 RightFaceBoundaryCondition = 3 3 3
-DomainLeftEdge             = -1.0 -1.0 -1.0   // (scaled units)
+DomainLeftEdge             =  0.0  0.0  0.0   // (scaled units)
 DomainRightEdge            =  1.0  1.0  1.0
 RefineBy                   = 2
 #PartitionNestedGrids       = 1
 #
 # runtime and I/O
 #
-#StopTime                   = 1.57788e0     // 500 Myr
-StopTime                   = 0.0
-#StopCycle                  = 99999
-StopCycle                  = 0
+StopTime                   = 1.57788e0     // 500 Myr
+#StopTime                   = 0.0
+StopCycle                  = 99999
+#StopCycle                  = 0
 dtDataDump                 = 3.15576e-2    // 10 Myr
 ParallelRootGridIO         = 1
 # 
