@@ -1,0 +1,135 @@
+SHELL = /bin/bash
+
+#EXES = enzo-reduce
+
+#--------------------------------
+# LCAPERF
+#--------------------------------
+
+LCAPERF_DEF = 
+LCAPERF_INC = 
+LCAPERF_LIB = 
+
+#--------------------------------
+# HYPRE
+#--------------------------------
+
+HYPRE_DEF = 
+HYPRE_INC = -I$(HYPRE_PATH)/include
+HYPRE_LIB = -L$(HYPRE_PATH)/lib -lHYPRE -L$(LAPACK_PATH)/lib -llapack -latlas
+
+#--------------------------------
+# LIBPNG
+#--------------------------------
+
+PNG_DEF = -DNO_FREETYPE
+PNG_INC = -I$(PNG_PATH)/include
+PNG_LIB = -L$(PNG_PATH)/lib -lpng
+
+#--------------------------------
+# HDF5
+#--------------------------------
+
+HDF5_DEF = 
+HDF5_INC = -I$(HDF5_PATH)/include
+HDF5_LIB = -L$(HDF5_PATH)/lib -lhdf5 -lz
+
+#--------------------------------
+# CELLO
+#--------------------------------
+
+# CELLOTOP = ../..
+# CELLOOBJ = $(CELLOTOP)
+# CELLO_INC = -I $(CELLOTOP)/include
+# CELLO_LIB = -L $(CELLOTOP)/lib -lcello
+
+# Assemble defines, includes, and libs
+DEF =  $(MACH_DEF) $(LCAPERF_DEF) $(PNG_DEF) $(HDF5_DEF) $(CELLO_DEF) -DUSE_MPI
+INC =  $(MACH_INC) $(LCAPERF_INC) $(PNG_INC) $(HDF5_INC) $(CELLO_INC) $(HYPRE_INC) 
+LIB =  $(MACH_LIB) $(CXX_FLAGS) -lm $(LCAPERF_LIB) $(PNG_LIB) $(HDF5_LIB) $(CELLO_LIB) 
+
+HYPRE_ALL = $(HYPRE_DEF) $(HYPRE_INC) $(HYPRE_LIB)
+
+#--------------------------------
+# Object files
+#--------------------------------
+
+OBJS_ALL = \
+       AMRsolve_domain.o \
+       AMRsolve_faces.o \
+       AMRsolve_grid.o \
+       AMRsolve_hierarchy.o \
+       AMRsolve_hypre.o \
+       AMRsolve_level.o \
+       AMRsolve_mpi.o \
+       AMRsolve_parameters.o \
+       AMRsolve_point.o \
+       lcamem.o \
+       AMRgrav_problem.o
+
+#--------------------------------
+# Executables
+#--------------------------------
+
+EXES = \
+   debug-matrix \
+   enzo2hypre \
+   enzo-reduce \
+   hypre-init \
+   hypre-png \
+   hypre-solve \
+   hypre-test \
+   plot-amr \
+   test-mem
+
+all: $(EXES)
+
+hypre-init: hypre-init.o
+	$(LD) $(LD_FLAGS) -o hypre-init hypre-init.o $(HYPRE_ALL) $(LIB)
+plot-amr: plot-amr.o AMRsolve_grid.o AMRsolve_mpi.o AMRsolve_domain.o AMRsolve_faces.o pngwriter.o
+	$(LD) $(LD_FLAGS) -o plot-amr plot-amr.o AMRsolve_grid.o AMRsolve_mpi.o AMRsolve_domain.o AMRsolve_faces.o pngwriter.o $(LIB)
+hypre-test: hypre-test.o
+	$(LD) $(LD_FLAGS) -o hypre-test hypre-test.o $(HYPRE_ALL) $(LIB)
+hypre-solve: hypre-solve.o $(OBJS_ALL)
+	$(LD) $(LD_FLAGS) -o hypre-solve hypre-solve.o $(OBJS_ALL) $(HYPRE_ALL) $(LIB)
+test-mem: test-mem.o $(OBJS_ALL)
+	$(LD) $(LD_FLAGS) -o test-mem test-mem.o $(OBJS_ALL) $(HYPRE_ALL) $(LIB)
+hypre-png: hypre-png.o AMRsolve_grid.o AMRsolve_mpi.o AMRsolve_domain.o AMRsolve_faces.o pngwriter.o
+	$(LD) $(LD_FLAGS) -o hypre-png hypre-png.o AMRsolve_grid.o AMRsolve_mpi.o AMRsolve_domain.o AMRsolve_faces.o pngwriter.o $(HYPRE_ALL) $(LIB)
+debug-matrix: debug-matrix.o
+	$(LD) $(LD_FLAGS) -o debug-matrix $(HYPRE_ALL) debug-matrix.o
+enzo2hypre: enzo2hypre.o
+	$(LD) $(LD_FLAGS) -o enzo2hypre enzo2hypre.o $(HYPRE_ALL) $(INC) $(LIB)
+enzo-reduce: enzo-reduce.o
+	$(LD) $(LD_FLAGS) -o enzo-reduce enzo-reduce.o $(CXX_FLAGS) -lm $(HDF5_LIB)
+
+BIN = ../bin
+.PHONY: install
+install: $(EXES)
+	(if [ ! -e $(BIN) ]; then mkdir $(BIN); fi)
+	cp $(EXES)  $(BIN)
+
+.cpp.o:
+	$(CXX) -c -o $*.o $*.cpp $(CXX_FLAGS) $(INC) $(DEF)
+
+.PHONY: dep
+dep:
+	-@(makedepend -fDEPEND *.cpp *.hpp) >& /dev/null
+
+include DEPEND
+
+.PHONY: clean
+clean:
+	rm -f *.o $(EXES) *~ \#*
+	rm -rf html
+
+.PHONY: doc
+doc:
+	doxygen
+	cp doxygen.css html
+
+.PHONY: clean-doc
+clean-doc:
+	rm -rf html latex
+
+
