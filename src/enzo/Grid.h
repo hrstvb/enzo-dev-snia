@@ -46,6 +46,14 @@ struct HierarchyEntry;
 
 //extern int CommunicationDirection;
 
+#ifdef AMR_SOLVE
+#  define AMR_SOLVE_PUBLIC  public:
+#  define AMR_SOLVE_PRIVATE private:
+#else
+#  define AMR_SOLVE_PUBLIC 
+#  define AMR_SOLVE_PRIVATE
+#endif
+
 //struct ParticleEntry {
 //  FLOAT Position[3];
 //  float Mass;
@@ -66,6 +74,9 @@ class grid
 //  General grid class data
 //
   int GridRank;                        // number of dimensions
+
+  AMR_SOLVE_PUBLIC;
+
   int GridDimension[MAX_DIMENSION];    // total dimensions of all grids
   int GridStartIndex[MAX_DIMENSION];   // starting index of the active region
                                        //   (zero based)
@@ -73,6 +84,9 @@ class grid
                                        //   (zero based)
   FLOAT GridLeftEdge[MAX_DIMENSION];   // starting pos (active problem space)
   FLOAT GridRightEdge[MAX_DIMENSION];  // ending pos (active problem space)
+
+  AMR_SOLVE_PRIVATE;
+
   float dtFixed;                       // current (fixed) timestep
   FLOAT Time;                          // current problem time
   FLOAT OldTime;                       // time corresponding to OldBaryonField
@@ -81,6 +95,13 @@ class grid
 //
 //  Baryon grid data
 //
+
+  AMR_SOLVE_PUBLIC;
+
+  FLOAT *CellWidth[MAX_DIMENSION];
+
+  AMR_SOLVE_PRIVATE;
+
   int    NumberOfBaryonFields;                        // active baryon fields
   float *BaryonField[MAX_NUMBER_OF_BARYON_FIELDS];    // pointers to arrays
   float *OldBaryonField[MAX_NUMBER_OF_BARYON_FIELDS]; // pointers to old arrays
@@ -88,7 +109,6 @@ class grid
   float *RandomForcingField[MAX_DIMENSION];           // pointers to arrays //AK
   int    FieldType[MAX_NUMBER_OF_BARYON_FIELDS];
   FLOAT *CellLeftEdge[MAX_DIMENSION];
-  FLOAT *CellWidth[MAX_DIMENSION];
   fluxes *BoundaryFluxes;
 
   // For restart dumps
@@ -107,11 +127,17 @@ class grid
 //
 //  Particle data
 //
+
+  AMR_SOLVE_PUBLIC;
+
   int    NumberOfParticles;
   FLOAT *ParticlePosition[MAX_DIMENSION];  // pointers to position arrays
+  float *ParticleMass;                     // pointer to mass array
+
+  AMR_SOLVE_PRIVATE;
+
   float *ParticleVelocity[MAX_DIMENSION];  // pointers to velocity arrays
   float *ParticleAcceleration[MAX_DIMENSION+1];  // 
-  float *ParticleMass;                     // pointer to mass array
   PINT  *ParticleNumber;                   // unique identifier
   int   *ParticleType;                     // type of particle
   float *ParticleAttribute[MAX_NUMBER_OF_PARTICLE_ATTRIBUTES];
@@ -123,6 +149,8 @@ class grid
 //
 //  Gravity data
 // 
+  AMR_SOLVE_PUBLIC;
+
   float *PotentialField;
   float *AccelerationField[MAX_DIMENSION]; // cell cntr acceleration at n+1/2
   float *GravitatingMassField;
@@ -130,9 +158,17 @@ class grid
   int    GravitatingMassFieldDimension[MAX_DIMENSION];
   FLOAT  GravitatingMassFieldCellSize;     // all dimensions must be the same
   float *GravitatingMassFieldParticles;     // for particles only
+  int    GravitatingMassFieldParticlesDimension[MAX_DIMENSION];
+
+#ifdef AMR_SOLVE
+  float *amr_grav_b;
+  float *amr_grav_x;
+#endif
+
+  AMR_SOLVE_PRIVATE;
+
   FLOAT  GravitatingMassFieldParticlesLeftEdge[MAX_DIMENSION];
   FLOAT  GravitatingMassFieldParticlesCellSize;
-  int    GravitatingMassFieldParticlesDimension[MAX_DIMENSION];
   gravity_boundary_type GravityBoundaryType;
   float  PotentialSum;
 //
@@ -156,7 +192,9 @@ class grid
 //
 //  Parallel Information
 //
+  AMR_SOLVE_PUBLIC;
   int ProcessorNumber;
+  AMR_SOLVE_PRIVATE;
 //
 // Movie Data Format
 //

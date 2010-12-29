@@ -386,6 +386,66 @@
     endif
 
 #-----------------------------------------------------------------------
+# DETERMINE AMR_SOLVE SETTINGS
+#-----------------------------------------------------------------------
+
+    ERROR_AMR_SOLVE = 1
+
+    # Settings for using AMR_SOLVE mods
+
+    ifeq ($(CONFIG_AMR_SOLVE),yes)
+        ERROR_AMR_SOLVE = 0
+        ASSEMBLE_AMR_SOLVE_DEFINES  = AMR_SOLVE
+        ASSEMBLE_AMR_SOLVE_INCLUDES = $(MACH_INCLUDES_HYPRE)
+        ASSEMBLE_AMR_SOLVE_LIBS     = $(MACH_LIBS_HYPRE)
+	ASSEMBLE_AMR_SOLVE_OBJS     = $(OBJS_AMR_SOLVE)
+	ASSEMBLE_AMR_SOLVE_SRC_LINKS = \
+             AMRsolve_constants.h \
+             AMRsolve_domain.C \
+             AMRsolve_domain.h \
+             AMRsolve_error.h \
+             AMRsolve_faces.C \
+             AMRsolve_faces.h \
+             AMRsolve_grid.C \
+             AMRsolve_grid.h \
+             AMRsolve_hierarchy.C \
+             AMRsolve_hierarchy.h \
+             AMRsolve_hypre.C \
+             AMRsolve_hypre.h \
+             AMRsolve_defs.h \
+             AMRsolve_level.C \
+             AMRsolve_level.h \
+             AMRsolve_mpi.C \
+             AMRsolve_mpi.h \
+             AMRsolve_parameters.C \
+             AMRsolve_parameters.h \
+             AMRsolve_performance.h \
+             AMRsolve_point.C \
+             AMRsolve_point.h \
+             AMRsolve_problem.C \
+             AMRsolve_problem.h \
+             AMRsolve_scalar.h
+    endif
+
+    # Settings for not using AMR_SOLVE mods
+
+    ifeq ($(CONFIG_AMR_SOLVE),no)
+        ERROR_AMR_SOLVE = 0
+        ASSEMBLE_AMR_SOLVE_DEFINES  =
+        ASSEMBLE_AMR_SOLVE_INCLUDES =
+        ASSEMBLE_AMR_SOLVE_LIBS     =
+	ASSEMBLE_AMR_SOLVE_OBJS     = 
+    endif
+
+    # error if CONFIG_AMR_SOLVE is incorrect
+
+    ifeq ($(ERROR_AMR_SOLVE),1)
+       .PHONY: error_amr_solve
+       error_amr_solve:
+	$(error Illegal value '$(CONFIG_AMR_SOLVE)' for $$(CONFIG_AMR_SOLVE))
+    endif
+
+#-----------------------------------------------------------------------
 # DETERMINE LCAPERF SETTINGS
 #-----------------------------------------------------------------------
 
@@ -952,6 +1012,7 @@
               $(ASSEMBLE_TASKMAP_DEFINES) \
               $(ASSEMBLE_PACKED_AMR_DEFINES) \
               $(ASSEMBLE_PACKED_MEM_DEFINES) \
+              $(ASSEMBLE_AMR_SOLVE_DEFINES) \
               $(ASSEMBLE_TESTING_DEFINES) \
               $(ASSEMBLE_TPVEL_DEFINES) \
               $(ASSEMBLE_PHOTON_DEFINES) \
@@ -972,6 +1033,7 @@
     INCLUDES = $(MACH_INCLUDES) \
     	       $(ASSEMBLE_MPI_INCLUDES) \
                $(ASSEMBLE_HYPRE_INCLUDES) \
+               $(ASSEMBLE_AMR_SOLVE_INCLUDES) \
                $(ASSEMBLE_LCAPERF_INCLUDES) \
                $(ASSEMBLE_PYTHON_INCLUDES) \
                $(ASSEMBLE_PAPI_INCLUDES) \
@@ -980,15 +1042,19 @@
     OBJS_LIB = $(OBJS_CONFIG_LIB) \
     	       $(OBJS_PHOTON_LIB) \
     	       $(OBJS_LCAPERF_LIB) \
+    	       $(OBJS_AMR_SOLVE) \
 	       $(OBJS_HYDRO_RK) \
 	       $(OBJS_ECUDA_LIB) 
 
     LIBS = $(MACH_LIBS) \
            $(ASSEMBLE_MPI_LIBS) \
            $(ASSEMBLE_HYPRE_LIBS) \
+           $(ASSEMBLE_AMR_SOLVE_LIBS) \
            $(ASSEMBLE_LCAPERF_LIBS) \
            $(ASSEMBLE_PAPI_LIBS) \
            $(ASSEMBLE_PYTHON_LIBS) \
            $(ASSEMBLE_CUDA_LIBS)
+
+    SRC_LINKS = $(ASSEMBLE_AMR_SOLVE_SRC_LINKS)
 
 

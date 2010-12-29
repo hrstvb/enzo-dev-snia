@@ -183,6 +183,11 @@ help-config:
 	@echo "      gmake hypre-yes"
 	@echo "      gmake hypre-no"
 	@echo
+	@echo "   Include AMR_SOLVE module (implicit AMR linear solvers)"
+	@echo
+	@echo "      gmake amr-solve-yes"
+	@echo "      gmake amr-solve-no"
+	@echo
 	@echo "   Include emissivity field"
 	@echo
 	@echo "      gmake emissivity-yes"
@@ -258,6 +263,7 @@ show-config:
 	@echo "   CONFIG_TPVEL  [tpvel-{yes,no}]]                           : $(CONFIG_TPVEL)"
 	@echo "   CONFIG_PHOTON  [photon-{yes,no}]                          : $(CONFIG_PHOTON)"
 	@echo "   CONFIG_HYPRE  [hypre-{yes,no}]                            : $(CONFIG_HYPRE)"
+	@echo "   CONFIG_AMR_SOLVE [amr-solve-{yes,no}]                     : $(CONFIG_AMR_SOLVE)"
 	@echo "   CONFIG_EMISSIVITY  [emissivity-{yes,no}]                  : $(CONFIG_EMISSIVITY)"
 	@echo "   CONFIG_USE_HDF4  [use-hdf4-{yes,no}]                      : $(CONFIG_USE_HDF4)"
 	@echo "   CONFIG_NEW_GRID_IO  [newgridio-{yes,no}]                  : $(CONFIG_NEW_GRID_IO)"
@@ -725,6 +731,23 @@ CONFIG_HYPRE-%: suggest-clean
 
 #-----------------------------------------------------------------------
 
+VALID_AMR_SOLVE = amr-solve-yes amr-solve-no
+.PHONY: $(VALID_AMR_SOLVE)
+
+amr-solve-yes: CONFIG_AMR_SOLVE-yes
+amr-solve-no: CONFIG_AMR_SOLVE-no
+amr-solve-%:
+	@printf "\n\tInvalid target: $@\n\n\tValid targets: [$(VALID_AMR_SOLVE)]\n\n"
+CONFIG_AMR_SOLVE-%: suggest-clean
+	@tmp=.config.temp; \
+        grep -v CONFIG_AMR_SOLVE $(MAKE_CONFIG_OVERRIDE) > $${tmp}; \
+        mv $${tmp} $(MAKE_CONFIG_OVERRIDE); \
+        echo "CONFIG_AMR_SOLVE = $*" >> $(MAKE_CONFIG_OVERRIDE); \
+	$(MAKE)  show-config | grep CONFIG_AMR_SOLVE:
+	@echo
+
+#-----------------------------------------------------------------------
+
 VALID_EMISSIVITY = emissivity-yes emissivity-no
 .PHONY: $(VALID_EMISSIVITY)
 
@@ -850,3 +873,76 @@ CONFIG_GRAVITY_4S-%: suggest-clean
 
 #-----------------------------------------------------------------------
 
+# Link any extra source files from external directories
+src-links:$(SRC_LINKS)
+
+#-----------------------------------------------------------------------
+
+AMRsolve_headers = AMRsolve_constants.h \
+                   AMRsolve_domain.h \
+                   AMRsolve_enzo.h \
+                   AMRsolve_error.h \
+                   AMRsolve_faces.h \
+                   AMRsolve_grid.h \
+                   AMRsolve_hierarchy.h \
+                   AMRsolve_hypre.h \
+                   AMRsolve_defs.h \
+                   AMRsolve_level.h \
+                   AMRsolve_mpi.h \
+                   AMRsolve_parameters.h \
+                   AMRsolve_performance.h \
+                   AMRsolve_point.h \
+                   AMRsolve_problem.h \
+                   AMRsolve_scalar.h 
+AMRsolve_constants.h:
+	ln -sf ../amr_solve/AMRsolve_constants.h AMRsolve_constants.h
+AMRsolve_domain.h:
+	ln -sf ../amr_solve/AMRsolve_domain.h AMRsolve_domain.h
+AMRsolve_enzo.h:
+	ln -sf ../amr_solve/AMRsolve_enzo.h AMRsolve_enzo.h
+AMRsolve_error.h:
+	ln -sf ../amr_solve/AMRsolve_error.h AMRsolve_error.h
+AMRsolve_faces.h:
+	ln -sf ../amr_solve/AMRsolve_faces.h AMRsolve_faces.h
+AMRsolve_grid.h:
+	ln -sf ../amr_solve/AMRsolve_grid.h AMRsolve_grid.h
+AMRsolve_hierarchy.h:
+	ln -sf ../amr_solve/AMRsolve_hierarchy.h AMRsolve_hierarchy.h
+AMRsolve_hypre.h:
+	ln -sf ../amr_solve/AMRsolve_hypre.h AMRsolve_hypre.h
+AMRsolve_defs.h:
+	ln -sf ../amr_solve/AMRsolve_defs.h AMRsolve_defs.h
+AMRsolve_level.h:
+	ln -sf ../amr_solve/AMRsolve_level.h AMRsolve_level.h
+AMRsolve_mpi.h:
+	ln -sf ../amr_solve/AMRsolve_mpi.h AMRsolve_mpi.h
+AMRsolve_parameters.h:
+	ln -sf ../amr_solve/AMRsolve_parameters.h AMRsolve_parameters.h
+AMRsolve_performance.h:
+	ln -sf ../amr_solve/AMRsolve_performance.h AMRsolve_performance.h
+AMRsolve_point.h:
+	ln -sf ../amr_solve/AMRsolve_point.h AMRsolve_point.h
+AMRsolve_problem.h:
+	ln -sf ../amr_solve/AMRsolve_problem.h AMRsolve_problem.h
+AMRsolve_scalar.h:
+	ln -sf ../amr_solve/AMRsolve_scalar.h AMRsolve_scalar.h
+AMRsolve_domain.C: $(AMRsolve_headers)
+	ln -sf ../amr_solve/AMRsolve_domain.cpp AMRsolve_domain.C
+AMRsolve_faces.C: $(AMRsolve_headers)
+	ln -sf ../amr_solve/AMRsolve_faces.cpp AMRsolve_faces.C
+AMRsolve_grid.C: $(AMRsolve_headers)
+	ln -sf ../amr_solve/AMRsolve_grid.cpp AMRsolve_grid.C
+AMRsolve_hierarchy.C: $(AMRsolve_headers)
+	ln -sf ../amr_solve/AMRsolve_hierarchy.cpp AMRsolve_hierarchy.C
+AMRsolve_hypre.C: $(AMRsolve_headers)
+	ln -sf ../amr_solve/AMRsolve_hypre.cpp AMRsolve_hypre.C
+AMRsolve_level.C: $(AMRsolve_headers)
+	ln -sf ../amr_solve/AMRsolve_level.cpp AMRsolve_level.C
+AMRsolve_mpi.C: $(AMRsolve_headers)
+	ln -sf ../amr_solve/AMRsolve_mpi.cpp AMRsolve_mpi.C
+AMRsolve_parameters.C: $(AMRsolve_headers)
+	ln -sf ../amr_solve/AMRsolve_parameters.cpp AMRsolve_parameters.C
+AMRsolve_point.C: $(AMRsolve_headers)
+	ln -sf ../amr_solve/AMRsolve_point.cpp AMRsolve_point.C
+AMRsolve_problem.C: $(AMRsolve_headers)
+	ln -sf ../amr_solve/AMRsolve_problem.cpp AMRsolve_problem.C

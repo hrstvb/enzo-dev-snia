@@ -23,6 +23,7 @@
 #    CONFIG_TASKMAP
 #    CONFIG_PACKED_AMR
 #    CONFIG_PACKED_MEM
+#    CONFIG_AMR_SOLVE
 #    CONFIG_LCAPERF
 #    CONFIG_PYTHON
 #    CONFIG_PAPI
@@ -146,6 +147,15 @@
 #-----------------------------------------------------------------------
 
      CONFIG_PACKED_MEM = no
+
+#=======================================================================
+# CONFIG_AMR_SOLVE
+#=======================================================================
+#    yes           use Hypre enhanced AMR solvers
+#    no            don't use Hypre enhanced AMR solvers
+#-----------------------------------------------------------------------
+
+     CONFIG_AMR_SOLVE = no
 
 #=======================================================================
 # CONFIG_LCAPERF

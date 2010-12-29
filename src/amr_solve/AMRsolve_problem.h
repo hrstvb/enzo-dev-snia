@@ -1,17 +1,17 @@
 /// @file      newgrav-problem.h
 /// @author    James Bordner (jobordner@ucsd.edu)
 /// @author    Daniel Reynolds (reynolds@smu.edu)
-/// @brief     Declaration of the AMRgrav_Problem class
+/// @brief     Declaration of the AMRsolve_Problem class
 
 #ifndef AMRGRAV_PROBLEM_H
 #define AMRGRAV_PROBLEM_H
 
 #define BUFFER_LENGTH 255
 
-class AMRgrav_Problem {
+class AMRsolve_Problem {
 
-  /// @class    AMRgrav_Problem
-  /// @brief    Declaration of AMRgrav_Problem class for storing test problem parameters
+  /// @class    AMRsolve_Problem
+  /// @brief    Declaration of AMRsolve_Problem class for storing test problem parameters
 
   //----------------------------------------------------------------------
 
@@ -27,13 +27,13 @@ private:
 
 public:
 
-  AMRgrav_Problem() throw();
+  AMRsolve_Problem() throw();
 
-  ~AMRgrav_Problem() throw();
+  ~AMRsolve_Problem() throw();
 
-  AMRgrav_Problem(const AMRgrav_Problem&) throw();
+  AMRsolve_Problem(const AMRsolve_Problem&) throw();
 
-  AMRgrav_Problem& operator=(const AMRgrav_Problem&) throw();
+  AMRsolve_Problem& operator=(const AMRsolve_Problem&) throw();
 
   //--------------------------------------------------
 

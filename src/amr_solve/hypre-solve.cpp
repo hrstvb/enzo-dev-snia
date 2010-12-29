@@ -38,7 +38,7 @@
 #include "AMRsolve_level.h"
 #include "AMRsolve_hierarchy.h"
 #include "AMRsolve_parameters.h"
-#include "AMRgrav_problem.h"
+#include "AMRsolve_problem.h"
 #include "AMRsolve_hypre.h"
 
 //======================================================================
@@ -85,7 +85,7 @@ int main(int argc, char **argv)
     // create a new problem and read it in
 
     LCAPERF_START("problem");
-    AMRgrav_Problem problem;
+    AMRsolve_Problem problem;
     LCAPERF_STOP("problem");
 
     LCAPERF_START("problem-read");

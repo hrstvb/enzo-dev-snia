@@ -38,7 +38,7 @@
 #include "AMRsolve_level.h"
 #include "AMRsolve_hierarchy.h"
 #include "AMRsolve_parameters.h"
-#include "AMRgrav_problem.h"
+#include "AMRsolve_problem.h"
 #include "AMRsolve_hypre.h"
 
 //======================================================================
@@ -174,7 +174,7 @@ void test_level()
 
 void test_problem()
 {
-  AMRgrav_Problem * problem = new AMRgrav_Problem;
+  AMRsolve_Problem * problem = new AMRsolve_Problem;
   problem->read ("in.test-mem");
   delete problem;
 }

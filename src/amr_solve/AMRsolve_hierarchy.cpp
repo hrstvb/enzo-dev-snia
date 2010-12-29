@@ -40,20 +40,20 @@ const int maximum_level    = 1000;
 
 //----------------------------------------------------------------------
 
-#ifdef HYPRE_GRAV /* defined if we're interfacing with enzo */
+#ifdef AMR_SOLVE /* defined if we're interfacing with enzo */
 
 #include "AMRsolve_enzo.h"
 
 // Define what Enzo thinks is a float
 
-#  ifdef r4
+#  ifdef CONFIG_BFLOAT_4
 #    define ENZO_FLOAT float
 #  endif
-#  ifdef r8
+#  ifdef CONFIG_BFLOAT_8
 #    define ENZO_FLOAT double
 #  endif
 
-#endif /* ifdef HYPRE_GRAV */
+#endif /* ifdef AMR_SOLVE */
 
 //----------------------------------------------------------------------
 
@@ -78,7 +78,7 @@ AMRsolve_Hierarchy::~AMRsolve_Hierarchy() throw()
 
 //======================================================================
 
-#ifdef HYPRE_GRAV
+#ifdef AMR_SOLVE
 
 void AMRsolve_Hierarchy::enzo_attach(LevelHierarchyEntry *LevelArray[],
 				     int level_coarsest,
@@ -186,25 +186,25 @@ void AMRsolve_Hierarchy::enzo_attach(LevelHierarchyEntry *LevelArray[],
 	int ndh = ndh3[0]*ndh3[1]*ndh3[2];
 
 	// Allocate X, warning if we're reallocating
-	if (enzo_grid->hypre_grav_x == NULL) {
+	if (enzo_grid->amr_grav_x == NULL) {
 	  WARNING_MESSAGE;
-	  delete [] enzo_grid->hypre_grav_x;
-	  enzo_grid->hypre_grav_x = NULL;
+	  delete [] enzo_grid->amr_grav_x;
+	  enzo_grid->amr_grav_x = NULL;
 	}
-	enzo_grid->hypre_grav_x = new ENZO_FLOAT[ndh]; // Deleted and nulled- in detach
+	enzo_grid->amr_grav_x = new ENZO_FLOAT[ndh]; // Deleted and nulled- in detach
 
 	// Clear X
-	for (int i=0; i<ndh; i++) enzo_grid->hypre_grav_x[i] = 0;
+	for (int i=0; i<ndh; i++) enzo_grid->amr_grav_x[i] = 0;
 
 	// CREATE THE B VECTOR
 
 	// Allocate B, warning if we're reallocating
-	if (enzo_grid->hypre_grav_b == NULL) {
+	if (enzo_grid->amr_grav_b == NULL) {
 	  WARNING_MESSAGE;
-	  delete [] enzo_grid->hypre_grav_b;
-	  enzo_grid->hypre_grav_b = NULL;
+	  delete [] enzo_grid->amr_grav_b;
+	  enzo_grid->amr_grav_b = NULL;
 	}
-	enzo_grid->hypre_grav_b = new ENZO_FLOAT[ndh]; // Deleted and nulled- in detach
+	enzo_grid->amr_grav_b = new ENZO_FLOAT[ndh]; // Deleted and nulled- in detach
 
 	// Get the gravitating mass field array dimensions
 	int nde3[3];
@@ -233,7 +233,7 @@ void AMRsolve_Hierarchy::enzo_attach(LevelHierarchyEntry *LevelArray[],
 	      int k2 = i2 + il[2];
 	      int ih =  i0 + ndh3[0] * ( i1 + ndh3[1] * i2 );
 	      int ie =  k0 + nde3[0] * ( k1 + nde3[1] * k2 );
-	      sum_temp += (enzo_grid->hypre_grav_b[ih] = enzo_grid->GravitatingMassField[ie]);
+	      sum_temp += (enzo_grid->amr_grav_b[ih] = enzo_grid->GravitatingMassField[ie]);
 	    }
 	  }
 	}
@@ -241,8 +241,8 @@ void AMRsolve_Hierarchy::enzo_attach(LevelHierarchyEntry *LevelArray[],
 	printf("%s:%d %d DEBUG sum = %g\n",__FILE__,__LINE__,pmpi->ip(),sum_temp);
 
 	// Set the hypre arrays to point to the corresponding enzo hypre-grav arrays
-	grid->set_u(enzo_grid->hypre_grav_x,ndh3);
-	grid->set_f(enzo_grid->hypre_grav_b,ndh3);
+	grid->set_u(enzo_grid->amr_grav_x,ndh3);
+	grid->set_f(enzo_grid->amr_grav_b,ndh3);
 	WRITE_B_SUM(grid);
       }
       id++;
@@ -258,7 +258,7 @@ void AMRsolve_Hierarchy::enzo_attach(LevelHierarchyEntry *LevelArray[],
 
 //----------------------------------------------------------------------
 
-#ifdef HYPRE_GRAV
+#ifdef AMR_SOLVE
 void AMRsolve_Hierarchy::enzo_detach() throw()
 {
   _TRACE_;

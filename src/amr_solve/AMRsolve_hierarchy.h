@@ -6,7 +6,7 @@
 #ifndef AMRSOLVE_HIERRACHY_H
 #define AMRSOLVE_HIERRACHY_H
 
-#ifdef HYPRE_GRAV
+#ifdef AMR_SOLVE
 // ENZO DEPENDENCY
 struct LevelHierarchyEntry;
 #endif
@@ -58,7 +58,7 @@ protected:
 
   ~AMRsolve_Hierarchy() throw();
 
-#ifdef HYPRE_GRAV
+#ifdef AMR_SOLVE
 
   /// ENZO INTERFACE: attach to the Enzo hierarchy
   void enzo_attach(LevelHierarchyEntry *LevelArray[],

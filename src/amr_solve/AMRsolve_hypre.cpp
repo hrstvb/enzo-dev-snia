@@ -50,7 +50,7 @@ typedef int int3[3];
 #include "AMRsolve_level.h"
 #include "AMRsolve_hierarchy.h"
 #include "AMRsolve_parameters.h"
-#include "AMRgrav_problem.h"
+#include "AMRsolve_problem.h"
 #include "AMRsolve_hypre.h"
 #include "AMRsolve_error.h"
 

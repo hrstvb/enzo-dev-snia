@@ -1,7 +1,7 @@
 /// @file      problem.cpp
 /// @author    James Bordner (jobordner@ucsd.edu)
 /// @author    Daniel Reynolds (reynolds@smu.edu)
-/// @brief     Implementation of the AMRgrav_Problem class
+/// @brief     Implementation of the AMRsolve_Problem class
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -34,25 +34,25 @@
 #include "AMRsolve_grid.h"
 #include "AMRsolve_level.h"
 #include "AMRsolve_hierarchy.h"
-#include "AMRgrav_problem.h"
+#include "AMRsolve_problem.h"
 
 //======================================================================
 
-AMRgrav_Problem::AMRgrav_Problem() throw()
+AMRsolve_Problem::AMRsolve_Problem() throw()
 {
   //
 }
 
 //----------------------------------------------------------------------
 
-AMRgrav_Problem::~AMRgrav_Problem() throw()
+AMRsolve_Problem::~AMRsolve_Problem() throw()
 {
   deallocate_();
 }
 
 //----------------------------------------------------------------------
 
-AMRgrav_Problem::AMRgrav_Problem(const AMRgrav_Problem& p) throw()
+AMRsolve_Problem::AMRsolve_Problem(const AMRsolve_Problem& p) throw()
 {
   domain_    = p.domain_;
   points_    = p.points_;
@@ -61,7 +61,7 @@ AMRgrav_Problem::AMRgrav_Problem(const AMRgrav_Problem& p) throw()
 
 //----------------------------------------------------------------------
 
-AMRgrav_Problem& AMRgrav_Problem::operator=(const AMRgrav_Problem& p) throw()
+AMRsolve_Problem& AMRsolve_Problem::operator=(const AMRsolve_Problem& p) throw()
 {
   domain_    = p.domain_;
   points_    = p.points_;
@@ -71,7 +71,7 @@ AMRgrav_Problem& AMRgrav_Problem::operator=(const AMRgrav_Problem& p) throw()
 
 //----------------------------------------------------------------------
 
-void AMRgrav_Problem::read(std::string filename) throw()
+void AMRsolve_Problem::read(std::string filename) throw()
 {
   bool boundary_defined = false;
 
@@ -113,7 +113,7 @@ void AMRgrav_Problem::read(std::string filename) throw()
 
 //----------------------------------------------------------------------
 
-void AMRgrav_Problem::print() throw()
+void AMRsolve_Problem::print() throw()
 {
   int i;
   domain_.print();
@@ -123,7 +123,7 @@ void AMRgrav_Problem::print() throw()
 
 //----------------------------------------------------------------------
 
-void AMRgrav_Problem::write(FILE *fp) throw()
+void AMRsolve_Problem::write(FILE *fp) throw()
 {
   if (fp == 0) fp = stdout;
   int i;
@@ -134,7 +134,7 @@ void AMRgrav_Problem::write(FILE *fp) throw()
 
 //----------------------------------------------------------------------
 
-void AMRgrav_Problem::deallocate_() throw()
+void AMRsolve_Problem::deallocate_() throw()
 {
   for (unsigned i=0; i<points_.size(); i++) {
     delete points_[i];

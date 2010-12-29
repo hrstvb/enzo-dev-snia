@@ -65,7 +65,7 @@ OBJS_ALL = \
        AMRsolve_parameters.o \
        AMRsolve_point.o \
        lcamem.o \
-       AMRgrav_problem.o
+       AMRsolve_problem.o
 
 #--------------------------------
 # Executables
