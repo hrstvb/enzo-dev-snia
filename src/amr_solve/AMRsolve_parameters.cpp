@@ -154,6 +154,6 @@ int AMRsolve_Parameters::readline_(FILE* fp, char* buffer, int n) throw()
   return (c != EOF);
 }
 
-AMRsolve_Parameters* hypre_parameters = NULL;
+AMRsolve_Parameters* amrsolve_parameters = NULL;
 
 //======================================================================

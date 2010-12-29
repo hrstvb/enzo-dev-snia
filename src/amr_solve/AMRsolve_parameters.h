@@ -103,6 +103,6 @@ public:
 
 };
 
-extern AMRsolve_Parameters* hypre_parameters;
+extern AMRsolve_Parameters* amrsolve_parameters;
 
 #endif /* AMRSOLVE_PARAMETERS_H */

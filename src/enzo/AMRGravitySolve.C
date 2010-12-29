@@ -1,20 +1,21 @@
-#ifdef HYPRE_GRAV
+#ifdef AMR_SOLVE
 
-/// @file     HypreGravitySolve.C
-/// @date     2009-09-02
+/// @file     AMRGravitySolve.C
+/// @date     2010-12-29
 /// @author   James Bordner (jobordner@ucsd.edu)
-/// @brief    Interface between Enzo and the hypre-solve linear solver
+/// @author   Daniel Reynolds (reynolds@smu.edu)
+/// @brief    Interface between Enzo and the AMRsolve linear solver
 ///
-/// HypreGravitySolve serves as the single function interface between
-/// Enzo and the hypre-solve linear solver package.  It solves the
+/// AMRGravitySolve serves as the single function interface between
+/// Enzo and the AMRsolve linear solver package.  It solves the
 /// Poisson equation on an Enzo AMR hierarchy between two levels specified
 /// by the "level_coarse" and "level_fine" parameters.  An extra scaling
 /// factor "f_scale" is passed, which can be 1.0.  
-/// The right hand side is specified by "Grid::hypre_grav_b", which is
+/// The right hand side is specified by "Grid::amr_grav_b", which is
 /// created and initialized in the "Hierarchy::enzo_attach()" function
-/// in [newgrav-]hierarchy.C
+/// in AMRsolve_hierarchy.C
 
-#include "newgrav.h"
+#include "AMRsolve.h"
 
 #include "performance.h"
 #include "macros_and_parameters.h"
@@ -27,12 +28,12 @@
 #include "Grid.h"
 #include "LevelHierarchy.h"
 #include "Hierarchy.h"
-#include "debug.h"
+//#include "debug.h"
 
-const bool trace_hypre = true;
-const bool debug_hypre = true;
+const bool trace_amrsolve = true;
+const bool debug_amrsolve = true;
 
-void HypreGravitySolve 
+void AMRGravitySolve 
 (
  LevelHierarchyEntry * LevelArray[],    // Enzo's current LevelArray
  double                f_scale,         // scaling for the right-hand side
@@ -41,93 +42,84 @@ void HypreGravitySolve
  )
 {
 
-  if (trace_hypre && pmpi->is_root()) {
-    printf ("%s:%d %d HypreGravitySolve(%d %d)\n",
-	    __FILE__,__LINE__,pmpi->ip(),
-	    Eint32(level_coarse),Eint32(level_fine));
+  if (trace_amrsolve && pmpi->is_root()) {
+    printf("%s:%d %d AMRGravitySolve(%d %d)\n",
+	   __FILE__,__LINE__,pmpi->ip(),
+	   Eint32(level_coarse),Eint32(level_fine));
     fflush(stdout);
   }
 
-  LCAPERF_START("hypre_solve");
+  LCAPERF_START("amr_solve");
  
-  // Insert Enzo grids in this level into a hypre-solve hierarchy
+  // Insert Enzo grids in this level into a AMRsolve hierarchy
+  AMRsolve_Hierarchy * hierarchy = new AMRsolve_Hierarchy;
 
-  Hierarchy * hierarchy = new Hierarchy;
-
-  LCAPERF_START("hypre_attach");
+  LCAPERF_START("amrsolve_attach");
   hierarchy->enzo_attach(LevelArray,level_coarse,level_fine);
-  LCAPERF_STOP("hypre_attach");
+  LCAPERF_STOP("amrsolve_attach");
 
-  // Initialize the hypre-solve hierarchy
+  // Initialize the AMRsolve hierarchy
+  AMRsolve_Domain domain(3, DomainLeftEdge, DomainRightEdge);
+  bool is_periodic = true;
 
-  Domain domain (3, DomainLeftEdge, DomainRightEdge);
-  bool   is_periodic = true;
-
-  LCAPERF_START("hypre_hierarchy");
+  LCAPERF_START("amrsolve_hierarchy");
   hierarchy->initialize(domain,*pmpi,is_periodic);
-  LCAPERF_STOP("hypre_hierarchy");
+  LCAPERF_STOP("amrsolvehierarchy");
 
-  // Initialize the hypre-solve linear system
-
-  LCAPERF_START("hypre_matrix");
-  Hypre hypre (*hierarchy,*hypre_parameters);
-
-  hypre.init_hierarchy (*pmpi);
-  hypre.init_stencil ();
-  hypre.init_graph ();
-  std::vector<Point *>  points; // ignored
-  hypre.init_elements (points,f_scale);
-  LCAPERF_STOP("hypre_matrix");
+  // Initialize the AMRsolve linear system
+  LCAPERF_START("amrsolve_matrix");
+  AMRsolve_Hypre amrsolve(*hierarchy, *amrsolve_parameters);
+  amrsolve.init_hierarchy(*pmpi);
+  amrsolve.init_stencil();
+  amrsolve.init_graph();
+  std::vector<AMRsolve_Point *> points; // ignored
+  amrsolve.init_elements(points, f_scale);
+  LCAPERF_STOP("amrsolve_matrix");
 
   // Solve the linear system
-
-  LCAPERF_START("hypre_solve");
-  hypre.solve ();
-  LCAPERF_STOP("hypre_solve");
+  LCAPERF_START("amrsolve_solve");
+  amrsolve.solve();
+  LCAPERF_STOP("amrsolve_solve");
 
   // Display solver results
-
-  hypre.evaluate ();
+  amrsolve.evaluate();
 
   // Output
-
   static int cycle = 0;
 
   if (cycle % 10 == 0) {
-
     char filename [80];
 
     ItHierarchyGridsLocal itgl (*hierarchy);
-    printf ("%s:%d scale = %g\n",__FILE__,__LINE__,f_scale);
-    while (Grid * grid = itgl++) {
-      sprintf (filename,"XH.id=%d.proc=%ld.cycle=%d",
-	       grid->id(),MyProcessorNumber,cycle);
-      printf ("%s:%d writing %s\n",__FILE__,__LINE__,filename);
-      FILE * fp = fopen (filename,"w");
+    printf("%s:%d scale = %g\n",__FILE__,__LINE__,f_scale);
+
+    while (AMRsolve_Grid* grid = itgl++) {
+      sprintf(filename,"XH.id=%d.proc=%ld.cycle=%d",
+	      grid->id(),MyProcessorNumber,cycle);
+      printf("%s:%d writing %s\n",__FILE__,__LINE__,filename);
+      FILE* fp = fopen(filename,"w");
       Eint32 nx,ny,nz;
-      Scalar * values = grid->get_u(&nx,&ny,&nz);
+      Scalar* values = grid->get_u(&nx,&ny,&nz);
       for (int ix=0; ix<nx; ix++) {
 	for (int iy=0; iy<ny; iy++) {
 	  for (int iz=0; iz<nz; iz++) {
 	    int i = ix + nx * ( iy + ny * iz);
-	    fprintf (fp,"%d %d %d %g\n",ix,iy,iz,values[i]);
-	    
+	    fprintf(fp,"%d %d %d %g\n",ix,iy,iz,values[i]);
 	  }
 	}
       }
       fclose(fp);
     }
   }
-
   cycle ++;
 
   // Clean up
-
   hierarchy->enzo_detach();
 
-  LCAPERF_STOP("hypre_solve");
+  LCAPERF_STOP("amr_solve");
 
   delete hierarchy;
   hierarchy = NULL;
 }
-#endif
+
+#endif   // AMR_SOLVE
