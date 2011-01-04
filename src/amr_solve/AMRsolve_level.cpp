@@ -1,4 +1,4 @@
-/// @file      level.cpp
+/// @file      AMRsolve_level.cpp
 /// @author    James Bordner (jobordner@ucsd.edu)
 /// @author    Daniel Reynolds (reynolds@smu.edu)
 /// @brief     Implementation of the AMRsolve_Level class

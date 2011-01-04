@@ -1,7 +1,7 @@
 /// @file      test-mem.cpp
 /// @author    James Bordner (jobordner@ucsd.edu)
 /// @author    Daniel Reynolds (reynolds@smu.edu)
-/// @brief     Main driver to test for memory leaks in hypre-solve
+/// @brief     Main driver to test for memory leaks in amr_solve
 
 #include <assert.h>
 #include <stdio.h>
@@ -39,7 +39,7 @@
 #include "AMRsolve_hierarchy.h"
 #include "AMRsolve_parameters.h"
 #include "AMRsolve_problem.h"
-#include "AMRsolve_hypre.h"
+#include "AMRsolve_hypre_grav.h"
 
 //======================================================================
 
@@ -98,12 +98,12 @@ int main(int argc, char **argv)
 
   // Test Problem class
 
-  MPI_Barrier(MPI_COMM_WORLD);
-  bytes_begin = lcamem::bytes_;
-  test_problem();
-  bytes_end = lcamem::bytes_;
-  print_result ("Problem",bytes_begin,bytes_end);
-  MPI_Barrier(MPI_COMM_WORLD);
+//   MPI_Barrier(MPI_COMM_WORLD);
+//   bytes_begin = lcamem::bytes_;
+//   test_problem();
+//   bytes_end = lcamem::bytes_;
+//   print_result ("Problem",bytes_begin,bytes_end);
+//   MPI_Barrier(MPI_COMM_WORLD);
 
   // Test Hierarchy class
 

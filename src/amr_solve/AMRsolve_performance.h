@@ -1,4 +1,4 @@
-/// @file      newgrav-performance.h
+/// @file      AMRsolve_performance.h
 /// @author    James Bordner (jobordner@ucsd.edu)
 /// @author    Daniel Reynolds (reynolds@smu.edu)
 /// @brief     lcaperf-related defines

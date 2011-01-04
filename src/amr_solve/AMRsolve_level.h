@@ -1,4 +1,4 @@
-/// @file      newgrav-level.h
+/// @file      AMRsolve_level.h
 /// @author    James Bordner (jobordner@ucsd.edu)
 /// @author    Daniel Reynolds (reynolds@smu.edu)
 /// @brief     Declaration of the AMRsolve_Level class

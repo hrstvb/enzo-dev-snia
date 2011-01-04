@@ -1,4 +1,4 @@
-/// @file      parameters.cpp
+/// @file      AMRsolve_parameters.cpp
 /// @author    James Bordner (jobordner@ucsd.edu)
 /// @author    Daniel Reynolds (reynolds@smu.edu)
 /// @brief     Implementation of the AMRsolve_Parameters class

@@ -1,4 +1,4 @@
-/// @file      newgrav-mpi.h
+/// @file      AMRsolve_mpi.h
 /// @author    James Bordner (jobordner@ucsd.edu)
 /// @author    Daniel Reynolds (reynolds@smu.edu)
 /// @brief     Declaration of the AMRsolve_Mpi class

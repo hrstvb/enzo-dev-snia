@@ -1,4 +1,4 @@
-/// @file      newgrav-domain.h
+/// @file      AMRsolve_domain.h
 /// @author    James Bordner (jobordner@ucsd.edu)
 /// @author    Daniel Reynolds (reynolds@smu.edu)
 /// @brief     Declaration of the AMRsolve_Domain class

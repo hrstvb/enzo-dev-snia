@@ -1,4 +1,4 @@
-/// @file      grid.cpp
+/// @file      AMRsolve_grid.cpp
 /// @author    James Bordner (jobordner@ucsd.edu)
 /// @author    Daniel Reynolds (reynolds@smu.edu)
 /// @brief     Implemtation of the AMRsolve_Grid class
@@ -319,7 +319,7 @@ void AMRsolve_Grid::deallocate_u_() throw()
   }
   u_ = NULL;
   offset_u_ = 0;
-  is_u_allocated_ = true; // reset default
+  is_u_allocated_ = false; // reset default
 }
 
 //----------------------------------------------------------------------
@@ -335,7 +335,7 @@ void AMRsolve_Grid::deallocate_f_() throw()
   }
   f_ = NULL;
   offset_f_ = 0;
-  is_f_allocated_ = true; // reset default
+  is_f_allocated_ = false; // reset default
 }
 
 //======================================================================

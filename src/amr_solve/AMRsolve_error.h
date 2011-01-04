@@ -1,4 +1,4 @@
-/// @file      newgrav-error.h
+/// @file      AMRsolve_error.h
 /// @author    James Bordner (jobordner@ucsd.edu)
 /// @author    Daniel Reynolds (reynolds@smu.edu)
 /// @brief     Macros related to error and warning messages

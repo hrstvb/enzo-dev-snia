@@ -1,4 +1,4 @@
-/// @file      newgrav-grid.h
+/// @file      AMRsolve_grid.h
 /// @author    James Bordner
 /// @author    Daniel Reynolds (reynolds@smu.edu)
 /// @brief     Declaration of the AMRsolve_Grid class

@@ -1,4 +1,4 @@
-/// @file      newgrav-faces.h
+/// @file      AMRsolve_faces.h
 /// @author    James Bordner (jobordner@ucsd.edu)
 /// @author    Daniel Reynolds (reynolds@smu.edu)
 /// @brief     Declaration of the AMRsolve_Faces class

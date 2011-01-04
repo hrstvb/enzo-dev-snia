@@ -39,7 +39,7 @@
 #include "AMRsolve_hierarchy.h"
 #include "AMRsolve_parameters.h"
 #include "AMRsolve_problem.h"
-#include "AMRsolve_hypre.h"
+#include "AMRsolve_hypre_grav.h"
 
 //======================================================================
 // BEGIN MAIN
@@ -115,7 +115,7 @@ int main(int argc, char **argv)
     // Initialize hypre
     // --------------------------------------------------
 
-    AMRsolve_Hypre hypre(hierarchy,problem.parameters());
+    AMRsolve_Hypre_Grav hypre(hierarchy,problem.parameters());
 
 
     LCAPERF_START("hypre-init-hierarchy");

@@ -12,7 +12,7 @@
 /// by the "level_coarse" and "level_fine" parameters.  An extra scaling
 /// factor "f_scale" is passed, which can be 1.0.  
 /// The right hand side and solution arrays are held in the Grid class, and
-/// are accessed directly by the AMRsolve_Hierarchy::enzo_attach() function.
+/// are accessed directly by the AMRsolve_Hierarchy::enzo_attach_grav() function.
 
 #include "AMRsolve.h"
 
@@ -53,9 +53,9 @@ void AMRGravitySolve
   // Insert Enzo grids in this level into a AMRsolve hierarchy
   AMRsolve_Hierarchy* hierarchy = new AMRsolve_Hierarchy;
 
-  LCAPERF_START("amrsolve_attach");
-  hierarchy->enzo_attach(LevelArray,level_coarse,level_fine);
-  LCAPERF_STOP("amrsolve_attach");
+  LCAPERF_START("amrsolve_attach_grav");
+  hierarchy->enzo_attach_grav(LevelArray,level_coarse,level_fine);
+  LCAPERF_STOP("amrsolve_attach_grav");
 
   // Initialize the AMRsolve hierarchy
   AMRsolve_Domain domain(3, DomainLeftEdge, DomainRightEdge);
@@ -67,7 +67,7 @@ void AMRGravitySolve
 
   // Initialize the AMRsolve linear system
   LCAPERF_START("amrsolve_matrix");
-  AMRsolve_Hypre amrsolve(*hierarchy, *amrsolve_parameters);
+  AMRsolve_Hypre_Grav amrsolve(*hierarchy, *amrsolve_parameters);
   amrsolve.init_hierarchy(*pmpi);
   amrsolve.init_stencil();
   amrsolve.init_graph();

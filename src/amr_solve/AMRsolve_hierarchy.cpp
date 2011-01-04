@@ -1,4 +1,4 @@
-/// @file      hierarchy.cpp
+/// @file      AMRsolve_hierarchy.cpp
 /// @author    James Bordner (jobordner@ucsd.edu)
 /// @author    Daniel Reynolds (reynolds@smu.edu)
 /// @brief     Implementation of the AMRsolve_Hierarchy class
@@ -80,9 +80,9 @@ AMRsolve_Hierarchy::~AMRsolve_Hierarchy() throw()
 
 #ifdef AMR_SOLVE
 
-void AMRsolve_Hierarchy::enzo_attach(LevelHierarchyEntry *LevelArray[],
-				     int level_coarsest,
-				     int level_finest) throw()
+void AMRsolve_Hierarchy::enzo_attach_grav(LevelHierarchyEntry *LevelArray[],
+					  int level_coarsest,
+					  int level_finest) throw()
 {
   _TRACE_;
   set_dim(3);
@@ -94,11 +94,10 @@ void AMRsolve_Hierarchy::enzo_attach(LevelHierarchyEntry *LevelArray[],
 
   // Traverse levels in enzo hierarchy
   std::map<grid *,int> enzo_id;
-  if (debug_hierarchy) printf("DEBUG: %s:%d Called enzo_attach (%d %d)\n",
+  if (debug_hierarchy) printf("DEBUG: %s:%d Called enzo_attach_grav (%d %d)\n",
 			      __FILE__,__LINE__,level_coarsest,level_finest);
 
   // Set defaults for level_coarsest and level_finest:
-  //
   //    if no levels specified: default to entire hierarchy
   //    if one level specified: default to just that level
   if (level_coarsest == LEVEL_UNKNOWN && level_finest == LEVEL_UNKNOWN) {
@@ -115,8 +114,6 @@ void AMRsolve_Hierarchy::enzo_attach(LevelHierarchyEntry *LevelArray[],
   if (debug_hierarchy) printf("DEBUG: %s:%d Attaching to Enzo (%d %d)\n",
 			      __FILE__,__LINE__,level_coarsest,level_finest);
 
-  int levelfactor = 1;   // refinement factor for the current level
-
   // Loop over levels
   for (int level = level_coarsest; 
        level <= level_finest && LevelArray[level] != NULL;
@@ -127,7 +124,7 @@ void AMRsolve_Hierarchy::enzo_attach(LevelHierarchyEntry *LevelArray[],
 	 itEnzoLevelGrid != NULL;
 	 itEnzoLevelGrid = itEnzoLevelGrid->NextGridThisLevel) {
 
-      grid * enzo_grid = itEnzoLevelGrid->GridData;
+      grid* enzo_grid = itEnzoLevelGrid->GridData;
 
       // Save grid id's to determine parents
       enzo_id[enzo_grid] = id;
@@ -137,11 +134,11 @@ void AMRsolve_Hierarchy::enzo_attach(LevelHierarchyEntry *LevelArray[],
       if (level == level_coarsest) {
 	id_parent = -1;
       } else {
-	grid * enzo_parent = itEnzoLevelGrid->GridHierarchyEntry->ParentGrid->GridData;
-	id_parent =  enzo_id[enzo_parent];
+	grid* enzo_parent = itEnzoLevelGrid->GridHierarchyEntry->ParentGrid->GridData;
+	id_parent = enzo_id[enzo_parent];
       }
 
-      int ip = enzo_grid -> ProcessorNumber;
+      int ip = enzo_grid->ProcessorNumber;
 //       fprintf(fp_debug,"%s:%d %d enzo grid[%d] PotentialField = %p  GravitatingMassField = %p\n",
 // 	       __FILE__,__LINE__,pmpi->ip(),id,
 // 	       enzo_grid->PotentialField,
@@ -167,10 +164,8 @@ void AMRsolve_Hierarchy::enzo_attach(LevelHierarchyEntry *LevelArray[],
 	//	il[dim] = enzo_grid->GridStartIndex[dim];
       }
 	      
-      // Create a new hypre-solve grid
-
-      AMRsolve_Grid * grid = new AMRsolve_Grid(id,id_parent,ip,xl,xu,il,n);
-      
+      // Create a new amr_solve grid
+      AMRsolve_Grid* grid = new AMRsolve_Grid(id,id_parent,ip,xl,xu,il,n);
       insert_grid(grid);
 
       if (grid->is_local()) {
@@ -186,7 +181,7 @@ void AMRsolve_Hierarchy::enzo_attach(LevelHierarchyEntry *LevelArray[],
 	int ndh = ndh3[0]*ndh3[1]*ndh3[2];
 
 	// Allocate X, warning if we're reallocating
-	if (enzo_grid->amrsolve_x == NULL) {
+	if (enzo_grid->amrsolve_x != NULL) {
 	  WARNING_MESSAGE;
 	  delete [] enzo_grid->amrsolve_x;
 	  enzo_grid->amrsolve_x = NULL;
@@ -194,12 +189,12 @@ void AMRsolve_Hierarchy::enzo_attach(LevelHierarchyEntry *LevelArray[],
 	enzo_grid->amrsolve_x = new ENZO_FLOAT[ndh]; // Deleted and nulled- in detach
 
 	// Clear X
-	for (int i=0; i<ndh; i++) enzo_grid->amrsolve_x[i] = 0;
+	for (int i=0; i<ndh; i++)  enzo_grid->amrsolve_x[i] = 0;
 
 	// CREATE THE B VECTOR
 
 	// Allocate B, warning if we're reallocating
-	if (enzo_grid->amrsolve_b == NULL) {
+	if (enzo_grid->amrsolve_b != NULL) {
 	  WARNING_MESSAGE;
 	  delete [] enzo_grid->amrsolve_b;
 	  enzo_grid->amrsolve_b = NULL;
@@ -240,15 +235,151 @@ void AMRsolve_Hierarchy::enzo_attach(LevelHierarchyEntry *LevelArray[],
 
 	printf("%s:%d %d DEBUG sum = %g\n",__FILE__,__LINE__,pmpi->ip(),sum_temp);
 
-	// Set the hypre arrays to point to the corresponding enzo hypre-grav arrays
-	grid->set_u(enzo_grid->amrsolve_x,ndh3);
-	grid->set_f(enzo_grid->amrsolve_b,ndh3);
+	// Set the amrsolve arrays to point to the corresponding enzo arrays
+	grid->set_u(enzo_grid->amrsolve_x, ndh3);
+	grid->set_f(enzo_grid->amrsolve_b, ndh3);
 	WRITE_B_SUM(grid);
       }
       id++;
     } // grids within level
 
-    levelfactor *= RefineBy;
+  } // level
+
+  _TRACE_;
+}
+#endif
+
+//======================================================================
+
+#ifdef AMR_SOLVE
+
+void AMRsolve_Hierarchy::enzo_attach_fld(LevelHierarchyEntry *LevelArray[],
+					 int level_coarsest,
+					 int level_finest) throw()
+{
+  _TRACE_;
+  set_dim(3);
+
+  // Determine Grid ID's
+
+  // Count grids
+  int id = 0;
+
+  // Traverse levels in enzo hierarchy
+  std::map<grid *,int> enzo_id;
+  if (debug_hierarchy) printf("DEBUG: %s:%d Called enzo_attach_fld (%d %d)\n",
+			      __FILE__,__LINE__,level_coarsest,level_finest);
+
+  // Set defaults for level_coarsest and level_finest:
+  //    if no levels specified: default to entire hierarchy
+  //    if one level specified: default to just that level
+  if (level_coarsest == LEVEL_UNKNOWN && level_finest == LEVEL_UNKNOWN) {
+    level_coarsest = 0;
+    level_finest   = INT_MAX;
+  } else if (level_coarsest != LEVEL_UNKNOWN && level_finest == LEVEL_UNKNOWN) {
+    level_finest   = level_coarsest;
+  }
+
+  if (!(level_coarsest <= level_finest)) {
+    ERROR("level_finest must not be less than level_coarsest");
+  }
+
+  if (debug_hierarchy) printf("DEBUG: %s:%d Attaching to Enzo (%d %d)\n",
+			      __FILE__,__LINE__,level_coarsest,level_finest);
+
+  // Loop over levels
+  for (int level = level_coarsest; 
+       level <= level_finest && LevelArray[level] != NULL;
+       level++) {
+
+    // Traverse grids in enzo level
+    for (LevelHierarchyEntry* itEnzoLevelGrid = LevelArray[level];
+	 itEnzoLevelGrid != NULL;
+	 itEnzoLevelGrid = itEnzoLevelGrid->NextGridThisLevel) {
+
+      grid* enzo_grid = itEnzoLevelGrid->GridData;
+
+      // Save grid id's to determine parents
+      enzo_id[enzo_grid] = id;
+
+      // Collect required enzo grid data
+      int id_parent;
+      if (level == level_coarsest) {
+	id_parent = -1;
+      } else {
+	grid* enzo_parent = itEnzoLevelGrid->GridHierarchyEntry->ParentGrid->GridData;
+	id_parent = enzo_id[enzo_parent];
+      }
+
+      int ip = enzo_grid->ProcessorNumber;
+//       fprintf(fp_debug,"%s:%d %d enzo grid[%d] PotentialField = %p  GravitatingMassField = %p\n",
+// 	       __FILE__,__LINE__,pmpi->ip(),id,
+// 	       enzo_grid->PotentialField,
+// 	       enzo_grid->GravitatingMassField);
+
+      
+      // Compute global grid size at this level
+      long long nd[3];
+      for (int dim=0; dim<3; dim++) {
+	nd[dim] = (long long) ((DomainRightEdge[dim] - DomainLeftEdge[dim]) / 
+		       enzo_grid->CellWidth[dim][0] + 0.5);
+      }
+	
+      Scalar xl[3],xu[3];
+      int il[3],n[3];
+      for (int dim=0; dim<3; dim++) {
+	xl[dim] = enzo_grid->GridLeftEdge[dim];
+	xu[dim] = enzo_grid->GridRightEdge[dim];
+	n[dim]  = enzo_grid->GridEndIndex[dim] - enzo_grid->GridStartIndex[dim] + 1;
+	il[dim] = int((xl[dim] - DomainLeftEdge[dim]) 
+		       / (DomainRightEdge[dim]-DomainLeftEdge[dim]) * nd[dim]);
+      }
+	      
+      // Create a new amr_solve grid
+      AMRsolve_Grid* grid = new AMRsolve_Grid(id,id_parent,ip,xl,xu,il,n);
+      insert_grid(grid);
+
+      if (grid->is_local()) {
+
+	// CREATE THE X VECTOR
+
+	// Compute the grid dimensions, with no ghost zones
+	int ndh3[3];
+	ndh3[0] = enzo_grid->GridEndIndex[0] - enzo_grid->GridStartIndex[0] + 1;
+	ndh3[1] = enzo_grid->GridEndIndex[1] - enzo_grid->GridStartIndex[1] + 1;
+	ndh3[2] = enzo_grid->GridEndIndex[2] - enzo_grid->GridStartIndex[2] + 1;
+	int ndh = ndh3[0]*ndh3[1]*ndh3[2];
+
+	// Allocate X, warning if we're reallocating
+	if (enzo_grid->amrsolve_x != NULL) {
+	  WARNING_MESSAGE;
+	  delete [] enzo_grid->amrsolve_x;
+	  enzo_grid->amrsolve_x = NULL;
+	}
+	enzo_grid->amrsolve_x = new ENZO_FLOAT[ndh]; // Deleted and nulled- in detach
+
+	// Clear X
+	for (int i=0; i<ndh; i++)  enzo_grid->amrsolve_x[i] = 0;
+
+	// CREATE THE B VECTOR
+
+	// Allocate B, warning if we're reallocating
+	if (enzo_grid->amrsolve_b != NULL) {
+	  WARNING_MESSAGE;
+	  delete [] enzo_grid->amrsolve_b;
+	  enzo_grid->amrsolve_b = NULL;
+	}
+	enzo_grid->amrsolve_b = new ENZO_FLOAT[ndh]; // Deleted and nulled- in detach
+
+	// Set the amrsolve arrays to point to the corresponding enzo arrays; 
+	// Note: these arrays are the correct size, so we don't need any of the 
+	//       different-grid-offset business that gravity does.
+	grid->set_u(enzo_grid->amrsolve_x, ndh3);
+	grid->set_f(enzo_grid->amrsolve_b, ndh3);
+	WRITE_B_SUM(grid);
+      }
+      id++;
+    } // grids within level
 
   } // level
 

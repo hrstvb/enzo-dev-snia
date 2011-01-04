@@ -1,15 +1,15 @@
-/// @file      newgrav-hypre.h
+/// @file      AMRsolve_hypre_grav.h
 /// @author    James Bordner (jobordner@ucsd.edu)
 /// @author    Daniel Reynolds (reynolds@smu.edu)
-/// @brief     Declaration of the AMRsolve_Hypre class
+/// @brief     Declaration of the AMRsolve_Hypre_Grav class
 
-#ifndef AMRSOLVE_HYPRE_H
-#define AMRSOLVE_HYPRE_H
+#ifndef AMRSOLVE_HYPRE_GRAV_H
+#define AMRSOLVE_HYPRE_GRAV_H
 
-class AMRsolve_Hypre {
+class AMRsolve_Hypre_Grav {
 
-  /// @class    AMRsolve_Hypre
-  /// @brief    AMRsolve_Hypre class for interfacing to the LLNL hypre solver
+  /// @class    AMRsolve_Hypre_Grav
+  /// @brief    AMRsolve_Hypre_Grav class for interfacing to the LLNL hypre solver
 
 private:
 
@@ -32,9 +32,9 @@ private:
 
 public:
 
-  AMRsolve_Hypre(AMRsolve_Hierarchy& hierarchy, AMRsolve_Parameters& parameters);
+  AMRsolve_Hypre_Grav(AMRsolve_Hierarchy& hierarchy, AMRsolve_Parameters& parameters);
 
-  ~AMRsolve_Hypre();
+  ~AMRsolve_Hypre_Grav();
 
   void init_hierarchy(AMRsolve_Mpi& mpi);
   void init_stencil();
@@ -91,4 +91,4 @@ private:
 				 int igg3[3], int ign3[3]);
 };
 
-#endif /* AMRSOLVE_HYPRE_H */
+#endif /* AMRSOLVE_HYPRE_GRAV_H */

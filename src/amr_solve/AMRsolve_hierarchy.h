@@ -1,4 +1,4 @@
-/// @file      newgrav-hierarchy.h
+/// @file      AMRsolve_hierarchy.h
 /// @author    James Bordner (jobordner@ucsd.edu)
 /// @author    Daniel Reynolds (reynolds@smu.edu)
 /// @brief     Declaration of the AMRsolve_Hierarchy class
@@ -60,10 +60,15 @@ protected:
 
 #ifdef AMR_SOLVE
 
-  /// ENZO INTERFACE: attach to the Enzo hierarchy
-  void enzo_attach(LevelHierarchyEntry *LevelArray[],
-		   int level_coarse = LEVEL_UNKNOWN,
-		   int level_fine   = LEVEL_UNKNOWN) throw();
+  /// ENZO INTERFACE: attach to the Enzo hierarchy for gravity solves
+  void enzo_attach_grav(LevelHierarchyEntry *LevelArray[],
+			int level_coarse = LEVEL_UNKNOWN,
+			int level_fine   = LEVEL_UNKNOWN) throw();
+
+  /// ENZO INTERFACE: attach to the Enzo hierarchy for radiation solves
+  void enzo_attach_fld(LevelHierarchyEntry *LevelArray[],
+		       int level_coarse = LEVEL_UNKNOWN,
+		       int level_fine   = LEVEL_UNKNOWN) throw();
 
   /// ENZO INTERFACE: detach from the Enzo hierarchy
   void enzo_detach() throw();

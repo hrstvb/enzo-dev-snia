@@ -410,8 +410,10 @@
              AMRsolve_grid.h \
              AMRsolve_hierarchy.C \
              AMRsolve_hierarchy.h \
-             AMRsolve_hypre.C \
-             AMRsolve_hypre.h \
+             AMRsolve_hypre_fld.C \
+             AMRsolve_hypre_fld.h \
+             AMRsolve_hypre_grav.C \
+             AMRsolve_hypre_grav.h \
              AMRsolve_defs.h \
              AMRsolve_level.C \
              AMRsolve_level.h \

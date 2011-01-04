@@ -1,4 +1,4 @@
-/// @file      problem.cpp
+/// @file      AMRsolve_problem.cpp
 /// @author    James Bordner (jobordner@ucsd.edu)
 /// @author    Daniel Reynolds (reynolds@smu.edu)
 /// @brief     Implementation of the AMRsolve_Problem class

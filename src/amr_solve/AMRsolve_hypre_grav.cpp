@@ -1,7 +1,7 @@
-/// @file      hypre.cpp
+/// @file      AMRsolve_hypre_grav.cpp
 /// @author    James Bordner (jobordner@ucsd.edu)
 /// @author    Daniel Reynolds (reynolds@smu.edu)
-/// @brief     Implementation of the AMRsolve_Hypre class
+/// @brief     Implementation of the AMRsolve_Hypre_Grav class
 
 #include <stdlib.h>
 #include <mpi.h>
@@ -51,7 +51,7 @@ typedef int int3[3];
 #include "AMRsolve_hierarchy.h"
 #include "AMRsolve_parameters.h"
 #include "AMRsolve_problem.h"
-#include "AMRsolve_hypre.h"
+#include "AMRsolve_hypre_grav.h"
 #include "AMRsolve_error.h"
 
 //======================================================================
@@ -67,9 +67,9 @@ inline Scalar acoef(Scalar x, Scalar y, Scalar z)
 // PUBLIC MEMBER FUNCTIONS
 //======================================================================
 
-/// AMRsolve_Hypre constructor
-AMRsolve_Hypre::AMRsolve_Hypre(AMRsolve_Hierarchy& hierarchy, 
-			       AMRsolve_Parameters& parameters)
+/// AMRsolve_Hypre_Grav constructor
+AMRsolve_Hypre_Grav::AMRsolve_Hypre_Grav(AMRsolve_Hierarchy& hierarchy, 
+					 AMRsolve_Parameters& parameters)
   : grid_(0), graph_(0), stencil_(0), A_(0), B_(0), X_(0),
     solver_(0), parameters_(&parameters), hierarchy_(&hierarchy),
     resid_(-1.0), iter_(-1), r_factor_(const_r_factor), matrix_scale_(1.0)
@@ -79,8 +79,8 @@ AMRsolve_Hypre::AMRsolve_Hypre(AMRsolve_Hierarchy& hierarchy,
 
 //----------------------------------------------------------------------
 
-/// AMRsolve_Hypre destructor
-AMRsolve_Hypre::~AMRsolve_Hypre()
+/// AMRsolve_Hypre_Grav destructor
+AMRsolve_Hypre_Grav::~AMRsolve_Hypre_Grav()
 {
   //
 }
@@ -91,7 +91,7 @@ AMRsolve_Hypre::~AMRsolve_Hypre()
 /** Creates a hypre grid, with one part per level and one box per Grid
     patch object, for an AMR problem.  Sets grid box extents, grid
     part variables, and periodicity. */
-void AMRsolve_Hypre::init_hierarchy(AMRsolve_Mpi& mpi)
+void AMRsolve_Hypre_Grav::init_hierarchy(AMRsolve_Mpi& mpi)
 {
 
   int dim       = hierarchy_->dimension();
@@ -146,13 +146,13 @@ void AMRsolve_Hypre::init_hierarchy(AMRsolve_Mpi& mpi)
   HYPRE_SStructGridAssemble(grid_);
   _TRACE_;
   
-} // AMRsolve_Hypre::init_hierarchy()
+} // AMRsolve_Hypre_Grav::init_hierarchy()
 
 //----------------------------------------------------------------------
 
 /// Initialize the discretization stencils.  
 /** Creates and initializes a hypre stencil object. */
-void AMRsolve_Hypre::init_stencil()
+void AMRsolve_Hypre_Grav::init_stencil()
 {
 
   _TRACE_;
@@ -179,7 +179,7 @@ void AMRsolve_Hypre::init_stencil()
   if (dim >= 3) HYPRE_SStructStencilSetEntry(stencil_, 6, entries[6], 0);
   _TRACE_;
 
-} // AMRsolve_Hypre::init_stencil()
+} // AMRsolve_Hypre_Grav::init_stencil()
 
 //----------------------------------------------------------------------
 
@@ -189,7 +189,7 @@ void AMRsolve_Hypre::init_stencil()
     part (level), and nonzeros for graph entries connecting linked
     parts.  The matrix nonzero structure is generally nonsymmetric.
     Only the stencil step is required for unigrid problems. */
-void AMRsolve_Hypre::init_graph()
+void AMRsolve_Hypre_Grav::init_graph()
 {
   // Create the hypre graph object
   _TRACE_;
@@ -234,15 +234,15 @@ void AMRsolve_Hypre::init_graph()
   HYPRE_SStructGraphAssemble(graph_);
   _TRACE_;
 
-} // AMRsolve_Hypre::init_graph()
+} // AMRsolve_Hypre_Grav::init_graph()
 
 //----------------------------------------------------------------------
 
 /// Initialize the matrix A and right-hand-side vector b
 /* Creates a matrix with a given nonzero structure, and sets nonzero
    values. */
-void AMRsolve_Hypre::init_elements(std::vector<AMRsolve_Point *> points, 
-				   Scalar f_scale)
+void AMRsolve_Hypre_Grav::init_elements(std::vector<AMRsolve_Point *> points, 
+					Scalar f_scale)
 {
   // Create the hypre matrix A_, solution X_, and right-hand side B_ objects
   HYPRE_SStructMatrixCreate(MPI_COMM_WORLD, graph_, &A_);
@@ -283,19 +283,16 @@ void AMRsolve_Hypre::init_elements(std::vector<AMRsolve_Point *> points,
   HYPRE_SStructVectorAssemble(X_);
 
   // Optionally write the matrix and vectors to a file for debugging
-  if (parameters_->value("dump_a") == "true") 
-    HYPRE_SStructMatrixPrint ("A-hypre",A_,0);
-  if (parameters_->value("dump_x") == "true") 
-    HYPRE_SStructVectorPrint ("X0-hypre",X_,0);
-  if (parameters_->value("dump_b") == "true") 
-    HYPRE_SStructVectorPrint ("B-hypre",B_,0);
+  if (parameters_->value("dump_a") == "true")  HYPRE_SStructMatrixPrint("A-hypre",A_,0);
+  if (parameters_->value("dump_x") == "true")  HYPRE_SStructVectorPrint("X0-hypre",X_,0);
+  if (parameters_->value("dump_b") == "true")  HYPRE_SStructVectorPrint("B-hypre",B_,0);
 
-} // AMRsolve_Hypre::init_elements()
+} // AMRsolve_Hypre_Grav::init_elements()
 
 //----------------------------------------------------------------------
 
 /// Initialize and solve the linear solver
-void AMRsolve_Hypre::solve()
+void AMRsolve_Hypre_Grav::solve()
 {
   std::string solver = parameters_->value("solver");
   int         levels = hierarchy_->num_levels();
@@ -332,20 +329,19 @@ void AMRsolve_Hypre::solve()
 
   } else {
     char error_message[100];
-    sprintf (error_message, "AMRsolve_Hypre::solve called with illegal "
-	     "combination of solver %s on %d levels", solver.c_str(),levels);
+    sprintf(error_message, "AMRsolve_Hypre_Grav::solve called with illegal "
+	    "combination of solver %s on %d levels", solver.c_str(),levels);
     ERROR(error_message);
   }
   
-  if (parameters_->value("dump_x") == "true") 
-    HYPRE_SStructVectorPrint ("X-hypre",X_,1);
+  if (parameters_->value("dump_x") == "true")  HYPRE_SStructVectorPrint("X-hypre",X_,1);
 
-} // AMRsolve_Hypre::solve()
+} // AMRsolve_Hypre_Grav::solve()
 
 //----------------------------------------------------------------------
 
 /// Evaluate the success of the solve
-void AMRsolve_Hypre::evaluate()
+void AMRsolve_Hypre_Grav::evaluate()
 {
   char filename[80];
 
@@ -385,7 +381,7 @@ void AMRsolve_Hypre::evaluate()
   Scalar xsum_local  = 0.0;
   Scalar x2sum_local = 0.0;
 
-  while (AMRsolve_Grid * grid = itg++) {
+  while (AMRsolve_Grid* grid = itg++) {
 
     int level = grid->level();
 
@@ -397,11 +393,10 @@ void AMRsolve_Hypre::evaluate()
 
     int nx[3];
     Scalar* x = grid->get_u(&nx[0],&nx[1],&nx[2]);
-    HYPRE_SStructVectorGetBoxValues (X_,level,lower,upper,0,x);  
+    HYPRE_SStructVectorGetBoxValues(X_,level,lower,upper,0,x);  
 
     int n3[3];
     grid->get_size(n3);
-
     for (int i2=0; i2<n3[2]; i2++) {
       for (int i1=0; i1<n3[1]; i1++) {
 	for (int i0=0; i0<n3[0]; i0++) {
@@ -416,12 +411,10 @@ void AMRsolve_Hypre::evaluate()
   }
 
   Scalar xsum = 0.0;
-  MPI_Allreduce(&xsum_local, &xsum, 1, 
-		MPI_SCALAR, MPI_SUM, MPI_COMM_WORLD);
+  MPI_Allreduce(&xsum_local, &xsum, 1, MPI_SCALAR, MPI_SUM, MPI_COMM_WORLD);
 
   Scalar x2sum = 0.0;
-  MPI_Allreduce(&x2sum_local, &x2sum, 1, 
-		MPI_SCALAR, MPI_SUM, MPI_COMM_WORLD);
+  MPI_Allreduce(&x2sum_local, &x2sum, 1, MPI_SCALAR, MPI_SUM, MPI_COMM_WORLD);
 
   if (pmpi->is_root()) { 
 
@@ -442,13 +435,13 @@ void AMRsolve_Hypre::evaluate()
     }
 
     // Appears to have completed successfully
-    if (success) 
-      printf ("Success!\n"); fflush(stdout); 
+    if (success)  
+      printf("Success!\n"); fflush(stdout); 
   }
-  if (pmpi->is_root()) printf("norm(X)        = %g\n",sqrt(x2sum));
-  if (pmpi->is_root()) printf("sum(X)/norm(X) = %g\n",xsum/sqrt(x2sum));
+  if (pmpi->is_root())  printf("norm(X)        = %g\n",sqrt(x2sum));
+  if (pmpi->is_root())  printf("sum(X)/norm(X) = %g\n",xsum/sqrt(x2sum));
 
-} // AMRsolve_Hypre::evaluate()
+} // AMRsolve_Hypre_Grav::evaluate()
 
 //======================================================================
 // PRIVATE MEMBER FUNCTIONS
@@ -458,7 +451,7 @@ void AMRsolve_Hypre::evaluate()
 /// init_graph_nonstencil_() with phase == phase_graph to set nonstencil
 /// graph entries, and again by init_matrix_nonstencil_() with phase
 /// == phase_matrix to set nonstencil matrix entries.
-void AMRsolve_Hypre::init_nonstencil_(AMRsolve_Grid& grid, phase_enum phase)
+void AMRsolve_Hypre_Grav::init_nonstencil_(AMRsolve_Grid& grid, phase_enum phase)
 {
   // Input parameter check
   if ( !(phase == phase_graph || phase == phase_matrix) ) {
@@ -519,19 +512,17 @@ void AMRsolve_Hypre::init_nonstencil_(AMRsolve_Grid& grid, phase_enum phase)
 
 	  AMRsolve_Grid* adjacent = grid.faces().adjacent(axis,face,index1,index2);
 
-	  AMRsolve_Faces::Label& fz = 
-	    grid.faces().label(axis,face,index1,index2);
+	  AMRsolve_Faces::Label& fz = grid.faces().label(axis,face,index1,index2);
 
 	  // Add graph entries iff grid or adjacent grid is local, and if
 	  // adjacent grid (if it exists) is in the next-coarser level
 	  bool is_local =
-	    (adjacent != NULL) &&  (adjacent->is_local() || grid.is_local());
+	    ((adjacent != NULL) && (adjacent->is_local() || grid.is_local()));
 	  bool is_coarse = (fz == AMRsolve_Faces::_coarse_);
 
 	  if (is_local && is_coarse) {
 
 	    // (fine) grid global indices
-
 	    int index_fine[3]; 
 	    index_fine[axis0] = index_global[axis0][0] + face*(n0 - r_factor_);
 	    index_fine[axis1] = index_global[axis1][0] + index1;
@@ -582,12 +573,12 @@ void AMRsolve_Hypre::init_nonstencil_(AMRsolve_Grid& grid, phase_enum phase)
       } // for index1
     } // for face
   } // for axis
-} // AMRsolve_Hypre::init_nonstencil_()
+} // AMRsolve_Hypre_Grav::init_nonstencil_()
 
 //------------------------------------------------------------------------
 
 /// Initialize matrix stencil and graph entries
-void AMRsolve_Hypre::init_elements_matrix_()
+void AMRsolve_Hypre_Grav::init_elements_matrix_()
 {
 
   ItHierarchyLevels itl (*hierarchy_);
@@ -628,8 +619,8 @@ void AMRsolve_Hypre::init_elements_matrix_()
 //------------------------------------------------------------------------
 
 /// Set right-hand-side elements
-void AMRsolve_Hypre::init_elements_rhs_(std::vector<AMRsolve_Point *>& points,
-					Scalar f_scale)
+void AMRsolve_Hypre_Grav::init_elements_rhs_(std::vector<AMRsolve_Point *>& points,
+					     Scalar f_scale)
 {
   Scalar local_shift_b_sum = 0.0;
   long long shift_b_count  = 0.0;
@@ -666,7 +657,7 @@ void AMRsolve_Hypre::init_elements_rhs_(std::vector<AMRsolve_Point *>& points,
     HYPRE_SStructFACZeroAMRVectorData(B_, parts, refinements);
 
     // Accumulate local sums
-    local_shift_b_sum  = 0.0;
+    local_shift_b_sum = 0.0;
 
     // Compute total number of variables (excluding overlap)
     shift_b_count = 0; 
@@ -681,7 +672,7 @@ void AMRsolve_Hypre::init_elements_rhs_(std::vector<AMRsolve_Point *>& points,
 
 	// Adjust shift_b_count: add grid; subtract overlap
 	shift_b_count += grid->num_unknowns();
-	if (part > 0) shift_b_count -= grid->num_unknowns() / r_factor3;
+	if (part > 0)  shift_b_count -= grid->num_unknowns() / r_factor3;
 
 	if (grid->is_local()) {
 
@@ -691,14 +682,14 @@ void AMRsolve_Hypre::init_elements_rhs_(std::vector<AMRsolve_Point *>& points,
 	  int n = grid->num_unknowns();
 
 	  // Create space for the patch
- 	  double * values = new double[n];
+ 	  double* values = new double[n];
  	  for (int i=0; i<n; i++)  values[i] = 0.0;
 
  	  // Copy vector values to the array
  	  HYPRE_SStructVectorGetBoxValues(B_,part,lower,upper,0,values);  
 
 	  // Accumulate the sum
-	  for (int i=0; i<n; i++) local_shift_b_sum += values[i];
+	  for (int i=0; i<n; i++)  local_shift_b_sum += values[i];
 
 	  // Delete the zeroed values
  	  delete [] values;
@@ -712,15 +703,15 @@ void AMRsolve_Hypre::init_elements_rhs_(std::vector<AMRsolve_Point *>& points,
 		  MPI_SCALAR, MPI_SUM, MPI_COMM_WORLD);
 
     // Compute the shift given the global sum and global count
-    Scalar shift_b_amount = - shift_b_sum / shift_b_count;
+    Scalar shift_b_amount = -shift_b_sum/shift_b_count;
 
     // Perform the shift of B 
-    while (AMRsolve_Level * level = itl++) {
+    while (AMRsolve_Level* level = itl++) {
 
       int part = level->index();
 
       ItLevelGridsLocal itg (*level);
-      while (AMRsolve_Grid * grid = itg++) {
+      while (AMRsolve_Grid* grid = itg++) {
 
 	int lower[3],upper[3];
 	grid->get_limits(lower, upper);
@@ -745,7 +736,7 @@ void AMRsolve_Hypre::init_elements_rhs_(std::vector<AMRsolve_Point *>& points,
 //------------------------------------------------------------------------
 
 /// Set matrix stencil values for the grid interior
-void AMRsolve_Hypre::init_matrix_stencil_(AMRsolve_Grid& grid)
+void AMRsolve_Hypre_Grav::init_matrix_stencil_(AMRsolve_Grid& grid)
 {
   int n          = grid.num_unknowns();
   int entries[7] = { 0,1,2,3,4,5,6 };
@@ -777,9 +768,9 @@ void AMRsolve_Hypre::init_matrix_stencil_(AMRsolve_Grid& grid)
   WHERE; printf("h120  h201  h012 = %g %g %g\n",h120, h201, h012);
 
   int i0,i1,i2,i;
-  for (i2 = 0; i2 < n3[2]; i2++) {
-    for (i1 = 0; i1 < n3[1]; i1++) {
-      for (i0 = 0; i0 < n3[0]; i0++) {
+  for (i2=0; i2<n3[2]; i2++) {
+    for (i1=0; i1<n3[1]; i1++) {
+      for (i0=0; i0<n3[0]; i0++) {
 
 	// DIFFUSION COEFFICIENTS HERE
 	// (NOTE: inefficient due to recomputing)
@@ -816,7 +807,12 @@ void AMRsolve_Hypre::init_matrix_stencil_(AMRsolve_Grid& grid)
   WHERE; printf("v0[0]=%g\n",v0[0]);
 
   //-----------------------------------------------------------
-  // Adjust stencil at grid boundaries
+  // Adjust stencil at grid boundaries (not implemented)
+  //-----------------------------------------------------------
+
+
+  //-----------------------------------------------------------
+  // insert matrix entries into Hypre matrix A_
   //-----------------------------------------------------------
 
   //   AMRsolve_Faces& faces = grid.faces();
@@ -852,24 +848,24 @@ void AMRsolve_Hypre::init_matrix_stencil_(AMRsolve_Grid& grid)
     } // for face
   } // for axis
 
-} // AMRsolve_Hypre::init_matrix_stencil_()
+} // AMRsolve_Hypre_Grav::init_matrix_stencil_()
 
 //------------------------------------------------------------------------
 
 /// Clean up stencil connections between parts for FAC solver
-void AMRsolve_Hypre::init_matrix_clear_(int part)
+void AMRsolve_Hypre_Grav::init_matrix_clear_(int part)
 {
   if (part > 0) {
     int r_factors[3] = {r_factor_,r_factor_,r_factor_}; 
     HYPRE_SStructFACZeroAMRMatrixData(A_, part-1, r_factors);
   }
 
-} // AMRsolve_Hypre::init_matrix_clear_()
+} // AMRsolve_Hypre_Grav::init_matrix_clear_()
 
 //------------------------------------------------------------------------
 
 /// Add contributions from point sources to right-hand side B
-Scalar AMRsolve_Hypre::init_vector_points_(std::vector<AMRsolve_Point *>& points)
+Scalar AMRsolve_Hypre_Grav::init_vector_points_(std::vector<AMRsolve_Point *>& points)
 {
   const Scalar scaling0 = -4.0*const_G*const_pi;
 
@@ -925,13 +921,13 @@ Scalar AMRsolve_Hypre::init_vector_points_(std::vector<AMRsolve_Point *>& points
 
   return shift_b_sum;
 
-} // AMRsolve_Hypre::init_vector_points_()
+} // AMRsolve_Hypre_Grav::init_vector_points_()
 
 //------------------------------------------------------------------------
 
 /// Add contributions from Density in enzo HDF5 files to right-hand side B
-Scalar AMRsolve_Hypre::init_vector_file_(std::string file_prefix,
-					 bool enzo_packed)
+Scalar AMRsolve_Hypre_Grav::init_vector_file_(std::string file_prefix,
+					      bool enzo_packed)
 {
   ItHierarchyGridsLocal itg (*hierarchy_);
   char error_message[80];
@@ -942,7 +938,7 @@ Scalar AMRsolve_Hypre::init_vector_file_(std::string file_prefix,
 
   Scalar shift_b_sum = 0.0;
 
-  while (AMRsolve_Grid * grid = itg++) {
+  while (AMRsolve_Grid* grid = itg++) {
 
     // Open the HDF5 grid file
     char grid_num_str[10];
@@ -1033,12 +1029,12 @@ Scalar AMRsolve_Hypre::init_vector_file_(std::string file_prefix,
 //------------------------------------------------------------------------
 
 /// Use existing f_ for right-hand side B
-Scalar AMRsolve_Hypre::init_vector_attach_(Scalar f_scale)
+Scalar AMRsolve_Hypre_Grav::init_vector_attach_(Scalar f_scale)
 {
   _TRACE_;
   Scalar shift_b_sum = 0.0;
   ItHierarchyGridsLocal itg (*hierarchy_);
-  while (AMRsolve_Grid * grid = itg++) {
+  while (AMRsolve_Grid* grid = itg++) {
     int n0,n1,n2;
     Scalar* values = grid->get_f(&n0,&n1,&n2);
 
@@ -1082,7 +1078,7 @@ Scalar AMRsolve_Hypre::init_vector_attach_(Scalar f_scale)
 //------------------------------------------------------------------------
 
 /// Initialize the PFMG hypre solver
-void AMRsolve_Hypre::solve_pfmg_(int itmax, double restol)
+void AMRsolve_Hypre_Grav::solve_pfmg_(int itmax, double restol)
 {
   _TRACE_;
   // Create and initialize the solver
@@ -1111,12 +1107,12 @@ void AMRsolve_Hypre::solve_pfmg_(int itmax, double restol)
   HYPRE_SStructSysPFMGDestroy(solver_);
 
   _TRACE_;
-} // AMRsolve_Hypre::solve_pfmg_()
+} // AMRsolve_Hypre_Grav::solve_pfmg_()
 
 //------------------------------------------------------------------------
 
 /// Initialize the FAC hypre solver
-void AMRsolve_Hypre::solve_fac_(int itmax, double restol)
+void AMRsolve_Hypre_Grav::solve_fac_(int itmax, double restol)
 {
   _TRACE_;
   int i;
@@ -1179,12 +1175,12 @@ void AMRsolve_Hypre::solve_fac_(int itmax, double restol)
   delete [] refinements;
 
   _TRACE_;
-} // AMRsolve_Hypre::solve_fac_()
+} // AMRsolve_Hypre_Grav::solve_fac_()
 
 //------------------------------------------------------------------------
 
 /// Initialize the BICGSTAB hypre solver
-void AMRsolve_Hypre::solve_bicgstab_(int itmax, double restol)
+void AMRsolve_Hypre_Grav::solve_bicgstab_(int itmax, double restol)
 {
   _TRACE_;
   // Create the solver
@@ -1215,12 +1211,12 @@ void AMRsolve_Hypre::solve_bicgstab_(int itmax, double restol)
   HYPRE_SStructBiCGSTABDestroy(solver_);
 
   _TRACE_;
-} // AMRsolve_Hypre::solve_bicgstab_()
+} // AMRsolve_Hypre_Grav::solve_bicgstab_()
 
 //------------------------------------------------------------------------
 
 /// Initialize the BiCGSTAB hypre solver with BoomerAMG preconditioning
-void AMRsolve_Hypre::solve_bicgstab_boomer_(int itmax, double restol)
+void AMRsolve_Hypre_Grav::solve_bicgstab_boomer_(int itmax, double restol)
 {
   _TRACE_;
   HYPRE_Solver solver;
@@ -1270,12 +1266,12 @@ void AMRsolve_Hypre::solve_bicgstab_boomer_(int itmax, double restol)
   HYPRE_BiCGSTABDestroy(solver);
 
   _TRACE_;
-} // AMRsolve_Hypre::solve_bicgstab_boomer_()
+} // AMRsolve_Hypre_Grav::solve_bicgstab_boomer_()
 
 //------------------------------------------------------------------------
 
 /// Initialize the GMRES hypre solver
-void AMRsolve_Hypre::solve_gmres_(int itmax, double restol)
+void AMRsolve_Hypre_Grav::solve_gmres_(int itmax, double restol)
 {
   _TRACE_;
   // Create the solver
@@ -1306,7 +1302,7 @@ void AMRsolve_Hypre::solve_gmres_(int itmax, double restol)
   HYPRE_SStructGMRESDestroy(solver_);
 
   _TRACE_;
-} // AMRsolve_Hypre::solve_gmres_()
+} // AMRsolve_Hypre_Grav::solve_gmres_()
 
 //------------------------------------------------------------------------
 
@@ -1316,10 +1312,14 @@ void AMRsolve_Hypre::solve_gmres_(int itmax, double restol)
 /// (via init_graph_nonstencil_()) for the nonzero structure, and with
 /// phase == phase_matrix (via init_matrix_nonstencil_()) for the
 /// matrix nonzeros.
-void AMRsolve_Hypre::update_fine_coarse_const_(int face, AMRsolve_Grid& grid, 
-					       int axis0, phase_enum phase,
-					       int level_fine, int level_coarse,
-					       int index_fine[3], int index_coarse[3])
+void AMRsolve_Hypre_Grav::update_fine_coarse_const_(int face, 
+						    AMRsolve_Grid& grid, 
+						    int axis0, 
+						    phase_enum phase,
+						    int level_fine, 
+						    int level_coarse,
+						    int index_fine[3], 
+						    int index_coarse[3])
 {
   int axis1 = (axis0+1)%3;
   int axis2 = (axis0+2)%3;
@@ -1450,10 +1450,14 @@ void AMRsolve_Hypre::update_fine_coarse_const_(int face, AMRsolve_Grid& grid,
 /// (via init_graph_nonstencil_()) for the nonzero structure, and with
 /// phase == phase_matrix (via init_matrix_nonstencil_()) for the
 /// matrix nonzeros.
-void AMRsolve_Hypre::update_coarse_fine_const_(int face, AMRsolve_Grid& grid_coarse, 
-					       int axis0, phase_enum phase,
-					       int level_fine, int level_coarse,
-					       int index_fine[3], int index_coarse[3])
+void AMRsolve_Hypre_Grav::update_coarse_fine_const_(int face, 
+						    AMRsolve_Grid& grid_coarse, 
+						    int axis0, 
+						    phase_enum phase,
+						    int level_fine, 
+						    int level_coarse,
+						    int index_fine[3], 
+						    int index_coarse[3])
 {
   int axis1 = (axis0+1)%3;
   int axis2 = (axis0+2)%3;

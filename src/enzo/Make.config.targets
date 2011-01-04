@@ -885,7 +885,8 @@ AMRsolve_headers = AMRsolve_constants.h \
                    AMRsolve_faces.h \
                    AMRsolve_grid.h \
                    AMRsolve_hierarchy.h \
-                   AMRsolve_hypre.h \
+                   AMRsolve_hypre_fld.h \
+                   AMRsolve_hypre_grav.h \
                    AMRsolve_defs.h \
                    AMRsolve_level.h \
                    AMRsolve_mpi.h \
@@ -908,8 +909,10 @@ AMRsolve_grid.h:
 	ln -sf ../amr_solve/AMRsolve_grid.h AMRsolve_grid.h
 AMRsolve_hierarchy.h:
 	ln -sf ../amr_solve/AMRsolve_hierarchy.h AMRsolve_hierarchy.h
-AMRsolve_hypre.h:
-	ln -sf ../amr_solve/AMRsolve_hypre.h AMRsolve_hypre.h
+AMRsolve_hypre_fld.h:
+	ln -sf ../amr_solve/AMRsolve_hypre_fld.h AMRsolve_hypre_fld.h
+AMRsolve_hypre_grav.h:
+	ln -sf ../amr_solve/AMRsolve_hypre_grav.h AMRsolve_hypre_grav.h
 AMRsolve_defs.h:
 	ln -sf ../amr_solve/AMRsolve_defs.h AMRsolve_defs.h
 AMRsolve_level.h:
@@ -934,8 +937,10 @@ AMRsolve_grid.C: $(AMRsolve_headers)
 	ln -sf ../amr_solve/AMRsolve_grid.cpp AMRsolve_grid.C
 AMRsolve_hierarchy.C: $(AMRsolve_headers)
 	ln -sf ../amr_solve/AMRsolve_hierarchy.cpp AMRsolve_hierarchy.C
-AMRsolve_hypre.C: $(AMRsolve_headers)
-	ln -sf ../amr_solve/AMRsolve_hypre.cpp AMRsolve_hypre.C
+AMRsolve_hypre_fld.C: $(AMRsolve_headers)
+	ln -sf ../amr_solve/AMRsolve_hypre_fld.cpp AMRsolve_hypre_fld.C
+AMRsolve_hypre_grav.C: $(AMRsolve_headers)
+	ln -sf ../amr_solve/AMRsolve_hypre_grav.cpp AMRsolve_hypre_grav.C
 AMRsolve_level.C: $(AMRsolve_headers)
 	ln -sf ../amr_solve/AMRsolve_level.cpp AMRsolve_level.C
 AMRsolve_mpi.C: $(AMRsolve_headers)

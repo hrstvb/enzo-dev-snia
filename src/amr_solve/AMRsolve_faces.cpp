@@ -1,4 +1,4 @@
-/// @file      faces.cpp
+/// @file      AMRsolve_faces.cpp
 /// @author    James Bordner (jobordner@ucsd.edu)
 /// @author    Daniel Reynolds (reynolds@smu.edu)
 /// @brief     Implementation of the AMRsolve_Faces class

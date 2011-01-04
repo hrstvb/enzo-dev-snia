@@ -1,4 +1,4 @@
-/// @file      newgrav-point.h
+/// @file      AMRsolve_point.h
 /// @author    James Bordner (jobordner@ucsd.edu)
 /// @author    Daniel Reynolds (reynolds@smu.edu)
 /// @brief     Declaration of the AMRsolve_Point class

@@ -1,4 +1,4 @@
-/// @file      newgrav-parameters.h
+/// @file      AMRsolve_parameters.h
 /// @author    James Bordner (jobordner@ucsd.edu)
 /// @author    Daniel Reynolds (reynolds@smu.edu)
 /// @brief     Declaration of the AMRsolve_Parameters class

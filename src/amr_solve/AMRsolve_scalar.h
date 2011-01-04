@@ -1,4 +1,4 @@
-/// @file      newgrav-scalar.h
+/// @file      AMRsolve_scalar.h
 /// @author    James Bordner (jobordner@ucsd.edu)
 /// @author    Daniel Reynolds (reynolds@smu.edu)
 /// @brief     Scalar related defines

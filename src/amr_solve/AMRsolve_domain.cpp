@@ -1,4 +1,4 @@
-/// @file      domain.cpp
+/// @file      AMRsolve_domain.cpp
 /// @author    James Bordner (jobordner@ucsd.edu)
 /// @author    Daniel Reynolds (reynolds@smu.edu)
 /// @brief     Implementation of the AMRsolve_Domain class

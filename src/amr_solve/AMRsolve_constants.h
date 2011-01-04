@@ -1,4 +1,4 @@
-/// @file      newgrav-constants.h
+/// @file      AMRsolve_constants.h
 /// @author    James Bordner (jobordner@ucsd.edu)
 /// @author    Daniel Reynolds (reynolds@smu.edu)
 /// @brief     Declaration and implementation of the Constants class
