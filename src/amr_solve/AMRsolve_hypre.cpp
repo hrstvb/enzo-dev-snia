@@ -756,11 +756,11 @@ void AMRsolve_Hypre::init_matrix_stencil_(AMRsolve_Grid& grid)
   double h201 = h3[2]*h3[0] / h3[1];
   double h012 = h3[0]*h3[1] / h3[2];
 
-  double * v0;         // Diagonal elements
-  double * v1[3][2];   // Off-diagonal elements
+  double* v0;         // Diagonal elements
+  double* v1[3][2];   // Off-diagonal elements
 
   // Allocate storage
-  v0 = new double [n];
+  v0 = new double[n];
   for (int axis=0; axis<3; axis++) {
     for (int face=0; face<2; face++) {
       v1[axis][face] = new double[n];
@@ -996,7 +996,7 @@ Scalar AMRsolve_Hypre::init_vector_file_(std::string file_prefix,
 		     grid->index_upper(1), 
 		     grid->index_upper(2) };
 
-    // Set AMRsolve_Hypre B_ vector to values from the file
+    // Set Hypre B_ vector to values from the file
     HYPRE_SStructVectorAddToBoxValues(B_,part,lower,upper,0,values);
 
     // Compute sum to return in case we need to shift rhs for periodic problems
@@ -1055,7 +1055,7 @@ Scalar AMRsolve_Hypre::init_vector_attach_(Scalar f_scale)
       }
     }
 
-    // Set AMRsolve_Hypre B_ vector to grid f_ values
+    // Set Hypre B_ vector to grid f_ values
     int part = grid->level();
     int lower[3] = { grid->index_lower(0), 
 		     grid->index_lower(1), 
@@ -1371,12 +1371,40 @@ void AMRsolve_Hypre::update_fine_coarse_const_(int face, AMRsolve_Grid& grid,
       index_fine[axis1] += index_increment[k][1];
       index_fine[axis2] += index_increment[k][2];
 
+      // @@@@@@@@@@@@@@@@@@@@@@@@@@@@
+      double xl3[3]; // global position of lowest grid vertex 
+      grid.x_lower(xl3[0],xl3[1],xl3[2]);
+
+      int il3[3];    // global index of lowest grid vertex
+      grid.index_lower(il3[0],il3[1],il3[2]);
+      // @@@@@@@@@@@@@@@@@@@@@@@@@@@@
+
+
       for (int k=1; k<5; k++) {
 
-	// (x,y,z) = ???
+	// @@@@@@@@@@@@@@@@@@@@@@@@@@@@
+	double x3[3]; // global position of fine grid unknown
 
-	val_a = 1.0; // DIFFUSION COEFFICIENT GOES HERE
+	// compute position of fine grid vertex
+	x3[0] = xl3[0] + (index_fine[0]-il3[0]) * val_h_fine;
+	x3[1] = xl3[1] + (index_fine[1]-il3[1]) * val_h_fine;
+	x3[2] = xl3[2] + (index_fine[2]-il3[2]) * val_h_fine;
 
+	// adjust position for fine grid unknown
+	double h2 = 0.5*val_h_fine;
+	x3[0] += h2;
+	x3[1] += h2;
+	x3[2] += h2;
+
+	// adjust position for center of fine grid face
+	//    (-h2 if face == 0; +h2 if face == 1)
+	x3[axis0] += (2*face - 1) * h2;
+	// @@@@@@@@@@@@@@@@@@@@@@@@@@@@
+
+
+	// Set matrix entry using diffusion coefficient 
+	//   Note:  (x,y,z) == (x3[0],x3[1],x3[2])
+	val_a = acoef(x3[0],x3[1],x3[2]);
 	val = matrix_scale_ * val_h_fine * val_s * val_a;
 
 	// Update off-diagonal
@@ -1453,11 +1481,37 @@ void AMRsolve_Hypre::update_coarse_fine_const_(int face, AMRsolve_Grid& grid_coa
 
   } else if (phase == phase_matrix) {
 
+    // @@@@@@@@@@@@@@@@@@@@@@@@@@@@
+    double xl3[3];    // global position of lowest grid vertex 
+    grid_coarse.x_lower(xl3[0],xl3[1],xl3[2]);
+
+    int il3[3];       // global index of lowest grid vertex
+    grid_coarse.index_lower(il3[0],il3[1],il3[2]);
+    
+    double x3[3];     // global position of coarse grid unknown
+
+    // compute position of coarse grid vertex
+    x3[0] = xl3[0] + (index_coarse[0]-il3[0]) * val_h_coarse;
+    x3[1] = xl3[1] + (index_coarse[1]-il3[1]) * val_h_coarse;
+    x3[2] = xl3[2] + (index_coarse[2]-il3[2]) * val_h_coarse;
+
+    // adjust position for coarse grid unknown
+    double h2 = 0.5*val_h_coarse;
+    x3[0] += h2;
+    x3[1] += h2;
+    x3[2] += h2;
+
+    // adjust position for center of coarse grid face 
+    //    (+h2 if face == 0; -h2 if face == 1)
+    x3[axis0] += (1 - 2*face) * h2;
+    // @@@@@@@@@@@@@@@@@@@@@@@@@@@@
+    
+    // Set matrix entry using diffusion coefficient 
+    // (x,y,z) == (x3[0],x3[1],x3[2])
     double val_s = 1./8.;
-    double val_a = 1.0; // DIFFUSION COEFFICIENT GOES HERE
+    double val_a = acoef(x3[0],x3[1],x3[2]);
     double val   = matrix_scale_ * val_h_coarse * val_s * val_a;
     int    entry;
-
     double value;
 
     // Adjust coarse-fine nonstencil values
