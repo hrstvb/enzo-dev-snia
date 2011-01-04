@@ -161,8 +161,8 @@ class grid
   int    GravitatingMassFieldParticlesDimension[MAX_DIMENSION];
 
 #ifdef AMR_SOLVE
-  float *amr_grav_b;
-  float *amr_grav_x;
+  float *amrsolve_b;
+  float *amrsolve_x;
 #endif
 
   AMR_SOLVE_PRIVATE;

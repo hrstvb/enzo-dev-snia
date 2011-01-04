@@ -11,9 +11,8 @@
 /// Poisson equation on an Enzo AMR hierarchy between two levels specified
 /// by the "level_coarse" and "level_fine" parameters.  An extra scaling
 /// factor "f_scale" is passed, which can be 1.0.  
-/// The right hand side is specified by "Grid::amr_grav_b", which is
-/// created and initialized in the "Hierarchy::enzo_attach()" function
-/// in AMRsolve_hierarchy.C
+/// The right hand side and solution arrays are held in the Grid class, and
+/// are accessed directly by the AMRsolve_Hierarchy::enzo_attach() function.
 
 #include "AMRsolve.h"
 
@@ -52,7 +51,7 @@ void AMRGravitySolve
   LCAPERF_START("amr_solve");
  
   // Insert Enzo grids in this level into a AMRsolve hierarchy
-  AMRsolve_Hierarchy * hierarchy = new AMRsolve_Hierarchy;
+  AMRsolve_Hierarchy* hierarchy = new AMRsolve_Hierarchy;
 
   LCAPERF_START("amrsolve_attach");
   hierarchy->enzo_attach(LevelArray,level_coarse,level_fine);
