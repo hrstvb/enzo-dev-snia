@@ -198,7 +198,8 @@ void test_hierarchy()
 
   hierarchy->insert_grid(grid);
 
-  hierarchy->initialize(*domain,*pmpi, true);
+  bool periodicity[] = {true, true, true};
+  hierarchy->initialize(*domain,*pmpi, periodicity);
 
   delete hierarchy;
   delete domain;

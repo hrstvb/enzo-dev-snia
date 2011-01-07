@@ -83,7 +83,7 @@ class AMRsolve_Faces
   AMRsolve_Faces(int *n) throw();
   ~AMRsolve_Faces() throw();
 
-  /// Set or get the face-zone type of the i,jth zone on the given
+  /// Get the face-zone type of the i,jth zone on the given
   /// axis (0 to 2) and face (0 to 1).  No error checking is performed
   /// on axis, face, i or j.
   Label& label(int axis, int face, int i, int j) throw()

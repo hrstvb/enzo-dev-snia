@@ -81,6 +81,16 @@ class AMRsolve_Grid
   int* counters_;           /// Counters for nonstencil entries.  Required by
                             ///   hypre to maintain state between nonstencil 
                             ///   and matrix initialization.
+  
+  // optional pointers to Enzo data arrays (if used; set using set_* routines)
+  Scalar* E_;               /// ptr to Radiation energy density array
+  Scalar* eta_;             /// ptr to emissivity array
+  Scalar* HI_;              /// ptr to HI density array
+  Scalar* HeI_;             /// ptr to HeI density array
+  Scalar* HeII_;            /// ptr to HeII density array
+
+  // optional integers describing grid relationship with Enzo data arrays
+  int Ghosts_[3][2];        /// number of ghost zones per grid face
 
   //--------------------------------------------------------------------
   // STATIC MEMBER DATA
@@ -93,7 +103,7 @@ class AMRsolve_Grid
   // PROTECTED MEMBER DATA
   //--------------------------------------------------------------------
 
-protected:
+ protected:
 
   /// Vector of neighboring Grids, with extra sentinal 0-pointer at the end
   std::vector<AMRsolve_Grid *> neighbors0_; 
@@ -158,11 +168,42 @@ protected:
   /// Set the solution array associated with the Grid
   void set_u(Scalar*, int dims[3]) throw();
 
-  /// Return a pointer to the right-hand side array associated withthe Grid
+  /// Return a pointer to the right-hand side array associated with the Grid
   Scalar* get_f(int* nf0, int* nf1, int* nf2) throw();
 
   /// Set the right-hand side array associated with the Grid
   void set_f(Scalar*, int dims[3]) throw();
+
+  /// Return a pointer to the specified Enzo data array associated with the Grid
+  /// (does not check for non-NULL value)
+  Scalar* get_E()    throw() { assert(E_);    return E_;    }; 
+  Scalar* get_eta()  throw() { assert(eta_);  return eta_;  };
+  Scalar* get_HI()   throw() { assert(HI_);   return HI_;   };
+  Scalar* get_HeI()  throw() { assert(HeI_);  return HeI_;  };
+  Scalar* get_HeII() throw() { assert(HeII_); return HeII_; };
+
+  /// Set a pointer to the specified Enzo data array associated with the Grid
+  /// (does not check for non-NULL value)
+  void set_E(Scalar* E)       throw() { E_    = E;    };
+  void set_eta(Scalar* eta)   throw() { eta_  = eta;  };
+  void set_HI(Scalar* HI)     throw() { HI_   = HI;   };
+  void set_HeI(Scalar* HeI)   throw() { HeI_  = HeI;  };
+  void set_HeII(Scalar* HeII) throw() { HeII_ = HeII; };
+
+  /// Get/Set routines for number of ghost zones in an Enzo grid (compared to current Grid)
+  void get_Ghosts(int Ghosts[3][2]) throw() 
+  {
+    for (int i=0; i<3; i++)
+      for (int j=0; j<2; j++)
+	Ghosts[i][j] = Ghosts_[i][j];
+  };
+  void set_Ghosts(int Ghosts[3][2]) throw() 
+  { 
+    for (int i=0; i<3; i++)
+      for (int j=0; j<2; j++)
+	Ghosts_[i][j] = Ghosts[i][j];
+  };
+
 
   /// Deallocate storage for the u_ and f_ arrays
   void deallocate() throw();
@@ -389,9 +430,9 @@ protected:
   /// Initialize the counters_ array to given value
   void init_counter(int value)
   {
-    for (int i0=0; i0<n_[0]; i0++) {
+    for (int i2=0; i2<n_[2]; i2++) {
       for (int i1=0; i1<n_[1]; i1++) {
-	for (int i2=0; i2<n_[2]; i2++) {
+	for (int i0=0; i0<n_[0]; i0++) {
 	  counters_[index(i0,i1,i2,n_[0],n_[1],n_[2])] = value;
 	}
       }

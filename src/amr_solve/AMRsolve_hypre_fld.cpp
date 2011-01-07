@@ -56,11 +56,6 @@ typedef int int3[3];
 
 // Coefficient for Poisson problem
 
-inline Scalar acoef(Scalar x, Scalar y, Scalar z)
-{
-  return 1.0;
-}
-
 //======================================================================
 // PUBLIC MEMBER FUNCTIONS
 //======================================================================
@@ -70,9 +65,15 @@ AMRsolve_Hypre_FLD::AMRsolve_Hypre_FLD(AMRsolve_Hierarchy& hierarchy,
 				       AMRsolve_Parameters& parameters)
   : grid_(0), graph_(0), stencil_(0), A_(0), B_(0), X_(0),
     solver_(0), parameters_(&parameters), hierarchy_(&hierarchy),
-    resid_(-1.0), iter_(-1), r_factor_(const_r_factor), matrix_scale_(1.0)
+    resid_(-1.0), iter_(-1), r_factor_(const_r_factor), Nchem_(-1),
+    theta_(-1.0), dt_(-1.0), aval_(-1.0), aval0_(-1.0), adot_(-1.0), 
+    adot0_(-1.0), HIconst_(-1.0), HeIconst_(-1.0), HeIIconst_(-1.0), 
+    nUn_(-1.0), nUn0_(-1.0), lUn_(-1.0), lUn0_(-1.0), rUn_(-1.0), rUn0_(-1.0)
 {
-  //
+  // set array-valued items
+  for (int i=0; i<3; i++)
+    for (int j=0; j<2; j++)
+      BdryType_[i][j] = -1;
 }
 
 //----------------------------------------------------------------------
@@ -86,9 +87,9 @@ AMRsolve_Hypre_FLD::~AMRsolve_Hypre_FLD()
 //----------------------------------------------------------------------
 
 /// Initialize the Grid Hierarchy
-/** Creates a hypre grid, with one part per level and one box per Grid
-    patch object, for an AMR problem.  Sets grid box extents, grid
-    part variables, and periodicity. */
+/** Creates a hypre grid, with one part per level and one box per 
+    Grid patch object, for an AMR problem.  Sets grid box extents, 
+    grid part variables, and periodicity. */
 void AMRsolve_Hypre_FLD::init_hierarchy(AMRsolve_Mpi& mpi)
 {
 
@@ -99,19 +100,16 @@ void AMRsolve_Hypre_FLD::init_hierarchy(AMRsolve_Mpi& mpi)
   _TRACE_;
   HYPRE_SStructGridCreate(MPI_COMM_WORLD, dim, num_parts, &grid_);
 
-  ItHierarchyLevels itl (*hierarchy_);
-
   _TRACE_;
-  while (AMRsolve_Level * level = itl++) {
+  ItHierarchyLevels itl (*hierarchy_);
+  while (AMRsolve_Level* level = itl++) {
 
     _TRACE_;
     int part = level->index();
 
-    ItLevelGridsLocal itgl (*level);
-
     // Set extents for boxes that comprise the hypre grid
-    while (AMRsolve_Grid * grid = itgl++) {
-
+    ItLevelGridsLocal itgl (*level);
+    while (AMRsolve_Grid* grid = itgl++) {
       int lower[3] = {grid->index_lower(0),
 		      grid->index_lower(1),
 		      grid->index_lower(2)};
@@ -119,7 +117,6 @@ void AMRsolve_Hypre_FLD::init_hierarchy(AMRsolve_Mpi& mpi)
 		      grid->index_upper(1),
 		      grid->index_upper(2)};
       HYPRE_SStructGridSetExtents(grid_, part, lower, upper);
-      
     } // while grid = itgl++
 
     _TRACE_;
@@ -198,9 +195,7 @@ void AMRsolve_Hypre_FLD::init_graph()
 
   _TRACE_;
   ItHierarchyLevels itl (*hierarchy_);
-
-  _TRACE_;
-  while (AMRsolve_Level * level = itl++) {
+  while (AMRsolve_Level* level = itl++) {
 
     int part = level->index();
 
@@ -212,19 +207,17 @@ void AMRsolve_Hypre_FLD::init_graph()
     _TRACE_;
     if (part > 0) {
       ItLevelGridsAll itag (*level);
-      while (AMRsolve_Grid * grid = itag++) {
-	init_graph_nonstencil_(*grid);
-      } // while grid = itag++
+      while (AMRsolve_Grid* grid = itag++)  init_graph_nonstencil_(*grid);
     } // if part > 0
-
-    ItLevelGridsAll itag (*level);
 
     // Initialize face counters for subsequent matrix inter-level entries
     _TRACE_;
+    ItLevelGridsAll itag (*level);
     while (AMRsolve_Grid * grid = itag++) {
       int dim = hierarchy_->dimension();
       grid->init_counter(dim*2+1);
     } // while grid = itag++
+
   } // while level = itl++
 
   // Assemble the hypre graph
@@ -239,8 +232,37 @@ void AMRsolve_Hypre_FLD::init_graph()
 /// Initialize the matrix A and right-hand-side vector b
 /* Creates a matrix with a given nonzero structure, and sets nonzero
    values. */
-void AMRsolve_Hypre_FLD::init_elements(Scalar f_scale)
+void AMRsolve_Hypre_FLD::init_elements(double dt, int Nchem, double theta, 
+				       double aval, double aval0, 
+				       double adot, double adot0, 
+				       double HIconst, double HeIconst, 
+				       double HeIIconst, double nUn, 
+				       double nUn0, double lUn, 
+				       double lUn0, double rUn, 
+				       double rUn0, int BdryType[3][2])
 {
+  // set input arguments into AMRsolve_Hypre_FLD object
+  dt_        = dt;
+  Nchem_     = Nchem;
+  theta_     = theta;
+  aval_      = aval;
+  aval0_     = aval0;
+  adot_      = adot;
+  adot0_     = adot0;
+  HIconst_   = HIconst;
+  HeIconst_  = HeIconst;
+  HeIIconst_ = HeIIconst;
+  nUn_       = nUn;
+  nUn0_      = nUn0;
+  lUn_       = lUn;
+  lUn0_      = lUn0;
+  rUn_       = rUn;
+  rUn0_      = rUn0;
+  for (int i=0; i<3; i++)
+    for (int j=0; j<2; j++)
+      BdryType_[i][j] = BdryType[i][j];
+
+
   // Create the hypre matrix A_, solution X_, and right-hand side B_ objects
   HYPRE_SStructMatrixCreate(MPI_COMM_WORLD, graph_, &A_);
   HYPRE_SStructVectorCreate(MPI_COMM_WORLD, grid_,  &X_);
@@ -265,14 +287,12 @@ void AMRsolve_Hypre_FLD::init_elements(Scalar f_scale)
   //--------------------------------------------------
   // Initialize the matrix A_ elements
   //--------------------------------------------------
-
   init_elements_matrix_();
 
   //--------------------------------------------------
   // Initialize B_ elements 
   //--------------------------------------------------
-
-  init_elements_rhs_(f_scale);
+  init_elements_rhs_();
 
   // Assemble the matrix and vectors
   HYPRE_SStructMatrixAssemble(A_);
@@ -331,114 +351,155 @@ void AMRsolve_Hypre_FLD::solve()
     ERROR(error_message);
   }
   
-  if (parameters_->value("dump_x") == "true")  HYPRE_SStructVectorPrint("X-hypre",X_,1);
+  if (parameters_->value("dump_x") == "true")  
+    HYPRE_SStructVectorPrint("X-hypre",X_,1);
 
 } // AMRsolve_Hypre_FLD::solve()
 
 //----------------------------------------------------------------------
 
-/// Evaluate the success of the solve
-void AMRsolve_Hypre_FLD::evaluate()
+/// Evaluate the success of the solve, return values (0=success, 1=failure)
+int AMRsolve_Hypre_FLD::evaluate()
 {
-  char filename[80];
+  // check whether solution/rhs was requested
+  if (parameters_->value("dump_x") == "true" || 
+      parameters_->value("dump_b") == "true") {
 
+    // iterate over processor-local grids
+    ItHierarchyGridsLocal itg(*hierarchy_);
+    while (AMRsolve_Grid* grid = itg++) {
+
+      char filename[80];
+
+      // get level & grid information
+      int level = grid->level();
+      int lower[3],upper[3];
+      grid->get_limits(lower,upper);
+      
+      if (parameters_->value("dump_x") == "true") {
+	// extract Enzo solution
+	int nx[3];
+	HYPRE_SStructVectorGather(X_);
+	HYPRE_SStructVectorGetBoxValues(X_, level, lower, upper, 0,
+					grid->get_u(&nx[0],&nx[1],&nx[2]));  
+	sprintf(filename,"X.%d",grid->id());
+	grid->write("header",filename);
+	grid->write("u",filename);
+      }
+      
+      if (parameters_->value("dump_b") == "true") {
+	// extract Enzo rhs
+	int nb[3];
+	HYPRE_SStructVectorGather(B_);
+	HYPRE_SStructVectorGetBoxValues(B_, level, lower, upper, 0,
+					grid->get_f(&nb[0],&nb[1],&nb[2]));  
+	sprintf(filename,"B.%d",grid->id());
+	grid->write("f",filename);
+      }
+      
+    } // grid = itg++
+  } // if dump_x or dump_b
+
+
+  // check for error flags; output info to stdout, if requested
+  int err_flag = 0;
+
+  // Residual too high
+  double restol = atof(parameters_->value("solver_restol").c_str());
+  if (resid_ > restol) {
+    if (pmpi->is_root()) 
+      printf("Diverged: %g > %g\n", resid_,restol);
+    err_flag = 1;
+  }
+
+  // Iterations reached limit
+  int itmax = atoi(parameters_->value("solver_itmax").c_str());
+  if (iter_ >= itmax) {
+    if (pmpi->is_root()) 
+      printf("Stalled: %d >= %d\n", iter_,itmax);
+    err_flag = 1;
+  }
+
+  // Appears to have completed successfully
+  if (err_flag == 0)  
+    if (pmpi->is_root()) {
+      printf("AMRsolve_Hypre_FLD Success!\n"); 
+      fflush(stdout); 
+    }
+
+  return err_flag;
+
+} // AMRsolve_Hypre_FLD::evaluate()
+
+//----------------------------------------------------------------------
+
+/// Extracts HYPRE solution and updates Enzo radiation field
+void AMRsolve_Hypre_FLD::update_enzo()
+{
+  // iterate over grids on this processor
   ItHierarchyGridsLocal itg(*hierarchy_);
-  while (AMRsolve_Grid * grid = itg++) {
+  while (AMRsolve_Grid* grid = itg++) {
 
+    // get level, grid information
     int level = grid->level();
-
     int lower[3],upper[3];
     grid->get_limits(lower,upper);
 
-    grid->allocate();
+    // extract Enzo solution
+    int n3[3];
+    Scalar* u = grid->get_u(&n3[0],&n3[1],&n3[2]);
+    HYPRE_SStructVectorGather(X_);
+    HYPRE_SStructVectorGetBoxValues(X_, level, lower, upper, 0, u);  
 
-    int nx[3];
-    HYPRE_SStructVectorGetBoxValues(X_,level,lower,upper,0,
-				    grid->get_u(&nx[0],&nx[1],&nx[2]));  
-    if (parameters_->value("dump_x") == "true") {
-      sprintf(filename,"X.%d",grid->id());
-      grid->write("header",filename);
-      grid->write("u",filename);
-    }
-    
-    int nb[3];
-    HYPRE_SStructVectorGetBoxValues(B_,level,lower,upper,0,
-				    grid->get_f(&nb[0],&nb[1],&nb[2]));  
-    if (parameters_->value("dump_b") == "true") {
-      sprintf(filename,"B.%d",grid->id());
-      grid->write("f",filename);
+    // access Enzo radiation field
+    Scalar* E = grid->get_E();
+
+    // get buffering information on relating amrsolve grid to Enzo data
+    int ghosts[3][2]; 
+    grid->get_Ghosts(ghosts);
+    int en0 = n3[0] + ghosts[0][0] + ghosts[0][1];
+    int en1 = n3[1] + ghosts[1][0] + ghosts[1][1];
+    int en2 = n3[2] + ghosts[2][0] + ghosts[2][1];
+
+    // update Enzo data with amrsolve solution
+    int k0, k1, k2, k, i0, i1, i2, i;
+    for (i2=0; i2<n3[2]; i2++) {
+      k2 = ghosts[2][0] + i2;
+
+      for (i1=0; i1<n3[1]; i1++) {
+	k1 = ghosts[1][0] + i1;
+
+	for (i0=0; i0<n3[0]; i0++) {
+	  k0 = ghosts[0][0] + i0;
+
+	  // compute indices of amrsolve, enzo cells
+	  i = i0 + n3[0]*(i1 + n3[1]*i2);
+	  k = k0 + en0*(k1 + en1*k2);
+
+	  // update Enzo solution with amrsolve solution (corrector)
+	  E[k] += u[i];
+	}
+      }
     }
 
   } // grid = itg++
 
-  // --------------------------------------------------
-  // Evaluate ||X|| and sum(X) / ||X|| and display result
-  // --------------------------------------------------
+} // AMRsolve_Hypre_FLD::update_enzo()
 
-  Scalar xsum_local  = 0.0;
-  Scalar x2sum_local = 0.0;
 
-  while (AMRsolve_Grid* grid = itg++) {
+//----------------------------------------------------------------------
 
-    int level = grid->level();
+/// dumps HYPRE matrix and RHS (called when aborting solve)
+void AMRsolve_Hypre_FLD::abort_dump()
+{
 
-    int lower[3],upper[3];
+  // have HYPRE dump out everything it knows to disk
+  HYPRE_SStructMatrixPrint("A.mat",A_,0);
+  HYPRE_SStructVectorPrint("x.vec",X_,0);
+  HYPRE_SStructVectorPrint("b.vec",B_,0);
 
-    grid->get_limits(lower,upper);
+} // AMRsolve_Hypre_FLD::abort_dump()
 
-    grid->allocate();
-
-    int nx[3];
-    Scalar* x = grid->get_u(&nx[0],&nx[1],&nx[2]);
-    HYPRE_SStructVectorGetBoxValues(X_,level,lower,upper,0,x);  
-
-    int n3[3];
-    grid->get_size(n3);
-    for (int i2=0; i2<n3[2]; i2++) {
-      for (int i1=0; i1<n3[1]; i1++) {
-	for (int i0=0; i0<n3[0]; i0++) {
-
-	  int i = i0 + nx[0]*(i1+nx[1]*i2);
-	  Scalar xval = x[i];
-	  xsum_local  += xval;
-	  x2sum_local += xval*xval;
-	}
-      }
-    }
-  }
-
-  Scalar xsum = 0.0;
-  MPI_Allreduce(&xsum_local, &xsum, 1, MPI_SCALAR, MPI_SUM, MPI_COMM_WORLD);
-
-  Scalar x2sum = 0.0;
-  MPI_Allreduce(&x2sum_local, &x2sum, 1, MPI_SCALAR, MPI_SUM, MPI_COMM_WORLD);
-
-  if (pmpi->is_root()) { 
-
-    bool success = true;
-
-    // Residual too high
-    double restol = atof(parameters_->value("solver_restol").c_str());
-    if (resid_ > restol) {
-      printf("Diverged: %g > %g\n", resid_,restol);
-      success = false;
-    }
-
-    // Iterations reached limit
-    int itmax = atoi(parameters_->value("solver_itmax").c_str());
-    if (iterations() >= itmax) {
-      printf("Stalled: %d >= %d\n", iterations(),itmax);
-      success = false;
-    }
-
-    // Appears to have completed successfully
-    if (success)  
-      printf("Success!\n"); fflush(stdout); 
-  }
-  if (pmpi->is_root())  printf("norm(X)        = %g\n",sqrt(x2sum));
-  if (pmpi->is_root())  printf("sum(X)/norm(X) = %g\n",xsum/sqrt(x2sum));
-
-} // AMRsolve_Hypre_FLD::evaluate()
 
 //======================================================================
 // PRIVATE MEMBER FUNCTIONS
@@ -463,7 +524,7 @@ void AMRsolve_Hypre_FLD::init_nonstencil_(AMRsolve_Grid& grid, phase_enum phase)
   grid.indices(index_global);
   
   // Determine the discretization method (constant, linear, quadratic)
-  // Currently only constant is implemented
+  // ***Currently only constant is implemented***
   enum discret_type_enum {discret_type_unknown, discret_type_const};
   discret_type_enum discret_type;
 
@@ -527,7 +588,7 @@ void AMRsolve_Hypre_FLD::init_nonstencil_(AMRsolve_Grid& grid, phase_enum phase)
 
 	    // (coarse) adjacent global indices
 	    int index_coarse[3]; 
-	    index_coarse[axis0] = (index_fine[axis0]) / r_factor_  + (face*r_factor_-1);
+	    index_coarse[axis0] = (index_fine[axis0]) / r_factor_ + (face*r_factor_-1);
 	    index_coarse[axis1] = (index_fine[axis1]) / r_factor_;
 	    index_coarse[axis2] = (index_fine[axis2]) / r_factor_;
 
@@ -579,20 +640,15 @@ void AMRsolve_Hypre_FLD::init_elements_matrix_()
 {
 
   ItHierarchyLevels itl (*hierarchy_);
-
-  while (AMRsolve_Level * level = itl++) {
+  while (AMRsolve_Level* level = itl++) {
 
     int part = level->index();
 
-    ItLevelGridsLocal itlg (*level);
-    
     // 1. Set stencil values within level
-    while (AMRsolve_Grid * grid = itlg++) {
-      init_matrix_stencil_(*grid);
-    } // while grid = itlg++
+    ItLevelGridsLocal itlg (*level);
+    while (AMRsolve_Grid* grid = itlg++)  init_matrix_stencil_(*grid);
 
     if (part > 0) {
-
       // *** WARNING: POSSIBLE SCALING ISSUE.  Below we loop over all
       // *** grids; however, we only need to loop over "parent-child
       // *** pairs such that either child or parent is local to this
@@ -600,120 +656,219 @@ void AMRsolve_Hypre_FLD::init_elements_matrix_()
  
       // Set matrix values between levels
       ItLevelGridsAll itag (*level);
-      while (AMRsolve_Grid * grid = itag++) {
- 	init_matrix_nonstencil_(*grid);
-      } // while grid = itag++
+      while (AMRsolve_Grid* grid = itag++)  init_matrix_nonstencil_(*grid);
+
     } // while level > 0
   } // while level = itl++
 
-  for (int part = 1; part < hierarchy_->num_levels(); part++) {
-    // Clean up stencil connections between levels
+  // Clean up stencil connections between levels
+  for (int part=1; part<hierarchy_->num_levels(); part++) 
     init_matrix_clear_(part);
-  } // for part
 
 } // init_elements_matrix_()
 
 //------------------------------------------------------------------------
 
-/// Set right-hand-side elements
-void AMRsolve_Hypre_FLD::init_elements_rhs_(Scalar f_scale)
+/// Set right-hand-side elements based on values in grids
+void AMRsolve_Hypre_FLD::init_elements_rhs_()
 {
-  Scalar local_shift_b_sum = 0.0;
-  long long shift_b_count  = 0.0;
+  // declare shortcut variables
+  Scalar Eavg, Ed_zl, Ed_yl, Ed_xl, Ed_xr, Ed_yr, Ed_zr, R, R0, kap, kap0;
+  Scalar D_zl, D_yl, D_xl, D_xr, D_yr, D_zr;
+  Scalar D0_zl, D0_yl, D0_xl, D0_xr, D0_yr, D0_zr;
+  Scalar afac  = adot_  / aval_;
+  Scalar afac0 = adot0_ / aval0_;
+  Scalar dtfac  = dt_ * theta_;
+  Scalar dtfac0 = dt_ * (1.0 - theta_);
+  Scalar Rmin = 1.0e-20;
+  Scalar c = 2.99792458e10;
 
-  bool enzo_file   = parameters_->value("enzo_interface") == "file";
-  bool enzo_attach = parameters_->value("enzo_interface") == "attach";
+  _TRACE_;
+  // iterate over all grids local to this processor
+  ItHierarchyGridsLocal itg (*hierarchy_);
+  while (AMRsolve_Grid* grid = itg++) {
 
-  // Set RHS according to existing grid f and u
-  local_shift_b_sum += init_vector_attach_(f_scale);
+    // for each local grid, use Enzo's "f" array to store RHS entries 
+    // for the linear system.
+    int n0,n1,n2;
+    Scalar* values = grid->get_f(&n0,&n1,&n2);
 
-  if ( parameters_->value("boundary") == "periodic" ) {
+    // access relevant arrays from this grid to compute RHS
+    Scalar* E    = grid->get_E();
+    Scalar* eta  = grid->get_eta();
+    Scalar* HI   = grid->get_HI();
+    Scalar* HeI  = grid->get_HeI();
+    Scalar* HeII = grid->get_HeII();
 
-    // Clear under overlapped areas
-    int parts[hierarchy_->num_levels()];
-    int3 *refinements = new int3[hierarchy_->num_levels()];
-    for (int part = 0; part < hierarchy_->num_levels(); part++) {
-      parts[part] = part;
-      refinements[part][0] = r_factor_;
-      refinements[part][1] = r_factor_;
-      refinements[part][2] = r_factor_;
-    }
-    HYPRE_SStructFACZeroAMRVectorData(B_, parts, refinements);
+    // get buffering information on relating amrsolve grid to Enzo data
+    int ghosts[3][2]; 
+    grid->get_Ghosts(ghosts);
+    int en0 = n0 + ghosts[0][0] + ghosts[0][1];  // enzo data dimensions
+    int en1 = n1 + ghosts[1][0] + ghosts[1][1];  // enzo data dimensions
+    int en2 = n2 + ghosts[2][0] + ghosts[2][1];  // enzo data dimensions
 
-    // Accumulate local sums
-    local_shift_b_sum = 0.0;
+    // access this grid's mesh spacing, and set relevant shortcuts
+    Scalar hx,hy,hz;
+    grid->h(hx,hy,hz);
+    Scalar dxi  = aval_ / hx / lUn_;
+    Scalar dyi  = aval_ / hy / lUn_;
+    Scalar dzi  = aval_ / hz / lUn_;
+    Scalar dxi0 = aval0_ / hx / lUn0_;
+    Scalar dyi0 = aval0_ / hy / lUn0_;
+    Scalar dzi0 = aval0_ / hz / lUn0_;
 
-    // Compute total number of variables (excluding overlap)
-    shift_b_count = 0; 
-    const int r_factor3 = r_factor_*r_factor_*r_factor_;
+    // iterate over the domain, computing the RHS array
+    int k2, k1, k0, k_l00, k_r00, k_0l0, k_0r0, k_00l, k_00r, k_000;
+    int i0, i1, i2, i;
+    for (i2=0; i2<n2; i2++) {
+      k2 = ghosts[2][0] + i2;
 
-    ItHierarchyLevels itl (*hierarchy_);
-    while (AMRsolve_Level * level = itl++) {
-      
-      int part = level->index();
-      ItLevelGridsAll itgl (*level);
-      while (AMRsolve_Grid * grid = itgl++) {
+      for (i1=0; i1<n1; i1++) {
+	k1 = ghosts[1][0] + i1;
 
-	// Adjust shift_b_count: add grid; subtract overlap
-	shift_b_count += grid->num_unknowns();
-	if (part > 0)  shift_b_count -= grid->num_unknowns() / r_factor3;
+	for (i0=0; i0<n0; i0++) {
+	  k0 = ghosts[0][0] + i0;
 
-	if (grid->is_local()) {
+	  // compute indices of neighboring Enzo cells
+	  k_l00 = k0-1 + en0*(k1   + en1*k2);
+	  k_0l0 = k0   + en0*(k1-1 + en1*k2);
+	  k_00l = k0   + en0*(k1   + en1*(k2-1));
+	  k_000 = k0   + en0*(k1   + en1*k2);
+	  k_r00 = k0+1 + en0*(k1   + en1*k2);
+	  k_0r0 = k0   + en0*(k1+1 + en1*k2);
+	  k_00r = k0   + en0*(k1   + en1*(k2+1));
 
- 	  // Get grid info
- 	  int lower[3],upper[3];
-	  grid->get_limits(lower, upper);
-	  int n = grid->num_unknowns();
+	  //--------------
+	  // z-directional limiter, lower face
+	  Ed_zl = E[k_000] - E[k_00l];
+	  Eavg = (E[k_000] + E[k_00l])*0.5;
+	  R  = MAX(dzi *fabs(Ed_zl)/Eavg, Rmin);
+	  R0 = MAX(dzi0*fabs(Ed_zl)/Eavg, Rmin);
+	  if (Nchem_ == 1) {
+	    kap = (HI[k_000] + HI[k_00l])*HIconst_*0.5;
+	  } else {
+	    kap = ((HI[k_000]   + HI[k_00l])*HIconst_ +
+		   (HeI[k_000]  + HeI[k_00l])*HeIconst_ +
+		   (HeII[k_000] + HeII[k_00l])*HeIIconst_)*0.5;
+	  }
+	  D_zl = c/sqrt(9.0*kap*kap*nUn_*nUn_ + R*R);
+	  D0_zl = c/sqrt(9.0*kap*kap*nUn0_*nUn0_ + R0*R0);
 
-	  // Create space for the patch
- 	  double* values = new double[n];
- 	  for (int i=0; i<n; i++)  values[i] = 0.0;
+	  //--------------
+	  // y-directional limiter, lower face
+	  Ed_yl = E[k_000] - E[k_0l0];
+	  Eavg = (E[k_000] + E[k_0l0])*0.5;
+	  R  = MAX(dyi *fabs(Ed_yl)/Eavg, Rmin);
+	  R0 = MAX(dyi0*fabs(Ed_yl)/Eavg, Rmin);
+	  if (Nchem_ == 1) {
+	    kap = (HI[k_000] + HI[k_0l0])*HIconst_*0.5;
+	  } else {
+	    kap = ((HI[k_000]   + HI[k_0l0])*HIconst_ +
+		   (HeI[k_000]  + HeI[k_0l0])*HeIconst_ +
+		   (HeII[k_000] + HeII[k_0l0])*HeIIconst_)*0.5;
+	  }
+	  D_yl = c/sqrt(9.0*kap*kap*nUn_*nUn_ + R*R);
+	  D0_yl = c/sqrt(9.0*kap*kap*nUn0_*nUn0_ + R0*R0);
 
- 	  // Copy vector values to the array
- 	  HYPRE_SStructVectorGetBoxValues(B_,part,lower,upper,0,values);  
+	  //--------------
+	  // x-directional limiter, lower face
+	  Ed_xl = E[k_000] - E[k_l00];
+	  Eavg = (E[k_000] + E[k_l00])*0.5;
+	  R  = MAX(dxi *fabs(Ed_xl)/Eavg, Rmin);
+	  R0 = MAX(dxi0*fabs(Ed_xl)/Eavg, Rmin);
+	  if (Nchem_ == 1) {
+	    kap = (HI[k_000] + HI[k_l00])*HIconst_*0.5;
+	  } else {
+	    kap = ((HI[k_000]   + HI[k_l00])*HIconst_ +
+		   (HeI[k_000]  + HeI[k_l00])*HeIconst_ +
+		   (HeII[k_000] + HeII[k_l00])*HeIIconst_)*0.5;
+	  }
+	  D_xl = c/sqrt(9.0*kap*kap*nUn_*nUn_ + R*R);
+	  D0_xl = c/sqrt(9.0*kap*kap*nUn0_*nUn0_ + R0*R0);
 
-	  // Accumulate the sum
-	  for (int i=0; i<n; i++)  local_shift_b_sum += values[i];
+	  //--------------
+	  // x-directional limiter, upper face
+	  Ed_xr = E[k_r00] - E[k_000];
+	  Eavg = (E[k_r00] + E[k_000])*0.5;
+	  R  = MAX(dxi *fabs(Ed_xr)/Eavg, Rmin);
+	  R0 = MAX(dxi0*fabs(Ed_xr)/Eavg, Rmin);
+	  if (Nchem_ == 1) {
+	    kap = (HI[k_000] + HI[k_r00])*HIconst_*0.5;
+	  } else {
+	    kap = ((HI[k_000]   + HI[k_r00])*HIconst_ +
+		   (HeI[k_000]  + HeI[k_r00])*HeIconst_ +
+		   (HeII[k_000] + HeII[k_r00])*HeIIconst_)*0.5;
+	  }
+	  D_xr = c/sqrt(9.0*kap*kap*nUn_*nUn_ + R*R);
+	  D0_xr = c/sqrt(9.0*kap*kap*nUn0_*nUn0_ + R0*R0);
 
-	  // Delete the zeroed values
- 	  delete [] values;
+	  //--------------
+	  // y-directional limiter, upper face
+	  Ed_yr = E[k_0r0] - E[k_000];
+	  Eavg = (E[k_0r0] + E[k_000])*0.5;
+	  R  = MAX(dyi *fabs(Ed_yr)/Eavg, Rmin);
+	  R0 = MAX(dyi0*fabs(Ed_yr)/Eavg, Rmin);
+	  if (Nchem_ == 1) {
+	    kap = (HI[k_000] + HI[k_0r0])*HIconst_*0.5;
+	  } else {
+	    kap = ((HI[k_000]   + HI[k_0r0])*HIconst_ +
+		   (HeI[k_000]  + HeI[k_0r0])*HeIconst_ +
+		   (HeII[k_000] + HeII[k_0r0])*HeIIconst_)*0.5;
+	  }
+	  D_yr = c/sqrt(9.0*kap*kap*nUn_*nUn_ + R*R);
+	  D0_yr = c/sqrt(9.0*kap*kap*nUn0_*nUn0_ + R0*R0);
+
+	  //--------------
+	  // z-directional limiter, upper face
+	  Ed_zr = E[k_00r] - E[k_000];
+	  Eavg = (E[k_00r] + E[k_000])*0.5;
+	  R  = MAX(dzi *fabs(Ed_zr)/Eavg, Rmin);
+	  R0 = MAX(dzi0*fabs(Ed_zr)/Eavg, Rmin);
+	  if (Nchem_ == 1) {
+	    kap = (HI[k_000] + HI[k_00r])*HIconst_*0.5;
+	  } else {
+	    kap = ((HI[k_000]   + HI[k_00r])*HIconst_ +
+		   (HeI[k_000]  + HeI[k_00r])*HeIconst_ +
+		   (HeII[k_000] + HeII[k_00r])*HeIIconst_)*0.5;
+	  }
+	  D_zr = c/sqrt(9.0*kap*kap*nUn_*nUn_ + R*R);
+	  D0_zr = c/sqrt(9.0*kap*kap*nUn0_*nUn0_ + R0*R0);
+
+	  // opacity values in this cell
+	  if (Nchem_ == 1) {
+	    kap = HI[k_000]*HIconst_;
+	  } else {
+	    kap = HI[k_000]*HIconst_ + HeI[k_000]*HeIconst_ + HeII[k_000]*HeIIconst_;
+	  }
+	  kap0 = kap*nUn0_;
+	  kap *= nUn_;
+
+	  // set rhs in this cell
+	  i = i0 + n0*(i1 + n1*i2);
+	  values[i] = ( (dtfac/rUn_ + dtfac0/rUn0_)*eta[k_000]
+		      + (1.0 - dtfac0*(afac0+c*kap0))*E[k_000]
+		      + dtfac0*dxi0*dxi0*(D0_xr*Ed_xr-D0_xl*Ed_xl)
+		      + dtfac0*dyi0*dyi0*(D0_yr*Ed_yr-D0_yl*Ed_yl)
+		      + dtfac0*dzi0*dzi0*(D0_zr*Ed_zr-D0_zl*Ed_zl)
+		      - (1.0 + dtfac*(afac+c*kap))*E[k_000]
+		      + dtfac*dxi*dxi*(D_xr*Ed_xr-D_xl*Ed_xl)
+		      + dtfac*dyi*dyi*(D_yr*Ed_yr-D_yl*Ed_yl)
+		      + dtfac*dzi*dzi*(D_zr*Ed_zr-D_zl*Ed_zl) );
 	}
       }
     }
 
-    // Get global sum from local sums
-    Scalar shift_b_sum = 0.0;
-    MPI_Allreduce(&local_shift_b_sum, &shift_b_sum, 1, 
-		  MPI_SCALAR, MPI_SUM, MPI_COMM_WORLD);
+    // Set Hypre B_ vector to RHS values
+    int part = grid->level();
+    int lower[3] = { grid->index_lower(0), 
+		     grid->index_lower(1), 
+		     grid->index_lower(2) };
+    int upper[3] = { grid->index_upper(0), 
+		     grid->index_upper(1), 
+		     grid->index_upper(2) };
+    HYPRE_SStructVectorAddToBoxValues(B_,part,lower,upper,0,values);
 
-    // Compute the shift given the global sum and global count
-    Scalar shift_b_amount = -shift_b_sum/shift_b_count;
-
-    // Perform the shift of B 
-    while (AMRsolve_Level* level = itl++) {
-
-      int part = level->index();
-
-      ItLevelGridsLocal itg (*level);
-      while (AMRsolve_Grid* grid = itg++) {
-
-	int lower[3],upper[3];
-	grid->get_limits(lower, upper);
-	Scalar* values = new Scalar[grid->num_unknowns()];
-
-	for (int i=0; i<grid->num_unknowns(); i++) values[i] = shift_b_amount;
-
-	HYPRE_SStructVectorAddToBoxValues(B_,part,lower,upper,0,values);
-
-	delete [] values;
-
-      } // while grid = itg++
-    } // while level = itl++
-
-    // Re-clear under overlapped area that got shifted
-    HYPRE_SStructFACZeroAMRVectorData(B_, parts, refinements);
-
-  } // if periodic
+  }  // while grid = itg++
 
 } // init_elements_rhs_()
 
@@ -724,16 +879,37 @@ void AMRsolve_Hypre_FLD::init_matrix_stencil_(AMRsolve_Grid& grid)
 {
   int n          = grid.num_unknowns();
   int entries[7] = { 0,1,2,3,4,5,6 };
-  double h3[3]   = {grid.h(0),grid.h(1),grid.h(2)};
   int    n3[3]   = {grid.n(0),grid.n(1),grid.n(2)};
-
-  double h120 = h3[1]*h3[2] / h3[0];
-  double h201 = h3[2]*h3[0] / h3[1];
-  double h012 = h3[0]*h3[1] / h3[2];
 
   double* v0;         // Diagonal elements
   double* v1[3][2];   // Off-diagonal elements
 
+  // declare shortcut variables
+  double Eavg, Ed_zl, Ed_yl, Ed_xl, Ed_xr, Ed_yr, Ed_zr, R, kap;
+  double D_zl, D_yl, D_xl, D_xr, D_yr, D_zr;
+  double afac = adot_ / aval_;
+  double dtfac = dt_ * theta_;
+  double Rmin = 1.0e-20;
+  double c = 2.99792458e10;
+
+  // access relevant arrays from this grid to compute RHS
+  Scalar* E    = grid.get_E();
+  Scalar* HI   = grid.get_HI();
+  Scalar* HeI  = grid.get_HeI();
+  Scalar* HeII = grid.get_HeII();
+  
+  // get buffering information on relating amrsolve grid to Enzo data
+  int ghosts[3][2]; 
+  grid.get_Ghosts(ghosts);
+  int en0 = n3[0] + ghosts[0][0] + ghosts[0][1];  // enzo data dimensions
+  int en1 = n3[1] + ghosts[1][0] + ghosts[1][1];  // enzo data dimensions
+  int en2 = n3[2] + ghosts[2][0] + ghosts[2][1];  // enzo data dimensions
+
+  // access this grid's mesh spacing, and set relevant shortcuts
+  double dxi = aval_ / grid.h(0) / lUn_;
+  double dyi = aval_ / grid.h(1) / lUn_;
+  double dzi = aval_ / grid.h(2) / lUn_;
+  
   // Allocate storage
   v0 = new double[n];
   for (int axis=0; axis<3; axis++) {
@@ -746,43 +922,130 @@ void AMRsolve_Hypre_FLD::init_matrix_stencil_(AMRsolve_Grid& grid)
   // Set stencil for all unknowns, ignoring boundary conditions
   //-----------------------------------------------------------
 
-  double lower[3];
-  grid.x_lower(lower[0],lower[1],lower[2]);
-
-  WHERE; printf("h120  h201  h012 = %g %g %g\n",h120, h201, h012);
-
-  int i0,i1,i2,i;
+  int k2, k1, k0, k_l00, k_r00, k_0l0, k_0r0, k_00l, k_00r, k_000;
+  int i0, i1, i2, i;
   for (i2=0; i2<n3[2]; i2++) {
+    k2 = ghosts[2][0] + i2;
+
     for (i1=0; i1<n3[1]; i1++) {
+      k1 = ghosts[1][0] + i1;
+
       for (i0=0; i0<n3[0]; i0++) {
+	k0 = ghosts[0][0] + i0;
+	  
+	// compute indices of neighboring Enzo cells
+	k_l00 = k0-1 + en0*(k1   + en1*k2);
+	k_0l0 = k0   + en0*(k1-1 + en1*k2);
+	k_00l = k0   + en0*(k1   + en1*(k2-1));
+	k_000 = k0   + en0*(k1   + en1*k2);
+	k_r00 = k0+1 + en0*(k1   + en1*k2);
+	k_0r0 = k0   + en0*(k1+1 + en1*k2);
+	k_00r = k0   + en0*(k1   + en1*(k2+1));
 
-	// DIFFUSION COEFFICIENTS HERE
-	// (NOTE: inefficient due to recomputing)
-
-	// Compute position of the zone center
-	double x0 = lower[0]+(i0 + 0.5)*h3[0];
-	double x1 = lower[1]+(i1 + 0.5)*h3[1];
-	double x2 = lower[2]+(i2 + 0.5)*h3[2];
-
-	double axm = acoef(x0-0.5*h3[0],x1,x2);
-	double axp = acoef(x0+0.5*h3[0],x1,x2);
-	double aym = acoef(x0,x1-0.5*h3[1],x2);
-	double ayp = acoef(x0,x1+0.5*h3[1],x2);
-	double azm = acoef(x0,x1,x2-0.5*h3[2]);
-	double azp = acoef(x0,x1,x2+0.5*h3[2]);
-
+	//--------------
+	// z-directional limiter, lower face
+	Ed_zl = E[k_000] - E[k_00l];
+	Eavg = (E[k_000] + E[k_00l])*0.5;
+	R = MAX(dzi*fabs(Ed_zl)/Eavg, Rmin);
+	if (Nchem_ == 1) {
+	  kap = (HI[k_000] + HI[k_00l])*HIconst_*0.5;
+	} else {
+	  kap = ((HI[k_000]   + HI[k_00l])*HIconst_ +
+		 (HeI[k_000]  + HeI[k_00l])*HeIconst_ +
+		 (HeII[k_000] + HeII[k_00l])*HeIIconst_)*0.5;
+	}
+	D_zl = c/sqrt(9.0*kap*kap*nUn_*nUn_ + R*R);
+	
+	//--------------
+	// y-directional limiter, lower face
+	Ed_yl = E[k_000] - E[k_0l0];
+	Eavg = (E[k_000] + E[k_0l0])*0.5;
+	R = MAX(dyi*fabs(Ed_yl)/Eavg, Rmin);
+	if (Nchem_ == 1) {
+	  kap = (HI[k_000] + HI[k_0l0])*HIconst_*0.5;
+	} else {
+	  kap = ((HI[k_000]   + HI[k_0l0])*HIconst_ +
+		 (HeI[k_000]  + HeI[k_0l0])*HeIconst_ +
+		 (HeII[k_000] + HeII[k_0l0])*HeIIconst_)*0.5;
+	}
+	D_yl = c/sqrt(9.0*kap*kap*nUn_*nUn_ + R*R);
+	
+	//--------------
+	// x-directional limiter, lower face
+	Ed_xl = E[k_000] - E[k_l00];
+	Eavg = (E[k_000] + E[k_l00])*0.5;
+	R = MAX(dxi*fabs(Ed_xl)/Eavg, Rmin);
+	if (Nchem_ == 1) {
+	  kap = (HI[k_000] + HI[k_l00])*HIconst_*0.5;
+	} else {
+	  kap = ((HI[k_000]   + HI[k_l00])*HIconst_ +
+		 (HeI[k_000]  + HeI[k_l00])*HeIconst_ +
+		 (HeII[k_000] + HeII[k_l00])*HeIIconst_)*0.5;
+	}
+	D_xl = c/sqrt(9.0*kap*kap*nUn_*nUn_ + R*R);
+	
+	//--------------
+	// x-directional limiter, upper face
+	Ed_xr = E[k_r00] - E[k_000];
+	Eavg = (E[k_r00] + E[k_000])*0.5;
+	R = MAX(dxi*fabs(Ed_xr)/Eavg, Rmin);
+	if (Nchem_ == 1) {
+	  kap = (HI[k_000] + HI[k_r00])*HIconst_*0.5;
+	} else {
+	  kap = ((HI[k_000]   + HI[k_r00])*HIconst_ +
+		 (HeI[k_000]  + HeI[k_r00])*HeIconst_ +
+		 (HeII[k_000] + HeII[k_r00])*HeIIconst_)*0.5;
+	}
+	D_xr = c/sqrt(9.0*kap*kap*nUn_*nUn_ + R*R);
+	
+	//--------------
+	// y-directional limiter, upper face
+	Ed_yr = E[k_0r0] - E[k_000];
+	Eavg = (E[k_0r0] + E[k_000])*0.5;
+	R = MAX(dyi*fabs(Ed_yr)/Eavg, Rmin);
+	if (Nchem_ == 1) {
+	  kap = (HI[k_000] + HI[k_0r0])*HIconst_*0.5;
+	} else {
+	  kap = ((HI[k_000]   + HI[k_0r0])*HIconst_ +
+		 (HeI[k_000]  + HeI[k_0r0])*HeIconst_ +
+		 (HeII[k_000] + HeII[k_0r0])*HeIIconst_)*0.5;
+	}
+	D_yr = c/sqrt(9.0*kap*kap*nUn_*nUn_ + R*R);
+	
+	//--------------
+	// z-directional limiter, upper face
+	Ed_zr = E[k_00r] - E[k_000];
+	Eavg = (E[k_00r] + E[k_000])*0.5;
+	R = MAX(dzi*fabs(Ed_zr)/Eavg, Rmin);
+	if (Nchem_ == 1) {
+	  kap = (HI[k_000] + HI[k_00r])*HIconst_*0.5;
+	} else {
+	  kap = ((HI[k_000]   + HI[k_00r])*HIconst_ +
+		 (HeI[k_000]  + HeI[k_00r])*HeIconst_ +
+		 (HeII[k_000] + HeII[k_00r])*HeIIconst_)*0.5;
+	}
+	D_zr = c/sqrt(9.0*kap*kap*nUn_*nUn_ + R*R);
+	
+	// opacity values in this cell
+	if (Nchem_ == 1) {
+	  kap = HI[k_000]*HIconst_;
+	} else {
+	  kap = HI[k_000]*HIconst_ + HeI[k_000]*HeIconst_ + HeII[k_000]*HeIIconst_;
+	}
+	kap *= nUn_;
+	
+	// get the linear grid index
 	i = AMRsolve_Grid::index(i0,i1,i2,n3[0],n3[1],n3[2]);
 
-	v1[0][0][i] = matrix_scale_ * h120 * axm;
-	v1[0][1][i] = matrix_scale_ * h120 * axp;
-	v1[1][0][i] = matrix_scale_ * h201 * aym;
-	v1[1][1][i] = matrix_scale_ * h201 * ayp;
-	v1[2][0][i] = matrix_scale_ * h012 * azm;
-	v1[2][1][i] = matrix_scale_ * h012 * azp;
-
-	v0[i] = -( v1[0][0][i] + v1[0][1][i] +
-		   v1[1][0][i] + v1[1][1][i] + 
-		   v1[2][0][i] + v1[2][1][i] );
+	// set the matrix entries
+	v1[2][0][i] = -dtfac*dzi*dzi*D_zl;    // z-left
+	v1[1][0][i] = -dtfac*dyi*dyi*D_yl;    // y-left
+	v1[0][0][i] = -dtfac*dxi*dxi*D_xl;    // x-left
+	v1[0][1][i] = -dtfac*dxi*dxi*D_xr;    // x-right
+	v1[1][1][i] = -dtfac*dyi*dyi*D_yr;    // y-right
+	v1[2][1][i] = -dtfac*dzi*dzi*D_zr;    // z-right
+	v0[i] = 1.0 + dtfac*(afac + c*kap + dxi*dxi*(D_xl+D_xr) 
+		    + dyi*dyi*(D_yl+D_yr) + dzi*dzi*(D_zl+D_zr));  // self
 
       } // for i0
     } // for i1
@@ -791,9 +1054,148 @@ void AMRsolve_Hypre_FLD::init_matrix_stencil_(AMRsolve_Grid& grid)
   WHERE; printf("v0[0]=%g\n",v0[0]);
 
   //-----------------------------------------------------------
-  // Adjust stencil at grid boundaries (not implemented)
+  // Adjust stencil at grid boundaries
   //-----------------------------------------------------------
 
+  // update matrix/rhs based on boundary conditions/location
+  //    z-left face
+  if (grid.faces().label(2,0,0,0) == AMRsolve_Faces::_boundary_) {
+    if (BdryType_[2][0] == 1) {           // Dirichlet
+      i2 = 0;
+      for (i1=0; i1<n3[1]; i1++) {
+	for (i0=0; i0<n3[0]; i0++) {
+	  i = AMRsolve_Grid::index(i0,i1,i2,n3[0],n3[1],n3[2]);
+	  v1[2][0][i] = 0.0;
+	}
+      }
+    }  // BdryType_ == 1
+    else if (BdryType_[2][0] == 2) {    // Neumann
+      i2 = 0;
+      for (i1=0; i1<n3[1]; i1++) {
+	for (i0=0; i0<n3[0]; i0++) {
+	  i = AMRsolve_Grid::index(i0,i1,i2,n3[0],n3[1],n3[2]);
+	  v0[i] += v1[2][0][i];
+	  v1[2][0][i] = 0.0;
+	} 
+      }
+    }  // BdryType_ == 2
+  }  // label == boundary
+
+  //    y-left face
+  if (grid.faces().label(1,0,0,0) == AMRsolve_Faces::_boundary_) {
+    if (BdryType_[1][0] == 1) {           // Dirichlet
+      i1 = 0;
+      for (i2=0; i2<n3[2]; i2++) {
+	for (i0=0; i0<n3[0]; i0++) {
+	  i = AMRsolve_Grid::index(i0,i1,i2,n3[0],n3[1],n3[2]);
+	  v1[1][0][i] = 0.0;
+	}
+      }
+    }  // BdryType_ == 1
+    else if (BdryType_[1][0] == 2) {    // Neumann
+      i1 = 0;
+      for (i2=0; i2<n3[2]; i2++) {
+	for (i0=0; i0<n3[0]; i0++) {
+	  i = AMRsolve_Grid::index(i0,i1,i2,n3[0],n3[1],n3[2]);
+	  v0[i] += v1[1][0][i];
+	  v1[1][0][i] = 0.0;
+	}
+      }
+    }  // BdryType_ == 2
+  }  // label == boundary
+
+  //    x-left face
+  if (grid.faces().label(0,0,0,0) == AMRsolve_Faces::_boundary_) {
+    if (BdryType_[0][0] == 1) {           // Dirichlet
+      i0 = 0;
+      for (i2=0; i2<n3[2]; i2++) {
+	for (i1=0; i1<n3[1]; i1++) {
+	  i = AMRsolve_Grid::index(i0,i1,i2,n3[0],n3[1],n3[2]);
+	  v1[0][0][i] = 0.0;
+	}
+      }
+    }  // BdryType_ == 1
+    else if (BdryType_[0][0] == 2) {    // Neumann
+      i0 = 0;
+      for (i2=0; i2<n3[2]; i2++) {
+	for (i1=0; i1<n3[1]; i1++) {
+	  i = AMRsolve_Grid::index(i0,i1,i2,n3[0],n3[1],n3[2]);
+	  v0[i] += v1[0][0][i];
+	  v1[0][0][i] = 0.0;
+	}
+      }
+    }  // BdryType_ == 2
+  }  // label == boundary
+
+  //    x-right face
+  if (grid.faces().label(0,1,0,0) == AMRsolve_Faces::_boundary_) {
+    if (BdryType_[0][1] == 1) {           // Dirichlet
+      i0 = n3[0]-1;
+      for (i2=0; i2<n3[2]; i2++) {
+	for (i1=0; i1<n3[1]; i1++) {
+	  i = AMRsolve_Grid::index(i0,i1,i2,n3[0],n3[1],n3[2]);
+	  v1[0][1][i] = 0.0;
+	}
+      }
+    }  // BdryType_ == 1
+    else if (BdryType_[0][1] == 2) {    // Neumann
+      i0 = n3[0]-1;
+      for (i2=0; i2<n3[2]; i2++) {
+	for (i1=0; i1<n3[1]; i1++) {
+	  i = AMRsolve_Grid::index(i0,i1,i2,n3[0],n3[1],n3[2]);
+	  v0[i] += v1[0][1][i];
+	  v1[0][1][i] = 0.0;
+	}
+      }
+    }  // BdryType_ == 2
+  }  // label == boundary
+
+  //    y-right face
+  if (grid.faces().label(1,1,0,0) == AMRsolve_Faces::_boundary_) {
+    if (BdryType_[1][1] == 1) {           // Dirichlet
+      i1 = n3[1]-1;
+      for (i2=0; i2<n3[2]; i2++) {
+	for (i0=0; i0<n3[0]; i0++) {
+	  i = AMRsolve_Grid::index(i0,i1,i2,n3[0],n3[1],n3[2]);
+	  v1[1][1][i] = 0.0;
+	}
+      }
+    }  // BdryType_ == 1
+    else if (BdryType_[1][1] == 2) {    // Neumann
+      i1 = n3[1]-1;
+      for (i2=0; i2<n3[2]; i2++) {
+	for (i0=0; i0<n3[0]; i0++) {
+	  i = AMRsolve_Grid::index(i0,i1,i2,n3[0],n3[1],n3[2]);
+	  v0[i] += v1[1][1][i];
+	  v1[1][1][i] = 0.0;
+	}
+      }
+    }  // BdryType_ == 2
+  }  // label == boundary
+
+  //    z-right face
+  if (grid.faces().label(2,1,0,0) == AMRsolve_Faces::_boundary_) {
+    if (BdryType_[2][1] == 1) {           // Dirichlet
+      i2 = n3[2]-1;
+      for (i1=0; i1<n3[1]; i1++) {
+	for (i0=0; i0<n3[0]; i0++) {
+	  i = AMRsolve_Grid::index(i0,i1,i2,n3[0],n3[1],n3[2]);
+	  v1[2][1][i] = 0.0;
+	}
+      }
+    }  // BdryType_ == 1
+    else if (BdryType_[2][1] == 2) {    // Neumann
+      i2 = n3[2]-1;
+      for (i1=0; i1<n3[1]; i1++) {
+	for (i0=0; i0<n3[0]; i0++) {
+	  i = AMRsolve_Grid::index(i0,i1,i2,n3[0],n3[1],n3[2]);
+	  v0[i] += v1[2][1][i];
+	  v1[2][1][i] = 0.0;
+	}
+      }
+    }  // BdryType_ == 2
+  }  // label == boundary
+  
 
   //-----------------------------------------------------------
   // insert matrix entries into Hypre matrix A_
@@ -848,55 +1250,6 @@ void AMRsolve_Hypre_FLD::init_matrix_clear_(int part)
 
 //------------------------------------------------------------------------
 
-/// Use existing f_ for right-hand side B
-Scalar AMRsolve_Hypre_FLD::init_vector_attach_(Scalar f_scale)
-{
-  _TRACE_;
-  Scalar shift_b_sum = 0.0;
-  ItHierarchyGridsLocal itg (*hierarchy_);
-  while (AMRsolve_Grid* grid = itg++) {
-    int n0,n1,n2;
-    Scalar* values = grid->get_f(&n0,&n1,&n2);
-
-    // Scale by 1/(hx*hy*hz)
-    Scalar hx,hy,hz;
-    grid->h(hx,hy,hz);
-    Scalar scale = hx*hy*hz * f_scale;
-    for (int i0=0; i0<n0; i0++) {
-      for (int i1=0; i1<n1; i1++) {
-	for (int i2=0; i2<n2; i2++) {
-	  int k = i0 + n0*(i1 + n1*i2);
-	  values[k] *= scale;
-	}
-      }
-    }
-
-    // Set Hypre B_ vector to grid f_ values
-    int part = grid->level();
-    int lower[3] = { grid->index_lower(0), 
-		     grid->index_lower(1), 
-		     grid->index_lower(2) };
-    int upper[3] = { grid->index_upper(0), 
-		     grid->index_upper(1), 
-		     grid->index_upper(2) };
-    HYPRE_SStructVectorAddToBoxValues(B_,part,lower,upper,0,values);
-
-    // Compute sum to return in case we need to shift rhs for periodic problems
-    for (int i0=0; i0<n0; i0++) {
-      for (int i1=0; i1<n1; i1++) {
-	for (int i2=0; i2<n2; i2++) {
-	  int k = i0 + n0*(i1 + n1*i2);
-	  shift_b_sum += values[k];
-	}
-      }
-    }
-  }
-
-  return shift_b_sum;
-}
-
-//------------------------------------------------------------------------
-
 /// Initialize the PFMG hypre solver
 void AMRsolve_Hypre_FLD::solve_pfmg_(int itmax, double restol)
 {
@@ -904,12 +1257,37 @@ void AMRsolve_Hypre_FLD::solve_pfmg_(int itmax, double restol)
   // Create and initialize the solver
   HYPRE_SStructSysPFMGCreate(MPI_COMM_WORLD, &solver_);
 
-  // stopping criteria
+  // extract some additional solver parameters
+  std::string srlxtype = parameters_->value("solver_rlxtype");
+  std::string snpre    = parameters_->value("solver_npre");
+  std::string snpost   = parameters_->value("solver_npost");
+  std::string sprintl  = parameters_->value("solver_printl");
+  std::string slog     = parameters_->value("solver_log");
+
+  //   if not defined, then define them
+  if (srlxtype == "")  srlxtype = "1";
+  if (snpre == "")     snpre = "1";
+  if (snpost == "")    snpost = "1";
+  if (sprintl == "")   sprintl = "1";
+  if (slog == "")      slog = "1";
+
+  //   set local variables
+  int rlxtype = atoi(srlxtype.c_str());
+  int npre    = atoi(snpre.c_str());
+  int npost   = atoi(snpost.c_str());
+  int printl  = atoi(sprintl.c_str());
+  int log     = atoi(slog.c_str());
+
+  // set solver options
   if (itmax != 0 )   HYPRE_SStructSysPFMGSetMaxIter(solver_,itmax);
   if (restol != 0.0) HYPRE_SStructSysPFMGSetTol(solver_,    restol);
+  HYPRE_SStructSysPFMGSetRelaxType(solver_,    rlxtype);
+  HYPRE_SStructSysPFMGSetNumPreRelax(solver_,  npre);
+  HYPRE_SStructSysPFMGSetNumPostRelax(solver_, npost);
+  HYPRE_SStructSysPFMGSetPrintLevel(solver_,   printl);
+  HYPRE_SStructSysPFMGSetLogging(solver_,      log);
 
-  HYPRE_SStructSysPFMGSetPrintLevel(solver_, 1);
-  HYPRE_SStructSysPFMGSetLogging(solver_, 1);
+  // setup solver 
   HYPRE_SStructSysPFMGSetup(solver_,A_,B_,X_);
 
   // Solve the linear system
@@ -956,15 +1334,35 @@ void AMRsolve_Hypre_FLD::solve_fac_(int itmax, double restol)
   }
   HYPRE_SStructFACSetPRefinements(solver_, num_parts, refinements);
 
+  // extract some additional solver parameters
+  std::string srlxtype = parameters_->value("solver_rlxtype");
+  std::string snpre    = parameters_->value("solver_npre");
+  std::string snpost   = parameters_->value("solver_npost");
+  std::string scsolve  = parameters_->value("solver_csolve");
+  std::string sprintl  = parameters_->value("solver_printl");
+  std::string slog     = parameters_->value("solver_log");
+
+  //   if not defined, then define them
+  if (srlxtype == "")  srlxtype = "2";
+  if (snpre == "")     snpre = "2";
+  if (snpost == "")    snpost = "2";
+  if (scsolve == "")   scsolve = "1";
+  if (sprintl == "")   sprintl = "1";
+  if (slog == "")      slog = "1";
+
+  //   set local variables
+  int relax   = atoi(srlxtype.c_str());
+  int npre    = atoi(snpre.c_str());
+  int npost   = atoi(snpost.c_str());
+  int printl  = atoi(sprintl.c_str());
+  int log     = atoi(slog.c_str());
+  int csolve  = atoi(scsolve.c_str());
+
   // solver parameters
-  int npre   = 2;
-  int npost  = 2;
-  int csolve = 1;
-  int relax  = 2;
-  HYPRE_SStructFACSetNumPreRelax(solver_, npre);
-  HYPRE_SStructFACSetNumPostRelax(solver_, npost);
+  HYPRE_SStructFACSetNumPreRelax(solver_,      npre);
+  HYPRE_SStructFACSetNumPostRelax(solver_,     npost);
   HYPRE_SStructFACSetCoarseSolverType(solver_, csolve);
-  HYPRE_SStructFACSetRelaxType(solver_, relax);
+  HYPRE_SStructFACSetRelaxType(solver_,        relax);
 
   // stopping criteria
   if (itmax != 0 )    HYPRE_SStructFACSetMaxIter(solver_, itmax);
@@ -1006,12 +1404,17 @@ void AMRsolve_Hypre_FLD::solve_bicgstab_(int itmax, double restol)
   // Create the solver
   HYPRE_SStructBiCGSTABCreate(MPI_COMM_WORLD, &solver_);
 
+  // extract some additional solver parameters
+  std::string slog = parameters_->value("solver_log");
+  if (slog == "")      slog = "1";
+  int log = atoi(slog.c_str());
+
   // stopping criteria
   if (itmax != 0 )   HYPRE_SStructBiCGSTABSetMaxIter(solver_,itmax);
   if (restol != 0.0) HYPRE_SStructBiCGSTABSetTol(solver_,    restol);
 
   // output amount
-  HYPRE_SStructBiCGSTABSetLogging(solver_, 1);
+  HYPRE_SStructBiCGSTABSetLogging(solver_, log);
 
   // Initialize the solver
   HYPRE_SStructBiCGSTABSetup(solver_, A_, B_, X_);
@@ -1048,8 +1451,16 @@ void AMRsolve_Hypre_FLD::solve_bicgstab_boomer_(int itmax, double restol)
   if (itmax != 0 )   HYPRE_BiCGSTABSetMaxIter(solver,itmax);
   if (restol != 0.0) HYPRE_BiCGSTABSetTol(solver,    restol);
 
+  // extract some additional solver parameters
+  std::string slog    = parameters_->value("solver_log");
+  std::string sprintl = parameters_->value("solver_printl");
+  if (slog == "")      slog = "1";
+  if (sprintl == "")   sprintl = "1";
+  int log    = atoi(slog.c_str());
+  int printl = atoi(sprintl.c_str());
+
   // output amount
-  HYPRE_BiCGSTABSetLogging(solver, 1);
+  HYPRE_BiCGSTABSetLogging(solver, log);
 
   // Set BoomerAMG preconditioner
   HYPRE_Solver par_precond;
@@ -1057,7 +1468,7 @@ void AMRsolve_Hypre_FLD::solve_bicgstab_boomer_(int itmax, double restol)
   HYPRE_BoomerAMGSetCoarsenType(par_precond, 6);
   HYPRE_BoomerAMGSetStrongThreshold(par_precond, 0.25);
   HYPRE_BoomerAMGSetTol(par_precond, 0.0);
-  HYPRE_BoomerAMGSetPrintLevel(par_precond, 1);
+  HYPRE_BoomerAMGSetPrintLevel(par_precond, printl);
   HYPRE_BoomerAMGSetPrintFileName(par_precond, "sstruct.out.log");
   HYPRE_BoomerAMGSetMaxIter(par_precond, 1);
   HYPRE_BiCGSTABSetPrecond(solver,
@@ -1097,12 +1508,17 @@ void AMRsolve_Hypre_FLD::solve_gmres_(int itmax, double restol)
   // Create the solver
   HYPRE_SStructGMRESCreate(MPI_COMM_WORLD, &solver_);
 
+  // extract some additional solver parameters
+  std::string slog = parameters_->value("solver_log");
+  if (slog == "")      slog = "1";
+  int log = atoi(slog.c_str());
+
   // stopping criteria
   if (itmax != 0 )   HYPRE_SStructGMRESSetMaxIter(solver_, itmax);
   if (restol != 0.0) HYPRE_SStructGMRESSetTol(solver_,     restol);
 
   // output amount
-  HYPRE_SStructGMRESSetLogging(solver_, 1);
+  HYPRE_SStructGMRESSetLogging(solver_, log);
 
   // Initialize the solver
   HYPRE_SStructGMRESSetup(solver_, A_, B_, X_);
@@ -1126,14 +1542,13 @@ void AMRsolve_Hypre_FLD::solve_gmres_(int itmax, double restol)
 
 //------------------------------------------------------------------------
 
-/// Update the matrix at a coarse face zone adjacent to fine face
-/// zones using a simple piecewise-constant finite volume
-/// discretization.  Called in two phases, with phase == phase_graph
-/// (via init_graph_nonstencil_()) for the nonzero structure, and with
-/// phase == phase_matrix (via init_matrix_nonstencil_()) for the
-/// matrix nonzeros.
+/// Update the matrix at a coarse/fine interface; this routine changes the 
+/// fine-grid matrix to account for the coarse grid neighbor.  Called in 
+/// two phases, with phase == phase_graph (via init_graph_nonstencil_()) 
+/// for the nonzero structure, and with phase == phase_matrix
+/// (via init_matrix_nonstencil_()) for the matrix nonzeros.
 void AMRsolve_Hypre_FLD::update_fine_coarse_const_(int face, 
-						   AMRsolve_Grid& grid, 
+						   AMRsolve_Grid& grid_fine, 
 						   int axis0, 
 						   phase_enum phase,
 						   int level_fine, 
@@ -1144,13 +1559,48 @@ void AMRsolve_Hypre_FLD::update_fine_coarse_const_(int face,
   int axis1 = (axis0+1)%3;
   int axis2 = (axis0+2)%3;
 
+  // declare shortcut variables
+  Scalar Eavg, Ed, R, kap, D;
+  Scalar afac = adot_ / aval_;
+  Scalar dtfac = dt_ * theta_;
+  Scalar Rmin = 1.0e-20;
+  Scalar c = 2.99792458e10;
+
+  // access relevant arrays from this grid to compute RHS
+  Scalar* E    = grid_fine.get_E();
+  Scalar* HI   = grid_fine.get_HI();
+  Scalar* HeI  = grid_fine.get_HeI();
+  Scalar* HeII = grid_fine.get_HeII();
+  
+  // get active enzo grid size
+  int n3[3];
+  grid_fine.get_size(n3);
+
+  // get buffering information on relating amrsolve grid to Enzo data
+  int ghosts[3][2]; 
+  grid_fine.get_Ghosts(ghosts);
+  int en0 = n3[0] + ghosts[0][0] + ghosts[0][1];  // enzo data dimensions
+  int en1 = n3[1] + ghosts[1][0] + ghosts[1][1];  // enzo data dimensions
+  int en2 = n3[2] + ghosts[2][0] + ghosts[2][1];  // enzo data dimensions
+
+  // indices for Enzo fine grid cells on both sides of interface
+  int k_row, k_col, k0, k1, k2;
+  int adj0=0, adj1=0, adj2=0;
+  if (axis0 == 0)  adj0 = (face == 0) ? -1 : 1;  
+  if (axis0 == 1)  adj1 = (face == 0) ? -1 : 1;  
+  if (axis0 == 2)  adj2 = (face == 0) ? -1 : 1;  
+  
+  // set this grid's mesh spacing in this direction
+  Scalar dxi;
+  if (axis0 == 0)  dxi = aval_ / grid_fine.h(0) / lUn_;
+  if (axis0 == 1)  dxi = aval_ / grid_fine.h(1) / lUn_;
+  if (axis0 == 2)  dxi = aval_ / grid_fine.h(2) / lUn_;
+  
   //--------------------------------------------------
   // (*) CONSTANT
   //     Scale        = 2/3
-  //     Coefficients = 1
+  //     Coefficients = determined on the fly
   //--------------------------------------------------
-
-  Scalar val_h_fine = grid.h(axis1) * grid.h(axis2) / grid.h(axis0);
 
   int index_increment[][3] = {{face*(r_factor_-1),0,0},
 			      {0,1,0},
@@ -1158,12 +1608,11 @@ void AMRsolve_Hypre_FLD::update_fine_coarse_const_(int face,
 			      {0,-1,0},
 			      {-face*(r_factor_-1),0,-1}};
 
-  if (grid.is_local()) {
+  if (grid_fine.is_local()) {
 
     if (phase == phase_graph) {
 
-      int k = 0;
-
+      int k=0;
       index_fine[axis0] += index_increment[k][0];
       index_fine[axis1] += index_increment[k][1];
       index_fine[axis2] += index_increment[k][2];
@@ -1178,76 +1627,66 @@ void AMRsolve_Hypre_FLD::update_fine_coarse_const_(int face,
 
     } else if (phase == phase_matrix) {
 
-      // fine->coarse off-diagonal
-      double val_s = 2. / 3.;
-
+      // fine->coarse off-diagonal scaling
+      double val_s = 2.0 / 3.0;
       int entry;
-      double val_a;
-      double val,value;
+      double val, value;
 
       int k=0;
-
       index_fine[axis0] += index_increment[k][0];
       index_fine[axis1] += index_increment[k][1];
       index_fine[axis2] += index_increment[k][2];
 
-      // @@@@@@@@@@@@@@@@@@@@@@@@@@@@
-      double xl3[3]; // global position of lowest grid vertex 
-      grid.x_lower(xl3[0],xl3[1],xl3[2]);
+      for (k=1; k<5; k++) {
 
-      int il3[3];    // global index of lowest grid vertex
-      grid.index_lower(il3[0],il3[1],il3[2]);
-      // @@@@@@@@@@@@@@@@@@@@@@@@@@@@
+	// set indices for Enzo fine cells on both sides of interface
+	k0 = index_fine[0] + ghosts[0][0];
+	k1 = index_fine[1] + ghosts[1][0];
+	k2 = index_fine[2] + ghosts[2][0];
+	k_row = k0 + en0*(k1 + en1*k2);
+	k_col = k0 + adj0 + en0*(k1 + adj1 + en1*(k2 + adj2));
 
-
-      for (int k=1; k<5; k++) {
-
-	// @@@@@@@@@@@@@@@@@@@@@@@@@@@@
-	double x3[3]; // global position of fine grid unknown
-
-	// compute position of fine grid vertex
-	x3[0] = xl3[0] + (index_fine[0]-il3[0]) * val_h_fine;
-	x3[1] = xl3[1] + (index_fine[1]-il3[1]) * val_h_fine;
-	x3[2] = xl3[2] + (index_fine[2]-il3[2]) * val_h_fine;
-
-	// adjust position for fine grid unknown
-	double h2 = 0.5*val_h_fine;
-	x3[0] += h2;
-	x3[1] += h2;
-	x3[2] += h2;
-
-	// adjust position for center of fine grid face
-	//    (-h2 if face == 0; +h2 if face == 1)
-	x3[axis0] += (2*face - 1) * h2;
-	// @@@@@@@@@@@@@@@@@@@@@@@@@@@@
+	// Compute limiter at this face
+	Ed = E[k_row] - E[k_col];
+	Eavg = (E[k_row] + E[k_col])*0.5;
+	R = MAX(dxi*fabs(Ed)/Eavg, Rmin);
+	if (Nchem_ == 1) {
+	  kap = (HI[k_row] + HI[k_col])*HIconst_*0.5;
+	} else {
+	  kap = ((HI[k_row]   + HI[k_col])*HIconst_ +
+		 (HeI[k_row]  + HeI[k_col])*HeIconst_ +
+		 (HeII[k_row] + HeII[k_col])*HeIIconst_)*0.5;
+	}
+	D = c/sqrt(9.0*kap*kap*nUn_*nUn_ + R*R);
 
 
-	// Set matrix entry using diffusion coefficient 
-	//   Note:  (x,y,z) == (x3[0],x3[1],x3[2])
-	val_a = acoef(x3[0],x3[1],x3[2]);
-	val = matrix_scale_ * val_h_fine * val_s * val_a;
-
-	// Update off-diagonal
-	entry = grid.counter(index_fine)++;
+	// Set matrix values across coarse/fine face
+	val = -val_s * dtfac * dxi * dxi * D;
+	
+	//   Update off-diagonal
+	entry = grid_fine.counter(index_fine)++;
 	value = val;
 	HYPRE_SStructMatrixAddToValues(A_, level_fine, index_fine, 
 				       0, 1, &entry, &value);
 
-	// Update diagonal
+	//   Update diagonal
 	entry = 0;
 	value = -val;
 	HYPRE_SStructMatrixAddToValues(A_, level_fine, index_fine, 
 				       0, 1, &entry, &value);
 
-	// Clear coarse-fine stencil values
-	val = matrix_scale_ * val_h_fine * val_a;
 
-	entry = 2*axis0 + 1 + (1-face); // stencil xp=1,xm,yp,ym,zp,zm=6
-	value = - val;
+	// Clear original matrix values from stencil
+	val = -dtfac * dxi * dxi * D;
+	
+	//   Update off-diagonal, stencil xp=1,xm,yp,ym,zp,zm=6
+	entry = 2*axis0 + 1 + (1-face);
+	value = -val;
 	HYPRE_SStructMatrixAddToValues(A_, level_fine, index_fine, 
 				       0, 1, &entry, &value);
 
-	entry = 0; // diagonal
+	//   Update diagonal
+	entry = 0;
 	value = val;
 	HYPRE_SStructMatrixAddToValues(A_, level_fine, index_fine, 
 				       0, 1, &entry, &value);
@@ -1259,17 +1698,16 @@ void AMRsolve_Hypre_FLD::update_fine_coarse_const_(int face,
 
       } // for k = 1,4
     } // if phase == phase_matrix
-  } // if grid.is_local()
+  } // if grid_fine.is_local()
 } // if discret_type_const
 
 //------------------------------------------------------------------------
 
-/// Update the matrix at a coarse face zone adjacent to fine face
-/// zones using a simple piecewise-constant finite volume
-/// discretization.  Called in two phases, with phase == phase_graph
-/// (via init_graph_nonstencil_()) for the nonzero structure, and with
-/// phase == phase_matrix (via init_matrix_nonstencil_()) for the
-/// matrix nonzeros.
+/// Update the matrix at a coarse/fine interface; this routine changes the 
+/// coarse-grid matrix to account for the fine grid neighbors.  Called in 
+/// two phases, with phase == phase_graph (via init_graph_nonstencil_()) 
+/// for the nonzero structure, and with phase == phase_matrix
+/// (via init_matrix_nonstencil_()) for the matrix nonzeros.
 void AMRsolve_Hypre_FLD::update_coarse_fine_const_(int face, 
 						   AMRsolve_Grid& grid_coarse, 
 						   int axis0, 
@@ -1282,8 +1720,7 @@ void AMRsolve_Hypre_FLD::update_coarse_fine_const_(int face,
   int axis1 = (axis0+1)%3;
   int axis2 = (axis0+2)%3;
 
-  Scalar val_h_coarse = grid_coarse.h(axis1) * grid_coarse.h(axis2) / grid_coarse.h(axis0);
-
+  // set graph entry
   if (phase == phase_graph) {
 
     int index_increment[][3] = {{1,0,0},
@@ -1303,38 +1740,67 @@ void AMRsolve_Hypre_FLD::update_coarse_fine_const_(int face,
       index_fine[2] += index_increment[k][2];
     } // for k=0,7
 
+  // set matrix entry
   } else if (phase == phase_matrix) {
 
-    // @@@@@@@@@@@@@@@@@@@@@@@@@@@@
-    double xl3[3];    // global position of lowest grid vertex 
-    grid_coarse.x_lower(xl3[0],xl3[1],xl3[2]);
-
-    int il3[3];       // global index of lowest grid vertex
-    grid_coarse.index_lower(il3[0],il3[1],il3[2]);
+    // declare shortcut variables
+    double Eavg, Ed, R, kap, D;
+    double afac = adot_ / aval_;
+    double dtfac = dt_ * theta_;
+    double Rmin = 1.0e-20;
+    double c = 2.99792458e10;
     
-    double x3[3];     // global position of coarse grid unknown
-
-    // compute position of coarse grid vertex
-    x3[0] = xl3[0] + (index_coarse[0]-il3[0]) * val_h_coarse;
-    x3[1] = xl3[1] + (index_coarse[1]-il3[1]) * val_h_coarse;
-    x3[2] = xl3[2] + (index_coarse[2]-il3[2]) * val_h_coarse;
-
-    // adjust position for coarse grid unknown
-    double h2 = 0.5*val_h_coarse;
-    x3[0] += h2;
-    x3[1] += h2;
-    x3[2] += h2;
-
-    // adjust position for center of coarse grid face 
-    //    (+h2 if face == 0; -h2 if face == 1)
-    x3[axis0] += (1 - 2*face) * h2;
-    // @@@@@@@@@@@@@@@@@@@@@@@@@@@@
+    // access relevant arrays from this grid to compute RHS
+    Scalar* E    = grid_coarse.get_E();
+    Scalar* HI   = grid_coarse.get_HI();
+    Scalar* HeI  = grid_coarse.get_HeI();
+    Scalar* HeII = grid_coarse.get_HeII();
     
-    // Set matrix entry using diffusion coefficient 
-    // (x,y,z) == (x3[0],x3[1],x3[2])
+    // get active enzo grid size
+    int n3[3];
+    grid_coarse.get_size(n3);
+
+    // get buffering information on relating amrsolve grid to Enzo data
+    int ghosts[3][2]; 
+    grid_coarse.get_Ghosts(ghosts);
+    int en0 = n3[0] + ghosts[0][0] + ghosts[0][1];  // enzo data dimensions
+    int en1 = n3[1] + ghosts[1][0] + ghosts[1][1];  // enzo data dimensions
+    int en2 = n3[2] + ghosts[2][0] + ghosts[2][1];  // enzo data dimensions
+    
+    // set this grid's mesh spacing in this direction
+    Scalar dxi;
+    if (axis0 == 0)  dxi = aval_ / grid_coarse.h(0) / lUn_;
+    if (axis0 == 1)  dxi = aval_ / grid_coarse.h(1) / lUn_;
+    if (axis0 == 2)  dxi = aval_ / grid_coarse.h(2) / lUn_;
+    
+    // set indices for Enzo coarse grid cells on both sides of interface
+    int adj0=0, adj1=0, adj2=0;
+    if (axis0 == 0)  adj0 = (face == 0) ? -1 : 1;  
+    if (axis0 == 1)  adj1 = (face == 0) ? -1 : 1;  
+    if (axis0 == 2)  adj2 = (face == 0) ? -1 : 1;  
+    
+    int k0 = index_coarse[0] + ghosts[0][0];
+    int k1 = index_coarse[1] + ghosts[1][0];
+    int k2 = index_coarse[2] + ghosts[2][0];
+    int k_row = k0 + en0*(k1 + en1*k2);
+    int k_col = k0 + adj0 + en0*(k1 + adj1 + en1*(k2 + adj2));
+    
+    // Compute limiter at this face
+    Ed = E[k_row] - E[k_col];
+    Eavg = (E[k_row] + E[k_col])*0.5;
+    R = MAX(dxi*fabs(Ed)/Eavg, Rmin);
+    if (Nchem_ == 1) {
+      kap = (HI[k_row] + HI[k_col])*HIconst_*0.5;
+    } else {
+      kap = ((HI[k_row]   + HI[k_col])*HIconst_ +
+	     (HeI[k_row]  + HeI[k_col])*HeIconst_ +
+	     (HeII[k_row] + HeII[k_col])*HeIIconst_)*0.5;
+    }
+    D = c/sqrt(9.0*kap*kap*nUn_*nUn_ + R*R);
+
+    // set matrix entry across coarse/fine face
     double val_s = 1./8.;
-    double val_a = acoef(x3[0],x3[1],x3[2]);
-    double val   = matrix_scale_ * val_h_coarse * val_s * val_a;
+    double val = -val_s * dtfac * dxi * dxi * D;
     int    entry;
     double value;
 
@@ -1343,27 +1809,27 @@ void AMRsolve_Hypre_FLD::update_coarse_fine_const_(int face,
       // Set new nonstencil coarse-fine entry
       entry = grid_coarse.counter(index_coarse)++;
       value = val;
-      HYPRE_SStructMatrixAddToValues(A_, level_coarse,index_coarse, 
+      HYPRE_SStructMatrixAddToValues(A_, level_coarse, index_coarse, 
 				     0, 1, &entry, &value);
       // Adjust stencil diagonal
       entry = 0;
-      value = - val;
+      value = -val;
       HYPRE_SStructMatrixAddToValues(A_, level_coarse, index_coarse, 
 				     0, 1, &entry, &value);
     } // for i=0,7
 
-    val = matrix_scale_ * val_h_coarse * val_a;
+    // Clear original matrix values from stencil
+    val = -dtfac * dxi * dxi * D;
 
-    // Clear coarse-fine stencil values
-    // (note: "face" is for fine grid, but we want coarse)
-    entry = 2*axis0 + 1 + face;     //stencil xp=1,xm,yp,ym,zp,zm=6
-    value = - val;
+    //   Update off-diagonal, stencil xp=1,xm,yp,ym,zp,zm=6
+    //   (note: "face" is for fine grid, but we want coarse)
+    entry = 2*axis0 + 1 + face;
+    value = -val;
     HYPRE_SStructMatrixAddToValues(A_, level_coarse, index_coarse, 
 				   0, 1, &entry, &value);
 
-    // Adjust stencil values
-
-    entry = 0; // diagonal
+    //   Update diagonal
+    entry = 0;
     value = val;
     HYPRE_SStructMatrixAddToValues(A_, level_coarse, index_coarse, 
 				   0, 1, &entry, &value);

@@ -102,9 +102,12 @@ int main(int argc, char **argv)
 
     // determine interconnections between grids
 
-    bool is_periodic = problem.parameters().value("boundary") == "periodic";
+    bool is_periodic[] = {
+      problem.parameters().value("boundary") == "periodic",
+      problem.parameters().value("boundary") == "periodic",
+      problem.parameters().value("boundary") == "periodic" }
     LCAPERF_START("hierarchy-initialize");
-    hierarchy.initialize(problem.domain(), *pmpi,is_periodic);
+    hierarchy.initialize(problem.domain(), *pmpi, is_periodic);
     LCAPERF_STOP("hierarchy-initialize");
 
     if (debug) problem.print ();

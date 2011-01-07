@@ -28,7 +28,23 @@ private:
   int                  iter_;          // Solver iterations
 
   const int            r_factor_;      // Refinement factor
-  Scalar               matrix_scale_;  // 1.0:  1 1 1 -6 1 1 1
+  int                  Nchem_;         // number of chemical species
+  double               theta_;         // time discretization parameter
+  double               dt_;            // time step size
+  double               aval_;          // cosmological expansion constant
+  double               aval0_;         // cosmological expansion constant (old time)
+  double               adot_;          // rate of cosmological expansion
+  double               adot0_;         // rate of cosmological expansion (old time)
+  double               HIconst_;       // opacity coefficient for HI
+  double               HeIconst_;      // opacity coefficient for HeI
+  double               HeIIconst_;     // opacity coefficient for HeII
+  double               nUn_;           // number density units
+  double               nUn0_;          // number density units (old time)
+  double               lUn_;           // length units
+  double               lUn0_;          // length units (old time)
+  double               rUn_;           // radiation units
+  double               rUn0_;          // radiation units (old time)
+  int                  BdryType_[3][2];   // boundary condition types (global problem)
 
 public:
 
@@ -39,9 +55,15 @@ public:
   void init_hierarchy(AMRsolve_Mpi& mpi);
   void init_stencil();
   void init_graph();
-  void init_elements(Scalar f_scale=1.0);
+  void init_elements(double dt, int Nchem, double theta, double aval, 
+		     double aval0, double adot, double adot0, 
+		     double HIconst, double HeIconst, double HeIIconst, 
+		     double nUn, double nUn0, double lUn, double lUn0, 
+		     double rUn, double rUn0, int BdryType[3][2]);
   void solve();
-  void evaluate();
+  int  evaluate();
+  void update_enzo();
+  void abort_dump();
 
   int    iterations() { return iter_; };
   double residual() { return resid_; };
@@ -56,7 +78,7 @@ private:
 
   // init_elements() functions
   void init_elements_matrix_();
-  void init_elements_rhs_(Scalar f_scale=1.0);
+  void init_elements_rhs_();
 
   void init_matrix_stencil_(AMRsolve_Grid& grid);
   void init_matrix_clear_(int part);
@@ -65,9 +87,6 @@ private:
 
   void init_nonstencil_(AMRsolve_Grid& grid, phase_enum phase);
   
-  // init_vector() functions
-  Scalar init_vector_attach_(Scalar f_scale=1.0);
-
   // solve() functions
   void solve_fac_(int itmax, double restol);
   void solve_bicgstab_(int itmax, double restol);

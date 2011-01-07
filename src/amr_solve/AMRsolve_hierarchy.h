@@ -27,10 +27,10 @@ class AMRsolve_Hierarchy
 private:
 
   /// Dimension
-  int                        dimension_;
+  int                 dimension_;
   /// List of each grid's parent
   std::map<AMRsolve_Grid *, AMRsolve_Grid * >  grid_parent_;
-  /// Global index of lowest vertex in globalo root grid
+  /// Global index of lowest vertex in global root grid
   int                 il0_[3];
   /// Number of zones in global root grid
   int                 n0_[3];
@@ -80,7 +80,7 @@ protected:
 
   /// Initialize the AMRsolve_Hierarchy given a AMRsolve_Domain, AMRsolve_Mpi, and periodicity
   void initialize(AMRsolve_Domain& domain, AMRsolve_Mpi& mpi, 
-		  bool is_periodic) throw();
+		  bool is_periodic[3]) throw();
 
   void set_dim(int d) throw() { dimension_ = d; };
 
@@ -210,12 +210,12 @@ private:
   void geomview_grid_(FILE *fpr, bool full=true) throw();
 
   /// Initialize il0_[], n0_[], and period_index[]
-  void init_indices_ (bool is_periodic) throw();
+  void init_indices_(bool is_periodic[3]) throw();
 
   /// Initialize xl_[], xu_[], and period_domain[]
-  void init_extents_ (bool is_periodic) throw();
+  void init_extents_(bool is_periodic[3]) throw();
 
-  void insert_in_level_ (int level, AMRsolve_Grid & grid) throw ();
+  void insert_in_level_(int level, AMRsolve_Grid& grid) throw();
 
   void deallocate_() throw();
 

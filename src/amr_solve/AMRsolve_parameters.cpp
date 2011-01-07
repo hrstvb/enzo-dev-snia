@@ -89,6 +89,27 @@ void AMRsolve_Parameters::print() throw()
 }
 //----------------------------------------------------------------------
 
+/// Set a minimum set of default parameters
+/** Set a minimum set of default parameters. */
+void AMRsolve_Parameters::set_defaults() throw()
+{
+  this->set_parameter("discret","constant");
+  this->set_parameter("dimension","3");
+  this->set_parameter("solver_restol","1e-6");
+  this->set_parameter("solver_itmax","200");
+  this->set_parameter("solver_printl","1");
+  this->set_parameter("solver_log","1");
+  this->set_parameter("dump_hypre","false");
+  this->set_parameter("dump_x","false");
+  this->set_parameter("dump_b","false");
+  this->set_parameter("solver","bicgstab");
+  this->set_parameter("solver_rlxtype","2");
+  this->set_parameter("solver_npre","2");
+  this->set_parameter("solver_npost","2");
+  this->set_parameter("solver_csolve","1");
+}
+//----------------------------------------------------------------------
+
 /// Associate the given value with the given key.
 /** Associate the given value with the given key. */
 void AMRsolve_Parameters::add_parameter(std::string key, std::string val) 
@@ -102,8 +123,27 @@ void AMRsolve_Parameters::add_parameter(std::string key, std::string val)
 
 //----------------------------------------------------------------------
 
-/// Retrieve the ith value of the the given parameter.
-/** Retrieve the ith value of the the given parameter. */
+/// Associate the given value with the given key (replaces all existing).
+/** Associate the given value with the given key (replaces all existing). */
+void AMRsolve_Parameters::set_parameter(std::string key, std::string val) 
+  throw()
+{
+  _TRACE_;
+  // Do nothing if key is empty or a comment ("#" or "//")
+  if (key=="" || key=="#" || key=="//") return;
+
+  // erase any existing <key,value> pairs
+  while (values_.find(key) != values_.end()) 
+    values_.erase(values_.find(key));
+
+  // add the new parameter
+  values_.insert( std::pair<std::string,std::string>(key,val) );
+}
+
+//----------------------------------------------------------------------
+
+/// Retrieve the ith value of the the given parameter (not implemented).
+/** Retrieve the ith value of the the given parameter (not implemented). */
 std::string AMRsolve_Parameters::ith_value(std::string key, int i) const throw()
 {
   _TRACE_;
@@ -112,8 +152,8 @@ std::string AMRsolve_Parameters::ith_value(std::string key, int i) const throw()
 
 //----------------------------------------------------------------------
 
-/// Return the multiplicity of values for the given key.
-/**  Return the multiplicity of values for the given key.  May be 0. */
+/// Return the multiplicity of values for the given key (not implemented).
+/**  Return the multiplicity of values for the given key.  May be 0 (not implemented). */
 int AMRsolve_Parameters::num_values(std::string key) const throw()
 {
   _TRACE_;

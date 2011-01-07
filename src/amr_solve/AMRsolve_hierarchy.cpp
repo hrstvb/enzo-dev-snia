@@ -302,6 +302,9 @@ void AMRsolve_Hierarchy::enzo_attach_fld(LevelHierarchyEntry *LevelArray[],
       // Save grid id's to determine parents
       enzo_id[enzo_grid] = id;
 
+      // Set owning processor for this grid
+      int ip = enzo_grid->ProcessorNumber;
+      
       // Collect required enzo grid data
       int id_parent;
       if (level == level_coarsest) {
@@ -311,20 +314,14 @@ void AMRsolve_Hierarchy::enzo_attach_fld(LevelHierarchyEntry *LevelArray[],
 	id_parent = enzo_id[enzo_parent];
       }
 
-      int ip = enzo_grid->ProcessorNumber;
-//       fprintf(fp_debug,"%s:%d %d enzo grid[%d] PotentialField = %p  GravitatingMassField = %p\n",
-// 	       __FILE__,__LINE__,pmpi->ip(),id,
-// 	       enzo_grid->PotentialField,
-// 	       enzo_grid->GravitatingMassField);
-
-      
       // Compute global grid size at this level
       long long nd[3];
       for (int dim=0; dim<3; dim++) {
 	nd[dim] = (long long) ((DomainRightEdge[dim] - DomainLeftEdge[dim]) / 
 		       enzo_grid->CellWidth[dim][0] + 0.5);
       }
-	
+
+      // Compute active size of this grid, and location information
       Scalar xl[3],xu[3];
       int il[3],n[3];
       for (int dim=0; dim<3; dim++) {
@@ -339,44 +336,25 @@ void AMRsolve_Hierarchy::enzo_attach_fld(LevelHierarchyEntry *LevelArray[],
       AMRsolve_Grid* grid = new AMRsolve_Grid(id,id_parent,ip,xl,xu,il,n);
       insert_grid(grid);
 
+      // if this is a local grid, allocate data and set pointers to Enzo data
       if (grid->is_local()) {
 
-	// CREATE THE X VECTOR
+	// allocate the u and f arrays on this grid
+	grid->allocate();
 
-	// Compute the grid dimensions, with no ghost zones
-	int ndh3[3];
-	ndh3[0] = enzo_grid->GridEndIndex[0] - enzo_grid->GridStartIndex[0] + 1;
-	ndh3[1] = enzo_grid->GridEndIndex[1] - enzo_grid->GridStartIndex[1] + 1;
-	ndh3[2] = enzo_grid->GridEndIndex[2] - enzo_grid->GridStartIndex[2] + 1;
-	int ndh = ndh3[0]*ndh3[1]*ndh3[2];
+	// Set pointers to the relevant Enzo data arrays for setting up the 
+	// linear system later on.
+	grid->set_E(enzo_grid->AccessRadiationFrequency0());
+	grid->set_eta(enzo_grid->AccessEmissivity0());
+	grid->set_HI(enzo_grid->AccessHIDensity());
+	grid->set_HeI(enzo_grid->AccessHeIDensity());
+	grid->set_HeII(enzo_grid->AccessHeIIDensity());
 
-	// Allocate X, warning if we're reallocating
-	if (enzo_grid->amrsolve_x != NULL) {
-	  WARNING_MESSAGE;
-	  delete [] enzo_grid->amrsolve_x;
-	  enzo_grid->amrsolve_x = NULL;
-	}
-	enzo_grid->amrsolve_x = new ENZO_FLOAT[ndh]; // Deleted and nulled- in detach
-
-	// Clear X
-	for (int i=0; i<ndh; i++)  enzo_grid->amrsolve_x[i] = 0;
-
-	// CREATE THE B VECTOR
-
-	// Allocate B, warning if we're reallocating
-	if (enzo_grid->amrsolve_b != NULL) {
-	  WARNING_MESSAGE;
-	  delete [] enzo_grid->amrsolve_b;
-	  enzo_grid->amrsolve_b = NULL;
-	}
-	enzo_grid->amrsolve_b = new ENZO_FLOAT[ndh]; // Deleted and nulled- in detach
-
-	// Set the amrsolve arrays to point to the corresponding enzo arrays; 
-	// Note: these arrays are the correct size, so we don't need any of the 
-	//       different-grid-offset business that gravity does.
-	grid->set_u(enzo_grid->amrsolve_x, ndh3);
-	grid->set_f(enzo_grid->amrsolve_b, ndh3);
-	WRITE_B_SUM(grid);
+	// Set Enzo ghost zone information for this grid
+	int enzo_ghosts[][2] = { {DEFAULT_GHOST_ZONES, DEFAULT_GHOST_ZONES}, 
+				 {DEFAULT_GHOST_ZONES, DEFAULT_GHOST_ZONES}, 
+				 {DEFAULT_GHOST_ZONES, DEFAULT_GHOST_ZONES} };
+	grid->set_Ghosts(enzo_ghosts);
       }
       id++;
     } // grids within level
@@ -421,7 +399,7 @@ void AMRsolve_Hierarchy::insert_grid(AMRsolve_Grid* pgrid) throw()
     determines each grid's parent, containing level, children, 
     neighbors, face-zone categories, and global indices. */
 void AMRsolve_Hierarchy::initialize(AMRsolve_Domain& domain, AMRsolve_Mpi& mpi,
-				    bool is_periodic) throw()
+				    bool is_periodic[3]) throw()
 {
   if (debug_hierarchy) printf("AMRsolve_Hierarchy::init_levels()\n");
 
@@ -911,7 +889,7 @@ void AMRsolve_Hierarchy::init_grid_faces_(AMRsolve_Domain& domain,
 
 //======================================================================
 
-void AMRsolve_Hierarchy::init_indices_(bool is_periodic) throw()
+void AMRsolve_Hierarchy::init_indices_(bool is_periodic[3]) throw()
 {
   _TRACE_;
   // Determine problem size the hard way
@@ -944,7 +922,7 @@ void AMRsolve_Hierarchy::init_indices_(bool is_periodic) throw()
   _TRACE_;
 
   for (i=0; i<3; i++) {
-    period_index_[i] = is_periodic ? n0_[i] : 0.0;
+    period_index_[i] = is_periodic[i] ? n0_[i] : 0.0;
   }
 
   _TRACE_;
@@ -952,7 +930,7 @@ void AMRsolve_Hierarchy::init_indices_(bool is_periodic) throw()
 
 //======================================================================
 
-void AMRsolve_Hierarchy::init_extents_(bool is_periodic) throw()
+void AMRsolve_Hierarchy::init_extents_(bool is_periodic[3]) throw()
 {
   _TRACE_;
 
@@ -980,7 +958,7 @@ void AMRsolve_Hierarchy::init_extents_(bool is_periodic) throw()
   }
 
   for (i=0; i<3; i++) {
-    period_domain_[i] = is_periodic ? xu_[i] - xl_[i] : 0.0;
+    period_domain_[i] = is_periodic[i] ? xu_[i] - xl_[i] : 0.0;
   }
 
   _TRACE_;

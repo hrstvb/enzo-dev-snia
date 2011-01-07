@@ -31,13 +31,19 @@ public:
   /// Print all parameters to stdout.
   void print() throw();
 
-  /// Associate the given value with the given key.
+  /// Set minimum set of default parameters
+  void set_defaults() throw();
+
+  /// Associate the given value with the given key (adds new pair).
   void add_parameter(std::string key, std::string val) throw();
 
-  /// Retrieve the ith value of the the given parameter.
+  /// Associate the given value with the given key (replaces all existing values).
+  void set_parameter(std::string key, std::string val) throw();
+
+  /// Retrieve the ith value of the the given parameter (not implemented).
   std::string ith_value(std::string key, int i) const throw();
 
-  /// Return the multiplicity of values for the given key.  May be 0.
+  /// Return the multiplicity of values for the given key.  May be 0 (not implemented).
   int num_values(std::string key) const throw();
 
   /// Return the value for the given key.
