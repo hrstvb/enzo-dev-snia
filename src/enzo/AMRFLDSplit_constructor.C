@@ -35,15 +35,9 @@ AMRFLDSplit::AMRFLDSplit()
 
   // initialize total RT time to zero
   RTtime = 0.0;
-  HYPREtime = 0.0;
+  AMRSolTime = 0.0;
 
-  // initialize HYPRE values to -1/NULL
-  mattype = -1;
-  stSize = -1;
-#ifdef USE_HYPRE
-  grid = NULL;
-  stencil = NULL;
-#endif
+  // initialize solver parameters
   sol_tolerance = -1.0;
   sol_maxit = -1;
   sol_rlxtype = -1;
@@ -52,26 +46,14 @@ AMRFLDSplit::AMRFLDSplit()
   sol_printl = -1;
   sol_log = -1;
   totIters = -1;
-  for (dim=0; dim<3; dim++) {
-    for (face=0; face<2; face++)
-      SolvIndices[dim][face] = 0;
-    SolvOff[dim] = 0;
-  }
 
   // initialize problem grid information to -1/NULL
   rank = -1;
   for (dim=0; dim<3; dim++) {
-    layout[dim] = 1;    // initialize for single-processor run
-    location[dim] = 0;  // initialize for single-processor run
     LocDims[dim] = 1;
-    ArrDims[dim] = 1;
-    dx[dim] = 1.0;
     for (face=0; face<2; face++) {
       OnBdry[dim][face] = false;
-      NBors[dim][face] = MPI_PROC_NULL;
-      GhDims[dim][face] = 0;
       BdryType[dim][face] = -1;
-      EdgeVals[dim][face] = -1.0;
       BdryVals[dim][face] = NULL;
     }
   }
@@ -88,11 +70,7 @@ AMRFLDSplit::AMRFLDSplit()
   dt = -1.0;
   dtrad = -1.0;
   theta = -1.0;
-  sol = NULL;
-  U0 = NULL;
-  extsrc = NULL;
   
-
   // initialize problem defining data 
   a = 1.0;
   a0 = 1.0;
@@ -111,7 +89,6 @@ AMRFLDSplit::AMRFLDSplit()
   TimeUnits = 1.0;
   VelUnits = 1.0;
   Nchem = 0;
-  Model = -1;
   ESpectrum = -1;
   intSigE = 0.0;
   intSigESigHI = 0.0;
@@ -120,28 +97,6 @@ AMRFLDSplit::AMRFLDSplit()
   intSigESigHInu = 0.0;
   intSigESigHeInu = 0.0;
   intSigESigHeIInu = 0.0;
-
-  // initialize linear solver/Jacobian arrays to NULL
-  matentries = NULL;
-  rhsentries = NULL;
-  HYPREbuff  = NULL;
-
-  // initialize HYPRE structures to NULL
-#ifdef USE_HYPRE
-  P      = NULL;
-  rhsvec = NULL;
-  solvec = NULL;
-#endif
-
-  // initialize access to Enzo arrays to NULL
-  vx = NULL;
-  vy = NULL;
-  vz = NULL;
-  rho = NULL;
-  eh = NULL;
-
-  // initialize storage arrays to NULL
-  OpacityE = NULL;
 
 }
 #endif

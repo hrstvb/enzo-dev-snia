@@ -208,6 +208,7 @@ class grid
   friend int ExternalBoundary::Prepare(grid *TopGrid);
   friend int ProtoSubgrid::CopyFlaggedZonesFromGrid(grid *Grid);
   friend class Star;
+  friend class AMRFLDSplit;
 #ifdef NEW_PROBLEM_TYPES
   friend class ProblemType;
 #endif

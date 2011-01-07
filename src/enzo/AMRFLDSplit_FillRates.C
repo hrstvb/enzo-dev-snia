@@ -18,44 +18,25 @@
 /           chemistry and cooling routines using time-averaged internal
 /           values for the radiation.
 / 
-/  NOTE: In order to save on memory, the photo-heating rates are 
-/        combined into a single rate, and scaled by the current number 
-/        density of HI, to be later unpacked by rescaling back with HI.  
-/        This loses accuracy in the case that during chemistry 
-/        subcycling the chemistry changes significantly, since we retain 
-/        the initial rate scaling but use updated HI values in rescaling.
+/  NOTE: In order to save on memory, Enzo's chemistry routines assume 
+/        that the photo-heating rates are combined into a single rate, 
+/        and scaled by the current number density of HI, to be later 
+/        unpacked by rescaling back with HI.  This potentially loses 
+/        accuracy in the case that during chemistry subcycling the 
+/        HI, HeI and HeII values change significantly, since we retain 
+/        the initial rate scaling but use updated HI values in 
+/        chemistry subcycles.
 /
 ************************************************************************/
 #ifdef TRANSFER
 #include "AMRFLDSplit.h"
 
 
-int AMRFLDSplit::FillRates(EnzoVector *u, EnzoVector *u0, float *phHI, 
-			   float *phHeI, float *phHeII, float *photogamma, 
-			   float *dissH2I)
+int AMRFLDSplit::FillRates(LevelHierarchyEntry *LevelArray[], int level)
 {
 
 //   if (debug)
 //     printf("Entering AMRFLDSplit::FillRates routine\n");
-
-  // get local mesh description
-  int usz[4], ghXl, ghXr, ghYl, ghYr, ghZl, ghZr;
-  u->size(&usz[0], &usz[1], &usz[2], &usz[3], 
-	  &ghXl, &ghXr, &ghYl, &ghYr, &ghZl, &ghZr);
-  if (usz[0] != LocDims[0]) 
-    ENZO_FAIL("FillRates error: x0 vector dims do not match");
-  if (usz[1] != LocDims[1]) 
-    ENZO_FAIL("FillRates error: x1 vector dims do not match");
-  if (usz[2] != LocDims[2]) 
-    ENZO_FAIL("FillRates error: x2 vector dims do not match");
-  if (usz[3] != 1) 
-    ENZO_FAIL("FillRates error: nspecies dims do not match");
-  if ((usz[0]+ghXl+ghXr) != ArrDims[0]) 
-    ENZO_FAIL("FillRates error: x0 vector sizes do not match");
-  if ((usz[1]+ghYl+ghYr) != ArrDims[1]) 
-    ENZO_FAIL("FillRates error: x1 vector sizes do not match");
-  if ((usz[2]+ghZl+ghZr) != ArrDims[2]) 
-    ENZO_FAIL("FillRates error: x2 vector sizes do not match");
 
   // set some physical constants
   float c = 2.99792458e10;        // speed of light [cm/s]
@@ -70,45 +51,90 @@ int AMRFLDSplit::FillRates(EnzoVector *u, EnzoVector *u0, float *phHI,
     / POW(tbase1,3.0) / dbase1;
   float rtunits = ev2erg/TimeUnits/coolunit/dom;
   
-  // access radiation energy density arrays
-  float *Er = u->GetData(0);
-  float *E0 = u0->GetData(0);
+  // iterate over grids owned by this processor (this level down)
+  for (int thislevel=level; thislevel<MAX_DEPTH_OF_HIERARCHY; thislevel++)
+    for (LevelHierarchyEntry* Temp=LevelArray[thislevel]; Temp; 
+	 Temp=Temp->NextGridThisLevel)
+      if (MyProcessorNumber == Temp->GridHierarchyEntry->GridData->ReturnProcessorNumber()) {
 
-  // compute the size of the fields
-  int i, dim, size=1;
-  for (dim=0; dim<rank; dim++)  size *= ArrDims[dim];
+	// set grid dimension information
+	int dim, i;
+	int ghZl = (rank > 2) ? DEFAULT_GHOST_ZONES : 0;
+	int ghYl = (rank > 1) ? DEFAULT_GHOST_ZONES : 0;
+	int ghXl = DEFAULT_GHOST_ZONES;
+	int n3[] = {1, 1, 1};
+	for (dim=0; dim<rank; dim++)
+	  n3[dim] = Temp->GridHierarchyEntry->GridData->GetGridEndIndex(dim)
+	          - Temp->GridHierarchyEntry->GridData->GetGridStartIndex(dim) + 1;
+	int x0len = n3[0] + 2*ghXl;
+	int x1len = n3[1] + 2*ghYl;
+	int x2len = n3[2] + 2*ghZl;
+	int size = x0len*x1len*x2len;
+	
 
-  // temporary variables
-  float Erval, nHI, nHeI, nHeII;
+	// access Enzo fields 
+	float *Enew       = Temp->GridHierarchyEntry->GridData->AccessRadiationFrequency0();
+	float *phHI       = Temp->GridHierarchyEntry->GridData->AccessKPhHI();
+	float *phHeI      = Temp->GridHierarchyEntry->GridData->AccessKPhHeI();
+	float *phHeII     = Temp->GridHierarchyEntry->GridData->AccessKPhHeII();
+	float *photogamma = Temp->GridHierarchyEntry->GridData->AccessPhotoGamma();
+	float *dissH2I    = Temp->GridHierarchyEntry->GridData->AccessKDissH2I();
+	float *HI         = Temp->GridHierarchyEntry->GridData->AccessHIDensity();
+	float *HeI=NULL, *HeII=NULL;
+	if (Nchem == 3) {
+	  HeI  = Temp->GridHierarchyEntry->GridData->AccessHeIDensity();
+	  HeII = Temp->GridHierarchyEntry->GridData->AccessHeIIDensity();
+	}
 
-  // fill HI photo-ionization rate
-  float pHIconst = c*TimeUnits*intSigESigHInu/hp/intSigE;
-  for (i=0; i<size; i++)  phHI[i] = Er[i]*ErUnits*pHIconst;
+	// check that field data exists
+	if (Enew == NULL)
+	  ENZO_FAIL("AMRFLDSplit_FillRates ERROR: no radiation array!");
+	if (phHI == NULL)
+	  ENZO_FAIL("AMRFLDSplit_FillRates ERROR: no radiation array!");
+	if (photogamma == NULL)
+	  ENZO_FAIL("AMRFLDSplit_FillRates ERROR: no radiation array!");
+	if (RadiativeTransferHydrogenOnly == FALSE) {
+	  if (phHeI == NULL)
+	    ENZO_FAIL("AMRFLDSplit_FillRates ERROR: no radiation array!");
+	  if (phHeII == NULL)
+	    ENZO_FAIL("AMRFLDSplit_FillRates ERROR: no radiation array!");
+	}
+	if (MultiSpecies > 1) 
+	  if (dissH2I == NULL)
+	    ENZO_FAIL("AMRFLDSplit_FillRates ERROR: no radiation array!");
 
-  // fill HeI and HeII photo-ionization rates
-  float pHeIconst  = c*TimeUnits*intSigESigHeInu/hp/intSigE;
-  float pHeIIconst = c*TimeUnits*intSigESigHeIInu/hp/intSigE;
-  if (RadiativeTransferHydrogenOnly == FALSE) {
-    for (i=0; i<size; i++)  phHeI[i]  = Er[i]*ErUnits*pHeIconst;
-    for (i=0; i<size; i++)  phHeII[i] = Er[i]*ErUnits*pHeIIconst;
-  }
+	// fill HI photo-ionization rate
+	float pHIconst = c*TimeUnits*intSigESigHInu/hp/intSigE;
+	for (i=0; i<size; i++)  phHI[i] = Enew[i]*ErUnits*pHIconst;
+
+	// fill HeI and HeII photo-ionization rates
+	float pHeIconst  = c*TimeUnits*intSigESigHeInu/hp/intSigE;
+	float pHeIIconst = c*TimeUnits*intSigESigHeIInu/hp/intSigE;
+	if (RadiativeTransferHydrogenOnly == FALSE) {
+	  for (i=0; i<size; i++)  phHeI[i]  = Enew[i]*ErUnits*pHeIconst;
+	  for (i=0; i<size; i++)  phHeII[i] = Enew[i]*ErUnits*pHeIIconst;
+	}
    
-  // fill photo-heating rate
-  float phScale    = c*TimeUnits/intSigE/VelUnits/VelUnits/mp/rtunits;
-  float GHIconst   = phScale*(intSigESigHI   - 13.6*ev2erg/hp*intSigESigHInu);
-  float GHeIconst  = phScale*(intSigESigHeI  - 24.6*ev2erg/hp*intSigESigHeInu);
-  float GHeIIconst = phScale*(intSigESigHeII - 54.4*ev2erg/hp*intSigESigHeIInu);
-  if (Nchem == 1)
-    for (i=0; i<size; i++)  photogamma[i] = Er[i]*ErUnits*GHIconst;
-  if (Nchem == 3)
-    for (i=0; i<size; i++)  photogamma[i] = Er[i]*ErUnits *
+	// fill photo-heating rate
+	float phScale    = c*TimeUnits/intSigE/VelUnits/VelUnits/mp/rtunits;
+	float GHIconst   = phScale*(intSigESigHI   - 13.6*ev2erg/hp*intSigESigHInu);
+	float GHeIconst  = phScale*(intSigESigHeI  - 24.6*ev2erg/hp*intSigESigHeInu);
+	float GHeIIconst = phScale*(intSigESigHeII - 54.4*ev2erg/hp*intSigESigHeIInu);
+	if (Nchem == 1)
+	  for (i=0; i<size; i++)  photogamma[i] = Enew[i]*ErUnits*GHIconst;
+	if (Nchem == 3)
+	  for (i=0; i<size; i++)  
+	    photogamma[i] = Enew[i]*ErUnits *
 	      (GHIconst*HI[i] + GHeIconst*HeI[i] + GHeIIconst*HeII[i])/HI[i];
 
-  // fill H2 dissociation rate (none for grey FLD problems)
-  if (MultiSpecies > 1) 
-    for (i=0; i<size; i++)  dissH2I[i] = 0.0;
+	// fill H2 dissociation rate (none for grey FLD problems)
+	if (MultiSpecies > 1) 
+	  for (i=0; i<size; i++)  dissH2I[i] = 0.0;
+
+      }  // end iteration over grids on this processor
 
   // return success
   return SUCCESS;
+
 }
 #endif

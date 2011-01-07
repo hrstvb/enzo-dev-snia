@@ -59,7 +59,7 @@
 
 
 int AMRFLDSplit::SetupBoundary(int Dim, int Face, 
-			     int BdryConst, float *BdryData) 
+			       int BdryConst, float *BdryData) 
 {
 //   if (debug)
 //     printf("Entering AMRFLDSplit::SetupBoundary routine\n");

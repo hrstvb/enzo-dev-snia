@@ -28,35 +28,13 @@ AMRFLDSplit::~AMRFLDSplit()
 
 //   if (debug)  printf("Entering AMRFLDSplit::destructor routine\n");
 
-  // delete HYPRE objects
-#ifdef USE_HYPRE
-  HYPRE_StructStencilDestroy(stencil);
-  HYPRE_StructGridDestroy(grid);
-#endif
-
-  // delete EnzoVectors and other internal arrays
-  int i, j;
-  //   EnzoVectors require deleting the structure
-  delete sol;
-  delete U0;
-  delete extsrc;
-
-  //   arrays require deleting the array
-#ifdef USE_HYPRE
-  HYPRE_StructVectorDestroy(rhsvec);
-  HYPRE_StructVectorDestroy(solvec);
-  HYPRE_StructMatrixDestroy(P);
-#endif
-  delete[] matentries;
-  delete[] rhsentries;
-  delete[] HYPREbuff;
-  delete[] OpacityE;
-
   // delete boundary condition arrays
+  int i, j;
   for (i=0; i<3; i++)
-    for (j=0; j<2; j++) {
-      if (BdryVals[i][j] != NULL)  delete[] BdryVals[i][j];
-    }
+    for (j=0; j<2; j++) 
+      if (BdryVals[i][j] != NULL)  
+	delete [] BdryVals[i][j];
+
 
 }
 #endif

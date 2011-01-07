@@ -28,7 +28,6 @@ int AMRFLDSplit::WriteParameters(FILE *fptr)
   
   fprintf(fptr, "RadHydroESpectrum = %"ISYM"\n", ESpectrum);
   fprintf(fptr, "RadHydroChemistry = %"ISYM"\n", Nchem);
-  fprintf(fptr, "RadHydroModel = %"ISYM"\n", Model);
 
   // set restart initial time step to current time step
   if (dt == 0.0) {

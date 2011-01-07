@@ -72,8 +72,7 @@ int AMRFLDSplit::Initialize(HierarchyEntry &TopGrid, TopGridData &MetaData)
 
   if (debug)  printf("Entering AMRFLDSplit::Initialize routine\n");
 
-
-  // find the grid corresponding to this process from the Hierarcy
+  // find root grid corresponding to this process from the Hierarcy
   HierarchyEntry *ThisGrid = &TopGrid;
   int i, dim, face, foundgrid=0;
   for (i=0; i<=MAX_NUMBER_OF_SUBGRIDS; i++) {
@@ -87,7 +86,6 @@ int AMRFLDSplit::Initialize(HierarchyEntry &TopGrid, TopGridData &MetaData)
     ENZO_FAIL("Error in AMRFLDSplit_Initialize");
   }
 
-  
 #ifdef _OPENMP
   // output number of OpenMP threads that will be used in this run
   int nthreads = omp_get_max_threads();
@@ -95,34 +93,35 @@ int AMRFLDSplit::Initialize(HierarchyEntry &TopGrid, TopGridData &MetaData)
 	 MyProcessorNumber,nthreads);
 #endif
 
-
 #ifndef MPI_INT
   // in case MPI is not included
   int MPI_PROC_NULL = -3;
   int MPI_COMM_WORLD = 0;
 #endif
 
-  // set rank of self-gravity problem to 3
-  rank = MetaData.TopGridRank;
+  // initialize the amrsolve Mpi object
+  pmpi = new AMRsolve_Mpi(MPI_COMM_WORLD);
+  AMRsolve_Grid::set_mpi(*pmpi);
 
+  // set rank of fld problem; error message if not 3 (amrsolve requirement)
+  rank = MetaData.TopGridRank;
+  if (rank != 3)
+    ENZO_FAIL("Error in AMRFLDSplit_Initialize: rank must be 3 (for now)");
+  
   // get processor layout from Grid
+  int layout[3];     // number of procs in each dim (1-based)
   for (dim=0; dim<rank; dim++) 
     layout[dim] = ThisGrid->GridData->GetProcessorLayout(dim);
   
   // get processor location in MPI grid
+  int location[3];   // location of this proc in each dim (0-based)
   for (dim=0; dim<rank; dim++) 
     location[dim] = ThisGrid->GridData->GetProcessorLocation(dim);
-
-  // get neighbor information from grid
-  for (dim=0; dim<rank; dim++) 
-    for (face=0; face<2; face++) 
-      NBors[dim][face] = ThisGrid->GridData->GetProcessorNeighbors(dim,face);
 
 //   if (debug)  printf("  Initialize: setting default parameters\n");
 
   // set default module parameters
   Nchem  = 1;           // hydrogen only
-  Model  = 1;           // case-B HII recombination coefficient
   ESpectrum = 1;        // T=10^5 blackbody spectrum
   theta  = 1.0;         // backwards euler implicit time discret.
   maxsubcycles = 100.0; // step ratio between radiation and hydro
@@ -133,27 +132,27 @@ int AMRFLDSplit::Initialize(HierarchyEntry &TopGrid, TopGridData &MetaData)
       BdryType[dim][face] = 0;
 
   // set default solver parameters
-  sol_tolerance      = 1.0e-8;    // HYPRE solver tolerance
-  sol_printl         = 1;         // HYPRE print level
-  sol_log            = 1;         // HYPRE logging level
-  sol_maxit          = 50;        // HYPRE max multigrid iters
-  sol_rlxtype        = 1;         // HYPRE relaxation type
-  sol_npre           = 1;         // HYPRE num pre-smoothing steps
-  sol_npost          = 1;         // HYPRE num post-smoothing steps
+  sol_tolerance = 1e-8;  // HYPRE solver tolerance
+  sol_maxit     = 50;    // HYPRE max linear iters
+  sol_type      = 1;     // HYPRE solver
+  sol_printl    = 1;     // HYPRE print level
+  sol_log       = 1;     // HYPRE logging level
+  sol_rlxtype   = 1;     // HYPRE relaxation type
+  sol_npre      = 1;     // HYPRE num pre-smoothing steps
+  sol_npost     = 1;     // HYPRE num post-smoothing steps
 
   // set default ionization parameters
-  NGammaDot          = 0.0;       // ionization strength
-  EtaRadius          = 0.0;       // single cell
-  EtaCenter[0]       = 0.0;       // x-location
-  EtaCenter[1]       = 0.0;       // y-location
-  EtaCenter[2]       = 0.0;       // z-location
+  NGammaDot    = 0.0;    // ionization strength
+  EtaRadius    = 0.0;    // single cell
+  EtaCenter[0] = 0.0;    // x-location
+  EtaCenter[1] = 0.0;    // y-location
+  EtaCenter[2] = 0.0;    // z-location
 
   // set default chemistry constants
   hnu0_HI   = 13.6;      // ionization energy of HI   [eV]
   hnu0_HeI  = 24.6;      // ionization energy of HeI  [eV]
   hnu0_HeII = 54.4;      // ionization energy of HeII [eV]
 
-//   if (debug)  printf("  Initialize: checking input file\n");
 
   ////////////////////////////////
   // if input file present, over-write defaults with module inputs
@@ -175,7 +174,6 @@ int AMRFLDSplit::Initialize(HierarchyEntry &TopGrid, TopGridData &MetaData)
 	ret = 0;
 	ret += sscanf(line, "RadHydroESpectrum = %"ISYM, &ESpectrum);
 	ret += sscanf(line, "RadHydroChemistry = %"ISYM, &Nchem);
-	ret += sscanf(line, "RadHydroModel = %"ISYM, &Model);
 	ret += sscanf(line, "RadHydroMaxDt = %"FSYM, &maxdt);
 	ret += sscanf(line, "RadHydroMinDt = %"FSYM, &mindt);
 	ret += sscanf(line, "RadHydroInitDt = %"FSYM, &initdt);
@@ -184,16 +182,17 @@ int AMRFLDSplit::Initialize(HierarchyEntry &TopGrid, TopGridData &MetaData)
 	ret += sscanf(line, "RadHydroDtRadFac = %"FSYM, &dtfac);
 	ret += sscanf(line, "RadiationScaling = %"FSYM, &ErScale);
 	ret += sscanf(line, "RadHydroTheta = %"FSYM, &theta);
-	ret += sscanf(line, "RadiationBoundaryX0Faces = %"ISYM" %"ISYM, 
+	ret += sscanf(line, "RadiationBoundaryX0Faces = %i %i", 
 		      BdryType[0], BdryType[0]+1);
 	if (rank > 1) {
-	  ret += sscanf(line, "RadiationBoundaryX1Faces = %"ISYM" %"ISYM,
+	  ret += sscanf(line, "RadiationBoundaryX1Faces = %i %i",
 			BdryType[1], BdryType[1]+1);
 	  if (rank > 2) {
-	    ret += sscanf(line, "RadiationBoundaryX2Faces = %"ISYM" %"ISYM,
+	    ret += sscanf(line, "RadiationBoundaryX2Faces = %i %i",
 			  BdryType[2], BdryType[2]+1);
 	  }
 	}
+	ret += sscanf(line, "RadHydroSolType = %i", &sol_type);
 	ret += sscanf(line, "RadHydroSolTolerance = %"FSYM, &sol_tolerance);
 	ret += sscanf(line, "RadHydroMaxMGIters = %i", &sol_maxit);
 	ret += sscanf(line, "RadHydroMGRelaxType = %i", &sol_rlxtype);
@@ -213,11 +212,26 @@ int AMRFLDSplit::Initialize(HierarchyEntry &TopGrid, TopGridData &MetaData)
   rewind(fptr);
   fclose(fptr);
 
-//   if (debug)  printf("  Initialize: verifying inputs\n");
 
   ////////////////////////////////
 
-  // check that these give appropriate values, otherwise set dim to periodic
+  //   LocDims holds the dimensions of the local domain, 
+  //   active cells only (no ghost or boundary cells)
+  for (dim=0; dim<rank; dim++)
+    LocDims[dim] = ThisGrid->GridData->GetGridEndIndex(dim)
+      - ThisGrid->GridData->GetGridStartIndex(dim) + 1;
+
+
+  //// Check input parameters ////
+
+  // First, ensure that Enzo was called with RadiativeCooling enabled 
+  // (since AMRFLDSplit doesn't handle chemistry/cooling)
+  if (!RadiativeCooling) {
+    fprintf(stderr,"AMRFLDSplit_Initialize: RadiativeCooling must be on!  Enabling\n");
+    RadiativeCooling = 1;
+  }
+  
+  // check for appropriate BdryType values, otherwise set dim to periodic
   for (dim=0; dim<rank; dim++) 
     for (face=0; face<2; face++)
       /// ADD NEW BOUNDARY CONDITION TYPES HERE!
@@ -235,37 +249,13 @@ int AMRFLDSplit::Initialize(HierarchyEntry &TopGrid, TopGridData &MetaData)
       BdryType[dim][1] = 0;
     }
 
-
   // ensure that new BdryVals array pointers are set to NULL
   for (dim=0; dim<rank; dim++) 
     for (face=0; face<2; face++) 
       BdryVals[dim][face] = NULL;
 
-
-//   if (debug)  printf("  Initialize: setting up subdomain information\n");
-
-  // set up subdomain information
-  //   EdgeVals gives the location of the left/right edge of the
-  //      domain (no bdry) -- start with Enzo grid size
-  for (dim=0; dim<rank; dim++) {
-    EdgeVals[dim][0] = ThisGrid->GridData->GetGridLeftEdge(dim);
-    EdgeVals[dim][1] = ThisGrid->GridData->GetGridRightEdge(dim);
-  }
-
-  //   LocDims holds the dimensions of the local domain, 
-  //   active cells only (no ghost or boundary cells)
-  for (dim=0; dim<rank; dim++)
-    LocDims[dim] = ThisGrid->GridData->GetGridEndIndex(dim)
-      - ThisGrid->GridData->GetGridStartIndex(dim) + 1;
-
-  // Model gives the physical set of equations to use
-  if ((Model != 1) && (Model != 10) && (Model != 4)) {
-    fprintf(stderr,"AMRFLDSplit Initialize: illegal Model = %"ISYM"\n",Model);
-    ENZO_FAIL("   Model is unimplemented in this module, exiting.");
-  }
-
   // Nchem gives the number of chemical species
-  if ((Nchem < 0) || (Nchem > 10)) {
+  if ((Nchem < 1) || (Nchem > 3)) {
     fprintf(stderr,"AMRFLDSplit Initialize: illegal Nchem = %"ISYM"\n",Nchem);
     fprintf(stderr,"   re-setting Nchem to 1\n");
     Nchem = 1;  // default is hydrogen only
@@ -338,337 +328,16 @@ int AMRFLDSplit::Initialize(HierarchyEntry &TopGrid, TopGridData &MetaData)
     theta = 1.0;  // default is backwards Euler
   }
 
-  // set flags denoting if this processor is on the external boundary
-  for (dim=0; dim<rank; dim++) {
-    if (layout[dim]==0) {
-      OnBdry[dim][0] = OnBdry[dim][1] = true;
-    }
-    else {
-      OnBdry[dim][0] = (location[dim] == 0);
-      OnBdry[dim][1] = (location[dim] == layout[dim]-1);
-    }
-  }
-  if (debug){
-    printf("AMRFLDSplit::Initialize p%"ISYM": rank = %"ISYM", Nchem = %"ISYM"\n",
-	   MyProcessorNumber, rank, Nchem);
-    printf("AMRFLDSplit::Initialize p%"ISYM": layout = (%"ISYM",%"ISYM",%"ISYM")\n",MyProcessorNumber,layout[0],layout[1],layout[2]);
-    printf("AMRFLDSplit::Initialize p%"ISYM": location = (%"ISYM",%"ISYM",%"ISYM")\n",MyProcessorNumber,location[0],location[1],location[2]);
-  }
-
-  //   for non-periodic domain, unset neighbor info.
-  for (dim=0; dim<rank; dim++) {
-    if ((OnBdry[dim][0]) && (BdryType[dim][0] != 0))
-      NBors[dim][0] = MPI_PROC_NULL;
-    if ((OnBdry[dim][1]) && (BdryType[dim][1] != 0))
-      NBors[dim][1] = MPI_PROC_NULL;
-  }
-  if (debug) {
-    printf("AMRFLDSplit::Initialize p%"ISYM": EdgeVals = (%g:%g,%g:%g,%g:%g)\n",
-	   MyProcessorNumber, EdgeVals[0][0], EdgeVals[0][1], EdgeVals[1][0],
-	   EdgeVals[1][1], EdgeVals[2][0], EdgeVals[2][1]);
-    printf("AMRFLDSplit::Initialize p%"ISYM": OnBdry = (%"ISYM":%"ISYM",%"ISYM":%"ISYM",%"ISYM":%"ISYM")\n",MyProcessorNumber,int(OnBdry[0][0]),int(OnBdry[0][1]),int(OnBdry[1][0]),int(OnBdry[1][1]),int(OnBdry[2][0]),int(OnBdry[2][1]));
-    printf("AMRFLDSplit::Initialize p%"ISYM": BdryType = (%"ISYM":%"ISYM",%"ISYM":%"ISYM",%"ISYM":%"ISYM")\n",MyProcessorNumber,BdryType[0][0],BdryType[0][1],BdryType[1][0],BdryType[1][1],BdryType[2][0],BdryType[2][1]);
-    printf("AMRFLDSplit::Initialize p%"ISYM": NBors = (%"ISYM":%"ISYM",%"ISYM":%"ISYM",%"ISYM":%"ISYM")\n",MyProcessorNumber,NBors[0][0],NBors[0][1],NBors[1][0],NBors[1][1],NBors[2][0],NBors[2][1]);
-  }
-
-  // get the current units values (used to help set the time step size)
-  double MassUnits;
-  float TempUnits;
-  DenUnits=LenUnits=TempUnits=MassUnits=TimeUnits=VelUnits=aUnits=1.0;
-  if (GetUnits(&DenUnits, &LenUnits, &TempUnits, 
-	       &TimeUnits, &VelUnits, &MassUnits, MetaData.Time) == FAIL) 
-    ENZO_FAIL("Error in GetUnits.");
-  a = 1.0; adot = 0.0;
-  if (ComovingCoordinates) {
-    if (CosmologyComputeExpansionFactor(MetaData.Time, &a, &adot) == FAIL) 
-      ENZO_FAIL("Error in CosmologyComputeExpansionFactor.");
-    aUnits = 1.0/(1.0 + InitialRedshift);
-  }
-
-  // dt* gives the time step sizes for each piece of physics
-  dtrad  = initdt;                        // use the input value (scaled units)
-
-  // set a bound on the global initial dt as a factor of the radiation timestep
-  dt = initdt*maxsubcycles;
-
-  // set initial time step into TopGrid
-  ThisGrid->GridData->SetMaxRadiationDt(dt);
-  
-  // compute global dimension information
-  for (dim=0; dim<rank; dim++)
-    GlobDims[dim] = MetaData.TopGridDims[dim];
-
-  // dx gives grid cell size (comoving, normalized units)
-  for (dim=0; dim<rank; dim++)
-    dx[dim] = (EdgeVals[dim][1]-EdgeVals[dim][0])/LocDims[dim];
-
-  // compute global index information for this subdomain
-  float fCellsLeft;
-  for (dim=0; dim<rank; dim++) {
-
-    // the global indexing is easy if we're at the left edge
-    if (location[dim]==0)  SolvIndices[dim][0]=0;
-
-    // otherwise we compute the number of intervening cells to left edge
-    else {
-
-      // get floating point value for number of cells
-      fCellsLeft = (EdgeVals[dim][0] - DomainLeftEdge[dim])/dx[dim];
-
-      // round floating point value to closest integer
-      SolvIndices[dim][0] =  (long) (fCellsLeft >= 0.0) ?
-	(trunc(fCellsLeft+0.5)) : (trunc(fCellsLeft-0.5));
-    }
-
-    // add on local size to obtain right edge indices
-    SolvIndices[dim][1] = SolvIndices[dim][0] + LocDims[dim] - 1;
-  }
-
-  // store local array sizes (active + ghost)
-  for (dim=0; dim<rank; dim++)
-    ArrDims[dim] = LocDims[dim] + 2*DEFAULT_GHOST_ZONES;
-
-  if (debug) {
-    printf("AMRFLDSplit::Initialize p%"ISYM": SolvIndices = (%i:%i,%i:%i,%i:%i)\n",
-	   MyProcessorNumber, SolvIndices[0][0], SolvIndices[0][1], SolvIndices[1][0], 
-	   SolvIndices[1][1], SolvIndices[2][0], SolvIndices[2][1]);
-    printf("AMRFLDSplit::Initialize p%"ISYM": SolvOff = (%"ISYM",%"ISYM",%"ISYM")\n",
-	   MyProcessorNumber, SolvOff[0], SolvOff[1], SolvOff[2]);
-    printf("AMRFLDSplit::Initialize p%"ISYM": LocDims = (%"ISYM",%"ISYM",%"ISYM")\n",
-	   MyProcessorNumber, LocDims[0], LocDims[1], LocDims[2]);
-    printf("AMRFLDSplit::Initialize p%"ISYM": ArrDims = (%"ISYM",%"ISYM",%"ISYM")\n",
-	   MyProcessorNumber, ArrDims[0], ArrDims[1], ArrDims[2]);
-  }
-
-//   if (debug)  printf("  Initialize: setting up EnzoVectors\n");
-
-  // set up vector container for previous time step (empty data)
-  int xghosts = DEFAULT_GHOST_ZONES, yghosts=0, zghosts=0;
-  if (rank > 1) {
-    yghosts = DEFAULT_GHOST_ZONES;
-    if (rank > 2) {
-      zghosts = DEFAULT_GHOST_ZONES;
-    }
-  }
-  U0 = new EnzoVector(LocDims[0], LocDims[1], LocDims[2], 
-		      xghosts, xghosts, yghosts, yghosts, zghosts, zghosts, 
-		      1, NBors[0][0], NBors[0][1], NBors[1][0], 
-		      NBors[1][1], NBors[2][0], NBors[2][1], 1);
-  GhDims[0][0] = xghosts;
-  GhDims[0][1] = xghosts;
-  GhDims[1][0] = yghosts;
-  GhDims[1][1] = yghosts;
-  GhDims[2][0] = zghosts;
-  GhDims[2][1] = zghosts;
-
-  if (debug)
-    printf("AMRFLDSplit::Initialize p%"ISYM": GhDims = (%"ISYM":%"ISYM",%"ISYM":%"ISYM",%"ISYM":%"ISYM")\n",
-	   MyProcessorNumber, GhDims[0][0], GhDims[0][1], GhDims[1][0], 
-	   GhDims[1][1], GhDims[2][0], GhDims[2][1]);
-
-  // set up vectors for temporary storage and Jacobian components
-  sol  = U0->clone();
-  extsrc = U0->clone();
-  OpacityE = new float[ArrDims[0]*ArrDims[1]*ArrDims[2]];
-
-
-//   if (debug)  printf("  Initialize: setting up CoolData object\n");
-
-  // ensure that CoolData object has been set up
-  if (CoolData.ceHI == NULL) 
-    if (InitializeRateData(MetaData.Time) == FAIL) 
-      ENZO_FAIL("Error in InitializeRateData.");
-
-  // if performing chemistry in this module, un-scale rates for use 
-  // within RadHydro solver (handles its own units) 
-  if (RadiativeCooling == 0) {
-    float mp = 1.67262171e-24;   // Mass of a proton [g]
-    float tbase1 = TimeUnits;
-    float xbase1 = LenUnits/(a*aUnits);
-    float dbase1 = DenUnits*a*a*a*aUnits*aUnits*aUnits;
-    float kunit  = (aUnits*aUnits*aUnits*mp) / (dbase1*tbase1);
-    float kunit_3bdy  = kunit * (aUnits*aUnits*aUnits*mp) / dbase1;
-    float coolunit = (aUnits*aUnits*aUnits*aUnits*aUnits*xbase1*xbase1*mp*mp) 
-                     / (tbase1*tbase1*tbase1*dbase1);
-    for (i=0; i<CoolData.NumberOfTemperatureBins; i++) {
-      RateData.k1[i]      *= kunit;
-      RateData.k2[i]      *= kunit;
-      RateData.k3[i]      *= kunit;
-      RateData.k4[i]      *= kunit;
-      RateData.k5[i]      *= kunit;
-      RateData.k6[i]      *= kunit;
-      RateData.k7[i]      *= kunit;
-      RateData.k8[i]      *= kunit;
-      RateData.k9[i]      *= kunit;
-      RateData.k10[i]     *= kunit;
-      RateData.k11[i]     *= kunit;
-      RateData.k12[i]     *= kunit;
-      RateData.k13[i]     *= kunit;
-      RateData.k13dd[i]   *= kunit;
-      RateData.k14[i]     *= kunit;
-      RateData.k15[i]     *= kunit;
-      RateData.k16[i]     *= kunit;
-      RateData.k17[i]     *= kunit;
-      RateData.k18[i]     *= kunit;
-      RateData.k19[i]     *= kunit;
-      RateData.k20[i]     *= kunit;
-      RateData.k21[i]     *= kunit;
-      RateData.k22[i]     *= kunit_3bdy;
-      RateData.k50[i]     *= kunit;
-      RateData.k51[i]     *= kunit;
-      RateData.k52[i]     *= kunit;
-      RateData.k53[i]     *= kunit;
-      RateData.k54[i]     *= kunit;
-      RateData.k55[i]     *= kunit;
-      RateData.k56[i]     *= kunit;
-      CoolData.ceHI[i]    *= coolunit;
-      CoolData.ceHeI[i]   *= coolunit;
-      CoolData.ceHeII[i]  *= coolunit;
-      CoolData.ciHI[i]    *= coolunit;
-      CoolData.ciHeI[i]   *= coolunit;
-      CoolData.ciHeIS[i]  *= coolunit;
-      CoolData.ciHeII[i]  *= coolunit;
-      CoolData.reHII[i]   *= coolunit;
-      CoolData.reHeII1[i] *= coolunit;
-      CoolData.reHeII2[i] *= coolunit;
-      CoolData.reHeIII[i] *= coolunit;
-      CoolData.brem[i]    *= coolunit;
-    }
-    CoolData.comp   *= coolunit;
-    CoolData.piHI   *= coolunit;
-    CoolData.piHeI  *= coolunit;
-    CoolData.piHeII *= coolunit;
-  }
-
-//   if (debug)  printf("  Initialize: computing radiation spectrum integrals\n");
-
-  // compute Radiation Energy spectrum integrals
-  if (this->ComputeRadiationIntegrals() == FAIL) 
-    ENZO_FAIL("AMRFLDSplit::Initialize Error in computing radiation spectrum integrals");
-
-//   if (debug)  printf("  Initialize: initializing HYPRE data structures\n");
-
-#ifdef USE_HYPRE
-
-#ifdef USE_MPI
-  float stime = MPI_Wtime();
-#else
-  float stime = 0.0;
-#endif
-  // initialize HYPRE stuff
-  //    initialize the diagnostic information
-  totIters = 0;
-
-//   if (debug)  printf("     HYPRE_StructGridCreate\n");
-
-  //    set up the grid
-  //       create the grid object
-  HYPRE_StructGridCreate(MPI_COMM_WORLD, rank, &grid);
-
-//   if (debug)  printf("     HYPRE_StructGridSetExtents\n");
-
-  //       set my grid extents as if we have one part with multiple boxes.
-  //       Have each processor describe it's own global extents
-  Eint32 ilower[3] = {SolvIndices[0][0], SolvIndices[1][0], SolvIndices[2][0]};
-  Eint32 iupper[3] = {SolvIndices[0][1], SolvIndices[1][1], SolvIndices[2][1]};
-  HYPRE_StructGridSetExtents(grid, ilower, iupper);
-
-//   if (debug)  printf("     HYPRE_StructGridSetPeriodic\n");
-
-  //       set grid periodicity
-  Eint32 periodicity[3] = {0, 0, 0};
-  if (BdryType[0][0] == 0)  periodicity[0] = GlobDims[0];
-  if (BdryType[1][0] == 0)  periodicity[1] = GlobDims[1];
-  if (BdryType[2][0] == 0)  periodicity[2] = GlobDims[2];
-  HYPRE_StructGridSetPeriodic(grid, periodicity);
-  
-//   if (debug)  printf("     HYPRE_StructGridAssemble\n");
-
-  //       assemble the grid
-  HYPRE_StructGridAssemble(grid);
-
-//   if (debug)  printf("     HYPRE_StructStencilCreate\n");
-
-  //   set up the stencil
-  if (rank == 1) 
-    stSize = 3;
-  else if (rank == 2)
-    stSize = 5;
-  else 
-    stSize = 7;
-  HYPRE_StructStencilCreate(rank, stSize, &stencil);
-
-//   if (debug)  printf("     HYPRE_StructStencilSetElement\n");
-
-  //      set stencil entries
-  Eint32 offset[3];
-  Eint32 stentry=0;
-  //         dependency to x2 left
-  if (rank == 3) {
-    offset[0] = 0;  offset[1] = 0;  offset[2] = -1;
-    HYPRE_StructStencilSetElement(stencil, stentry++, offset);
-  }
-  //         dependency to x1 left
-  if (rank >= 2) {
-    offset[0] = 0;  offset[1] = -1;  offset[2] = 0;
-    HYPRE_StructStencilSetElement(stencil, stentry++, offset);
-  }
-  //         dependency to x0 left
-  offset[0] = -1;  offset[1] = 0;  offset[2] = 0;
-  HYPRE_StructStencilSetElement(stencil, stentry++, offset);
-  //         dependency to self
-  offset[0] = 0;  offset[1] = 0;  offset[2] = 0;
-  HYPRE_StructStencilSetElement(stencil, stentry++, offset);
-  //         dependency to x0 right
-  offset[0] = 1;  offset[1] = 0;  offset[2] = 0;
-  HYPRE_StructStencilSetElement(stencil, stentry++, offset);
-  //         dependency to x1 right
-  if (rank >= 2) {
-    offset[0] = 0;  offset[1] = 1;  offset[2] = 0;
-    HYPRE_StructStencilSetElement(stencil, stentry++, offset);
-  }
-  //         dependency to x2 right
-  if (rank == 3) {
-    offset[0] = 0;  offset[1] = 0;  offset[2] = 1;
-    HYPRE_StructStencilSetElement(stencil, stentry++, offset);
-  }
-
-//   if (debug)  printf("     HYPRE_Struct{Matrix/Vector}*\n");
-
-  //   allocate temporary arrays
-  int Nx = (SolvIndices[0][1]-SolvIndices[0][0]+1);
-  int Ny = (SolvIndices[1][1]-SolvIndices[1][0]+1);
-  int Nz = (SolvIndices[2][1]-SolvIndices[2][0]+1);
-  matentries = new Eflt64[stSize*Nx*Ny*Nz];
-  rhsentries = new Eflt64[Nx*Ny*Nz];
-  HYPREbuff = new Eflt64[Nx];
-  HYPRE_StructMatrixCreate(MPI_COMM_WORLD, grid, stencil, &P);
-  HYPRE_StructMatrixInitialize(P);
-  HYPRE_StructVectorCreate(MPI_COMM_WORLD, grid, &rhsvec);
-  HYPRE_StructVectorInitialize(rhsvec);
-  HYPRE_StructVectorCreate(MPI_COMM_WORLD, grid, &solvec);
-  HYPRE_StructVectorInitialize(solvec);
-
-#ifdef USE_MPI
-  float ftime = MPI_Wtime();
-#else
-  float ftime = 0.0;
-#endif
-  HYPREtime += ftime-stime;
-
-#else  // ifdef USE_HYPRE
-
-  ENZO_FAIL("AMRFLDSplit_Initialize ERROR: module requires USE_HYPRE to be set!");
-  
-#endif
-
-//   if (debug)  printf("  Initialize: checking MG solver parameters\n");
-
-  //   check MG solver parameters
+  //   check linear solver parameters
   if (sol_maxit < 0) {
     fprintf(stderr,"Illegal RadHydroMaxMGIters = %i. Setting to 20\n",
 	    sol_maxit);
     sol_maxit = 20;
+  }
+  if ((sol_type < 0) || (sol_type) > 4) {
+    fprintf(stderr,"Illegal RadHydroSolType = %i.  Setting to 1 (BiCGStab)\n", 
+	    sol_type);
+    sol_type = 1;
   }
   if ((sol_rlxtype<0) || (sol_rlxtype>3)) {
     fprintf(stderr,"Illegal RadHydroMGRelaxType = %i. Setting to 1\n",
@@ -686,11 +355,123 @@ int AMRFLDSplit::Initialize(HierarchyEntry &TopGrid, TopGridData &MetaData)
     sol_npost = 1;
   }
   if ((sol_tolerance < 1.0e-15) || (sol_tolerance > 1.0)) {
-    fprintf(stderr,"Illegal RadHydroNewtTolerance = %g. Setting to 1e-4\n",
+    fprintf(stderr,"Illegal RadHydroSolTolerance = %g. Setting to 1e-4\n",
 	    sol_tolerance);
     sol_tolerance = 1.0e-4;
   }
 
+
+  // set flags denoting if this processor is on the external boundary
+  for (dim=0; dim<rank; dim++) {
+    if (layout[dim]==0) {
+      OnBdry[dim][0] = OnBdry[dim][1] = true;
+    }
+    else {
+      OnBdry[dim][0] = (location[dim] == 0);
+      OnBdry[dim][1] = (location[dim] == layout[dim]-1);
+    }
+  }
+  if (debug){
+    printf("AMRFLDSplit::Initialize p%"ISYM": rank = %"ISYM", Nchem = %"ISYM"\n",
+	   MyProcessorNumber, rank, Nchem);
+    printf("AMRFLDSplit::Initialize p%"ISYM": layout = (%"ISYM",%"ISYM",%"ISYM")\n",MyProcessorNumber,layout[0],layout[1],layout[2]);
+    printf("AMRFLDSplit::Initialize p%"ISYM": location = (%"ISYM",%"ISYM",%"ISYM")\n",MyProcessorNumber,location[0],location[1],location[2]);
+  }
+  if (debug) {
+    printf("AMRFLDSplit::Initialize p%"ISYM": OnBdry = (%i:%i,%i:%i,%i:%i)\n",
+	   MyProcessorNumber, Eint32(OnBdry[0][0]), Eint32(OnBdry[0][1]), 
+	   Eint32(OnBdry[1][0]), Eint32(OnBdry[1][1]), Eint32(OnBdry[2][0]), 
+	   Eint32(OnBdry[2][1]));
+    printf("AMRFLDSplit::Initialize p%"ISYM": BdryType = (%i:%i,%i:%i,%i:%i)\n",
+	   MyProcessorNumber, BdryType[0][0], BdryType[0][1], BdryType[1][0], 
+	   BdryType[1][1], BdryType[2][0], BdryType[2][1]);
+  }
+
+  // dt* gives the time step sizes for each piece of physics
+  dtrad = initdt;                        // use the input value (scaled units)
+
+  // set a bound on the global initial dt as a factor of the radiation timestep
+  dt = initdt*maxsubcycles;
+
+  // set initial time step into TopGrid
+  ThisGrid->GridData->SetMaxRadiationDt(dt);
+  
+  if (debug)
+    printf("AMRFLDSplit::Initialize p%"ISYM": LocDims = (%"ISYM",%"ISYM",%"ISYM")\n",
+	   MyProcessorNumber, LocDims[0], LocDims[1], LocDims[2]);
+
+
+  // set up vector container for previous time step (empty data)
+  int xghosts = DEFAULT_GHOST_ZONES, yghosts=0, zghosts=0;
+  if (rank > 1) {
+    yghosts = DEFAULT_GHOST_ZONES;
+    if (rank > 2) {
+      zghosts = DEFAULT_GHOST_ZONES;
+    }
+  }
+
+  // ensure that CoolData object has been set up
+  if (CoolData.ceHI == NULL) 
+    if (InitializeRateData(MetaData.Time) == FAIL) 
+      ENZO_FAIL("Error in InitializeRateData.");
+
+
+  // compute Radiation Energy spectrum integrals
+  if (this->ComputeRadiationIntegrals() == FAIL) 
+    ENZO_FAIL("AMRFLDSplit::Initialize Error in radiation spectrum integrals");
+
+
+#ifdef USE_HYPRE
+
+#ifdef USE_MPI
+  float stime = MPI_Wtime();
+#else
+  float stime = 0.0;
+#endif
+  // initialize amrsolve stuff
+  //    initialize the diagnostic information
+  totIters = 0;
+
+  // set amrsolve parameters
+  amrsolve_params = new AMRsolve_Parameters();
+  amrsolve_params->set_defaults();
+  if (sol_type == 0)  amrsolve_params->set_parameter("solver","fac");
+  if (sol_type == 1)  amrsolve_params->set_parameter("solver","bicgstab");
+  if (sol_type == 2)  amrsolve_params->set_parameter("solver","bicgstab-boomer");
+  if (sol_type == 3)  amrsolve_params->set_parameter("solver","gmres");
+  if (sol_type == 4)  amrsolve_params->set_parameter("solver","pfmg");
+  char numstr[80];
+  sprintf(numstr, "%e", sol_tolerance);
+  amrsolve_params->add_parameter("solver_restol",numstr);
+  sprintf(numstr, "%i", sol_maxit);
+  amrsolve_params->add_parameter("solver_itmax",numstr);
+  sprintf(numstr, "%i", sol_printl);
+  amrsolve_params->add_parameter("solver_printl",numstr);
+  sprintf(numstr, "%i", sol_log);
+  amrsolve_params->add_parameter("solver_log",numstr);
+  sprintf(numstr, "%i", sol_rlxtype);
+  amrsolve_params->add_parameter("solver_rlxtype",numstr);
+  sprintf(numstr, "%i", sol_npre);
+  amrsolve_params->add_parameter("solver_npre",numstr);
+  sprintf(numstr, "%i", sol_npost);
+  amrsolve_params->add_parameter("solver_npost",numstr);
+  if (debug) {
+    printf("AMRFLDSplit::Initialize amrsolve parameters:\n");
+    amrsolve_params->print();
+  }
+
+#ifdef USE_MPI
+  float ftime = MPI_Wtime();
+#else
+  float ftime = 0.0;
+#endif
+  AMRSolTime += ftime-stime;
+
+#else  // ifdef USE_HYPRE
+
+  ENZO_FAIL("AMRFLDSplit_Initialize ERROR: module requires USE_HYPRE to be set!");
+  
+#endif
 
 //   if (debug)  printf("  Initialize: calling local problem initializers\n");
 
@@ -1083,6 +864,7 @@ int AMRFLDSplit::Initialize(HierarchyEntry &TopGrid, TopGridData &MetaData)
   }
   ////////////////////////////////
 
+
   if (debug)  printf("  Initialize: outputting parameters to log file\n");
 
   // output RadHydro solver parameters to output log file 
@@ -1096,7 +878,6 @@ int AMRFLDSplit::Initialize(HierarchyEntry &TopGrid, TopGridData &MetaData)
     else {
       fprintf(outfptr, "RadHydroESpectrum = %"ISYM"\n", ESpectrum);
       fprintf(outfptr, "RadHydroChemistry = %"ISYM"\n", Nchem);
-      fprintf(outfptr, "RadHydroModel = %"ISYM"\n", Model);
       fprintf(outfptr, "RadHydroMaxDt = %g\n", maxdt);
       fprintf(outfptr, "RadHydroMinDt = %g\n", mindt);
       fprintf(outfptr, "RadHydroInitDt = %g\n", initdt);
@@ -1105,17 +886,18 @@ int AMRFLDSplit::Initialize(HierarchyEntry &TopGrid, TopGridData &MetaData)
       fprintf(outfptr, "RadHydroDtRadFac = %g\n", dtfac);
       fprintf(outfptr, "RadiationScaling = %g\n", ErScale);
       fprintf(outfptr, "RadHydroTheta = %g\n", theta);
-      fprintf(outfptr, "RadiationBoundaryX0Faces = %"ISYM" %"ISYM"\n", 
+      fprintf(outfptr, "RadiationBoundaryX0Faces = %i %i\n", 
 	      BdryType[0][0], BdryType[0][1]);
       if (rank > 1) {
-	fprintf(outfptr, "RadiationBoundaryX1Faces = %"ISYM" %"ISYM"\n", 
+	fprintf(outfptr, "RadiationBoundaryX1Faces = %i %i\n", 
 		BdryType[1][0], BdryType[1][1]);
 	if (rank > 2) {
-	  fprintf(outfptr, "RadiationBoundaryX2Faces = %"ISYM" %"ISYM"\n", 
+	  fprintf(outfptr, "RadiationBoundaryX2Faces = %i %i\n", 
 		  BdryType[2][0], BdryType[2][1]);
 	}
       }
-      fprintf(outfptr, "RadHydroNewtTolerance = %g\n", sol_tolerance);    
+      fprintf(outfptr, "RadHydroSolType = %i\n", sol_type);
+      fprintf(outfptr, "RadHydroSolTolerance = %g\n", sol_tolerance);    
       fprintf(outfptr, "RadHydroMaxMGIters = %i\n", sol_maxit);    
       fprintf(outfptr, "RadHydroMGRelaxType = %i\n", sol_rlxtype);    
       fprintf(outfptr, "RadHydroMGPreRelax = %i\n", sol_npre);    

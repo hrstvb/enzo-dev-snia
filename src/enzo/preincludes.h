@@ -29,6 +29,9 @@
 #include <stdio.h>
 #include <string.h>
 #include <math.h>
+#ifdef AMR_SOLVE
+#include "AMRsolve.h"
+#endif
 #ifdef USE_HYPRE
 #include "HYPRE_sstruct_ls.h"
 #endif

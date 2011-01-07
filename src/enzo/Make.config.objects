@@ -27,14 +27,11 @@ OBJS_CONFIG_LIB = \
 	AMRFLDSplit_Dump.o \
 	AMRFLDSplit_EnforceBoundary.o \
 	AMRFLDSplit_Evolve.o \
-	AMRFLDSplit_FInterface.o \
 	AMRFLDSplit_FillRates.o \
 	AMRFLDSplit_Initialize.o \
-	AMRFLDSplit_Opacity.o \
 	AMRFLDSplit_RadiationSource.o \
 	AMRFLDSplit_RadiationSpectrum.o \
 	AMRFLDSplit_SetupBoundary.o \
-	AMRFLDSplit_SetupSystem.o \
 	AMRFLDSplit_WriteParameters.o \
 	AMRGravitySolve.o \
         AMRH5writer.o \

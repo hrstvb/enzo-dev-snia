@@ -59,7 +59,7 @@ void AMRGravitySolve
 
   // Initialize the AMRsolve hierarchy
   AMRsolve_Domain domain(3, DomainLeftEdge, DomainRightEdge);
-  bool is_periodic = true;
+  bool is_periodic[] = {true, true, true};
 
   LCAPERF_START("amrsolve_hierarchy");
   hierarchy->initialize(domain,*pmpi,is_periodic);
