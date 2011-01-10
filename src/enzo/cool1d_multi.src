@@ -115,7 +115,7 @@
       real dom, qq, vibl, logtem0, logtem9, dlogtem, energy, zr
       real dt2, ttmin, comp1, comp2, scoef, acoef, HIdot,
      &     hdlte1, hdlow1, gamma2, x, nH2, nother, fudge, fH2,
-     &     gphdl1, factor
+     &     gphdl1, factor, zero
       double precision coolunit, dbase1, tbase1, xbase1, rtunits
 
 !  Slice locals
@@ -179,7 +179,7 @@
       zr       = 1.0/(aye*uaye) - 1.0
       fudge    = 1.0
       iradfield = -1
-
+      zero = 0.0d0
 !     Set compton cooling coefficients (and temperature)
 
       if (iexpand .eq. 1) then
@@ -347,7 +347,7 @@
       enddo
 
 !     Compute the cooling function
-
+		
       do i = is+1, ie+1
          if ( itmask(i) ) then
          edot(i) = (
@@ -397,6 +397,14 @@
      &           tgas(i), p2d(i)
             ERROR_MESSAGE
          endif
+
+	if (edot(i) .eq. 1./zero) then
+            write(6,*) 'Inf in edot[1]: ', i, j, k, edot(i), 
+     &           HI(i,j,k), HII(i,j,k), HeI(i,j,k), HeII(i,j,k), 
+     &           HeIII(i,j,k), de(i,j,k), d(i,j,k), 
+     &           tgas(i), p2d(i)
+            ERROR_MESSAGE
+	endif		
          
          end if
       enddo
@@ -857,6 +865,16 @@ c
      &        clPar1, clPar2, clPar3, clPar4, clPar5,
      &        clDataSize, clCooling, clHeating, clMMW,
      &        itmask)
+
+	do i = is+1, ie+1
+		if (edot(i) .eq. 1./zero) then
+            		write(6,*) 'Inf in edot[1]: ', i, j, k, edot(i), 
+     &           	HI(i,j,k), HII(i,j,k), HeI(i,j,k), HeII(i,j,k), 
+     &           	HeIII(i,j,k), de(i,j,k), d(i,j,k), 
+     &           	tgas(i), p2d(i)
+            	ERROR_MESSAGE
+		endif
+	enddo			
 
       endif
 

@@ -98,7 +98,7 @@
       logical itmask(in)
 
 !  Parameters
-
+	real zero
 !  Locals
 
       integer i, q
@@ -113,7 +113,7 @@
 
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\/////////////////////////////////
 !=======================================================================
-
+	zero=0.0d0
       inv_log10 = 1.0 / log(10.0)
       log10_tCMB = log10(comp2)
 
@@ -305,8 +305,26 @@
      &           clPar1, dclPar(1), clPar2, dclPar(2),
      &           clPar3, dclPar(3), clPar4, dclPar(4),
      &           clPar5, dclPar(5),
-     &           clDataSize, clCooling, log_cool(i))
+     &           clDataSize, clCooling, log_cool(i),0)
                edot_met(i) = -10**log_cool(i)
+		if(log_cool(i) .ge. 38.0) then
+
+               		call interpolate_5D(log_n_h(i), log_Z(i), 
+     &           log_e_frac(i), zr, log10tem(i), clGridDim,
+     &           clPar1, dclPar(1), clPar2, dclPar(2),
+     &           clPar3, dclPar(3), clPar4, dclPar(4),
+     &           clPar5, dclPar(5),
+     &           clDataSize, clCooling, log_cool(i),1)
+
+
+
+		endif
+
+
+		if(edot_met(i) .eq. 1.0/zero .or. abs(log_cool(i)) .ge. 38) then
+			write(6,*) '5d interpolate failed:',edot_met(i),log_cool(i)
+		endif
+
 
 !     Ignore CMB term if T >> T_CMB
                if ((icmbTfloor .eq. 1) .and. 
@@ -316,8 +334,13 @@
      &                 clPar1, dclPar(1), clPar2, dclPar(2),
      &                 clPar3, dclPar(3), clPar4, dclPar(4),
      &                 clPar5, dclPar(5),
-     &                 clDataSize, clCooling, log_cool_cmb(i))
+     &                 clDataSize, clCooling, log_cool_cmb(i), 0)
                   edot_met(i) = edot_met(i) + 10**log_cool_cmb(i)
+
+		  if(edot_met(i) .eq. 1.0/zero .or. abs(log_cool_cmb(i)) .ge. 38) then
+			write(6,*) '5d cmb interpolate failed:',edot_met(i),log_cool_cmb(i)
+			endif
+
                endif
 
                if (iClHeat .eq. 1) then
@@ -326,8 +349,23 @@
      &                 clPar1, dclPar(1), clPar2, dclPar(2),
      &                 clPar3, dclPar(3), clPar4, dclPar(4),
      &                 clPar5, dclPar(5),
-     &                 clDataSize, clHeating, log_heat(i))
+     &                 clDataSize, clHeating, log_heat(i), 0)
                   edot_met(i) = edot_met(i) + 10**log_heat(i)
+
+		if (log_heat(i) .ge. 38.0) then
+		call interpolate_5D(log_n_h(i), log_Z(i), 
+     &                 log_e_frac(i), zr, log10tem(i), clGridDim,
+     &                 clPar1, dclPar(1), clPar2, dclPar(2),
+     &                 clPar3, dclPar(3), clPar4, dclPar(4),
+     &                 clPar5, dclPar(5),
+     &                 clDataSize, clHeating, log_heat(i), 1)
+
+		endif
+
+		  if(edot_met(i) .eq. 1.0/zero .or. abs(log_heat(i)) .ge. 38) then
+			write(6,*) '5d heating interpolate failed:',edot_met(i),log_cool(i)
+			write(6,*) log_heat(i),log10tem(i),log10_tCMB,log_cool_cmb(i)
+		endif
                endif
 
             endif
@@ -338,6 +376,22 @@
 
             edot(i) = edot(i) + (edot_met(i) * h_mass_fr(i) *
      &           d(i,j,k) * d(i,j,k))
+
+!		if(de(i,j,k) .gt. d(i,j,k)) then
+!			write(6,*) 'd,de: ',d(i,j,k),de(i,j,k),de(i,j,k)/d(i,j,k)
+!			write(6,*) log_n_h(i),log_Z(i),log_e_frac(i),zr,log10tem(i)
+!			write(6,*) h_mass_fr(i),HI(i,j,k),HII(i,j,k)
+!			write(6,*) HM(i,j,k), H2I(i,j,k),H2II(i,j,k)
+!		endif
+
+
+
+	    if(edot(i) .eq. 1.0/zero) then
+		write(6,*) 'Infinite edot:',edot(i),edot_met(i),h_mass_fr(i),d(i,j,k)
+		write(6,*) log_n_h(i),log_Z(i),log_e_frac(i),zr,log10tem(i),clGridDim
+		write(6,*) log_cool(i),log_heat(i),log_cool_cmb(i),cl_e_frac(i)
+		endif
+
 
          end if
       enddo
@@ -378,6 +432,7 @@
      &     (gridPar1(index1+1) - gridPar1(index1))
 
       value = (input1 - gridPar1(index1)) * slope + dataField(index1)
+
 
       return
       end
@@ -435,6 +490,8 @@
 
       value = (input1 - gridPar1(index1)) * slope + value2(1)
 
+
+	
       return
       end
 
@@ -507,6 +564,9 @@
 
       value = (input1 - gridPar1(index1)) * slope + value2(1)
 
+
+
+	
       return
       end
 
@@ -534,7 +594,7 @@
 
 !  Locals
 
-      integer index1, index2, index3, index4, int_index, q, w, e
+      integer index1, index2, index3, index4, int_index, q, w, e, off_table
       real slope, value4(2), value3(2), value2(2)
 
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\/////////////////////////////////
@@ -542,6 +602,7 @@
 
 !     Calculate interpolation indices
 
+      off_table = 0
       index1 = min(gridDim(1)-1,
      &     max(1,int((input1-gridPar1(1))/dgridPar1)+1))
       index2 = min(gridDim(2)-1,
@@ -561,41 +622,106 @@
 
                int_index = (((q+index1-2) * gridDim(2) + (w+index2-2)) * 
      &              gridDim(3) + (e+index3-2)) * gridDim(4) + index4
+	
+	       if(input4 .lt. gridPar4(1)) then
+			value4(e)=dataField(int_index)	
+			off_table = off_table + 1
+	       endif
 
-               slope = (dataField(int_index+1) - dataField(int_index)) /
-     &              (gridPar4(index4+1) - gridPar4(index4))
+	       if(input4 .gt. gridPar4(gridDim(4))) then
+			value4(e)=dataField(int_index+1)
+			off_table = off_table + 1
+	       endif
 
-               value4(e) = (input4 - gridPar4(index4)) * slope + 
-     &              dataField(int_index)
+	
+	       if((input4 .ge. gridPar4(1)) 
+     &			.and. (input4 .le. gridPar4(gridDim(4)))) then
 
+	             slope = (dataField(int_index+1) - dataField(int_index)) /
+     &  	            (gridPar4(index4+1) - gridPar4(index4))
+
+               	     value4(e) = (input4 - gridPar4(index4)) * slope + 
+     &              		dataField(int_index)
+	       endif
             enddo
 
 !     interpolate over parameter 3
 
-            slope = (value4(2) - value4(1)) /
-     &           (gridPar3(index3+1) - gridPar3(index3))
+	    if(input3 .lt. gridPar3(1)) then
+		value3(w) = value4(1)
+		off_table = off_table + 1
+	    endif
 
-            value3(w) = (input3 - gridPar3(index3)) * slope +
-     &           value4(1)
+	    if(input3 .gt. gridPar3(gridDim(3))) then
+		value3(w) = value4(2)
+		off_table = off_table + 1
+	    endif
+
+	    if((input3 .ge. gridPar3(1)) 
+     &		.and. (input3 .le. gridPar3(gridDim(3)))) then
+
+	            slope = (value4(2) - value4(1)) /
+     &           	(gridPar3(index3+1) - gridPar3(index3))	
+
+	            value3(w) = (input3 - gridPar3(index3)) * slope +
+     &           	value4(1)
+	    endif
 
          enddo
 
 !     interpolate over parameter 2
 
-         slope = (value3(2) - value3(1)) /
-     &        (gridPar2(index2+1) - gridPar2(index2))
 
-         value2(q) = (input2 - gridPar2(index2)) * slope + value3(1)
+	if(input2 .lt. gridPar2(1)) then
+		value2(q)=value3(1)
+		off_table = off_table + 1
+	endif
 
+	if(input2 .gt. 2.0) then
+!		value2(q)=value3(2)
+!		off_table = off_table + 1
+		write(6,*) 'Z > 100 Zsol in cool1d_cloudy.src',input1, input2,
+     &			input3, input4
+
+	endif
+
+	if((input2 .ge. gridPar2(1))) then
+!     &		.and. (input2 .le. gridPar2(gridDim(2)))) then
+
+	         slope = (value3(2) - value3(1)) /
+     &  	      (gridPar2(index2+1) - gridPar2(index2))
+
+	         value2(q) = (input2 - gridPar2(index2)) * slope + value3(1)
+	endif
       enddo
 
 !     interpolate over parameter 1
 
-      slope = (value2(2) - value2(1)) /
-     &     (gridPar1(index1+1) - gridPar1(index1))
+	if(input1 .lt. gridPar1(1)) then
+		value= value2(1)
+		off_table = off_table + 1
+	endif
 
-      value = (input1 - gridPar1(index1)) * slope + value2(1)
+	if(input1 .gt. gridPar1(gridDim(1))) then
+		value=value2(2)
+		off_table = off_table + 1
+	endif
 
+	if((input1 .ge. gridPar1(1)) 
+     &		.and. (input1 .le. gridPar1(gridDim(1)))) then
+
+	      slope = (value2(2) - value2(1)) /
+     &  	   (gridPar1(index1+1) - gridPar1(index1))
+
+	      value = (input1 - gridPar1(index1)) * slope + value2(1)
+	endif
+
+!	if((off_table .gt. 0) .and. (input2 .ge. gridPar2(1))) then
+!		write(6,*) 'Off cloudy cooling table',input1,input2,input3,input4		
+!	endif	
+
+
+	
       return
       end
 
@@ -609,12 +735,12 @@
      &     gridPar3, dgridPar3,
      &     gridPar4, dgridPar4,
      &     gridPar5, dgridPar5,
-     &     dataSize, dataField, value)
+     &     dataSize, dataField, value, print_indices)
 
 !  General Arguments
 
       integer dataSize
-      integer gridDim(4)
+      integer gridDim(5)
       real input1, input2, input3, input4, input5, value
       real gridPar1(gridDim(1)), dgridPar1,
      &     gridPar2(gridDim(2)), dgridPar2,
@@ -622,11 +748,14 @@
      &     gridPar4(gridDim(4)), dgridPar4,
      &     gridPar5(gridDim(5)), dgridPar5
       real dataField(dataSize)
+	integer print_indices
+	real temp
+
 
 !  Locals
 
       integer index1, index2, index3, index4, index5, 
-     &     int_index, q, w, e, r, midPt, highPt
+     &     int_index, q, w, e, r, midPt, highPt, off_table
       real slope, value5(2), value4(2), value3(2), value2(2)
 
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\/////////////////////////////////
@@ -634,6 +763,7 @@
 
 !     Calculate interpolation indices
 
+      off_table = 0
       index1 = min(gridDim(1)-1,
      &     max(1,int((input1-gridPar1(1))/dgridPar1)+1))
       index2 = min(gridDim(2)-1,
@@ -666,6 +796,43 @@
       index5 = min(gridDim(5)-1,
      &     max(1,int((input5-gridPar5(1))/dgridPar5)+1))
 
+	if(print_indices .eq. 1) then
+
+		write(6,*) "Grid Dims:",GridDim
+		write(6,*) "indices: ",index1,index2,index3,index4,index5
+
+
+
+		write(6,*) "first parameter values:",gridPar1(1),gridPar2(1)
+		write(6,*) gridPar3(1),gridPar4(1),gridPar5(1)
+		write(6,*) "delta parameter values:",dgridPar1,dgridPar2
+		write(6,*) dgridPar3,dgridPar4,dgridPar5
+
+
+		temp=max(1,int((input1-gridPar1(1))/dgridPar1)+1)
+		write(6,*) "compute index1:",gridDim(1),input1,gridPar1(1),dgridPar1
+		write(6,*) temp,index1
+
+		temp=max(1,int((input2-gridPar2(1))/dgridPar2)+1)
+		write(6,*) "compute index2:",gridDim(2),input2,gridPar2(1),dgridPar2
+		write(6,*) temp,index2
+
+		temp=max(1,int((input3-gridPar3(1))/dgridPar3)+1)
+		write(6,*) "compute index3:",gridDim(3),input3,gridPar3(1),dgridPar3
+		write(6,*) temp,index3
+
+		temp=max(1,int((input4-gridPar4(1))/dgridPar4)+1)
+		write(6,*) "compute index4:",gridDim(4),input4,gridPar4(1),dgridPar4
+		write(6,*) temp,index4
+
+		temp=max(1,int((input5-gridPar5(1))/dgridPar5)+1)
+		write(6,*) "compute index5:",gridDim(5),input5,gridPar5(1),dgridPar5
+		write(6,*) temp,index5
+
+	endif
+
+
+
       do q=1, 2
 
          do w=1, 2
@@ -681,51 +848,171 @@
      &                 gridDim(4) + (r+index4-2)) * gridDim(5) +
      &                 index5
 
-                  slope = (dataField(int_index+1) - 
-     &                 dataField(int_index)) /
-     &                 (gridPar5(index5+1) - gridPar5(index5))
+		  if(input5 .lt. gridPar5(1)) then
+			value5(r) = dataField(int_index)
+			off_table = off_table + 1
+		  endif
+		  if(input5 .gt. gridPar5(gridDim(5))) then
+			value5(r) = data_Field(int_index +1)
+			off_table = off_table + 1
+		  endif
 
-                  value5(r) = (input5 - gridPar5(index5)) * slope +
-     &                 dataField(int_index)
+		  if((input5 .ge. gridPar5(1)) 
+     &			.and. (input5 .le. gridPar5(gridDim(5)))) then
 
+	                  slope = (dataField(int_index+1) - 
+     &  	               dataField(int_index)) /
+     &          	       (gridPar5(index5+1) - gridPar5(index5))
+
+	                  value5(r) = (input5 - gridPar5(index5)) * slope +
+     &  	               dataField(int_index)
+		  endif
+		
+
+
+		if(print_indices .eq. 1) then 
+			write(6,*) "interpolate over parameter 5"
+			write(6,*) "computed index:",int_index
+			write(6,*) "q,w,e,r:",q,w,e,r
+			write(6,*) "indices:",index1,index2,index3,index4,index5
+			write(6,*) gridPar5(index5+1),gridPar5(index5)
+			write(6,*) "slope,value:",slope,value5(r)
+		endif
+
+
+		
                enddo
 
 !     interpolate over parameter 4
+		
+		if(input4 .lt. gridPar4(1)) then
+			value4(e) = value5(1)
+			off_table = off_table + 1
+		endif
 
-               slope = (value5(2) - value5(1)) /
-     &              (gridPar4(index4+1) - gridPar4(index4))
+		if(input4 .gt. gridPar4(gridDim(4))) then
+			value4(e) = value5(2)
+			off_table = off_table + 1
+		endif
 
-               value4(e) = (input4 - gridPar4(index4)) * slope +
-     &              value5(1)
+
+		if((input4 .ge. gridPar4(1)) 
+     &			.and. (input4 .le. gridPar4(gridDim(4)))) then
+
+	               slope = (value5(2) - value5(1)) /
+     &  	            (gridPar4(index4+1) - gridPar4(index4))
+
+	               value4(e) = (input4 - gridPar4(index4)) * slope +
+     &        		      value5(1)
+
+		endif
+
+
+		if(print_indices .eq. 1) then
+			write(6,*) "interpolate over parameter 4",index4
+			write(6,*) gridPar4(index4+1),gridPar4(index4),slope,value4(e)
+		endif
+
+
 
             enddo
 
 !     interpolate over parameter 3
 
-            slope = (value4(2) - value4(1)) /
-     &           (gridPar3(index3+1) - gridPar3(index3))
+	    if(input3 .lt. gridPar3(1)) then
+		value3(w) = value4(1)
+		off_table = off_table + 1
+	    endif
 
-            value3(w) = (input3 - gridPar3(index3)) * slope +
-     &           value4(1)
+	    if(input3 .gt. gridPar3(gridDim(3))) then
+		value3(w) = value4(2)
+		off_table = off_table + 1
+	    endif
+
+
+	    if((input3 .ge. gridPar3(1)) 
+     &		.and. (input3 .le. gridPar3(gridDim(3)))) then
+
+	            slope = (value4(2) - value4(1)) /
+     &  	         (gridPar3(index3+1) - gridPar3(index3))
+
+	            value3(w) = (input3 - gridPar3(index3)) * slope +
+     &  	         value4(1)
+	    endif
+		if(print_indices .eq. 1) then
+			write(6,*) "interpolate over parameter 3",index3
+			write(6,*) gridPar3(index3+1),gridPar3(index3),slope,value3(w)
+		endif
 
          enddo
 
 !     interpolate over parameter 2
 
-         slope = (value3(2) - value3(1)) /
-     &        (gridPar2(index2+1) - gridPar2(index2))
+      	    if(input2 .lt. gridPar2(1)) then
+		value2(q) = value3(1)
+		off_table = off_table + 1
+	    endif
 
-         value2(q) = (input2 - gridPar2(index2)) * slope +
-     &        value3(1)
+	    if(input2 .gt. 2.0) then
+!		value2(q) = value3(2)
+
+
+!		off_table = off_table + 1
+		write(6,*) 'Z > 100 Zsol in cool1d_cloudy.src',input1, input2,
+     &			input3, input4, input5
+	    endif
+
+
+	 if((input2 .ge. gridPar2(1))) then 
+!     &		.and. (input2 .le. gridPar2(gridDim(2)))) then
+
+	         slope = (value3(2) - value3(1)) /
+     &  	      (gridPar2(index2+1) - gridPar2(index2))
+
+	         value2(q) = (input2 - gridPar2(index2)) * slope +
+     &  	      value3(1)
+	endif
+
+	if(print_indices .eq. 1) then
+		write(6,*) "interpolate over parameter 2",index2
+		write(6,*) gridPar2(index2+1),gridPar2(index2),slope,value2(q)
+	endif	
 
       enddo
 
 !     interpolate over parameter 1
 
-      slope = (value2(2) - value2(1)) /
-     &     (gridPar1(index1+1) - gridPar1(index1))
+	if(input1 .lt. gridPar1(1)) then
+		value = value2(1)
+		off_table = off_table + 1
+	endif
 
-      value = (input1 - gridPar1(index1)) * slope + value2(1)
+	if(input1 .gt. gridPar1(gridDim(1))) then
+		value = value2(2)
+		off_table = off_table + 1
+	endif
+
+
+	if((input1 .ge. gridPar1(1)) 
+     &		.and. (input1 .le. gridPar1(gridDim(1)))) then
+
+	      slope = (value2(2) - value2(1)) /
+     &  	   (gridPar1(index1+1) - gridPar1(index1))
+
+	      value = (input1 - gridPar1(index1)) * slope + value2(1)
+	endif
+
+!	if((off_table .gt. 0) .and. (input2 .gt. gridPar2(1))) then
+!		write(6,*) 'Off cloudy cooling table',input1,input2,input3,input4,input5		
+!	endif	
+
+	if(print_indices .eq. 1) then
+			write(6,*) "interpolate over parameter 1",index1
+			write(6,*) gridPar1(index1+1),gridPar1(index1),slope,value
+	endif
+
+	
+
 
       return
       end
