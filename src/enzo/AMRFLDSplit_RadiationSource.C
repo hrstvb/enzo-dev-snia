@@ -27,6 +27,8 @@ float AMRFLDSplit::RadiationSource(LevelHierarchyEntry *LevelArray[],
 				   int level, float time)
 {
 
+//   if (debug)  printf("    AMRFLDSplit RadiationSource, initializing local variables\n");
+
   // initialize local variables to be reused
   int i, j, k;
   float SpecConst = (ESpectrum == 1) ? 1.52877652583602 : 1.0;
@@ -35,6 +37,8 @@ float AMRFLDSplit::RadiationSource(LevelHierarchyEntry *LevelArray[],
   float etaconst;
   float cellZl, cellZr, cellYl, cellYr, cellXl, cellXr, cellXc, cellYc, cellZc;
   
+//   if (debug)  printf("    AMRFLDSplit RadiationSource, iterating over processor grids\n");
+
   // iterate over grids owned by this processor (this level down)
   for (int thislevel=level; thislevel<MAX_DEPTH_OF_HIERARCHY; thislevel++)
     for (LevelHierarchyEntry* Temp=LevelArray[thislevel]; Temp; 
@@ -59,8 +63,15 @@ float AMRFLDSplit::RadiationSource(LevelHierarchyEntry *LevelArray[],
 	for (int dim=0; dim<rank; dim++)
 	  dx[dim] = (Temp->GridData->GetGridRightEdge(dim) 
 		     - Temp->GridData->GetGridLeftEdge(dim)) 
- 	          / (Temp->GridData->GetGridDimension(dim));
-	float dV = dx[0]*dx[1]*dx[2];
+	          / n3[dim];
+	float dV = dx[0]*dx[1]*dx[2]*LenUnits*LenUnits*LenUnits;
+
+	// set a cell "normalized volume" assuming the global domain has volume 1
+	float dVscale = 1;
+	for (int dim=0; dim<rank; dim++)
+	  dVscale *= (Temp->GridData->GetGridRightEdge(dim) 
+ 		    - Temp->GridData->GetGridLeftEdge(dim)) 
+	            / n3[dim] / (DomainRightEdge[dim] - DomainLeftEdge[dim]);
 	
 	// access emissivity field, initialize to zero
 	float *eta = Temp->GridData->AccessEmissivity0();
@@ -79,7 +90,7 @@ float AMRFLDSplit::RadiationSource(LevelHierarchyEntry *LevelArray[],
 	    
 	    // compute eta factor for given ionization source
 	    etaconst = h_nu0 * NGammaDot * SpecConst / dV;
-	    
+
 	    for (k=ghZl; k<n3[2]+ghZl; k++) {
 	      
 	      // z-boundaries (comoving) for this cell
@@ -194,8 +205,8 @@ float AMRFLDSplit::RadiationSource(LevelHierarchyEntry *LevelArray[],
 	for (k=ghZl; k<n3[2]+ghZl; k++) 
 	  for (j=ghYl; j<n3[1]+ghYl; j++) 
 	    for (i=ghXl; i<n3[0]+ghXl; i++) 
-	      total_eta += eta[(k*x1len+j)*x0len+i]*eta[(k*x1len+j)*x0len+i]*dV;
-	
+ 	      total_eta += eta[(k*x1len+j)*x0len+i]*eta[(k*x1len+j)*x0len+i]*dVscale;
+
       }  // end iteration over grids on this processor
   
   // communicate to obtain overall emissivity

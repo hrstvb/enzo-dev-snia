@@ -62,7 +62,7 @@ int AMRFLDSplit::EnforceBoundary(LevelHierarchyEntry *LevelArray[])
   for (int dim=0; dim<rank; dim++)
     dx[dim] = (ThisGrid->GridData->GetGridRightEdge(dim) 
 	       - ThisGrid->GridData->GetGridLeftEdge(dim)) 
-            / (ThisGrid->GridData->GetGridDimension(dim));
+            / n3[dim];
       
   // access old/new radiation fields (old stored in KPhHI)
   float *Eold = ThisGrid->GridData->AccessKPhHI();

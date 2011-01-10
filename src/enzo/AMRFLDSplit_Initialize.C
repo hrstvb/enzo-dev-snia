@@ -442,21 +442,21 @@ int AMRFLDSplit::Initialize(HierarchyEntry &TopGrid, TopGridData &MetaData)
   if (sol_type == 4)  amrsolve_params->set_parameter("solver","pfmg");
   char numstr[80];
   sprintf(numstr, "%e", sol_tolerance);
-  amrsolve_params->add_parameter("solver_restol",numstr);
+  amrsolve_params->set_parameter("solver_restol",numstr);
   sprintf(numstr, "%i", sol_maxit);
-  amrsolve_params->add_parameter("solver_itmax",numstr);
+  amrsolve_params->set_parameter("solver_itmax",numstr);
   sprintf(numstr, "%i", sol_printl);
-  amrsolve_params->add_parameter("solver_printl",numstr);
+  amrsolve_params->set_parameter("solver_printl",numstr);
   sprintf(numstr, "%i", sol_log);
-  amrsolve_params->add_parameter("solver_log",numstr);
+  amrsolve_params->set_parameter("solver_log",numstr);
   sprintf(numstr, "%i", sol_rlxtype);
-  amrsolve_params->add_parameter("solver_rlxtype",numstr);
+  amrsolve_params->set_parameter("solver_rlxtype",numstr);
   sprintf(numstr, "%i", sol_npre);
-  amrsolve_params->add_parameter("solver_npre",numstr);
+  amrsolve_params->set_parameter("solver_npre",numstr);
   sprintf(numstr, "%i", sol_npost);
-  amrsolve_params->add_parameter("solver_npost",numstr);
+  amrsolve_params->set_parameter("solver_npost",numstr);
   if (debug) {
-    printf("AMRFLDSplit::Initialize amrsolve parameters:\n");
+    printf("AMRFLDSplit::Initialize, customized amrsolve parameters:\n");
     amrsolve_params->print();
   }
 

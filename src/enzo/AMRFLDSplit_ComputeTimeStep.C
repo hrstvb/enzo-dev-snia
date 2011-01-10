@@ -73,8 +73,7 @@ float AMRFLDSplit::ComputeTimeStep(LevelHierarchyEntry *LevelArray[], int level)
 	  for (int dim=0; dim<rank; dim++)
 	    dV *= (Temp->GridData->GetGridRightEdge(dim) 
 		   - Temp->GridData->GetGridLeftEdge(dim)) 
-	        / (Temp->GridData->GetGridDimension(dim))
-	        / (DomainRightEdge[dim] - DomainLeftEdge[dim]);
+	        / n3[dim] / (DomainRightEdge[dim] - DomainLeftEdge[dim]);
       
       
 	  // access old/new radiation fields (old stored in KPhHI)
@@ -93,7 +92,7 @@ float AMRFLDSplit::ComputeTimeStep(LevelHierarchyEntry *LevelArray[], int level)
 		  diff = Enew[(k*x1len + j)*x0len + i] 
 		       - Eold[(k*x1len + j)*x0len + i];
 		  tmp = fabs(diff/w);
-		  loc_est += POW(tmp,dtnorm)/dV;
+		  loc_est += POW(tmp,dtnorm)*dV;
 		}
 	  }
 	  else {
@@ -109,7 +108,7 @@ float AMRFLDSplit::ComputeTimeStep(LevelHierarchyEntry *LevelArray[], int level)
 		  loc_est = (loc_est > tmp) ? loc_est : tmp;
 		}
 	  }
-	  
+
 	}  // end iteration over grids on this processor
 
     // communicate to obtain overall sum/max
