@@ -16,6 +16,7 @@
 #include <math.h>
 #include <string.h>
 
+#include "ErrorExceptions.h"
 #include "macros_and_parameters.h"
 #include "typedefs.h"
 #include "global_data.h"
@@ -729,7 +730,9 @@ int grid::PrintToScreenBoundaries(float *field, char *display, int direction, in
   }
 
   if (fail){
-     printf("\n\n\n\n");printf(display); 	  printf("Grid Edges %g %g %g\n", GridLeftEdge[0], GridLeftEdge[1], GridLeftEdge[2]);
+     printf("\n\n\n\n");
+     //printf(display); 	  
+     printf("Grid Edges %g %g %g\n", GridLeftEdge[0], GridLeftEdge[1], GridLeftEdge[2]);
     printf( "\n\n*******Processor # %d ********\n", ProcessorNumber);
     printf( "\n\n*******Displaying Data (Slice in %d on cell %d) (TopGrid %d)  ********\n", direction, slice, isTopGrid() );
 

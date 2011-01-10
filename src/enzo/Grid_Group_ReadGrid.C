@@ -50,7 +50,7 @@ static int GridReadDataGridCounter = 0;
  
 #ifndef NEW_GRID_IO
 int grid::Group_ReadGrid(FILE *fptr, int GridID, HDF5_hid_t file_id, 
-			 int ReadText, int ReadData)
+			 int ReadText, int ReadData, bool ReadParticlesOnly)
 {
  
   int i, j, k, field, size, active_size;
@@ -165,10 +165,9 @@ int grid::Group_ReadGrid(FILE *fptr, int GridID, HDF5_hid_t file_id,
     if (NumberOfBaryonFields > 0) {
 
       if (NumberOfBaryonFields >= MAX_NUMBER_OF_BARYON_FIELDS) {
-	printf("NumberOfBaryonFields (%"ISYM") exceeds "
+	ENZO_VFAIL("NumberOfBaryonFields (%"ISYM") exceeds "
 	       "MAX_NUMBER_OF_BARYON_FIELDS (%"ISYM").\n", 
-	       NumberOfBaryonFields, MAX_NUMBER_OF_BARYON_FIELDS);
-	ENZO_FAIL("");
+	       NumberOfBaryonFields, MAX_NUMBER_OF_BARYON_FIELDS)
       }
 
       fscanf(fptr, "FieldType = ");
@@ -283,7 +282,7 @@ int grid::Group_ReadGrid(FILE *fptr, int GridID, HDF5_hid_t file_id,
   strcpy(name, "/Grid");
   strcat(name, id);
  
-  if (NumberOfBaryonFields > 0 && ReadData &&
+  if (NumberOfBaryonFields > 0 && ReadData && !ReadParticlesOnly &&
       (MyProcessorNumber == ProcessorNumber)) {
 
     strcpy(logname, procfilename);
@@ -449,7 +448,7 @@ int grid::Group_ReadGrid(FILE *fptr, int GridID, HDF5_hid_t file_id,
  
     /* Open file if not already done (note: particle name must = grid name). */
  
-    if (NumberOfBaryonFields == 0) {
+    if (NumberOfBaryonFields == 0 || ReadParticlesOnly) {
  
       strcpy(logname, procfilename);
       strcat(logname, ".in_log");
@@ -642,8 +641,12 @@ int grid::Group_ReadGrid(FILE *fptr, int GridID, HDF5_hid_t file_id,
  
  
     // Read ParticleType if present
+
+    H5E_BEGIN_TRY{
+      dset_id = H5Dopen(group_id, "particle_type");
+    }H5E_END_TRY
  
-    if (ParticleTypeInFile == TRUE) {
+    if (ParticleTypeInFile == TRUE && dset_id != h5_error) {
  
       /* Read ParticleType into temporary buffer and Copy to ParticleType. */
 
@@ -679,9 +682,8 @@ int grid::Group_ReadGrid(FILE *fptr, int GridID, HDF5_hid_t file_id,
 	abs_type = ABS(ParticleType[i]);
         if (abs_type < PARTICLE_TYPE_GAS ||
             abs_type > NUM_PARTICLE_TYPES-1) {
-          fprintf(stderr, "file: %s: particle %"ISYM" has unknown type %"ISYM"\n",
-                  name, i, ParticleType[i]);
-          ENZO_FAIL("");
+          ENZO_VFAIL("file: %s: particle %"ISYM" has unknown type %"ISYM"\n",
+                  name, i, ParticleType[i])
         }
       }
 
@@ -744,7 +746,8 @@ int grid::Group_ReadGrid(FILE *fptr, int GridID, HDF5_hid_t file_id,
   /* Close file. */
  
   if ( (MyProcessorNumber == ProcessorNumber) &&
-       (NumberOfParticles > 0 || NumberOfBaryonFields > 0)
+       (NumberOfParticles > 0 || 
+	(NumberOfBaryonFields > 0 && !ReadParticlesOnly))
        && ReadData ){
  
     h5_status = H5Gclose(group_id);
@@ -763,6 +766,7 @@ int grid::Group_ReadGrid(FILE *fptr, int GridID, HDF5_hid_t file_id,
   if (MyProcessorNumber == ProcessorNumber)
     {
       if (io_log) fclose(log_fptr);
+
     }
  
   return SUCCESS;

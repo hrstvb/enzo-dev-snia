@@ -43,9 +43,9 @@ extern "C" void FORTRAN_NAME(copy3drt)(float *source, float *dest,
                                    int *sstart1, int *sstart2, int *sstart3,
                                    int *dstart1, int *dstart2, int *dststart3);
 
+int CommunicationBarrier(void);
 #ifdef USE_MPI
 int CommunicationBufferPurge(void);
-int CommunicationBarrier(void);
 int CommunicationBufferedSend(void *buffer, int size, MPI_Datatype Type, int Target,
 			      int Tag, MPI_Comm CommWorld, int BufferSize);
 #endif
@@ -214,9 +214,8 @@ int NonUnigridCommunicationTranspose(region *FromRegion, int NumberOfFromRegions
 //	       MPI_TRANSPOSE_TAG, (void*) ReceiveBuffer, RecvCount,
 //	       DataType, Source, MPI_TRANSPOSE_TAG, MPI_COMM_WORLD,
 //	       &status) != MPI_SUCCESS) {
-//	fprintf(stderr, "Proc %"ISYM" MPI_Sendrecv error %"ISYM"\n", MyProcessorNumber,
-//		status.MPI_ERROR);
-//	ENZO_FAIL("");
+//	ENZO_VFAIL("Proc %"ISYM" MPI_Sendrecv error %"ISYM"\n", MyProcessorNumber,
+//		status.MPI_ERROR)
 //      }
 
       MPI_Irecv((void*) ReceiveBuffer, RecvCount, DataType, Source, 
@@ -688,9 +687,8 @@ int OptimizedUnigridCommunicationTranspose(
 	       MPI_TRANSPOSE_TAG, (void*) ReceiveBuffer, RecvCount,
 	       DataType, Source, MPI_TRANSPOSE_TAG, MPI_COMM_WORLD,
 	       &Status) != MPI_SUCCESS) {
-	fprintf(stderr, "Proc %"ISYM" MPI_Sendrecv error %"ISYM"\n", MyProcessorNumber,
-		Status.MPI_ERROR);
-	ENZO_FAIL("");
+	ENZO_VFAIL("Proc %"ISYM" MPI_Sendrecv error %"ISYM"\n", MyProcessorNumber,
+		Status.MPI_ERROR)
       }
 */
 
@@ -783,7 +781,7 @@ int NonBlockingCommunicationTranspose(region *FromRegion, int NumberOfFromRegion
 			   region *ToRegion, int NumberOfToRegions,
 			   int TransposeOrder)
 {
-
+#ifdef USE_MPI
   /* Declarations. */
  
   int dim, n, ni, i, ii, j, jj, size, index, Zero[] = {0,0,0};
@@ -794,7 +792,6 @@ int NonBlockingCommunicationTranspose(region *FromRegion, int NumberOfFromRegion
   int SendSize, ReceiveSize;
   int NumberOfRequests = 0;
 
-#ifdef USE_MPI
   MPI_Request RequestHandle[PROCS_PER_LOOP];
   MPI_Status ListOfStatuses[PROCS_PER_LOOP];
   MPI_Arg ListOfIndices[PROCS_PER_LOOP];
@@ -807,7 +804,6 @@ int NonBlockingCommunicationTranspose(region *FromRegion, int NumberOfFromRegion
   char error_string[1024];
   MPI_Arg length_of_error_string, error_class;
   MPI_Errhandler_set(MPI_COMM_WORLD, MPI_ERRORS_RETURN);
-#endif
  
 #ifdef DEBUG_NONBLOCKCT
     fprintf(stderr, "CT(%"ISYM"): start From=%"ISYM"  To=%"ISYM"\n", 
@@ -964,8 +960,6 @@ int NonBlockingCommunicationTranspose(region *FromRegion, int NumberOfFromRegion
  
       ReceiveBuffer[ni] = new float[ReceiveSize];
  
-#ifdef USE_MPI
- 
       int ToProc = (MyProcessorNumber + n) % NumberOfProcessors;
       int FromProc = (MyProcessorNumber - n + NumberOfProcessors) %
 	NumberOfProcessors;
@@ -988,9 +982,8 @@ int NonBlockingCommunicationTranspose(region *FromRegion, int NumberOfFromRegion
 //	       MPI_TRANSPOSE_TAG, (void*) ReceiveBuffer, RecvCount,
 //	       DataType, Source, MPI_TRANSPOSE_TAG, MPI_COMM_WORLD,
 //	       &status) != MPI_SUCCESS) {
-//	fprintf(stderr, "Proc %"ISYM" MPI_Sendrecv error %"ISYM"\n", MyProcessorNumber,
-//		status.MPI_ERROR);
-//	ENZO_FAIL("");
+//	ENZO_VFAIL("Proc %"ISYM" MPI_Sendrecv error %"ISYM"\n", MyProcessorNumber,
+//		status.MPI_ERROR)
 //      }
 
       /* Post receive call */
@@ -1014,8 +1007,6 @@ int NonBlockingCommunicationTranspose(region *FromRegion, int NumberOfFromRegion
       counter[14] ++;
       CommunicationTime += endtime-starttime;
 #endif /* MPI_INSTRUMENTATION */
- 
-#endif /* USE_MPI */
  
     } else {
       //MPI_Request_free(RequestHandle+ni);
@@ -1065,7 +1056,7 @@ int NonBlockingCommunicationTranspose(region *FromRegion, int NumberOfFromRegion
 	      MPI_Error_string(ListOfStatuses[index].MPI_ERROR, error_string, 
 			       &length_of_error_string);
 	      fprintf(stderr, "P%d: %s\n", MyProcessorNumber, error_string);
-	      ENZO_FAIL("");
+	      ENZO_FAIL("MPI Error in CommunicationTranspose!\n");
 	    }
 	  }
 #endif
@@ -1106,6 +1097,7 @@ int NonBlockingCommunicationTranspose(region *FromRegion, int NumberOfFromRegion
 	      }
 
 	      if (TransposeOrder == TRANSPOSE_FORWARD)
+
 		FORTRAN_NAME(copy3dft)(ReceiveBuffer[request]+index, 
 				 ToRegion[j].Data,
 				 Receives[i].RegionDim, Receives[i].RegionDim+1,
@@ -1179,6 +1171,10 @@ int NonBlockingCommunicationTranspose(region *FromRegion, int NumberOfFromRegion
 
   CommunicationBarrier();
   CommunicationBufferPurge();
+
+#else
+  ENZO_FAIL("UnigridTranspose = 2 can only be used with use-mpi-yes.");
+#endif /* USE_MPI */
  
   return SUCCESS;
 };

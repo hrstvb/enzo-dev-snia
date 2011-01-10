@@ -43,16 +43,14 @@ int grid::CopyPotentialToBaryonField()
   // Check to make sure BaryonField "GravPotential" exists
  
   if (BaryonField[field] == NULL) {
-    fprintf(stderr, "GravPotential field missing.\n");
-    ENZO_FAIL("");
+    ENZO_FAIL("GravPotential field missing.\n");
   }
  
  
   // Check to make sure PotentialField exists
  
   if (PotentialField == NULL) {
-    fprintf(stderr, "PotentialField missing.\n");
-    ENZO_FAIL("");
+    ENZO_FAIL("PotentialField missing.\n");
   }
  
   /* Well, it appears that currently GravitatingMassField is larger
@@ -101,7 +99,7 @@ int grid::CopyPotentialToBaryonField()
  
       for (i = 0; i < GridDimension[0]; i++, index++)
       {
-		BaryonField[field+1][jj] = GravitatingMassField[index]; // use this for debugging 
+	//BaryonField[field+1][jj] = GravitatingMassField[index]; // use this for debugging 
 	BaryonField[field][jj++] = PotentialField[index];
 	// debuggin:
 	maxPot = max(maxPot,PotentialField[index]);
@@ -113,6 +111,7 @@ int grid::CopyPotentialToBaryonField()
  
 //  fprintf(stderr, "STUFF field %"ISYM"  elements %"ISYM"  %16.8e  %16.8e\n", field, crap, big, low);
 //  if (debug1) printf("Potential minimum: %g \t maximum: %g\n", minPot, maxPot);
+
 
   return SUCCESS;
 }

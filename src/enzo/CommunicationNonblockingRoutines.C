@@ -24,6 +24,7 @@
 #include "typedefs.h"
 #include "global_data.h"
 #include "GroupPhotonList.h"
+#include "CommunicationUtilities.h"
 #include "PhotonCommunication.h"
 
 #ifdef USE_MPI
@@ -34,16 +35,31 @@ int CommunicationFindOpenRequest(MPI_Request *requests, Eint32 last_free,
 				 Eint32 nrequests, Eint32 index, Eint32 &max_index);
 void CommunicationCheckForErrors(int NumberOfStatuses, MPI_Status *statuses,
 				 char *msg=NULL);
+int KeepTransportingSend(int keep_transporting);
+int KeepTransportingCheck(char* &kt_global, int &keep_transporting);
+int InitializePhotonMessages(void);
 static Eint32 PH_ListOfIndices[MAX_PH_RECEIVE_BUFFERS];
 static MPI_Status PH_ListOfStatuses[MAX_PH_RECEIVE_BUFFERS];
 #endif /* USE_MPI */
 
 /******************************************************************/
 
-int InitializePhotonCommunication(char* &kt_global)
+int InitializePhotonCommunication(void)
 {
 #ifdef USE_MPI
   int i, proc;
+
+  /* Receive any orphaned messages from the last RT call, so they
+     don't interfere with this cycle. */
+
+#ifdef NONBLOCKING_RT
+  char *dummy = new char[NumberOfProcessors];
+  KeepTransportingCheck(dummy, i);
+  delete [] dummy;
+  CommunicationBarrier();
+#endif /* NONBLOCKING_RT */
+
+  /* Initialize */
 
   PhotonMessageIndex = 0;
   PhotonMessageMaxIndex = 0;
@@ -52,13 +68,26 @@ int InitializePhotonCommunication(char* &kt_global)
   PH_CommunicationReceiveIndex = 0;  
   PH_CommunicationReceiveMaxIndex = 0;
 
-  MPI_Errhandler_set(MPI_COMM_WORLD, MPI_ERRORS_RETURN);
-
   for (i = 0; i < MAX_PH_RECEIVE_BUFFERS; i++)
     PH_CommunicationReceiveMPI_Request[i] = NULL;
   
   /* Anticipate the first call for the number of messages to receive */
 
+#ifdef NONBLOCKING_RT
+  InitializePhotonMessages();
+#endif
+
+#endif /* USE_MPI */
+    return SUCCESS;
+}
+
+/**********************************************************************/
+int InitializePhotonMessages(void)
+{
+#ifdef USE_MPI
+  int proc;
+  PhotonMessageIndex = 0;
+  PhotonMessageMaxIndex = 0;
   for (proc = 0; proc < NumberOfProcessors; proc++)
     if (proc != MyProcessorNumber) {
       MPI_Irecv(PhotonMessageBuffer+PhotonMessageIndex,
@@ -67,9 +96,15 @@ int InitializePhotonCommunication(char* &kt_global)
       PhotonMessageIndex++;
       PhotonMessageMaxIndex++;
     } // ENDIF other processor
+#endif /* USE_MPI */
+  return SUCCESS;
+}
+/**********************************************************************/
 
-  /* Same anticipation for the keep_transporting messages */
-
+int KeepTransportingInitialize(char* &kt_global, bool initial_call)
+{
+#ifdef USE_MPI
+  int proc;
   kt_global = new char[NumberOfProcessors];
   for (proc = 0; proc < NumberOfProcessors; proc++)
     kt_global[proc] = 1;
@@ -79,23 +114,47 @@ int InitializePhotonCommunication(char* &kt_global)
 		1, MPI_CHAR, proc, 
 		MPI_KEEPTRANSPORTING_TAG, MPI_COMM_WORLD,
 		KeepTransMessageRequest+KeepTransMessageIndex);
-      KeepTransMessageIndex++;
-      KeepTransMessageMaxIndex++;
+      if (initial_call) {
+	KeepTransMessageIndex++;
+	KeepTransMessageMaxIndex++;
+      } else {
+	KeepTransMessageIndex =
+	  CommunicationFindOpenRequest(KeepTransMessageRequest, NO_HINT,
+				       10*MAX_PH_RECEIVE_BUFFERS,
+				       KeepTransMessageIndex,
+				       KeepTransMessageMaxIndex);
+      }
       if (DEBUG)
 	printf("P%d: Sending KT=%d to P%d\n", MyProcessorNumber, 
 	       kt_global[MyProcessorNumber], proc);
       CommunicationBufferedSend(kt_global+MyProcessorNumber, 1, MPI_CHAR, proc,
 				MPI_KEEPTRANSPORTING_TAG, MPI_COMM_WORLD, 1);
 
-    } // ENDIF other processor
-
+      } // ENDIF other processor
 #endif /* USE_MPI */
-    return SUCCESS;
+  return SUCCESS;
 }
 
-/**********************************************************************/
+int KeepTransportingFinalize(char* &kt_global, int keep_transporting)
+{
+#ifdef USE_MPI
+  /* Send a halt message to all other processes to ensure that they
+     exit the keep_transporting loop, only if this process exited the
+     loop not from a halt signal. */
 
-int FinalizePhotonCommunication(char* &kt_global)
+  if (keep_transporting != 2)
+    KeepTransportingSend(HALT_TRANSPORT);
+
+  CommunicationBarrier();
+  KeepTransportingCheck(kt_global, keep_transporting);
+
+  delete [] kt_global;
+
+#endif /* USE_MPI */
+  return SUCCESS;
+}
+
+int FinalizePhotonCommunication(void)
 {
 #ifdef USE_MPI
   int i;
@@ -103,6 +162,7 @@ int FinalizePhotonCommunication(char* &kt_global)
   /* If there are any leftover MPI_Irecv calls from the photon
      "nPhoton" and keep_transporting calls, cancel them. */
 
+#ifdef NONBLOCKING_RT
   for (i = 0; i < PhotonMessageMaxIndex; i++)
     if (PhotonMessageRequest[i] != MPI_REQUEST_NULL)
       MPI_Cancel(PhotonMessageRequest+i);
@@ -110,11 +170,17 @@ int FinalizePhotonCommunication(char* &kt_global)
   for (i = 0; i < KeepTransMessageMaxIndex; i++)
     if (KeepTransMessageRequest[i] != MPI_REQUEST_NULL)
       MPI_Cancel(KeepTransMessageRequest+i);
+#endif /* NONBLOCKING_RT */
 
-  delete [] kt_global;
+  for (i = 0; i < PH_CommunicationReceiveMaxIndex; i++)
+    if (PH_CommunicationReceiveMPI_Request[i] != MPI_REQUEST_NULL)
+      MPI_Cancel(PH_CommunicationReceiveMPI_Request+i);
 
   /* Wait until all of the requests are cancelled */
 
+  MPI_Errhandler_set(MPI_COMM_WORLD, MPI_ERRORS_RETURN);
+
+#ifdef NONBLOCKING_RT
   MPI_Waitall(PhotonMessageMaxIndex, PhotonMessageRequest, 
 	      PH_ListOfStatuses);
   CommunicationCheckForErrors(PhotonMessageMaxIndex, PH_ListOfStatuses,
@@ -122,6 +188,13 @@ int FinalizePhotonCommunication(char* &kt_global)
   MPI_Waitall(KeepTransMessageMaxIndex, KeepTransMessageRequest, 
 	      PH_ListOfStatuses);
   CommunicationCheckForErrors(KeepTransMessageMaxIndex, PH_ListOfStatuses,
+			      "Waitall KT message cancels");
+#endif /* NONBLOCKING_RT */
+
+  MPI_Waitall(PH_CommunicationReceiveMaxIndex, 
+	      PH_CommunicationReceiveMPI_Request,
+	      PH_ListOfStatuses);
+  CommunicationCheckForErrors(PH_CommunicationReceiveMaxIndex, PH_ListOfStatuses,
 			      "Waitall KT message cancels");
 
   MPI_Errhandler_set(MPI_COMM_WORLD, MPI_ERRORS_ARE_FATAL);
@@ -147,7 +220,11 @@ int CommunicationNumberOfPhotonSends(int *nPhoton, int size)
   Eint32 NumberOfMessages, proc;
 
   for (proc = 0; proc < NumberOfProcessors; proc++)
+#ifdef NONBLOCKING_RT
     if (proc != MyProcessorNumber && nPhoton[proc] > 0) {
+#else
+    if (proc != MyProcessorNumber) {
+#endif
       NumberOfMessages = nPhoton[proc] / size;
       if (nPhoton[proc] % size > 0) NumberOfMessages++;
       if (DEBUG)
@@ -187,11 +264,16 @@ int PostPhotonReceives(Eint32 index, Eint32 proc, int size, MPI_Datatype type)
     PH_CommunicationReceiveBuffer[PH_CommunicationReceiveIndex] =
       (char *) ReceiveBuffer;
 
+#ifdef NONBLOCKING_RT
     PH_CommunicationReceiveIndex = 
       CommunicationFindOpenRequest(PH_CommunicationReceiveMPI_Request,
 				   NO_HINT, MAX_PH_RECEIVE_BUFFERS,
 				   PH_CommunicationReceiveIndex,
 				   PH_CommunicationReceiveMaxIndex);
+#else
+    PH_CommunicationReceiveIndex++;
+    PH_CommunicationReceiveMaxIndex++;
+#endif
 
     if (DEBUG)
       printf("P%d: PHCRIndex/Max = %d/%d\n", MyProcessorNumber, 
@@ -249,24 +331,32 @@ int InitializePhotonReceive(int max_size, bool local_transport,
   /* Receive MPI messages that contain how many messages with the
      actual photon data that we'll be receiving from each process. */
 
-  //if (local_transport)
-  MPI_Testsome(PhotonMessageMaxIndex, PhotonMessageRequest, &NumberOfReceives,
-	       PH_ListOfIndices, PH_ListOfStatuses);
+  MPI_Errhandler_set(MPI_COMM_WORLD, MPI_ERRORS_RETURN);
+  if (local_transport)
+    MPI_Testsome(PhotonMessageMaxIndex, PhotonMessageRequest, &NumberOfReceives,
+		 PH_ListOfIndices, PH_ListOfStatuses);
+  else {
+    MPI_Waitall(PhotonMessageMaxIndex, PhotonMessageRequest,
+		PH_ListOfStatuses);
+    NumberOfReceives = PhotonMessageMaxIndex;
+  }
   if (NumberOfReceives > 0)
     CommunicationCheckForErrors(PhotonMessageMaxIndex, PH_ListOfStatuses,
 				"Testsome InitializePhotonReceive");
-//  else
-//    MPI_Waitsome(PhotonMessageMaxIndex, PhotonMessageRequest, &NumberOfReceives,
-//		 PH_ListOfIndices, PH_ListOfStatuses);
+  MPI_Errhandler_set(MPI_COMM_WORLD, MPI_ERRORS_ARE_FATAL);
 
-  if (DEBUG)
+  if (DEBUG && NumberOfReceives > 0)
     printf("P%d: Received %d header messages, Index/MaxIndex = %d/%d.\n", 
 	   MyProcessorNumber, NumberOfReceives, PhotonMessageIndex, 
 	   PhotonMessageMaxIndex);
 
   for (i = 0; i < NumberOfReceives; i++) {
-    
+
+#ifdef NONBLOCKING_RT    
     index = PH_ListOfIndices[i];
+#else
+    index = i;
+#endif
     RecvProc = PH_ListOfStatuses[i].MPI_SOURCE;
 
     if (DEBUG)
@@ -281,6 +371,7 @@ int InitializePhotonReceive(int max_size, bool local_transport,
        there's already a message waiting.  If so, post another
        receive.  Repeat until no more messages. */
 
+#ifdef NONBLOCKING_RT
     do {
       PhotonMessageIndex =
 	CommunicationFindOpenRequest(PhotonMessageRequest, index,
@@ -299,6 +390,7 @@ int InitializePhotonReceive(int max_size, bool local_transport,
       }
 
     } while (MessageReceived);
+#endif /* NONBLOCKING_RT */
 
   } // ENDFOR i (receives)
 
@@ -331,37 +423,64 @@ int KeepTransportingCheck(char* &kt_global, int &keep_transporting)
 #ifdef USE_MPI
   int i, index, RecvProc;
   char value = keep_transporting;
+  char received = RECV_DATA;
+  bool PingRequired, PingReceived, AcceptMessage;
   MPI_Arg proc, NumberOfReceives, MessageReceived;
   MPI_Status status;
 
-  if (DEBUG)
-    printf("P%d: keep_transporting(before) = %d, KTMaxIndex = %d\n", 
-	   MyProcessorNumber, keep_transporting, KeepTransMessageMaxIndex);
+//  if (DEBUG)
+//    printf("P%d: keep_transporting(before) = %d, KTMaxIndex = %d\n", 
+//	   MyProcessorNumber, keep_transporting, KeepTransMessageMaxIndex);
 
+  MPI_Errhandler_set(MPI_COMM_WORLD, MPI_ERRORS_RETURN);
   MPI_Testsome(KeepTransMessageMaxIndex, KeepTransMessageRequest,
 	       &NumberOfReceives, PH_ListOfIndices, PH_ListOfStatuses);
   if (NumberOfReceives > 0)
     CommunicationCheckForErrors(KeepTransMessageMaxIndex, PH_ListOfStatuses,
 				"KTCheck Testsome");
+  MPI_Errhandler_set(MPI_COMM_WORLD, MPI_ERRORS_ARE_FATAL);
 
   if (DEBUG && NumberOfReceives > 0)
     printf("P%d: Received %d KT messages, Index/MaxIndex = %d/%d.\n", 
 	   MyProcessorNumber, NumberOfReceives, KeepTransMessageIndex, 
 	   KeepTransMessageMaxIndex);
-  
+
+  int second_recv, next_kt;
   for (i = 0; i < NumberOfReceives; i++) {
+    AcceptMessage = true;
     index = PH_ListOfIndices[i];
     RecvProc = PH_ListOfStatuses[i].MPI_SOURCE;
-    kt_global[RecvProc] = KeepTransMessageBuffer[index];
+    //if (RecvProc < 0) continue;   // Undefined rank
+    PingRequired = (kt_global[RecvProc] == SENT_DATA);
+    if (PingRequired) {
+      AcceptMessage = (KeepTransMessageBuffer[index] == RECV_DATA);
+      if (AcceptMessage) PingRequired = false;
+      next_kt = -1;
+    } else {
+      if (KeepTransMessageBuffer[index] != RECV_DATA)
+	next_kt = KeepTransMessageBuffer[index];
+      else
+	next_kt = -1;
+    } // ENDELSE
+
+    // Halt message overrides everything
+    if (KeepTransMessageBuffer[KeepTransMessageIndex] == HALT_TRANSPORT)
+      next_kt = 2;
+
+    if (DEBUG)
+      printf("P%d: Primary KT receive, P%d, = %d\n",
+	     MyProcessorNumber, RecvProc,
+	     KeepTransMessageBuffer[KeepTransMessageIndex]);
 
     /* Post another receive for the next loop.  Immediately test if
        there's already a message waiting.  If so, post another
        receive.  Repeat until no more messages. */
 
+    second_recv = 0;
     do {
       KeepTransMessageIndex =
 	CommunicationFindOpenRequest(KeepTransMessageRequest, NO_HINT,
-				     MAX_PH_RECEIVE_BUFFERS,
+				     10*MAX_PH_RECEIVE_BUFFERS,
 				     KeepTransMessageIndex,
 				     KeepTransMessageMaxIndex);
       MPI_Irecv(KeepTransMessageBuffer + KeepTransMessageIndex, 
@@ -373,13 +492,47 @@ int KeepTransportingCheck(char* &kt_global, int &keep_transporting)
       if (MessageReceived) {
 //	CommunicationCheckForErrors(1, &status, 
 //				    "KT immediate");
-	kt_global[RecvProc] = KeepTransMessageBuffer[KeepTransMessageIndex];
+	if (PingRequired) {
+	  AcceptMessage = 
+	    (KeepTransMessageBuffer[KeepTransMessageIndex] == RECV_DATA);
+	  if (AcceptMessage) PingRequired = false;
+	}
+	else if (AcceptMessage) {
+	  if (KeepTransMessageBuffer[KeepTransMessageIndex] != RECV_DATA)
+	    next_kt = KeepTransMessageBuffer[KeepTransMessageIndex];
+	    //next_kt = max(next_kt, KeepTransMessageBuffer[KeepTransMessageIndex]);
+	  else
+	    next_kt = -1;   // Forget any older messages
+	}
+
+	// Halt message overrides everything
+	if (KeepTransMessageBuffer[KeepTransMessageIndex] == HALT_TRANSPORT)
+	  next_kt = 2;
+
+	if (DEBUG)
+	  printf("P%d: Secondary KT receive, P%d, Recv %d, = %d\n",
+		 MyProcessorNumber, RecvProc, second_recv,
+		 KeepTransMessageBuffer[KeepTransMessageIndex]);
+	second_recv++;
       }
     } while (MessageReceived);
 
+    // Ping back the processor, saying that we've received this flag
+    if (kt_global[RecvProc] == SENT_DATA) {
+      CommunicationBufferedSend(&received, 1, MPI_CHAR, RecvProc,
+				MPI_KEEPTRANSPORTING_TAG, MPI_COMM_WORLD, 1);
+      CommunicationBufferedSend(&value, 1, MPI_CHAR, RecvProc,
+				MPI_KEEPTRANSPORTING_TAG, MPI_COMM_WORLD, 1);
+    }
+
+    if (next_kt >= 0)
+      kt_global[RecvProc] = next_kt;
+    else
+      kt_global[RecvProc] = TRANSPORT;
+
     if (DEBUG)
-      printf("P%d: Setting kt_global[%d] = %d\n", MyProcessorNumber,
-	     RecvProc, kt_global[RecvProc]);
+      printf("P%d: Setting kt_global[%d] = %d.  %d secondary receives\n", 
+	     MyProcessorNumber, RecvProc, kt_global[RecvProc], second_recv);
 
   } // ENDFOR i (receives)
 
@@ -387,9 +540,18 @@ int KeepTransportingCheck(char* &kt_global, int &keep_transporting)
   kt_global[MyProcessorNumber] = keep_transporting;
   keep_transporting = 0;
 
-  for (proc = 0; proc < NumberOfProcessors; proc++)
-    keep_transporting = max(keep_transporting, kt_global[proc]);
-  if (DEBUG)
+  for (proc = 0; proc < NumberOfProcessors; proc++) {
+    if (kt_global[proc] == SENT_DATA) 
+      keep_transporting = max(keep_transporting, 1);
+    else
+      keep_transporting = max(keep_transporting, kt_global[proc]);
+  }
+
+  // Only exit if we're finished with all of our local work.
+  if (keep_transporting == HALT_TRANSPORT && kt_global[MyProcessorNumber] == 1)
+    keep_transporting = 1;
+
+  if (DEBUG && NumberOfReceives > 0)
     printf("P%d: keep_transporting = %d/%d, kt_global = %d %d %d %d %d %d %d %d\n",
 	   MyProcessorNumber, value, keep_transporting, kt_global[0],
 	   kt_global[1], kt_global[2], kt_global[3], kt_global[4], 
@@ -421,7 +583,8 @@ void CommunicationCheckForErrors(int NumberOfStatuses, MPI_Status *statuses,
       fprintf(stderr, "P%d: %s\n", MyProcessorNumber, error_string);
       MPI_Error_string(statuses[i].MPI_ERROR, error_string, &length);
       fprintf(stderr, "P%d: %s\n", MyProcessorNumber, error_string);
-      ENZO_FAIL("");
+      ENZO_FAIL("MPI communication error!");
+
     } // ENDIF MPI_ERROR
   return;
 }

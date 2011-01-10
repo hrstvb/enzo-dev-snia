@@ -110,9 +110,15 @@ int WriteTracerParticleData(char *basename, int filenumber,
 		   FLOAT WriteTime);
 int WriteAllData(char *basename, int filenumber, HierarchyEntry *TopGrid,
 		 TopGridData &MetaData, ExternalBoundary *Exterior,
+#ifdef TRANSFER
+		 ImplicitProblemABC *ImplicitSolver,
+#endif
 		 FLOAT WriteTime = -1);
 int Group_WriteAllData(char *basename, int filenumber, HierarchyEntry *TopGrid,
 		 TopGridData &MetaData, ExternalBoundary *Exterior,
+#ifdef TRANSFER
+		 ImplicitProblemABC *ImplicitSolver,
+#endif
 		 FLOAT WriteTime = -1);
 
 void my_exit(int status);
@@ -129,7 +135,30 @@ static float TopGridTimeStep = 0.0; //AK
  
 /* EvolveGrid function */
  
-int EvolveLevel(TopGridData *MetaData, LevelHieraR7V&w&–BfÇW†W2this grid. */
+int EvolveLevel(TopGridData *MetaData, LevelHierarchyEntry *LevelArray[],
+		int level, float dtLevelAbove, ExternalBoundary *Exterior
+#ifdef TRANSFER
+		, ImplicitProblemABC *ImplicitSolver
+#endif
+		)
+
+#ifdef EMISSIVITY
+/* reset Emissivity array here before next step calculate the new values */
+  if (StarMakerEmissivityField > 0) {
+  /* 
+     clear the Emissivity of the level below, after the level below 
+     updated the current level (it's parent) and before the next 
+     timestep at the current level.
+  */
+    LevelHierarchyEntry *Temp;
+    Temp = LevelArray[level+1];
+    while (Temp != NULL) {
+      Temp->GridData->UnigridClearEmissivity();
+      Temp = Temp->NextGridThisLevel;
+    }
+  }
+#endif
+
  
       SubgridFluxesEstimate[grid] = new fluxes *[NumberOfSubgrids[grid]];
  
@@ -179,8 +208,7 @@ int EvolveLevel(TopGridData *MetaData, LevelHieraR7V&w&–BfÇW†W2this grid. */
  
     if (SelfGravity)
       if (PrepareDensityField(LevelArray, level, MetaData, When) == FAIL) {
-	fprintf(stderr, "Error in PrepareDensityField.\n");
-	ENZO_FAIL("");
+	ENZO_FAIL("Error in PrepareDensityField.\n");
       }
  
 //  fprintf(stderr, "%"ISYM": EvolveLevel: Exit PrepareDensityField\n", MyProcessorNumber);
@@ -191,8 +219,7 @@ int EvolveLevel(TopGridData *MetaData, LevelHieraR7V&w&–BfÇW†W2this grid. */
       if ( ComputeRandomForcingNormalization(LevelArray, 0, MetaData,
                                              &norm, &TopGridTimeStep)
            == FAIL ) {
-        fprintf(stderr, "Error in ComputeRandomForcingNormalization.\n");
-        ENZO_FAIL("");
+        ENZO_FAIL("Error in ComputeRandomForcingNormalization.\n");
       }
  
 #ifdef USE_LCAPERF
@@ -247,12 +274,10 @@ int EvolveLevel(TopGridData *MetaData, LevelHieraR7V&w&–BfÇW†W2this grid. */
 	  if (level > 0)
 	    if (Grids[grid]->GridData->SolveForPotential(Dummy, level)
 		== FAIL) {
-	      fprintf(stderr, "Error in grid->SolveForPotential.\n");
-	      ENZO_FAIL("");
+	      ENZO_FAIL("Error in grid->SolveForPotential.\n");
 	    }
 	  if (Grids[grid]->GridData->ComputeAccelerations(level) == FAIL) {
-	    fprintf(stderr, "Error in grid->ComputeAccelerations.\n");
-	    ENZO_FAIL("");
+	    ENZO_FAIL("Error in grid->ComputeAccelerations.\n");
 	  }
 	}
 	  /* otherwise, interpolate potential from coarser grid, which is
@@ -272,8 +297,7 @@ int EvolveLevel(TopGridData *MetaData, LevelHieraR7V&w&–BfÇW†W2this grid. */
 
       if (UniformGravity || PointSourceGravity)
 	if (Grids[grid]->GridData->ComputeAccelerationFieldExternal() ==FAIL) {
-	  fprintf(stderr,"Error in grid->ComputeAccelerationFieldExternal.\n");
-	  ENZO_FAIL("");
+	  ENZO_FAIL("Error in grid->ComputeAccelerationFieldExternal.\n");
 	}
  
 #ifdef USE_LCAPERF
@@ -285,8 +309,7 @@ int EvolveLevel(TopGridData *MetaData, LevelHieraR7V&w&–BfÇW†W2this grid. */
       if (ComputePotential)
 	if (CheckEnergyConservation(Grids, grid, NumberOfGrids, level,
 				    dtThisLevel) == FAIL) {
-	  fprintf(stderr, "Error in CheckEnergyConservation.\n");
-	  ENZO_FAIL("");
+	  ENZO_FAIL("Error in CheckEnergyConservation.\n");
 	}
 */
       /* Copy current fields (with their boundaries) to the old fields
@@ -297,8 +320,7 @@ int EvolveLevel(TopGridData *MetaData, LevelHieraR7V&w&–BfÇW†W2this grid. */
 #endif
 
       if (Grids[grid]->GridData->CopyBaryonFieldToOldBaryonField() == FAIL) {
-	fprintf(stderr, "Error in grid->CopyBaryonFieldToOldBaryonField.\n");
-	ENZO_FAIL("");
+	ENZO_FAIL("Error in grid->CopyBaryonFieldToOldBaryonField.\n");
       }
  
 #ifdef USE_LCAPERF
@@ -332,8 +354,7 @@ int EvolveLevel(TopGridData *MetaData, LevelHieraR7V&w&–BfÇW†W2this grid. */
 
       if (Grids[grid]->GridData->SolveHydroEquations(LevelCycleCount[level],
 	 NumberOfSubgrids[grid], SubgridFluxesEstimate[grid], level) == FAIL) {
-	fprintf(stderr, "Error in grid->SolveHydroEquations.\n");
-	ENZO_FAIL("");
+	ENZO_FAIL("Error in grid->SolveHydroEquations.\n");
       }
  
 #ifdef USE_LCAPERF
@@ -350,9 +371,9 @@ int EvolveLevel(TopGridData *MetaData, LevelHieraR7V&w&–BfÇW†W2this grid. */
  
 	LCAPERF_START("evolve-level-14"); // change this?
 
-	if (Grids[grid1]->GridData->SolveRateAndCoolEquations() == FAIL) {
-	  fprintf(stderr, "Error in grid->SolveRateEquations.\n");
-	  ENZO_FAIL("");
+	int RTCoupledSolverIntermediateStep = FALSE;
+	if (Grids[grid1]->GridData->SolveRateAndCoolEquations(RTCoupledSolverIntermediateStep) == FAIL) {
+	  ENZO_FAIL("Error in grid->SolveRateEquations.\n");
 	}
  
 	LCAPERF_STOP("evolve-level-14"); // change this?
@@ -367,8 +388,7 @@ int EvolveLevel(TopGridData *MetaData, LevelHieraR7V&w&–BfÇW†W2this grid. */
 
 	if (MultiSpecies)
 	  if (Grids[grid1]->GridData->SolveRateEquations() == FAIL) {
-	    fprintf(stderr, "Error in grid->SolveRateEquations.\n");
-	    ENZO_FAIL("");
+	    ENZO_FAIL("Error in grid->SolveRateEquations.\n");
 	  }
  
 	LCAPERF_STOP("evolve-level-14"); // SolveRateEquations()
@@ -383,8 +403,7 @@ int EvolveLevel(TopGridData *MetaData, LevelHieraR7V&w&–BfÇW†W2this grid. */
 
 	if (RadiativeCooling)
 	  if (Grids[grid1]->GridData->SolveRadiativeCooling() == FAIL) {
-	    fprintf(stderr, "Error in grid->SolveRadiativeCooling.\n");
-	    ENZO_FAIL("");
+	    ENZO_FAIL("Error in grid->SolveRadiativeCooling.\n");
 	  }
  
 	LCAPERF_STOP("evolve-level-15"); // SolveRadiativeCooling()
@@ -402,8 +421,7 @@ int EvolveLevel(TopGridData *MetaData, LevelHieraR7V&w&–BfÇW†W2this grid. */
 #endif
 
       if (UpdateParticlePositions(Grids[grid]->GridData) == FAIL) {
-	fprintf(stderr, "Error in UpdateParticlePositions.\n");
-	ENZO_FAIL("");
+	ENZO_FAIL("Error in UpdateParticlePositions.\n");
       }
  
 #ifdef USE_LCAPERF
@@ -430,9 +448,13 @@ int EvolveLevel(TopGridData *MetaData, LevelHieraR7V&w&–BfÇW†W2this grid. */
 	}
       }
       if (StarParticleCreation || StarParticleFeedback) {
-	if (Grids[grid]->GridData->StarParticleHandler(level) == FAIL) {
-	  fprintf(stderr, "Error in grid->StarParticleWrapper");
-	  ENZO_FAIL("");
+	if (Grids[grid]->GridData->StarParticleHandler(level
+#ifdef EMISSIVITY
+	/* adding the changed StarParticleHandler prototype */
+						       ,dtLevelAbove
+#endif
+           ) == FAIL) {
+	  ENZO_FAIL("Error in grid->StarParticleWrapper");
 	}
       }
  
@@ -492,9 +514,9 @@ int EvolveLevel(TopGridData *MetaData, LevelHieraR7V&w&–BfÇW†W2this grid. */
 #endif
 
 if (SetBoundaryConditions(Grids, NumberOfGrids, level, MetaData,
-			      Exterior, LevelArray[level]) == FAIL)
-      ENZO_FAIL("");
- 
+			  Exterior, LevelArray[level]) == FAIL)
+  ENZO_FAIL("Error in SetBoundaryConditions()!\n");
+  
 
 #ifdef USE_LCAPERF
     LCAPERF_STOP("evolve-level-21"); // SetBoundaryConditions()
@@ -509,8 +531,8 @@ if (SetBoundaryConditions(Grids, NumberOfGrids, level, MetaData,
     if (StarParticleCreation)
       if (CommunicationUpdateStarParticleCount(Grids, MetaData,
 					       NumberOfGrids) == FAIL)
-	ENZO_FAIL("");
- 
+	ENZO_FAIL("Error in CommunicationUpdateStarParticleCount()!\n");
+  
 #ifdef USE_LCAPERF
     LCAPERF_STOP("evolve-level-22"); // CommunicationUpdateStarParticleCount()
 #endif
@@ -531,8 +553,7 @@ if (SetBoundaryConditions(Grids, NumberOfGrids, level, MetaData,
 				    MetaData->TracerParticleDumpNumber++,
 				    LevelArray, MetaData,
 				    LevelArray[level]->GridData->ReturnTime()) == FAIL) {
-	  fprintf(stderr, "Error in WriteTracerParticleData.\n");
-	  ENZO_FAIL("");
+	  ENZO_FAIL("Error in WriteTracerParticleData.\n");
 	}
       }
  
@@ -550,8 +571,7 @@ if (SetBoundaryConditions(Grids, NumberOfGrids, level, MetaData,
       CopyGravPotential = TRUE;
       When = 0.0;
       if (PrepareDensityField(LevelArray, level, MetaData, When) == FAIL) {
-        fprintf(stderr, "Error in PrepareDensityField.\n");
-        ENZO_FAIL("");
+        ENZO_FAIL("Error in PrepareDensityField.\n");
       }
       CopyGravPotential = FALSE;
  
@@ -564,8 +584,7 @@ if (SetBoundaryConditions(Grids, NumberOfGrids, level, MetaData,
           if (level > 0)
             if (Grids[grid]->GridData->SolveForPotential(Dummy, level)
                 == FAIL) {
-              fprintf(stderr, "Error in grid->SolveForPotential.\n");
-              ENZO_FAIL("");
+              ENZO_FAIL("Error in grid->SolveForPotential.\n");
             }
           // fprintf(stderr, "Call CP from EvolveLevel\n");
           Grids[grid]->GridData->CopyPotentialToBaryonField();
@@ -598,16 +617,20 @@ if (SetBoundaryConditions(Grids, NumberOfGrids, level, MetaData,
       //#ifdef USE_HDF5_GROUPS
       if (Group_WriteAllData(MetaData->DataDumpName, MetaData->DataDumpNumber++,
 		       Temp2->GridHierarchyEntry, *MetaData, Exterior,
+#ifdef TRANSFER
+		       ImplicitSolver,
+#endif
 		       LevelArray[level]->GridData->ReturnTime()) == FAIL) {
-	fprintf(stderr, "Error in Group_WriteAllData.\n");
-	ENZO_FAIL("");
+	ENZO_FAIL("Error in Group_WriteAllData.\n");
       }
 // #else
 //       if (WriteAllData(MetaData->DataDumpName, MetaData->DataDumpNumber++,
 // 		       Temp2->GridHierarchyEntry, *MetaData, Exterior, 
+// #ifdef TRANSFER
+// 		       ImplicitSolver,
+// #endif
 // 		       LevelArray[level]->GridData->ReturnTime()) == FAIL) {
-// 	fprintf(stderr, "Error in WriteAllData.\n");
-// 	ENZO_FAIL("");
+// 	ENZO_FAIL("Error in WriteAllData.\n");
 //       }
 // #endif
     }
@@ -632,8 +655,7 @@ if (SetBoundaryConditions(Grids, NumberOfGrids, level, MetaData,
 	  NumberOfGrids = GenerateGridArray(LevelArray, mlevel, &Grids);
 	  if (WriteStreamData(Grids, NumberOfGrids, MetaData,
 			      LevelCycleCount[mlevel], TRUE) == FAIL) {
-	    fprintf(stderr, "Error in WriteStreamData.\n");
-	    ENZO_FAIL("");
+	    ENZO_FAIL("Error in WriteStreamData.\n");
 	  }
 	}
       }
@@ -660,8 +682,7 @@ if (SetBoundaryConditions(Grids, NumberOfGrids, level, MetaData,
  
     if (LevelArray[level+1] != NULL) {
       if (EvolveLevel(MetaData, LevelArray, level+1, dtThisLevel, Exterior) == FAIL) {
-	fprintf(stderr, "Error in EvolveLevel (%"ISYM").\n", level);
-	ENZO_FAIL("");
+	ENZO_VFAIL("Error in EvolveLevel (%"ISYM").\n", level)
       }
     }
 
@@ -670,8 +691,7 @@ if (SetBoundaryConditions(Grids, NumberOfGrids, level, MetaData,
     if (MovieSkipTimestep != INT_UNDEFINED) {
       if (WriteStreamData(Grids, NumberOfGrids, MetaData, 
 			  LevelCycleCount[level]) == FAIL) {
-	fprintf(stderr, "Error in WriteStreamData.\n");
-	ENZO_FAIL("");
+	ENZO_FAIL("Error in WriteStreamData.\n");
       }
     }
  
@@ -692,7 +712,7 @@ if (SetBoundaryConditions(Grids, NumberOfGrids, level, MetaData,
 
     if (UpdateFromFinerGrids(level, Grids, NumberOfGrids, NumberOfSubgrids,
 			     SubgridFluxesEstimate) == FAIL)
-      ENZO_FAIL("");
+      ENZO_FAIL("Error in UpdateFromFinerGrids()!\n");
  
 #ifdef USE_LCAPERF
     LCAPERF_STOP("evolve-level-28"); // UpdateFromFinerGrids()
@@ -713,8 +733,7 @@ if (SetBoundaryConditions(Grids, NumberOfGrids, level, MetaData,
 	if (Grids[grid]->GridData->AddToBoundaryFluxes
 	    (SubgridFluxesEstimate[grid][NumberOfSubgrids[grid] - 1])
 	    == FAIL) {
-	  fprintf(stderr, "Error in grid->AddToBoundaryFluxes.\n");
-	  ENZO_FAIL("");
+	  ENZO_FAIL("Error in grid->AddToBoundaryFluxes.\n");
 	}
  
       /* Delete fluxes pointed to by SubgridFluxesEstimate[subgrid]. */
@@ -740,8 +759,7 @@ if (SetBoundaryConditions(Grids, NumberOfGrids, level, MetaData,
     if (RadiationFieldType >= 10 && RadiationFieldType <= 11 &&
 	level <= RadiationFieldLevelRecompute)
       if (RadiationFieldUpdate(LevelArray, level, MetaData) == FAIL) {
-	fprintf(stderr, "Error in RecomputeRadiationField.\n");
-	ENZO_FAIL("");
+	ENZO_FAIL("Error in RecomputeRadiationField.\n");
       }
  
 #ifdef USE_LCAPERF
@@ -757,8 +775,7 @@ if (SetBoundaryConditions(Grids, NumberOfGrids, level, MetaData,
 
     if (dtThisLevelSoFar < dtLevelAbove)
       if (RebuildHierarchy(MetaData, LevelArray, level) == FAIL) {
-	fprintf(stderr, "Error in RebuildHierarchy.\n");
-	ENZO_FAIL("");
+	ENZO_FAIL("Error in RebuildHierarchy.\n");
       }
  
 #ifdef USE_LCAPERF
@@ -787,6 +804,7 @@ if (SetBoundaryConditions(Grids, NumberOfGrids, level, MetaData,
  
 #ifdef UNUSED
   if (level > MaximumGravityRefinementLevel &&
+
       level == MaximumRefinementLevel)
     ZEUSQuadraticArtificialViscosity /= 1;
 #endif

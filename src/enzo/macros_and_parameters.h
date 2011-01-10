@@ -82,9 +82,11 @@
 
 #define MAX_POTENTIAL_ITERATIONS            8
 
+#define MAX_ENERGY_BINS                    10
+
 #define ROOT_PROCESSOR                      0
 
-#define VERSION                           1.3  /* current version number */
+#define VERSION                             2.0  /* current version number */
 
 /* Unmodifiable Parameters */
 
@@ -437,6 +439,8 @@ typedef int            HDF5_hid_t;
 #define MPI_SENDSTAR_TAG 21
 #define MPI_SENDPMFLAG_TAG 22
 #define MPI_SENDPART_TAG 23
+#define MPI_SENDMARKER_TAG 24
+#define MPI_SGMARKER_TAG 25
 
 // There are 5 tags related to this (1000-1004)
 #define MPI_SENDPARTFIELD_TAG 1000
@@ -447,19 +451,20 @@ typedef int            HDF5_hid_t;
 
 /* Particle types (note: gas is a conceptual type) */
 
-#define NUM_PARTICLE_TYPES 10
+#define NUM_PARTICLE_TYPES 11
 
-#define PARTICLE_TYPE_RESET       -1
-#define PARTICLE_TYPE_GAS          0
-#define PARTICLE_TYPE_DARK_MATTER  1
-#define PARTICLE_TYPE_STAR         2
-#define PARTICLE_TYPE_TRACER       3
-#define PARTICLE_TYPE_MUST_REFINE  4
-#define PARTICLE_TYPE_SINGLE_STAR  5
-#define PARTICLE_TYPE_BLACK_HOLE   6
-#define PARTICLE_TYPE_CLUSTER      7
-#define PARTICLE_TYPE_MBH          8
-#define PARTICLE_TYPE_COLOR_STAR   9
+#define PARTICLE_TYPE_RESET         -1
+#define PARTICLE_TYPE_GAS            0
+#define PARTICLE_TYPE_DARK_MATTER    1
+#define PARTICLE_TYPE_STAR           2
+#define PARTICLE_TYPE_TRACER         3
+#define PARTICLE_TYPE_MUST_REFINE    4
+#define PARTICLE_TYPE_SINGLE_STAR    5
+#define PARTICLE_TYPE_BLACK_HOLE     6
+#define PARTICLE_TYPE_CLUSTER        7
+#define PARTICLE_TYPE_MBH            8
+#define PARTICLE_TYPE_COLOR_STAR     9
+#define PARTICLE_TYPE_SIMPLE_SOURCE 10
 
 /* Star particle handling */
 
@@ -502,6 +507,10 @@ typedef int            HDF5_hid_t;
 #define CEN_METAL_COOLING 2
 #define CLOUDY_METAL_COOLING 3
 
+/* Definitions for grid::ComputeHeat, grid::ComputeConductionTimeStep, and grid::ConductHeat */
+
+#define ELT(a,b,c) ( (a) + GridDimension[0]*((b) + GridDimension[1]*(c)) )
+
 /* Streaming format parameters */
 
 #define ALL_PARTICLES 1
@@ -523,7 +532,7 @@ typedef int            HDF5_hid_t;
 #ifdef USE_MPI
 #define MPI_INSTRUMENTATION
 #else /* USE_MPI */
-#undef MEM_TRACE
+//#undef MEM_TRACE
 #undef MPI_TRACE
 #endif
 

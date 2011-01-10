@@ -49,11 +49,14 @@ int grid::PutSinkRestartInitialize(int level, int *NumberOfCellsSet)
   int DensNum, GENum, TENum, Vel1Num, Vel2Num, Vel3Num;
   if (this->IdentifyPhysicalQuantities(DensNum, GENum, Vel1Num, Vel2Num,
 				       Vel3Num, TENum) == FAIL) {
-    fprintf(stderr, "Error in IdentifyPhysicalQuantities.\n");
-    ENZO_FAIL("");
+    ENZO_FAIL("Error in IdentifyPhysicalQuantities.\n");
   }
 
   if (level == 0) {  // set it up on level zero and make it mustrefine
+
+
+
+
     NumberOfParticles = 64;
     NumberOfStars = 64;
     printf("Adding Sink Particles. \n");
@@ -80,9 +83,9 @@ int grid::PutSinkRestartInitialize(int level, int *NumberOfCellsSet)
 	  ParticleMass[l] = den_m;
 	  ParticleNumber[l] = l;
 	  ParticleType[l] = PARTICLE_TYPE_MUST_REFINE;
-	  ParticlePosition[0][l] = 0.125+0.25*i;//+0.5*dx;
-	  ParticlePosition[1][l] = 0.125+0.25*j;//+0.5*dx;
-	  ParticlePosition[2][l] = 0.125+0.25*k;//+0.5*dx;
+	  ParticlePosition[0][l] = 0.125+0.25*i+0.5*dxm;
+	  ParticlePosition[1][l] = 0.125+0.25*j+0.5*dxm;
+	  ParticlePosition[2][l] = 0.125+0.25*k+0.5*dxm;
 	  ParticleVelocity[0][l] = 0.0;
 	  ParticleVelocity[1][l] = 0.0;
 	  ParticleVelocity[2][l] = 0.0;
@@ -165,6 +168,7 @@ int grid::PutSinkRestartInitialize(int level, int *NumberOfCellsSet)
 // 	  (*NumberOfCellsSet)++;
  
 // 	} // end: if (radius2 < EjectaRadius*EjectaRadius)
+
  
 //       } // next i
 //     } // next j

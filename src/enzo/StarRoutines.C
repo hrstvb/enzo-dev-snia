@@ -53,6 +53,7 @@ Star::Star(void)
   CurrentGrid = NULL;
   Mass = FinalMass = DeltaMass = BirthTime = LifeTime = last_accretion_rate = NotEjectedMass = 0.0;
   FeedbackFlag = Identifier = level = GridID = type = naccretions = 0;
+  AddedEmissivity = false;
 }
 
 Star::Star(grid *_grid, int _id, int _level)
@@ -74,6 +75,7 @@ Star::Star(grid *_grid, int _id, int _level)
   PrevStar = NULL;
   CurrentGrid = _grid;
   DeltaMass = 0.0;
+  AddedEmissivity = false;
   last_accretion_rate = 0.0;
   NotEjectedMass = 0.0;
   level = _level;
@@ -122,6 +124,7 @@ Star::Star(StarBuffer *buffer, int n)
   level = buffer[n].level;
   GridID = buffer[n].GridID;
   type = buffer[n].type;
+  AddedEmissivity = buffer[n].AddedEmissivity;
   NextStar = NULL;
   PrevStar = NULL;
 }
@@ -167,13 +170,16 @@ Star::Star(StarBuffer buffer)
 /* No need to delete the accretion arrays because the pointers are
    stored in the copies located in the grid class. */
 
-//Star::~Star(void)
-//{
-//  if (accretion_rate != NULL)
-//    delete [] accretion_rate;
-//  if (accretion_time != NULL)
-//    delete [] accretion_time;
-//}
+Star::~Star(void)
+{
+  if (accretion_rate != NULL)
+    delete [] accretion_rate;
+  if (accretion_time != NULL)
+    delete [] accretion_time;
+  NextStar = NULL;
+  PrevStar = NULL;
+  CurrentGrid = NULL;
+}
 
 /***************
 
@@ -205,6 +211,7 @@ void Star::operator=(Star a)
   level = a.level;
   GridID = a.GridID;
   type = a.type;
+  AddedEmissivity = a.AddedEmissivity;
   if (accretion_rate != NULL)
     delete [] accretion_rate;
   if (accretion_time != NULL)
@@ -268,6 +275,7 @@ Star *Star::copy(void)
   a->level = level;
   a->GridID = GridID;
   a->type = type;
+  a->AddedEmissivity = AddedEmissivity;
   if (naccretions > 0) {
     a->accretion_rate = new float[naccretions];
     a->accretion_time = new FLOAT[naccretions];
@@ -444,8 +452,8 @@ void Star::DeleteCopyInGrid(void)
 
 void Star::PrintInfo(void)
 {
-  printf("Star %"ISYM": pos = %"PSYM" %"PSYM" %"PSYM", vel = %"FSYM" %"FSYM" %"FSYM"\n",
-	 Identifier, pos[0], pos[1], pos[2], vel[0], vel[1], vel[2]);
+  printf("[P%d] Star %"ISYM": pos = %"PSYM" %"PSYM" %"PSYM", vel = %"FSYM" %"FSYM" %"FSYM"\n",
+	 MyProcessorNumber, Identifier, pos[0], pos[1], pos[2], vel[0], vel[1], vel[2]);
   printf("\t delta_vel = %"FSYM" %"FSYM" %"FSYM"\n", delta_vel[0], delta_vel[1],
 	 delta_vel[2]);
   printf("\t naccr = %"ISYM, naccretions);
@@ -460,6 +468,7 @@ void Star::PrintInfo(void)
   printf("\t FeedbackFlag = %"ISYM"\n", FeedbackFlag);
   printf("\t accreted_angmom = %"FSYM" %"FSYM" %"FSYM"\n", accreted_angmom[0],
 	 accreted_angmom[1], accreted_angmom[2]);
+  printf("\t this = %x, PrevStar = %x, NextStar = %x\n", this, PrevStar, NextStar);
   return;
 }
 
@@ -470,6 +479,8 @@ RadiationSourceEntry* Star::RadiationSourceInitialize(void)
   source->PreviousSource = GlobalRadiationSources;
   source->NextSource     = GlobalRadiationSources->NextSource;
   source->SuperSource    = NULL;  // Define this later (below)
+  source->GridID         = GridID;
+  source->GridLevel      = level;
   source->Type           = type;
   source->LifeTime       = LifeTime;
   source->CreationTime   = BirthTime;
@@ -477,6 +488,7 @@ RadiationSourceEntry* Star::RadiationSourceInitialize(void)
   source->Position[0]    = pos[0]; 
   source->Position[1]    = pos[1]; 
   source->Position[2]    = pos[2]; 
+  source->AddedEmissivity = false;
   return source;
 }
 #endif
@@ -518,6 +530,7 @@ StarBuffer* Star::StarListToBuffer(int n)
     result[count].level = tmp->level;
     result[count].GridID = tmp->GridID;
     result[count].type = tmp->type;
+    result[count].AddedEmissivity = tmp->AddedEmissivity;
     count++;
     tmp = tmp->NextStar;
   }

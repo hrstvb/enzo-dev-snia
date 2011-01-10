@@ -10,6 +10,7 @@
 /         Evolve Hydro & MHD using 2nd order Runge-Kutta method.
 /
 ************************************************************************/
+#include "preincludes.h"
 
 #ifdef USE_MPI
 #include "mpi.h"
@@ -32,6 +33,9 @@
 #include "Grid.h"
 #include "LevelHierarchy.h"
 #include "../hydro_rk/tools.h"
+#ifdef TRANSFER
+#include "ImplicitProblemABC.h"
+#endif
 
 /* function prototypes */
 
@@ -49,7 +53,7 @@ int ComputeDednerWaveSpeeds(TopGridData *MetaData,LevelHierarchyEntry *LevelArra
 			    int level, FLOAT dt0);
 #ifdef TRANSFER
 int EvolvePhotons(TopGridData *MetaData, LevelHierarchyEntry *LevelArray[],
-		  Star *AllStars, FLOAT GridTime, int level, int LoopTime = TRUE);
+		  Star *&AllStars, FLOAT GridTime, int level, int LoopTime = TRUE);
 int RadiativeTransferPrepare(LevelHierarchyEntry *LevelArray[], int level,
 			     TopGridData *MetaData, Star *&AllStars,
 			     float dtLevelAbove);
@@ -117,7 +121,11 @@ int SetBoundaryConditions(HierarchyEntry *Grids[], int NumberOfGrids,
 
 
 int OutputFromEvolveLevel(LevelHierarchyEntry *LevelArray[],TopGridData *MetaData,
-		      int level, ExternalBoundary *Exterior);
+			  int level, ExternalBoundary *Exterior
+#ifdef TRANSFER
+			  , ImplicitProblemABC *ImplicitSolver
+#endif
+			  );
 
 #ifdef FLUX_FIX
 int UpdateFromFinerGrids(int level, HierarchyEntry *Grids[], int NumberOfGrids,
@@ -172,14 +180,12 @@ int FastSiblingLocatorInitializeStaticChainingMesh(ChainingMeshStructure *Mesh, 
 
 double ReturnWallTime();
 int CallPython(LevelHierarchyEntry *LevelArray[], TopGridData *MetaData,
-               int level);
+               int level, int from_topgrid);
 int SetLevelTimeStep(HierarchyEntry *Grids[], int NumberOfGrids, int level, 
 		     float *dtThisLevelSoFar, float *dtThisLevel, 
 		     float dtLevelAbove);
 
 void my_exit(int status);
-int CallPython(LevelHierarchyEntry *LevelArray[], TopGridData *MetaData,
-               int level);
 
 /* Counters for performance and cycle counting. */
 
@@ -205,7 +211,11 @@ extern int RK2SecondStepBaryonDeposit;
 /* EvolveGrid function */
 
 int EvolveLevel_RK2(TopGridData *MetaData, LevelHierarchyEntry *LevelArray[],
-		    int level, float dtLevelAbove, ExternalBoundary *Exterior, FLOAT dt0)
+		    int level, float dtLevelAbove, ExternalBoundary *Exterior, 
+#ifdef TRANSFER
+		    ImplicitProblemABC *ImplicitSolver,
+#endif
+		    FLOAT dt0)
 {
 
   float dtThisLevelSoFar = 0.0, dtThisLevel, dtGrid;
@@ -306,6 +316,8 @@ int EvolveLevel_RK2(TopGridData *MetaData, LevelHierarchyEntry *LevelArray[],
  
 #ifdef TRANSFER
     RadiativeTransferPrepare(LevelArray, level, MetaData, AllStars, dtLevelAbove);
+    FLOAT GridTime = Grids[0]->GridData->ReturnTime() + dtThisLevel;
+    EvolvePhotons(MetaData, LevelArray, AllStars, GridTime, level);
 #endif /* TRANSFER */
 
     /* For each grid, compute the number of it's subgrids. */
@@ -387,11 +399,6 @@ int EvolveLevel_RK2(TopGridData *MetaData, LevelHierarchyEntry *LevelArray[],
     }
 
     /* Solve the radiative transfer */
-
-#ifdef TRANSFER
-    FLOAT GridTime = Grids[0]->GridData->ReturnTime();
-    EvolvePhotons(MetaData, LevelArray, AllStars, GridTime, level);
-#endif /* TRANSFER */
 
     /* Compute particle-particle acceleration */
 
@@ -491,18 +498,20 @@ int EvolveLevel_RK2(TopGridData *MetaData, LevelHierarchyEntry *LevelArray[],
 	    Grids[grid1]->GridData->AddResistivity();
 	
 	  time1 = ReturnWallTime();
-	  
-	 
+	   
 	
 	} // ENDIF MHD_RK
-      } // ENDIF UseHydro
 
       /* Add viscosity */
 
-      if (UseViscosity) {
+      if (UseViscosity) 
 	Grids[grid1]->GridData->AddViscosity();
 
-      }
+      /* If using comoving co-ordinates, do the expansion terms now. */
+      if (ComovingCoordinates)
+	Grids[grid1]->GridData->ComovingExpansionTerms();
+
+      } // ENDIF UseHydro
 
 
       /* Solve the cooling and species rate equations. */
@@ -516,7 +525,11 @@ int EvolveLevel_RK2(TopGridData *MetaData, LevelHierarchyEntry *LevelArray[],
       /* Include 'star' particle creation and feedback. */
 
       Grids[grid1]->GridData->StarParticleHandler
-	(Grids[grid1]->NextGridNextLevel, level);
+	(Grids[grid1]->NextGridNextLevel, level
+#ifdef EMISSIVITY 
+			  , dtLevelAbove
+#endif
+        );
  
       /* Gravity: clean up AccelerationField. */
 
@@ -531,10 +544,6 @@ int EvolveLevel_RK2(TopGridData *MetaData, LevelHierarchyEntry *LevelArray[],
       if (UseFloor) 
 	Grids[grid1]->GridData->SetFloor();
 
-      /* If using comoving co-ordinates, do the expansion terms now. */
-
-      if (ComovingCoordinates)
-	Grids[grid1]->GridData->ComovingExpansionTerms();
 
     }  // end loop over grids
 
@@ -546,11 +555,9 @@ int EvolveLevel_RK2(TopGridData *MetaData, LevelHierarchyEntry *LevelArray[],
       SetBoundaryConditions(Grids, NumberOfGrids, level, MetaData, Exterior, LevelArray[level]);
 #endif
       
-      for (grid1 = 0; grid1 < NumberOfGrids; grid1++) {
-
+      for (grid1 = 0; grid1 < NumberOfGrids; grid1++) 
 	Grids[grid1]->GridData->PoissonSolver(level);
-      }
-      
+    
     }
     
 #ifdef FAST_SIB
@@ -565,8 +572,12 @@ int EvolveLevel_RK2(TopGridData *MetaData, LevelHierarchyEntry *LevelArray[],
 			 level, AllStars, TotalStarParticleCountPrevious);
 
 
-    OutputFromEvolveLevel(LevelArray,MetaData,level,Exterior);
-    CallPython(LevelArray, MetaData, level);
+    OutputFromEvolveLevel(LevelArray,MetaData,level,Exterior
+#ifdef TRANSFER
+			  , ImplicitSolver
+#endif
+			  );
+    CallPython(LevelArray, MetaData, level, 0);
 
     /* For each grid, delete the GravitatingMassFieldParticles. */
 
@@ -581,7 +592,11 @@ int EvolveLevel_RK2(TopGridData *MetaData, LevelHierarchyEntry *LevelArray[],
 
     //    LevelWallTime[level] += ReturnWallTime() - time1;
     if (LevelArray[level+1] != NULL) {
-      if (EvolveLevel_RK2(MetaData, LevelArray, level+1, dtThisLevel, Exterior, dt0) 
+      if (EvolveLevel_RK2(MetaData, LevelArray, level+1, dtThisLevel, Exterior, 
+#ifdef TRANSFER
+			  ImplicitSolver, 
+#endif
+			  dt0) 
 	  == FAIL) {
 	fprintf(stderr, "Error in EvolveLevel_RK2 (%"ISYM").\n", level);
 	ENZO_FAIL("");
@@ -594,8 +609,12 @@ int EvolveLevel_RK2(TopGridData *MetaData, LevelHierarchyEntry *LevelArray[],
     jbPerf.attribute ("level",&jb_level,JB_INT);
 #endif
 
-    OutputFromEvolveLevel(LevelArray,MetaData,level,Exterior);
-    CallPython(LevelArray, MetaData, level);
+    OutputFromEvolveLevel(LevelArray, MetaData, level, Exterior
+#ifdef TRANSFER
+			  , ImplicitSolver
+#endif
+			  );
+    CallPython(LevelArray, MetaData, level, 0);
 
     /* Update SubcycleNumber and the timestep counter for the
        streaming data if this is the bottom of the hierarchy -- Note

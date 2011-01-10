@@ -1,4 +1,3 @@
-
 /***********************************************************************
 /
 /  GRID: SUBTRACT ACCRETED MASS FROM NEARBY CELLS
@@ -10,6 +9,8 @@
 /  PURPOSE: Subtract mass from gas grids after accreting onto MBH,
 /           For BlackHole, a different approach is used at the moment;
 /           see Star_SubtractAccretedMassFromCell.C
+/ 
+/           This file is based on the logic of Grid_AddFeedbackSphere.C
 /
 ************************************************************************/
 
@@ -87,8 +88,7 @@ int grid::SubtractAccretedMassFromSphere(Star *cstar, int level, float radius, f
 
   if (this->IdentifyColourFields(SNColourNum, MetalNum, MBHColourNum, 
 				 Galaxy1ColourNum, Galaxy2ColourNum) == FAIL) {
-    fprintf(stderr, "Error in grid->IdentifyColourFields.\n");
-    ENZO_FAIL("");
+    ENZO_FAIL("Error in grid->IdentifyColourFields.\n");
   }
 
   MetalNum = max(MetalNum, SNColourNum);
@@ -99,12 +99,13 @@ int grid::SubtractAccretedMassFromSphere(Star *cstar, int level, float radius, f
                   MASS SUBTRACTION AFTER ACCRETION ONTO MBH
   ************************************************************************/
 
-  // Correct if the volume with 27 cells is larger than the energy bubble volume
+  // Correct if the volume with 27 cells is larger than the bubble volume 
+  // from which we subtract the mass
   float BoxVolume = 27 * CellWidth[0][0] * CellWidth[0][0] * CellWidth[0][0];
   float BubbleVolume = (4.0 * M_PI / 3.0) * radius * radius * radius;
   if (BoxVolume > BubbleVolume) {
-    printf("grid::SAMFS: this shouldn't happen, check CSP! \n");
-    ENZO_FAIL("");
+    fprintf(stdout, "grid::SAMFS: level(%d) probably too coarse, rescaling Subtraction!\n", level);
+    Subtraction *= BubbleVolume/BoxVolume;
   }
 
   for (k = 0; k < GridDimension[2]; k++) {
@@ -187,6 +188,7 @@ int grid::SubtractAccretedMassFromSphere(Star *cstar, int level, float radius, f
 	    BaryonField[MetalNum][index] *= increase;
 	  
 	  if (MBHColourNum > 0)
+
 	    BaryonField[MBHColourNum][index] *= increase;    
 	  
 	  CellsModified++;

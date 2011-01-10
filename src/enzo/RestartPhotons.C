@@ -37,7 +37,7 @@ int GetUnits(float *DensityUnits, float *LengthUnits,
 	     float *TemperatureUnits, float *TimeUnits,
 	     float *VelocityUnits, FLOAT Time);
 int EvolvePhotons(TopGridData *MetaData, LevelHierarchyEntry *LevelArray[],
-		  Star *AllStars, FLOAT GridTime, int level, int LoopTime = TRUE);
+		  Star *&AllStars, FLOAT GridTime, int level, int LoopTime = TRUE);
 
 int RestartPhotons(TopGridData *MetaData, LevelHierarchyEntry *LevelArray[],
 		   Star *AllStars)
@@ -59,17 +59,14 @@ int RestartPhotons(TopGridData *MetaData, LevelHierarchyEntry *LevelArray[],
   float LengthUnits, TimeUnits, TemperatureUnits, VelocityUnits, 
     DensityUnits; 
 
-  if (GetUnits(&DensityUnits, &LengthUnits, &TemperatureUnits,
-	       &TimeUnits, &VelocityUnits, MetaData->Time) == FAIL) {
-    fprintf(stdout, "Error in GetUnits.\n");
-    ENZO_FAIL("");
-  }
+  GetUnits(&DensityUnits, &LengthUnits, &TemperatureUnits,
+	   &TimeUnits, &VelocityUnits, MetaData->Time);
   
   /* Light crossing time */
 
   const float clight = 2.9979e10;
 
-  float LightCrossingTime = VelocityUnits / 
+  float LightCrossingTime = (LengthUnits/TimeUnits) / 
     (clight * RadiativeTransferPropagationSpeedFraction);
   FLOAT SavedPhotonTime = PhotonTime;
   float SavedPhotonTimestep = dtPhoton;
@@ -117,7 +114,7 @@ int RestartPhotons(TopGridData *MetaData, LevelHierarchyEntry *LevelArray[],
       }
 
     if ((PhotonCount == 0 && LastPhotonCount == 0) ||
-	RadiativeTransferAdaptiveTimestep == TRUE) {
+	RadiativeTransferAdaptiveTimestep > 0) {
       PhotonTime = SavedPhotonTime + dtPhoton*1e-2;
       break;
     }
@@ -133,10 +130,7 @@ int RestartPhotons(TopGridData *MetaData, LevelHierarchyEntry *LevelArray[],
   if (RadiativeTransferOpticallyThinH2)
     for (level = 0; level < MAX_DEPTH_OF_HIERARCHY; level++)
       for (Temp = LevelArray[level]; Temp; Temp = Temp->NextGridThisLevel)
-	if (Temp->GridData->AddH2Dissociation(AllStars) == FAIL) {
-	  fprintf(stderr, "Error in AddH2Dissociation.\n");
-	  ENZO_FAIL("");
-	}
+	Temp->GridData->AddH2Dissociation(AllStars);
 
   return SUCCESS;
 

@@ -51,8 +51,8 @@ int CommunicationShareStars(int *NumberToMove, star_data* &SendList,
 			    int &NumberOfReceives, star_data* &SharedList);
 
 #define NO_DEBUG_CCP
-#define GRIDS_PER_LOOP 20000
-#define PARTICLES_PER_LOOP 10000000
+#define GRIDS_PER_LOOP 100000
+#define PARTICLES_PER_LOOP 100000000
  
 int CommunicationCollectParticles(LevelHierarchyEntry *LevelArray[],
 				  int level, bool ParticlesAreLocal, 
@@ -364,8 +364,14 @@ int CommunicationCollectParticles(LevelHierarchyEntry *LevelArray[],
       AllMovedParticles = TotalNumberToMove;
       AllMovedStars = TotalStarsToMove;
 #ifdef USE_MPI
-      CommunicationAllReduceValues(&AllMovedParticles, 1, MPI_SUM);
-      CommunicationAllReduceValues(&AllMovedStars, 1, MPI_SUM);
+      int ibuffer[2];
+      if (NumberOfProcessors > 1) {
+	ibuffer[0] = AllMovedParticles;
+	ibuffer[1] = AllMovedStars;
+	CommunicationAllReduceValues(ibuffer, 2, MPI_SUM);
+	AllMovedParticles = ibuffer[0];
+	AllMovedStars = ibuffer[1];
+      }
 #endif
 
 #ifdef DEBUG_CCP

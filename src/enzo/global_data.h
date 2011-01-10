@@ -159,6 +159,13 @@ EXTERN int ConservativeInterpolation;
 
 EXTERN float MinimumEfficiency;
 
+/* This flag will automatically adjust MinimumSubgridEdge and
+   MaximumSubgridSize.  It will select MaximumSubgridSize from
+   OptimalSubgridPerProcessor. */
+
+EXTERN int SubgridSizeAutoAdjust;
+EXTERN int OptimalSubgridsPerProcessor;
+
 /* This is the minimum allowable edge size for a new subgrid (>=4) */
 
 EXTERN int MinimumSubgridEdge;
@@ -206,6 +213,8 @@ EXTERN float PointSourceGravityCoreRadius;
 /* SelfGravity (TRUE or FALSE) */
 
 EXTERN int SelfGravity;
+EXTERN int SelfGravityGasOff;
+EXTERN int AccretionKernal;
 
 /* CopyGravPotential (TRUE or FALSE) */
 
@@ -416,6 +425,7 @@ EXTERN float CurrentMaximumDensity;
 EXTERN float IncrementDensityOutput;
 
 /* Parameter(s) for embedded python execution */
+EXTERN int PythonTopGridSkip;
 EXTERN int PythonSubcycleSkip;
 
 /* Parameters to control inline halo finding */
@@ -481,12 +491,23 @@ EXTERN FLOAT MustRefineParticlesLeftEdge[MAX_DIMENSION],
 /* For CellFlaggingMethod = 8,
    binary switch that allows must refine particles to be created by the 
    routines MustRefineParticlesFlagFromList or MustRefineParticlesFlagInRegion*/
+
 EXTERN int MustRefineParticlesCreateParticles;
+
+/* For CellFlaggingMethod = 8,
+   The physical length (in pc) to which the must refine particles apply 
+   The above parameter will be automatically adjusted to match this length */
+
+EXTERN int   MustRefineParticlesRefineToLevelAutoAdjust;
+
+/* For CellFlaggingMethod = 8,
+   For new particle system only refine around particles above the minimum mass */
+
+EXTERN float MustRefineParticlesMinimumMass;
 
 /* For CellFlaggingMethod = 9,   
    The minimum shear (roughly, dv accross two zones) required for 
    refinement.    */
-
 
 EXTERN float MinimumShearForRefinement;
 
@@ -518,6 +539,12 @@ EXTERN int   StarParticleCreation;
 EXTERN int   StarParticleFeedback;
 EXTERN int   NumberOfParticleAttributes;
 EXTERN int   AddParticleAttributes;
+EXTERN int   BigStarFormation;
+EXTERN int   BigStarFormationDone;
+EXTERN float BigStarSeparation;
+EXTERN float SimpleQ;
+EXTERN float SimpleRampTime;
+
 
 /* Parameters governing certain time or redshift-dependent actions. */
 
@@ -573,9 +600,6 @@ EXTERN double timer[MAX_COUNTERS];
 EXTERN int counter[MAX_COUNTERS];
 EXTERN FILE *filePtr;
 EXTERN char tracename[MAX_NAME_LENGTH];
-EXTERN char memtracename[MAX_NAME_LENGTH];
-EXTERN FILE *memtracePtr;
-EXTERN int traceMEM;
 EXTERN double starttime, endtime;
 EXTERN double Start_Wall_Time, End_Wall_Time, WallTime;
 EXTERN int flagging_count, in_count, out_count, moving_count;
@@ -584,6 +608,11 @@ EXTERN float flagging_pct, moving_pct;
 EXTERN char name[MAX_NAME_LENGTH];
 EXTERN FILE *tracePtr;
 EXTERN int traceMPI;
+#ifdef MEM_TRACE
+EXTERN FILE *memtracePtr;
+EXTERN int traceMEM;
+EXTERN char memtracename[MAX_NAME_LENGTH];
+#endif
 
 /* New Movie Data */
 
@@ -725,6 +754,8 @@ EXTERN char GlobalPath[MAX_LINE_LENGTH];
 
 #ifdef USE_PYTHON
 EXTERN int NumberOfPythonCalls;
+EXTERN int NumberOfPythonTopGridCalls;
+EXTERN int NumberOfPythonSubcycleCalls;
 EXTERN PyObject *grid_dictionary;
 EXTERN PyObject *old_grid_dictionary;
 EXTERN PyObject *hierarchy_information;
@@ -739,7 +770,7 @@ EXTERN char *MetalCoolingTable;
 EXTERN int CIECooling;
 EXTERN int H2OpticalDepthApproximation;
 
-//   1 - Adaptive ray tacing transfer
+//   1 - Adaptive ray tracing transfer
 //   0 - none
 EXTERN int RadiativeTransfer;
 EXTERN int RadiativeTransferHydrogenOnly;
@@ -779,10 +810,29 @@ EXTERN float dtThisLevelSoFar[MAX_DEPTH_OF_HIERARCHY];
 EXTERN float dtThisLevel[MAX_DEPTH_OF_HIERARCHY];
 
 /* Coupled radiative transfer, cooling, and rate solver */
-
 EXTERN int RadiativeTransferCoupledRateSolver;
 
 
+//   2 - FLD radiation transfer only (no ray-tracing at all)
+//   1 - FLD radiation transfer (for optically-thin LW radiation)
+//   0 - none
+EXTERN int RadiativeTransferFLD;
+
+
+/* Implicit problem decision flag (only 0 through 3 work for now)
+      0 => do not use any implicit solver
+      1 => use the gFLDProblem module for single-group coupled FLD
+      2 => use the FSProb module for free-streaming FLD radiation 
+      3 => use the gFLDSplit module for single-group split FLD
+      4 => use the MFProb, multi-frequency fully implicit module
+      5 => use the MFSplit, multi-frequency split implicit module
+*/
+EXTERN int ImplicitProblem;
+
+/* Star-Maker emissivity field generator and uv_param used in calculating Geoffrey's Emissivity0 baryon field */
+
+EXTERN int StarMakerEmissivityField;
+EXTERN float uv_param;
 
 /* Shearing Boundary Conditions */
 
@@ -824,5 +874,13 @@ EXTERN int OutputWhenJetsHaveNotEjected;
 
 EXTERN int VelAnyl;
 EXTERN int BAnyl;
+
+EXTERN char current_error[255];
+
+/* Thermal conduction */
+
+EXTERN int Conduction;  // TRUE OR FALSE
+EXTERN float ConductionSpitzerFraction;  // f_Spitzer
+EXTERN float ConductionCourantSafetyNumber;
 
 #endif

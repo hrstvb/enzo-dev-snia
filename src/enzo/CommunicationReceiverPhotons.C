@@ -33,6 +33,8 @@
 #ifdef USE_MPI
 static Eint32 PH_ListOfIndices[MAX_PH_RECEIVE_BUFFERS];
 static MPI_Status PH_ListOfStatuses[MAX_PH_RECEIVE_BUFFERS];
+void CommunicationCheckForErrors(int NumberOfStatuses, MPI_Status *statuses,
+				 char *msg=NULL);
 int CommunicationFindOpenRequest(MPI_Request *requests, Eint32 last_free,
 				 Eint32 nrequests, Eint32 index, 
 				 Eint32 &max_index);
@@ -82,7 +84,16 @@ int CommunicationReceiverPhotons(LevelHierarchyEntry *LevelArray[],
   for (i = 0; i < TotalReceives; i++)
     CompletedRequests[i] = false;
 
+#ifndef NONBLOCKING_RT
+  if (TotalReceives > 0)
+    for (level = 0; level < MAX_DEPTH_OF_HIERARCHY; level++)
+      if (LevelArray[level] != NULL)
+	nGrids[level] = GenerateGridArray(LevelArray, level, &Grids[level]);
+  while (ReceivesCompletedToDate < TotalReceives) {
+#endif
+
   NumberOfCompletedRequests = 0;
+  MPI_Errhandler_set(MPI_COMM_WORLD, MPI_ERRORS_RETURN);
 
   /* Wait for >1 receives */
 
@@ -103,12 +114,20 @@ int CommunicationReceiverPhotons(LevelHierarchyEntry *LevelArray[],
   fflush(stdout);
 #endif
 
+  if (NumberOfCompletedRequests > 0)
+    CommunicationCheckForErrors(TotalReceives, PH_ListOfStatuses,
+				"CommunicationReceiverPhotons");
+  MPI_Errhandler_set(MPI_COMM_WORLD, MPI_ERRORS_ARE_FATAL);
+
   /* Get grid lists */
 
-  if (NumberOfCompletedRequests > 0)
+#ifdef NONBLOCKING_RT
+  if (NumberOfCompletedRequests > 0) {
     for (level = 0; level < MAX_DEPTH_OF_HIERARCHY; level++)
       if (LevelArray[level] != NULL)
 	nGrids[level] = GenerateGridArray(LevelArray, level, &Grids[level]);
+  }
+#endif
 
   /* Loop over receive handles, looking for completed (i.e. null)
      requests. */
@@ -119,15 +138,6 @@ int CommunicationReceiverPhotons(LevelHierarchyEntry *LevelArray[],
   for (irecv = 0; irecv < NumberOfCompletedRequests; irecv++) {
 
     index = PH_ListOfIndices[irecv];
-      
-    if (PH_ListOfStatuses[index].MPI_ERROR != 0) {
-      fprintf(stderr, "MPI Error on processor %"ISYM". "
-	      "Error number %"ISYM" on request %"ISYM"\n",
-	      MyProcessorNumber, PH_ListOfStatuses[index].MPI_ERROR, index);
-      fprintf(stdout, "P(%"ISYM") index %"ISYM" -- mpi error %"ISYM"\n", 
-	      MyProcessorNumber, index, PH_ListOfStatuses[index].MPI_ERROR);
-    }
-
     if (CompletedRequests[index])
       continue;
 
@@ -147,7 +157,8 @@ int CommunicationReceiverPhotons(LevelHierarchyEntry *LevelArray[],
        faster. */
 
     NumberReceives = 0;
-    while (RecvBuffer[NumberReceives].ToLevel != BUFFER_END)
+    while (RecvBuffer[NumberReceives].ToLevel != BUFFER_END &&
+	   NumberReceives < PHOTON_BUFFER_SIZE)
       NumberReceives++;
     TotalReceivedPhotons += NumberReceives;
 
@@ -163,6 +174,23 @@ int CommunicationReceiverPhotons(LevelHierarchyEntry *LevelArray[],
 	  
       lvl	 = RecvBuffer[i].ToLevel;
       gi	 = RecvBuffer[i].ToGrid;
+
+      // Double check if the grids exists on this processor and if the
+      // grid number is valid.  If not, skip and warn the user.
+      if (gi >= nGrids[lvl]) {
+	printf("P%d: WARNING: CommunicationReceiverPhotons: Bad grid number = %d\n"
+	       "\t Receive %d, level %d, NumberOfGrids = %d.  SKIPPING!\n",
+	       MyProcessorNumber, gi, i, lvl, nGrids[lvl]);
+	continue;
+      }
+      else if (Grids[lvl][gi]->GridData->ReturnProcessorNumber() != 
+	       MyProcessorNumber) {
+	printf("P%d: WARNING: CommunicationReceiverPhotons: This grid isn't on this processor!\n"
+	       "\t Grid %d (P%d), Receive %d, level %d, NumberOfGrids = %d. SKIPPING!\n",
+	       MyProcessorNumber, gi, Grids[lvl][gi]->GridData->ReturnProcessorNumber(), 
+	       i, lvl, nGrids[lvl]);
+	continue;
+      }
       ToGrid = Grids[lvl][gi]->GridData;
       ToPP	 = ToGrid->ReturnPhotonPackagePointer();
 
@@ -227,14 +255,23 @@ int CommunicationReceiverPhotons(LevelHierarchyEntry *LevelArray[],
 
   } // ENDFOR completed requests (index)
 
-  //PH_CommunicationReceiveIndex = 0;
+#ifndef NONBLOCKING_RT
+  } // ENDWHILE receiving
+  PH_CommunicationReceiveIndex = 0;
+  PH_CommunicationReceiveMaxIndex = 0;
+#else
   PH_CommunicationReceiveIndex = 
     CommunicationFindOpenRequest(PH_CommunicationReceiveMPI_Request, NO_HINT,
 				 MAX_PH_RECEIVE_BUFFERS,
 				 PH_CommunicationReceiveIndex,
 				 PH_CommunicationReceiveMaxIndex);
+#endif
 
+#ifdef NONBLOCKING_RT
   if (NumberOfCompletedRequests > 0)
+#else
+  if (TotalReceives > 0)
+#endif
     for (level = 0; level < MAX_DEPTH_OF_HIERARCHY; level++)
       if (LevelArray[level] != NULL)
 	delete [] Grids[level];

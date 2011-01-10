@@ -30,6 +30,7 @@ int RadiativeTransferReadParameters(FILE *fptr)
   /* Set defaults. */
 
   RadiationPressure           = FALSE;             // off
+  RadiationPressureScale      = 1.0;
   PhotonTime                  = 0; 
   dtPhoton                    = FLOAT_UNDEFINED;
   for (i = 0; i < 4; i++) {
@@ -57,11 +58,17 @@ int RadiativeTransferReadParameters(FILE *fptr)
   RadiativeTransferPhotonMergeRadius          = 10.0;
   RadiativeTransferTimestepVelocityLimit      = 100.0; // km/s
   RadiativeTransferPeriodicBoundary           = FALSE;
+  RadiativeTransferFLDCallOnLevel             = 0;
   RadiativeTransferHIIRestrictedTimestep      = FALSE;
   RadiativeTransferAdaptiveTimestep           = FALSE;
   RadiativeTransferHydrogenOnly               = FALSE;
   RadiativeTransferTraceSpectrum              = FALSE;
   RadiativeTransferTraceSpectrumTable         = (char*) "spectrum_table.dat";
+  RadiativeTransferSourceBeamAngle            = 30.0;
+  RadiativeTransferLoadBalance                = FALSE;
+
+  if (MultiSpecies == 0)
+    RadiativeTransferOpticallyThinH2 = FALSE;
 
   /* read input from file */
 
@@ -73,6 +80,8 @@ int RadiativeTransferReadParameters(FILE *fptr)
     
     ret += sscanf(line, "RadiativeTransferRadiationPressure = %"ISYM, 
 		  &RadiationPressure);
+    ret += sscanf(line, "RadiativeTransferRadiationPressureScale = %"FSYM, 
+		  &RadiationPressureScale);
     ret += sscanf(line, "RadiativeTransferSourceRadius = %"FSYM, 
 		  &RadiativeTransferSourceRadius);
     ret += sscanf(line, "RadiativeTransferPropagationSpeedFraction = %"FSYM, 
@@ -101,6 +110,10 @@ int RadiativeTransferReadParameters(FILE *fptr)
 		  &RadiativeTransferSourceClustering);
     ret += sscanf(line, "RadiativeTransferPhotonMergeRadius = %"FSYM, 
 		  &RadiativeTransferPhotonMergeRadius);
+    ret += sscanf(line, "RadiativeTransferFLDCallOnLevel = %"ISYM, 
+		  &RadiativeTransferFLDCallOnLevel);
+    ret += sscanf(line, "RadiativeTransferSourceBeamAngle = %"FSYM, 
+		  &RadiativeTransferSourceBeamAngle);
     ret += sscanf(line, "RadiativeTransferHIIRestrictedTimestep = %"ISYM, 
 		  &RadiativeTransferHIIRestrictedTimestep);
     ret += sscanf(line, "RadiativeTransferAdaptiveTimestep = %"ISYM, 
@@ -109,6 +122,8 @@ int RadiativeTransferReadParameters(FILE *fptr)
 		  &RadiativeTransferHydrogenOnly);
     ret += sscanf(line, "RadiativeTransferTraceSpectrum = %"ISYM, 
 		  &RadiativeTransferTraceSpectrum);
+    ret += sscanf(line, "RadiativeTransferLoadBalance = %"ISYM, 
+		  &RadiativeTransferLoadBalance);
     if (sscanf(line, "RadiativeTransferTraceSpectrumTable = %s", dummy) == 1)
       RadiativeTransferTraceSpectrumTable = dummy;  
     ret += sscanf(line, "dtPhoton = %"FSYM, &dtPhoton);
@@ -124,7 +139,8 @@ int RadiativeTransferReadParameters(FILE *fptr)
 
     if (ret == 0 && strstr(line, "=") != NULL && line[0] != '#' && 
 	MyProcessorNumber == ROOT_PROCESSOR &&
-	strstr(line, "RadiativeTransfer") && !strstr(line, "RadiativeTransfer "))
+	strstr(line, "RadiativeTransfer") && !strstr(line, "RadiativeTransfer ")
+	&& !strstr(line, "RadiativeTransferFLD "))
       fprintf(stderr, "warning: the following parameter line was not "
 	      "interpreted:\n%s\n", line);
   }
@@ -133,12 +149,59 @@ int RadiativeTransferReadParameters(FILE *fptr)
 
   /* Check if H2 cooling is turned on for Lyman-Werner radiation. */
 
-  if (RadiativeTransferOpticallyThinH2 && MultiSpecies < 2 &&
-      MyProcessorNumber == ROOT_PROCESSOR) {
-    fprintf(stderr, "Warning: optically thin Lyman-Werner radiation turned on "
-	    "without H2 cooling.  Setting LW radiation OFF.\n");
+  if (RadiativeTransferOpticallyThinH2 && MultiSpecies < 2) {
+    if (MyProcessorNumber == ROOT_PROCESSOR)
+      fprintf(stderr, "Warning: optically thin Lyman-Werner radiation turned on "
+	      "without H2 cooling.  Setting LW radiation OFF.\n");
     RadiativeTransferOpticallyThinH2 = FALSE;
   }
+
+  /* Check if we're simultaneously using FLD and 1/r^2 Lyman-Werner radiation */
+
+  if (RadiativeTransferOpticallyThinH2 && RadiativeTransferFLD) {
+    if (MyProcessorNumber == ROOT_PROCESSOR)
+      fprintf(stderr, "Warning: optically thin Lyman-Werner radiation and FLD "
+	      "turned on.  Turning the optically thin radiation OFF.\n");
+    RadiativeTransferOpticallyThinH2 = FALSE;
+  }
+
+  if (RadiativeTransferFLDCallOnLevel < 0) {
+    if (MyProcessorNumber == ROOT_PROCESSOR)
+      fprintf(stderr, "Warning: RadiativeTransferFLDCallOnLevel = %"ISYM
+	      " cannot be negative!  Setting to 0.\n");
+    RadiativeTransferFLDCallOnLevel = 0;
+  }
+
+
+  // If RadiativeTransferFLD > 1, turn off RadiativeTransfer
+  if (RadiativeTransferFLD > 1  &&  RadiativeTransfer) {
+    if (MyProcessorNumber == ROOT_PROCESSOR)
+      fprintf(stderr, "Warning: RadiativeTransferFLD > 1 cannot be used with "
+	      "RadiativeTransfer.  Turning ray-tracing solver OFF.\n");
+    RadiativeTransfer = FALSE;
+  }
+
+
+  // If RadiativeTransferFLD > 1, turn off RadiativeCooling
+  if (RadiativeTransferFLD > 1  &&  RadiativeCooling) {
+    if (MyProcessorNumber == ROOT_PROCESSOR)
+      fprintf(stderr, "Warning: RadiativeTransferFLD > 1 cannot be used with "
+	      "RadiativeCooling solver.  Turning RadiativeCooling OFF.\n");
+    RadiativeCooling = 0;
+  }
+
+  // If RadiativeTransferFLD > 1, reset RadiationFieldType (if necessary)
+  if (RadiativeTransferFLD > 1  &&  (RadiationFieldType != 0)) {
+    if (MyProcessorNumber == ROOT_PROCESSOR)
+      fprintf(stderr, "Warning: RadiativeTransferFLD > 1 cannot be used with "
+	      "RadiationFieldType != 0.  Resetting RadiationFieldType.\n");
+    RadiationFieldType = 0;
+  }
+
+  // If RadiativeTransferFLD > 1, ensure that ImplicitProblem > 0
+  if (RadiativeTransferFLD > 1  &&  (ImplicitProblem == 0)) 
+    ENZO_FAIL("Error: RadiativeTransferFLD > 1 requires ImplicitProblem > 0!")
+
 
   delete [] dummy;
 

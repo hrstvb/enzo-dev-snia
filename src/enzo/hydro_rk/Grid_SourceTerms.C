@@ -14,6 +14,7 @@
 #include <unistd.h>
 #include <math.h>
 
+#include "ErrorExceptions.h"
 #include "macros_and_parameters.h"
 #include "typedefs.h"
 #include "global_data.h"
@@ -245,7 +246,6 @@ int grid::SourceTerms(float **dU)
 
 
   if ((ProblemType == 35 || ProblemType == 36 ||ProblemType == 37) && ShearingBoxProblemType !=0) {
-    
     int igrid;
     float rho, gx, gy, gz;
     FLOAT xPos[3];
@@ -267,7 +267,7 @@ int grid::SourceTerms(float **dU)
     float lengthy=DomainRightEdge[1]-DomainLeftEdge[1];
     float lengthz;
     if (GridRank==3) lengthz=DomainRightEdge[2]-DomainLeftEdge[2];
-    else lengthz-0.0;
+    else lengthz=0.0;
     
 
     for (int k = GridStartIndex[2]; k <= GridEndIndex[2]; k++) {

@@ -12,11 +12,24 @@
 #ifndef __ENZO_EXCEPTIONS__
 #define __ENZO_EXCEPTIONS__
 
+#ifndef OSX10_4
 #include <execinfo.h>
+#else
+#include "execinfo_local.h"
+#endif
 #include <signal.h>
 #include <stdio.h>
 
 #include <exception>
+
+// If we are using the new problem type initializers, we need to include these
+// in a file that we know will be included before macros_and_parameters.h.
+#ifdef NEW_PROBLEM_TYPES
+#include <stdlib.h>
+#include <stdio.h>
+#include <map>
+#include <string>
+#endif
 
 // Example from 
 //
@@ -26,15 +39,7 @@
 // This must be included BEFORE macros_and_parameters.h
 // so we use int here
 
-#ifdef DEFINE_STORAGE
-# define EXTERN
-#else /* DEFINE_STORAGE */
-# define EXTERN extern
-#endif
-
-EXTERN char current_error[255];
-
-#undef EXTERN
+extern char current_error[255];
 
  class EnzoFatalException
  {

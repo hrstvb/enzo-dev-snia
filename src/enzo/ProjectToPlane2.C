@@ -10,6 +10,7 @@
 /  PURPOSE:
 /
 ************************************************************************/
+#include "preincludes.h"
 
 // This function projects a specified region of the grid to a plane,
 //   along one of the orthogonal directions.
@@ -35,6 +36,9 @@
 #include "TopGridData.h"
 #include "CosmologyParameters.h"
 #include "CommunicationUtilities.h"
+#ifdef TRANSFER
+#include "ImplicitProblemABC.h"
+#endif
 
 /* function prototypes */
 
@@ -55,21 +59,28 @@ int CosmologyComputeExpansionFactor(FLOAT time, FLOAT *a, FLOAT *dadt);
 int CommunicationReduceValues(float *values, int number, MPI_Op ReduceOp);
 #endif /* USE_MPI */
 #ifdef TRANSFER
-int RadiativeTransferInitialize(char *ParameterFile, TopGridData &MetaData,
+int RadiativeTransferInitialize(char *ParameterFile, 
+				HierarchyEntry &TopGrid, 
+				TopGridData &MetaData,
 				ExternalBoundary &Exterior, 
+				ImplicitProblemABC* &ImplicitSolver,
 				LevelHierarchyEntry *LevelArray[]);
 #endif
 
 #define NUMBER_OF_PROJECTED_FIELDS 28
 
 
-int ProjectToPlane2(char *ParameterFile,
+int ProjectToPlane2(char *ParameterFile, HierarchyEntry &TopGrid,
 		    TopGridData &MetaData, LevelHierarchyEntry *LevelArray[],
 		    int ProjectStartTemp[], int ProjectEndTemp[], 
 		    FLOAT ProjectStartCoordinate[],
 		    FLOAT ProjectEndCoordinate[], int ProjectLevel,
 		    int ProjectionDimension, char *ProjectionFileName,
-		    int ProjectionSmooth, ExternalBoundary *Exterior)
+		    int ProjectionSmooth, 
+#ifdef TRANSFER
+		    ImplicitProblemABC *ImplicitSolver,
+#endif
+		    ExternalBoundary *Exterior)
 {
 
   /* Declarations */
@@ -84,8 +95,8 @@ int ProjectToPlane2(char *ParameterFile,
   /* Read radiative transfer parameters */
 
 #ifdef TRANSFER
-  RadiativeTransferInitialize(ParameterFile, MetaData, *Exterior,
-			      LevelArray);
+  RadiativeTransferInitialize(ParameterFile, TopGrid, MetaData, *Exterior,
+			      ImplicitSolver, LevelArray);
 #endif
 
   /* Set The GravityResolution to 1 to make the DM resolution the same at
@@ -164,8 +175,7 @@ int ProjectToPlane2(char *ParameterFile,
   /* Error check. */
 
   if (ProjectionDimension < 0 || ProjectionDimension > MetaData.TopGridRank) {
-    fprintf(stderr, "Invalid ProjectionDimension (%d).\n",ProjectionDimension);
-    ENZO_FAIL("");
+    ENZO_VFAIL("Invalid ProjectionDimension (%d).\n",ProjectionDimension)
   }
 
   /* Check to see if a metal cooling rates (and ratios of line and total
@@ -609,25 +619,22 @@ int ProjectToPlane2(char *ParameterFile,
 				  &total_lum);
 
       if (err)
-	fprintf(stderr, "Error writing attributes for %s.\n", FieldName);
+	ENZO_VFAIL("Error writing attributes for %s!\n", FieldName)
       
       if ((status = H5Dclose(dset_id)) < 0)
-	fprintf(stderr, "Error in closing dataset for %s.\n", FieldName);
-
-      if (status || err)
-	ENZO_FAIL("");
+	ENZO_VFAIL("Error in closing dataset for %s!\n", FieldName)
 
     } // ENDFOR fields
 
     if (H5Fclose(file_id) < 0) {
-      fprintf(stderr, "Error closing HDF file %s.\n", ProjectionFileName);
-      ENZO_FAIL("");
+      ENZO_VFAIL("Error closing HDF file %s.\n", ProjectionFileName)
     }
 
 	//    delete [] float_temp;
     delete [] density_squared;
 
   } // end: if (MyProcessNumber == ROOT_PROCESSOR)
+
 
   for (field = 0; field < NumberOfProjectedFields; field++)
     delete [] ProjectedField[field];

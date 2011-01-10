@@ -58,6 +58,7 @@ static MPI_Datatype MPI_PhotonList;
 
 int CommunicationTransferPhotons(LevelHierarchyEntry *LevelArray[], 
 				 ListOfPhotonsToMove **AllPhotons,
+				 char *kt_global,
 				 int &keep_transporting)
 {
 
@@ -305,8 +306,11 @@ int CommunicationTransferPhotons(LevelHierarchyEntry *LevelArray[],
      completed messages, post receive calls from all processors with
      photons to receive */
 
-  InitializePhotonReceive(PHOTON_BUFFER_SIZE, local_transport, 
-			  MPI_PhotonList);
+#ifdef NONBLOCKING_RT
+  InitializePhotonReceive(PHOTON_BUFFER_SIZE, true, MPI_PhotonList);
+#else
+  InitializePhotonReceive(PHOTON_BUFFER_SIZE, false, MPI_PhotonList);
+#endif
 
   /* Second stage: post sends to processors */
      
@@ -316,7 +320,7 @@ int CommunicationTransferPhotons(LevelHierarchyEntry *LevelArray[],
       if (nPhoton[proc] % PHOTON_BUFFER_SIZE > 0) NumberOfMessages++;
       //tag = MPI_PHOTONGROUP_TAG*10 + nPhoton[proc];
       tag = MPI_PHOTONGROUP_TAG;
-      if (DEBUG)
+      if (DEBUG && NumberOfMessages > 0)
 	printf("CTPh(P%"ISYM"): Sending %"ISYM" photons to P%"ISYM" (%d messages, TAG=%d)\n", 
 	       MyProcessorNumber, nPhoton[proc], proc, NumberOfMessages, tag);
       for (i = 0; i < NumberOfMessages; i++) {
@@ -333,9 +337,20 @@ int CommunicationTransferPhotons(LevelHierarchyEntry *LevelArray[],
   /* Third stage: finally receive the data and transfer them to their
      respective grids  */
 
+#ifndef NONBLOCKING_RT
+  local_transport = false;
+#endif
   CommunicationReceiverPhotons(LevelArray, local_transport, 
 			       keep_transporting);
-      
+
+  if (kt_global != NULL)
+    for (proc = 0; proc < NumberOfProcessors; proc++)
+      if (proc != MyProcessorNumber && nPhoton[proc] > 0 &&
+	  kt_global[proc] != HALT_TRANSPORT) {
+	kt_global[proc] = SENT_DATA;
+	keep_transporting = 1;
+      }
+
   /* Clean up */
 
   CommunicationBufferPurge();

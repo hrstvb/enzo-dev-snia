@@ -30,7 +30,7 @@
 
 float ReturnValuesFromSpectrumTable(float ColumnDensity, float dColumnDensity, int mode);
 
-int Star::ComputePhotonRates(float E[], double Q[])
+int Star::ComputePhotonRates(int &nbins, float E[], double Q[])
 {
 
   float x, x2, _mass, EnergyFractionLW, MeanEnergy, XrayLuminosityFraction;
@@ -43,6 +43,11 @@ int Star::ComputePhotonRates(float E[], double Q[])
     /* Luminosities from Schaerer (2002) */
 
   case PopIII:
+    nbins = (PopIIIHeliumIonization &&
+	     !RadiativeTransferHydrogenOnly) ? 3 : 1;
+#ifdef TRANSFER    
+    if (!RadiativeTransferOpticallyThinH2) nbins++;
+#endif
     E[0] = 28.0;
     E[1] = 30.0;
     E[2] = 58.0;
@@ -64,6 +69,11 @@ int Star::ComputePhotonRates(float E[], double Q[])
     /* Average energy from Schaerer (2003) */
 
   case PopII:
+    nbins = (StarClusterHeliumIonization && 
+	     !RadiativeTransferHydrogenOnly) ? 3 : 1;
+#ifdef TRANSFER    
+    if (!RadiativeTransferOpticallyThinH2) nbins++;
+#endif
     EnergyFractionLW   = 0.01;
     EnergyFractionHeI  = 0.295;
     EnergyFractionHeII = 2.81e-4;
@@ -87,6 +97,7 @@ int Star::ComputePhotonRates(float E[], double Q[])
        accreting BH (Kuhlen & Madau 2004; Alvarez et al. 2009) */
 
   case BlackHole:
+    nbins = 1;
     XrayLuminosityFraction = 0.43;
     EnergyFractionLW = 1.51e-3;
     MeanEnergy = 93.0;  // eV
@@ -108,7 +119,7 @@ int Star::ComputePhotonRates(float E[], double Q[])
        spectral temperature is 2 keV, for accreting massive BH */
 
   case MBH:
-
+    nbins = 1;
     XrayLuminosityFraction = 1.0;
     E[0] = 2000.0; //2keV
     E[1] = 0.0;
@@ -132,6 +143,7 @@ int Star::ComputePhotonRates(float E[], double Q[])
 #ifdef TRANSFER
 
     if (RadiativeTransferTraceSpectrum == TRUE) {
+      nbins = 1;
       E[0] = ReturnValuesFromSpectrumTable(0.0, 0.0, 3); //##### mean energy if column density=0
       E[1] = 0.0;
       E[2] = 0.0;
@@ -152,9 +164,16 @@ int Star::ComputePhotonRates(float E[], double Q[])
 
     break;
 
+  case SimpleSource:
+    nbins = 1;
+    // radiating particle that ramps with time, independant of mass
+    E[0] = 20.0;
+    Q[0] = SimpleQ; // ramping done in StarParticleRadTransfer.C
+    break;
+
   default:
-    fprintf(stderr, "Star type = %"ISYM" not understood.\n", this->type);
-    ENZO_FAIL("");
+    ENZO_VFAIL("Star type = %"ISYM" not understood.\n", this->type)
+
   } // ENDSWITCH
 
   return SUCCESS;

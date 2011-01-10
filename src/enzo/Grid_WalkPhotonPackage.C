@@ -27,18 +27,17 @@
 #include "GridList.h"
 #include "Grid.h"
 #include "CosmologyParameters.h"
-#include "RadiativeTransferHealpixRoutines.h"
 
 #define MAX_HEALPIX_LEVEL 13
 #define MAX_COLUMN_DENSITY 1e25
 #define MIN_TAU_IFRONT 0.1
 #define TAU_DELETE_PHOTON 10.0
+#define GEO_CORRECTION
 
 int SplitPhotonPackage(PhotonPackageEntry *PP);
 FLOAT FindCrossSection(int type, float energy);
 float ReturnValuesFromSpectrumTable(float ColumnDensity, float dColumnDensity, int mode);
 
-enum species { iHI, iHeI, iHeII, iH2I, iHII };
 int grid::WalkPhotonPackage(PhotonPackageEntry **PP, 
 			    grid **MoveToGrid, grid *ParentGrid, grid *CurrentGrid, 
 			    grid **Grids0, int nGrids0, int DensNum, int DeNum,
@@ -46,8 +45,8 @@ int grid::WalkPhotonPackage(PhotonPackageEntry **PP,
 			    int kphHINum, int gammaNum, int kphHeINum, 
 			    int kphHeIINum, 
 			    int kdissH2INum, int RPresNum1, int RPresNum2, 
-			    int RPresNum3, int &DeleteMe, int &PauseMe, 
-			    int &DeltaLevel, float LightCrossingTime,
+			    int RPresNum3, int RaySegNum, int &DeleteMe, 
+			    int &PauseMe, int &DeltaLevel, float LightCrossingTime,
 			    float DensityUnits, float TemperatureUnits,
 			    float VelocityUnits, float LengthUnits,
 			    float TimeUnits) {
@@ -66,7 +65,7 @@ int grid::WalkPhotonPackage(PhotonPackageEntry **PP,
   int i, index, dim, splitMe, direction;
   int keep_walking, count, H2Thin, type, TemperatureField;
   int g[3], celli[3], u_dir[3], u_sign[3];
-  long cindex;
+  int cindex;
   float m[3], slice_factor, slice_factor2, sangle_inv;
   float MinTauIfront, PhotonEscapeRadius[3], c, c_inv, tau;
   float DomainWidth[3], dx, dx2, dxhalf, fraction, dColumnDensity;
@@ -91,11 +90,10 @@ int grid::WalkPhotonPackage(PhotonPackageEntry **PP,
   }
 
   if ((*PP) == NULL || (*PP)->PreviousPackage->NextPackage != (*PP)) {
-    fprintf(stderr, "Called grid::WalkPhotonPackage with an invalid pointer.\n"
+    ENZO_VFAIL("Called grid::WalkPhotonPackage with an invalid pointer.\n"
 	    "\t %x %x %x %x\n",
 	    (*PP), (*PP)->PreviousPackage, (*PP)->PreviousPackage->NextPackage,
-	    PhotonPackages);
-    ENZO_FAIL("");
+	    PhotonPackages)
   }
 
   /* This controls the splitting condition, where this many rays must
@@ -123,9 +121,8 @@ int grid::WalkPhotonPackage(PhotonPackageEntry **PP,
   /* Calculate the normal direction (HEALPix) */
 
   if (pix2vec_nest((long) (1 << (*PP)->level), (*PP)->ipix, dir_vec)==FAIL) {
-    fprintf(stdout,"WalkPhotonPackage: pix2vec_nest outor %ld %ld %g %x\n",
-	    (long) (1 << (*PP)->level), (*PP)->ipix, (*PP)->Photons, (*PP) );
-    ENZO_FAIL("");
+    ENZO_VFAIL("WalkPhotonPackage: pix2vec_nest outor %ld %ld %g %x\n",
+	    (long) (1 << (*PP)->level), (*PP)->ipix, (*PP)->Photons, (*PP) )
   }
 
   if (DEBUG) 
@@ -156,6 +153,8 @@ int grid::WalkPhotonPackage(PhotonPackageEntry **PP,
     // Current cell in integer and floating point
     g[dim] = GridStartIndex[dim] + 
       nint(floor((r[dim] - GridLeftEdge[dim]) / CellWidth[dim][0]));
+    if (g[dim] < 0 || g[dim] >= GridDimension[dim])
+      ENZO_FAIL("Ray out of grid?");
     f[dim] = CellLeftEdge[dim][g[dim]];
 
     // On cell boundaries, the index will change in negative directions
@@ -169,7 +168,7 @@ int grid::WalkPhotonPackage(PhotonPackageEntry **PP,
 
   cindex = GRIDINDEX_NOGHOST(g[0],g[1],g[2]);
   if (SubgridMarker[cindex] != this) {
-    FindPhotonNewGrid(cindex, r, *PP, *MoveToGrid,
+    FindPhotonNewGrid(cindex, r, u, *PP, *MoveToGrid,
 		      DeltaLevel, DomainWidth, DeleteMe, 
 		      ParentGrid);
     return SUCCESS;
@@ -321,18 +320,28 @@ int grid::WalkPhotonPackage(PhotonPackageEntry **PP,
 
   count = 0;
   keep_walking = 1;
-  cindex = GRIDINDEX_NOGHOST(g[0],g[1],g[2]);
+  //cindex = GRIDINDEX_NOGHOST(g[0],g[1],g[2]);
   while (keep_walking) {
 
     /* If the photon has left the grid, determine MoveToGrid,
        DeltaLevel, and DeleteMe, and exit the loop. */
 
     if (SubgridMarker[cindex] != this) {
-      FindPhotonNewGrid(cindex, r, *PP, *MoveToGrid,
+      FindPhotonNewGrid(cindex, r, u, *PP, *MoveToGrid,
 			DeltaLevel, DomainWidth, DeleteMe, 
 			ParentGrid);
       break;
     }
+
+    /* Check for photons that have left the domain (only for root
+       grids without periodic radiation boundaries).  We also adjust
+       the photon coordinates if it needs wrapping around the
+       periodic boundary. */
+
+    if (GravityBoundaryType != SubGridIsolated)
+      if (this->PhotonPeriodicBoundary(cindex, r, g, s, *PP, *MoveToGrid,
+				       DomainWidth, DeleteMe) == FALSE)
+	break;
 
     oldr = (*PP)->Radius;
     min_dr = 1e20;
@@ -369,26 +378,6 @@ int grid::WalkPhotonPackage(PhotonPackageEntry **PP,
     // My Position in coordinates [0..1]
     for (dim = 0; dim < 3; dim++)
       r[dim] = s[dim] + radius*u[dim];
-
-//    if (SubgridMarker[cindex] != CurrentGrid) {
-//      if (SubgridMarker[cindex] == NULL) {
-//	(*MoveToGrid) = ParentGrid;
-//	DeltaLevel = -1;
-//      } else {
-//	(*MoveToGrid) = SubgridMarker[cindex];
-//	DeltaLevel = 1;
-//	if (DEBUG) 
-//	  printf("different grid subgrid marker %x %x %ld %"ISYM" %"ISYM
-//		 " %"ISYM" %"FSYM" %"FSYM" %"FSYM"\n",
-//		 SubgridMarker[cindex], CurrentGrid, cindex, 
-//		 g[0], g[1], g[2], r[0], r[1], r[2]);
-//      }
-//      // move it at least a tiny fraction of the grid cell to not have
-//      // to worry about round off errors shifting photons back and
-//      // forth between two grids without doing anything.
-//      (*PP)->Radius += PFLOAT_EPSILON;
-//      return SUCCESS;
-//    }
 
     // splitting condition split package if its associated area is
     // larger than dx^2/RaysPerCell but only as long as the radius is
@@ -457,14 +446,18 @@ int grid::WalkPhotonPackage(PhotonPackageEntry **PP,
     /* Geometric correction factor because the ray's solid angle could
        not completely cover the cell */
 
+#ifdef GEO_CORRECTION
     midpoint = oldr + 0.5f*ddr - PFLOAT_EPSILON;
-    nearest_edge = -1e20;
     for (dim = 0; dim < 3; dim++)
       m[dim] = fabs(s[dim] + midpoint * u[dim] - (ce[dim] + dxhalf));
-    nearest_edge = max(max(m[0], m[1]), m[2]);
+    for (dim = 1, nearest_edge = m[0]; dim < 3; dim++)
+      if (m[dim] > nearest_edge) nearest_edge = m[dim];
     sangle_inv = 1.0 / (dtheta*radius);
     slice_factor = min(0.5f + (dxhalf-nearest_edge) * sangle_inv, 1.0f);
     slice_factor2 = slice_factor * slice_factor;
+#else
+    slice_factor2 = 1.0;
+#endif
 
     // Adjust length and energy due to cosmological expansion
     // assumes that da/a=dl/l=2/3 dt/t which is strictly only true for OmegaM=1
@@ -737,14 +730,15 @@ int grid::WalkPhotonPackage(PhotonPackageEntry **PP,
 	(*PP)->Radius > (*PP)->SourcePositionDiff)
       for (dim = 0; dim < MAX_DIMENSION; dim++)
 	BaryonField[RPresNum1+dim][index] += 
-	  RadiationPressureConversion * dP * (*PP)->Energy / 
+	  RadiationPressureConversion * RadiationPressureScale * dP * (*PP)->Energy / 
 	  density[index] * dir_vec[dim];
     
     (*PP)->CurrentTime += cdt;
     (*PP)->Photons     -= dP;
     (*PP)->Radius      += ddr;
 
-    //BaryonField[kphHeIINum][index] += 1;
+    if (RadiativeTransferLoadBalance)
+      BaryonField[RaySegNum][index] += 1.0;
 
     // return in case we're pausing to merge
     if (PauseMe)
@@ -767,6 +761,7 @@ int grid::WalkPhotonPackage(PhotonPackageEntry **PP,
     
     // are we done ? 
     if (((*PP)->CurrentTime) >= EndTime) {
+
       (*PP)->Photons = -1;
       DeleteMe = TRUE;
       return SUCCESS;

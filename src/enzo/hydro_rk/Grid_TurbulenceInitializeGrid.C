@@ -12,6 +12,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
+#include "ErrorExceptions.h"
 #include "macros_and_parameters.h"
 #include "typedefs.h"
 #include "global_data.h"
@@ -42,6 +43,7 @@ int grid::TurbulenceInitializeGrid(float CloudDensity, float CloudSoundSpeed, FL
   int DeNum, HINum, HIINum, HeINum, HeIINum, HeIIINum, HMNum, H2INum, H2IINum,
     DINum, DIINum, HDINum,  kphHINum, gammaNum, kphHeINum,
     kphHeIINum, kdissH2INum, RPresNum1, RPresNum2, RPresNum3;
+  int ColourNum;
 
   NumberOfBaryonFields = 0;
   FieldType[NumberOfBaryonFields++] = Density;
@@ -84,6 +86,7 @@ int grid::TurbulenceInitializeGrid(float CloudDensity, float CloudSoundSpeed, FL
       FieldType[HDINum  = NumberOfBaryonFields++] = HDIDensity;
     }
   }
+  FieldType[ColourNum = NumberOfBaryonFields++] = Metallicity;
 
   if (RadiativeTransfer && (MultiSpecies < 1)) {
     fprintf(stderr, "Grid_PhotonTestInitialize: Radiative Transfer but not MultiSpecies set");
@@ -139,9 +142,9 @@ int grid::TurbulenceInitializeGrid(float CloudDensity, float CloudSoundSpeed, FL
   double MassUnits = DensityUnits*pow(LengthUnits,3);
   printf("Mass Units = %"GSYM" \n",MassUnits);
   printf("Time Units = %"GSYM" \n",TimeUnits);
+  printf("Density Units = %"GSYM" \n",DensityUnits);
 
   GravitationalConstant = 4.0*pi*GravConst*MassUnits*pow(TimeUnits,2)/pow(LengthUnits,3);
-
 
   /* Return if this doesn't concern us. */
 
@@ -277,13 +280,13 @@ int grid::TurbulenceInitializeGrid(float CloudDensity, float CloudSoundSpeed, FL
 	    Density = CloudDensity / (1.0 + pow(6.0*r/CloudRadius,2));
 	    eint = CloudInternalEnergy;
 	  }
-
+ 
 	  /* Type 4: 1/r^2 profile with a smaller core.
 	     This is a model for massive star formation with a seed
 	     protostar in the center */
 
 	  if (CloudType == 4) {
-	    Density = 5.0*CloudDensity / (1.0 + pow(9.0*r/CloudRadius,2));
+	    Density = 4.2508525*CloudDensity / (1.0 + pow(9.0*r/CloudRadius,2));
 	    eint = CloudInternalEnergy;
 	    Velx = -CloudAngularVelocity * ypos;
 	    Vely =  CloudAngularVelocity * xpos;
@@ -303,7 +306,7 @@ int grid::TurbulenceInitializeGrid(float CloudDensity, float CloudSoundSpeed, FL
 	  /* Type 6: flattened 1/r^2 profile with large core and with ambient medium. */
 
 	  if (CloudType == 6) {
-	    Density = CloudDensity / (1.0 + 6.0*pow(r/CloudRadius,2));
+	    Density = 1.0522054*CloudDensity / (1.0 + pow(4.0*r/CloudRadius,2));
 	    eint = CloudInternalEnergy;
 	  }
 
@@ -331,19 +334,21 @@ int grid::TurbulenceInitializeGrid(float CloudDensity, float CloudSoundSpeed, FL
 	  }
 
 	  if (CloudType == 4) {
-	    Density = CloudDensity/20.0;
-	    eint = CloudInternalEnergy;
+	    Density = max(DensityUnits,0.5*4.25*CloudDensity/(1.0 + pow(9.0*r/CloudRadius,2)));
+	    eint = CloudInternalEnergy*200.0; //400.0;
 	  }
 
 
           if (CloudType ==6) {
-	    Density = max(DensityUnits, CloudDensity/(1.0 + pow(6.0*r/CloudRadius,2)));
-	    eint = CloudInternalEnergy;
+	    //Density = max(DensityUnits, 0.5*CloudDensity/(1.0 + pow(4.0*r/CloudRadius,2)));
+	    Density = CloudDensity/1000.0;
+	    eint = CloudInternalEnergy*200.0; //400.0;
 	  }
 
 	}
 
 	BaryonField[iden ][n] = Density;
+	BaryonField[ColourNum][n] = Density*0.018477;
 	BaryonField[ivx  ][n] = Velx;
 	BaryonField[ivy  ][n] = Vely;
 	BaryonField[ivz  ][n] = Velz;
@@ -443,13 +448,12 @@ int grid::TurbulenceInitializeGrid(float CloudDensity, float CloudSoundSpeed, FL
       k2 = 10.0;
       dk = 1.0;
     }
-
-    if (CloudType == 6) {
+    if (CloudType == 4 || CloudType == 6) {
       k1 = 2.0;
-      k2 = 10.0;
-      dk = 1.0;
+      k2 = min(34.0, int(GridDimension[0]/10));
+      printf("                GridDimension[0] = %"ISYM"\n",GridDimension[0] );
+      dk = max(1.0,int((k2-k1)/10));
     }
-
     if (CloudType == 7) {
       k1 = 1.0;
       k2 = 2.0;
@@ -631,9 +635,9 @@ int grid::TurbulenceInitializeGrid(float CloudDensity, float CloudSoundSpeed, FL
     ParticleMass[0] = den_p;
     ParticleNumber[0] = 0;
     ParticleType[0] = PARTICLE_TYPE_MUST_REFINE;
-    ParticlePosition[0][0] = 0.5+0.5*dxm;
-    ParticlePosition[1][0] = 0.5+0.5*dxm;
-    ParticlePosition[2][0] = 0.5+0.5*dxm;
+    ParticlePosition[0][0] = 0.35+0.5*dxm;
+    ParticlePosition[1][0] = 0.45+0.5*dxm;
+    ParticlePosition[2][0] = 0.70+0.5*dxm;
     ParticleVelocity[0][0] = 0.0;
     ParticleVelocity[1][0] = 0.0;
     ParticleVelocity[2][0] = 0.0;
