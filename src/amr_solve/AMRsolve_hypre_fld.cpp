@@ -420,12 +420,12 @@ int AMRsolve_Hypre_FLD::evaluate()
     err_flag = 1;
   }
 
-  // Appears to have completed successfully
-  if (err_flag == 0)  
-    if (pmpi->is_root()) {
-      printf("AMRsolve_Hypre_FLD Success!\n"); 
-      fflush(stdout); 
-    }
+//   // Appears to have completed successfully
+//   if (err_flag == 0)  
+//     if (pmpi->is_root()) {
+//       printf("AMRsolve_Hypre_FLD Success!\n"); 
+//       fflush(stdout); 
+//     }
 
   return err_flag;
 
@@ -1051,7 +1051,7 @@ void AMRsolve_Hypre_FLD::init_matrix_stencil_(AMRsolve_Grid& grid)
     } // for i1
   } // for i2
 
-  WHERE; printf("v0[0]=%g\n",v0[0]);
+//   WHERE; printf("v0[0]=%g\n",v0[0]);
 
   //-----------------------------------------------------------
   // Adjust stencil at grid boundaries
