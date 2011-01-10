@@ -67,6 +67,7 @@ int RHIonizationTestInitialize(FILE *fptr, FILE *Outfptr,
   char *HeIIName  = "HeII_Density";
   char *HeIIIName = "HeIII_Density";
   char *DeName    = "Electron_Density";
+  char *EtaName   = "Emissivity";
 
   // local declarations
   char line[MAX_LINE_LENGTH];
@@ -369,6 +370,11 @@ int RHIonizationTestInitialize(FILE *fptr, FILE *Outfptr,
     if (MultiSpecies > 1)
       DataLabel[BaryonField++] = kdissH2IName;
   }
+
+  // if using the AMRFLDSplit solver, set a field for the emissivity
+  if (ImplicitProblem == 6) 
+    DataLabel[BaryonField++] = EtaName;
+
 
   for (int i=0; i<BaryonField; i++) 
     DataUnits[i] = NULL;

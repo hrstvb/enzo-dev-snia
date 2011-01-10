@@ -61,7 +61,7 @@ int grid::RHIonizationTestInitializeGrid(int NumChemicals,
   // create necessary baryon fields
   int RhoNum, TENum, IENum, V0Num, V1Num, V2Num, EgNum, DeNum, 
     HINum, HIINum, HeINum, HeIINum, HeIIINum, kphHINum, kphHeINum, 
-    kphHeIINum, gammaNum, kdissH2INum;
+    kphHeIINum, gammaNum, kdissH2INum, etaNum;
   NumberOfBaryonFields = 0;
   FieldType[RhoNum = NumberOfBaryonFields++] = Density;
   FieldType[TENum = NumberOfBaryonFields++]  = TotalEnergy;
@@ -92,6 +92,10 @@ int grid::RHIonizationTestInitializeGrid(int NumChemicals,
     if (MultiSpecies > 1)
       FieldType[kdissH2INum = NumberOfBaryonFields++] = kdissH2I;
   }
+  // if using the AMRFLDSplit solver, set a field for the emissivity
+  if (ImplicitProblem == 6) 
+    FieldType[etaNum = NumberOfBaryonFields++] = Emissivity0;
+
 
   // set the subgrid static flag (necessary??)
   SubgridsAreStatic = FALSE;
@@ -177,6 +181,10 @@ int grid::RHIonizationTestInitializeGrid(int NumChemicals,
       if (MultiSpecies > 1)
 	for (i=0; i<size; i++)  BaryonField[kdissH2INum][i] = 0.0;
     }
+
+    // if using the AMRFLDSplit solver, set emissivity field
+    if (ImplicitProblem == 6) 
+      for (i=0; i<size; i++)  BaryonField[etaNum][i] = 0.0;
 
     
     if (debug  &&  NewData) {
