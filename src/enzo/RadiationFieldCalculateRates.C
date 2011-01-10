@@ -382,11 +382,69 @@ int RadiationFieldCalculateRates(FLOAT Time)
                  * exp( -1.070 * POW(Redshift-1.782, 2.0) /
                  (1.0+0.2124 * POW(Redshift-0.9213, 2.0)) )
                  / CoolingUnits * Ramp;
+    
     }
+
+  /* ------------------------------------------------------------------ */
+  /* 13) Field (12) for the Haardt and Madau (2001) QSO+GAL (alpha_q = 1.57)*/
+  /* combined with field (9) molecular hydrogen constant photo-dissociation
+     Rate is 1.13e8 * F_LW  (flux in Lyman-Werner bands) F_LW is 
+     4pi * J_LW where J_LW is taken from the z=4 panel in Fig. 5 of 
+     Haardt & Madau (1996)*/
+
+
+  if (RadiationFieldType == 13){
+
+    RateData.k24 = 1.04e-12 * POW(1.0+Redshift, 0.231)
+                 * exp( -0.6818 * POW(Redshift-1.855, 2.0) /
+             (1.0+0.1646 * POW(Redshift+0.3097, 2.0)) )
+      * TimeUnits * Ramp;
+    RateData.k25 = 1.84e-14 * POW(1.0+Redshift, -1.038)
+                 * exp( -1.1640 * POW(Redshift-1.973, 2.0) /
+                 (1.0+0.1940 * POW(Redshift-0.6561, 2.0)) )
+                 * TimeUnits * Ramp;
+    RateData.k26 = 5.79e-13 * POW(1.0+Redshift, 0.278)
+                 * exp( -0.8260 * POW(Redshift-1.973, 2.0) /
+                 (1.0+0.1730 * POW(Redshift+0.2880, 2.0)) )
+                 * TimeUnits * Ramp;
+    CoolData.piHI   = 8.86e-24 * POW(1.0+Redshift, -0.0290)
+                 * exp( -0.7055 * POW(Redshift-2.003, 2.0) /
+                 (1.0+0.1884 * POW(Redshift+0.2888, 2.0)) )
+                 / CoolingUnits * Ramp;
+    CoolData.piHeI  = 5.86e-24 * POW(1.0+Redshift, 0.1764)
+                 * exp( -0.8029 * POW(Redshift-2.088, 2.0) /
+                 (1.0+0.1732 * POW(Redshift+0.1362, 2.0)) )
+                 / CoolingUnits * Ramp;
+    CoolData.piHeII = 2.17e-25 * POW(1.0+Redshift, -0.2196)
+                 * exp( -1.070 * POW(Redshift-1.782, 2.0) /
+                 (1.0+0.2124 * POW(Redshift-0.9213, 2.0)) )
+                 / CoolingUnits * Ramp;
+    /*Constant LW flux*/
+    /*    RateData.k31 = 1.13e8 * 7.1e-21 * TimeUnits;*/
+
+    /*Redshift dependent LW flux*/
+    RateData.k31 = 1.13e8 * POW(10.0,-19.65+0.1962*Redshift-0.009637*Redshift*Redshift-2.792*PEXP(-0.5*(Redshift+1.397)*(Redshift+1.397)/1.035/1.035)) * TimeUnits;
+
+  }
+
+  /* 14) Field for a redshift dependant molecular hydrogen photo-dissociation 
+     rate.  Rate is 1.13e8 * F_LW  (flux in Lyman-Werner bands) F_LW is 
+     4pi * J_LW where J_LW is a fit to the average intensity in the LW band 
+     over z from Haardt & Madau 2001.*/
+
+
+
+  if(RadiationFieldType == 14){
+
+    /*Redshift dependent LW flux*/
+    RateData.k31 = 1.13e8 * POW(10.0,-19.65+0.1962*Redshift-0.009637*Redshift*Redshift-2.792*PEXP(-0.5*(Redshift+1.397)*(Redshift+1.397)/1.035/1.035)) * TimeUnits;
+
+
+  }
 
 
 /* ------------------------------------------------------------------ */
-  if (RadiationFieldType < 0 || RadiationFieldType > 12) {
+  if (RadiationFieldType < 0 || RadiationFieldType > 14) {
     fprintf(stderr, "RadiationFieldType %"ISYM" not recognized.\n", 
 	    RadiationFieldType);
     ENZO_FAIL("");

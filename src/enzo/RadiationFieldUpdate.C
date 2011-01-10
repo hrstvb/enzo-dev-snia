@@ -294,8 +294,9 @@ int RadiationFieldUpdate(LevelHierarchyEntry *LevelArray[], int level,
 		   &RadiationData.HeIIAveragePhotoHeatingCrossSection,
 		&TimeUnits, &LengthUnits, &DensityUnits, &aUnits);
 
-  //  fprintf(stdout, "RadiationFieldUpdate: RadiationData.HIAPHCS = %e \n",
-  //	  RadiationData.HIAveragePhotoHeatingCrossSection); 
+  if (RadiationData.RadiationShield == TRUE)
+    fprintf(stdout, "RadiationFieldUpdate: RadiationData.HIAPHCS = %e \n",
+  	  RadiationData.HIAveragePhotoHeatingCrossSection); 
  
   /* Output spectrum. */
  
@@ -305,7 +306,7 @@ int RadiationFieldUpdate(LevelHierarchyEntry *LevelArray[], int level,
     fprintf(fptr, "# Redshift = %"GOUTSYM"   Time = %"GOUTSYM"    X-ray energy/temp = %"GSYM" %"GSYM"   Justburn = %"GSYM"   Densities = %"GSYM" %"GSYM" %"GSYM"\n", 1.0/a - 1.0, Time, RadiationData.ComptonXrayEnergyDensity, RadiationData.ComptonXrayTemperature, RadiationData.IntegratedStarFormation,
  
 *HIMeanDensitySum, *HeIMeanDensitySum, *HeIIMeanDensitySum);
-    if (RadiationFieldType == 11)
+    if (RadiationFieldType == 11 || RadiationFieldType == 13)
       fprintf(fptr, "# Averaged CrossSections = %"GSYM" %"GSYM" %"GSYM"   %"GSYM" %"GSYM" %"GSYM"\n",
 	    RadiationData.HIAveragePhotoionizationCrossSection,
 	    RadiationData.HeIAveragePhotoionizationCrossSection,

@@ -32,6 +32,8 @@ int InitializeRadiationFieldData(FLOAT Time)
 {
  
   int i, j, level;
+
+  float beta;
  
   /* Set radiation data parameters. */
   /* These should really be read in. */
@@ -82,6 +84,23 @@ int InitializeRadiationFieldData(FLOAT Time)
   RadiationData.HIAveragePhotoHeatingCrossSection = 0;
   RadiationData.HeIAveragePhotoHeatingCrossSection = 0;
   RadiationData.HeIIAveragePhotoHeatingCrossSection = 0;
+
+
+  if (RadiationFieldType == 13){
+
+    //power-law slope of radiation field
+    beta = -1.57;
+
+    RadiationData.HIAveragePhotoionizationCrossSection = (6.30e-18)*beta/(beta-3.0); 
+    RadiationData.HeIAveragePhotoionizationCrossSection = (7.82e-18)*beta/(beta-3.0);
+    RadiationData.HeIIAveragePhotoionizationCrossSection = (1.575e-18)*beta/(beta-3.0);
+
+    RadiationData.HIAveragePhotoHeatingCrossSection = (6.30e-18)*beta*(beta+1.0)/(beta-3.0)/(beta-2.0);
+    RadiationData.HeIAveragePhotoHeatingCrossSection = (7.82e-18)*beta*(beta+1.0)/(beta-3.0)/(beta-2.0);
+    RadiationData.HeIIAveragePhotoHeatingCrossSection = (1.575e-18)*beta*(beta+1.0)/(beta-3.0)/(beta-2.0);
+    
+  }
+
  
   RadiationData.IntegratedStarFormation = 0;
  
