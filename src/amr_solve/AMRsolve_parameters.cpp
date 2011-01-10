@@ -133,11 +133,11 @@ void AMRsolve_Parameters::set_parameter(std::string key, std::string val)
   if (key=="" || key=="#" || key=="//") return;
 
   // erase any existing <key,value> pairs
-  while (values_.find(key) != values_.end()) 
-    values_.erase(values_.find(key));
+  values_.erase(key);
 
   // add the new parameter
   values_.insert( std::pair<std::string,std::string>(key,val) );
+
 }
 
 //----------------------------------------------------------------------
