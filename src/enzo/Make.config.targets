@@ -743,8 +743,8 @@ CONFIG_AMR_SOLVE-%: suggest-clean
         grep -v CONFIG_AMR_SOLVE $(MAKE_CONFIG_OVERRIDE) > $${tmp}; \
         mv $${tmp} $(MAKE_CONFIG_OVERRIDE); \
         echo "CONFIG_AMR_SOLVE = $*" >> $(MAKE_CONFIG_OVERRIDE); \
-	$(MAKE)  show-config | grep CONFIG_AMR_SOLVE:
-	@echo
+	$(MAKE)  show-config | grep CONFIG_AMR_SOLVE; \
+	echo
 
 #-----------------------------------------------------------------------
 

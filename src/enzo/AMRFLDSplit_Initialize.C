@@ -70,6 +70,8 @@ int RHIonizationClumpInitialize(FILE *fptr, FILE *Outfptr,
 int AMRFLDSplit::Initialize(HierarchyEntry &TopGrid, TopGridData &MetaData)
 {
 
+#ifdef AMR_SOLVE
+
   if (debug)  printf("Entering AMRFLDSplit::Initialize routine\n");
 
   // find root grid corresponding to this process from the Hierarcy
@@ -912,5 +914,9 @@ int AMRFLDSplit::Initialize(HierarchyEntry &TopGrid, TopGridData &MetaData)
   }
 
   return SUCCESS;
+
+#else // AMR_SOLVE
+  ENZO_FAIL("AMRFLDSplit_Initialize requires AMR_SOLVE in configuration");
+#endif // AMR_SOLVE
 }
-#endif
+#endif // TRANSFER
