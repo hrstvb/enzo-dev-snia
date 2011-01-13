@@ -810,7 +810,7 @@ int NestedCosmologySimulationReInitialize(HierarchyEntry *TopGrid,
  
  
   int dim, gridnum = 0;
- 
+
   HierarchyEntry *CurrentGrid;
   HierarchyEntry *Temp;
  
@@ -918,7 +918,6 @@ int NestedCosmologySimulationReInitialize(HierarchyEntry *TopGrid,
  
     Temp = CurrentGrid;
     while (Temp != NULL) {
-      ParticleTempCount = ParticleCount; // set particle count to beginning of this level (not used for ring IO)
       if (Temp->GridData->NestedCosmologySimulationInitializeGrid
 	  (gridnum, CosmologySimulationOmegaBaryonNow,
 	   CosmologySimulationOmegaCDMNow,
