@@ -62,30 +62,20 @@ int gFLDSplit::FillRates(EnzoVector *u, EnzoVector *u0, float *phHI,
   float hp = 6.6260693e-27;       // Planck's constant [ergs*s]
   float mp = 1.67262171e-24;      // mass of a proton [g]
   float ev2erg = 1.60217653e-12;  // conversion constant from eV to ergs
-  float dom = DenUnits*POW(a,3.0)/mp;
+  float dom = DenUnits*a*a*a/mp;
   float tbase1 = TimeUnits;
   float xbase1 = LenUnits/a/aUnits;
-  float dbase1 = DenUnits*POW(a*aUnits,3.0);
-  float coolunit = POW(aUnits,5.0) * POW(xbase1,2.0) * POW(mp,2.0) 
-    / POW(tbase1,3.0) / dbase1;
+  float dbase1 = DenUnits*a*a*a*aUnits*aUnits*aUnits;
+  float coolunit = aUnits*aUnits*aUnits*aUnits*aUnits * xbase1*xbase1
+    * mp*mp / tbase1/tbase1/tbase1 / dbase1;
   float rtunits = ev2erg/TimeUnits/coolunit/dom;
   
-  // access radiation energy density arrays
+  // access radiation energy density array
   float *Er = u->GetData(0);
-  float *E0 = u0->GetData(0);
-
-  // access current chemistry density arrays
-  float *HI, *HeI, *HeII;
-  if (Nchem > 0)  HI   = U0->GetData(2);
-  if (Nchem > 1)  HeI  = U0->GetData(3);
-  if (Nchem > 1)  HeII = U0->GetData(4);
 
   // compute the size of the fields
   int i, dim, size=1;
   for (dim=0; dim<rank; dim++)  size *= ArrDims[dim];
-
-  // temporary variables
-  float Erval, nHI, nHeI, nHeII;
 
   // fill HI photo-ionization rate
   float pHIconst = c*TimeUnits*intSigESigHInu/hp/intSigE;
@@ -106,9 +96,13 @@ int gFLDSplit::FillRates(EnzoVector *u, EnzoVector *u0, float *phHI,
   float GHeIIconst = phScale*(intSigESigHeII - 54.4*ev2erg/hp*intSigESigHeIInu);
   if (Nchem == 1)
     for (i=0; i<size; i++)  photogamma[i] = Er[i]*ErUnits*GHIconst;
-  if (Nchem == 3)
+  if (Nchem == 3) {
+    float *HI = U0->GetData(2);
+    float *HeI = U0->GetData(3);
+    float *HeII = U0->GetData(4);
     for (i=0; i<size; i++)  photogamma[i] = Er[i]*ErUnits *
 	      (GHIconst*HI[i] + GHeIconst*HeI[i] + GHeIIconst*HeII[i])/HI[i];
+  }
 
   // fill H2 dissociation rate (none for grey FLD problems)
   if (MultiSpecies > 1) 
