@@ -65,7 +65,8 @@ int grid::MFIonizationTestInitializeGrid(int NumChemicals,
 
   // create necessary baryon fields
   int RhoNum, TENum, IENum, V0Num, V1Num, V2Num, FSNum, E1Num, 
-    E2Num, E3Num, DeNum, HINum, HIINum, HeINum, HeIINum, HeIIINum;
+    E2Num, E3Num, DeNum, HINum, HIINum, HeINum, HeIINum, HeIIINum, 
+    kphHINum, kphHeINum, kphHeIINum, gammaNum, kdissH2INum, etaNum;
   NumberOfBaryonFields = 0;
   FieldType[RhoNum = NumberOfBaryonFields++] = Density;
   FieldType[TENum = NumberOfBaryonFields++]  = TotalEnergy;
@@ -84,9 +85,24 @@ int grid::MFIonizationTestInitializeGrid(int NumChemicals,
   FieldType[HeINum = NumberOfBaryonFields++]   = HeIDensity;
   FieldType[HeIINum = NumberOfBaryonFields++]  = HeIIDensity;    
   FieldType[HeIIINum = NumberOfBaryonFields++] = HeIIIDensity;    
+  // if using external chemistry/cooling, set rate fields
+  if (RadiativeCooling) {
+    FieldType[kphHINum = NumberOfBaryonFields++] = kphHI;
+    FieldType[gammaNum = NumberOfBaryonFields++] = PhotoGamma;
+    if (RadiativeTransferHydrogenOnly == FALSE) {
+      FieldType[kphHeINum  = NumberOfBaryonFields++] = kphHeI;
+      FieldType[kphHeIINum = NumberOfBaryonFields++] = kphHeII;
+    }
+    if (MultiSpecies > 1)
+      FieldType[kdissH2INum = NumberOfBaryonFields++] = kdissH2I;
+  }
+  // if using the AMRFLDSplit solver, set a field for the emissivity
+  if (ImplicitProblem == 6) 
+    FieldType[etaNum = NumberOfBaryonFields++] = Emissivity0;
+
 
   // set the subgrid static flag (necessary??)
-  SubgridsAreStatic = FALSE;  // no subgrids
+  SubgridsAreStatic = FALSE;
 
   // Return if this doesn't concern us.
   if (ProcessorNumber != MyProcessorNumber)
@@ -100,7 +116,7 @@ int grid::MFIonizationTestInitializeGrid(int NumChemicals,
     fprintf(stderr,"Error in GetUnits.\n");
     return FAIL;
   }
-  if (MyProcessorNumber == ROOT_PROCESSOR) {
+  if (debug  &&  NewData) {
     fprintf(stdout,"  Internal Unit Conversion Factors:\n");
     fprintf(stdout,"         length = %g\n",LengthUnits);
     fprintf(stdout,"           mass = %g\n",MassUnits);
@@ -113,10 +129,6 @@ int grid::MFIonizationTestInitializeGrid(int NumChemicals,
  
   // allocate fields
   if (NewData == TRUE) {
-//     printf("\n  P%"ISYM": Allocating %"ISYM" baryon fields of size %"ISYM" (%"ISYM"x%"ISYM"x%"ISYM")\n",
-// 	   MyProcessorNumber, NumberOfBaryonFields, size, 
-// 	   GridDimension[0], GridDimension[1], GridDimension[2]);
-
     for (int field=0; field<NumberOfBaryonFields; field++)
       if (BaryonField[field] == NULL)
 	BaryonField[field] = new float[size];
@@ -124,10 +136,9 @@ int grid::MFIonizationTestInitializeGrid(int NumChemicals,
     // set fluid density, total energy, [internal energy,] velocities, 
     // radiation energy, electron density, chemical species
     int i;
-    float TEConstant = (IEConstant + 
-			0.5*(VxConstant*VxConstant + 
-			     VyConstant*VyConstant + 
-			     VzConstant*VzConstant));
+    float TEConstant = (IEConstant + 0.5*(VxConstant*VxConstant + 
+					  VyConstant*VyConstant + 
+					  VzConstant*VzConstant));
     float HIIConstant = InitialFractionHII*HydrogenMassFraction*DensityConstant;
     float HIConstant = HydrogenMassFraction*DensityConstant - HIIConstant;
     float HeIIConstant = InitialFractionHeII*DensityConstant*(1.0-HydrogenMassFraction);
@@ -161,8 +172,25 @@ int grid::MFIonizationTestInitializeGrid(int NumChemicals,
     if (DualEnergyFormalism)
       for (i=0; i<size; i++)
 	BaryonField[IENum][i] = IEConstant/eUnits;
+
+    // if using external chemistry/cooling, set rate fields
+    if (RadiativeCooling) {
+      for (i=0; i<size; i++)  BaryonField[kphHINum][i] = 0.0;
+      for (i=0; i<size; i++)  BaryonField[gammaNum][i] = 0.0;
+      if (RadiativeTransferHydrogenOnly == FALSE) {
+	for (i=0; i<size; i++)  BaryonField[kphHeINum][i]  = 0.0;
+	for (i=0; i<size; i++)  BaryonField[kphHeIINum][i] = 0.0;
+      }
+      if (MultiSpecies > 1)
+	for (i=0; i<size; i++)  BaryonField[kdissH2INum][i] = 0.0;
+    }
+
+    // if using the AMRFLDSplit solver, set emissivity field
+    if (ImplicitProblem == 6) 
+      for (i=0; i<size; i++)  BaryonField[etaNum][i] = 0.0;
+
     
-    if (debug) {
+    if (debug && NewData) {
       fprintf(stdout,"\n  Initializing constant fields using CGS values:\n");
       fprintf(stdout,"        density = %g\n",DensityConstant);
       fprintf(stdout,"   total energy = %g\n",TEConstant);

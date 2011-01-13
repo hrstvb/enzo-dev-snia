@@ -76,7 +76,7 @@ int grid::RHIonizationTestInitializeGrid(int NumChemicals,
     FieldType[HINum = NumberOfBaryonFields++]    = HIDensity;
     FieldType[HIINum = NumberOfBaryonFields++]   = HIIDensity;
   }
-  if ((NumChemicals == 3) || (MultiSpecies == 1)) {
+  if ((NumChemicals == 3) || (MultiSpecies > 0)) {
     FieldType[HeINum   = NumberOfBaryonFields++] = HeIDensity;
     FieldType[HeIINum  = NumberOfBaryonFields++] = HeIIDensity;    
     FieldType[HeIIINum = NumberOfBaryonFields++] = HeIIIDensity;
@@ -134,10 +134,9 @@ int grid::RHIonizationTestInitializeGrid(int NumChemicals,
     // set fluid density, total energy, [internal energy,] velocities, 
     // radiation energy, electron density, chemical species
     int i;
-    float TEConstant = (IEConstant + 
-			0.5*(VxConstant*VxConstant + 
-			     VyConstant*VyConstant + 
-			     VzConstant*VzConstant));
+    float TEConstant = (IEConstant + 0.5*(VxConstant*VxConstant + 
+					  VyConstant*VyConstant + 
+					  VzConstant*VzConstant));
     float HIIConstant = InitialFractionHII*HydrogenMassFraction*DensityConstant;
     float HIConstant = HydrogenMassFraction*DensityConstant - HIIConstant;
     float HeIIConstant = InitialFractionHeII*DensityConstant*(1.0-HydrogenMassFraction);
@@ -160,7 +159,7 @@ int grid::RHIonizationTestInitializeGrid(int NumChemicals,
 	BaryonField[HINum][i]    = HIConstant/DensityUnits;
 	BaryonField[HIINum][i]   = HIIConstant/DensityUnits;
       }
-      if ((NumChemicals == 3) || (MultiSpecies == 1)) {
+      if ((NumChemicals == 3) || (MultiSpecies > 0)) {
 	BaryonField[HeINum][i]   = HeIConstant/DensityUnits;
 	BaryonField[HeIINum][i]  = HeIIConstant/DensityUnits;
 	BaryonField[HeIIINum][i] = HeIIIConstant/DensityUnits;
@@ -202,7 +201,7 @@ int grid::RHIonizationTestInitializeGrid(int NumChemicals,
 	fprintf(stdout,"            nHI = %g\n",HIConstant);
 	fprintf(stdout,"           nHII = %g\n",HIIConstant);
       }
-      if ((NumChemicals == 3) || (MultiSpecies == 1)) {
+      if ((NumChemicals == 3) || (MultiSpecies > 0)) {
 	fprintf(stdout,"           nHeI = %g\n",HeIConstant);
 	fprintf(stdout,"          nHeII = %g\n",HeIIConstant);
 	fprintf(stdout,"         nHeIII = %g\n",HeIIIConstant);
@@ -222,7 +221,7 @@ int grid::RHIonizationTestInitializeGrid(int NumChemicals,
 	fprintf(stdout,"            nHI = %g\n",BaryonField[HINum][1]);
 	fprintf(stdout,"           nHII = %g\n",BaryonField[HIINum][1]);
       }
-      if ((NumChemicals == 3) || (MultiSpecies == 1)) {
+      if ((NumChemicals == 3) || (MultiSpecies > 0)) {
 	fprintf(stdout,"           nHeI = %g\n",BaryonField[HeINum][1]);
 	fprintf(stdout,"          nHeII = %g\n",BaryonField[HeIINum][1]);
 	fprintf(stdout,"         nHeIII = %g\n",BaryonField[HeIIINum][1]);

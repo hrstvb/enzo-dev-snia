@@ -97,7 +97,6 @@ int RHIonizationTestInitialize(FILE *fptr, FILE *Outfptr,
   float RadHydroInitialFractionHeII  = 0.0;
   float RadHydroInitialFractionHeIII = 0.0;
   int   RadHydroChemistry            = 1;
-  int   RadHydroModel                = 1;
   int   AMRNumberOfInitialPatches = 0;
   int   AMRPatchLevel[MAX_INITIAL_PATCHES];
   FLOAT AMRPatchLeftEdge[MAX_INITIAL_PATCHES][MAX_DIMENSION];
@@ -122,8 +121,6 @@ int RHIonizationTestInitialize(FILE *fptr, FILE *Outfptr,
 		      &RadHydroX2Velocity);
 	ret += sscanf(line, "RadHydroChemistry = %"ISYM, 
 		      &RadHydroChemistry);
-	ret += sscanf(line, "RadHydroModel = %"ISYM, 
-		      &RadHydroModel);
 	ret += sscanf(line, "RadHydroDensity = %"FSYM, 
 		      &RadHydroDensity);
 	ret += sscanf(line, "RadHydroTemperature = %"FSYM, 
@@ -211,7 +208,7 @@ int RHIonizationTestInitialize(FILE *fptr, FILE *Outfptr,
 	num_dens = HI + HII + ne;
 	mu = RadHydroDensity/num_dens;
       }
-      else if ((RadHydroChemistry == 3) || (MultiSpecies == 1)) {
+      else if (RadHydroChemistry == 3) {
 	nH = RadHydroDensity*RadHydroHydrogenMassFraction;
 	nHe = RadHydroDensity*(1.0 - RadHydroHydrogenMassFraction);
 	HI = nH*(1.0 - RadHydroInitialFractionHII);
@@ -226,14 +223,13 @@ int RHIonizationTestInitialize(FILE *fptr, FILE *Outfptr,
       else {
 	ENZO_FAIL("Initialize error: NChem != {0,1,3}\n");
       }
-      // correct mu if using a special model
-      if ((RadHydroModel == 4) || (RadHydroModel == 5)) 
-	mu = DEFAULT_MU;
       // compute the internal energy
       RadHydroIEnergy = kb*RadHydroTemperature/mu/mp/(Gamma-1.0);	
+
+      printf("RHIonizationTestInitialize: ne = %g, num_dens = %g, mu = %g\n",ne,num_dens,mu);
+
     }
   }
-
 
   /////////////////
   // Set up the TopGrid as usual
@@ -353,7 +349,7 @@ int RHIonizationTestInitialize(FILE *fptr, FILE *Outfptr,
     DataLabel[BaryonField++] = HIName;
     DataLabel[BaryonField++] = HIIName;
   }
-  if ((RadHydroChemistry == 3) || (MultiSpecies == 1)) {
+  if ((RadHydroChemistry == 3) || (MultiSpecies > 0)) {
     DataLabel[BaryonField++] = HeIName;
     DataLabel[BaryonField++] = HeIIName;
     DataLabel[BaryonField++] = HeIIIName;

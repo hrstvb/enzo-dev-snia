@@ -43,6 +43,8 @@ int grid::RHIonizationClumpInitializeGrid(int NumChemicals,
 					  float EgConst, 
 					  float HMassFrac, 
 					  float InitFracHII, 
+					  float InitFracHeII, 
+					  float InitFracHeIII, 
 					  float ClumpCenterX,
 					  float ClumpCenterY,
 					  float ClumpCenterZ,
@@ -52,12 +54,6 @@ int grid::RHIonizationClumpInitializeGrid(int NumChemicals,
 #ifdef TRANSFER
 //   if (debug)
 //     fprintf(stdout,"Entering grid::RHIonizationClumpInitializeGrid routine\n");
-
-  // ensure that we're using Hydrogen only
-  if (NumChemicals != 1) {
-    fprintf(stderr,"  Illegal chemical species = %i\n",NumChemicals);
-    ENZO_FAIL("Error in Grid_RHIonizationClumpInitializeGrid");
-  }
 
   // determine whether data should be allocated/initialized or not
   int NewData = TRUE;
@@ -71,7 +67,8 @@ int grid::RHIonizationClumpInitializeGrid(int NumChemicals,
 
   // create necessary baryon fields
   int RhoNum, TENum, IENum, V0Num, V1Num, V2Num, EgNum, DeNum, 
-    HINum, HIINum, kphHINum, gammaNum;
+    HINum, HIINum, HeINum, HeIINum, HeIIINum, kphHINum, kphHeINum, 
+    kphHeIINum, gammaNum, kdissH2INum, etaNum;
   NumberOfBaryonFields = 0;
   FieldType[RhoNum = NumberOfBaryonFields++] = Density;
   FieldType[TENum = NumberOfBaryonFields++]  = TotalEnergy;
@@ -84,11 +81,26 @@ int grid::RHIonizationClumpInitializeGrid(int NumChemicals,
   FieldType[DeNum = NumberOfBaryonFields++]    = ElectronDensity;
   FieldType[HINum = NumberOfBaryonFields++]    = HIDensity;
   FieldType[HIINum = NumberOfBaryonFields++]   = HIIDensity;
+  if ((NumChemicals == 3) || (MultiSpecies > 0)) {
+    FieldType[HeINum   = NumberOfBaryonFields++] = HeIDensity;
+    FieldType[HeIINum  = NumberOfBaryonFields++] = HeIIDensity;    
+    FieldType[HeIIINum = NumberOfBaryonFields++] = HeIIIDensity;
+  }
   // if using external chemistry/cooling, set rate fields
   if (RadiativeCooling) {
     FieldType[kphHINum = NumberOfBaryonFields++] = kphHI;
     FieldType[gammaNum = NumberOfBaryonFields++] = PhotoGamma;
+    if (RadiativeTransferHydrogenOnly == FALSE) {
+      FieldType[kphHeINum  = NumberOfBaryonFields++] = kphHeI;
+      FieldType[kphHeIINum = NumberOfBaryonFields++] = kphHeII;
+    }
+    if (MultiSpecies > 1)
+      FieldType[kdissH2INum = NumberOfBaryonFields++] = kdissH2I;
   }
+  // if using the AMRFLDSplit solver, set a field for the emissivity
+  if (ImplicitProblem == 6) 
+    FieldType[etaNum = NumberOfBaryonFields++] = Emissivity0;
+
 
   // set the subgrid static flag (necessary??)
   SubgridsAreStatic = FALSE;  // no subgrids
@@ -133,17 +145,20 @@ int grid::RHIonizationClumpInitializeGrid(int NumChemicals,
     float TEConstOut = (IEConstOut + 0.5*(VxConst*VxConst + 
 					  VyConst*VyConst + 
 					  VzConst*VzConst));
-    float RhoConstIn  = NumDensityIn * mp;
-    float RhoConstOut = NumDensityOut * mp;
-    float HIIConstIn  = InitFracHII * HMassFrac * RhoConstIn;
-    float HIIConstOut = InitFracHII * HMassFrac * RhoConstOut;
-    float HIConstIn   = HMassFrac * RhoConstIn - HIIConstIn;
-    float HIConstOut  = HMassFrac * RhoConstOut - HIIConstOut;
-    float DeConstIn   = HIIConstIn;
-    float DeConstOut  = HIIConstOut;
-    float HeIConst    = 0.0;
-    float HeIIConst   = 0.0;
-    float HeIIIConst  = 0.0;
+    float RhoConstIn    = NumDensityIn * mp;
+    float RhoConstOut   = NumDensityOut * mp;
+    float HIIConstIn    = InitFracHII * HMassFrac * RhoConstIn;
+    float HIIConstOut   = InitFracHII * HMassFrac * RhoConstOut;
+    float HIConstIn     = HMassFrac * RhoConstIn - HIIConstIn;
+    float HIConstOut    = HMassFrac * RhoConstOut - HIIConstOut;
+    float HeIIConstIn   = InitFracHeII * (1.0 - HMassFrac) * RhoConstIn;
+    float HeIIConstOut  = InitFracHeII * (1.0 - HMassFrac) * RhoConstOut;
+    float HeIIIConstIn  = InitFracHeIII * (1.0 - HMassFrac) * RhoConstIn;
+    float HeIIIConstOut = InitFracHeIII * (1.0 - HMassFrac) * RhoConstOut;
+    float HeIConstIn    = (1.0 - HMassFrac) * RhoConstIn - HeIIConstIn - HeIIIConstIn;
+    float HeIConstOut   = (1.0 - HMassFrac) * RhoConstOut - HeIIConstOut - HeIIIConstOut;
+    float DeConstIn     = HIIConstIn + 0.25*HeIIConstIn + 0.5*HeIIIConstIn;
+    float DeConstOut    = HIIConstOut + 0.25*HeIIConstOut + 0.5*HeIIIConstOut;
     float eUnits = VelocityUnits*VelocityUnits;
     float EUnits = DensityUnits*eUnits;
     // initialize clump-independent quantities
@@ -157,6 +172,12 @@ int grid::RHIonizationClumpInitializeGrid(int NumChemicals,
     if (RadiativeCooling) {
       for (i=0; i<size; i++)  BaryonField[kphHINum][i] = 0.0;
       for (i=0; i<size; i++)  BaryonField[gammaNum][i] = 0.0;
+      if (RadiativeTransferHydrogenOnly == FALSE) {
+	for (i=0; i<size; i++)  BaryonField[kphHeINum][i]  = 0.0;
+	for (i=0; i<size; i++)  BaryonField[kphHeIINum][i] = 0.0;
+      }
+      if (MultiSpecies > 1)
+	for (i=0; i<size; i++)  BaryonField[kdissH2INum][i] = 0.0;
     }
     
     // initialize clump-dependent quantities
@@ -205,6 +226,11 @@ int grid::RHIonizationClumpInitializeGrid(int NumChemicals,
 	  BaryonField[DeNum][idx]  = (Vout*DeConstOut + Vin*DeConstIn)/DensityUnits;
 	  BaryonField[HINum][idx]  = (Vout*HIConstOut + Vin*HIConstIn)/DensityUnits;
 	  BaryonField[HIINum][idx] = (Vout*HIIConstOut + Vin*HIIConstIn)/DensityUnits;
+	  if ((NumChemicals == 3) || (MultiSpecies > 0)) {
+	    BaryonField[HeINum][idx]   = (Vout*HeIConstOut + Vin*HeIConstIn)/DensityUnits;
+	    BaryonField[HeIINum][idx]  = (Vout*HeIIConstOut + Vin*HeIIConstIn)/DensityUnits;
+	    BaryonField[HeIIINum][idx] = (Vout*HeIIIConstOut + Vin*HeIIIConstIn)/DensityUnits;
+	  }
 	}
       }
     }
@@ -225,6 +251,11 @@ int grid::RHIonizationClumpInitializeGrid(int NumChemicals,
       printf("      electrons = %g\n",DeConstOut);
       printf("            nHI = %g\n",HIConstOut);
       printf("           nHII = %g\n",HIIConstOut);
+      if ((NumChemicals == 3) || (MultiSpecies > 0)) {
+	printf("           nHeI = %g\n",HeIConstOut);
+	printf("          nHeII = %g\n",HeIIConstOut);
+	printf("         nHeIII = %g\n",HeIIIConstOut);
+      }
       
       printf("\n  Inside the clump:\n");
       printf("        density = %g\n",RhoConstIn);
@@ -238,6 +269,11 @@ int grid::RHIonizationClumpInitializeGrid(int NumChemicals,
       printf("      electrons = %g\n",DeConstIn);
       printf("            nHI = %g\n",HIConstIn);
       printf("           nHII = %g\n",HIIConstIn);
+      if ((NumChemicals == 3) || (MultiSpecies > 0)) {
+	printf("           nHeI = %g\n",HeIConstIn);
+	printf("          nHeII = %g\n",HeIIConstIn);
+	printf("         nHeIII = %g\n",HeIIIConstIn);
+      }
     }
 
   } // end if NewData == TRUE
