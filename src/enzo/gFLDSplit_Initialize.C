@@ -34,6 +34,7 @@ EXTERN char outfilename[];
 
 // function prototypes
 int InitializeRateData(FLOAT Time);
+int FreezeRateData(FLOAT Time, HierarchyEntry &TopGrid);
 int CosmologyComputeExpansionFactor(FLOAT time, FLOAT *a, FLOAT *dadt);
 int GetUnits(float *DensityUnits, float *LengthUnits,
 	     float *TemperatureUnits, float *TimeUnits,
@@ -126,8 +127,8 @@ int gFLDSplit::Initialize(HierarchyEntry &TopGrid, TopGridData &MetaData)
   ESpectrum = 1;        // T=10^5 blackbody spectrum
   HFrac  = 1.0;         // all Hydrogen
   theta  = 1.0;         // backwards euler implicit time discret.
-  maxsubcycles = 100.0; // step ratio between radiation and hydro
-  maxchemsub = 100.0;   // step ratio between chemistry and radiation
+  maxsubcycles = 1.0;   // step ratio between radiation and hydro
+  maxchemsub = 1.0;     // step ratio between chemistry and radiation
   dtnorm = 2.0;         // use 2-norm for time step estimation
   ErScale = 1.0;        // no radiation equation scaling
   ecScale = 1.0;        // no energy equation scaling
@@ -325,8 +326,8 @@ int gFLDSplit::Initialize(HierarchyEntry &TopGrid, TopGridData &MetaData)
   // size and radiation time step size (dt_rad <= dt_hydro)
   if (maxsubcycles < 1.0) {
     fprintf(stderr,"gFLDSplit Initialize: illegal RadHydroMaxSubcycles = %g\n",maxsubcycles);
-    fprintf(stderr,"   re-setting to %g\n",1.0);
-    maxsubcycles = 100.0;    // default is to synchronize steps
+    fprintf(stderr,"   re-setting to 1.0\n");
+    maxsubcycles = 1.0;    // default is to synchronize steps
   }
 
   // maxchemsub gives the maximum desired ratio between radiation time step 
@@ -335,6 +336,18 @@ int gFLDSplit::Initialize(HierarchyEntry &TopGrid, TopGridData &MetaData)
     fprintf(stderr,"gFLDSplit Initialize: illegal RadHydroMaxChemSubcycles = %g\n",maxchemsub);
     fprintf(stderr,"   re-setting to %g\n",1.0);
     maxchemsub = 100.0;    // default is to synchronize steps
+  }
+
+  // if using Enzo's chemistry module, warn if subcycling radiation, and reset chemsub
+  if (RadiativeCooling) {
+    if (maxsubcycles > 1.0) {
+      fprintf(stderr,"\n**************************************************************\n");
+      fprintf(stderr," WARNING: radiation subcycling (RadHydroMaxSubcycles = %g > 1.0)\n",
+	      maxsubcycles);
+      fprintf(stderr,"          may not work properly with Enzo chemistry module!\n");
+      fprintf(stderr,"**************************************************************\n\n");
+    }
+    maxchemsub = 1.0;
   }
 
   // a, adot give cosmological expansion & rate
@@ -1145,6 +1158,12 @@ int gFLDSplit::Initialize(HierarchyEntry &TopGrid, TopGridData &MetaData)
     break;
   }
   ////////////////////////////////
+
+  // if using an isothermal "model", freeze rate data, now that ICs exist
+  if (Model == 4) 
+    if (FreezeRateData(MetaData.Time, TopGrid) == FAIL) 
+      ENZO_FAIL("Error in FreezeRateData.");
+
 
   if (debug)  printf("  Initialize: outputting parameters to log file\n");
 

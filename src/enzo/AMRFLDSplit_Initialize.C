@@ -34,6 +34,7 @@ EXTERN char outfilename[];
 
 // function prototypes
 int InitializeRateData(FLOAT Time);
+int FreezeRateData(FLOAT Time, HierarchyEntry &TopGrid);
 int CosmologyComputeExpansionFactor(FLOAT time, FLOAT *a, FLOAT *dadt);
 int GetUnits(float *DensityUnits, float *LengthUnits,
 	     float *TemperatureUnits, float *TimeUnits,
@@ -124,9 +125,10 @@ int AMRFLDSplit::Initialize(HierarchyEntry &TopGrid, TopGridData &MetaData)
 
   // set default module parameters
   Nchem  = 1;           // hydrogen only
+  int Model = 1;        // standard non-LTE, non-isothermal model
   ESpectrum = 1;        // T=10^5 blackbody spectrum
   theta  = 1.0;         // backwards euler implicit time discret.
-  maxsubcycles = 100.0; // step ratio between radiation and hydro
+  maxsubcycles = 1.0;   // step ratio between radiation and hydro
   dtnorm = 2.0;         // use 2-norm for time step estimation
   ErScale = 1.0;        // no radiation equation scaling
   for (dim=0; dim<rank; dim++)     // set default radiation boundaries to 
@@ -175,6 +177,7 @@ int AMRFLDSplit::Initialize(HierarchyEntry &TopGrid, TopGridData &MetaData)
       while (fgets(line, MAX_LINE_LENGTH, fptr) != NULL) {
 	ret = 0;
 	ret += sscanf(line, "RadHydroESpectrum = %"ISYM, &ESpectrum);
+	ret += sscanf(line, "RadHydroModel = %"ISYM, &Model);
 	ret += sscanf(line, "RadHydroChemistry = %"ISYM, &Nchem);
 	ret += sscanf(line, "RadHydroMaxDt = %"FSYM, &maxdt);
 	ret += sscanf(line, "RadHydroMinDt = %"FSYM, &mindt);
@@ -256,6 +259,13 @@ int AMRFLDSplit::Initialize(HierarchyEntry &TopGrid, TopGridData &MetaData)
     for (face=0; face<2; face++) 
       BdryVals[dim][face] = NULL;
 
+  // Model gives the physical set of equations to use {1,4} allowed for AMRFLDSplit
+  if ((Model != 1) && (Model != 4)) {
+    fprintf(stderr,"AMRFLDSplit Initialize: illegal Model = %"ISYM"\n",Model);
+    fprintf(stderr,"   Model is unimplemented in this module, resetting to 1.");
+    Model = 1;
+  }
+
   // Nchem gives the number of chemical species
   if ((Nchem < 1) || (Nchem > 3)) {
     fprintf(stderr,"AMRFLDSplit Initialize: illegal Nchem = %"ISYM"\n",Nchem);
@@ -286,10 +296,18 @@ int AMRFLDSplit::Initialize(HierarchyEntry &TopGrid, TopGridData &MetaData)
 
   // maxsubcycles gives the maximum desired ratio between hydro time step 
   // size and radiation time step size (dt_rad <= dt_hydro)
+  // ***warn if subcycling radiation***
   if (maxsubcycles < 1.0) {
     fprintf(stderr,"AMRFLDSplit Initialize: illegal RadHydroMaxSubcycles = %g\n",maxsubcycles);
-    fprintf(stderr,"   re-setting to %g\n",1.0);
-    maxsubcycles = 100.0;    // default is to synchronize steps
+    fprintf(stderr,"   re-setting to 1.0\n");
+    maxsubcycles = 1.0;    // default is to synchronize steps
+  }
+  if (maxsubcycles > 1.0) {
+    fprintf(stderr,"\n**************************************************************\n");
+    fprintf(stderr," WARNING: radiation subcycling (RadHydroMaxSubcycles = %g > 1.0)\n",
+	    maxsubcycles);
+    fprintf(stderr,"          may not work properly with Enzo chemistry module!\n");
+    fprintf(stderr,"**************************************************************\n\n");
   }
 
   // a, adot give cosmological expansion & rate
@@ -411,12 +429,6 @@ int AMRFLDSplit::Initialize(HierarchyEntry &TopGrid, TopGridData &MetaData)
       zghosts = DEFAULT_GHOST_ZONES;
     }
   }
-
-  // ensure that CoolData object has been set up
-  if (CoolData.ceHI == NULL) 
-    if (InitializeRateData(MetaData.Time) == FAIL) 
-      ENZO_FAIL("Error in InitializeRateData.");
-
 
   // compute Radiation Energy spectrum integrals
   if (this->ComputeRadiationIntegrals() == FAIL) 
@@ -865,6 +877,16 @@ int AMRFLDSplit::Initialize(HierarchyEntry &TopGrid, TopGridData &MetaData)
     break;
   }
   ////////////////////////////////
+
+  // ensure that CoolData object has been set up
+  if (CoolData.ceHI == NULL) 
+    if (InitializeRateData(MetaData.Time) == FAIL) 
+      ENZO_FAIL("Error in InitializeRateData.");
+  
+  // if using an isothermal "model", freeze rate data, now that ICs exist
+  if (Model == 4) 
+    if (FreezeRateData(MetaData.Time, TopGrid) == FAIL) 
+      ENZO_FAIL("Error in FreezeRateData.");
 
 
   if (debug)  printf("  Initialize: outputting parameters to log file\n");
