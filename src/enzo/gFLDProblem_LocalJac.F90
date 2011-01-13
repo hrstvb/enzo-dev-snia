@@ -1756,15 +1756,8 @@ subroutine gFLDProblem_LocalJac4(Erjac_Er, Erjac_ec, Erjac_HI, ecjac_Er,  &
            dne_dHI = dnHII_dHI
 
            ! compute temperature and shortcuts
-           !*** For Model 4 with cosmology, the temperature is held in ecScale ***!
-           if (adot == 0.d0) then
-              eint = eca(i,j,k)*ecUnits + VelUnits*VelUnits*(eha(i,j,k)  &
-                   - KEconst*(vx(i,j,k)**2 + vy(i,j,k)**2 + vz(i,j,k)**2))
-              T = (gamma-1.d0)*mol_weight*mp*eint/kb
-              T = max(1.d0*T,1.d0*min_temp)
-           else
-              T = ecScale
-           endif
+           !*** For Model 4, the temperature is held in ecScale ***!
+           T = ecScale
            lamT = 3.15614d5/T
 
            ! look up rates

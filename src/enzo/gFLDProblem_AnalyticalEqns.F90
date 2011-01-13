@@ -201,14 +201,7 @@ subroutine gFLDProblem_AnalyticResid(ecres, HIres, HeIres, HeIIres, Er,  &
   if (Model == 4) then
 
      ! first compute the fixed temperature (isothermal model)
-     if (adot == 0.d0) then
-        eint = vUn*vUn*(eh(1,1,1)                                  &
-             - KEconst*(vx(1,1,1)**2 + vy(1,1,1)**2 + vz(1,1,1)**2))
-        T = eint*(gamma-1.d0)*0.6d0*1.67262171d-24/1.3806504d-16
-        T = max(1.d0*T,1.d0)
-     else
-        T = ecScale
-     endif
+     T = ecScale
 
      ! now compute the Hydrogen reaction rates
      lamT = 3.15614d5/T
@@ -653,14 +646,7 @@ subroutine gFLDProblem_AnalyticInitGuess(Er, ec, HI, HeI, HeII, dt, vx,  &
   if (Model == 4) then
 
      ! first compute the fixed temperature (isothermal model)
-     if (adot == 0.d0) then
-        eint = vUn*vUn*(eh(1,1,1)                                  &
-             - KEconst*(vx(1,1,1)**2 + vy(1,1,1)**2 + vz(1,1,1)**2))
-        T = eint*(gamma-1.d0)*0.6d0*1.67262171d-24/1.3806504d-16
-        T = max(1.d0*T,1.d0)
-     else
-        T = ecScale
-     endif
+     T = ecScale
 
      ! now compute the Hydrogen reaction rates
      lamT = 3.15614d5/T

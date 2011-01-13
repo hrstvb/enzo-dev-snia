@@ -406,12 +406,8 @@ subroutine gFLDProblem_LocalRHS(rhs_Er, rhs_ec, rhs_HI, rhs_HeI,       &
               kappaE = nHI*IsEsHI/IsE
               
               ! temperature shortcuts
-              !*** For Model 4 with cosmology, the temperature is held in ecScale ***!
-              if (adot == 0.d0) then
-                 T = Tempa(i,j,k)
-              else
-                 T = ecScale
-              endif
+              !*** For Model 4, the temperature is held in ecScale ***!
+              T = ecScale
               lamT = 3.15614d5/T
 
               ! look up rates

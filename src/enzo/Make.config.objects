@@ -216,6 +216,7 @@ OBJS_CONFIG_LIB = \
 	fourn.o \
 	FreeRealMem.o \
 	FreeExpansionInitialize.o \
+	FreezeRateData.o \
         FriendOfFriend.o \
 	FSMultiSourceInitialize.o \
 	FSProb_ComputeOpacityLW.o \

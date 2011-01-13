@@ -671,7 +671,7 @@ subroutine gFLDSplit_AnalyticChemistry4(Er, HI, Er0, HI0, dt, vx, vy, vz, &
   ! initialize success/fail flag to success
   ier = 1
 
-  ! we only have this enabled for Model 1 (case B HII recomb rate), 
+  ! we only have this enabled for Model 4 (case B HII recomb rate), 
   ! with chemistry
   if ((Nchem /= 1) .or. (Model /= 4)) then
      write(*,*) 'AnalyticChemistry4 ERROR: only implemented for Nchem = 1', &
@@ -695,14 +695,7 @@ subroutine gFLDSplit_AnalyticChemistry4(Er, HI, Er0, HI0, dt, vx, vy, vz, &
   if (DualEnergy == 1)  KEconst = 0.d0
 
   ! first compute the fixed temperature (isothermal model)
-  if (adot == 0.d0) then
-     eint = VelUnits*VelUnits*(eh(1,1,1)                        &
-          - KEconst*(vx(1,1,1)**2 + vy(1,1,1)**2 + vz(1,1,1)**2))
-     T = eint*(gamma-1.d0)*0.6d0*1.67262171d-24/1.3806504d-16
-     T = max(1.d0*T,1.d0)
-  else
-     T = ecScale
-  endif
+  T = ecScale
   
   ! now compute the Hydrogen reaction rates
   lamT = 3.15614d5/T
@@ -1020,7 +1013,7 @@ subroutine gFLDSplit_AnalyticInitGuess(Er, ec, HI, HeI, HeII, dt, vx,    &
   ! initialize success/fail flag to success
   ier = 1
 
-  ! we only have this enabled for Model 1 (case B HII recomb rate), 
+  ! we only have this enabled for Models 1 & 4 (case B HII recomb rate), 
   ! with chemistry 
   if ((Nchem == 0) .or. ((Model /= 1) .and. (Model /= 4))) then
      write(*,*) 'AnalyticInitGuess ERROR: only implemented for Models 1 & 4', &
@@ -1078,14 +1071,7 @@ subroutine gFLDSplit_AnalyticInitGuess(Er, ec, HI, HeI, HeII, dt, vx,    &
   if (Model == 4) then
 
      ! first compute the fixed temperature (isothermal model)
-     if (adot == 0.d0) then
-        eint = vUn*vUn*(eh(1,1,1)                                  &
-             - KEconst*(vx(1,1,1)**2 + vy(1,1,1)**2 + vz(1,1,1)**2))
-        T = eint*(gamma-1.d0)*0.6d0*1.67262171d-24/1.3806504d-16
-        T = max(1.d0*T,1.d0)
-     else
-        T = ecScale
-     endif
+     T = ecScale
 
      ! now compute the Hydrogen reaction rates
      lamT = 3.15614d5/T

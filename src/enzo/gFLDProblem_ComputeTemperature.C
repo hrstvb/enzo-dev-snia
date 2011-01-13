@@ -152,11 +152,10 @@ int gFLDProblem::ComputeTemperature(float *TempArr, float time,
     float **ni = new float *[Nchem];
     for (int i=1; i<=Nchem; i++)  ni[i-1] = u->GetData(1+i);
 
-    //   If performing Ionization test 0 or 1, decouple the gas energy from 
-    //   the chemistry: use DEFAULT_MU as in standard approach
+    //   For models 4 and 5, the temperature is stored in ecScale
     if ((Model == 4) || (Model == 5)) {
       for (i=0; i<size; i++)
-        TempArr[i] = max((Gamma-1.0)*DEFAULT_MU*mp*TempArr[i]/kb, MIN_TEMP);
+        TempArr[i] = ecScale;
     }
     else {
       // Hydrogen only
