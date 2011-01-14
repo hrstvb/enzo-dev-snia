@@ -110,6 +110,20 @@ int AMRFLDSplit::Initialize(HierarchyEntry &TopGrid, TopGridData &MetaData)
   rank = MetaData.TopGridRank;
   if (rank != 3)
     ENZO_FAIL("Error in AMRFLDSplit_Initialize: rank must be 3 (for now)");
+
+  // initialize internal module units
+  double MassUnits;
+  float TempUnits;
+  DenUnits=LenUnits=TempUnits=MassUnits=TimeUnits=VelUnits=aUnits=1.0;
+  if (GetUnits(&DenUnits, &LenUnits, &TempUnits, 
+	       &TimeUnits, &VelUnits, &MassUnits, MetaData.Time) == FAIL) 
+    ENZO_FAIL("Error in GetUnits.");
+  a = 1.0; adot = 0.0;
+  if (ComovingCoordinates) {
+    if (CosmologyComputeExpansionFactor(MetaData.Time, &a, &adot) == FAIL) 
+      ENZO_FAIL("Error in CosmologyComputeExpansionFactor.");
+    aUnits = 1.0/(1.0 + InitialRedshift);
+  }
   
   // get processor layout from Grid
   int layout[3];     // number of procs in each dim (1-based)
