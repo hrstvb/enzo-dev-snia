@@ -64,7 +64,8 @@ float AMRFLDSplit::RadiationSource(LevelHierarchyEntry *LevelArray[],
 	  dx[dim] = (Temp->GridData->GetGridRightEdge(dim) 
 		     - Temp->GridData->GetGridLeftEdge(dim)) 
 	          / n3[dim];
-	float dV = dx[0]*dx[1]*dx[2]*LenUnits*LenUnits*LenUnits;
+	float lUn = (LenUnits + LenUnits0)*0.5;
+	float dV = dx[0]*dx[1]*dx[2]*lUn*lUn*lUn;
 
 	// set a cell "normalized volume" assuming the global domain has volume 1
 	float dVscale = 1;
@@ -130,7 +131,7 @@ float AMRFLDSplit::RadiationSource(LevelHierarchyEntry *LevelArray[],
 	    
 	    // compute eta factor for given ionization source
 	    etaconst = h_nu0 * NGammaDot * SpecConst / dV / POW(2.0*EtaRadius, rank);
-	    
+
 	    for (k=ghZl; k<n3[2]+ghZl; k++) {
 	      
 	      // z-center (comoving) for this cell
