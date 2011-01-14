@@ -48,8 +48,6 @@ int AMRFLDSplit::Evolve(LevelHierarchyEntry *LevelArray[], int level, float dthy
 
 #ifdef AMR_SOLVE
 
-//   if (debug)  printf("Entering AMRFLDSplit::Evolve routine\n");
-
   // start MPI timer for overall solver
 #ifdef USE_MPI
   float stime = MPI_Wtime();
@@ -60,10 +58,12 @@ int AMRFLDSplit::Evolve(LevelHierarchyEntry *LevelArray[], int level, float dthy
   ////////////////////////////////////
   // Problem Setup Phase
 
-//   if (debug)  printf("AMRFLDSplit Evolve, scaling radiation field (all grids)\n");
+  if (debug)  printf("\n AMRFLDSplit Evolve:\n");
 
-  // scale radiation field on all relevant grids to solver units
+  // scale radiation field on all relevant grids to solver units, output statistics
   LevelHierarchyEntry *Temp;
+  float Etyp=0.0, Emax=0.0;
+  int Ncells = 0;
   for (int thislevel=level; thislevel<MAX_DEPTH_OF_HIERARCHY; thislevel++)
     for (Temp=LevelArray[thislevel]; Temp; Temp=Temp->NextGridThisLevel)
       if (MyProcessorNumber == Temp->GridHierarchyEntry->GridData->ReturnProcessorNumber()) {
@@ -84,24 +84,44 @@ int AMRFLDSplit::Evolve(LevelHierarchyEntry *LevelArray[], int level, float dthy
 	  float *Enew = Temp->GridHierarchyEntry->GridData->AccessRadiationFrequency0();
 	  for (int k=0; k<x0len*x1len*x2len; k++)  Enew[k]/=ErScale;
 
-      }  // end loop over grids on this proc
-    
+	  for (int k=0; k<x0len*x1len*x2len; k++)  {
+	    Etyp += Enew[k]*Enew[k];
+	    Emax = max(Emax, Enew[k]*Enew[k]);
+	  }
+	  Ncells += x0len*x1len*x2len;
 
-//   if (debug)  printf("AMRFLDSplit Evolve, building amrsolve hierarchy\n");
+      }  // end loop over grids on this proc
+
+  // communicate among all procs to get information on current radiation field
+#ifdef USE_MPI
+  MPI_Datatype FDataType = (sizeof(float) == 4) ? MPI_FLOAT : MPI_DOUBLE;
+  MPI_Datatype IDataType = (sizeof(int) == 4) ? MPI_INTEGER : MPI_LONG;
+  MPI_Arg one = 1;
+  float dtmp;
+  int itmp; 
+  MPI_Allreduce(&Emax, &dtmp, one, FDataType, MPI_MAX, MPI_COMM_WORLD);
+  Emax = sqrt(dtmp);
+  MPI_Allreduce(&Etyp, &dtmp, one, FDataType, MPI_SUM, MPI_COMM_WORLD);
+  MPI_Allreduce(&Ncells, &itmp, one, IDataType, MPI_SUM, MPI_COMM_WORLD);
+  Etyp = sqrt(dtmp/itmp);
+#else
+  Emax = sqrt(Emax);
+  Etyp = sqrt(Etyp/Ncells);
+#endif
+  if (debug) {
+    printf("   current internal quantities:\n");
+    printf("      Eg rms = %13.7e, max = %13.7e\n", Etyp, Emax);
+  }    
 
   // insert Enzo grids into an AMRsolve hierarchy
   AMRsolve_Hierarchy* hierarchy = new AMRsolve_Hierarchy;
 //  hierarchy->enzo_attach_fld(LevelArray, level, MAX_DEPTH_OF_HIERARCHY);
   hierarchy->enzo_attach_fld(LevelArray, 0, MAX_DEPTH_OF_HIERARCHY);
 
-//   if (debug)  printf("AMRFLDSplit Evolve, initializing hierarchy\n");
-
   // Initialize the AMRsolve domain & hierarchy
   AMRsolve_Domain domain(3, DomainLeftEdge, DomainRightEdge);
   bool is_periodic[] = {BdryType[0][0]==0, BdryType[1][0]==0, BdryType[2][0]==0};
   hierarchy->initialize(domain, *pmpi, is_periodic);
-
-//   if (debug)  printf("AMRFLDSplit Evolve, initializing amrsolve_hypre_fld\n");
 
   // Initialize the amrsolve FLD solver
   AMRsolve_Hypre_FLD amrfldsolve(*hierarchy, *amrsolve_params);
@@ -118,8 +138,6 @@ int AMRFLDSplit::Evolve(LevelHierarchyEntry *LevelArray[], int level, float dthy
   ////////////////////////////////////
   // Problem Solve Phase
 
-//   if (debug)  printf("AMRFLDSplit Evolve, getting current time on this level\n");
-
   // Find a grid on this level, owned by this processor, to get current time
   HierarchyEntry* ThisGrid;
   for (Temp = LevelArray[level]; Temp; Temp = Temp->NextGridThisLevel) {
@@ -130,8 +148,6 @@ int AMRFLDSplit::Evolve(LevelHierarchyEntry *LevelArray[], int level, float dthy
 
   // Get general time-related information
   tnew = ThisGrid->GridData->ReturnTime();
-
-//   if (debug)  printf("AMRFLDSplit Evolve, starting radiation time-stepping loop\n");
 
   // internal time-stepping loop to catch up with Hydro time
   float end_time = tnew + dthydro;
@@ -165,8 +181,6 @@ int AMRFLDSplit::Evolve(LevelHierarchyEntry *LevelArray[], int level, float dthy
 	printf("\n subcycled rad %"ISYM": dt=%7.1e, t=%7.1e (hydro dt=%7.1e, t=%7.1e)\n",
 	       radstep,dt,tnew,dthydro,end_time);
       
-//       if (debug)  printf("AMRFLDSplit Evolve, calling RadStep\n");
-
       // take a radiation step
       recompute_step = this->RadStep(LevelArray, level, amrfldsolve);
 
@@ -184,8 +198,6 @@ int AMRFLDSplit::Evolve(LevelHierarchyEntry *LevelArray[], int level, float dthy
 #endif
     AMRSolTime += ftime2-stime2;
     
-//     if (debug)  printf("AMRFLDSplit Evolve, calling ComputeTimeStep\n");
-
     // update the radiation time step size for next time step
     //   (limit growth at each cycle)
     float dt_est = this->ComputeTimeStep(LevelArray, level);
@@ -195,8 +207,6 @@ int AMRFLDSplit::Evolve(LevelHierarchyEntry *LevelArray[], int level, float dthy
 
     //////////////////////////////////////////////////////////////////////
     // UPDATE THE FOLLOWING -- THIS CURRENTLY ONLY WORKS FOR THE TOPGRID!!
-
-//     if (debug)  printf("AMRFLDSplit Evolve, creating U0 to update ghost zones in TopGrid\n");
 
     // have U0 communicate neighbor information
     int ghZl = (rank > 2) ? DEFAULT_GHOST_ZONES : 0;
@@ -241,27 +251,19 @@ int AMRFLDSplit::Evolve(LevelHierarchyEntry *LevelArray[], int level, float dthy
   ////////////////////////////////////
   // Problem Cleanup and Preparation for Next Call Phase
 
-//   if (debug)  printf("AMRFLDSplit Evolve, detaching enzo from amrsolve hierarchy\n");
-
   // clean up amrsolve structures
   hierarchy->enzo_detach();
   delete hierarchy;
   hierarchy = NULL;
 
-//   if (debug)  printf("AMRFLDSplit Evolve, filling chemistry/cooling rates\n");
-
   // fill the chemistry and cooling rates
   if (this->FillRates(LevelArray, level) == FAIL)
     ENZO_FAIL("AMRFLDSplit Evolve: FillRates error");
-
-//   if (debug)  printf("AMRFLDSplit Evolve, updating radiation dt in this level's grid\n");
 
   // update the radiation time step size at this level for next time step 
   if (dtrad != huge_number)
     ThisGrid->GridData->SetMaxRadiationDt(dtrad*maxsubcycles);
 
-
-//   if (debug)  printf("AMRFLDSplit Evolve, re-scaling radiation field (all grids)\n");
 
   // scale radiation field on all relevant grids back to enzo units
   for (int thislevel=level; thislevel<MAX_DEPTH_OF_HIERARCHY; thislevel++)
@@ -321,8 +323,6 @@ int AMRFLDSplit::RadStep(LevelHierarchyEntry *LevelArray[], int level,
 			 AMRsolve_Hypre_FLD amrfldsolve)
 {
 
-//   if (debug)  printf("  AMRFLDSplit RadStep, getting units\n");
-
   // update internal Enzo units for current times
   float TempUnits, RadUnits;
   double MassUnits;
@@ -358,8 +358,6 @@ int AMRFLDSplit::RadStep(LevelHierarchyEntry *LevelArray[], int level,
   told *= TimeUnits;
   tnew *= TimeUnits;
 
-//   if (debug)  printf("  AMRFLDSplit RadStep, computing emissivity field\n");
-
   //   compute emissivity at this internal time step (if provided internally)
   int eta_set = 0;
 #ifdef EMISSIVITY 
@@ -370,14 +368,10 @@ int AMRFLDSplit::RadStep(LevelHierarchyEntry *LevelArray[], int level,
     if (debug)   printf("   emissivity norm = %g\n",srcNorm);
   }
     
-//   if (debug)  printf("  AMRFLDSplit RadStep, enforcing boundary conditions\n");
-
   //   enforce boundary conditions on old/new radiation fields
   if (this->EnforceBoundary(LevelArray) != SUCCESS) 
     ENZO_FAIL("AMRFLDSplit_RadStep: EnforceBoundary failure!!");
     
-//   if (debug)  printf("  AMRFLDSplit RadStep, copying current radiation field into KPhHI\n");
-
   //   copy current radiation field into temporary field (KPhHI)
   //   on all grids owned by this processor, all levels here and down
   for (int thislevel=level; thislevel<MAX_DEPTH_OF_HIERARCHY; thislevel++)
@@ -406,18 +400,25 @@ int AMRFLDSplit::RadStep(LevelHierarchyEntry *LevelArray[], int level,
 
       }  // end loop over grids on this proc
     
-//   if (debug)  printf("  AMRFLDSplit RadStep, initializing amrsolve linear system\n");
+//   amrsolve_params->set_parameter("dump_a","true");
+//   amrsolve_params->set_parameter("dump_b","true");
 
   // set up and solve radiation equation via amrsolve
   Eflt64 HIconst   = intSigESigHI   / intSigE;
   Eflt64 HeIconst  = intSigESigHeI  / intSigE / 4.0;
   Eflt64 HeIIconst = intSigESigHeII / intSigE / 4.0;
-  amrfldsolve.init_elements(dt, Nchem, theta, a, a0, adot, adot0, HIconst, 
+  Eflt64 a_ = a;
+  Eflt64 a0_ = a0;
+  Eflt64 adot_  = (ESpectrum == -1) ? 0.0 : adot;
+  Eflt64 adot0_ = (ESpectrum == -1) ? 0.0 : adot0;
+  amrfldsolve.init_elements(dt, Nchem, theta, a_, a0_, adot_, adot0_, HIconst, 
 			    HeIconst, HeIIconst, NiUnits, NiUnits0, 
 			    LenUnits, LenUnits0, ErUnits, ErUnits0, BdryType);
 
+//   ENZO_FAIL("Stopping computation for debugging purposes");
+  
+
   if (debug)  printf(" ----------------------------------------------------------------------\n");
-//   if (debug)  printf("  AMRFLDSplit RadStep, solving amrsolve linear system\n");
 
   amrfldsolve.solve();
   Eflt64 finalresid = amrfldsolve.residual();
@@ -425,8 +426,6 @@ int AMRFLDSplit::RadStep(LevelHierarchyEntry *LevelArray[], int level,
   if (debug) printf("   lin resid = %.1e (tol = %.1e), its = %i\n",
 		    finalresid, sol_tolerance, Sits);
   
-//   if (debug)  printf("  AMRFLDSplit RadStep, checking amrsolve solution\n");
-
   // check solution
   int recompute_step = 0;
   if (amrfldsolve.evaluate() != 0) {
@@ -452,13 +451,9 @@ int AMRFLDSplit::RadStep(LevelHierarchyEntry *LevelArray[], int level,
   }
   if (debug)  printf(" ======================================================================\n\n");
 
-//   if (debug)  printf("  AMRFLDSplit RadStep, updating enzo with amrsolve solution\n");
-
   // increment Enzo radiation field with amrsolve solution
   amrfldsolve.update_enzo();
   
-
-//   if (debug)  printf("  AMRFLDSplit RadStep, enforcing solution floor on radiation field\n");
 
   // enforce a solution floor on radiation
   float epsilon=1.0;      // radiation floor
