@@ -53,10 +53,10 @@ int grid::AddRandomForcing(float * norm, float dtTopGrid)
  
   int corneri=  GridStartIndex[0] + GridDimension[0]*(GridStartIndex[1]+GridStartIndex[2]*GridDimension[1]);
   if (RandomForcingField[0][0] == 0.0)
-    ERROR_MESSAGE;
+    ENZO_FAIL("");
   fprintf(stderr, "TopGridTimeStep: %g\n", dtTopGrid);
   if (dtTopGrid == 0.0)
-    ERROR_MESSAGE;
+    ENZO_FAIL("");
  
  
   /* compute the field size */

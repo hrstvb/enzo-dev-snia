@@ -62,7 +62,7 @@ int CommunicationTransferStars(grid *GridPointer[], int NumberOfGrids,
   int *GridMap = new int[NumberOfGrids];
   int *StartIndex[MAX_DIMENSION];
   int Layout[MAX_DIMENSION], LayoutTemp[MAX_DIMENSION];
-  int Rank, grid_num, bin, CenterIndex;
+  int Rank, grid_num, CenterIndex;
   int *pbin;
   int GridPosition[MAX_DIMENSION], Dims[MAX_DIMENSION];
   FLOAT Left[MAX_DIMENSION], Right[MAX_DIMENSION];
