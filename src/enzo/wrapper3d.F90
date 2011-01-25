@@ -29,7 +29,7 @@
       n(2) = 1
       n(3) = 1
 
-c$omp parallel do private(j) schedule(static)
+!$omp parallel do private(j) schedule(static)
       do k=1,n3
       do j=1,n2
       call fftwrap3d( x(1,j,k), n, dir, method )
@@ -41,7 +41,7 @@ c$omp parallel do private(j) schedule(static)
       call rotate3d(x,n1,n2,n3,y)
 
       n(1) = n2
-c$omp parallel do private(k) schedule(static)
+!$omp parallel do private(k) schedule(static)
       do i=1,n1
       do k=1,n3
       call fftwrap3d( y(1,k,i), n, dir, method )
@@ -55,7 +55,7 @@ c$omp parallel do private(k) schedule(static)
       deallocate( y)
 
       n(1) = n3
-c$omp parallel do private(i) schedule(static)
+!$omp parallel do private(i) schedule(static)
       do j=1,n2
       do i=1,n1
       call fftwrap3d( z(1,i,j), n, dir, method )

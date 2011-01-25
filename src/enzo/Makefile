@@ -180,6 +180,7 @@ verbose: $(EXE).exe
 #	@echo "Compiling $<"
 #	@$(CPP) $(DEFINES) $(CPPFLAGS) $*.src90 > $*.f90
 .F90.o:
+	@echo "Compiling $<"
 	@rm -f $@
 	@(if [ $(VERBOSE) -eq 0 ]; then \
 	  $(F90) -c -o $@ $(F90FLAGS) $(DEFINES) $*.F90 >& $(OUTPUT) ; \

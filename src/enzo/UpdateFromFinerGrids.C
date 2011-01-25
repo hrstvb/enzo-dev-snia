@@ -67,11 +67,7 @@ int UpdateFromFinerGrids(int level, HierarchyEntry *Grids[], int NumberOfGrids,
  
   int grid1, subgrid, StartGrid, EndGrid;
   HierarchyEntry *NextGrid;
- 
-#ifdef FLUX_FIX
-  int SUBlingGrid;
   LevelHierarchyEntry *NextEntry;
-#endif
  
   /* Define a temporary flux holder for the refined fluxes. */
  
