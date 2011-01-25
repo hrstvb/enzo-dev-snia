@@ -446,6 +446,7 @@ OBJS_CONFIG_LIB = \
 	Grid_InterpolateParticlesToGrid.o \
 	Grid_InterpolatePositions.o \
         Grid_InterpolateStarParticlesToGrid.o \
+	Grid_inteuler.o \
 	Grid_KHInitializeGrid.o \
         Grid_MagneticFieldResetter.o \
 	Grid_MirrorStarParticles.o \
@@ -601,6 +602,7 @@ OBJS_CONFIG_LIB = \
         intrmp.o \
         int_spline.o \
         intvar.o \
+	intvarC.o \
         Isdigit.o \
         KHInitialize.o \
         LevelHierarchy_AddLevel.o \
@@ -710,6 +712,7 @@ OBJS_CONFIG_LIB = \
         ReduceFragmentation.o \
         remap.o \
         ReportMemoryUsage.o \
+	Return_MPI_Tag.o \
         ReturnWallTime.o \
 	RHIonizationClumpInitialize.o \
 	RHIonizationSteepInitialize.o \

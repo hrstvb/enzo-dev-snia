@@ -139,6 +139,7 @@ int PrepareDensityField(LevelHierarchyEntry *LevelArray[],
     CommunicationReceiveIndex = 0;
     CommunicationReceiveCurrentDependsOn = COMMUNICATION_NO_DEPENDENCE;
     CommunicationDirection = COMMUNICATION_POST_RECEIVE;
+#pragma omp parallel for schedule(static)
     for (grid1 = StartGrid; grid1 < EndGrid; grid1++)
       DepositParticleMassField(Grids[grid1], EvaluateTime);
 
@@ -153,6 +154,7 @@ int PrepareDensityField(LevelHierarchyEntry *LevelArray[],
     /* Next, send data and process grids on the same processor. */
 
     CommunicationDirection = COMMUNICATION_SEND;
+#pragma omp parallel for schedule(static)
     for (grid1 = StartGrid; grid1 < EndGrid; grid1++)
       DepositParticleMassField(Grids[grid1], EvaluateTime);
 
@@ -190,12 +192,14 @@ int PrepareDensityField(LevelHierarchyEntry *LevelArray[],
     CommunicationReceiveCurrentDependsOn = COMMUNICATION_NO_DEPENDENCE;
     CommunicationDirection = COMMUNICATION_POST_RECEIVE;
  
+#pragma omp parallel for schedule(static)
     for (grid1 = StartGrid; grid1 < EndGrid; grid1++)
       PrepareGravitatingMassField1(Grids[grid1]);
 
     /* Next, send data and process grids on the same processor. */
 
     CommunicationDirection = COMMUNICATION_SEND;
+#pragma omp parallel for schedule(static)
     for (grid1 = StartGrid; grid1 < EndGrid; grid1++)
       PrepareGravitatingMassField1(Grids[grid1]);
 
@@ -230,10 +234,16 @@ int PrepareDensityField(LevelHierarchyEntry *LevelArray[],
 #endif
       
 #ifdef FAST_SIB
+#ifndef BITWISE_IDENTICALITY
+#pragma omp parallel for schedule(static)
+#endif
     for (grid1 = StartGrid; grid1 < EndGrid; grid1++)
       PrepareGravitatingMassField2a(Grids[grid1], grid1, SiblingList,
 				    MetaData, level, When);
 #else
+#ifndef BITWISE_IDENTICALITY
+#pragma omp parallel for schedule(static)
+#endif
     for (grid1 = StartGrid; grid1 < EndGrid; grid1++)
       PrepareGravitatingMassField2a(Grids[grid1], MetaData, LevelArray,
 				    level, When);
@@ -244,10 +254,12 @@ int PrepareDensityField(LevelHierarchyEntry *LevelArray[],
 
     CommunicationDirection = COMMUNICATION_SEND;
 #ifdef FAST_SIB
+#pragma omp parallel for schedule(static)
     for (grid1 = StartGrid; grid1 < EndGrid; grid1++)
       PrepareGravitatingMassField2a(Grids[grid1], grid1, SiblingList,
 				   MetaData, level, When);
 #else
+#pragma omp parallel for schedule(static)
     for (grid1 = StartGrid; grid1 < EndGrid; grid1++)
       PrepareGravitatingMassField2a(Grids[grid1], MetaData, LevelArray,
 				   level, When);
@@ -277,12 +289,14 @@ int PrepareDensityField(LevelHierarchyEntry *LevelArray[],
     CommunicationReceiveCurrentDependsOn = COMMUNICATION_NO_DEPENDENCE;
     CommunicationDirection = COMMUNICATION_POST_RECEIVE;
       
+#pragma omp parallel for schedule(static)
     for (grid1 = StartGrid; grid1 < EndGrid; grid1++)
       PrepareGravitatingMassField2b(Grids[grid1], level);
 
     /* Next, send data and process grids on the same processor. */
 
     CommunicationDirection = COMMUNICATION_SEND;
+#pragma omp parallel for schedule(static)
     for (grid1 = StartGrid; grid1 < EndGrid; grid1++)
       PrepareGravitatingMassField2b(Grids[grid1], level);
 
@@ -308,6 +322,7 @@ int PrepareDensityField(LevelHierarchyEntry *LevelArray[],
     CommunicationReceiveCurrentDependsOn = COMMUNICATION_NO_DEPENDENCE;
       
 #ifdef FAST_SIB
+#pragma omp parallel for schedule(static) private(grid2)
     for (grid1 = StartGrid; grid1 < EndGrid; grid1++)
       for (grid2 = 0; grid2 < SiblingList[grid1].NumberOfSiblings; grid2++)
 	Grids[grid1]->GridData->
@@ -316,6 +331,7 @@ int PrepareDensityField(LevelHierarchyEntry *LevelArray[],
 			  MetaData->RightFaceBoundaryCondition,
 			  &grid::CopyOverlappingMassField);
 #else
+#pragma omp parallel for schedule(static) private(grid2)
     for (grid1 = StartGrid; grid1 < EndGrid; grid1++)
       for (grid2 = 0; grid2 < NumberOfGrids; grid2++)
 	Grids[grid1]->GridData->
@@ -327,6 +343,7 @@ int PrepareDensityField(LevelHierarchyEntry *LevelArray[],
 
     CommunicationDirection = COMMUNICATION_SEND;
 #ifdef FAST_SIB
+#pragma omp parallel for schedule(static) private(grid2)
     for (grid1 = StartGrid; grid1 < EndGrid; grid1++)
       for (grid2 = 0; grid2 < SiblingList[grid1].NumberOfSiblings; grid2++)
 	Grids[grid1]->GridData->
@@ -335,6 +352,7 @@ int PrepareDensityField(LevelHierarchyEntry *LevelArray[],
 			  MetaData->RightFaceBoundaryCondition,
 			  &grid::CopyOverlappingMassField);
 #else
+#pragma omp parallel for schedule(static) private(grid2)
     for (grid1 = StartGrid; grid1 < EndGrid; grid1++)
       for (grid2 = 0; grid2 < NumberOfGrids; grid2++)
 	Grids[grid1]->GridData->
@@ -385,6 +403,7 @@ int PrepareDensityField(LevelHierarchyEntry *LevelArray[],
       if (iterate > 0)
 	CopyPotentialFieldAverage = 2;
  
+#pragma omp parallel for schedule(static)
       for (grid1 = 0; grid1 < NumberOfGrids; grid1++) {
 	Grids[grid1]->GridData->SolveForPotential(level, EvaluateTime);
 	if (CopyGravPotential)
@@ -410,6 +429,7 @@ int PrepareDensityField(LevelHierarchyEntry *LevelArray[],
 	CommunicationReceiveIndex = 0;
 	CommunicationReceiveCurrentDependsOn = COMMUNICATION_NO_DEPENDENCE;
 #ifdef FAST_SIB
+#pragma omp parallel for schedule(static) private(grid2)
 	for (grid1 = StartGrid; grid1 < EndGrid; grid1++) {
  
 	  //fprintf(stderr, "#SIBSend on cpu %"ISYM": %"ISYM"\n", MyProcessorNumber, SiblingList[grid1].NumberOfSiblings);
@@ -431,6 +451,7 @@ int PrepareDensityField(LevelHierarchyEntry *LevelArray[],
 	  
 	} // ENDFOR grid1
 #else
+#pragma omp parallel for schedule(static) private(grid2)
 	for (grid1 = StartGrid; grid1 < EndGrid; grid1++)
 	  for (grid2 = 0; grid2 < NumberOfGrids; grid2++)
 	    Grids[grid1]->GridData->
@@ -451,6 +472,7 @@ int PrepareDensityField(LevelHierarchyEntry *LevelArray[],
 
  
 #ifdef FAST_SIB
+#pragma omp parallel for schedule(static) private(grid2)
 	for (grid1 = StartGrid; grid1 < EndGrid; grid1++) {
  
 	  //fprintf(stderr, "#SIBRecv on cpu %"ISYM": %"ISYM"\n", MyProcessorNumber, SiblingList[grid1].NumberOfSiblings);
@@ -472,6 +494,7 @@ int PrepareDensityField(LevelHierarchyEntry *LevelArray[],
  
 	} // ENDFOR grid1
 #else
+#pragma omp parallel for schedule(static) private(grid2)
 	for (grid1 = StartGrid; grid1 < EndGrid; grid1++)
 	  for (grid2 = 0; grid2 < NumberOfGrids; grid2++)
 	    Grids[grid1]->GridData->
@@ -499,6 +522,7 @@ int PrepareDensityField(LevelHierarchyEntry *LevelArray[],
        (but only if there is at least a subgrid -- it should be only
        if there is a subgrrid on reallevel, but this is ok). */
  
+#pragma omp parallel for schedule(static)
     for (grid1 = 0; grid1 < NumberOfGrids; grid1++)
       if (Grids[grid1]->NextGridNextLevel != NULL) {
 	Grids[grid1]->GridData->SolveForPotential(MaximumGravityRefinementLevel);

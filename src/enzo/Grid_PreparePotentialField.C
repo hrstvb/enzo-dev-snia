@@ -117,16 +117,10 @@ int grid::PreparePotentialField(grid *ParentGrid)
 	      dim, ParentStartIndex[dim], ParentTempDim[dim], ParentDim[dim])
     }
   }
- 
-  /* If posting a receive, then record details of call. */
 
-#ifdef USE_MPI
-  if (CommunicationDirection == COMMUNICATION_POST_RECEIVE) {
-    CommunicationReceiveGridOne[CommunicationReceiveIndex]  = this;
-    CommunicationReceiveGridTwo[CommunicationReceiveIndex]  = ParentGrid;
-    CommunicationReceiveCallType[CommunicationReceiveIndex] = 7;
-  }
-#endif /* USE_MPI */
+  int CommType = 7;
+  FLOAT Zero3[] = {0,0,0};
+  int Zero3Int[] = {0,0,0};
 
   /* Copy data from other processor if needed (modify ParentDim and
      ParentStartIndex to reflect the fact that we are only coping part of
@@ -134,7 +128,9 @@ int grid::PreparePotentialField(grid *ParentGrid)
  
   if (ProcessorNumber != ParentGrid->ProcessorNumber) {
     ParentGrid->CommunicationSendRegion(ParentGrid, ProcessorNumber,
-	       POTENTIAL_FIELD, NEW_ONLY, ParentStartIndex, ParentTempDim);
+		POTENTIAL_FIELD, NEW_ONLY, ParentStartIndex, ParentTempDim,
+					CommType, this, ParentGrid,
+					Zero3, Zero3Int);
     if (CommunicationDirection == COMMUNICATION_POST_RECEIVE ||
 	CommunicationDirection == COMMUNICATION_SEND)
       return SUCCESS;

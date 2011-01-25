@@ -33,7 +33,7 @@ int grid::MoveParticlesFOF(int level, FOF_particle_data* &P,
   if (MyProcessorNumber != ProcessorNumber)
     return SUCCESS;
 
-  int i, j, dim, Index0;
+  int i, j, dim, Index0, idx;
   double VelocityConv, MassConv;
   double VelConvInv, MassConvInv;
   double BoxSizeInv;
@@ -49,37 +49,43 @@ int grid::MoveParticlesFOF(int level, FOF_particle_data* &P,
 
     Index0 = Index;
 
+#pragma omp parallel private(dim,j)
+    {
+
     for (dim = 0; dim < GridRank; dim++) {
-      Index = Index0;
-      for (i = 0; i < NumberOfParticles; i++, Index++) {
-	P[Index].Pos[dim] = AllVars.BoxSize * ParticlePosition[dim][i];
-	P[Index].Vel[dim] = ParticleVelocity[dim][i] * VelocityConv;
+#pragma omp for nowait schedule(static) private(idx)
+      for (i = 0; i < NumberOfParticles; i++) {
+	idx = Index0+i;
+	P[idx].Pos[dim] = AllVars.BoxSize * ParticlePosition[dim][i];
+	P[idx].Vel[dim] = ParticleVelocity[dim][i] * VelocityConv;
       }
     }
 
     for (j = 0; j < NumberOfParticleAttributes; j++) {
-      Index = Index0;
-      for (i = 0; i < NumberOfParticles; i++, Index++)
-    	P[Index].Attr[j] = ParticleAttribute[j][i];
+#pragma omp for nowait schedule(static) 
+      for (i = 0; i < NumberOfParticles; i++)
+    	P[Index0+i].Attr[j] = ParticleAttribute[j][i];
     }
 
-    Index = Index0;
-    for (i = 0; i < NumberOfParticles; i++, Index++) {
+#pragma omp for nowait schedule(static) private(idx)
+    for (i = 0; i < NumberOfParticles; i++) {
+      idx = Index0+i;
+      P[idx].slab = (int) (ParticlePosition[0][i] * NumberOfProcessors);
 
-      P[Index].slab = (int) (ParticlePosition[0][i] * NumberOfProcessors);
+      P[idx].Mass = ParticleMass[i] * MassConv;
 
-      P[Index].Mass = ParticleMass[i] * MassConv;
+      P[idx].PartID = ParticleNumber[i];
+      P[idx].Type = ParticleType[i];
+      //P[idx].level = level;
+      //P[idx].GridID = GridNum;
 
-      P[Index].PartID = ParticleNumber[i];
-      P[Index].Type = ParticleType[i];
-      //P[Index].level = level;
-      //P[Index].GridID = GridNum;
-
-      P[Index].Energy = 0.0;
-      P[Index].Rho = 0.0;
+      P[idx].Energy = 0.0;
+      P[idx].Rho = 0.0;
 
     }
+    } // END omp parallel
 
+    Index = Index0 + NumberOfParticles;
     this->DeleteParticles();
 
   } // ENDIF (COPY_OUT)
@@ -98,7 +104,11 @@ int grid::MoveParticlesFOF(int level, FOF_particle_data* &P,
 
     this->AllocateNewParticles(npart);
 
+#pragma omp parallel private(dim,j)
+    {
+
     for (dim = 0; dim < GridRank; dim++)
+#pragma omp for nowait schedule(static)
       for (i = 0; i < AllVars.Nlocal; i++)
 	if (P[i].slab == MyProcessorNumber && P[i].PartID >= 0) {
 	  ParticlePosition[dim][i] = P[i].Pos[dim] * BoxSizeInv;
@@ -106,16 +116,19 @@ int grid::MoveParticlesFOF(int level, FOF_particle_data* &P,
 	}
 
     for (j = 0; j < NumberOfParticleAttributes; j++)
+#pragma omp for nowait schedule(static)
       for (i = 0; i < AllVars.Nlocal; i++)
 	if (P[i].slab == MyProcessorNumber && P[i].PartID >= 0)
 	  ParticleAttribute[j][i] = P[i].Attr[j];
 
+#pragma omp for nowait schedule(static)
     for (i = 0; i < AllVars.Nlocal; i++) 
       if (P[i].slab == MyProcessorNumber && P[i].PartID >= 0) {
 	ParticleMass[i] = P[i].Mass * MassConvInv;
 	ParticleType[i] = P[i].Type;
 	ParticleNumber[i] = P[i].PartID;
       }
+    } // END omp parallel
 
     NumberOfParticles = npart;
 

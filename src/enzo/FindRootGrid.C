@@ -35,7 +35,7 @@ int FindRootGrid(int &dummy, grid **Grids0, int nGrids0,
     return SUCCESS;
   }
 
-  if (NumberOfProcessors == 1) {
+  if (nGrids0 == 1) {
     dummy = 0;
     return SUCCESS;
   }

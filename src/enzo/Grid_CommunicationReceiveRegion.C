@@ -40,6 +40,7 @@ extern "C" void FORTRAN_NAME(copy3d)(float *source, float *dest,
                                    int *sstart1, int *sstart2, int *sstart3,
                                    int *dstart1, int *dstart2, int *dststart3);
  
+MPI_Arg Return_MPI_Tag(int tag, int num1[], int num2[3]=0);
 #ifdef USE_MPI
 int CommunicationBufferedSend(void *buffer, int size, MPI_Datatype Type, int Target,
 			      int Tag, MPI_Comm CommWorld, int BufferSize);
@@ -49,7 +50,8 @@ int CommunicationBufferedSend(void *buffer, int size, MPI_Datatype Type, int Tar
 int grid::CommunicationReceiveRegion(grid *FromGrid, int FromProcessor,
 				     int SendField, int NewOrOld,
 				     int RegionStart[], int RegionDim[],
-				     int IncludeBoundary)
+				     int IncludeBoundary, int CommType,
+				     grid *grid_one, grid *grid_two)
 {
 #ifdef USE_MPI 
   MPI_Request  RequestHandle;
@@ -58,6 +60,7 @@ int grid::CommunicationReceiveRegion(grid *FromGrid, int FromProcessor,
   MPI_Arg Count;
   MPI_Arg Source;
   MPI_Arg ZeroTag;
+  MPI_Arg Tag;
 
   int i, index, field, dim, Zero[] = {0, 0, 0};
 
@@ -151,6 +154,28 @@ int grid::CommunicationReceiveRegion(grid *FromGrid, int FromProcessor,
 #ifdef MPI_INSTRUMENTATION
     starttime=MPI_Wtime();
 #endif /* MPI_INSTRUMENTATION */
+
+#pragma omp critical
+    {
+
+    if (CommunicationDirection == COMMUNICATION_SEND_RECEIVE) {
+      CommunicationGridID[0] = FromGrid->ID;
+      CommunicationGridID[1] = this->ID;
+      for (dim = 0; dim < MAX_DIMENSION; dim++)
+	CommunicationTags[dim] = FromOffset[dim];
+    }
+    else if (CommunicationDirection != COMMUNICATION_RECEIVE) {
+      CommunicationGridID[0] = grid_one->ID;
+      CommunicationGridID[1] = grid_two->ID;
+      for (dim = 0; dim < MAX_DIMENSION; dim++)
+	CommunicationTags[dim] = FromOffset[dim];
+    }
+
+    if (CommunicationDirection == COMMUNICATION_POST_RECEIVE) {
+      CommunicationReceiveGridOne[CommunicationReceiveIndex]  = grid_one;
+      CommunicationReceiveGridTwo[CommunicationReceiveIndex]  = grid_two;
+      CommunicationReceiveCallType[CommunicationReceiveIndex] = CommType;
+    }
  
     if (MyProcessorNumber == FromProcessor) {
 #ifdef MPI_INSTRUMENTATION
@@ -159,17 +184,21 @@ int grid::CommunicationReceiveRegion(grid *FromGrid, int FromProcessor,
 		TransferSize, FromProcessor, ProcessorNumber);
 #endif
       CommunicationBufferedSend(buffer, TransferSize, DataType, ProcessorNumber, 
-				0, MPI_COMM_WORLD, BUFFER_IN_PLACE);
+				MPI_RECEIVEREGION_TAG, MPI_COMM_WORLD, 
+				BUFFER_IN_PLACE);
     } // ENDIF from processor
     
     if (MyProcessorNumber == ProcessorNumber) {
+
+      Tag = Return_MPI_Tag(MPI_RECEIVEREGION_TAG, CommunicationGridID, 
+			   CommunicationTags);
 
       /* Post the receive message without waiting for the message to
 	 be received.  When the data arrives, this will be called again
 	 in (the real) receive mode. */
 
       if (CommunicationDirection == COMMUNICATION_POST_RECEIVE) {
-	MPI_Irecv(buffer, TransferSize, DataType, FromProcessor, 0, 
+	MPI_Irecv(buffer, TransferSize, DataType, FromProcessor, Tag,
 		  MPI_COMM_WORLD, 
 		  CommunicationReceiveMPI_Request+CommunicationReceiveIndex);
 	CommunicationReceiveBuffer[CommunicationReceiveIndex] = buffer;
@@ -180,11 +209,13 @@ int grid::CommunicationReceiveRegion(grid *FromGrid, int FromProcessor,
       /* If in send-receive mode, then wait for the message now. */
 
       if (CommunicationDirection == COMMUNICATION_SEND_RECEIVE) {
-	MPI_Recv(buffer, TransferSize, DataType, FromProcessor, 0, 
+	MPI_Recv(buffer, TransferSize, DataType, FromProcessor, Tag,
 		 MPI_COMM_WORLD, &Status);
       }
 
     } // ENDIF grid processor
+
+    } // END omp critical
  
 #ifdef MPI_INSTRUMENTATION
     endtime=MPI_Wtime();

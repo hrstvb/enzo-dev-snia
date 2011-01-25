@@ -42,7 +42,9 @@ int CommunicationReceiveFluxes(fluxes *Fluxes, int FromProc,
 void DeleteFluxes(fluxes *Fluxes);
  
  
-int grid::GetProjectedBoundaryFluxes(grid *ParentGrid, fluxes &ProjectedFluxes)
+int grid::GetProjectedBoundaryFluxes(grid *ParentGrid, int grid_num,
+				     int subgrid_num, fluxes &ProjectedFluxes,
+				     int IsSubling)
 {
  
   /* Return if this doesn't involve us. */
@@ -175,13 +177,24 @@ int grid::GetProjectedBoundaryFluxes(grid *ParentGrid, fluxes &ProjectedFluxes)
  
   /* If posting a receive, then record details of call. */
 
+#pragma omp critical
+  {
+
 #ifdef USE_MPI
   if (CommunicationDirection == COMMUNICATION_POST_RECEIVE) {
     CommunicationReceiveGridOne[CommunicationReceiveIndex]  = this;
     CommunicationReceiveGridTwo[CommunicationReceiveIndex]  = ParentGrid;
     CommunicationReceiveCallType[CommunicationReceiveIndex] = 11;
+    CommunicationReceiveArgumentInt[0][CommunicationReceiveIndex] = grid_num;
+    CommunicationReceiveArgumentInt[1][CommunicationReceiveIndex] = subgrid_num;
+    CommunicationReceiveArgumentInt[2][CommunicationReceiveIndex] = IsSubling;
   }
 #endif /* USE_MPI */
+
+  if (CommunicationDirection != COMMUNICATION_RECEIVE) {
+    CommunicationGridID[0] = this->ID;
+    CommunicationGridID[1] = ParentGrid->ID;
+  }
 
   /* If appropriate, receive data and exit. */
 
@@ -190,12 +203,11 @@ int grid::GetProjectedBoundaryFluxes(grid *ParentGrid, fluxes &ProjectedFluxes)
 				   NumberOfBaryonFields, GridRank) == FAIL) {
       ENZO_FAIL("Error in CommunicationReceiveFluxes.\n");
     }
-    return SUCCESS;
   }
 
   /* Send fluxes and delete. */
   
-  if (ParentGrid->ProcessorNumber != ProcessorNumber) {
+  else if (ParentGrid->ProcessorNumber != ProcessorNumber) {
     if (CommunicationSendFluxes(&ProjectedFluxes, 
 				ParentGrid->ProcessorNumber,
 				NumberOfBaryonFields, GridRank) == FAIL) {
@@ -204,6 +216,8 @@ int grid::GetProjectedBoundaryFluxes(grid *ParentGrid, fluxes &ProjectedFluxes)
     }
     DeleteFluxes(&ProjectedFluxes);
   }
+
+  } // END omp critical
 
   return SUCCESS;
  

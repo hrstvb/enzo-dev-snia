@@ -228,15 +228,9 @@ int grid::InterpolateBoundaryFromParent(grid *ParentGrid)
       Offset[dim]             = 0;
     }
  
-    /* If posting a receive, then record details of call. */
-
-#ifdef USE_MPI
-    if (CommunicationDirection == COMMUNICATION_POST_RECEIVE) {
-      CommunicationReceiveGridOne[CommunicationReceiveIndex]  = this;
-      CommunicationReceiveGridTwo[CommunicationReceiveIndex]  = ParentGrid;
-      CommunicationReceiveCallType[CommunicationReceiveIndex] = 1;
-    }
-#endif /* USE_MPI */
+    int CommType = 1;
+    int Zero3Int[] = {0,0,0};
+    FLOAT Zero3[] = {0,0,0};
 
     /* Copy data from other processor if needed (modify ParentDim and
        ParentStartIndex to reflect the fact that we are only coping part of
@@ -245,7 +239,9 @@ int grid::InterpolateBoundaryFromParent(grid *ParentGrid)
     if (ProcessorNumber != ParentGrid->ProcessorNumber) {
       int NewOrOld = (Time == ParentGrid->Time) ? NEW_ONLY : NEW_AND_OLD;
       ParentGrid->CommunicationSendRegion(ParentGrid, ProcessorNumber,
-		   ALL_FIELDS, NewOrOld, ParentStartIndex, ParentTempDim);
+		  ALL_FIELDS, NewOrOld, ParentStartIndex, ParentTempDim,
+					  CommType, this, ParentGrid,
+					  Zero3, Zero3Int);
       if (CommunicationDirection == COMMUNICATION_POST_RECEIVE ||
 	  CommunicationDirection == COMMUNICATION_SEND)
 	return SUCCESS;

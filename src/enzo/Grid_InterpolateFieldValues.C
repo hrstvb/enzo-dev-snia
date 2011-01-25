@@ -206,6 +206,12 @@ int grid::InterpolateFieldValues(grid *ParentGrid)
       TempDim[dim]            = 1;
       Offset[dim]             = 0;
     }
+
+    /* Never called as non-blocking.  So pass dummy values. */
+
+    int CommType = -1;
+    FLOAT Zero3[] = {0,0,0};
+    int Zero3Int[] = {0,0,0};
  
     /* Copy data from other processor if needed (modify ParentDim and
        ParentStartIndex to reflect the fact that we are only coping part of
@@ -213,7 +219,9 @@ int grid::InterpolateFieldValues(grid *ParentGrid)
  
     if (ProcessorNumber != ParentGrid->ProcessorNumber) {
       ParentGrid->CommunicationSendRegion(ParentGrid, ProcessorNumber,
-			ALL_FIELDS, NEW_ONLY, ParentStartIndex, ParentTempDim);
+		  ALL_FIELDS, NEW_ONLY, ParentStartIndex, ParentTempDim,
+					  CommType, NULL, NULL, 
+					  Zero3, Zero3Int);
       for (dim = 0; dim < GridRank; dim++) {
 	ParentDim[dim] = ParentTempDim[dim];
 	ParentStartIndex[dim] = 0;
