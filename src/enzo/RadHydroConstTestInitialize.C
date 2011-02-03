@@ -356,8 +356,6 @@ int RadHydroConstTestInitialize(FILE *fptr, FILE *Outfptr,
     DataLabel[BaryonField++] = HeIIName;
     DataLabel[BaryonField++] = HeIIIName;
   }
-  for (int i=0; i<BaryonField; i++) 
-    DataUnits[i] = NULL;
 
   // if using external chemistry/cooling, set rate labels
   if (RadiativeCooling) {
@@ -375,6 +373,8 @@ int RadHydroConstTestInitialize(FILE *fptr, FILE *Outfptr,
   if (ImplicitProblem == 6) 
     DataLabel[BaryonField++] = EtaName;
 
+  for (int i=0; i<BaryonField; i++) 
+    DataUnits[i] = NULL;
 
   return SUCCESS;
 

@@ -179,7 +179,7 @@ int CosmoIonizationInitialize(FILE *fptr, FILE *Outfptr,
 
   // convert input temperature to internal energy
   RadHydroTemperature = max(RadHydroTemperature,MIN_TEMP); // enforce minimum
-  float mp  =1.67262171e-24;    // proton mass [g]
+  float mp = 1.67262171e-24;    // proton mass [g]
   float kb = 1.3806504e-16;     // boltzmann constant [erg/K]
   float nH, HI, HII, nHe, HeI, HeII, HeIII, ne, num_dens, mu;
   if (RadHydroChemistry == 1) {

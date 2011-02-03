@@ -136,6 +136,8 @@ int RHIonizationClumpInitialize(FILE *fptr, FILE *Outfptr,
 		      &RadHydroRadiationEnergy);
 	ret += sscanf(line, "RadHydroInitialFractionHII = %"FSYM, 
 		      &RadHydroInitialFractionHII);
+	ret += sscanf(line, "RadHydroHFraction = %"FSYM, 
+		      &RadHydroHydrogenMassFraction);
 	if ((RadHydroChemistry == 3) || (MultiSpecies == 1)) {
 	  ret += sscanf(line, "RadHydroInitialFractionHeII = %"FSYM, 
 			&RadHydroInitialFractionHeII);
@@ -196,16 +198,36 @@ int RHIonizationClumpInitialize(FILE *fptr, FILE *Outfptr,
     }
 
   // if temperature specified and not internal energy, perform conversion here
-  RadHydroTemperatureIn = max(RadHydroTemperatureIn,MIN_TEMP); // enforce minimum
+  RadHydroTemperatureIn  = max(RadHydroTemperatureIn, MIN_TEMP); // enforce minimum
   RadHydroTemperatureOut = max(RadHydroTemperatureOut,MIN_TEMP); // enforce minimum
   float mp = 1.67262171e-24;    // proton mass [g]
   float kb = 1.3806504e-16;     // boltzmann constant [erg/K]
-  float nH, HI, HII, ne, num_dens, mu;
-  HI = 1.0 - RadHydroInitialFractionHII;
-  HII = RadHydroInitialFractionHII;
-  ne = HII;
-  num_dens = HI + HII + ne;
-  mu = 1.0/num_dens;
+  float nH, HI, HII, nHe, HeI, HeII, HeIII, ne, num_dens, mu;
+  if (RadHydroChemistry == 0) 
+    mu = DEFAULT_MU;
+  else if (RadHydroChemistry == 1) {
+    HI = 1.0 - RadHydroInitialFractionHII;
+    HII = RadHydroInitialFractionHII;
+    ne = HII;
+    num_dens = HI + HII + ne;
+    mu = 1.0/num_dens;
+  }
+  else if (RadHydroChemistry == 3) {
+    nH = RadHydroHydrogenMassFraction;
+    nHe = (1.0 - RadHydroHydrogenMassFraction);
+    HI = nH*(1.0 - RadHydroInitialFractionHII);
+    HII = nH*RadHydroInitialFractionHII;
+    HeII = nHe*RadHydroInitialFractionHeII;
+    HeIII = nHe*RadHydroInitialFractionHeIII;
+    HeI = nHe - HeII - HeIII;
+    ne = HII + HeII/4.0 + HeIII/2.0;
+    num_dens = 0.25*(HeI + HeII + HeIII) + HI + HII + ne;
+    mu = 1.0/num_dens;
+  }
+  else {
+    fprintf(stderr,"Initialize error: NChem != {0,1,3}\n");
+    return FAIL;	
+  }
   // compute the internal energy
   float RadHydroIEnergyIn  = kb*RadHydroTemperatureIn/mu/mp/(Gamma-1.0);
   float RadHydroIEnergyOut = kb*RadHydroTemperatureOut/mu/mp/(Gamma-1.0);
