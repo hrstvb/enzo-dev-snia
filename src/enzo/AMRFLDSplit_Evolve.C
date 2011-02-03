@@ -60,6 +60,8 @@ int AMRFLDSplit::Evolve(LevelHierarchyEntry *LevelArray[], int level, float dthy
 
   if (debug)  printf("\n AMRFLDSplit Evolve:\n");
 
+  if (debug)  printf("AMRFLDSplit_Evolve: scaling radiation field\n");
+
   // scale radiation field on all relevant grids to solver units, output statistics
   LevelHierarchyEntry *Temp;
   float Etyp=0.0, Emax=0.0;
@@ -113,6 +115,8 @@ int AMRFLDSplit::Evolve(LevelHierarchyEntry *LevelArray[], int level, float dthy
     printf("      Eg rms = %13.7e, max = %13.7e\n", Etyp, Emax);
   }    
 
+  if (debug)  printf("AMRFLDSplit_Evolve: attaching to amrsolve_hierarchy\n");
+
   // insert Enzo grids into an AMRsolve hierarchy
   AMRsolve_Hierarchy* hierarchy = new AMRsolve_Hierarchy;
 //  hierarchy->enzo_attach_fld(LevelArray, level, MAX_DEPTH_OF_HIERARCHY);
@@ -137,6 +141,8 @@ int AMRFLDSplit::Evolve(LevelHierarchyEntry *LevelArray[], int level, float dthy
 
   ////////////////////////////////////
   // Problem Solve Phase
+
+  if (debug)  printf("AMRFLDSplit_Evolve: getting current time\n");
 
   // Find a grid on this level, owned by this processor, to get current time
   HierarchyEntry* ThisGrid;
@@ -181,6 +187,8 @@ int AMRFLDSplit::Evolve(LevelHierarchyEntry *LevelArray[], int level, float dthy
 	printf("\n subcycled rad %"ISYM": dt=%7.1e, t=%7.1e (hydro dt=%7.1e, t=%7.1e)\n",
 	       radstep,dt,tnew,dthydro,end_time);
       
+  if (debug)  printf("AMRFLDSplit_Evolve: calling RadStep\n");
+
       // take a radiation step
       recompute_step = this->RadStep(LevelArray, level, amrfldsolve);
 
@@ -198,12 +206,16 @@ int AMRFLDSplit::Evolve(LevelHierarchyEntry *LevelArray[], int level, float dthy
 #endif
     AMRSolTime += ftime2-stime2;
     
+  if (debug)  printf("AMRFLDSplit_Evolve: computing new radiation time step\n");
+
     // update the radiation time step size for next time step
     //   (limit growth at each cycle)
     float dt_est = this->ComputeTimeStep(LevelArray, level);
     dtrad = min(dt_est, 1.1*dtrad);
 
 
+
+  if (debug)  printf("AMRFLDSplit_Evolve: updating neighbor information\n");
 
     //////////////////////////////////////////////////////////////////////
     // UPDATE THE FOLLOWING -- THIS CURRENTLY ONLY WORKS FOR THE TOPGRID!!
@@ -251,10 +263,14 @@ int AMRFLDSplit::Evolve(LevelHierarchyEntry *LevelArray[], int level, float dthy
   ////////////////////////////////////
   // Problem Cleanup and Preparation for Next Call Phase
 
+  if (debug)  printf("AMRFLDSplit_Evolve: detaching from amrsolve_hierarchy\n");
+
   // clean up amrsolve structures
   hierarchy->enzo_detach();
   delete hierarchy;
   hierarchy = NULL;
+
+  if (debug)  printf("AMRFLDSplit_Evolve: filling chemistry rates\n");
 
   // fill the chemistry and cooling rates
   if (this->FillRates(LevelArray, level) == FAIL)
@@ -264,6 +280,8 @@ int AMRFLDSplit::Evolve(LevelHierarchyEntry *LevelArray[], int level, float dthy
   if (dtrad != huge_number)
     ThisGrid->GridData->SetMaxRadiationDt(dtrad*maxsubcycles);
 
+
+  if (debug)  printf("AMRFLDSplit_Evolve: rescaling radiation field\n");
 
   // scale radiation field on all relevant grids back to enzo units
   for (int thislevel=level; thislevel<MAX_DEPTH_OF_HIERARCHY; thislevel++)
