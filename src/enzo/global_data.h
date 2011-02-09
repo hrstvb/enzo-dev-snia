@@ -703,8 +703,6 @@ EXTERN float DivergenceCleaningThreshold;
 EXTERN float PoissonApproximationThreshold;
 EXTERN int PoissonBoundaryType;
 
-
-
 /* Star Particle paramters */
 
 EXTERN int ShiningParticleID;
@@ -881,4 +879,8 @@ EXTERN int AnisotropicConduction;  // TRUE OR FALSE
 EXTERN float ConductionSpitzerFraction;  // f_Spitzer
 EXTERN float ConductionCourantSafetyNumber;
 
+/* Fixed redshift */
+
+EXTERN int UseFixedRedshift; // TRUE or FALSE
+EXTERN int FixedRedshift; // just a redshift
 #endif
