@@ -150,7 +150,7 @@ int RadiationFieldUpdate(LevelHierarchyEntry *LevelArray[], int level,
     ENZO_FAIL("Error in GetUnits.\n");
   }
 
-  if (ComovingCoordinates) {
+  if (ComovingCoordinates || UseFixedRedshift) {
  
     aUnits = 1.0/(1.0 + InitialRedshift);
  

@@ -64,7 +64,7 @@ int grid::ComputeConductionTimeStep (float &dt) {
     ENZO_FAIL("Error in GetUnits.");
   }
 
-  if (ComovingCoordinates) {
+  if (ComovingCoordinates || UseFixedRedshift) {
  
     if (CosmologyComputeExpansionFactor(Time, &a, &dadt)
 	== FAIL) {

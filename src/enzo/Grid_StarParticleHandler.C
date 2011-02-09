@@ -450,7 +450,7 @@ int grid::StarParticleHandler(HierarchyEntry* SubgridPointer, int level
  
   float zred;
   FLOAT a = 1, dadt;
-  if (ComovingCoordinates)
+  if (ComovingCoordinates || UseFixedRedshift)
     CosmologyComputeExpansionFactor(Time, &a, &dadt);
   zred = 1.0*(1.0+InitialRedshift)/a - 1.0;
  

@@ -46,7 +46,7 @@ void GadgetIonizeParamsTable(float redshift)
 
   J_UV=gJH0=gJHep=gJHe0=epsH0=epsHep=epsHe0=0.;
 
-  if(ComovingCoordinates==0)
+  if(ComovingCoordinates==0 && !UseFixedRedshift)
     {
       gJHe0 = gJHep = gJH0 = 0;
       epsHe0 = epsHep = epsH0 = 0;

@@ -133,7 +133,7 @@ int grid::ComputeLuminosity(float *luminosity, int NumberOfLuminosityFields)
     TimeUnits, aUnits = 1;
   GetUnits(&DensityUnits, &LengthUnits, &TemperatureUnits,
 	   &TimeUnits, &VelocityUnits, Time);
-  if (ComovingCoordinates) {
+  if (ComovingCoordinates || UseFixedRedshift) {
     CosmologyComputeExpansionFactor(Time+0.5*dtFixed, &a, &dadt);
     aUnits = 1.0/(1.0 + InitialRedshift);
   }

@@ -153,7 +153,7 @@ int InitializeRateData(FLOAT Time)
     ENZO_FAIL("Error in GetUnits.\n");
   }
 
-  if (ComovingCoordinates) {
+  if (ComovingCoordinates || UseFixedRedshift) {
  
     if (CosmologyComputeExpansionFactor(Time, &a, &dadt)
 	== FAIL) {

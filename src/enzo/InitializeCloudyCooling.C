@@ -82,7 +82,7 @@ int InitializeCloudyCooling(FLOAT Time)
     return FAIL;
   }
 
-  if (ComovingCoordinates) {
+  if (ComovingCoordinates || UseFixedRedshift) {
 
     if (CosmologyComputeExpansionFactor(Time, &a, &dadt) 
 	== FAIL) {

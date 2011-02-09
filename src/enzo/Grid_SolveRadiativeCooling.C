@@ -179,7 +179,7 @@ int grid::SolveRadiativeCooling()
     ENZO_FAIL("Error in GetUnits.\n");
   }
 
-  if (ComovingCoordinates) {
+  if (ComovingCoordinates || UseFixedRedshift) {
  
     if (CosmologyComputeExpansionFactor(Time+0.5*dtFixed, &a, &dadt)
 	== FAIL) {

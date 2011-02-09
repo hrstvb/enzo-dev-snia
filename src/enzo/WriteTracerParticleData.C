@@ -69,7 +69,7 @@ int WriteTracerParticleData(char *basename, int dumpnumber,
 	       &TimeUnits, &VelocityUnits, WriteTime) == FAIL) {
     ENZO_FAIL("Error in GetUnits.\n");
   }
-  if (ComovingCoordinates) {
+  if (ComovingCoordinates || UseFixedRedshift) {
     CosmologyComputeExpansionFactor(WriteTime, &a, &dadt);
     Redshift = (1.0+InitialRedshift)/a - 1;
   }

@@ -84,7 +84,7 @@ float grid::GadgetCoolingRate(float logT, float rho, float *nelec, float redshif
 
       Lambda = LambdaExc + LambdaIon + LambdaRec + LambdaFF;
 
-      if(ComovingCoordinates)
+      if(ComovingCoordinates || UseFixedRedshift)
 	{
 	  LambdaCmptn = 5.65e-36 * ne * (T - 2.73 * (1. + redshift)) * POW(1. + redshift, 4.) / nHcgs;
 
@@ -118,7 +118,7 @@ float grid::GadgetCoolingRate(float logT, float rho, float *nelec, float redshif
       LambdaFF =
 	1.42e-27 * sqrt(T) * (1.1 + 0.34 * exp(-(5.5 - logT) * (5.5 - logT) / 3)) * (nHp + 4 * nHepp) * ne;
 
-      if(ComovingCoordinates)
+      if(ComovingCoordinates || UseFixedRedshift)
 	{
 
 	  /* add inverse Compton cooling off the microwave background */

@@ -28,7 +28,7 @@ int SetEvolveRefineRegion (FLOAT time)
 
   /* If TimeType is redshift, calculate redshift */
 
-  if (ComovingCoordinates) {
+  if (ComovingCoordinates || UseFixedRedshift) {
     CosmologyComputeExpansionFactor(time, &a, &dadt);
     redshift = (1 + InitialRedshift)/a - 1;
   }

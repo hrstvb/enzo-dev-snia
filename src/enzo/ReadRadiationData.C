@@ -77,7 +77,7 @@ int ReadRadiationData(FILE *fptr)
     ENZO_FAIL("Error in GetUnits.\n");
   }
 
-  if (ComovingCoordinates) {
+  if (ComovingCoordinates || UseFixedRedshift) {
     if (CosmologyComputeExpansionFactor(RadiationData.TimeFieldLastUpdated,
 					&a, &dadt) == FAIL) {
       ENZO_FAIL("Error in CosmologyComputeExpansionFactors.\n");
