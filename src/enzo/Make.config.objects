@@ -87,6 +87,7 @@ OBJS_CONFIG_LIB = \
         CommunicationUpdateStarParticleCount.o \
         CommunicationUtilities.o \
 	ConductionBubbleInitialize.o \
+	ConductionCloudInitialize.o \
 	ConductionTestInitialize.o \
         comp_accel.o \
         ComputePotentialFieldLevelZero.o \
@@ -139,6 +140,7 @@ OBJS_CONFIG_LIB = \
 	EnzoVector_test.o \
         euler.o \
         EvolveHierarchy.o \
+	EventHooks.o \
 	execinfo_local.o \
         expand_terms.o \
         ExternalBoundary_AddField.o \
@@ -342,6 +344,7 @@ OBJS_CONFIG_LIB = \
 	Grid_ComputeMetalLineLuminosity.o \
 	Grid_ComputePressureDualEnergyFormalism.o \
 	Grid_ComputePressure.o \
+    Grid_ComputeRandomForcingFields.o\
 	Grid_ComputeTemperatureField.o \
 	Grid_ComputeTimeStep.o \
         Grid_ComputeVectorAnalysisFields.o \
@@ -349,6 +352,7 @@ OBJS_CONFIG_LIB = \
 	Grid_ComputeXrayEmissivity.o \
         Grid_ConductHeat.o \
 	Grid_ConductionBubbleInitialize.o \
+	Grid_ConductionCloudInitialize.o \
 	Grid_ConductionTestInitialize.o \
 	Grid_constructor.o \
 	Grid_ConvertTotalEnergyToGasEnergy.o \
@@ -661,6 +665,9 @@ OBJS_CONFIG_LIB = \
         PrepareGravitatingMassField.o \
         PrepareIsolatedGreensFunction.o \
         PressurelessCollapseInitialize.o \
+        ProblemType.o \
+        ProblemType_RotatingCylinder.o \
+        ProblemType_CollapsingCoolingCloud.o \
         ProcMap.o \
         project.o \
         projectbool.o \
@@ -801,6 +808,7 @@ OBJS_CONFIG_LIB = \
         tscint2d.o \
         tscint3d.o \
         TurbulenceSimulationInitialize.o \
+turboinit.o\
         twoshock.o \
 	UpdateFromFinerGrids.o \
         UpdateParticlePositions.o \
