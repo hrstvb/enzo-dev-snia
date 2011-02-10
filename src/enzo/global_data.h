@@ -882,5 +882,5 @@ EXTERN float ConductionCourantSafetyNumber;
 /* Fixed redshift */
 
 EXTERN int UseFixedRedshift; // TRUE or FALSE
-EXTERN int FixedRedshift; // just a redshift
+EXTERN float FixedRedshift; // just a redshift
 #endif
