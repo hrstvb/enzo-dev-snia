@@ -33,7 +33,7 @@ int CommunicationCombineGrids(HierarchyEntry *OldHierarchy,
  
   /* If there is only one proc, then just point the new one at the old one. */
  
-  if (NumberOfProcessors == 1 || ParallelRootGridIO == TRUE) {
+  if (NumberOfCores == 1 || ParallelRootGridIO == TRUE) {
     *NewHierarchyPointer = OldHierarchy;
     return SUCCESS;
   }
@@ -104,11 +104,11 @@ int CommunicationCombineGrids(HierarchyEntry *OldHierarchy,
     CommunicationDirection = COMMUNICATION_SEND_RECEIVE;
 //  printf("(%"ISYM"): %"ISYM" --> %"ISYM"\n", MyProcessorNumber, OldProc, NewProc);
     if (MyProcessorNumber == NewProc || MyProcessorNumber == OldProc)
-      if (NewGrid->CommunicationReceiveRegion(OldGrid, OldProc, ALL_FIELDS,
-			      ((WriteTime < 0) ? NEW_ONLY : NEW_AND_OLD),
-			      StartIndex, TempDims, FALSE) == FAIL) {
-	ENZO_FAIL("Error in grid->CommunicationReceiveRegion.\n");
-      }
+      if (NewGrid->CommunicationReceiveRegion
+	  (OldGrid, OldProc, ALL_FIELDS,
+	   ((WriteTime < 0) ? NEW_ONLY : NEW_AND_OLD),
+	   StartIndex, TempDims, FALSE, 0, NULL, NULL) == FAIL)
+	ENZO_FAIL("Error in grid->CommunicationReceiveRegion.");
 
     /* Copy interpolated (particle) regions */
 
@@ -121,10 +121,10 @@ int CommunicationCombineGrids(HierarchyEntry *OldHierarchy,
 	StartIndex[dim] = nint((Left[dim] - DomainLeftEdge[dim])/CellSize[dim])
 	  + SendOffset[dim];
       }
-      if (NewGrid->CommunicationReceiveRegion(OldGrid, OldProc, INTERPOLATED_FIELDS,
-			      NEW_ONLY, StartIndex, TempDims, FALSE) == FAIL) {
-	ENZO_FAIL("Error in grid->CommunicationReceiveRegion.\n");
-      }
+      if (NewGrid->CommunicationReceiveRegion
+	  (OldGrid, OldProc, INTERPOLATED_FIELDS, NEW_ONLY, StartIndex, 
+	   TempDims, FALSE, 0, NULL, NULL) == FAIL)
+	ENZO_FAIL("Error in grid->CommunicationReceiveRegion.");
     }
  
     /* Copy particles. */

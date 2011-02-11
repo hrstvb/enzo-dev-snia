@@ -189,7 +189,8 @@
 !  Parameters
 
       integer itmax, ijk
-      parameter (itmax = 10000, ijk = MAX_ANY_SINGLE_DIRECTION)
+      parameter (itmax = 10000)
+      parameter (ijk = MAX_ANY_SINGLE_DIRECTION)
 
 #ifdef CONFIG_BFLOAT_4
       real tolerance
@@ -213,36 +214,36 @@
 
 !  row temporaries
 
-      integer indixe(ijk)
-      real t1(ijk), t2(ijk), logtem(ijk), tdef(ijk), 
-     &     dtit(ijk), ttot(ijk), p2d(ijk), tgas(ijk), tgasold(ijk)
+      integer indixe(in)
+      real t1(in), t2(in), logtem(in), tdef(in), 
+     &     dtit(in), ttot(in), p2d(in), tgas(in), tgasold(in)
 
 !  Rate equation row temporaries
 
-      real HIp(ijk), HIIp(ijk), HeIp(ijk), HeIIp(ijk), HeIIIp(ijk),
-     &     HMp(ijk), H2Ip(ijk), H2IIp(ijk),
-     &     dep(ijk), dedot(ijk),HIdot(ijk), dedot_prev(ijk),
-     &     DIp(ijk), DIIp(ijk), HDIp(ijk), HIdot_prev(ijk),
-     &     k24shield(ijk), k25shield(ijk), k26shield(ijk)
-      real k1 (ijk), k2 (ijk), k3 (ijk), k4 (ijk), k5 (ijk),
-     &     k6 (ijk), k7 (ijk), k8 (ijk), k9 (ijk), k10(ijk),
-     &     k11(ijk), k12(ijk), k13(ijk), k14(ijk), k15(ijk),
-     &     k16(ijk), k17(ijk), k18(ijk), k19(ijk), k22(ijk),
-     &     k50(ijk), k51(ijk), k52(ijk), k53(ijk), k54(ijk),
-     &     k55(ijk), k56(ijk), k13dd(ijk, 7)
+      real HIp(in), HIIp(in), HeIp(in), HeIIp(in), HeIIIp(in),
+     &     HMp(in), H2Ip(in), H2IIp(in),
+     &     dep(in), dedot(in),HIdot(in), dedot_prev(in),
+     &     DIp(in), DIIp(in), HDIp(in), HIdot_prev(in),
+     &     k24shield(in), k25shield(in), k26shield(in)
+      real k1 (in), k2 (in), k3 (in), k4 (in), k5 (in),
+     &     k6 (in), k7 (in), k8 (in), k9 (in), k10(in),
+     &     k11(in), k12(in), k13(in), k14(in), k15(in),
+     &     k16(in), k17(in), k18(in), k19(in), k22(in),
+     &     k50(in), k51(in), k52(in), k53(in), k54(in),
+     &     k55(in), k56(in), k13dd(in, 7)
 
 !  Cooling/heating row locals
 
-      double precision ceHI(ijk), ceHeI(ijk), ceHeII(ijk),
-     &     ciHI(ijk), ciHeI(ijk), ciHeIS(ijk), ciHeII(ijk),
-     &     reHII(ijk), reHeII1(ijk), reHeII2(ijk), reHeIII(ijk),
-     &     brem(ijk), edot(ijk)
-      real hyd01k(ijk), h2k01(ijk), vibh(ijk), roth(ijk), rotl(ijk),
-     &     gpldl(ijk), gphdl(ijk), hdlte(ijk), hdlow(ijk)
+      double precision ceHI(in), ceHeI(in), ceHeII(in),
+     &     ciHI(in), ciHeI(in), ciHeIS(in), ciHeII(in),
+     &     reHII(in), reHeII1(in), reHeII2(in), reHeIII(in),
+     &     brem(in), edot(in)
+      real hyd01k(in), h2k01(in), vibh(in), roth(in), rotl(in),
+     &     gpldl(in), gphdl(in), hdlte(in), hdlow(in)
 
 !  Iteration mask
 
-      logical itmask(ijk)
+      logical itmask(in)
 !
 !\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\/////////////////////////////////
 !=======================================================================
@@ -806,7 +807,7 @@ c -------------------------------------------------------------------
      &        in, jn, kn, ispecies, j, k
       real temstart, temend, tgas1d(in), dom
       double precision coolunit, tbase1
-      logical itmask(ijk)
+      logical itmask(in)
 
 !     Chemistry rates as a function of temperature
 
@@ -828,18 +829,18 @@ c -------------------------------------------------------------------
 
 !     Returned rate values
 
-      real k1 (ijk), k2 (ijk), k3 (ijk), k4 (ijk), k5 (ijk),
-     &     k6 (ijk), k7 (ijk), k8 (ijk), k9 (ijk), k10(ijk),
-     &     k11(ijk), k12(ijk), k13(ijk), k14(ijk), k15(ijk),
-     &     k16(ijk), k17(ijk), k18(ijk), k19(ijk), k22(ijk),
-     &     k50(ijk), k51(ijk), k52(ijk), k53(ijk), k54(ijk),
-     &     k55(ijk), k56(ijk), k13dd(ijk, 7),
-     &     k24shield(ijk), k25shield(ijk), k26shield(ijk)
+      real k1 (in), k2 (in), k3 (in), k4 (in), k5 (in),
+     &     k6 (in), k7 (in), k8 (in), k9 (in), k10(in),
+     &     k11(in), k12(in), k13(in), k14(in), k15(in),
+     &     k16(in), k17(in), k18(in), k19(in), k22(in),
+     &     k50(in), k51(in), k52(in), k53(in), k54(in),
+     &     k55(in), k56(in), k13dd(in, 7),
+     &     k24shield(in), k25shield(in), k26shield(in)
 
 !     1D temporaries (passed in)
 
-      integer indixe(ijk)
-      real t1(ijk), t2(ijk), logtem(ijk), tdef(ijk)
+      integer indixe(in)
+      real t1(in), t2(in), logtem(in), tdef(in)
 
 !     Parameters
 
@@ -849,7 +850,7 @@ c -------------------------------------------------------------------
 !     locals
 
       integer i, n1
-      real factor, x, logtem0, logtem9, dlogtem, nh
+      real factor, x, logtem0, logtem9, dlogtem, nh, interp
 
 !     Set log values of start and end of lookup tables
 
@@ -1633,9 +1634,9 @@ c
 !     locals
 
       integer i, j, k
-      real totalH(ijk), totalHe(ijk), 
+      real totalH(in), totalHe(in), 
      &     totalD, correctH, correctHe, correctD
-      real metalfree(ijk)
+      real metalfree(in)
 
 !     Loop over all zones
 

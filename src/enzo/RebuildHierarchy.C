@@ -40,8 +40,8 @@
  
 void AddLevel(LevelHierarchyEntry *LevelArray[], HierarchyEntry *Grid,
 	      int level);
-int FindSubgrids(HierarchyEntry *Grid, int level, int &TotalFlaggedCells,
-		 int &FlaggedGrids);
+int FindSubgrids(HierarchyEntry *Grid, ProtoSubgrid *SubgridList[],
+		 int level, int &TotalFlaggedCells, int &FlaggedGrids);
 void WriteListOfInts(FILE *fptr, int N, int nums[]);
 int ReportMemoryUsage(char *header = NULL);
 int DepositParticleMassFlaggingField(LevelHierarchyEntry* LevelArray[],
@@ -74,7 +74,7 @@ int CommunicationSyncNumberOfParticles(HierarchyEntry *GridHierarchyPointer[],
 int FastSiblingLocatorInitialize(ChainingMeshStructure *Mesh, int Rank,
 				 int TopGridDims[]);
 int FastSiblingLocatorFinalize(ChainingMeshStructure *Mesh);
-int CopyZonesFromOldGrids(LevelHierarchyEntry *OldGrids, 
+int CopyZonesFromOldGrids(LevelHierarchyEntry *OldGrids,
 			  TopGridData *MetaData,
 			  ChainingMeshStructure ChainingMesh);
 #ifdef TRANSFER
@@ -138,8 +138,8 @@ int RebuildHierarchy(TopGridData *MetaData,
   HierarchyEntry *GridParent[MAX_NUMBER_OF_SUBGRIDS];
   grid           *GridPointer[MAX_NUMBER_OF_SUBGRIDS];
   grid           *ContigiousGridList[MAX_NUMBER_OF_SUBGRIDS];
-
-
+  ProtoSubgrid   *SubgridList[MAX_NUMBER_OF_SUBGRIDS];
+ 
   /* Because we're storing particles in "empty" grids that are local
      to the subgrid, keep track of the number of particles stored
      locally.  Zero out NumberOfParticles on other processors, then
@@ -361,8 +361,11 @@ int RebuildHierarchy(TopGridData *MetaData,
 
       tt0 = ReturnWallTime();
       TotalFlaggedCells = FlaggedGrids = 0;
+#pragma omp parallel for schedule(static) private(SubgridList)	\
+  reduction(+:TotalFlaggedCells, FlaggedGrids)
       for (j = 0; j < grids; j++)
-	FindSubgrids(GridHierarchyPointer[j], i, TotalFlaggedCells, FlaggedGrids);
+	FindSubgrids(GridHierarchyPointer[j], SubgridList,
+		     i, TotalFlaggedCells, FlaggedGrids);
       CommunicationSumValues(&TotalFlaggedCells, 1);
       CommunicationSumValues(&FlaggedGrids, 1);
       if (debug)
@@ -434,6 +437,7 @@ int RebuildHierarchy(TopGridData *MetaData,
 	 Overlap counter, deleting the grid which it reaches zero. */
       
       tt0 = ReturnWallTime();
+#pragma omp parallel for schedule(static)
       for (j = 0; j < subgrids; j++) {
 	SubgridHierarchyPointer[j]->ParentGrid->GridData->
 	  DebugCheck("Rebuild parent");
@@ -453,8 +457,11 @@ int RebuildHierarchy(TopGridData *MetaData,
 	    RemoveForcingFromBaryonFields();
         }
 
+	SubgridHierarchyPointer[j]->GridData->SetGridID(j);
+
 	SubgridHierarchyPointer[j]->GridData->DebugCheck("Rebuild child");
       }
+
       tt1 = ReturnWallTime();
       RHperf[8] += tt1-tt0;
  
@@ -624,14 +631,14 @@ int RebuildHierarchy(TopGridData *MetaData,
  
 	Temp = Temp->NextGridThisLevel;
       }
- 
+
     } // end: loop over levels
  
   } // end: if (StaticHierarchy == TRUE)
 
   /* set grid IDs */
 
-  for (i = level; i < MAX_DEPTH_OF_HIERARCHY-1; i++)
+  for (i = 0; i < MAX_DEPTH_OF_HIERARCHY; i++)
     for (Temp = LevelArray[i], j = 0; Temp; Temp = Temp->NextGridThisLevel, j++)
       Temp->GridData->SetGridID(j);
 

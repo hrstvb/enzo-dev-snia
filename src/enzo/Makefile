@@ -78,6 +78,13 @@ include $(MAKE_CONFIG_OVERRIDE)
 # include $(ENZO_DIR)/Make.config.override
 
 #-----------------------------------------------------------------------
+# Make.mach.<machine-name> defines all machine-dependent settings.
+#-----------------------------------------------------------------------
+
+-include $(ENZO_DIR)/Make.mach.$(CONFIG_MACHINE)
+-include $(HOME)/.enzo/Make.mach.$(CONFIG_MACHINE)
+
+#-----------------------------------------------------------------------
 # Make.config.assemble takes the settings in the Make.config.settings
 # and Make.config.override, and generates the appropriate make variables
 # required by this makefile.  E.g. $(CXX), $(CXXFLAGS), etc.
@@ -197,7 +204,7 @@ verbose: $(EXE).exe
              exit 1; \
           fi ; \
 	else \
-	  $(FC) -c -o $@ $(FFLAGS)  $(DEFINES) $*.f >> $(OUTPUT) 2>&1 ; \
+	  $(FC) -c -o $@ $(FFLAGS)  $(DEFINES) $*.F >> $(OUTPUT) 2>&1 ; \
 	  if [ ! -e $@ ]; then \
 	     echo "See $(OUTPUT) for error messages"; \
 	     exit 1; \
@@ -208,6 +215,7 @@ verbose: $(EXE).exe
 #	@echo "Compiling $<"
 #	@$(CPP) $(DEFINES) $(CPPFLAGS) $*.src90 > $*.f90
 .F90.o:
+	@echo "Compiling $<"
 	@rm -f $@
 	@(if [ $(VERBOSE) -eq 0 ]; then \
 	  $(F90) -c -o $@ $(F90FLAGS) $(DEFINES) $*.F90 >& $(OUTPUT) ; \

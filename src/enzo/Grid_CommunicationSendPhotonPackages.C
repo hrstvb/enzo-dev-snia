@@ -30,6 +30,7 @@
 #include "communication.h"
 #include "CommunicationUtilities.h"
 
+MPI_Arg Return_MPI_Tag(int tag, int num1[], int num2[3]=0);
 #ifdef USE_MPI
 int CommunicationBufferedSend(void *buffer, int size, MPI_Datatype Type, 
                               int Target, int Tag, MPI_Comm CommWorld, 
@@ -168,6 +169,7 @@ int grid::CommunicationSendPhotonPackages(grid *ToGrid, int ToProcessor,
     MPI_Arg Source = ProcessorNumber;
     MPI_Arg Dest = ToProcessor;
     MPI_Arg stat;
+    MPI_Arg Tag;
 
     if (FirstTimeCalled) {
       PhotonBufferSize = sizeof(PhotonBuffer);
@@ -176,6 +178,14 @@ int grid::CommunicationSendPhotonPackages(grid *ToGrid, int ToProcessor,
       stat |= MPI_Type_commit(&PhotonBufferType);
       if (stat != MPI_SUCCESS) my_exit(EXIT_FAILURE);
       FirstTimeCalled = FALSE;
+    }
+
+#pragma omp critical
+    {
+
+    if (CommunicationDirection != COMMUNICATION_RECEIVE) {
+      CommunicationGridID[0] = ToGrid->ID;
+      CommunicationGridID[1] = this->ID;
     }
 
     if (MyProcessorNumber == ProcessorNumber) {
@@ -192,8 +202,10 @@ int grid::CommunicationSendPhotonPackages(grid *ToGrid, int ToProcessor,
 	printf("PhotonSend(P%"ISYM"): Receiving %"ISYM" photons from processor %"ISYM".\n",
 	       MyProcessorNumber, FromNumber, ProcessorNumber);
 
+      Tag = Return_MPI_Tag(MPI_PHOTON_TAG, CommunicationGridID);
+
       if (CommunicationDirection == COMMUNICATION_POST_RECEIVE) {
-	MPI_Irecv(buffer, Count, PhotonBufferType, Source, MPI_PHOTON_TAG,
+	MPI_Irecv(buffer, Count, PhotonBufferType, Source, Tag,
 		  MPI_COMM_WORLD,
 		  CommunicationReceiveMPI_Request+CommunicationReceiveIndex);
 
@@ -212,7 +224,7 @@ int grid::CommunicationSendPhotonPackages(grid *ToGrid, int ToProcessor,
 
       if (CommunicationDirection == COMMUNICATION_SEND_RECEIVE)
 	if (MPI_Recv(buffer, Count, PhotonBufferType, Source,
-		     MPI_PHOTON_TAG, MPI_COMM_WORLD, &status) != MPI_SUCCESS) {
+		     Tag, MPI_COMM_WORLD, &status) != MPI_SUCCESS) {
 	  fprintf(stderr, "P(%"ISYM"): MPI_Recv error %"ISYM"\n", MyProcessorNumber,
 		  status.MPI_ERROR);
 	  fprintf(stderr, "P(%"ISYM"): TransferSize = %"ISYM" ProcessorNumber = %"ISYM"\n", 
@@ -224,6 +236,7 @@ int grid::CommunicationSendPhotonPackages(grid *ToGrid, int ToProcessor,
 	}
 
     } /* ENDIF (MyProcessorNumber == ToProcessor) */
+    } // END omp critical
 
   } /* ENDIF (ProcessorNumber != ToProcessor) */
 #endif /* USE_MPI */

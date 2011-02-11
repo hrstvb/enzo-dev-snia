@@ -26,6 +26,7 @@
 #include "Hierarchy.h"
 #include "TopGridData.h"
 #include "LevelHierarchy.h"
+#include "communication.h"
  
 extern "C" void FORTRAN_NAME(copy3d)(float *source, float *dest,
                                    int *sdim1, int *sdim2, int *sdim3,
@@ -43,6 +44,7 @@ extern "C" void FORTRAN_NAME(copy3drt)(float *source, float *dest,
                                    int *sstart1, int *sstart2, int *sstart3,
                                    int *dstart1, int *dstart2, int *dststart3);
 
+MPI_Arg Return_MPI_Tag(int tag, int num1[], int num2[3]=0);
 int CommunicationBarrier(void);
 #ifdef USE_MPI
 int CommunicationBufferPurge(void);
@@ -186,14 +188,15 @@ int NonUnigridCommunicationTranspose(region *FromRegion, int NumberOfFromRegions
  
 #ifdef USE_MPI
  
-      MPI_Request RequestHandle;
+      MPI_Request RequestHandle; 
       MPI_Status status;
       MPI_Datatype DataType = (sizeof(float) == 4) ? MPI_FLOAT : MPI_DOUBLE;
       MPI_Arg Count;
       MPI_Arg RecvCount;
       MPI_Arg Source;
       MPI_Arg Dest;
- 
+      MPI_Arg SendTag, RecvTag;
+
       int ToProc = (MyProcessorNumber + n) % NumberOfProcessors;
       int FromProc = (MyProcessorNumber - n + NumberOfProcessors) %
 	NumberOfProcessors;
@@ -209,6 +212,14 @@ int NonUnigridCommunicationTranspose(region *FromRegion, int NumberOfFromRegions
       RecvCount = ReceiveSize;
       Source = FromProc;
       Dest = ToProc;
+
+      CommunicationGridID[0] = RecvCount;
+      CommunicationGridID[1] = 0;
+      RecvTag = Return_MPI_Tag(MPI_TRANSPOSE_TAG, CommunicationGridID);
+
+      CommunicationGridID[0] = Count;
+      CommunicationGridID[1] = 0;
+      SendTag = Return_MPI_Tag(MPI_TRANSPOSE_TAG, CommunicationGridID);
        
 //      if (MPI_Sendrecv((void*) SendBuffer, Count, DataType, Dest,
 //	       MPI_TRANSPOSE_TAG, (void*) ReceiveBuffer, RecvCount,
@@ -219,9 +230,9 @@ int NonUnigridCommunicationTranspose(region *FromRegion, int NumberOfFromRegions
 //      }
 
       MPI_Irecv((void*) ReceiveBuffer, RecvCount, DataType, Source, 
-		MPI_TRANSPOSE_TAG, MPI_COMM_WORLD, &RequestHandle);
-      MPI_Send((void*) SendBuffer, Count, DataType, Dest, 
-	       MPI_TRANSPOSE_TAG, MPI_COMM_WORLD);
+		RecvTag, MPI_COMM_WORLD, &RequestHandle);
+      MPI_Send((void*) SendBuffer, Count, DataType, Dest, SendTag,
+	       MPI_COMM_WORLD);
       MPI_Wait(&RequestHandle, &status);
  
 #ifdef MPI_INSTRUMENTATION
@@ -665,6 +676,7 @@ int OptimizedUnigridCommunicationTranspose(
       MPI_Arg RecvCount;
       MPI_Arg Source;
       MPI_Arg Dest;
+      MPI_Arg RecvTag, SendTag;
  
       int ToProc = (MyProcessorNumber + n) % NumberOfProcessors;
       int FromProc = (MyProcessorNumber - n + NumberOfProcessors) %
@@ -681,6 +693,14 @@ int OptimizedUnigridCommunicationTranspose(
       RecvCount = ReceiveSize;
       Source = FromProc;
       Dest = ToProc;
+
+      CommunicationGridID[0] = RecvCount;
+      CommunicationGridID[1] = 0;
+      RecvTag = Return_MPI_Tag(MPI_TRANSPOSE_TAG, CommunicationGridID);
+
+      CommunicationGridID[0] = Count;
+      CommunicationGridID[1] = 0;
+      SendTag = Return_MPI_Tag(MPI_TRANSPOSE_TAG, CommunicationGridID);
 
 /* 
       if (MPI_Sendrecv((void*) SendBuffer, Count, DataType, Dest,

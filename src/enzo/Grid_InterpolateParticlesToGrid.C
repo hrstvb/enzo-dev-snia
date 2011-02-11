@@ -36,6 +36,7 @@
 #include "FOF_nrutil.h"
 #include "FOF_proto.h"
 
+MPI_Arg Return_MPI_Tag(int tag, int num1[], int num2[3]=0);
 int FindField(int field, int farray[], int numfields);
 int GetUnits(float *DensityUnits, float *LengthUnits,
 	     float *TemperatureUnits, float *TimeUnits,
@@ -125,8 +126,14 @@ int grid::InterpolateParticlesToGrid(FOFData *D)
 	Source = proc;
 	for (field = 0; field < NumberOfFields; field++) {
 
+#pragma omp critical
+	  {
+
 	  buffer = new float[size];
-	  Tag = MPI_SENDPARTFIELD_TAG+field;
+	  CommunicationGridID[0] = this->ID;
+	  CommunicationGridID[1] = 0;
+	  Tag = Return_MPI_Tag(MPI_SENDPARTFIELD_TAG+field, 
+			       CommunicationGridID);
 	  MPI_Irecv(buffer, Count, DataType, Source, Tag, MPI_COMM_WORLD,
 		    CommunicationReceiveMPI_Request+CommunicationReceiveIndex);
 
@@ -138,6 +145,8 @@ int grid::InterpolateParticlesToGrid(FOFData *D)
 	  CommunicationReceiveDependsOn[CommunicationReceiveIndex] =
 	    CommunicationReceiveCurrentDependsOn;
 	  CommunicationReceiveIndex++;
+
+	  } // END omp critical
 
 	} // ENDFOR field
 
@@ -298,10 +307,14 @@ int grid::InterpolateParticlesToGrid(FOFData *D)
     if (MyProcessorNumber != ProcessorNumber) {
 
       for (field = 0; field < NumberOfFields; field++) {
-	Tag = MPI_SENDPARTFIELD_TAG + field;
-	CommunicationBufferedSend(InterpolatedField[field], size, DataType,
-				  ProcessorNumber, Tag, MPI_COMM_WORLD,
-				  size * sizeof(float));
+#pragma omp critical
+	{
+	  CommunicationGridID[0] = this->ID;
+	  CommunicationGridID[1] = 0;
+	  CommunicationBufferedSend(InterpolatedField[field], size, DataType,
+				    ProcessorNumber, MPI_SENDPARTFIELD_TAG+field, 
+				    MPI_COMM_WORLD, size * sizeof(float));
+	}
 	delete [] InterpolatedField[field];
 	InterpolatedField[field] = NULL;
       } // ENDFOR field
@@ -317,8 +330,11 @@ int grid::InterpolateParticlesToGrid(FOFData *D)
 #ifdef USE_MPI
   if (CommunicationDirection == COMMUNICATION_RECEIVE) {
 
+#pragma omp critical
+    {
     buffer = CommunicationReceiveBuffer[CommunicationReceiveIndex];
     field = CommunicationReceiveArgumentInt[0][CommunicationReceiveIndex];
+    } // END omp critical
     for (i = 0; i < size; i++)
       InterpolatedField[field][i] += buffer[i];
     delete [] buffer;

@@ -196,6 +196,7 @@ int ComputePotentialFieldLevelZeroPer(TopGridData *MetaData,
  
       NumberOfGreensRegions = NumberOfGrids;
       GreensRegion = new region[NumberOfGreensRegions];
+#pragma omp parallel for schedule(static)
       for (grid1 = 0; grid1 < NumberOfGrids; grid1++)
 	if (Grids[grid1]->GridData->PreparePeriodicGreensFunction(
 					     &(GreensRegion[grid1])) == FAIL) {
@@ -240,6 +241,7 @@ int ComputePotentialFieldLevelZeroPer(TopGridData *MetaData,
   /* ------------------------------------------------------------------- */
   /* Generate FFT regions for density field. */
  
+#pragma omp parallel for schedule(static) lastprivate(DomainDim)
   for (grid1 = 0; grid1 < NumberOfGrids; grid1++)
     if (Grids[grid1]->GridData->PrepareFFT(&InitialRegion[grid1],
 					  GRAVITATING_MASS_FIELD, DomainDim)
@@ -280,6 +282,7 @@ int ComputePotentialFieldLevelZeroPer(TopGridData *MetaData,
 			
   /* Multiply density by Green's function to get potential. */
  
+#pragma omp parallel for schedule(static) private(n,j)
   for (i = 0; i < NumberOfGreensRegions; i++)
     if (OutRegion[i].Data != NULL) {
       int size = OutRegion[i].RegionDim[0]*OutRegion[i].RegionDim[1]*
@@ -322,6 +325,7 @@ int ComputePotentialFieldLevelZeroPer(TopGridData *MetaData,
  
   /* Copy Potential in active region into while grid. */
  
+#pragma omp parallel for schedule(static)
   for (grid1 = 0; grid1 < NumberOfGrids; grid1++)
     if (Grids[grid1]->GridData->FinishFFT(&InitialRegion[grid1], POTENTIAL_FIELD,
 			       DomainDim) == FAIL) {
@@ -421,7 +425,7 @@ int ComputePotentialFieldLevelZeroPer(TopGridData *MetaData,
     delete [] OutRegion;
  
   if (CopyGravPotential)
-
+#pragma omp parallel for schedule(static)
     for (grid1 = 0; grid1 < NumberOfGrids; grid1++)
     {
       // fprintf(stderr, "Call CP from ComputePotentialFieldLevelZero\n");

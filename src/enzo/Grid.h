@@ -397,7 +397,9 @@ public:
 	   Returns FAIL or SUCCESS.
     (for step #19) */
 
-   int GetProjectedBoundaryFluxes(grid *ParentGrid, fluxes &ProjectedFluxes);
+   int GetProjectedBoundaryFluxes(grid *ParentGrid, int grid_num,
+				  int subgrid_num, fluxes &ProjectedFluxes,
+				  int IsSubling=FALSE);
 
 /* Return the refinement factors as compared to the grid in the argument
    (integer version) (for step #19) */
@@ -1452,15 +1454,18 @@ int CreateParticleTypeGrouping(hid_t ptype_dset,
 
 /* Send a region from a real grid to a 'fake' grid on another processor. */
 
-  int CommunicationSendRegion(grid *ToGrid, int ToProcessor, int SendField, 
-			     int NewOrOld, int RegionStart[], int RegionDim[]);
+  int CommunicationSendRegion(grid *ToGrid, int ToProcessor,int SendField,
+			      int NewOrOld, int RegionStart[], int RegionDim[],
+			      int CommType, grid* grid_one, grid* grid_two,
+			      FLOAT CommArg[], int CommArgInt[]);
 
 /* Send a region from a 'fake' grid to a real grid on another processor. */
 
-  int CommunicationReceiveRegion(grid *ToGrid, int ToProcessor, 
-				 int SendField, int NewOrOld, 
+  int CommunicationReceiveRegion(grid *FromGrid, int FromProcessor,
+				 int SendField, int NewOrOld,
 				 int RegionStart[], int RegionDim[],
-				 int IncludeBoundary);
+				 int IncludeBoundary, int CommType,
+				 grid *grid_one, grid *grid_two);
 
 /* Move a grid from one processor to another. */
 
@@ -1642,6 +1647,15 @@ int yEulerSweep(int i, int NumberOfSubgrids, fluxes *SubgridFluxes[],
 int zEulerSweep(int j, int NumberOfSubgrids, fluxes *SubgridFluxes[], 
 		Elong_int GridGlobalStart[], float *CellWidthTemp[], 
 		int GravityOn, int NumberOfColours, int colnum[]);
+
+int inteuler(int idim,
+	     float *dslice, float *pslice, int gravity, float *grslice,
+	     float *geslice, float *uslice, float *vslice, float *wslice, 
+	     float *dxi, float *flatten, 
+	     float *dls, float *drs, float *pls, float *prs, float *gels,
+	     float *gers, float *uls, float *urs, float *vls, float *vrs,
+	     float *wls, float *wrs, int ncolors, float *colslice,
+	     float *colls, float *colrs);
 
 // AccelerationHack
 
