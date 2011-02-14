@@ -15,23 +15,30 @@
 /        2) read without DEFINE_STORAGE defined for external linkage
 /
 ************************************************************************/
-#ifdef DEFINE_STORAGE
-# define EXTERN
-#else /* DEFINE_STORAGE */
-# define EXTERN extern
-#endif
+#ifndef __PARALLEL_H
+#define __PARALLEL_H
+
+#define COMMUNICATION_NO_DEPENDENCE -1
+
+#include <stdlib.h>
+#include <list>
 
 #ifdef USE_MPI
 #include "mpi.h"
 #endif /* USE_MPI */
 
+#include "mpi_typedef.h"
+
+using namespace std;
+
+namespace Parallel
+{
+
 /* Set maximum number of receive buffers */
 
-#define MAX_RECEIVE_BUFFERS 50000
+  static const size_t MAX_RECEIVE_BUFFERS = 50000;
 
 /* Set the code for the no dependence for the DependsOn element (see below). */
-
-#define COMMUNICATION_NO_DEPENDENCE -1
 
 /* This is the current mode for communiction.  There are two different ways
    that communication can be done.  The first is generally slower and is
@@ -62,30 +69,30 @@
       (CommunicationReceiveHandler) which does this for all the receieve
       methods. */
 
-EXTERN int CommunicationDirection;
+  int CommunicationDirection;
 
 /* This variable contains the most recent receive dependence; that is, the
    index of the receive handler which must complete first. */
 
-EXTERN int CommunicationReceiveCurrentDependsOn;
+  int CommunicationReceiveCurrentDependsOn;
 
 /* This is the index of the current receive buffer.  Alterations of
    CommunicationReceiveIndex or CommunicationGridID MUST be done in
    omp critical sections because they are global. */
 
-EXTERN int CommunicationReceiveIndex;
+  int CommunicationReceiveIndex;
 
 /* This is the grid ID of the receiving and sending grid that is being
-   processed for use with thread-safe MPI tags.  Usually sent to
-   Return_MPI_Tag(). */
+   processed for use with thread-safe MPI tags.  Used in MPI
+   headers. */
 
-EXTERN int CommunicationGridID[2];
+  //int CommunicationGridID[2];
 
 /* More flags to ensure unique MPI tags where the receiving and
    sending grids are the same.  Necessary when copying overlapping
    regions. */
 
-EXTERN int CommunicationTags[3];
+  //int CommunicationTags[3];
 
 /* The following variables contain information about each receive buffer
    handler.  They are:
@@ -103,14 +110,52 @@ EXTERN int CommunicationTags[3];
                   method which generated the handle.                     */
 
 #ifdef USE_MPI
+  MPI_Datatype CommunicationHeaderType;
+  //MPI_Request  CommunicationReceiveMPI_Request[MAX_RECEIVE_BUFFERS];
+  //MPI_Datatype CommunicationReceiveMPI_Datatype[MAX_RECEIVE_BUFFERS];
+  //void       *CommunicationReceiveBuffer[MAX_RECEIVE_BUFFERS];
+  //int          CommunicationReceiveCallType[MAX_RECEIVE_BUFFERS];
+  //grid        *CommunicationReceiveGridOne[MAX_RECEIVE_BUFFERS];
+  //grid        *CommunicationReceiveGridTwo[MAX_RECEIVE_BUFFERS];
+  //int          CommunicationReceiveDependsOn[MAX_RECEIVE_BUFFERS];
+  //FLOAT CommunicationReceiveArgument[MAX_DIMENSION][MAX_RECEIVE_BUFFERS];
+  //int CommunicationReceiveArgumentInt[MAX_DIMENSION][MAX_RECEIVE_BUFFERS];
 
-EXTERN int          CommunicationReceiveCallType[MAX_RECEIVE_BUFFERS];
-EXTERN MPI_Request  CommunicationReceiveMPI_Request[MAX_RECEIVE_BUFFERS];
-EXTERN float       *CommunicationReceiveBuffer[MAX_RECEIVE_BUFFERS];
-EXTERN grid        *CommunicationReceiveGridOne[MAX_RECEIVE_BUFFERS];
-EXTERN grid        *CommunicationReceiveGridTwo[MAX_RECEIVE_BUFFERS];
-EXTERN int          CommunicationReceiveDependsOn[MAX_RECEIVE_BUFFERS];
-EXTERN FLOAT CommunicationReceiveArgument[MAX_DIMENSION][MAX_RECEIVE_BUFFERS];
-EXTERN int CommunicationReceiveArgumentInt[MAX_DIMENSION][MAX_RECEIVE_BUFFERS];
+  int CreateMPIHeaderType(MPI_Datatype &HeaderType);
+
+  class MPIBuffer {
+
+  private:
+    int message_index;
+    MPI_Datatype MessageType;
+    MPI_Datatype BufferType;
+    MPI_Request request;
+    MPI_Arg tag;
+    enzo_message *message;
+
+  public:
+
+    MPIBuffer(const int grid1, const int grid2, const int CallType,
+	      const int MPI_Tag,
+	      const int GridOffset[] = NULL,
+	      const int GridDims[] = NULL,
+	      const FLOAT FloatArgs[] = NULL,
+	      const int IntArgs[] = NULL);
+
+    ~MPIBuffer(void);
+    
+    int RecvBuffer(int FromProcessor);
+    int IRecvBuffer(int FromProcessor);
+    int SendBuffer(int ToProcessor);
+    int FillBuffer(const MPI_Datatype BufferDataType, 
+		   const int BufferSize,
+		   void *buffer);
+    
+  }; // ENDCLASS    
+
+  list<MPIBuffer> CommunicationMPIBuffer;
 
 #endif /* USE_MPI */
+
+} // END NAMESPACE
+#endif  /* ifndef __PARALLEL_H */

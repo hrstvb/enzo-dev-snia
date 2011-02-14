@@ -647,6 +647,7 @@ OBJS_CONFIG_LIB = \
 	OutputPotentialFieldOnly.o \
 	OutputSmoothedDarkMatterOnly.o \
         P_ColumnFormat.o \
+	ParallelRoutines.o \
 	ParticleMergeRoutines.o \
         ParticleSplitter.o \
 	performance.o \
@@ -811,7 +812,7 @@ OBJS_CONFIG_LIB = \
         tscint2d.o \
         tscint3d.o \
         TurbulenceSimulationInitialize.o \
-turboinit.o\
+	turboinit.o \
         twoshock.o \
 	UpdateFromFinerGrids.o \
         UpdateParticlePositions.o \
