@@ -31,8 +31,10 @@
 #include "GridList.h"
 #include "ExternalBoundary.h"
 #include "Grid.h"
-#include "communication.h"
- 
+#include "Parallel.h"
+
+using Parallel::CommunicationDirection;
+
 /* function prototypes */
  
 int FindField(int f, int farray[], int n);

@@ -37,7 +37,6 @@
 #include "TopGridData.h"
 #include "Hierarchy.h"
 #include "LevelHierarchy.h"
-#include "communication.h"
 #include "CommunicationUtilities.h"
 
 void fpcol(Eflt64 *x, int n, int m, FILE *log_fptr);

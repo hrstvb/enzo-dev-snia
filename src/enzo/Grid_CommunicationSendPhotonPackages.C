@@ -27,17 +27,11 @@
 #include "Fluxes.h"
 #include "GridList.h"
 #include "Grid.h"
-#include "communication.h"
+#include "GroupPhotonList.h"
+#include "Parallel.h"
 #include "CommunicationUtilities.h"
 
-MPI_Arg Return_MPI_Tag(int tag, int num1[], int num2[3]=0);
-#ifdef USE_MPI
-int CommunicationBufferedSend(void *buffer, int size, MPI_Datatype Type, 
-                              int Target, int Tag, MPI_Comm CommWorld, 
-			      int BufferSize);
-static int FirstTimeCalled = TRUE;
-static MPI_Datatype PhotonBufferType;
-#endif /* USE_MPI */
+using namespace Parallel;
 
 void my_exit(int status);
 int FindSuperSource(PhotonPackageEntry **PP, int &LeafID, 
@@ -50,23 +44,6 @@ int grid::CommunicationSendPhotonPackages(grid *ToGrid, int ToProcessor,
 					  PhotonPackageEntry **ToPP)
 {
 
-  struct PhotonBuffer {
-    float	Photons;
-    int		Type;                     
-    float	Energy;                   
-    FLOAT	EmissionTimeInterval;     
-    FLOAT	EmissionTime;             
-    FLOAT	CurrentTime;              
-    FLOAT	Radius;                 
-    long	ipix;                    
-    int		level;                   
-    double	CrossSection;
-    float	ColumnDensity;
-    FLOAT	SourcePosition[3];        
-    float	SourcePositionDiff;
-    int		SuperSourceID;
-  };
-
   int index, dim, temp_int;
   PhotonPackageEntry *PP;
 
@@ -76,12 +53,25 @@ int grid::CommunicationSendPhotonPackages(grid *ToGrid, int ToProcessor,
   if (FromNumber == 0) 
     return SUCCESS;
 
+  /* Allocate MPI buffer */
+
+  const int CommType = 15;
+  MPIBuffer *mbuffer = NULL;
+  if (Parallel::CommunicationDirection == COMMUNICATION_POST_RECEIVE ||
+      Parallel::CommunicationDirection == COMMUNICATION_SEND) {
+    int iarg[] = {ToNumber, FromNumber, 0);
+    mbuffer = new MPIBuffer(this, ToGrid, CommType, MPI_PHOTON_TAG,
+			    NULL, NULL, NULL, iarg);
+  } else {
+    mbuffer = NULL;  // Grab from list.
+  }
+ 
   /* Allocate memory */
 
   PhotonBuffer *buffer = NULL;
 #ifdef USE_MPI
   if (CommunicationDirection == COMMUNICATION_RECEIVE)
-    buffer = (PhotonBuffer *) CommunicationReceiveBuffer[CommunicationReceiveIndex];
+    buffer = (PhotonBuffer *) mbuffer->ReturnBuffer();
   else
 #endif /* USE_MPI */
     buffer = new PhotonBuffer[FromNumber];
@@ -162,38 +152,12 @@ int grid::CommunicationSendPhotonPackages(grid *ToGrid, int ToProcessor,
 
   if (ProcessorNumber != ToProcessor) {
 
-    MPI_Status status;
-    MPI_Datatype DataTypeByte = MPI_BYTE;
-    MPI_Arg PhotonBufferSize;
-    MPI_Arg Count = FromNumber;
-    MPI_Arg Source = ProcessorNumber;
-    MPI_Arg Dest = ToProcessor;
-    MPI_Arg stat;
-    MPI_Arg Tag;
-
-    if (FirstTimeCalled) {
-      PhotonBufferSize = sizeof(PhotonBuffer);
-      //  fprintf(stderr, "Size of ParticleMoveList %"ISYM"\n", Count);
-      stat = MPI_Type_contiguous(PhotonBufferSize, DataTypeByte, &PhotonBufferType);
-      stat |= MPI_Type_commit(&PhotonBufferType);
-      if (stat != MPI_SUCCESS) my_exit(EXIT_FAILURE);
-      FirstTimeCalled = FALSE;
-    }
-
-#pragma omp critical
-    {
-
-    if (CommunicationDirection != COMMUNICATION_RECEIVE) {
-      CommunicationGridID[0] = ToGrid->ID;
-      CommunicationGridID[1] = this->ID;
-    }
-
     if (MyProcessorNumber == ProcessorNumber) {
       if (DEBUG)
 	printf("PhotonSend(P%"ISYM"): Sending %"ISYM" photons to processor %"ISYM".\n",
 	       MyProcessorNumber, FromNumber, ToProcessor);
-      CommunicationBufferedSend(buffer, Count, PhotonBufferType, Dest,
-				MPI_PHOTON_TAG, MPI_COMM_WORLD, BUFFER_IN_PLACE);
+      mbuffer->FillBuffer(MPI_PhotonBuffer, FromNumber, buffer);
+      mbuffer->SendBuffer(ToProcessor);
     }
 
     if (MyProcessorNumber == ToProcessor) {
@@ -205,38 +169,14 @@ int grid::CommunicationSendPhotonPackages(grid *ToGrid, int ToProcessor,
       Tag = Return_MPI_Tag(MPI_PHOTON_TAG, CommunicationGridID);
 
       if (CommunicationDirection == COMMUNICATION_POST_RECEIVE) {
-	MPI_Irecv(buffer, Count, PhotonBufferType, Source, Tag,
-		  MPI_COMM_WORLD,
-		  CommunicationReceiveMPI_Request+CommunicationReceiveIndex);
-
-	CommunicationReceiveGridOne[CommunicationReceiveIndex] = this;
-	CommunicationReceiveGridTwo[CommunicationReceiveIndex] = ToGrid;
-	CommunicationReceiveCallType[CommunicationReceiveIndex] = 15;
-	CommunicationReceiveArgumentInt[0][CommunicationReceiveIndex] = ToNumber;
-	CommunicationReceiveArgumentInt[1][CommunicationReceiveIndex] = FromNumber;
-	CommunicationReceiveBuffer[CommunicationReceiveIndex] = (float *) buffer;
-	CommunicationReceiveDependsOn[CommunicationReceiveIndex] = 
-	  CommunicationReceiveCurrentDependsOn;
-	CommunicationReceiveIndex++;
-
-
+	mbuffer->FillBuffer(MPI_PhotonBuffer, FromNumber, buffer);
+	mbuffer->IRecvBuffer(ProcessorNumber);
       } // ENDIF post receive
 
       if (CommunicationDirection == COMMUNICATION_SEND_RECEIVE)
-	if (MPI_Recv(buffer, Count, PhotonBufferType, Source,
-		     Tag, MPI_COMM_WORLD, &status) != MPI_SUCCESS) {
-	  fprintf(stderr, "P(%"ISYM"): MPI_Recv error %"ISYM"\n", MyProcessorNumber,
-		  status.MPI_ERROR);
-	  fprintf(stderr, "P(%"ISYM"): TransferSize = %"ISYM" ProcessorNumber = %"ISYM"\n", 
-		  MyProcessorNumber, Count*sizeof(PhotonBuffer), ProcessorNumber);
-	  char errstr[MPI_MAX_ERROR_STRING];
-	  Eint32 errlen;
-	  MPI_Error_string(status.MPI_ERROR, errstr, &errlen);
-	  ENZO_VFAIL("MPI Error %s\n",errstr)
-	}
+	mbuffer->RecvBuffer(ProcessorNumber);
 
     } /* ENDIF (MyProcessorNumber == ToProcessor) */
-    } // END omp critical
 
   } /* ENDIF (ProcessorNumber != ToProcessor) */
 #endif /* USE_MPI */

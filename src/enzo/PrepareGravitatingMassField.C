@@ -26,7 +26,10 @@
 #include "Hierarchy.h"
 #include "LevelHierarchy.h"
 #include "TopGridData.h"
-#include "communication.h"
+#include "Parallel.h"
+
+using Parallel::CommunicationDirection;
+using Parallel::CommunicationReceiveIndex;
 
 /* function prototypes */
 
@@ -63,7 +66,7 @@ int PrepareGravitatingMassField1(HierarchyEntry *Grid)
      GravitatingMassField which are beyond the boundary of the current grid. */
 
   int CommunicationReceiveIndexLast = CommunicationReceiveIndex;
-  CommunicationReceiveCurrentDependsOn = COMMUNICATION_NO_DEPENDENCE;
+  //CommunicationReceiveCurrentDependsOn = COMMUNICATION_NO_DEPENDENCE;
   if (Grid->ParentGrid != NULL)
    if (CurrentGrid->CopyParentToGravitatingFieldBoundary(
 				         Grid->ParentGrid->GridData) == FAIL) {
@@ -179,7 +182,7 @@ int PrepareGravitatingMassField2b(HierarchyEntry *Grid, int level)
  
   grid *CurrentGrid = Grid->GridData;
 
-  CommunicationReceiveCurrentDependsOn = COMMUNICATION_NO_DEPENDENCE;
+  //CommunicationReceiveCurrentDependsOn = COMMUNICATION_NO_DEPENDENCE;
   if (level > 0)
 
     CurrentGrid->PreparePotentialField(Grid->ParentGrid->GridData);

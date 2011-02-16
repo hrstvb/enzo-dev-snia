@@ -32,7 +32,9 @@
 #include "LevelHierarchy.h"
 #include "GroupPhotonList.h"
 #include "PhotonCommunication.h"
-#include "communication.h"
+#include "Parallel.h"
+
+using Parallel::MPI_PhotonList;
 
 PhotonPackageEntry* DeletePhotonPackage(PhotonPackageEntry *PP);
 int GenerateGridArray(LevelHierarchyEntry *LevelArray[], int level,
@@ -51,10 +53,6 @@ int CommunicationBufferPurge(void);
 int CommunicationBufferedSend(void *buffer, int size, MPI_Datatype Type, 
                               int Target, int Tag, MPI_Comm CommWorld, 
 			      int BufferSize);
-
-static int FirstTimeCalled = TRUE;
-static MPI_Datatype MPI_PhotonList;
-
 #endif /* USE_MPI */
 
 int CommunicationTransferPhotons(LevelHierarchyEntry *LevelArray[], 
@@ -103,14 +101,6 @@ int CommunicationTransferPhotons(LevelHierarchyEntry *LevelArray[],
 
   MPI_Status status;
   
-  /* Generate a new MPI type corresponding to the PhotonList struct. */
-  
-  if (FirstTimeCalled) {
-    MPI_Type_contiguous(sizeof(GroupPhotonList), MPI_BYTE, &MPI_PhotonList);
-    MPI_Type_commit(&MPI_PhotonList);
-    FirstTimeCalled = FALSE;
-  }
-
   /* If parallel, Partition photons into linked lists that are
      transferred to the same grid */
 
@@ -290,10 +280,10 @@ int CommunicationTransferPhotons(LevelHierarchyEntry *LevelArray[],
     delete Destroyer;
   }
 
-  /***************************************************************/
-  /*                  TRIPLE-PHASE COMMUNICATION                 */
-  /* Modeled after the scheme in communication.h and EvolveLevel */
-  /***************************************************************/
+  /**********************************************************/
+  /*                  TRIPLE-PHASE COMMUNICATION            */
+  /* Modeled after the scheme in Parallel.h and EvolveLevel */
+  /**********************************************************/
 
   bool local_transport;
   int NumberOfMessages, Offset;
@@ -302,11 +292,6 @@ int CommunicationTransferPhotons(LevelHierarchyEntry *LevelArray[],
   local_transport = (localCounter > 0);
   MPI_Type_size(MPI_PhotonList, &SizeOfGroupPhotonList);
   //SizeOfGroupPhotonList = sizeof(GroupPhotonList);
-
-  /* Not used here */
-  
-  CommunicationGridID[0] = 0;
-  CommunicationGridID[1] = 0;
 
   /* First stage: check for any received nPhoton messages.  For the
      completed messages, post receive calls from all processors with

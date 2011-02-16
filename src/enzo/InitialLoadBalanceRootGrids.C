@@ -27,7 +27,6 @@
 #include "TopGridData.h"
 #include "Hierarchy.h"
 #include "LevelHierarchy.h"
-#include "communication.h"
 #include "CommunicationUtilities.h"
 
 #define LOAD_BALANCE_RATIO 1.05

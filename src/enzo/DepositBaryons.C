@@ -27,8 +27,10 @@
 #include "Hierarchy.h"
 #include "TopGridData.h"
 #include "LevelHierarchy.h"
-#include "communication.h"
+#include "Parallel.h"
  
+using Parallel::CommunicationDirection;
+
 /* function prototypes */
  
 int DepositBaryonsChildren(HierarchyEntry *DepositGrid,

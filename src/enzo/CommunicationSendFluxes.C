@@ -28,19 +28,14 @@
 #include "TopGridData.h"
 #include "Hierarchy.h"
 #include "LevelHierarchy.h"
+#include "Parallel.h"
+
+using namespace Parallel;
  
 /* function prototypes */
  
-#ifdef USE_MPI
-int CommunicationBufferedSend(void *buffer, int size, MPI_Datatype Type, int Target,
-			      int Tag, MPI_Comm CommWorld, int BufferSize);
-#endif /* USE_MPI */
- 
- 
- 
- 
-int CommunicationSendFluxes(fluxes *Fluxes, int ToProc, int NumberOfFields,
-			    int Rank)
+int CommunicationSendFluxes(MPIBuffer *mbuffer, fluxes *Fluxes, int ToProc, 
+			    int NumberOfFields, int Rank)
 {
  
   /* Count space and Allocate buffer. */
@@ -76,15 +71,13 @@ int CommunicationSendFluxes(fluxes *Fluxes, int ToProc, int NumberOfFields,
   /* send. */
  
 #ifdef USE_MPI
- 
-  MPI_Datatype DataType = (sizeof(float) == 4) ? MPI_FLOAT : MPI_DOUBLE;
- 
+
 #ifdef MPI_INSTRUMENTATION
   starttime = MPI_Wtime();
 #endif
- 
-  CommunicationBufferedSend(buffer, TotalSize, DataType, ToProc, MPI_FLUX_TAG,
-			    MPI_COMM_WORLD, BUFFER_IN_PLACE);
+
+  mbuffer->FillBuffer(FloatDataType, TotalSize, buffer);
+  mbuffer->SendBuffer(ToProc);
  
 #ifdef MPI_INSTRUMENTATION
   /* Zhiling Lan's instrumented part */

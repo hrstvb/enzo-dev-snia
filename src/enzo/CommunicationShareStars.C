@@ -22,13 +22,15 @@
 #include "macros_and_parameters.h"
 #include "typedefs.h"
 #include "global_data.h"
+#include "Fluxes.h"
+#include "GridList.h"
+#include "ExternalBoundary.h"
+#include "Grid.h"
+#include "Parallel.h"
+
+using Parallel::MPI_StarShareList;
 
 void my_exit(int status);
-
-#ifdef USE_MPI
-static int FirstTimeCalled = TRUE;
-static MPI_Datatype MPI_StarMoveList;
-#endif
 
 Eint32 compare_star_proc(const void *a, const void *b);
 Eint32 compare_star_grid(const void *a, const void *b);
@@ -64,17 +66,6 @@ int CommunicationShareStars(int *NumberToMove, star_data* &SendList,
   if (NumberOfProcessors > 1) {
 
 #ifdef USE_MPI
-
-    /* Generate a new MPI type corresponding to the StarMoveList data. */
- 
-    if (FirstTimeCalled) {
-      Count = sizeof(star_data);
-      //  fprintf(stderr, "Size of StarMoveList %"ISYM"\n", Count);
-      stat = MPI_Type_contiguous(Count, DataTypeByte, &MPI_StarMoveList);
-      stat |= MPI_Type_commit(&MPI_StarMoveList);
-      if (stat != MPI_SUCCESS) my_exit(EXIT_FAILURE);
-      FirstTimeCalled = FALSE;
-    }
 
     /* Get counts from each processor to allocate buffers. */
 
@@ -131,9 +122,9 @@ int CommunicationShareStars(int *NumberToMove, star_data* &SendList,
     ******************************/
 
     stat = MPI_Alltoallv(SendList, MPI_SendListCount, MPI_SendListDisplacements,
-			   MPI_StarMoveList,
+			   MPI_StarShareList,
 			 SharedList, MPI_RecvListCount, MPI_RecvListDisplacements,
-			   MPI_StarMoveList,
+			   MPI_StarShareList,
 			 MPI_COMM_WORLD);
     if (stat != MPI_SUCCESS) my_exit(EXIT_FAILURE);
 

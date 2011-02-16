@@ -25,18 +25,13 @@
 #include "GridList.h"
 #include "ExternalBoundary.h"
 #include "Grid.h"
-#include "communication.h"
+#include "Parallel.h"
+
+using namespace Parallel;
 
 #define LEVEL_BIT_OFFSET 24
 
 /* function prototypes */
-
-#ifdef USE_MPI
-int CommunicationBufferedSend(void *buffer, int size, MPI_Datatype Type, 
-			      int Target, int Tag, MPI_Comm CommWorld, 
-			      int BufferSize);
-#endif /* USE_MPI */
-
 
 int grid::SetSubgridMarkerFromParent(grid *Parent, int level)
 {
@@ -150,8 +145,21 @@ int grid::SetSubgridMarkerFromParent(grid *Parent, int level)
       gzsize += 2 * GridStartIndex[dim] * GridDimension[dim1] * GridDimension[dim2];
     }
 
-    if (CommunicationDirection == COMMUNICATION_RECEIVE)
-      buffer = (Eint32*) CommunicationReceiveBuffer[CommunicationReceiveIndex];
+    /* Allocate MPI buffer */
+
+    const int CommType = 19;
+    MPIBuffer *mbuffer = NULL;
+    if (Parallel::CommunicationDirection == COMMUNICATION_POST_RECEIVE ||
+	Parallel::CommunicationDirection == COMMUNICATION_SEND) {
+      int iarg[] = {level, 0, 0};
+      mbuffer = new MPIBuffer(this, Parent, CommType, MPI_SENDMARKER_TAG,
+			      ParentStart, NULL, NULL, iarg);
+    } else {
+      mbuffer = NULL;  // Grab from list
+    }
+
+    if (Parallel::CommunicationDirection == COMMUNICATION_RECEIVE)
+      buffer = (Eint32*) mbuffer->ReturnBuffer();
     else
       buffer = new Eint32[gzsize];
 
@@ -237,9 +245,8 @@ int grid::SetSubgridMarkerFromParent(grid *Parent, int level)
 
 //      printf("P%d: Send %d Subgrid markers from grid %d:%d to %d:%d\n",
 //	     MyProcessorNumber, gzsize, level-1, Parent->ID, level, ID);
-      CommunicationBufferedSend(buffer, gzsize, MPI_INT, ProcessorNumber,
-				MPI_SENDMARKER_TAG, MPI_COMM_WORLD,
-				BUFFER_IN_PLACE);
+      mbuffer->FillBuffer(MPI_INT, gzsize, buffer);
+      mbuffer->SendBuffer(ProcessorNumber);
 
     } // ENDIF Parent processor
 
@@ -247,24 +254,17 @@ int grid::SetSubgridMarkerFromParent(grid *Parent, int level)
 
       /* Post the receive call */
 
-      if (CommunicationDirection == COMMUNICATION_POST_RECEIVE) {
+      if (Parallel::CommunicationDirection == COMMUNICATION_POST_RECEIVE) {
 //	printf("P%d: Posting receive for %d Subgrid markers from "
 //	       "grid %d:%d to %d:%d\n",
 //	       MyProcessorNumber, gzsize, level-1, Parent->ID, level, ID);
-	MPI_Irecv(buffer, gzsize, MPI_INT, Parent->ProcessorNumber,
-		  MPI_SENDMARKER_TAG, MPI_COMM_WORLD,
-		  CommunicationReceiveMPI_Request+CommunicationReceiveIndex);
-	CommunicationReceiveBuffer[CommunicationReceiveIndex] = (float*) buffer;
-	CommunicationReceiveGridOne[CommunicationReceiveIndex] = this;
-	CommunicationReceiveGridTwo[CommunicationReceiveIndex] = Parent;
-	CommunicationReceiveArgumentInt[0][CommunicationReceiveIndex] = level;
-	CommunicationReceiveCallType[CommunicationReceiveIndex] = 19;
-	CommunicationReceiveIndex++;
+	mbuffer->FillBuffer(MPI_INT, gzsize, buffer);
+	mbuffer->IRecvBuffer(Parent->ProcessorNumber);
       } // ENDIF post receive
 
       /* Process the received data */
 
-      if (CommunicationDirection == COMMUNICATION_RECEIVE) {
+      if (Parallel::CommunicationDirection == COMMUNICATION_RECEIVE) {
 
 	/* Store the buffer in SubgridMarker, as we can't convert them
 	   to a grid pointer here because we don't have LevelArray[].

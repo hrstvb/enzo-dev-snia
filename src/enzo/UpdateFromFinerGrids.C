@@ -38,8 +38,11 @@
 #include "Hierarchy.h"
 #include "TopGridData.h"
 #include "LevelHierarchy.h"
-#include "communication.h"
+#include "Parallel.h"
 #include "CommunicationUtilities.h"
+
+using Parallel::CommunicationDirection;
+using Parallel::CommunicationReceiveIndex;
 
 /* function prototypes */
  
@@ -99,7 +102,6 @@ int UpdateFromFinerGrids(int level, HierarchyEntry *Grids[], int NumberOfGrids,
  
       NextGrid = Grids[grid1]->NextGridNextLevel;
       subgrid = 0;
-      CommunicationReceiveCurrentDependsOn = COMMUNICATION_NO_DEPENDENCE;
       
       while (NextGrid != NULL && FluxCorrection) {
  
@@ -239,7 +241,6 @@ int UpdateFromFinerGrids(int level, HierarchyEntry *Grids[], int NumberOfGrids,
 
       /* Loop over subgrids for this grid: replace solution. */
 
-      CommunicationReceiveCurrentDependsOn = COMMUNICATION_NO_DEPENDENCE;
       NextGrid = Grids[grid1]->NextGridNextLevel;
       while (NextGrid != NULL) {
 
@@ -258,7 +259,6 @@ int UpdateFromFinerGrids(int level, HierarchyEntry *Grids[], int NumberOfGrids,
 
       /* Loop over subgrids for this grid: replace solution. */
 
-      CommunicationReceiveCurrentDependsOn = COMMUNICATION_NO_DEPENDENCE;
       NextGrid = Grids[grid1]->NextGridNextLevel;
       while (NextGrid != NULL) {
 

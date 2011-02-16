@@ -29,15 +29,14 @@
 #include "TopGridData.h"
 #include "Hierarchy.h"
 #include "LevelHierarchy.h"
-#include "communication.h"
+#include "Parallel.h"
+
+using namespace Parallel;
+
 void my_exit(int status);
-MPI_Arg Return_MPI_Tag(int tag, int num1[], int num2[3]=0);
  
- 
- 
- 
-int CommunicationReceiveFluxes(fluxes *Fluxes, int FromProc,
-			       int NumberOfFields, int Rank)
+int CommunicationReceiveFluxes(MPIBuffer *mbuffer, fluxes *Fluxes, 
+			       int FromProc, int NumberOfFields, int Rank)
 {
  
   /* Count space and allocate buffer. */
@@ -61,47 +60,32 @@ int CommunicationReceiveFluxes(fluxes *Fluxes, int FromProc,
  
   TotalSize *= NumberOfFields;
   if (CommunicationDirection == COMMUNICATION_RECEIVE)
-    buffer = CommunicationReceiveBuffer[CommunicationReceiveIndex];
+    buffer = (float*) mbuffer->ReturnBuffer();
   else
     buffer = new float[TotalSize];
 
  
   /* Receive into buffer. */
  
-  MPI_Status status;
-  MPI_Datatype DataType = (sizeof(float) == 4) ? MPI_FLOAT : MPI_DOUBLE;
- 
 #ifdef MPI_INSTRUMENTATION
   starttime = MPI_Wtime();
 #endif
-
-  MPI_Arg Count = TotalSize;
-  MPI_Arg Source = FromProc;
-  MPI_Arg Tag = Return_MPI_Tag(MPI_FLUX_TAG, CommunicationGridID);
 
   /* If in post-receive mode, then register the receive buffer to be filled
      when the data actually arrives. */
   
   if (CommunicationDirection == COMMUNICATION_POST_RECEIVE) {
-    MPI_Irecv(buffer, Count, DataType, Source, 
-	      Tag, MPI_COMM_WORLD,
-	      CommunicationReceiveMPI_Request+CommunicationReceiveIndex);
-    CommunicationReceiveBuffer[CommunicationReceiveIndex] = buffer;
-    CommunicationReceiveDependsOn[CommunicationReceiveIndex] =
-      CommunicationReceiveCurrentDependsOn;
-    CommunicationReceiveIndex++;
+    mbuffer->FillBuffer(FloatDataType, TotalSize, buffer);
+    mbuffer->IRecvBuffer(FromProc);
     return SUCCESS;
   }
 
   /* If in send-receive mode, then wait for the data to arrive now. */
 
-  if (CommunicationDirection == COMMUNICATION_SEND_RECEIVE)
-    if (MPI_Recv(buffer, Count, DataType, Source, Tag,
-		 MPI_COMM_WORLD, &status) != MPI_SUCCESS) {
-      ENZO_VFAIL("Proc %d MPI_Recv error %d\n", MyProcessorNumber,
-	      status.MPI_ERROR)
-
-    }
+  if (CommunicationDirection == COMMUNICATION_SEND_RECEIVE) {
+    mbuffer->FillBuffer(FloatDataType, TotalSize, buffer);
+    mbuffer->RecvBuffer(FromProc);
+  }
  
 #ifdef MPI_INSTRUMENTATION
   endtime = MPI_Wtime();

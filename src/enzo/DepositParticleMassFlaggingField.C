@@ -30,7 +30,9 @@
 #include "TopGridData.h"
 #include "Hierarchy.h"
 #include "LevelHierarchy.h"
-#include "communication.h"
+#include "Parallel.h"
+
+using Parallel::MPI_TwoInt;
 
 /* Because we're basically doing a non-blocking MPI_Reduce(MPI_SUM),
    we need to allocate buffers for each on all processors.  Split up
@@ -51,16 +53,6 @@ int CommunicationReceiveHandler(fluxes **SubgridFluxesEstimate[] = NULL,
 int CommunicationBufferPurge(void);
 Eint32 compare_proc1(const void *a, const void *b);
 Eint32 compare_grid1(const void *a, const void *b);
-
-#ifdef USE_MPI
-static int FirstTimeCalled = TRUE;
-static MPI_Datatype MPI_TwoInt;
-#endif
-
-struct two_int {
-  int grid;
-  int proc;
-};
 
 int DepositParticleMassFlaggingField(LevelHierarchyEntry* LevelArray[],
 				     int level, bool AllLocal)
@@ -101,7 +93,7 @@ int DepositParticleMassFlaggingField(LevelHierarchyEntry* LevelArray[],
     int grid1, Zero = 0;
     int NumberOfGrids = GenerateGridArray(LevelArray, level, &Grids);
 
-    CommunicationDirection = COMMUNICATION_SEND;
+    Parallel::CommunicationDirection = COMMUNICATION_SEND;
 #pragma omp parallel for schedule(static)
     for (grid1 = 0; grid1 < NumberOfGrids; grid1++)
       // Still have to check for the correct processor because this
@@ -113,7 +105,7 @@ int DepositParticleMassFlaggingField(LevelHierarchyEntry* LevelArray[],
 	  ENZO_FAIL("Error in grid->SetParticleMassFlaggingField(send).\n");
 	}
 
-    CommunicationDirection = COMMUNICATION_SEND_RECEIVE;
+    Parallel::CommunicationDirection = COMMUNICATION_SEND_RECEIVE;
     delete [] Grids;
     
   } // ENDIF serial
@@ -134,16 +126,6 @@ int DepositParticleMassFlaggingField(LevelHierarchyEntry* LevelArray[],
     MPI_Arg *MPI_SendListDisplacements = new MPI_Arg[NumberOfProcessors];
     MPI_Arg *MPI_RecvListCount = new MPI_Arg[NumberOfProcessors];
     MPI_Arg *MPI_RecvListDisplacements = new MPI_Arg[NumberOfProcessors];
-
-    /* Create a new MPI type corresponding to the structure, two_int */
-
-    if (FirstTimeCalled) {
-      Count = sizeof_twoint;
-      stat = MPI_Type_contiguous(Count, DataTypeByte, &MPI_TwoInt);
-      stat |= MPI_Type_commit(&MPI_TwoInt);
-      if (stat != MPI_SUCCESS) my_exit(EXIT_FAILURE);
-      FirstTimeCalled = FALSE;
-    }
 
     int i, count, proc, grid1, StartGrid, EndGrid, NumberOfGrids;
     int TotalNumberOfRecv, TotalNumberOfSends;
@@ -323,9 +305,9 @@ int DepositParticleMassFlaggingField(LevelHierarchyEntry* LevelArray[],
 
 	/* Post receives */
 
-	CommunicationReceiveIndex = 0;
-	CommunicationReceiveCurrentDependsOn = COMMUNICATION_NO_DEPENDENCE;
-	CommunicationDirection = COMMUNICATION_POST_RECEIVE;
+	//CommunicationReceiveIndex = 0;
+	//CommunicationReceiveCurrentDependsOn = COMMUNICATION_NO_DEPENDENCE;
+	Parallel::CommunicationDirection = COMMUNICATION_POST_RECEIVE;
 
 	if (TotalNumberOfRecv > 0) {
 
@@ -359,7 +341,7 @@ int DepositParticleMassFlaggingField(LevelHierarchyEntry* LevelArray[],
 
 	/* Calculate and send field */
 
-	CommunicationDirection = COMMUNICATION_SEND;
+	Parallel::CommunicationDirection = COMMUNICATION_SEND;
 #pragma omp parallel for schedule(static)
 	for (grid1 = StartGrid; grid1 < EndGrid; grid1++)
 	  if (Grids[grid1]->GridData->SetParticleMassFlaggingField
@@ -387,7 +369,7 @@ int DepositParticleMassFlaggingField(LevelHierarchyEntry* LevelArray[],
     } // ENDFOR processor batches
 
     // Set communication direction back to its default
-    CommunicationDirection = COMMUNICATION_SEND_RECEIVE;
+    Parallel::CommunicationDirection = COMMUNICATION_SEND_RECEIVE;
 
     delete [] SendList;
     delete [] SharedList;

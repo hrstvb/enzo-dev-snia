@@ -37,7 +37,9 @@
 #include "GridList.h"
 #include "ExternalBoundary.h"
 #include "Grid.h"
-#include "communication.h"
+#include "Parallel.h"
+
+using Parallel::CommunicationDirection;
 
 extern "C" void FORTRAN_NAME(copy3drel)(float *source, float *dest,
                                    int *dim1, int *dim2, int *dim3,

@@ -30,7 +30,6 @@
 #include "TopGridData.h"
 #include "Hierarchy.h"
 #include "LevelHierarchy.h"
-#include "communication.h"
 #include "CommunicationUtilities.h"
 
 double HilbertCurve3D(FLOAT *coord);

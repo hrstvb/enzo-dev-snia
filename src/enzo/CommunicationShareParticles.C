@@ -22,13 +22,15 @@
 #include "macros_and_parameters.h"
 #include "typedefs.h"
 #include "global_data.h"
+#include "Fluxes.h"
+#include "GridList.h"
+#include "ExternalBoundary.h"
+#include "Grid.h"
+#include "Parallel.h"
+
+using Parallel::MPI_ParticleShareList;
 
 void my_exit(int status);
-
-#ifdef USE_MPI
-static int FirstTimeCalled = TRUE;
-static MPI_Datatype MPI_ParticleMoveList;
-#endif
 
 Eint32 compare_proc(const void *a, const void *b);
 Eint32 compare_grid(const void *a, const void *b);
@@ -65,17 +67,6 @@ int CommunicationShareParticles(int *NumberToMove, particle_data* &SendList,
   if (NumberOfProcessors > 1) {
 
 #ifdef USE_MPI
-
-    /* Generate a new MPI type corresponding to the ParticleMoveList data. */
- 
-    if (FirstTimeCalled) {
-      Count = sizeof(particle_data);
-      //  fprintf(stderr, "Size of ParticleMoveList %"ISYM"\n", Count);
-      stat = MPI_Type_contiguous(Count, DataTypeByte, &MPI_ParticleMoveList);
-      stat |= MPI_Type_commit(&MPI_ParticleMoveList);
-      if (stat != MPI_SUCCESS) my_exit(EXIT_FAILURE);
-      FirstTimeCalled = FALSE;
-    }
 
     /* Get counts from each processor to allocate buffers. */
 
@@ -132,9 +123,9 @@ int CommunicationShareParticles(int *NumberToMove, particle_data* &SendList,
     ******************************/
 
     stat = MPI_Alltoallv(SendList, MPI_SendListCount, MPI_SendListDisplacements,
-			   MPI_ParticleMoveList,
+			   MPI_ParticleShareList,
 			 SharedList, MPI_RecvListCount, MPI_RecvListDisplacements,
-			   MPI_ParticleMoveList,
+			   MPI_ParticleShareList,
 			 MPI_COMM_WORLD);
     if (stat != MPI_SUCCESS) my_exit(EXIT_FAILURE);
 

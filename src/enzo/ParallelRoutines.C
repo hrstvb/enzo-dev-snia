@@ -13,6 +13,12 @@
 #endif /* USE_MPI */
 #include "macros_and_parameters.h"
 #include "typedefs.h"
+#include "global_data.h"
+#include "Fluxes.h"
+#include "GridList.h"
+#include "ExternalBoundary.h"
+#include "Grid.h"
+#include "GroupPhotonList.h"
 #include "Parallel.h"
 
 #ifdef USE_MPI
@@ -20,41 +26,43 @@ int CommunicationBufferedSend(void *buffer, int size, MPI_Datatype Type, int Tar
 			      int Tag, MPI_Comm CommWorld, int BufferSize);
 namespace Parallel {
 
-  int CreateMPIHeaderType(MPI_Datatype &HeaderType)
+  /*----------------------------------------------------------------------*/
+
+  void GenerateMPIRequestArray(MPI_Request *result)
   {
-
-    int i;
-    mpi_header header;
-    MPI_Datatype type[6] = {MPI_CHAR, IntDataType, IntDataType, IntDataType,
-			    FLOATDataType, IntDataType};
-    int blocklen[6] = {1, 2, 3, 3, 3, 3};
-    MPI_Aint disp[6];
-    MPI_Aint base;
     
-    /* Compute the displacements inside the struct, then create header
-       type */
-
-    MPI_Address(&header, disp);
-    MPI_Address(header.GridNum, disp+1);
-    MPI_Address(header.GridOffset, disp+2);
-    MPI_Address(header.GridDims, disp+3);
-    MPI_Address(header.FArg, disp+4);
-    MPI_Address(header.IArg, disp+5);
-    base = disp[0];
-    for (i = 0; i < 6; i++) disp[i] -= base;
-    MPI_Type_struct(6, blocklen, disp, type, &HeaderType);
-    MPI_Type_commit(&HeaderType);
-
-    CommunicationHeaderType = HeaderType;
-
-    return SUCCESS;
+    int i;
+    int size = CommunicationMPIBuffer.size();
+    result = new MPI_Request[size];
+    list<MPIBuffer>::iterator it;
+    for (it = CommunicationMPIBuffer.begin(), i = 0;
+	 it != CommunicationMPIBuffer.end(); ++it, i++)
+      result[i] = (*it).ReturnRequest();
 
   }
 
   /*----------------------------------------------------------------------*/
 
-  MPIBuffer::MPIBuffer(const int grid1, 
-		       const int grid2, 
+  MPIBuffer GetMPIBuffer(int num)
+  {
+    list<MPIBuffer>::iterator it = CommunicationMPIBuffer.begin();
+    advance(it,num);
+    return *it;
+  }
+
+  /*----------------------------------------------------------------------*/
+
+  MPIBuffer::MPIBuffer(void)
+  {
+    this->request = MPI_REQUEST_NULL;
+    this->tag = 0;
+    this->grid_one = NULL;
+    this->grid_two = NULL;
+    this->message = new enzo_message;
+  }
+
+  MPIBuffer::MPIBuffer(grid *grid1, 
+		       grid *grid2, 
 		       const int CallType,
 		       const int MPI_Tag,
 		       const int GridOffset[3],
@@ -70,15 +78,23 @@ namespace Parallel {
       this->message_index = CommunicationReceiveIndex++;
     }
 
-    request = MPI_REQUEST_NULL;
-    tag = MPI_Tag;
+    this->request = MPI_REQUEST_NULL;
+    this->tag = MPI_Tag;
+    this->grid_one = grid1;
+    this->grid_two = grid2;
 
     /* Create header */
   
     mpi_header header;
     header.CallType = CallType;
-    header.GridNum[0] = grid1;
-    header.GridNum[1] = grid2;
+    if (grid1 != NULL)
+      header.GridNum[0] = grid1->GetGridID();
+    else
+      header.GridNum[0] = 0;
+    if (grid2 != NULL)
+      header.GridNum[1] = grid2->GetGridID();
+    else
+      header.GridNum[1] = 0;
 
     if (GridOffset != NULL) 
       for (i = 0; i < 3; i++) header.GridOffset[i] = GridOffset[i];
@@ -128,7 +144,7 @@ namespace Parallel {
 
     this->message->buffer = buffer;
 
-    MPI_Datatype type[2] = {CommunicationHeaderType, BufferType};
+    MPI_Datatype type[2] = {MPI_Header, BufferType};
     int blocklen[2] = {1,1};
     MPI_Aint disp[2];
     MPI_Aint base;
@@ -146,23 +162,25 @@ namespace Parallel {
 
   int MPIBuffer::RecvBuffer(int FromProcessor)
   {
-    MPI_Recv(this->message, 1, MessageType, FromProcessor, this->tag,
-	     MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+    MPI_Recv(this->message, 1, MessageType, (MPI_Arg) FromProcessor, 
+	     this->tag, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
     return SUCCESS;
   }
 
   int MPIBuffer::IRecvBuffer(int FromProcessor)
   {
-    MPI_Irecv(this->message, 1, MessageType, FromProcessor, this->tag,
-	      MPI_COMM_WORLD, &this->request);
+    MPI_Irecv(this->message, 1, MessageType, (MPI_Arg) FromProcessor, 
+	      this->tag, MPI_COMM_WORLD, &this->request);
+    // Append to receive buffer list
+    CommunicationMPIBuffer.push_front(*this);
     return SUCCESS;
   }
 
-  int MPIBuffer::SendBuffer(int ToProcessor)
+  int MPIBuffer::SendBuffer(int ToProcessor, int size)
   {
     CommunicationBufferedSend(this->message, 1, this->MessageType,
 			      ToProcessor, this->tag, MPI_COMM_WORLD,
-			      BUFFER_IN_PLACE);
+			      size);
     return SUCCESS;
   }
 

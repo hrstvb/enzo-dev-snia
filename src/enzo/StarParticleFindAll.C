@@ -29,11 +29,9 @@
 #include "TopGridData.h"
 #include "LevelHierarchy.h"
 #include "CommunicationUtilities.h"
+#include "Parallel.h"
 
-#ifdef USE_MPI
-static int FirstTimeCalled = TRUE;
-static MPI_Datatype MPI_STAR;
-#endif
+using Parallel::MPI_StarBuffer;
 
 void InsertStarAfter(Star * &Node, Star * &NewNode);
 void DeleteStarList(Star * &Node);
@@ -109,13 +107,7 @@ int StarParticleFindAll(LevelHierarchyEntry *LevelArray[], Star *&AllStars)
   /***********************************************/
 
   if (NumberOfProcessors > 1) {
-
 #ifdef USE_MPI
-    if (FirstTimeCalled) {
-      MPI_Type_contiguous(sizeof(StarBuffer), MPI_BYTE, &MPI_STAR);
-      MPI_Type_commit(&MPI_STAR);
-      FirstTimeCalled = FALSE;
-    }
 
     /* Gather a list of particle counts on each processor */
 
@@ -142,8 +134,8 @@ int StarParticleFindAll(LevelHierarchyEntry *LevelArray[], Star *&AllStars)
 
       /* Share all data with all processors */
 
-      MPI_Allgatherv(sendBuffer, LocalNumberOfStars, MPI_STAR,
-		     recvBuffer, nCount, displace, MPI_STAR,
+      MPI_Allgatherv(sendBuffer, LocalNumberOfStars, MPI_StarBuffer,
+		     recvBuffer, nCount, displace, MPI_StarBuffer,
 		     MPI_COMM_WORLD);
 
       AllStars = StarBufferToList(recvBuffer, TotalNumberOfStars);

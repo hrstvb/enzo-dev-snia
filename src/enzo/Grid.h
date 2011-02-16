@@ -44,18 +44,6 @@ struct HierarchyEntry;
 #include "ProblemType.h"
 #endif
 
-//extern int CommunicationDirection;
-
-//struct ParticleEntry {
-//  FLOAT Position[3];
-//  float Mass;
-//  float Velocity[3];
-//  float Attribute[MAX_NUMBER_OF_PARTICLE_ATTRIBUTES];
-//  int Number;
-// int Type;
-//};
-
-extern int CommunicationDirection;
 int FindField(int f, int farray[], int n);
 struct LevelHierarchyEntry;
 
@@ -1440,6 +1428,9 @@ int CreateParticleTypeGrouping(hid_t ptype_dset,
 // Communication functions
 //
 
+ int CommunicationMethodShouldExit(grid *OtherGrid);
+
+
 /* Set grid's processor number. */
 
   void SetProcessorNumber(int Proc) {
@@ -1532,46 +1523,6 @@ int CreateParticleTypeGrouping(hid_t ptype_dset,
 // -------------------------------------------------------------------------
 // Helper functions (should be made private)
 //
-
-  /* This is a simple helper function which determines if the method
-     should return immediately because of communication-mode reasons.
-     Assumes that info is being sent from the "other-grid" processor to
-     the "this-grid" processor (i.e. the one that holds this object). */
-
-  int CommunicationMethodShouldExit(grid *OtherGrid) {
-
-    /* Return if neither grid lives on this processor. */
-    //    if (NumberOfProcessors == 1) return SUCCESS;
-
-    if (MyProcessorNumber != ProcessorNumber && 
-        MyProcessorNumber != OtherGrid->ProcessorNumber)
-      return SUCCESS;
-
-    /* If the two grids are on the same processor then return if
-       either in post-receive or receive modes to avoid duplicating method
-       (i.e. action is only carried out if in send mode (or send-receive)). */
-
-    if (ProcessorNumber == OtherGrid->ProcessorNumber)
-      if (CommunicationDirection == COMMUNICATION_POST_RECEIVE ||
-	  CommunicationDirection == COMMUNICATION_RECEIVE)
-        return SUCCESS;
-
-    /* If in send mode then exit if the send grid is not on this processor. */
-
-    if (CommunicationDirection == COMMUNICATION_SEND &&
-        MyProcessorNumber != OtherGrid->ProcessorNumber)
-      return SUCCESS;
-
-    /* If in either receive phase then exit if receive grid is not on this 
-       processor. */
-
-    if ((CommunicationDirection == COMMUNICATION_RECEIVE ||
-         CommunicationDirection == COMMUNICATION_POST_RECEIVE) &&
-        MyProcessorNumber != ProcessorNumber)
-      return SUCCESS;
-
-    return FAIL; /* i.e. method should not exit immediately. */
-  }
 
 /* Baryons: find certain commonly used variables from the list of fields. */
 

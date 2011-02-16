@@ -32,14 +32,14 @@
 #include "TopGridData.h"
 #include "Hierarchy.h"
 #include "LevelHierarchy.h"
-#include "communication.h"
- 
+#include "Parallel.h"
+
 /* function prototypes */
 void my_exit(int exit_status);
 
 int CommunicationInitialize(Eint32 *argc, char **argv[])
 {
- 
+
 #ifdef USE_MPI
  
   /* Initialize MPI and get info. */
@@ -93,8 +93,13 @@ int CommunicationInitialize(Eint32 *argc, char **argv[])
 #endif  
 
   CommunicationTime = 0;
- 
-  CommunicationDirection = COMMUNICATION_SEND_RECEIVE;
+
+  using namespace Parallel;
+  Parallel::CommunicationDirection = COMMUNICATION_SEND_RECEIVE;
+
+  /* Initialize custom MPI datatypes */
+
+  Parallel::CreateMPITypes();
  
   return SUCCESS;
 }

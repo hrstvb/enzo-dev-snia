@@ -34,8 +34,10 @@
 #include "GridList.h"
 #include "ExternalBoundary.h"
 #include "Grid.h"
-#include "communication.h"
- 
+#include "Parallel.h"
+
+using Parallel::CommunicationDirection; 
+
 int CopyPotentialFieldAverage = 0;
  
 int grid::CopyPotentialField(grid *OtherGrid, FLOAT EdgeOffset[MAX_DIMENSION])

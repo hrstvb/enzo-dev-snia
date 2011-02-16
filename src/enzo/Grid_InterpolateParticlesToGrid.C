@@ -30,33 +30,29 @@
 #include "Hierarchy.h"
 #include "TopGridData.h"
 #include "CosmologyParameters.h"
-#include "communication.h"
+#include "Parallel.h"
+
+using namespace Parallel;
 
 #include "FOF_allvars.h"
 #include "FOF_nrutil.h"
 #include "FOF_proto.h"
 
-MPI_Arg Return_MPI_Tag(int tag, int num1[], int num2[3]=0);
 int FindField(int field, int farray[], int numfields);
 int GetUnits(float *DensityUnits, float *LengthUnits,
 	     float *TemperatureUnits, float *TimeUnits,
 	     float *VelocityUnits, FLOAT Time);
 int CosmologyComputeExpansionFactor(FLOAT time, FLOAT *a, FLOAT *dadt);
 
-#ifdef USE_MPI
-int CommunicationBufferedSend(void *buffer, int size, MPI_Datatype Type, int Target,
-			      int Tag, MPI_Comm CommWorld, int BufferSize);
-#endif /* USE_MPI */
-
 int grid::InterpolateParticlesToGrid(FOFData *D)
 {
 
-  if (CommunicationDirection == COMMUNICATION_POST_RECEIVE ||
-      CommunicationDirection == COMMUNICATION_RECEIVE)
+  if (Parallel::CommunicationDirection == COMMUNICATION_POST_RECEIVE ||
+      Parallel::CommunicationDirection == COMMUNICATION_RECEIVE)
     if (NumberOfProcessors == 1 || MyProcessorNumber != ProcessorNumber)
       return SUCCESS;
 
-  if (CommunicationDirection == COMMUNICATION_SEND && D == NULL)
+  if (Parallel::CommunicationDirection == COMMUNICATION_SEND && D == NULL)
     ENZO_FAIL("D (FOFData) cannot be null in send-mode!");
 
   int ActiveDim[MAX_DIMENSION];
@@ -65,10 +61,6 @@ int grid::InterpolateParticlesToGrid(FOFData *D)
   int DensNum, VrmsNum, Vel1Num, Vel2Num, Vel3Num;
 
 #ifdef USE_MPI
-  MPI_Datatype DataType = (sizeof(float) == 4) ? MPI_FLOAT : MPI_DOUBLE;
-  MPI_Arg Count;
-  MPI_Arg Source;
-  MPI_Arg Tag;
   float *buffer;
 #endif /* USE_MPI */
 
@@ -116,38 +108,22 @@ int grid::InterpolateParticlesToGrid(FOFData *D)
 
   /************************* POST-RECEIVE MODE *************************/
 
-#ifdef USE_MPI
-  if (CommunicationDirection == COMMUNICATION_POST_RECEIVE) {
+  const int CommType = 17;
+  MPIBuffer *mbuffer = NULL;
 
-    Count = size;
+#ifdef USE_MPI
+  if (Parallel::CommunicationDirection == COMMUNICATION_POST_RECEIVE) {
+
     for (proc = min_slab; proc <= max_slab; proc++)
       if (proc != MyProcessorNumber) {
 	
-	Source = proc;
 	for (field = 0; field < NumberOfFields; field++) {
 
-#pragma omp critical
-	  {
-
 	  buffer = new float[size];
-	  CommunicationGridID[0] = this->ID;
-	  CommunicationGridID[1] = 0;
-	  Tag = Return_MPI_Tag(MPI_SENDPARTFIELD_TAG+field, 
-			       CommunicationGridID);
-	  MPI_Irecv(buffer, Count, DataType, Source, Tag, MPI_COMM_WORLD,
-		    CommunicationReceiveMPI_Request+CommunicationReceiveIndex);
-
-	  CommunicationReceiveGridOne[CommunicationReceiveIndex] = this;
-	  CommunicationReceiveGridTwo[CommunicationReceiveIndex] = NULL;
-	  CommunicationReceiveCallType[CommunicationReceiveIndex] = 17;
-	  CommunicationReceiveBuffer[CommunicationReceiveIndex] = buffer;
-	  CommunicationReceiveArgumentInt[0][CommunicationReceiveIndex] = field;
-	  CommunicationReceiveDependsOn[CommunicationReceiveIndex] =
-	    CommunicationReceiveCurrentDependsOn;
-	  CommunicationReceiveIndex++;
-
-	  } // END omp critical
-
+	  mbuffer = new MPIBuffer(this, NULL, CommType, MPI_SENDPARTFIELD_TAG+field);
+	  mbuffer->FillBuffer(FloatDataType, size, buffer);
+	  mbuffer->IRecvBuffer(proc);
+				  
 	} // ENDFOR field
 
       } // ENDIF different processor
@@ -157,7 +133,7 @@ int grid::InterpolateParticlesToGrid(FOFData *D)
   /************************* SEND MODE *************************/
   // Interpolate from particles to grid here.  Then send if needed.
 
-  if (CommunicationDirection == COMMUNICATION_SEND) {
+  if (Parallel::CommunicationDirection == COMMUNICATION_SEND) {
 
     float *r2list = NULL;
     int *ngblist = NULL;
@@ -307,14 +283,9 @@ int grid::InterpolateParticlesToGrid(FOFData *D)
     if (MyProcessorNumber != ProcessorNumber) {
 
       for (field = 0; field < NumberOfFields; field++) {
-#pragma omp critical
-	{
-	  CommunicationGridID[0] = this->ID;
-	  CommunicationGridID[1] = 0;
-	  CommunicationBufferedSend(InterpolatedField[field], size, DataType,
-				    ProcessorNumber, MPI_SENDPARTFIELD_TAG+field, 
-				    MPI_COMM_WORLD, size * sizeof(float));
-	}
+	mbuffer = new MPIBuffer(this, NULL, CommType, MPI_SENDPARTFIELD_TAG+field);
+	mbuffer->FillBuffer(FloatDataType, size, InterpolatedField[field]);
+	mbuffer->SendBuffer(ProcessorNumber, sizeof(float) * size);
 	delete [] InterpolatedField[field];
 	InterpolatedField[field] = NULL;
       } // ENDFOR field
@@ -328,18 +299,17 @@ int grid::InterpolateParticlesToGrid(FOFData *D)
   // Sum the data that's received.
 
 #ifdef USE_MPI
-  if (CommunicationDirection == COMMUNICATION_RECEIVE) {
-
-#pragma omp critical
-    {
-    buffer = CommunicationReceiveBuffer[CommunicationReceiveIndex];
-    field = CommunicationReceiveArgumentInt[0][CommunicationReceiveIndex];
+  mpi_header header;
+  if (Parallel::CommunicationDirection == COMMUNICATION_RECEIVE) {
+    mbuffer = NULL;  // Get from list
+    buffer = (float*) mbuffer->ReturnBuffer();
+    header = mbuffer->ReturnHeader();
+    field = header.IArg[0];
     } // END omp critical
     for (i = 0; i < size; i++)
       InterpolatedField[field][i] += buffer[i];
     delete [] buffer;
 
-  } // ENDIF receive
 #endif /* USE_MPI */
 
   return SUCCESS;

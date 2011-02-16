@@ -28,6 +28,9 @@
 #include "TopGridData.h"
 #include "Hierarchy.h"
 #include "LevelHierarchy.h"
+#include "Parallel.h"
+
+using Parallel::CommunicationDirection;
 
 #ifdef MPI_INSTRUMENTATION
 #define START_TIMING starttime = MPI_Wtime();

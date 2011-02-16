@@ -28,7 +28,10 @@
 #include "TopGridData.h"
 #include "Hierarchy.h"
 #include "LevelHierarchy.h"
-#include "communication.h"
+#include "Parallel.h"
+
+using Parallel::CommunicationDirection;
+using Parallel::CommunicationReceiveIndex;
 
 int GenerateGridArray(LevelHierarchyEntry *LevelArray[], int level,
 		      HierarchyEntry **Grids[]);

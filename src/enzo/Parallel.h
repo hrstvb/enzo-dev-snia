@@ -20,13 +20,14 @@
 
 #define COMMUNICATION_NO_DEPENDENCE -1
 
-#include <stdlib.h>
-#include <list>
-
 #ifdef USE_MPI
 #include "mpi.h"
 #endif /* USE_MPI */
 
+#include <stdlib.h>
+#include <list>
+#include "macros_and_parameters.h"
+#include "typedefs.h"
 #include "mpi_typedef.h"
 
 using namespace std;
@@ -69,18 +70,18 @@ namespace Parallel
       (CommunicationReceiveHandler) which does this for all the receieve
       methods. */
 
-  int CommunicationDirection;
+  static int CommunicationDirection;
 
 /* This variable contains the most recent receive dependence; that is, the
    index of the receive handler which must complete first. */
 
-  int CommunicationReceiveCurrentDependsOn;
+  static int CommunicationReceiveCurrentDependsOn;
 
 /* This is the index of the current receive buffer.  Alterations of
    CommunicationReceiveIndex or CommunicationGridID MUST be done in
    omp critical sections because they are global. */
 
-  int CommunicationReceiveIndex;
+  static int CommunicationReceiveIndex;
 
 /* This is the grid ID of the receiving and sending grid that is being
    processed for use with thread-safe MPI tags.  Used in MPI
@@ -110,7 +111,18 @@ namespace Parallel
                   method which generated the handle.                     */
 
 #ifdef USE_MPI
-  MPI_Datatype CommunicationHeaderType;
+  static MPI_Datatype MPI_Header;
+  static MPI_Datatype MPI_StarBuffer;
+  static MPI_Datatype MPI_ParticleEntry;
+  static MPI_Datatype MPI_PackedGrid;
+  static MPI_Datatype MPI_ParticleMoveList;
+  static MPI_Datatype MPI_StarMoveList;
+  static MPI_Datatype MPI_ParticleShareList;
+  static MPI_Datatype MPI_StarShareList;
+  static MPI_Datatype MPI_PhotonList;
+  static MPI_Datatype MPI_TwoInt;
+  static MPI_Datatype MPI_PhotonBuffer;
+
   //MPI_Request  CommunicationReceiveMPI_Request[MAX_RECEIVE_BUFFERS];
   //MPI_Datatype CommunicationReceiveMPI_Datatype[MAX_RECEIVE_BUFFERS];
   //void       *CommunicationReceiveBuffer[MAX_RECEIVE_BUFFERS];
@@ -121,7 +133,7 @@ namespace Parallel
   //FLOAT CommunicationReceiveArgument[MAX_DIMENSION][MAX_RECEIVE_BUFFERS];
   //int CommunicationReceiveArgumentInt[MAX_DIMENSION][MAX_RECEIVE_BUFFERS];
 
-  int CreateMPIHeaderType(MPI_Datatype &HeaderType);
+  int CreateMPITypes(void);
 
   class MPIBuffer {
 
@@ -131,31 +143,47 @@ namespace Parallel
     MPI_Datatype BufferType;
     MPI_Request request;
     MPI_Arg tag;
+    grid *grid_one;
+    grid *grid_two;
     enzo_message *message;
 
   public:
 
-    MPIBuffer(const int grid1, const int grid2, const int CallType,
-	      const int MPI_Tag,
+    MPIBuffer(void);
+    MPIBuffer(grid *grid1, grid *grid2, 
+	      const int CallType, const int MPI_Tag,
 	      const int GridOffset[] = NULL,
 	      const int GridDims[] = NULL,
 	      const FLOAT FloatArgs[] = NULL,
 	      const int IntArgs[] = NULL);
 
     ~MPIBuffer(void);
-    
+
+    MPI_Request ReturnRequest(void) { return request; };
+    void* ReturnBuffer(void) { return message->buffer; };
+    mpi_header ReturnHeader(void) { return message->header; };
+    grid* ReturnGridOne(void) { return grid_one; };
+    grid* ReturnGridTwo(void) { return grid_two; };
+    void MarkComplete(void) { grid_one = NULL; };
+
     int RecvBuffer(int FromProcessor);
     int IRecvBuffer(int FromProcessor);
-    int SendBuffer(int ToProcessor);
+    int SendBuffer(int ToProcessor, int size = BUFFER_IN_PLACE);
     int FillBuffer(const MPI_Datatype BufferDataType, 
 		   const int BufferSize,
 		   void *buffer);
     
   }; // ENDCLASS    
 
-  list<MPIBuffer> CommunicationMPIBuffer;
+  static list<MPIBuffer> CommunicationMPIBuffer;
 
-#endif /* USE_MPI */
+  void GenerateMPIRequestArray(MPI_Request *result);
+  MPIBuffer GetMPIBuffer(int num);
+  MPIBuffer* GetMPIBufferPointer(int num);
+
+#else /* USE_MPI */
+  typedef MPIBuffer char*;
+#endif
 
 } // END NAMESPACE
 #endif  /* ifndef __PARALLEL_H */

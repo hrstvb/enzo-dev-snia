@@ -31,9 +31,9 @@
 #include "TopGridData.h"
 #include "Hierarchy.h"
 #include "LevelHierarchy.h"
-#include "communication.h"
+
 void my_exit(int status);
-MPI_Arg Return_MPI_Tag(int tag, int num1[], int num2[3]=0);
+
 /* Records the number of times we've been called. */
  
 static int CallCount = 0;

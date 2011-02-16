@@ -26,8 +26,10 @@
 #include "Hierarchy.h"
 #include "LevelHierarchy.h"
 #include "TopGridData.h"
-#include "communication.h"
- 
+#include "Parallel.h"
+
+using Parallel::CommunicationDirection;
+
 /* function prototypes */
  
 extern "C" void FORTRAN_NAME(int_grid_cic)(float *source,

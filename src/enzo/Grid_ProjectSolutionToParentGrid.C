@@ -27,8 +27,10 @@
 #include "GridList.h"
 #include "ExternalBoundary.h"
 #include "Grid.h"
-#include "communication.h"
+#include "Parallel.h"
 #include "fortran.def"
+
+using Parallel::CommunicationDirection;
  
 /* function prototypes */
  

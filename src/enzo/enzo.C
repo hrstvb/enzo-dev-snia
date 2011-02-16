@@ -43,7 +43,6 @@
 #include "LevelHierarchy.h"
 #include "TopGridData.h"
 #include "CosmologyParameters.h"
-#include "communication.h"
 #include "CommunicationUtilities.h"
 #include "EventHooks.h"
 #ifdef TRANSFER
@@ -161,10 +160,6 @@ int RebuildHierarchy(TopGridData *MetaData,
 		     LevelHierarchyEntry *LevelArray[], int level);
 int CopyOverlappingZones(grid* CurrentGrid, TopGridData *MetaData,
 			 LevelHierarchyEntry *LevelArray[], int level);
-int CommunicationReceiveHandler(fluxes **SubgridFluxesEstimate[] = NULL,
-				int NumberOfSubgrids[] = NULL,
-				int FluxFlag = FALSE,
-				TopGridData* MetaData = NULL);
 int CreateSiblingList(HierarchyEntry ** Grids, int NumberOfGrids, SiblingGridList *SiblingList, 
 		      int StaticLevelZero,TopGridData * MetaData,int level);
 
@@ -177,10 +172,6 @@ int CommunicationInitialize(Eint32 *argc, char **argv[]);
 int CommunicationFinalize();
 
 int CommunicationPartitionGrid(HierarchyEntry *Grid, int gridnum);
-int CommunicationCombineGrids(HierarchyEntry *OldHierarchy,
-			      HierarchyEntry **NewHierarchyPointer,
-			      FLOAT WriteTime);
-void DeleteGridHierarchy(HierarchyEntry *GridEntry);
 int OutputPotentialFieldOnly(char *ParameterFile,
 			     LevelHierarchyEntry *LevelArray[], 
 			     HierarchyEntry *TopGrid,

@@ -33,6 +33,9 @@
 #include "TopGridData.h"
 #include "Hierarchy.h"
 #include "LevelHierarchy.h"
+#include "Parallel.h"
+
+using Parallel::MPI_ParticleEntry;
 
 /* function prototypes */
 
@@ -53,10 +56,6 @@ int CheckMergeFlagList(ParticleEntry *List, const int &Size, int *Flag, const in
 int CommunicationAllSumValues(int *Values, int Number);
 float ReturnCPUTime();
 double ReturnWallTime();
-
-#ifdef USE_MPI
-static MPI_Datatype MPI_ParticleEntry;
-#endif
 
 int CommunicationMergeStarParticle(HierarchyEntry *Grids[],				   
 				   int NumberOfGrids)
@@ -97,16 +96,6 @@ int CommunicationMergeStarParticle(HierarchyEntry *Grids[],
   //     ParticlePartialList[i].Mass, ParticlePartialList[i].Position[0], 
   //     ParticlePartialList[i].Velocity[0], ParticlePartialList[i].Attribute[0]);
 	
-  static int FirstTimeCalled = TRUE;
-
-  /* define a MPI type for ParticleEntry */
-
-  if (FirstTimeCalled) {
-    MPI_Type_contiguous(sizeof(ParticleEntry), MPI_BYTE, &MPI_ParticleEntry);
-    MPI_Type_commit(&MPI_ParticleEntry);
-    FirstTimeCalled = FALSE;
-  }
-
   /* communicate to get particle counts on every processory */
 
   Eint32 *SendListCount = new Eint32[NumberOfProcessors];
@@ -134,8 +123,8 @@ int CommunicationMergeStarParticle(HierarchyEntry *Grids[],
   ParticleEntry *SharedList = new ParticleEntry[NumberOfSharedParticles];
 
   MPI_Allgatherv(SendList, ParticlesToSend, MPI_ParticleEntry,
-		 SharedList, SendListCount, SendListDisplacements, MPI_ParticleEntry,
-		 MPI_COMM_WORLD);
+		 SharedList, SendListCount, SendListDisplacements,
+		 MPI_ParticleEntry, MPI_COMM_WORLD);
 
   float DensityUnits = 1.0, LengthUnits = 1.0, TemperatureUnits = 1, 
     TimeUnits = 1.0, VelocityUnits = 1.0;

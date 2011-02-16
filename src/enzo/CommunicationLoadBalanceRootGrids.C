@@ -27,7 +27,7 @@
 #include "TopGridData.h"
 #include "Hierarchy.h"
 #include "LevelHierarchy.h"
-#include "communication.h"
+#include "Parallel.h"
 #include "CommunicationUtilities.h"
 
 #define LOAD_BALANCE_RATIO 1.05
@@ -189,9 +189,9 @@ int CommunicationLoadBalanceRootGrids(LevelHierarchyEntry *LevelArray[],
 
     /* Post receives */
 
-    CommunicationReceiveIndex = 0;
-    CommunicationReceiveCurrentDependsOn = COMMUNICATION_NO_DEPENDENCE;
-    CommunicationDirection = COMMUNICATION_POST_RECEIVE;
+    using namespace Parallel;
+    Parallel::CommunicationReceiveIndex = 0;
+    Parallel::CommunicationDirection = COMMUNICATION_POST_RECEIVE;
 
     for (i = StartGrid; i < EndGrid; i++)
       if (Grids[i]->GridData->ReturnProcessorNumber() != RootProcessors[i])
@@ -199,7 +199,7 @@ int CommunicationLoadBalanceRootGrids(LevelHierarchyEntry *LevelArray[],
 
     /* Send grids */
 
-    CommunicationDirection = COMMUNICATION_SEND;
+    Parallel::CommunicationDirection = COMMUNICATION_SEND;
 
     for (i = StartGrid; i < EndGrid; i++)
       if (Grids[i]->GridData->ReturnProcessorNumber() != RootProcessors[i]) {

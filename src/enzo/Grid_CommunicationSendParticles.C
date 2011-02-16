@@ -29,19 +29,13 @@
 #include "GridList.h"
 #include "ExternalBoundary.h"
 #include "Grid.h"
-#include "communication.h"
+#include "Parallel.h"
 #include "CommunicationUtilities.h"
+
+using namespace Parallel;
 
 /* function prototypes */
  
-MPI_Arg Return_MPI_Tag(int tag, int num1[], int num2[3]=0);
-#ifdef USE_MPI
-int CommunicationBufferedSend(void *buffer, int size, MPI_Datatype Type, int Target,
-			      int Tag, MPI_Comm CommWorld, int BufferSize);
-static int FirstTimeCalled = TRUE;
-static MPI_Datatype ParticleDataType;
-#endif /* USE_MPI */
-
 void my_exit(int status);
  
 /* Send particle from this grid to ToGrid on processor ToProcessor, using
@@ -73,12 +67,25 @@ int grid::CommunicationSendParticles(grid *ToGrid, int ToProcessor,
   //  fprintf(stderr, "P(%"ISYM"): sending %"ISYM" from %"ISYM" -> %"ISYM" (%"ISYM" %"ISYM")\n",
   //  	  MyProcessorNumber, FromNumber, ProcessorNumber, ToProcessor,
   //  	  FromStart, ToStart);
+
+  /* Allocate MPI buffer */
+
+  const int CommType = 14;
+  MPIBuffer *mbuffer = NULL;
+  if (Parallel::CommunicationDirection == COMMUNICATION_POST_RECEIVE ||
+      Parallel::CommunicationDirection == COMMUNICATION_SEND) {
+    int iarg[] = {FromStart, FromNumber, ToStart};
+    mbuffer = new MPIBuffer(this, ToGrid, CommType, MPI_SENDPART_TAG,
+			    NULL, NULL, NULL, iarg);
+  } else {
+    mbuffer = NULL;  // Grab from list.
+  }
  
   /* Allocate buffer. */
  
   particle_data *buffer = NULL;
   if (CommunicationDirection == COMMUNICATION_RECEIVE)
-    buffer = (particle_data*) CommunicationReceiveBuffer[CommunicationReceiveIndex];
+    buffer = (particle_data*) mbuffer->ReturnBuffer();
   else
     buffer = new particle_data[TransferSize];
  
@@ -187,73 +194,32 @@ int grid::CommunicationSendParticles(grid *ToGrid, int ToProcessor,
  
   if (ProcessorNumber != ToProcessor) {
  
-    MPI_Status status;
-    MPI_Arg PCount, Count = TransferSize;
-    MPI_Arg Source = ProcessorNumber;
-    MPI_Arg Dest = ToProcessor;
-    MPI_Arg stat;
-    MPI_Arg Tag;
-
 #ifdef MPI_INSTRUMENTATION
     starttime = MPI_Wtime();
 #endif
 
-#pragma omp critical
-    {
-
-    if (FirstTimeCalled) {
-      PCount = sizeof(particle_data);
-      //  fprintf(stderr, "Size of ParticleMoveList %"ISYM"\n", Count);
-      stat = MPI_Type_contiguous(PCount, MPI_BYTE, &ParticleDataType);
-      stat |= MPI_Type_commit(&ParticleDataType);
-      if (stat != MPI_SUCCESS) my_exit(EXIT_FAILURE);
-      FirstTimeCalled = FALSE;
+    if (MyProcessorNumber == ProcessorNumber) {
+      mbuffer->FillBuffer(MPI_ParticleMoveList, TransferSize, buffer);
+      mbuffer->SendBuffer(ToProcessor);
     }
-
-    if (CommunicationDirection != COMMUNICATION_RECEIVE) {
-      CommunicationGridID[0] = ToGrid->ID;
-      CommunicationGridID[1] = this->ID;
-    }
-
-    if (MyProcessorNumber == ProcessorNumber)
-      CommunicationBufferedSend(buffer, Count, ParticleDataType,
-				Dest, MPI_SENDPART_TAG, MPI_COMM_WORLD,
-				BUFFER_IN_PLACE);
 
     if (MyProcessorNumber == ToProcessor) {
 
-      Tag = Return_MPI_Tag(MPI_SENDPART_TAG, CommunicationGridID);
-
       if (CommunicationDirection == COMMUNICATION_POST_RECEIVE) {
-	MPI_Irecv(buffer, Count, ParticleDataType, Source,
-		  Tag, MPI_COMM_WORLD,
-		  CommunicationReceiveMPI_Request+CommunicationReceiveIndex);
+	mbuffer->FillBuffer(MPI_ParticleMoveList, TransferSize, buffer);
+	mbuffer->IRecvBuffer(ProcessorNumber);
 
 //	printf("Posting receive from P%"ISYM" for %"ISYM" particles in "
 //	       "comm index %"ISYM"\n", Source, TransferSize, 
 //	       CommunicationReceiveIndex);
 
-	CommunicationReceiveGridOne[CommunicationReceiveIndex] = this;
-	CommunicationReceiveGridTwo[CommunicationReceiveIndex] = ToGrid;
-	CommunicationReceiveCallType[CommunicationReceiveIndex] = 14;
-	CommunicationReceiveArgumentInt[0][CommunicationReceiveIndex] = FromStart;
-	CommunicationReceiveArgumentInt[1][CommunicationReceiveIndex] = FromNumber;
-	CommunicationReceiveArgumentInt[2][CommunicationReceiveIndex] = ToStart;
-
-	CommunicationReceiveBuffer[CommunicationReceiveIndex] = (float *) buffer;
-	CommunicationReceiveDependsOn[CommunicationReceiveIndex] = 
-	  CommunicationReceiveCurrentDependsOn;
-	CommunicationReceiveIndex++;
       }
 
       if (CommunicationDirection == COMMUNICATION_SEND_RECEIVE)
-	MPI_Recv(buffer, Count, ParticleDataType, Source,
-		 Tag, MPI_COMM_WORLD, &status);
+	mbuffer->RecvBuffer(ProcessorNumber);
 
     } // ENDIF (MyProcessorNumber == ToProcessor)
 
-    } // END omp critical
- 
 #ifdef MPI_INSTRUMENTATION
     endtime = MPI_Wtime();
     timer[7] += endtime-starttime;

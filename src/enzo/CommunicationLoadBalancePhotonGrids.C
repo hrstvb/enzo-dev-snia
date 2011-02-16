@@ -28,7 +28,7 @@
 #include "TopGridData.h"
 #include "Hierarchy.h"
 #include "LevelHierarchy.h"
-#include "communication.h"
+#include "Parallel.h"
 #include "CommunicationUtilities.h"
 
 #define LOAD_BALANCE_RATIO 1.05
@@ -242,9 +242,10 @@ int CommunicationLoadBalancePhotonGrids(HierarchyEntry **Grids[], int *NumberOfG
 
   /* Post receives */
 
-  CommunicationReceiveIndex = 0;
-  CommunicationReceiveCurrentDependsOn = COMMUNICATION_NO_DEPENDENCE;
-  CommunicationDirection = COMMUNICATION_POST_RECEIVE;
+  using namespace Parallel;
+
+  Parallel::CommunicationReceiveIndex = 0;
+  Parallel::CommunicationDirection = COMMUNICATION_POST_RECEIVE;
 
   for (lvl = MIN_LEVEL; lvl < MAX_DEPTH_OF_HIERARCHY; lvl++)
     for (i = 0; i < NumberOfGrids[lvl]; i++) 
@@ -259,7 +260,7 @@ int CommunicationLoadBalancePhotonGrids(HierarchyEntry **Grids[], int *NumberOfG
 
   /* Send grids */
 
-  CommunicationDirection = COMMUNICATION_SEND;
+  Parallel::CommunicationDirection = COMMUNICATION_SEND;
 
   for (lvl = MIN_LEVEL; lvl < MAX_DEPTH_OF_HIERARCHY; lvl++)
   for (i = 0; i < NumberOfGrids[lvl]; i++)

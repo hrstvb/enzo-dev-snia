@@ -37,7 +37,10 @@
 #include "LevelHierarchy.h"
 #include "GroupPhotonList.h"
 #include "PhotonCommunication.h"
+#include "Parallel.h"
 #include "CommunicationUtilities.h"
+
+using Parallel::MPI_PhotonList;
 
 /* function prototypes */
 void my_exit(int status);
@@ -80,8 +83,6 @@ double ReturnWallTime();
 #ifdef USE_MPI
 int InitializePhotonReceive(int max_size, bool local_transport,
 			    MPI_Datatype MPI_PhotonType);
-static int FirstTimeCalled = TRUE;
-static MPI_Datatype MPI_PhotonList;
 #endif
 
 //#define NONBLOCKING_RT_OFF  // moved to a compile-time define
@@ -139,14 +140,6 @@ int EvolvePhotons(TopGridData *MetaData, LevelHierarchyEntry *LevelArray[],
     return SUCCESS;
 
   /* Declarations */
-
-#ifdef USE_MPI
-  if (FirstTimeCalled) {
-    MPI_Type_contiguous(sizeof(GroupPhotonList), MPI_BYTE, &MPI_PhotonList);
-    MPI_Type_commit(&MPI_PhotonList);
-    FirstTimeCalled = FALSE;
-  }
-#endif
 
   int i, lvl, GridNum;
   grid *Helper;

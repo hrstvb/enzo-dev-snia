@@ -38,8 +38,11 @@
 #include "Hierarchy.h"
 #include "TopGridData.h"
 #include "LevelHierarchy.h"
-#include "communication.h"
+#include "Parallel.h"
 #include "CommunicationUtilities.h"
+
+using Parallel::CommunicationDirection;
+using Parallel::CommunicationReceiveIndex;
 
 /* function prototypes */
  
@@ -137,7 +140,6 @@ int PrepareDensityField(LevelHierarchyEntry *LevelArray[],
     /* First, generate the receive calls. */
 
     CommunicationReceiveIndex = 0;
-    CommunicationReceiveCurrentDependsOn = COMMUNICATION_NO_DEPENDENCE;
     CommunicationDirection = COMMUNICATION_POST_RECEIVE;
 #pragma omp parallel for schedule(static)
     for (grid1 = StartGrid; grid1 < EndGrid; grid1++)
@@ -189,7 +191,6 @@ int PrepareDensityField(LevelHierarchyEntry *LevelArray[],
     /* First, generate the receive calls. */
 
     CommunicationReceiveIndex = 0;
-    CommunicationReceiveCurrentDependsOn = COMMUNICATION_NO_DEPENDENCE;
     CommunicationDirection = COMMUNICATION_POST_RECEIVE;
  
 #pragma omp parallel for schedule(static)
@@ -226,7 +227,6 @@ int PrepareDensityField(LevelHierarchyEntry *LevelArray[],
     /* First, generate the receive calls. */
 
     CommunicationReceiveIndex = 0;
-    CommunicationReceiveCurrentDependsOn = COMMUNICATION_NO_DEPENDENCE;
 #ifdef BITWISE_IDENTICALITY
     CommunicationDirection = COMMUNICATION_SEND_RECEIVE;
 #else
@@ -286,7 +286,6 @@ int PrepareDensityField(LevelHierarchyEntry *LevelArray[],
     /* First, generate the receive calls. */
 
     CommunicationReceiveIndex = 0;
-    CommunicationReceiveCurrentDependsOn = COMMUNICATION_NO_DEPENDENCE;
     CommunicationDirection = COMMUNICATION_POST_RECEIVE;
       
 #pragma omp parallel for schedule(static)
@@ -319,7 +318,6 @@ int PrepareDensityField(LevelHierarchyEntry *LevelArray[],
 
     CommunicationDirection = COMMUNICATION_POST_RECEIVE;
     CommunicationReceiveIndex = 0;
-    CommunicationReceiveCurrentDependsOn = COMMUNICATION_NO_DEPENDENCE;
       
 #ifdef FAST_SIB
 #pragma omp parallel for schedule(static) private(grid2)
@@ -427,7 +425,6 @@ int PrepareDensityField(LevelHierarchyEntry *LevelArray[],
     CommunicationDirection = COMMUNICATION_POST_RECEIVE;
 #endif
 	CommunicationReceiveIndex = 0;
-	CommunicationReceiveCurrentDependsOn = COMMUNICATION_NO_DEPENDENCE;
 #ifdef FAST_SIB
 #pragma omp parallel for schedule(static) private(grid2)
 	for (grid1 = StartGrid; grid1 < EndGrid; grid1++) {
@@ -552,7 +549,6 @@ int PrepareDensityField(LevelHierarchyEntry *LevelArray[],
 	GridCount = 0;
 	CommunicationDirection = COMMUNICATION_POST_RECEIVE;
 	CommunicationReceiveIndex = 0;
-	CommunicationReceiveCurrentDependsOn = COMMUNICATION_NO_DEPENDENCE;
 	Temp = FirstTemp;
 	while (Temp != NULL && GridCount++ < GRIDS_PER_LOOP) {
 	  Temp3 = Temp->GridHierarchyEntry;

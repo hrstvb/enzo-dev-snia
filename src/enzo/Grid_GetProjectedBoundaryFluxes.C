@@ -33,11 +33,13 @@
 #include "GridList.h"
 #include "ExternalBoundary.h"
 #include "Grid.h"
-#include "communication.h"
+#include "Parallel.h"
+
+using namespace Parallel;
  
-int CommunicationSendFluxes(fluxes *Fluxes, int ToProc, int NumberOfFields,
-			    int Rank);
-int CommunicationReceiveFluxes(fluxes *Fluxes, int FromProc,
+int CommunicationSendFluxes(MPIBuffer *mbuffer, fluxes *Fluxes, int ToProc, 
+			    int NumberOfFields, int Rank);
+int CommunicationReceiveFluxes(MPIBuffer *mbuffer, fluxes *Fluxes, int FromProc,
 			       int NumberOfFields, int Rank);
 void DeleteFluxes(fluxes *Fluxes);
  
@@ -174,32 +176,25 @@ int grid::GetProjectedBoundaryFluxes(grid *ParentGrid, int grid_num,
       }
 
   } // ENDIF !COMMUNICATION_POST_RECEIVE
+
+  MPIBuffer *buffer = NULL;
  
   /* If posting a receive, then record details of call. */
 
-#pragma omp critical
-  {
-
 #ifdef USE_MPI
-  if (CommunicationDirection == COMMUNICATION_POST_RECEIVE) {
-    CommunicationReceiveGridOne[CommunicationReceiveIndex]  = this;
-    CommunicationReceiveGridTwo[CommunicationReceiveIndex]  = ParentGrid;
-    CommunicationReceiveCallType[CommunicationReceiveIndex] = 11;
-    CommunicationReceiveArgumentInt[0][CommunicationReceiveIndex] = grid_num;
-    CommunicationReceiveArgumentInt[1][CommunicationReceiveIndex] = subgrid_num;
-    CommunicationReceiveArgumentInt[2][CommunicationReceiveIndex] = IsSubling;
+  if (CommunicationDirection == COMMUNICATION_POST_RECEIVE ||
+      CommunicationDirection == COMMUNICATION_SEND) {
+    const int CallType = 11;
+    int int_arg[] = {grid_num, subgrid_num, IsSubling};
+    buffer = new MPIBuffer(this, ParentGrid, CallType, MPI_FLUX_TAG, 
+			   NULL, NULL, NULL, int_arg);
   }
 #endif /* USE_MPI */
-
-  if (CommunicationDirection != COMMUNICATION_RECEIVE) {
-    CommunicationGridID[0] = this->ID;
-    CommunicationGridID[1] = ParentGrid->ID;
-  }
 
   /* If appropriate, receive data and exit. */
 
   if (ProcessorNumber != MyProcessorNumber) {
-    if (CommunicationReceiveFluxes(&ProjectedFluxes, ProcessorNumber,
+    if (CommunicationReceiveFluxes(buffer, &ProjectedFluxes, ProcessorNumber,
 				   NumberOfBaryonFields, GridRank) == FAIL) {
       ENZO_FAIL("Error in CommunicationReceiveFluxes.\n");
     }
@@ -208,7 +203,7 @@ int grid::GetProjectedBoundaryFluxes(grid *ParentGrid, int grid_num,
   /* Send fluxes and delete. */
   
   else if (ParentGrid->ProcessorNumber != ProcessorNumber) {
-    if (CommunicationSendFluxes(&ProjectedFluxes, 
+    if (CommunicationSendFluxes(buffer, &ProjectedFluxes, 
 				ParentGrid->ProcessorNumber,
 				NumberOfBaryonFields, GridRank) == FAIL) {
       ENZO_FAIL("Error in CommunicationSendFluxes.\n");
@@ -216,8 +211,6 @@ int grid::GetProjectedBoundaryFluxes(grid *ParentGrid, int grid_num,
     }
     DeleteFluxes(&ProjectedFluxes);
   }
-
-  } // END omp critical
 
   return SUCCESS;
  

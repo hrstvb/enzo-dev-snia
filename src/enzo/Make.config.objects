@@ -318,6 +318,7 @@ OBJS_CONFIG_LIB = \
         Grid_CollectParticles.o \
         Grid_CollectParticleMassFlaggingField.o \
         Grid_CollectStars.o \
+	Grid_CommunicationMethodShouldExit.o \
 	Grid_CommunicationMoveGrid.o \
 	Grid_CommunicationReceiveRegion.o \
 	Grid_CommunicationSendParticles.o \
@@ -344,7 +345,7 @@ OBJS_CONFIG_LIB = \
 	Grid_ComputeMetalLineLuminosity.o \
 	Grid_ComputePressureDualEnergyFormalism.o \
 	Grid_ComputePressure.o \
-    Grid_ComputeRandomForcingFields.o\
+	Grid_ComputeRandomForcingFields.o \
 	Grid_ComputeTemperatureField.o \
 	Grid_ComputeTimeStep.o \
         Grid_ComputeVectorAnalysisFields.o \
@@ -647,6 +648,7 @@ OBJS_CONFIG_LIB = \
 	OutputPotentialFieldOnly.o \
 	OutputSmoothedDarkMatterOnly.o \
         P_ColumnFormat.o \
+	ParallelCreateMPITypes.o \
 	ParallelRoutines.o \
 	ParticleMergeRoutines.o \
         ParticleSplitter.o \
@@ -722,7 +724,6 @@ OBJS_CONFIG_LIB = \
         ReduceFragmentation.o \
         remap.o \
         ReportMemoryUsage.o \
-	Return_MPI_Tag.o \
         ReturnWallTime.o \
 	RHIonizationClumpInitialize.o \
 	RHIonizationSteepInitialize.o \

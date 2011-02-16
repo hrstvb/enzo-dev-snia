@@ -28,15 +28,12 @@
 #include "TopGridData.h"
 #include "Hierarchy.h"
 #include "LevelHierarchy.h"
+#include "Parallel.h"
+
+using Parallel::MPI_PackedGrid;
  
 /* function prototypes */
  
-#ifdef USE_MPI
-static int FirstTimeCalled = TRUE;
-static MPI_Datatype MPI_PackedGrid;
-#endif
- 
-  
 int CommunicationShareGrids(HierarchyEntry *GridHierarchyPointer[],
 			    int NumberOfGrids, int ShareParticles)
 {
@@ -46,15 +43,6 @@ int CommunicationShareGrids(HierarchyEntry *GridHierarchyPointer[],
  
   /* Declarations. */
  
-  struct PackedGrid {
-    int Rank;
-    int Dimension[MAX_DIMENSION];
-    FLOAT LeftEdge[MAX_DIMENSION];
-    FLOAT RightEdge[MAX_DIMENSION];
-    int NumberOfParticles;
-    int NumberOfStars;
-    int ParentNumber;
-  };
   int i;
  
   /* Count the subgrids on this processor. */
@@ -107,17 +95,6 @@ int CommunicationShareGrids(HierarchyEntry *GridHierarchyPointer[],
  
 #ifdef USE_MPI
  
-  /* Generate a new MPI data type corresponding to the PackedGrid struct. */
-
-  MPI_Datatype DataType = MPI_BYTE;
-  MPI_Arg Count = sizeof(PackedGrid);
- 
-  if (FirstTimeCalled) {
-    MPI_Type_contiguous(Count, DataType, &MPI_PackedGrid);
-    MPI_Type_commit(&MPI_PackedGrid);
-    FirstTimeCalled = FALSE;
-  }
-
   int *SharedListCount = new int[NumberOfProcessors];
 
   MPI_Arg *MPI_SharedListCount = new MPI_Arg[NumberOfProcessors],
@@ -150,8 +127,8 @@ int CommunicationShareGrids(HierarchyEntry *GridHierarchyPointer[],
   Sendcount = GridsToSend;
    
   MPI_Allgatherv(SendList, Sendcount, MPI_PackedGrid, SharedList,
-		 MPI_SharedListCount, MPI_SharedListDisplacements, MPI_PackedGrid,
-		 MPI_COMM_WORLD);
+		 MPI_SharedListCount, MPI_SharedListDisplacements, 
+		 MPI_PackedGrid, MPI_COMM_WORLD);
 
 #ifdef MPI_INSTRUMENTATION
   endtime = MPI_Wtime();

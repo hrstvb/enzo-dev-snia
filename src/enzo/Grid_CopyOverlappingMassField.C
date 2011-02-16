@@ -25,8 +25,10 @@
 #include "GridList.h"
 #include "ExternalBoundary.h"
 #include "Grid.h"
-#include "communication.h"
- 
+#include "Parallel.h"
+
+using namespace Parallel;
+
 int grid::CopyOverlappingMassField(grid *OtherGrid,
 				   FLOAT EdgeOffset[MAX_DIMENSION])
 {
@@ -119,8 +121,8 @@ int grid::CopyOverlappingMassField(grid *OtherGrid,
 				       StartOther, Dim, CommType,
 				       this, OtherGrid, EdgeOffset,
 				       Zero3Int);
-    if (CommunicationDirection == COMMUNICATION_POST_RECEIVE ||
-	CommunicationDirection == COMMUNICATION_SEND)
+    if (Parallel::CommunicationDirection == COMMUNICATION_POST_RECEIVE ||
+	Parallel::CommunicationDirection == COMMUNICATION_SEND)
       return SUCCESS;    
     for (dim = 0; dim < GridRank; dim++) {
       OtherDim[dim] = Dim[dim];

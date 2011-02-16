@@ -31,7 +31,9 @@
 #include "Hierarchy.h"
 #include "LevelHierarchy.h"
 #include "CommunicationUtilities.h"
-#include "communication.h"
+#include "Parallel.h"
+
+using namespace Parallel;
 
 int GenerateGridArray(LevelHierarchyEntry *LevelArray[], int level,
 		      HierarchyEntry **Grids[]);
@@ -76,9 +78,9 @@ int CopyZonesFromOldGrids(LevelHierarchyEntry *OldGrids,
 
   /* Post receives, looping over the old grids */
 
-  CommunicationReceiveIndex = 0;
-  CommunicationReceiveCurrentDependsOn = COMMUNICATION_NO_DEPENDENCE;
-  CommunicationDirection = COMMUNICATION_POST_RECEIVE;
+  //CommunicationReceiveIndex = 0;
+  //CommunicationReceiveCurrentDependsOn = COMMUNICATION_NO_DEPENDENCE;
+  Parallel::CommunicationDirection = COMMUNICATION_POST_RECEIVE;
 
 #pragma omp parallel for schedule(static) private(i)
   for (grid1 = 0; grid1 < NumberOfGrids; grid1++) {
@@ -92,7 +94,7 @@ int CopyZonesFromOldGrids(LevelHierarchyEntry *OldGrids,
 
   /* Send data */
 
-  CommunicationDirection = COMMUNICATION_SEND;
+  Parallel::CommunicationDirection = COMMUNICATION_SEND;
 
 #pragma omp parallel for schedule(static) private(i)
   for (grid1 = 0; grid1 < NumberOfGrids; grid1++) {

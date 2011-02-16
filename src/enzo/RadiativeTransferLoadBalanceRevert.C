@@ -29,8 +29,11 @@
 #include "TopGridData.h"
 #include "Hierarchy.h"
 #include "LevelHierarchy.h"
-#include "communication.h"
+#include "Parallel.h"
 #include "CommunicationUtilities.h"
+
+using Parallel::CommunicationReceiveIndex;
+using Parallel::CommunicationDirection;
 
 int CommunicationReceiveHandler(fluxes **SubgridFluxesEstimate[] = NULL,
 				int NumberOfSubgrids[] = NULL,
@@ -62,7 +65,6 @@ int RadiativeTransferLoadBalanceRevert(HierarchyEntry **Grids[], int *NumberOfGr
   /* Post receives */
 
   CommunicationReceiveIndex = 0;
-  CommunicationReceiveCurrentDependsOn = COMMUNICATION_NO_DEPENDENCE;
   CommunicationDirection = COMMUNICATION_POST_RECEIVE;
 
   for (level = 1; level < MAX_DEPTH_OF_HIERARCHY; level++) {

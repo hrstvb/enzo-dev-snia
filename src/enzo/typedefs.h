@@ -267,13 +267,6 @@ union float_int {
   FLOAT FVAL;
 };
 
-//struct ParticleMoveList {
-//  int FromGrid;
-//  int ToGrid[6];
-//  int NumberToMove[6];
-//  float_int *Pointer[6];
-//};
-
 struct particle_data {
   FLOAT pos[MAX_DIMENSION];
   float vel[MAX_DIMENSION];
@@ -296,5 +289,35 @@ struct hilbert_data {
   double hkey;
   int grid_num;
 };
+
+struct PackedGrid {
+  int Rank;
+  int Dimension[MAX_DIMENSION];
+  FLOAT LeftEdge[MAX_DIMENSION];
+  FLOAT RightEdge[MAX_DIMENSION];
+  int NumberOfParticles;
+  int NumberOfStars;
+  int ParentNumber;
+};
+
+struct two_int {
+  int grid;
+  int proc;
+};
+
+struct ParticleMoveList {
+  int FromGrid;
+  int ToGrid[6];
+  int NumberToMove[6];
+  float_int *Pointer[6];
+};
+
+struct StarMoveList {
+  int FromGrid;
+  int ToGrid[6];
+  int NumberToMove[6];
+  StarBuffer *Pointer[6];
+};
+ 
 
 #endif

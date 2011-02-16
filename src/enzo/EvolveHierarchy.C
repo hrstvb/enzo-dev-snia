@@ -50,12 +50,15 @@
 #include "TopGridData.h"
 #include "LevelHierarchy.h"
 #include "CosmologyParameters.h"
-#include "communication.h"
+#include "Parallel.h"
 #include "CommunicationUtilities.h"
 #ifdef TRANSFER
 #include "ImplicitProblemABC.h"
 #endif
  
+using Parallel::CommunicationDirection;
+using Parallel::CommunicationReceiveIndex;
+
 // function prototypes
  
 int RebuildHierarchy(TopGridData *MetaData,
@@ -228,7 +231,6 @@ int EvolveHierarchy(HierarchyEntry &TopGrid, TopGridData &MetaData,
 
   CommunicationReceiveIndex = 0;
   CommunicationDirection = COMMUNICATION_POST_RECEIVE;
-  CommunicationReceiveCurrentDependsOn = COMMUNICATION_NO_DEPENDENCE;
 
   while (Temp != NULL) {
     if (Temp->GridData->SetExternalBoundaryValues(Exterior) == FAIL) {

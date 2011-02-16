@@ -61,8 +61,10 @@
 #include "Hierarchy.h"
 #include "TopGridData.h"
 #include "LevelHierarchy.h"
-#include "communication.h" 
+#include "Parallel.h" 
 #include "CommunicationUtilities.h"
+
+using namespace Parallel;
 
 /* Function prototypes */
 
@@ -355,9 +357,9 @@ int ComputePotentialFieldLevelZeroPer(TopGridData *MetaData,
 
   /* Post the receives */
 
-  CommunicationDirection = COMMUNICATION_POST_RECEIVE;
-  CommunicationReceiveIndex = 0;
-  CommunicationReceiveCurrentDependsOn = COMMUNICATION_NO_DEPENDENCE;
+  Parallel::CommunicationDirection = COMMUNICATION_POST_RECEIVE;
+  //CommunicationReceiveIndex = 0;
+  //CommunicationReceiveCurrentDependsOn = COMMUNICATION_NO_DEPENDENCE;
 
 #ifdef FAST_SIB
   for (grid1 = 0; grid1 < NumberOfGrids; grid1++)
@@ -385,7 +387,7 @@ int ComputePotentialFieldLevelZeroPer(TopGridData *MetaData,
 
   /* Send the data */
 
-  CommunicationDirection = COMMUNICATION_SEND;
+  Parallel::CommunicationDirection = COMMUNICATION_SEND;
 
 #ifdef FAST_SIB
   for (grid1 = 0; grid1 < NumberOfGrids; grid1++)
@@ -416,7 +418,7 @@ int ComputePotentialFieldLevelZeroPer(TopGridData *MetaData,
   if (CommunicationReceiveHandler() == FAIL)
     ENZO_FAIL("CommunicationReceiveHandler() failed!\n");
   
-  CommunicationDirection = COMMUNICATION_SEND_RECEIVE;
+  Parallel::CommunicationDirection = COMMUNICATION_SEND_RECEIVE;
  
   /* Clean up. */
  

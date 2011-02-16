@@ -31,8 +31,10 @@
 #include "GridList.h"
 #include "ExternalBoundary.h"
 #include "Grid.h"
-#include "communication.h"
- 
+#include "Parallel.h"
+
+using namespace Parallel;
+
 /* function prototypes */
  
 extern "C" void FORTRAN_NAME(prolong)(float *source, float *dest, int *ndim,
@@ -100,16 +102,6 @@ int grid::CopyParentToGravitatingFieldBoundary(grid *ParentGrid)
     }
   }
 
-  /* If posting a receive, then record details of call. */
-
-#ifdef UNUSED // Done in CommunicationSendRegion
-  if (CommunicationDirection == COMMUNICATION_POST_RECEIVE) {
-    CommunicationReceiveGridOne[CommunicationReceiveIndex]  = this;
-    CommunicationReceiveGridTwo[CommunicationReceiveIndex]  = ParentGrid;
-    CommunicationReceiveCallType[CommunicationReceiveIndex] = 4;
-  }
-#endif /* USE_MPI */
-
   FLOAT Zero3[] = {0,0,0};
   int ZeroInt3[] = {0,0,0};
   int CommType = 4;
@@ -123,8 +115,8 @@ int grid::CopyParentToGravitatingFieldBoundary(grid *ParentGrid)
       (ParentGrid, ProcessorNumber, GRAVITATING_MASS_FIELD, NEW_ONLY, 
        ParentStartIndex, ParentTempDim, CommType, this, ParentGrid, 
        Zero3, ZeroInt3);
-    if (CommunicationDirection == COMMUNICATION_POST_RECEIVE ||
-	CommunicationDirection == COMMUNICATION_SEND)
+    if (Parallel::CommunicationDirection == COMMUNICATION_POST_RECEIVE ||
+	Parallel::CommunicationDirection == COMMUNICATION_SEND)
       return SUCCESS;
     for (dim = 0; dim < GridRank; dim++) {
       ParentOffset[dim] -= Refinement[dim]*ParentStartIndex[dim];

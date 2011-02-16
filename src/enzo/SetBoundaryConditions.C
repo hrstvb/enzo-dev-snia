@@ -39,8 +39,11 @@
 #include "Hierarchy.h"
 #include "TopGridData.h"
 #include "LevelHierarchy.h"
-#include "communication.h"
+#include "Parallel.h"
 #include "CommunicationUtilities.h"
+
+using Parallel::CommunicationDirection;
+using Parallel::CommunicationReceiveIndex;
 
 /* function prototypes */
  
@@ -106,9 +109,6 @@ int SetBoundaryConditions(HierarchyEntry *Grids[], int NumberOfGrids,
 	/* a) Interpolate boundaries from the parent grid or set external
 	   boundary conditions. */
 	
-	CommunicationReceiveCurrentDependsOn = COMMUNICATION_NO_DEPENDENCE;
-	
-
 	  if (level == 0) {
     	    Grids[grid1]->GridData->SetExternalBoundaryValues(Exterior);
 	  } else {

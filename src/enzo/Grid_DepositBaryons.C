@@ -27,11 +27,12 @@
 #include "GridList.h"
 #include "ExternalBoundary.h"
 #include "Grid.h"
-#include "communication.h"
+#include "Parallel.h"
+
+using namespace Parallel;
  
 /* function prototypes */
  
-MPI_Arg Return_MPI_Tag(int tag, int num1[], int num2[3]=0);
 int CosmologyComputeExpansionFactor(FLOAT time, FLOAT *a, FLOAT *dadt);
  
 #ifdef USE_MPI
@@ -150,13 +151,26 @@ int grid::DepositBaryons(grid *TargetGrid, FLOAT DepositTime)
     }
  
   }
+
+  /* Allocate MPI buffer */
+
+  MPIBuffer *mbuffer = NULL;
+  const int CommType = 5;
+  if (Parallel::CommunicationDirection == COMMUNICATION_POST_RECEIVE ||
+      Parallel::CommunicationDirection == COMMUNICATION_SEND) {
+    FLOAT farg[] = {DepositTime, 0.0, 0.0};
+    mbuffer = new MPIBuffer(this, TargetGrid, CommType, MPI_SENDREGION_TAG,
+			    GridOffset, RegionDim, farg);
+  } else {
+    mbuffer = NULL; // Grab from list
+  }
  
   /* Prepare the density field. */
  
   float *dens_field = NULL;
 #ifdef USE_MPI
-  if (CommunicationDirection == COMMUNICATION_RECEIVE)
-    dens_field = CommunicationReceiveBuffer[CommunicationReceiveIndex];
+  if (Parallel::CommunicationDirection == COMMUNICATION_RECEIVE)
+    dens_field = (float*) mbuffer->ReturnBuffer();
   else
 #endif /* USE_MPI */
     dens_field = new float[size];
@@ -243,69 +257,28 @@ int grid::DepositBaryons(grid *TargetGrid, FLOAT DepositTime)
  
 #ifdef USE_MPI
  
-    MPI_Status status;
-    MPI_Datatype DataType = (sizeof(float) == 4) ? MPI_FLOAT : MPI_DOUBLE;
-    MPI_Arg Count;
-    MPI_Arg Source;
-    MPI_Arg Tag;
-
-    Count = size;
-    Source = ProcessorNumber;
- 
     double time1 = MPI_Wtime();
-
-#pragma omp critical
-    {
- 
-    /* If posting a receive, then record details of call. */
-
-    if (CommunicationDirection == COMMUNICATION_POST_RECEIVE) {
-      CommunicationReceiveGridOne[CommunicationReceiveIndex]  = this;
-      CommunicationReceiveGridTwo[CommunicationReceiveIndex]  = TargetGrid;
-      CommunicationReceiveCallType[CommunicationReceiveIndex] = 5;
-      CommunicationReceiveArgument[0][CommunicationReceiveIndex] = DepositTime;
-    }
-
-    if (CommunicationDirection != COMMUNICATION_RECEIVE) {
-      CommunicationGridID[0] = TargetGrid->ID;
-      CommunicationGridID[1] = this->ID;
-      for (dim = 0; dim < MAX_DIMENSION; dim++)
-	CommunicationTags[dim] = GridOffset[dim];
-    }
 
     /* Send Mode */
 
-    if (MyProcessorNumber == ProcessorNumber)
-      CommunicationBufferedSend(dens_field, size, DataType, 
-				TargetGrid->ProcessorNumber, MPI_SENDREGION_TAG,
-				MPI_COMM_WORLD, BUFFER_IN_PLACE);
+    if (MyProcessorNumber == ProcessorNumber) {
+      mbuffer->FillBuffer(FloatDataType, size, dens_field);
+      mbuffer->SendBuffer(TargetGrid->ProcessorNumber);
+    }
 
     /* Send/Recv Mode */
 
     if (MyProcessorNumber == TargetGrid->ProcessorNumber &&
-	CommunicationDirection == COMMUNICATION_SEND_RECEIVE) {
-      Tag = Return_MPI_Tag(MPI_SENDREGION_TAG, CommunicationGridID, 
-			   CommunicationTags);
-      MPI_Recv(dens_field, size, DataType, ProcessorNumber, 
-	       Tag, MPI_COMM_WORLD, &status);
-    }
+	Parallel::CommunicationDirection == COMMUNICATION_SEND_RECEIVE)
+      mbuffer->RecvBuffer(ProcessorNumber);
 
     /* Post receive call */
 
     if (MyProcessorNumber == TargetGrid->ProcessorNumber &&
-	CommunicationDirection == COMMUNICATION_POST_RECEIVE) {
-      Tag = Return_MPI_Tag(MPI_SENDREGION_TAG, CommunicationGridID,
-			   CommunicationTags);
-      MPI_Irecv(dens_field, size, DataType, ProcessorNumber, 
-	        Tag, MPI_COMM_WORLD, 
-	        CommunicationReceiveMPI_Request+CommunicationReceiveIndex);
-      CommunicationReceiveBuffer[CommunicationReceiveIndex] = dens_field;
-      CommunicationReceiveDependsOn[CommunicationReceiveIndex] =
-	CommunicationReceiveCurrentDependsOn;
-      CommunicationReceiveIndex++;
+	Parallel::CommunicationDirection == COMMUNICATION_POST_RECEIVE) {
+      mbuffer->FillBuffer(FloatDataType, size, dens_field);
+      mbuffer->IRecvBuffer(ProcessorNumber);
     }
- 
-    } // END omp critical
  
     double time3 = MPI_Wtime();
 
@@ -322,8 +295,7 @@ int grid::DepositBaryons(grid *TargetGrid, FLOAT DepositTime)
  
   /* Return if this is not our concern. */
  
-  if (CommunicationDirection == COMMUNICATION_POST_RECEIVE ||
-
+  if (Parallel::CommunicationDirection == COMMUNICATION_POST_RECEIVE ||
       MyProcessorNumber != TargetGrid->ProcessorNumber)
     return SUCCESS;
  

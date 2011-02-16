@@ -25,13 +25,9 @@
 #include "GridList.h"
 #include "ExternalBoundary.h"
 #include "Grid.h"
-#include "communication.h"
+#include "Parallel.h"
 
-#ifdef USE_MPI
-int CommunicationBufferedSend(void *buffer, int size, MPI_Datatype Type, int Target,
-			      int Tag, MPI_Comm CommWorld, int BufferSize);
-#endif /* USE_MPI */
-MPI_Arg Return_MPI_Tag(int tag, int num1[], int num2[3]=0);
+using namespace Parallel;
 
 /* The following is defined in Grid_DepositParticlePositions.C. */
  
@@ -53,8 +49,8 @@ int grid::SetParticleMassFlaggingField(int StartProc, int EndProc, int level,
   //printf("    grid::SetParticleMassFlaggingField   \n");
 
   if (MyProcessorNumber != ProcessorNumber &&
-      (CommunicationDirection == COMMUNICATION_RECEIVE ||
-       CommunicationDirection == COMMUNICATION_POST_RECEIVE))
+      (Parallel::CommunicationDirection == COMMUNICATION_RECEIVE ||
+       Parallel::CommunicationDirection == COMMUNICATION_POST_RECEIVE))
     return SUCCESS;
 
 //  printf("--> SetPMFlag[P%"ISYM"/%"ISYM"]: level %"ISYM", grid %"ISYM", "
@@ -67,13 +63,21 @@ int grid::SetParticleMassFlaggingField(int StartProc, int EndProc, int level,
   MPI_Arg Count;
   MPI_Arg Source;
   float *buffer = NULL;
+  MPIBuffer *mbuffer = NULL;
+  const int CommType = 13;
+  if (Parallel::CommunicationDirection == COMMUNICATION_POST_RECEIVE ||
+      Parallel::CommunicationDirection == COMMUNICATION_SEND)
+    mbuffer = new MPIBuffer(this, NULL, CommType, MPI_SENDPMFLAG_TAG);
+  else
+    mbuffer = NULL;  // Get from list
+
 #endif /* USE_MPI */
 
   size = 1;
   for (dim = 0; dim < GridRank; dim++)
     size *= GridDimension[dim];
 
-  if (CommunicationDirection == COMMUNICATION_SEND) {
+  if (Parallel::CommunicationDirection == COMMUNICATION_SEND) {
 
     int method, NumberOfFlaggedCells;
 
@@ -158,14 +162,8 @@ int grid::SetParticleMassFlaggingField(int StartProc, int EndProc, int level,
     if (MyProcessorNumber != ProcessorNumber) {
 //      printf("----> SetPMFlag[P%"ISYM"/%"ISYM"]: sending %"ISYM" floats.\n",
 //	     MyProcessorNumber, ProcessorNumber, size);
-#pragma omp critical
-      {
-	CommunicationGridID[0] = this->ID;
-	CommunicationGridID[1] = 0;
-	CommunicationBufferedSend(ParticleMassFlaggingField, size, DataType,
-				  ProcessorNumber, MPI_SENDPMFLAG_TAG, 
-				  MPI_COMM_WORLD, size*sizeof(float));
-      }
+      mbuffer->FillBuffer(FloatDataType, size, ParticleMassFlaggingField);
+      mbuffer->SendBuffer(ProcessorNumber, size*sizeof(float));
       delete [] ParticleMassFlaggingField;
       ParticleMassFlaggingField = NULL;
     }
@@ -176,24 +174,19 @@ int grid::SetParticleMassFlaggingField(int StartProc, int EndProc, int level,
   } // ENDIF: COMMUNICATION_SEND
 
 #ifdef USE_MPI
-#pragma omp critical
-  {
 
-  if (CommunicationDirection == COMMUNICATION_RECEIVE) {
+  if (Parallel::CommunicationDirection == COMMUNICATION_RECEIVE) {
 
     /* Receive the data and sum it */
 
-    buffer = CommunicationReceiveBuffer[CommunicationReceiveIndex];
+    buffer = (float*) mbuffer->ReturnBuffer();
     for (i = 0; i < size; i++)
       ParticleMassFlaggingField[i] += buffer[i];
     delete [] buffer;
 
   } // ENDIF receive
 
-  if (CommunicationDirection == COMMUNICATION_POST_RECEIVE) {
-
-    CommunicationGridID[0] = this->ID;
-    CommunicationGridID[1] = 0;
+  if (Parallel::CommunicationDirection == COMMUNICATION_POST_RECEIVE) {
 
     /* Post receive requests */
 
@@ -206,49 +199,16 @@ int grid::SetParticleMassFlaggingField(int StartProc, int EndProc, int level,
 
       if (Source >= StartProc && Source < EndProc) {
 	buffer = new float[size];
-	Tag = Return_MPI_Tag(MPI_SENDPMFLAG_TAG, CommunicationGridID);
-	MPI_Irecv(buffer, Count, DataType, Source, Tag, MPI_COMM_WORLD, 
-		  CommunicationReceiveMPI_Request+CommunicationReceiveIndex);
-
-	CommunicationReceiveGridOne[CommunicationReceiveIndex] = this;
-	CommunicationReceiveGridTwo[CommunicationReceiveIndex] = NULL;
-	CommunicationReceiveCallType[CommunicationReceiveIndex] = 13;
-	CommunicationReceiveBuffer[CommunicationReceiveIndex] = buffer;
-//	CommunicationReceiveArgumentInt[0][CommunicationReceiveIndex] = StartProc;
-//	CommunicationReceiveArgumentInt[1][CommunicationReceiveIndex] = EndProc;
-	CommunicationReceiveDependsOn[CommunicationReceiveIndex] =
-	  CommunicationReceiveCurrentDependsOn;
-	CommunicationReceiveIndex++;
+	mbuffer->FillBuffer(FloatDataType, size, buffer);
+	mbuffer->IRecvBuffer(Source);
       } // ENDIF inside processor range
 
     } // ENDFOR processors
 
   } // ENDIF post receive
-  } // END omp critical
 
 #endif /* USE_MPI */
    
   return SUCCESS;
  
 }
-
-/************************************************************************/
-
-
-#ifdef UNUSED
-void InitializeParticleMassFlaggingFieldCommunication(void)
-{
-#ifdef USE_MPI
-  int i;
-  irq = 0;
-  for (i = 0; i < MAX_REQUEST_HANDLES; i++) {
-    FlagRequestHandle[i] = NULL;
-    if (FlagBuffer[i] != NULL)
-
-      delete [] FlagBuffer[i];
-    FlagBuffer[i] = NULL;
-  }
-#endif USE_MPI
-  return;
-}
-#endif

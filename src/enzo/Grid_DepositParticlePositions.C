@@ -32,7 +32,9 @@
 #include "GridList.h"
 #include "ExternalBoundary.h"
 #include "Grid.h"
-#include "communication.h"
+#include "Parallel.h"
+
+using namespace Parallel;
  
 /* function prototypes */
  
@@ -53,7 +55,6 @@ int CommunicationBufferedSend(void *buffer, int size, MPI_Datatype Type,
 			      int BufferSize);
 #endif /* USE_MPI */
 double ReturnWallTime(void);
-MPI_Arg Return_MPI_Tag(int tag, int num1[], int num2[3]=0);
 
 /* This controls the maximum particle mass which will be deposited in
    the MASS_FLAGGING_FIELD.  Only set in Grid_SetFlaggingField. */
@@ -83,6 +84,7 @@ int grid::DepositParticlePositions(grid *TargetGrid, FLOAT DepositTime,
   float TimeDifference = 0;
   FLOAT LeftEdge[MAX_DIMENSION], OriginalLeftEdge[MAX_DIMENSION];
   float *DepositFieldPointer, *OriginalDepositFieldPointer;
+  MPIBuffer *mbuffer = NULL;
 
   /* 1) GravitatingMassField. */
  
@@ -187,13 +189,26 @@ int grid::DepositParticlePositions(grid *TargetGrid, FLOAT DepositTime,
       size *= Dimension[dim];
     }
 
+    /* Allocate MPI buffer */
+
+    const int CommType = 3;
+    if (Parallel::CommunicationDirection == COMMUNICATION_POST_RECEIVE ||
+	Parallel::CommunicationDirection == COMMUNICATION_SEND) {
+      FLOAT farg[] = {DepositTime, 0.0, 0.0};
+      int   iarg[] = {DepositField, 0, 0};
+      mbuffer = new MPIBuffer(this, TargetGrid, CommType, MPI_SENDREGION_TAG,
+			      Offset, Dimension, farg, iarg);
+    } else {
+      mbuffer = NULL; // Grab from list
+    }
+    
+
     /* Allocate buffer to communicate deposit region (unless in receive-mode
        in which case the buffer was already allocated in post-receive mode). */
 
 #ifdef USE_MPI
     if (CommunicationDirection == COMMUNICATION_RECEIVE)
-      DepositFieldPointer = 
-	CommunicationReceiveBuffer[CommunicationReceiveIndex];
+      DepositFieldPointer = (float*) mbuffer->ReturnBuffer();
     else {
       DepositFieldPointer = new float[size];
       if (MyProcessorNumber == ProcessorNumber)
@@ -297,62 +312,24 @@ int grid::DepositParticlePositions(grid *TargetGrid, FLOAT DepositTime,
 
 #ifdef USE_MPI
 
-    /* If posting a receive, then record details of call. */
-#pragma omp critical
-    {
-    if (CommunicationDirection == COMMUNICATION_POST_RECEIVE) {
-      CommunicationReceiveGridOne[CommunicationReceiveIndex]  = this;
-      CommunicationReceiveGridTwo[CommunicationReceiveIndex]  = TargetGrid;
-      CommunicationReceiveCallType[CommunicationReceiveIndex] = 3;
-      CommunicationReceiveArgument[0][CommunicationReceiveIndex] = DepositTime;
-      CommunicationReceiveArgumentInt[0][CommunicationReceiveIndex] =
-	                                                         DepositField;
-    }
-
-    if (CommunicationDirection != COMMUNICATION_RECEIVE) {
-      CommunicationGridID[0] = TargetGrid->ID;
-      CommunicationGridID[1] = this->ID;
-      for (dim = 0; dim < MAX_DIMENSION; dim++)
-	CommunicationTags[dim] = Offset[dim];
-    }
-
-    MPI_Status status;
-    MPI_Datatype DataType = (sizeof(float) == 4) ? MPI_FLOAT : MPI_DOUBLE;
-    MPI_Arg Count = size;
-    MPI_Arg Source = ProcessorNumber;
-    MPI_Arg Dest = TargetGrid->ProcessorNumber;
-    MPI_Arg Tag;
-
     double time1 = ReturnWallTime();
 
-    if (MyProcessorNumber == ProcessorNumber)
-      CommunicationBufferedSend(DepositFieldPointer, Count, DataType, 
-			     Dest, MPI_SENDREGION_TAG, 
-			     MPI_COMM_WORLD, BUFFER_IN_PLACE);
+    if (MyProcessorNumber == ProcessorNumber) {
+      mbuffer->FillBuffer(FloatDataType, size, DepositFieldPointer);
+      mbuffer->SendBuffer(TargetGrid->ProcessorNumber);
+    }
 
     if (MyProcessorNumber == TargetGrid->ProcessorNumber &&
 	CommunicationDirection == COMMUNICATION_SEND_RECEIVE) {
-      Tag = Return_MPI_Tag(MPI_SENDREGION_TAG, CommunicationGridID,
-			   CommunicationTags);
-      MPI_Recv(DepositFieldPointer, Count, DataType, Source, 
-	       Tag, MPI_COMM_WORLD, &status);
+      mbuffer->RecvBuffer(ProcessorNumber);
     }
 
     if (MyProcessorNumber == TargetGrid->ProcessorNumber &&
 	CommunicationDirection == COMMUNICATION_POST_RECEIVE) {
-      Tag = Return_MPI_Tag(MPI_SENDREGION_TAG, CommunicationGridID,
-			   CommunicationTags);
-      MPI_Irecv(DepositFieldPointer, Count, DataType, Source, 
-	        Tag, MPI_COMM_WORLD, 
-	        CommunicationReceiveMPI_Request+CommunicationReceiveIndex);
-      CommunicationReceiveBuffer[CommunicationReceiveIndex] = 
-	                                                  DepositFieldPointer;
-      CommunicationReceiveDependsOn[CommunicationReceiveIndex] =
-	  CommunicationReceiveCurrentDependsOn;
-      CommunicationReceiveIndex++;
+      mbuffer->FillBuffer(FloatDataType, size, DepositFieldPointer);
+      mbuffer->IRecvBuffer(ProcessorNumber);
     }      
     CommunicationTime += ReturnWallTime() - time1;
-    } // END #pragma omp critical
 
 #endif /* USE_MPI */
 

@@ -30,8 +30,10 @@
 #include "TopGridData.h"
 #include "Hierarchy.h"
 #include "LevelHierarchy.h"
-#include "communication.h"
+#include "Parallel.h"
 #include "CommunicationUtilities.h"
+
+using namespace Parallel;
 
 double HilbertCurve3D(FLOAT *coord);
 Eint32 compare_hkey(const void *a, const void *b);
@@ -282,9 +284,8 @@ int LoadBalanceHilbertCurve(HierarchyEntry *GridHierarchyPointer[],
 
   /* Post receives */
 
-  CommunicationReceiveIndex = 0;
-  CommunicationReceiveCurrentDependsOn = COMMUNICATION_NO_DEPENDENCE;
-  CommunicationDirection = COMMUNICATION_POST_RECEIVE;
+  Parallel::CommunicationReceiveIndex = 0;
+  Parallel::CommunicationDirection = COMMUNICATION_POST_RECEIVE;
 
   for (i = 0; i < NumberOfGrids; i++) 
     if (GridHierarchyPointer[i]->GridData->ReturnProcessorNumber() !=
@@ -296,7 +297,7 @@ int LoadBalanceHilbertCurve(HierarchyEntry *GridHierarchyPointer[],
 
   /* Send grids */
 
-  CommunicationDirection = COMMUNICATION_SEND;
+  Parallel::CommunicationDirection = COMMUNICATION_SEND;
 
   for (i = 0; i < NumberOfGrids; i++)
     if (GridHierarchyPointer[i]->GridData->ReturnProcessorNumber() !=

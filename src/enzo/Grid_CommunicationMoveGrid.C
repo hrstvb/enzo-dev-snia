@@ -27,8 +27,10 @@
 #include "GridList.h"
 #include "ExternalBoundary.h"
 #include "Grid.h"
-#include "communication.h"
- 
+#include "Parallel.h"
+
+using namespace Parallel;
+
 /* function prototypes */
  
  
@@ -85,8 +87,8 @@ int grid::CommunicationMoveGrid(int ToProcessor, int MoveParticles,
  
     if (DeleteOldFields == TRUE &&
 	MyProcessorNumber == ProcessorNumber && ProcessorNumber != ToProcessor &&
-	(CommunicationDirection == COMMUNICATION_SEND ||
-	 CommunicationDirection == COMMUNICATION_SEND_RECEIVE)) {
+	(Parallel::CommunicationDirection == COMMUNICATION_SEND ||
+	 Parallel::CommunicationDirection == COMMUNICATION_SEND_RECEIVE)) {
       if (MoveParticles == TRUE)
 	this->DeleteAllFields();
       else

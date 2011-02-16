@@ -9,6 +9,10 @@
 /  PURPOSE:
 /
 ************************************************************************/
+
+#ifdef USE_MPI
+#include "mpi.h"
+#endif
  
 #include <stdio.h>
 #include "ErrorExceptions.h"
@@ -22,6 +26,9 @@
 #include "Hierarchy.h"
 #include "TopGridData.h"
 #include "LevelHierarchy.h"
+#include "Parallel.h"
+
+using Parallel::CommunicationDirection;
  
 /* function prototypes */
  

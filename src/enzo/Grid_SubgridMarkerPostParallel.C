@@ -23,7 +23,6 @@
 #include "GridList.h"
 #include "ExternalBoundary.h"
 #include "Grid.h"
-#include "communication.h"
 
 #define LEVEL_BIT_OFFSET 24
 #define PACKED_INT_SIZE 32

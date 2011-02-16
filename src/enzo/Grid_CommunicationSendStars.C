@@ -24,19 +24,13 @@
 #include "GridList.h"
 #include "ExternalBoundary.h"
 #include "Grid.h"
-#include "communication.h"
+#include "Parallel.h"
 #include "CommunicationUtilities.h"
+
+using namespace Parallel;
 
 /* function prototypes */
 
-#ifdef USE_MPI
-static int FirstTimeCalled = TRUE;
-static MPI_Datatype MPI_STAR;
-int CommunicationBufferedSend(void *buffer, int size, MPI_Datatype Type, 
-                              int Target, int Tag, MPI_Comm CommWorld, 
-			      int BufferSize);
-#endif /* USE_MPI */
-MPI_Arg Return_MPI_Tag(int tag, int num1[], int num2[3]=0);
 Star* StarBufferToList(StarBuffer *buffer, int n);
 void InsertStarAfter(Star * &Node, Star * &NewNode);
 void DeleteStarList(Star * &Node);
@@ -59,13 +53,26 @@ int grid::CommunicationSendStars(grid *ToGrid, int ToProcessor)
   if (NumberOfStars == 0)
     return SUCCESS;
 
+  /* Allocate MPI buffer */
+
+  const int CommType = 18;
+  MPIBuffer *mbuffer = NULL;
+  if (Parallel::CommunicationDirection == COMMUNICATION_POST_RECEIVE ||
+      Parallel::CommunicationDirection == COMMUNICATION_SEND) {
+    int iarg[] = {NumberOfStars, 0, 0};
+    mbuffer = new MPIBuffer(this, ToGrid, CommType, MPI_SENDSTAR_TAG,
+			    NULL, NULL, NULL, iarg);
+  } else {
+    mbuffer = NULL;  // Grab from list.
+  }
+ 
   /* Allocate buffer in ToProcessor.  This is automatically done in
      StarListToBuffer in the local processor. */
 
   TransferSize = this->NumberOfStars;
 #ifdef USE_MPI
   if (CommunicationDirection == COMMUNICATION_RECEIVE)
-    buffer = (StarBuffer*) CommunicationReceiveBuffer[CommunicationReceiveIndex];
+    buffer = (StarBuffer*) mbuffer->ReturnBuffer();
   else
 #endif
     buffer = new StarBuffer[TransferSize];
@@ -85,12 +92,6 @@ int grid::CommunicationSendStars(grid *ToGrid, int ToProcessor)
 
   if (ProcessorNumber != ToProcessor) {
 
-    if (FirstTimeCalled) {
-      MPI_Type_contiguous(sizeof(StarBuffer), MPI_BYTE, &MPI_STAR);
-      MPI_Type_commit(&MPI_STAR);
-      FirstTimeCalled = FALSE;
-    }
-
     MPI_Status status;
     MPI_Arg PCount, Count = TransferSize;
     MPI_Arg Source = ProcessorNumber;
@@ -102,46 +103,22 @@ int grid::CommunicationSendStars(grid *ToGrid, int ToProcessor)
     starttime = MPI_Wtime();
 #endif
 
-#pragma omp critical
-    {
-
-    if (CommunicationDirection != COMMUNICATION_RECEIVE) {
-      CommunicationGridID[0] = ToGrid->ID;
-      CommunicationGridID[1] = this->ID;
+    if (MyProcessorNumber == ProcessorNumber) {
+      mbuffer->FillBuffer(MPI_StarBuffer, TransferSize, buffer);
+      mbuffer->SendBuffer(ToProcessor);
     }
-
-    if (MyProcessorNumber == ProcessorNumber)
-      CommunicationBufferedSend(buffer, Count, MPI_STAR, 
-				Dest, MPI_SENDSTAR_TAG, MPI_COMM_WORLD, 
-				BUFFER_IN_PLACE);
 
     if (MyProcessorNumber == ToProcessor) {
 
-      Tag = Return_MPI_Tag(MPI_SENDSTAR_TAG, CommunicationGridID);
-
       if (CommunicationDirection == COMMUNICATION_POST_RECEIVE) {
-	MPI_Irecv(buffer, Count, MPI_STAR, Source,
-		  Tag, MPI_COMM_WORLD,
-		  CommunicationReceiveMPI_Request+CommunicationReceiveIndex);
-
-	CommunicationReceiveGridOne[CommunicationReceiveIndex] = this;
-	CommunicationReceiveGridTwo[CommunicationReceiveIndex] = ToGrid;
-	CommunicationReceiveCallType[CommunicationReceiveIndex] = 18;
-	CommunicationReceiveArgumentInt[0][CommunicationReceiveIndex] = NumberOfStars;
-
-	CommunicationReceiveBuffer[CommunicationReceiveIndex] = (float *) buffer;
-	CommunicationReceiveDependsOn[CommunicationReceiveIndex] = 
-	  CommunicationReceiveCurrentDependsOn;
-	CommunicationReceiveIndex++;
+	mbuffer->FillBuffer(MPI_StarBuffer, TransferSize, buffer);
+	mbuffer->IRecvBuffer(ProcessorNumber);
       }
 
       if (CommunicationDirection == COMMUNICATION_SEND_RECEIVE)
-	MPI_Recv(buffer, Count, MPI_STAR, Source,
-		 Tag, MPI_COMM_WORLD, &status);
+	mbuffer->RecvBuffer(ProcessorNumber);
 
     } // ENDIF MyProcessorNumber == ToProcessor
-
-    } // END omp critical
 
 #ifdef MPI_INSTRUMENTATION
     /* Zhiling Lan's instrumented part */

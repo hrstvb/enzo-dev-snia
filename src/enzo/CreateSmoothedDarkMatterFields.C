@@ -30,7 +30,7 @@
 #include "Hierarchy.h"
 #include "TopGridData.h"
 #include "CosmologyParameters.h"
-#include "communication.h"
+#include "Parallel.h"
 
 #include "FOF_allvars.h"
 #include "FOF_nrutil.h"
@@ -115,9 +115,9 @@ int CreateSmoothedDarkMatterFields(TopGridData &MetaData, HierarchyEntry *TopGri
 
   // Post receive calls
 
-  CommunicationReceiveIndex = 0;
-  CommunicationReceiveCurrentDependsOn = COMMUNICATION_NO_DEPENDENCE;
-  CommunicationDirection = COMMUNICATION_POST_RECEIVE;
+  //CommunicationReceiveIndex = 0;
+  //CommunicationReceiveCurrentDependsOn = COMMUNICATION_NO_DEPENDENCE;
+  Parallel::CommunicationDirection = COMMUNICATION_POST_RECEIVE;
 
   for (level = 0; level < MAX_DEPTH_OF_HIERARCHY; level++)
     for (Temp = LevelArray[level]; Temp; Temp = Temp->NextGridThisLevel)
@@ -125,7 +125,7 @@ int CreateSmoothedDarkMatterFields(TopGridData &MetaData, HierarchyEntry *TopGri
 
   // Interpolate data and send
 
-  CommunicationDirection = COMMUNICATION_SEND;
+  Parallel::CommunicationDirection = COMMUNICATION_SEND;
   if (debug)
     fprintf(stdout, "CreateSmoothedDarkMatterFields: interpolating...\n");
 
@@ -140,7 +140,7 @@ int CreateSmoothedDarkMatterFields(TopGridData &MetaData, HierarchyEntry *TopGri
   
 
   // Reset to default
-  CommunicationDirection = COMMUNICATION_SEND_RECEIVE;
+  Parallel::CommunicationDirection = COMMUNICATION_SEND_RECEIVE;
 
   // Cleanup
   FOF_Finalize(AllVars, LevelArray, &MetaData);
