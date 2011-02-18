@@ -28,7 +28,7 @@ namespace Parallel {
 
   /*----------------------------------------------------------------------*/
 
-  void GenerateMPIRequestArray(MPI_Request *result)
+  void GenerateMPIRequestArray(MPI_Request * &result)
   {
     
     int i;

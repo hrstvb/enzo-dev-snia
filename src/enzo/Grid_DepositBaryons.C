@@ -152,8 +152,7 @@ int grid::DepositBaryons(grid *TargetGrid, FLOAT DepositTime,
 
   MPIBuffer *mbuffer = NULL;
   const int CommType = 5;
-  if (Parallel::CommunicationDirection == COMMUNICATION_POST_RECEIVE ||
-      Parallel::CommunicationDirection == COMMUNICATION_SEND) {
+  if (Parallel::CommunicationDirection != COMMUNICATION_RECEIVE) {
     FLOAT farg[] = {DepositTime, 0.0, 0.0};
     mbuffer = new MPIBuffer(this, TargetGrid, CommType, MPI_SENDREGION_TAG,
 			    GridOffset, RegionDim, farg);
@@ -255,11 +254,11 @@ int grid::DepositBaryons(grid *TargetGrid, FLOAT DepositTime,
 #ifdef USE_MPI
  
     double time1 = MPI_Wtime();
+    mbuffer->FillBuffer(FloatDataType, size, dens_field);
 
     /* Send Mode */
 
     if (MyProcessorNumber == ProcessorNumber) {
-      mbuffer->FillBuffer(FloatDataType, size, dens_field);
       mbuffer->SendBuffer(TargetGrid->ProcessorNumber);
     }
 
@@ -273,7 +272,6 @@ int grid::DepositBaryons(grid *TargetGrid, FLOAT DepositTime,
 
     if (MyProcessorNumber == TargetGrid->ProcessorNumber &&
 	Parallel::CommunicationDirection == COMMUNICATION_POST_RECEIVE) {
-      mbuffer->FillBuffer(FloatDataType, size, dens_field);
       mbuffer->IRecvBuffer(ProcessorNumber);
     }
  

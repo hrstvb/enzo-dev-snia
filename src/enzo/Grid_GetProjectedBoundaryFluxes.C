@@ -182,8 +182,7 @@ int grid::GetProjectedBoundaryFluxes(grid *ParentGrid, int grid_num,
   /* If posting a receive, then record details of call. */
 
 #ifdef USE_MPI
-  if (CommunicationDirection == COMMUNICATION_POST_RECEIVE ||
-      CommunicationDirection == COMMUNICATION_SEND) {
+  if (Parallel::CommunicationDirection != COMMUNICATION_RECEIVE) {
     const int CallType = 11;
     int int_arg[] = {grid_num, subgrid_num, IsSubling};
     buffer = new MPIBuffer(this, ParentGrid, CallType, MPI_FLUX_TAG, 

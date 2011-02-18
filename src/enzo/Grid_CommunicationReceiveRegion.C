@@ -89,8 +89,7 @@ int grid::CommunicationReceiveRegion(grid *FromGrid, int FromProcessor,
   }
  
   MPIBuffer *mbuffer = NULL;
-  if (Parallel::CommunicationDirection == COMMUNICATION_POST_RECEIVE ||
-      Parallel::CommunicationDirection == COMMUNICATION_SEND) {
+  if (Parallel::CommunicationDirection != COMMUNICATION_RECEIVE) {
     mbuffer = new MPIBuffer(grid_one, grid_two, CommType, 
 			    MPI_RECEIVEREGION_TAG, FromOffset, FromDim);
   } else {
@@ -155,13 +154,14 @@ int grid::CommunicationReceiveRegion(grid *FromGrid, int FromProcessor,
     starttime=MPI_Wtime();
 #endif /* MPI_INSTRUMENTATION */
 
+    mbuffer->FillBuffer(FloatDataType, TransferSize, buffer);
+
     if (MyProcessorNumber == FromProcessor) {
 #ifdef MPI_INSTRUMENTATION
       if (traceMPI) 
 	fprintf(tracePtr, "CRR RF: Sending %"ISYM" floats from %"ISYM" to %"ISYM"\n", 
 		TransferSize, FromProcessor, ProcessorNumber);
 #endif
-      mbuffer->FillBuffer(FloatDataType, TransferSize, buffer);
       mbuffer->SendBuffer(ProcessorNumber);
     } // ENDIF from processor
     
@@ -172,7 +172,6 @@ int grid::CommunicationReceiveRegion(grid *FromGrid, int FromProcessor,
 	 in (the real) receive mode. */
 
       if (CommunicationDirection == COMMUNICATION_POST_RECEIVE) {
-	mbuffer->FillBuffer(FloatDataType, TransferSize, buffer);
 	mbuffer->IRecvBuffer(FromProcessor);
       }
 

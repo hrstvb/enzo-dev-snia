@@ -64,6 +64,7 @@ int CommunicationReceiveFluxes(MPIBuffer *mbuffer, fluxes *Fluxes,
   else
     buffer = new float[TotalSize];
 
+  mbuffer->FillBuffer(FloatDataType, TotalSize, buffer);
  
   /* Receive into buffer. */
  
@@ -75,7 +76,6 @@ int CommunicationReceiveFluxes(MPIBuffer *mbuffer, fluxes *Fluxes,
      when the data actually arrives. */
   
   if (CommunicationDirection == COMMUNICATION_POST_RECEIVE) {
-    mbuffer->FillBuffer(FloatDataType, TotalSize, buffer);
     mbuffer->IRecvBuffer(FromProc);
     return SUCCESS;
   }
@@ -83,7 +83,6 @@ int CommunicationReceiveFluxes(MPIBuffer *mbuffer, fluxes *Fluxes,
   /* If in send-receive mode, then wait for the data to arrive now. */
 
   if (CommunicationDirection == COMMUNICATION_SEND_RECEIVE) {
-    mbuffer->FillBuffer(FloatDataType, TotalSize, buffer);
     mbuffer->RecvBuffer(FromProc);
   }
  

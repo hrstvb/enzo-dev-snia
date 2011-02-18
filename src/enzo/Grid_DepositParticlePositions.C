@@ -187,8 +187,7 @@ int grid::DepositParticlePositions(grid *TargetGrid, FLOAT DepositTime,
     /* Allocate MPI buffer */
 
     const int CommType = 3;
-    if (Parallel::CommunicationDirection == COMMUNICATION_POST_RECEIVE ||
-	Parallel::CommunicationDirection == COMMUNICATION_SEND) {
+    if (Parallel::CommunicationDirection != COMMUNICATION_RECEIVE) {
       FLOAT farg[] = {DepositTime, 0.0, 0.0};
       int   iarg[] = {DepositField, 0, 0};
       mbuffer = new MPIBuffer(this, TargetGrid, CommType, MPI_SENDREGION_TAG,
@@ -309,9 +308,9 @@ int grid::DepositParticlePositions(grid *TargetGrid, FLOAT DepositTime,
 #ifdef USE_MPI
 
     double time1 = ReturnWallTime();
+    mbuffer->FillBuffer(FloatDataType, size, DepositFieldPointer);
 
     if (MyProcessorNumber == ProcessorNumber) {
-      mbuffer->FillBuffer(FloatDataType, size, DepositFieldPointer);
       mbuffer->SendBuffer(TargetGrid->ProcessorNumber);
     }
 
@@ -322,7 +321,6 @@ int grid::DepositParticlePositions(grid *TargetGrid, FLOAT DepositTime,
 
     if (MyProcessorNumber == TargetGrid->ProcessorNumber &&
 	CommunicationDirection == COMMUNICATION_POST_RECEIVE) {
-      mbuffer->FillBuffer(FloatDataType, size, DepositFieldPointer);
       mbuffer->IRecvBuffer(ProcessorNumber);
     }      
     CommunicationTime += ReturnWallTime() - time1;

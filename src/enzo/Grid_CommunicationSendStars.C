@@ -58,8 +58,7 @@ int grid::CommunicationSendStars(grid *ToGrid, int ToProcessor,
 
   const int CommType = 18;
   MPIBuffer *mbuffer = NULL;
-  if (Parallel::CommunicationDirection == COMMUNICATION_POST_RECEIVE ||
-      Parallel::CommunicationDirection == COMMUNICATION_SEND) {
+  if (Parallel::CommunicationDirection != COMMUNICATION_RECEIVE) {
     int iarg[] = {NumberOfStars, 0, 0};
     mbuffer = new MPIBuffer(this, ToGrid, CommType, MPI_SENDSTAR_TAG,
 			    NULL, NULL, NULL, iarg);
@@ -94,26 +93,19 @@ int grid::CommunicationSendStars(grid *ToGrid, int ToProcessor,
 
   if (ProcessorNumber != ToProcessor) {
 
-    MPI_Status status;
-    MPI_Arg PCount, Count = TransferSize;
-    MPI_Arg Source = ProcessorNumber;
-    MPI_Arg Dest = ToProcessor;
-    MPI_Arg stat;
-    MPI_Arg Tag;
-
 #ifdef MPI_INSTRUMENTATION
     starttime = MPI_Wtime();
 #endif
 
+    mbuffer->FillBuffer(MPI_StarBuffer, TransferSize, buffer);
+
     if (MyProcessorNumber == ProcessorNumber) {
-      mbuffer->FillBuffer(MPI_StarBuffer, TransferSize, buffer);
       mbuffer->SendBuffer(ToProcessor);
     }
 
     if (MyProcessorNumber == ToProcessor) {
 
       if (CommunicationDirection == COMMUNICATION_POST_RECEIVE) {
-	mbuffer->FillBuffer(MPI_StarBuffer, TransferSize, buffer);
 	mbuffer->IRecvBuffer(ProcessorNumber);
       }
 

@@ -150,8 +150,7 @@ int grid::SetSubgridMarkerFromParent(grid *Parent, int level,
 
     const int CommType = 19;
     MPIBuffer *mbuffer = NULL;
-    if (Parallel::CommunicationDirection == COMMUNICATION_POST_RECEIVE ||
-	Parallel::CommunicationDirection == COMMUNICATION_SEND) {
+    if (Parallel::CommunicationDirection != COMMUNICATION_RECEIVE) {
       int iarg[] = {level, 0, 0};
       mbuffer = new MPIBuffer(this, Parent, CommType, MPI_SENDMARKER_TAG,
 			      ParentStart, NULL, NULL, iarg);

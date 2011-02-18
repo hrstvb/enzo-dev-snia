@@ -82,13 +82,13 @@ int grid::CommunicationSendRegion(grid *ToGrid, int ToProcessor,int SendField,
 
   // Allocate MPI buffer
   MPIBuffer *mbuffer = NULL;
-  if (Parallel::CommunicationDirection == COMMUNICATION_POST_RECEIVE ||
-      Parallel::CommunicationDirection == COMMUNICATION_SEND)
+  MPIBuffer TempBuffer;
+  if (Parallel::CommunicationDirection != COMMUNICATION_RECEIVE)
     mbuffer = new MPIBuffer(grid_one, grid_two, CommType, 
 			    MPI_SENDREGION_TAG, RegionStart, RegionDim,
 			    CommArg, CommArgInt);
   else {
-    MPIBuffer TempBuffer = GetMPIBuffer(CommunicationIndex);  // Grab from list.
+    TempBuffer = GetMPIBuffer(CommunicationIndex);  // Grab from list.
     mbuffer = &TempBuffer;
   }
 
@@ -181,6 +181,8 @@ int grid::CommunicationSendRegion(grid *ToGrid, int ToProcessor,int SendField,
     /* Send the data if on send processor, but leave buffer until the data
        has been transfered out. */
 
+    mbuffer->FillBuffer(FloatDataType, TransferSize, buffer);
+
     if (MyProcessorNumber == ProcessorNumber) {
 #ifdef MPI_INSTRUMENTATION
       if (traceMPI) 
@@ -191,7 +193,6 @@ int grid::CommunicationSendRegion(grid *ToGrid, int ToProcessor,int SendField,
 //	     TransferSize*sizeof(float), MyProcessorNumber, ToProcessor, 
 //	     Return_MPI_Tag(MPI_SENDREGION_TAG, CommunicationGridID, 
 //			    CommunicationTags));
-      mbuffer->FillBuffer(FloatDataType, TransferSize, buffer);
       mbuffer->SendBuffer(ToProcessor);
     }
 
@@ -210,7 +211,6 @@ int grid::CommunicationSendRegion(grid *ToGrid, int ToProcessor,int SendField,
 //	       "comm index %"ISYM"\n", Tag, ProcessorNumber, 
 //	       sizeof(float)*TransferSize, 
 //	       CommunicationReceiveIndex);
-	mbuffer->FillBuffer(FloatDataType, TransferSize, buffer);
 	mbuffer->IRecvBuffer(ProcessorNumber);
       }
 

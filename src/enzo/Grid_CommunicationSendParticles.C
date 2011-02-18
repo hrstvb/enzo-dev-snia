@@ -73,8 +73,7 @@ int grid::CommunicationSendParticles(grid *ToGrid, int ToProcessor,
 
   const int CommType = 14;
   MPIBuffer *mbuffer = NULL;
-  if (Parallel::CommunicationDirection == COMMUNICATION_POST_RECEIVE ||
-      Parallel::CommunicationDirection == COMMUNICATION_SEND) {
+  if (Parallel::CommunicationDirection != COMMUNICATION_RECEIVE) {
     int iarg[] = {FromStart, FromNumber, ToStart};
     mbuffer = new MPIBuffer(this, ToGrid, CommType, MPI_SENDPART_TAG,
 			    NULL, NULL, NULL, iarg);
@@ -199,16 +198,16 @@ int grid::CommunicationSendParticles(grid *ToGrid, int ToProcessor,
 #ifdef MPI_INSTRUMENTATION
     starttime = MPI_Wtime();
 #endif
+    
+    mbuffer->FillBuffer(MPI_ParticleMoveList, TransferSize, buffer);
 
     if (MyProcessorNumber == ProcessorNumber) {
-      mbuffer->FillBuffer(MPI_ParticleMoveList, TransferSize, buffer);
       mbuffer->SendBuffer(ToProcessor);
     }
 
     if (MyProcessorNumber == ToProcessor) {
 
       if (CommunicationDirection == COMMUNICATION_POST_RECEIVE) {
-	mbuffer->FillBuffer(MPI_ParticleMoveList, TransferSize, buffer);
 	mbuffer->IRecvBuffer(ProcessorNumber);
 
 //	printf("Posting receive from P%"ISYM" for %"ISYM" particles in "

@@ -184,7 +184,7 @@ namespace Parallel
 
   EXTERN list<MPIBuffer> CommunicationMPIBuffer;
 
-  void GenerateMPIRequestArray(MPI_Request *result);
+  void GenerateMPIRequestArray(MPI_Request * &result);
   MPIBuffer GetMPIBuffer(int num);
 
 #else /* USE_MPI */
