@@ -59,7 +59,7 @@ int grid::CommunicationSendPhotonPackages(grid *ToGrid, int ToProcessor,
   MPIBuffer *mbuffer = NULL;
   if (Parallel::CommunicationDirection == COMMUNICATION_POST_RECEIVE ||
       Parallel::CommunicationDirection == COMMUNICATION_SEND) {
-    int iarg[] = {ToNumber, FromNumber, 0);
+    int iarg[] = {ToNumber, FromNumber, 0};
     mbuffer = new MPIBuffer(this, ToGrid, CommType, MPI_PHOTON_TAG,
 			    NULL, NULL, NULL, iarg);
   } else {
@@ -165,8 +165,6 @@ int grid::CommunicationSendPhotonPackages(grid *ToGrid, int ToProcessor,
       if (DEBUG) 
 	printf("PhotonSend(P%"ISYM"): Receiving %"ISYM" photons from processor %"ISYM".\n",
 	       MyProcessorNumber, FromNumber, ProcessorNumber);
-
-      Tag = Return_MPI_Tag(MPI_PHOTON_TAG, CommunicationGridID);
 
       if (CommunicationDirection == COMMUNICATION_POST_RECEIVE) {
 	mbuffer->FillBuffer(MPI_PhotonBuffer, FromNumber, buffer);

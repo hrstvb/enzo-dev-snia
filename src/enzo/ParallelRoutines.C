@@ -35,9 +35,11 @@ namespace Parallel {
     int size = CommunicationMPIBuffer.size();
     result = new MPI_Request[size];
     list<MPIBuffer>::iterator it;
-    for (it = CommunicationMPIBuffer.begin(), i = 0;
-	 it != CommunicationMPIBuffer.end(); ++it, i++)
+    for (it = CommunicationMPIBuffer.begin();
+	 it != CommunicationMPIBuffer.end(); ++it) {
+      i = (*it).ReturnIndex();
       result[i] = (*it).ReturnRequest();
+    }
 
   }
 
@@ -54,6 +56,8 @@ namespace Parallel {
 
   MPIBuffer::MPIBuffer(void)
   {
+    this->BufferType = MPI_DATATYPE_NULL;
+    this->MessageType = MPI_DATATYPE_NULL;
     this->request = MPI_REQUEST_NULL;
     this->tag = 0;
     this->grid_one = NULL;
@@ -172,7 +176,10 @@ namespace Parallel {
     MPI_Irecv(this->message, 1, MessageType, (MPI_Arg) FromProcessor, 
 	      this->tag, MPI_COMM_WORLD, &this->request);
     // Append to receive buffer list
-    CommunicationMPIBuffer.push_front(*this);
+#pragma omp critical
+    {
+      CommunicationMPIBuffer.push_front(*this);
+    }
     return SUCCESS;
   }
 

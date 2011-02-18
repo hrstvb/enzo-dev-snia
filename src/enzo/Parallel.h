@@ -159,6 +159,7 @@ namespace Parallel
 
     ~MPIBuffer(void);
 
+    int ReturnIndex(void) { return message_index; };
     MPI_Request ReturnRequest(void) { return request; };
     void* ReturnBuffer(void) { return message->buffer; };
     mpi_header ReturnHeader(void) { return message->header; };
@@ -179,7 +180,6 @@ namespace Parallel
 
   void GenerateMPIRequestArray(MPI_Request *result);
   MPIBuffer GetMPIBuffer(int num);
-  MPIBuffer* GetMPIBufferPointer(int num);
 
 #else /* USE_MPI */
   typedef MPIBuffer char*;
