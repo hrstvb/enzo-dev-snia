@@ -32,7 +32,9 @@ int grid::CheckForOverlap(grid *OtherGrid,
 			  boundary_type LeftFaceBoundaryCondition[],
 			  boundary_type RightFaceBoundaryCondition[],
 			  int (grid::*CopyFunction)(grid *OtherGrid,
-						    FLOAT EdgeOffset[]))
+						    FLOAT EdgeOffset[],
+						    int CommunicationIndex)
+			  )
 {
  
   // Return if this doesn't involve us
@@ -82,7 +84,7 @@ int grid::CheckForOverlap(grid *OtherGrid,
   // Check for overlap & do copy
  
   if (this != OtherGrid || DoSelf)
-    if ((this->*CopyFunction)(OtherGrid, EdgeOffset) == FAIL) {
+    if ((this->*CopyFunction)(OtherGrid, EdgeOffset, 0) == FAIL) {
       ENZO_FAIL("Error in grid->*CopyFunction\n");
     }
  
@@ -176,7 +178,7 @@ int grid::CheckForOverlap(grid *OtherGrid,
 		}
 
 	    
-		if ((this->*CopyFunction)(OtherGrid, EdgeOffset) == FAIL) {
+		if ((this->*CopyFunction)(OtherGrid, EdgeOffset, 0) == FAIL) {
 		  printf("Error in grid->*CopyFunction (2)\n");
 		  ENZO_FAIL("CopyFunctionFail(2)");
 		}
@@ -188,7 +190,7 @@ int grid::CheckForOverlap(grid *OtherGrid,
 	      (FullPeriod==FALSE && ShearingBoundaryDirection==-1) && (ABS(i)+ABS(j)+ABS(k) == 1)) {
 
 	    
-	    if ((this->*CopyFunction)(OtherGrid, EdgeOffset) == FAIL) {
+	    if ((this->*CopyFunction)(OtherGrid, EdgeOffset, 0) == FAIL) {
 	      ENZO_FAIL("Error in grid->*CopyFunction (3)\n");
 	    }
 	  }

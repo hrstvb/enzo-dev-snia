@@ -53,7 +53,8 @@ int CommunicationBufferedSend(void *buffer, int size, MPI_Datatype Type, int Tar
 int grid::CommunicationSendRegion(grid *ToGrid, int ToProcessor,int SendField,
 				  int NewOrOld, int RegionStart[], int RegionDim[],
 				  int CommType, grid* grid_one, grid* grid_two,
-				  FLOAT CommArg[], int CommArgInt[])
+				  FLOAT CommArg[], int CommArgInt[],
+				  int CommunicationIndex)
 {
 #ifdef USE_MPI 
 
@@ -86,8 +87,11 @@ int grid::CommunicationSendRegion(grid *ToGrid, int ToProcessor,int SendField,
     mbuffer = new MPIBuffer(grid_one, grid_two, CommType, 
 			    MPI_SENDREGION_TAG, RegionStart, RegionDim,
 			    CommArg, CommArgInt);
-  else
-    mbuffer = NULL;  // Grab from list.
+  else {
+    MPIBuffer TempBuffer = GetMPIBuffer(CommunicationIndex);  // Grab from list.
+    mbuffer = &TempBuffer;
+  }
+
 
   // Allocate buffer
   float *buffer = NULL;

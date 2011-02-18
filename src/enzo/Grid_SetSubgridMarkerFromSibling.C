@@ -26,7 +26,8 @@
 /* function prototypes */
 
 int grid::SetSubgridMarkerFromSibling(grid *Sibling, 
-				      FLOAT EdgeOffset[MAX_DIMENSION])
+				      FLOAT EdgeOffset[MAX_DIMENSION],
+				      int CommunicationIndex)
 {
 
   /* Return if this grid is not on this processor. */

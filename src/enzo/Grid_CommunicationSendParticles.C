@@ -43,7 +43,8 @@ void my_exit(int status);
    particle number ToStart. If ToStart = -1, then add to end. */
  
 int grid::CommunicationSendParticles(grid *ToGrid, int ToProcessor,
-				    int FromStart, int FromNumber, int ToStart)
+				     int FromStart, int FromNumber, int ToStart,
+				     int CommunicationIndex)
 {
 #ifdef USE_MPI 
   int i, j, dim, index;
@@ -78,7 +79,8 @@ int grid::CommunicationSendParticles(grid *ToGrid, int ToProcessor,
     mbuffer = new MPIBuffer(this, ToGrid, CommType, MPI_SENDPART_TAG,
 			    NULL, NULL, NULL, iarg);
   } else {
-    mbuffer = NULL;  // Grab from list.
+    MPIBuffer TempBuffer = GetMPIBuffer(CommunicationIndex);  // Grab from list.
+    mbuffer = &TempBuffer;
   }
  
   /* Allocate buffer. */

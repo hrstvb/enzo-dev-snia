@@ -33,7 +33,8 @@ using namespace Parallel;
 
 /* function prototypes */
 
-int grid::SetSubgridMarkerFromParent(grid *Parent, int level)
+int grid::SetSubgridMarkerFromParent(grid *Parent, int level,
+				     int CommunicationIndex)
 {
 
   /* Return if this grid is not on this processor. */
@@ -155,7 +156,8 @@ int grid::SetSubgridMarkerFromParent(grid *Parent, int level)
       mbuffer = new MPIBuffer(this, Parent, CommType, MPI_SENDMARKER_TAG,
 			      ParentStart, NULL, NULL, iarg);
     } else {
-      mbuffer = NULL;  // Grab from list
+      MPIBuffer TempBuffer = GetMPIBuffer(CommunicationIndex);  // Grab from list.
+      mbuffer = &TempBuffer;
     }
 
     if (Parallel::CommunicationDirection == COMMUNICATION_RECEIVE)

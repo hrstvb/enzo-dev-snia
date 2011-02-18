@@ -52,7 +52,7 @@ extern "C" void FORTRAN_NAME(prolong)(float *source, float *dest, int *ndim,
 #endif /* SPLINE */
  
  
-int grid::PreparePotentialField(grid *ParentGrid)
+int grid::PreparePotentialField(grid *ParentGrid, int CommunicationIndex)
 {
  
   if (ParentGrid == NULL)
@@ -132,7 +132,7 @@ int grid::PreparePotentialField(grid *ParentGrid)
     ParentGrid->CommunicationSendRegion(ParentGrid, ProcessorNumber,
 		POTENTIAL_FIELD, NEW_ONLY, ParentStartIndex, ParentTempDim,
 					CommType, this, ParentGrid,
-					Zero3, Zero3Int);
+					Zero3, Zero3Int, CommunicationIndex);
     if (CommunicationDirection == COMMUNICATION_POST_RECEIVE ||
 	CommunicationDirection == COMMUNICATION_SEND)
       return SUCCESS;

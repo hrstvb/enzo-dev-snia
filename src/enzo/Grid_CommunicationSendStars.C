@@ -39,7 +39,8 @@ void DeleteStarList(Star * &Node);
    FromNumber particles counting from FromStart.  Place into ToGrid at
    particle number ToStart. If ToStart = -1, then add to end. */
 
-int grid::CommunicationSendStars(grid *ToGrid, int ToProcessor)
+int grid::CommunicationSendStars(grid *ToGrid, int ToProcessor,
+				 int CommunicationIndex)
 {
 
   int i, j, dim, index, TransferSize;
@@ -63,7 +64,8 @@ int grid::CommunicationSendStars(grid *ToGrid, int ToProcessor)
     mbuffer = new MPIBuffer(this, ToGrid, CommType, MPI_SENDSTAR_TAG,
 			    NULL, NULL, NULL, iarg);
   } else {
-    mbuffer = NULL;  // Grab from list.
+    MPIBuffer TempBuffer = GetMPIBuffer(CommunicationIndex);  // Grab from list.
+    mbuffer = &TempBuffer;
   }
  
   /* Allocate buffer in ToProcessor.  This is automatically done in

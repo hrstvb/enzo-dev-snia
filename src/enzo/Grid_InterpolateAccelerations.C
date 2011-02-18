@@ -42,7 +42,7 @@ extern "C" void FORTRAN_NAME(int_grid_cic)(float *source,
  
 /* EvolveHierarchy function */
  
-int grid::InterpolateAccelerations(grid *FromGrid)
+int grid::InterpolateAccelerations(grid *FromGrid, int CommunicationIndex)
 {
  
   /* Return if this grid is not on this processor. */
@@ -101,7 +101,7 @@ int grid::InterpolateAccelerations(grid *FromGrid)
   if (ProcessorNumber != FromGrid->ProcessorNumber) {
     FromGrid->CommunicationSendRegion(FromGrid, ProcessorNumber,
 	    ACCELERATION_FIELDS, NEW_ONLY, GridStart, GridActiveDim,
-			      CommType, this, FromGrid, Zero3, Zero3Int);
+	    CommType, this, FromGrid, Zero3, Zero3Int, CommunicationIndex);
     if (CommunicationDirection == COMMUNICATION_POST_RECEIVE ||
 	CommunicationDirection == COMMUNICATION_SEND)
       return SUCCESS;

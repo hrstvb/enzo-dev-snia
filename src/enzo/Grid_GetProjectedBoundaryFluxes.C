@@ -46,7 +46,7 @@ void DeleteFluxes(fluxes *Fluxes);
  
 int grid::GetProjectedBoundaryFluxes(grid *ParentGrid, int grid_num,
 				     int subgrid_num, fluxes &ProjectedFluxes,
-				     int IsSubling)
+				     int IsSubling, int CommunicationIndex)
 {
  
   /* Return if this doesn't involve us. */
@@ -188,6 +188,9 @@ int grid::GetProjectedBoundaryFluxes(grid *ParentGrid, int grid_num,
     int int_arg[] = {grid_num, subgrid_num, IsSubling};
     buffer = new MPIBuffer(this, ParentGrid, CallType, MPI_FLUX_TAG, 
 			   NULL, NULL, NULL, int_arg);
+  } else if (CommunicationDirection == COMMUNICATION_RECEIVE) {
+    MPIBuffer TempBuffer = GetMPIBuffer(CommunicationIndex);  // Grab from list.
+    buffer = &TempBuffer;
   }
 #endif /* USE_MPI */
 

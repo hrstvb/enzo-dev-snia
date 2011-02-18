@@ -65,7 +65,8 @@ extern "C" void FORTRAN_NAME(combine3d)(
  
 /* InterpolateBoundaryFromParent function */
  
-int grid::InterpolateBoundaryFromParent(grid *ParentGrid)
+int grid::InterpolateBoundaryFromParent(grid *ParentGrid, 
+					int CommunicationIndex)
 {
  
   /* Return if this doesn't involve us. */
@@ -243,7 +244,7 @@ int grid::InterpolateBoundaryFromParent(grid *ParentGrid)
       ParentGrid->CommunicationSendRegion(ParentGrid, ProcessorNumber,
 		  ALL_FIELDS, NewOrOld, ParentStartIndex, ParentTempDim,
 					  CommType, this, ParentGrid,
-					  Zero3, Zero3Int);
+					  Zero3, Zero3Int, CommunicationIndex);
       if (CommunicationDirection == COMMUNICATION_POST_RECEIVE ||
 	  CommunicationDirection == COMMUNICATION_SEND)
 	return SUCCESS;

@@ -41,7 +41,8 @@ void InsertPhotonAfter(PhotonPackageEntry * &Node, PhotonPackageEntry * &NewNode
 
 int grid::CommunicationSendPhotonPackages(grid *ToGrid, int ToProcessor,
 					  int ToNumber, int FromNumber, 
-					  PhotonPackageEntry **ToPP)
+					  PhotonPackageEntry **ToPP,
+					  int CommunicationIndex)
 {
 
   int index, dim, temp_int;
@@ -63,7 +64,8 @@ int grid::CommunicationSendPhotonPackages(grid *ToGrid, int ToProcessor,
     mbuffer = new MPIBuffer(this, ToGrid, CommType, MPI_PHOTON_TAG,
 			    NULL, NULL, NULL, iarg);
   } else {
-    mbuffer = NULL;  // Grab from list.
+    MPIBuffer TempBuffer = GetMPIBuffer(CommunicationIndex);  // Grab from list.
+    mbuffer = &TempBuffer;
   }
  
   /* Allocate memory */

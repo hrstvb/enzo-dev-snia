@@ -40,7 +40,8 @@ using Parallel::CommunicationDirection;
 
 int CopyPotentialFieldAverage = 0;
  
-int grid::CopyPotentialField(grid *OtherGrid, FLOAT EdgeOffset[MAX_DIMENSION])
+int grid::CopyPotentialField(grid *OtherGrid, FLOAT EdgeOffset[MAX_DIMENSION],
+			     int CommunicationIndex)
 {
   /* Return if this doesn't involve us. */
  
@@ -160,7 +161,8 @@ int grid::CopyPotentialField(grid *OtherGrid, FLOAT EdgeOffset[MAX_DIMENSION])
     OtherGrid->CommunicationSendRegion(OtherGrid, ProcessorNumber,
 			      POTENTIAL_FIELD, NEW_ONLY, StartOther, Dim,
 				       CommType, this, OtherGrid,
-				       EdgeOffset, Zero3Int);
+				       EdgeOffset, Zero3Int,
+				       CommunicationIndex);
     if (CommunicationDirection == COMMUNICATION_POST_RECEIVE ||
 	CommunicationDirection == COMMUNICATION_SEND)
       return SUCCESS;    

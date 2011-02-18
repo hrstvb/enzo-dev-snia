@@ -30,7 +30,8 @@
 using namespace Parallel;
 
 int grid::CopyOverlappingMassField(grid *OtherGrid,
-				   FLOAT EdgeOffset[MAX_DIMENSION])
+				   FLOAT EdgeOffset[MAX_DIMENSION],
+				   int CommunicationIndex)
 {
  
   if (MyProcessorNumber != ProcessorNumber &&
@@ -120,7 +121,7 @@ int grid::CopyOverlappingMassField(grid *OtherGrid,
 				       GRAVITATING_MASS_FIELD, NEW_ONLY,
 				       StartOther, Dim, CommType,
 				       this, OtherGrid, EdgeOffset,
-				       Zero3Int);
+				       Zero3Int, CommunicationIndex);
     if (Parallel::CommunicationDirection == COMMUNICATION_POST_RECEIVE ||
 	Parallel::CommunicationDirection == COMMUNICATION_SEND)
       return SUCCESS;    

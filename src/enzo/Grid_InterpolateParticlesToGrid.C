@@ -44,7 +44,7 @@ int GetUnits(float *DensityUnits, float *LengthUnits,
 	     float *VelocityUnits, FLOAT Time);
 int CosmologyComputeExpansionFactor(FLOAT time, FLOAT *a, FLOAT *dadt);
 
-int grid::InterpolateParticlesToGrid(FOFData *D)
+int grid::InterpolateParticlesToGrid(FOFData *D, int CommunicationIndex)
 {
 
   if (Parallel::CommunicationDirection == COMMUNICATION_POST_RECEIVE ||
@@ -300,8 +300,11 @@ int grid::InterpolateParticlesToGrid(FOFData *D)
 
 #ifdef USE_MPI
   mpi_header header;
+  MPIBuffer TempBuffer;
+  mbuffer = &TempBuffer;
   if (Parallel::CommunicationDirection == COMMUNICATION_RECEIVE) {
-    mbuffer = NULL;  // Get from list
+    TempBuffer = GetMPIBuffer(CommunicationIndex);  // Grab from list.
+    mbuffer = &TempBuffer;
     buffer = (float*) mbuffer->ReturnBuffer();
     header = mbuffer->ReturnHeader();
     field = header.IArg[0];

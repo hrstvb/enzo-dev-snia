@@ -45,6 +45,7 @@
 #include "CosmologyParameters.h"
 #include "CommunicationUtilities.h"
 #include "EventHooks.h"
+#include "Parallel.h"
 #ifdef TRANSFER
 #include "PhotonCommunication.h"
 #include "ImplicitProblemABC.h"

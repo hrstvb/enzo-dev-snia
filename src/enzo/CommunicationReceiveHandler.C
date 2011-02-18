@@ -173,7 +173,7 @@ int CommunicationReceiveHandler(fluxes **SubgridFluxesEstimate[],
 	CurrentHeader = CurrentBuffer.ReturnHeader();
 	grid_one = CurrentBuffer.ReturnGridOne();
 	grid_two = CurrentBuffer.ReturnGridTwo();
-	CommunicationReceiveIndex = index;
+	//CommunicationReceiveIndex = index;
 
 	/* Copy out the argument if needed */
 
@@ -185,55 +185,58 @@ int CommunicationReceiveHandler(fluxes **SubgridFluxesEstimate[],
 	switch (CurrentHeader.CallType) {
 
 	case 1:
-	  errcode = grid_one->InterpolateBoundaryFromParent(grid_two);
+	  errcode = grid_one->InterpolateBoundaryFromParent(grid_two, index);
 	  break;
 
 	case 2:
-	  errcode = grid_one->CopyZonesFromGrid(grid_two, EdgeOffset);
+	  errcode = grid_one->CopyZonesFromGrid(grid_two, EdgeOffset, index);
 	  break;
 
 	case 3:
 	  errcode = grid_one->
 	    DepositParticlePositions(grid_two, CurrentHeader.FArg[0],
-				     CurrentHeader.IArg[0]);
+				     CurrentHeader.IArg[0], index);
 	  break;
 
 	case 4:
-	  errcode = grid_one->CopyParentToGravitatingFieldBoundary(grid_two);
+	  errcode = grid_one->CopyParentToGravitatingFieldBoundary
+	    (grid_two, index);
 	  break;
 
 	case 5:
-	  errcode = grid_one->DepositBaryons(grid_two,
-					     CurrentHeader.FArg[0]);
+	  errcode = grid_one->DepositBaryons
+	    (grid_two, CurrentHeader.FArg[0], index);
 	  break;
 
 	case 6:
-	  errcode = grid_one->AddOverlappingParticleMassField(grid_two,
-							      EdgeOffset);
+	  errcode = grid_one->AddOverlappingParticleMassField
+	    (grid_two, EdgeOffset, index);
 	  break;
 
 	case 7:
-	  errcode = grid_one->PreparePotentialField(grid_two);
+	  errcode = grid_one->PreparePotentialField(grid_two, index);
 	  break;
 
 	case 8:
-	  errcode = grid_one->CopyOverlappingMassField(grid_two, EdgeOffset);
+	  errcode = grid_one->CopyOverlappingMassField(grid_two, EdgeOffset,
+						       index);
 	  break;
 
 	case 9:
-	  errcode = grid_one->CopyPotentialField(grid_two, EdgeOffset);
+	  errcode = grid_one->CopyPotentialField(grid_two, EdgeOffset,
+						 index);
 	  break;
 
 	case 10:
-	  errcode = grid_one->InterpolateAccelerations(grid_two);
+	  errcode = grid_one->InterpolateAccelerations(grid_two, index);
 	  break;
       
 	case 11:  /* Note this one involves two calls. */
 
 	  /* Project subgrid's refined fluxes to the level of this grid. */
 
-	  if (grid_one->GetProjectedBoundaryFluxes(grid_two, 0, 0,
-					       SubgridFluxesRefined) == FAIL) {
+	  if (grid_one->GetProjectedBoundaryFluxes
+	      (grid_two, 0, 0, SubgridFluxesRefined, index) == FAIL) {
 	    ENZO_FAIL("Error in grid->GetProjectedBoundaryFluxes.\n");
 	  }
 	
@@ -255,7 +258,7 @@ int CommunicationReceiveHandler(fluxes **SubgridFluxesEstimate[],
 #else
 	  if ((errcode = grid_two->CorrectForRefinedFluxes
 	      (SubgridFluxesEstimate[igrid][isubgrid], &SubgridFluxesRefined, 
-	       SubgridFluxesEstimate[igrid][NumberOfSubgrids[igrid] - 1]     ))
+	       SubgridFluxesEstimate[igrid][NumberOfSubgrids[igrid] - 1]))
 	      == FAIL) {
 	    ENZO_FAIL("Error in grid->CorrectForRefinedFluxes.\n");
 	  }
@@ -263,11 +266,11 @@ int CommunicationReceiveHandler(fluxes **SubgridFluxesEstimate[],
 	  break;
 
 	case 12:
-	  errcode = grid_one->ProjectSolutionToParentGrid(*grid_two);
+	  errcode = grid_one->ProjectSolutionToParentGrid(*grid_two, index);
 	  break;
 
 	case 13:
-	  errcode = grid_one->SetParticleMassFlaggingField();
+	  errcode = grid_one->SetParticleMassFlaggingField(index);
 	  break;
 
 	case 14:
@@ -275,7 +278,8 @@ int CommunicationReceiveHandler(fluxes **SubgridFluxesEstimate[],
 	  FromNumber = CurrentHeader.IArg[1];
 	  ToStart    = CurrentHeader.IArg[2];
 	  errcode = grid_one->CommunicationSendParticles
-	    (grid_two, MyProcessorNumber, FromStart, FromNumber, ToStart);
+	    (grid_two, MyProcessorNumber, FromStart, FromNumber, ToStart,
+	     index);
 	  break;
 
 #ifdef TRANSFER
@@ -285,7 +289,7 @@ int CommunicationReceiveHandler(fluxes **SubgridFluxesEstimate[],
 	  PP = grid_one->ReturnPhotonPackagePointer();
 	  errcode = grid_one->CommunicationSendPhotonPackages
 	    (grid_two, MyProcessorNumber, ToNumber, FromNumber,
-	     &PP->NextPackage);
+	     &PP->NextPackage, index);
 	  break;
 #endif /* TRANSFER */
 
@@ -296,22 +300,23 @@ int CommunicationReceiveHandler(fluxes **SubgridFluxesEstimate[],
 	  // post-receive mode.
 	  errcode = grid_one->CommunicationSendRegion
 	    (grid_two, MyProcessorNumber, ALL_FIELDS, NEW_ONLY, Zero,
-	     GridDimension, 0, NULL, NULL, ZeroFL, Zero);
+	     GridDimension, 0, NULL, NULL, ZeroFL, Zero, index);
 	  break;
 
 	case 17:
-	  errcode = grid_one->InterpolateParticlesToGrid(NULL);
+	  errcode = grid_one->InterpolateParticlesToGrid(NULL, index);
 	  break;
 
 	case 18:
-	  errcode = grid_one->CommunicationSendStars(grid_two, 
-						     MyProcessorNumber);
+	  errcode = grid_one->CommunicationSendStars
+	    (grid_two, MyProcessorNumber, index);
 	  break;
 
 #ifdef TRANSFER
 	case 19:
 	  level = CurrentHeader.IArg[0];
-	  errcode = grid_one->SetSubgridMarkerFromParent(grid_two, level);
+	  errcode = grid_one->SetSubgridMarkerFromParent
+	    (grid_two, level, index);
 	  break;
 #endif
 

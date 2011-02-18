@@ -33,7 +33,8 @@ using namespace Parallel;
  
 extern float DepositParticleMaximumParticleMass;
  
-int grid::SetParticleMassFlaggingField(int StartProc, int EndProc, int level, 
+int grid::SetParticleMassFlaggingField(int CommunicationIndex,
+				       int StartProc, int EndProc, int level, 
 				       int ParticleMassMethod, int *SendProcs,
 				       int NumberOfSends)
 {
@@ -68,8 +69,10 @@ int grid::SetParticleMassFlaggingField(int StartProc, int EndProc, int level,
   if (Parallel::CommunicationDirection == COMMUNICATION_POST_RECEIVE ||
       Parallel::CommunicationDirection == COMMUNICATION_SEND)
     mbuffer = new MPIBuffer(this, NULL, CommType, MPI_SENDPMFLAG_TAG);
-  else
-    mbuffer = NULL;  // Get from list
+  else {
+    MPIBuffer TempBuffer = GetMPIBuffer(CommunicationIndex);  // Grab from list.
+    mbuffer = &TempBuffer;
+  }
 
 #endif /* USE_MPI */
 

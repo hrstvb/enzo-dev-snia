@@ -333,7 +333,7 @@ public:
             (returns success or fail).
     (for step #16) */
 
-   int InterpolateBoundaryFromParent(grid *ParentGrid);
+  int InterpolateBoundaryFromParent(grid *ParentGrid, int CommunicationIndex=0);
 
 /* Member functions for dealing with thermal conduction */
    int ComputeHeat(float dedt[]);	     /* Compute Heat */
@@ -378,7 +378,7 @@ public:
            the current grid to the appropriate level).
     (for step #18) */
 
-   int ProjectSolutionToParentGrid(grid &ParentGrid);
+   int ProjectSolutionToParentGrid(grid &ParentGrid, int CommunicationIndex=0);
 
 /* Baryons: return boundary fluxes from this grid.  Downsample them to
            the refinement factors specified in the argument.
@@ -387,7 +387,7 @@ public:
 
    int GetProjectedBoundaryFluxes(grid *ParentGrid, int grid_num,
 				  int subgrid_num, fluxes &ProjectedFluxes,
-				  int IsSubling=FALSE);
+				  int IsSubling, int CommunicationFluxes=0);
 
 /* Return the refinement factors as compared to the grid in the argument
    (integer version) (for step #19) */
@@ -730,7 +730,8 @@ public:
 /* Sum particle mass flagging fields into ProcessorNumber if particles
    aren't local. */
 
-   int SetParticleMassFlaggingField(int StartProc=0, int EndProc=0, int level=-1, 
+   int SetParticleMassFlaggingField(int CommunicationIndex=0, int StartProc=0, 
+				    int EndProc=0, int level=-1, 
 				    int ParticleMassMethod=-1, int *SendProcs=NULL, 
 				    int NumberOfSends=0);
    int CollectParticleMassFlaggingField(void);
@@ -882,7 +883,8 @@ public:
 		       boundary_type LeftFaceBoundaryCondition[],
 		       boundary_type RightFaceBoundaryCondition[],
 		       int (grid::*CopyFunction)(grid *OtherGrid,
-						 FLOAT EdgeOffset[]));
+						 FLOAT EdgeOffset[],
+						 int CommunicationIndex));
 
  
 
@@ -917,13 +919,15 @@ public:
             (gg #7).  Return SUCCESS or FAIL. */
 
    int CopyZonesFromGrid(grid *GridOnSameLevel, 
-			 FLOAT EdgeOffset[MAX_DIMENSION]);
+			 FLOAT EdgeOffset[MAX_DIMENSION],
+			 int CommunicationIndex=0);
 
 /* gravity: copy coincident potential field zones from grid in the argument
             (gg #7).  Return SUCCESS or FAIL. */
 
    int CopyPotentialField(grid *GridOnSameLevel, 
-			  FLOAT EdgeOffset[MAX_DIMENSION]);
+			  FLOAT EdgeOffset[MAX_DIMENSION],
+			  int CommunicationIndex);
 
 /* baryons: check for coincident zone from the (old) grid in the argument
             (gg #7).  Return SUCCESS or FAIL. */
@@ -991,7 +995,8 @@ public:
 /* Gravity & baryons: Copy the parent density field to the extra boundary
       region of GravitatingMassField (if any). */
 
-   int CopyParentToGravitatingFieldBoundary(grid *ParentGrid);
+   int CopyParentToGravitatingFieldBoundary(grid *ParentGrid, 
+					    int CommunicationIndex=0);
 
 /* Gravity & Particles: allocate & clear the GravitatingMassFieldParticles. */
 
@@ -1017,7 +1022,7 @@ public:
 
 /* Gravity: Interpolate accelerations from other grid. */
 
-   int InterpolateAccelerations(grid *FromGrid);
+   int InterpolateAccelerations(grid *FromGrid, int CommunicationIndex=0);
 
 /* Gravity: Compute particle and grid accelerations. */
 
@@ -1027,11 +1032,12 @@ public:
    GravitatingMassField. */
 
    int CopyOverlappingMassField(grid *TargetGrid, 
-				FLOAT EdgeOffset[MAX_DIMENSION]);
+				FLOAT EdgeOffset[MAX_DIMENSION],
+				int CommunicationIndex=0);
 
 /* Gravity: Allocate and make initial guess for PotentialField. */
 
-   int PreparePotentialField(grid *ParentGrid);
+   int PreparePotentialField(grid *ParentGrid, int CommunicationIndex=0);
 
 /* Gravity: Allocate and make initial guess for PotentialField. */
 
@@ -1097,7 +1103,8 @@ public:
 
 /* Gravity: deposit baryons into target GravitatingMassField. */
 
-   int DepositBaryons(grid *TargetGrid, FLOAT DepositTime);
+   int DepositBaryons(grid *TargetGrid, FLOAT DepositTime,
+		      int CommunicationIndex=0);
 
 // -------------------------------------------------------------------------
 // Functions for accessing various grid-based information
@@ -1226,7 +1233,7 @@ public:
               TargetGrid at the given time. */
 
    int DepositParticlePositions(grid *TargetGrid, FLOAT DepositTime, 
-				int DepositField);
+				int DepositField, int CommunicationIndex=0);
 
    int DepositParticlePositionsLocal(FLOAT DepositTime, int DepositField);
 
@@ -1234,7 +1241,8 @@ public:
    GravitatingMassField. */
 
    int AddOverlappingParticleMassField(grid *TargetGrid, 
-				       FLOAT EdgeOffset[MAX_DIMENSION]);
+				       FLOAT EdgeOffset[MAX_DIMENSION],
+				       int CommunicationIndex=0);
 
 /* Particles: Apply particle acceleration to velocity for particles in this 
               grid
@@ -1448,7 +1456,8 @@ int CreateParticleTypeGrouping(hid_t ptype_dset,
   int CommunicationSendRegion(grid *ToGrid, int ToProcessor,int SendField,
 			      int NewOrOld, int RegionStart[], int RegionDim[],
 			      int CommType, grid* grid_one, grid* grid_two,
-			      FLOAT CommArg[], int CommArgInt[]);
+			      FLOAT CommArg[], int CommArgInt[],
+			      int CommunicationIndex=0);
 
 /* Send a region from a 'fake' grid to a real grid on another processor. */
 
@@ -1456,7 +1465,8 @@ int CreateParticleTypeGrouping(hid_t ptype_dset,
 				 int SendField, int NewOrOld,
 				 int RegionStart[], int RegionDim[],
 				 int IncludeBoundary, int CommType,
-				 grid *grid_one, grid *grid_two);
+				 grid *grid_one, grid *grid_two,
+				 int CommunicationIndex=0);
 
 /* Move a grid from one processor to another. */
 
@@ -1466,7 +1476,8 @@ int CreateParticleTypeGrouping(hid_t ptype_dset,
 /* Send particles from one grid to another. */
 
   int CommunicationSendParticles(grid *ToGrid, int ToProcessor, 
-				int FromStart, int FromNumber, int ToStart);
+				 int FromStart, int FromNumber, int ToStart,
+				 int CommunicationIndex=0);
 
 /* Transfer particle amount level 0 grids. */
 
@@ -2282,7 +2293,8 @@ int inteuler(int idim,
 
   int MoveAllStarsOld(int NumberOfGrids, grid* FromGrid[], int TopGridDimension);
 
-  int CommunicationSendStars(grid *ToGrid, int ToProcessor);
+  int CommunicationSendStars(grid *ToGrid, int ToProcessor,
+			     int CommunicationIndex=0);
 
   int TransferSubgridStars(int NumberOfSubgrids, grid* ToGrids[], int AllLocal);
   
@@ -2369,7 +2381,7 @@ int inteuler(int idim,
 		       int &Index, FOFData AllVars, float VelocityUnits, 
 		       double MassUnits, int CopyDirection);
 
-  int InterpolateParticlesToGrid(FOFData *D);
+  int InterpolateParticlesToGrid(FOFData *D, int CommunicationIndex=0);
 
 //------------------------------------------------------------------------
 //  Grid star particles onto the AMR mesh

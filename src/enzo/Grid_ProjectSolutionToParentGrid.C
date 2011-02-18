@@ -49,7 +49,7 @@ extern "C" void FORTRAN_NAME(div3d)(float *source, float *dest,
                                     int *rend1, int *rend2, int *rend3);
  
  
-int grid::ProjectSolutionToParentGrid(grid &ParentGrid)
+int grid::ProjectSolutionToParentGrid(grid &ParentGrid, int CommunicationIndex)
 {
   /* Return if this doesn't involve us. */
  
@@ -214,7 +214,7 @@ int grid::ProjectSolutionToParentGrid(grid &ParentGrid)
       ParentRegionDim[dim] = ParentEndIndex[dim] - ParentStartIndex[dim] + 1;
     ParentGrid.CommunicationReceiveRegion(&ParentGrid, ProcessorNumber,
 	  ALL_FIELDS, NEW_ONLY, ParentStartIndex, ParentRegionDim, TRUE,
-					  12, this, &ParentGrid);
+			     12, this, &ParentGrid, CommunicationIndex);
 
     /* Return if only posting the receive, not actually getting the data. */
 

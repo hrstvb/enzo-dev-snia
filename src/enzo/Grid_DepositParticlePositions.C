@@ -49,11 +49,6 @@ extern "C" void PFORTRAN_NAME(smooth_deposit)(FLOAT *posx, FLOAT *posy,
                         int *dim1, int *dim2, int *dim3, float *cellsize,
 			float *rsmooth);
 
-#ifdef USE_MPI
-int CommunicationBufferedSend(void *buffer, int size, MPI_Datatype Type, 
-                              int Target, int Tag, MPI_Comm CommWorld, 
-			      int BufferSize);
-#endif /* USE_MPI */
 double ReturnWallTime(void);
 
 /* This controls the maximum particle mass which will be deposited in
@@ -62,7 +57,7 @@ double ReturnWallTime(void);
 float DepositParticleMaximumParticleMass = 0;
  
 int grid::DepositParticlePositions(grid *TargetGrid, FLOAT DepositTime,
-				   int DepositField)
+				   int DepositField, int CommunicationIndex)
 {
  
   /* Return if this doesn't concern us. */
@@ -199,7 +194,8 @@ int grid::DepositParticlePositions(grid *TargetGrid, FLOAT DepositTime,
       mbuffer = new MPIBuffer(this, TargetGrid, CommType, MPI_SENDREGION_TAG,
 			      Offset, Dimension, farg, iarg);
     } else {
-      mbuffer = NULL; // Grab from list
+      MPIBuffer TempBuffer = GetMPIBuffer(CommunicationIndex);  // Grab from list.
+      mbuffer = &TempBuffer;
     }
     
 

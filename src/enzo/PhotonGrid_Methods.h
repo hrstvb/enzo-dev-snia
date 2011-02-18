@@ -48,9 +48,11 @@ void DeleteSubgridMarker() { delete [] SubgridMarker; SubgridMarker = NULL; };
 /* Set Subgrid Marker field */
 
    int SetSubgridMarkerFromSubgrid(grid *Subgrid);
-   int SetSubgridMarkerFromParent(grid *Parent, int level);
+   int SetSubgridMarkerFromParent(grid *Parent, int level, 
+				  int CommunicationIndex=0);
    int SetSubgridMarkerFromSibling(grid *Sibling, 
-				   FLOAT EdgeOffset[MAX_DIMENSION]);
+				   FLOAT EdgeOffset[MAX_DIMENSION],
+				   int CommunicationIndex=0);
    int SubgridMarkerPostParallel(HierarchyEntry **Grids[], int *NumberOfGrids);
    int SubgridMarkerPostParallelGZ(grid *Parent, HierarchyEntry **Grids[],
 				   int *NumberOfGrids);
@@ -86,7 +88,8 @@ void DeleteSubgridMarker() { delete [] SubgridMarker; SubgridMarker = NULL; };
 
   int CommunicationSendPhotonPackages(grid *ToGrid, int ToProcessor,
 				      int ToNumber, int FromNumber, 
-				      PhotonPackageEntry **ToPP);
+				      PhotonPackageEntry **ToPP,
+				      int CommunicationIndex=0);
 
 /* Transport Photon Packages */ 
 

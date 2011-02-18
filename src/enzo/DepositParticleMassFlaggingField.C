@@ -32,7 +32,7 @@
 #include "LevelHierarchy.h"
 #include "Parallel.h"
 
-using Parallel::MPI_TwoInt;
+using namespace Parallel;
 
 /* Because we're basically doing a non-blocking MPI_Reduce(MPI_SUM),
    we need to allocate buffers for each on all processors.  Split up
@@ -329,7 +329,7 @@ int DepositParticleMassFlaggingField(LevelHierarchyEntry* LevelArray[],
 	      for (i = 0; i < nSends; i++)
 		SendProcs[i] = SharedList[count-i-1].proc;
 	      if (Grids[grid1]->GridData->SetParticleMassFlaggingField
-		  (StartProc, EndProc, level, ParticleMassMethod, SendProcs,
+		  (0, StartProc, EndProc, level, ParticleMassMethod, SendProcs,
 		   nSends) == FAIL) {
 		ENZO_FAIL("Error in grid->SetParticleMassFlaggingField"
 			"(receive).\n");

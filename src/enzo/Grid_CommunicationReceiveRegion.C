@@ -47,7 +47,8 @@ int grid::CommunicationReceiveRegion(grid *FromGrid, int FromProcessor,
 				     int SendField, int NewOrOld,
 				     int RegionStart[], int RegionDim[],
 				     int IncludeBoundary, int CommType,
-				     grid *grid_one, grid *grid_two)
+				     grid *grid_one, grid *grid_two,
+				     int CommunicationIndex)
 {
 #ifdef USE_MPI 
 
@@ -89,11 +90,13 @@ int grid::CommunicationReceiveRegion(grid *FromGrid, int FromProcessor,
  
   MPIBuffer *mbuffer = NULL;
   if (Parallel::CommunicationDirection == COMMUNICATION_POST_RECEIVE ||
-      Parallel::CommunicationDirection == COMMUNICATION_SEND)
+      Parallel::CommunicationDirection == COMMUNICATION_SEND) {
     mbuffer = new MPIBuffer(grid_one, grid_two, CommType, 
 			    MPI_RECEIVEREGION_TAG, FromOffset, FromDim);
-  else
-    mbuffer = NULL;  // Grab from list.
+  } else {
+    MPIBuffer TempBuffer = GetMPIBuffer(CommunicationIndex);  // Grab from list.
+    mbuffer = &TempBuffer;
+  }
  
   // Allocate buffer
  

@@ -35,11 +35,6 @@ using namespace Parallel;
  
 int CosmologyComputeExpansionFactor(FLOAT time, FLOAT *a, FLOAT *dadt);
  
-#ifdef USE_MPI
-int CommunicationBufferedSend(void *buffer, int size, MPI_Datatype Type, int Target,
-			      int Tag, MPI_Comm CommWorld, int BufferSize);
-#endif /* USE_MPI */
- 
 extern "C" void FORTRAN_NAME(dep_grid_cic)(
                                float *source, float *dest, float *temp,
 			       float *velx, float *vely, float *velz,
@@ -57,7 +52,8 @@ int RK2SecondStepBaryonDeposit = 0;
 
 /* InterpolateBoundaryFromParent function */
  
-int grid::DepositBaryons(grid *TargetGrid, FLOAT DepositTime)
+int grid::DepositBaryons(grid *TargetGrid, FLOAT DepositTime,
+			 int CommunicationIndex)
 {
  
   /* If this doesn't concern us, return. */
@@ -162,7 +158,8 @@ int grid::DepositBaryons(grid *TargetGrid, FLOAT DepositTime)
     mbuffer = new MPIBuffer(this, TargetGrid, CommType, MPI_SENDREGION_TAG,
 			    GridOffset, RegionDim, farg);
   } else {
-    mbuffer = NULL; // Grab from list
+    MPIBuffer TempBuffer = GetMPIBuffer(CommunicationIndex);  // Grab from list.
+    mbuffer = &TempBuffer;
   }
  
   /* Prepare the density field. */

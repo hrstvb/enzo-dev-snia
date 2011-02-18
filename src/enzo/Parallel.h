@@ -18,6 +18,12 @@
 #ifndef __PARALLEL_H
 #define __PARALLEL_H
 
+#ifdef DEFINE_STORAGE
+# define EXTERN
+#else /* DEFINE_STORAGE */
+# define EXTERN extern
+#endif
+
 #define COMMUNICATION_NO_DEPENDENCE -1
 
 #ifdef USE_MPI
@@ -70,18 +76,18 @@ namespace Parallel
       (CommunicationReceiveHandler) which does this for all the receieve
       methods. */
 
-  static int CommunicationDirection;
+  EXTERN int CommunicationDirection;
 
 /* This variable contains the most recent receive dependence; that is, the
    index of the receive handler which must complete first. */
 
-  static int CommunicationReceiveCurrentDependsOn;
+  EXTERN int CommunicationReceiveCurrentDependsOn;
 
 /* This is the index of the current receive buffer.  Alterations of
    CommunicationReceiveIndex or CommunicationGridID MUST be done in
    omp critical sections because they are global. */
 
-  static int CommunicationReceiveIndex;
+  EXTERN int CommunicationReceiveIndex;
 
 /* This is the grid ID of the receiving and sending grid that is being
    processed for use with thread-safe MPI tags.  Used in MPI
@@ -111,17 +117,17 @@ namespace Parallel
                   method which generated the handle.                     */
 
 #ifdef USE_MPI
-  static MPI_Datatype MPI_Header;
-  static MPI_Datatype MPI_StarBuffer;
-  static MPI_Datatype MPI_ParticleEntry;
-  static MPI_Datatype MPI_PackedGrid;
-  static MPI_Datatype MPI_ParticleMoveList;
-  static MPI_Datatype MPI_StarMoveList;
-  static MPI_Datatype MPI_ParticleShareList;
-  static MPI_Datatype MPI_StarShareList;
-  static MPI_Datatype MPI_PhotonList;
-  static MPI_Datatype MPI_TwoInt;
-  static MPI_Datatype MPI_PhotonBuffer;
+  EXTERN MPI_Datatype MPI_Header;
+  EXTERN MPI_Datatype MPI_StarBuffer;
+  EXTERN MPI_Datatype MPI_ParticleEntry;
+  EXTERN MPI_Datatype MPI_PackedGrid;
+  EXTERN MPI_Datatype MPI_ParticleMoveList;
+  EXTERN MPI_Datatype MPI_StarMoveList;
+  EXTERN MPI_Datatype MPI_ParticleShareList;
+  EXTERN MPI_Datatype MPI_StarShareList;
+  EXTERN MPI_Datatype MPI_PhotonList;
+  EXTERN MPI_Datatype MPI_TwoInt;
+  EXTERN MPI_Datatype MPI_PhotonBuffer;
 
   //MPI_Request  CommunicationReceiveMPI_Request[MAX_RECEIVE_BUFFERS];
   //MPI_Datatype CommunicationReceiveMPI_Datatype[MAX_RECEIVE_BUFFERS];
@@ -176,7 +182,7 @@ namespace Parallel
     
   }; // ENDCLASS    
 
-  static list<MPIBuffer> CommunicationMPIBuffer;
+  EXTERN list<MPIBuffer> CommunicationMPIBuffer;
 
   void GenerateMPIRequestArray(MPI_Request *result);
   MPIBuffer GetMPIBuffer(int num);

@@ -45,7 +45,8 @@ extern "C" void FORTRAN_NAME(prolong)(float *source, float *dest, int *ndim,
  
 /* InterpolateBoundaryFromParent function */
  
-int grid::CopyParentToGravitatingFieldBoundary(grid *ParentGrid)
+int grid::CopyParentToGravitatingFieldBoundary(grid *ParentGrid,
+					       int CommunicationIndex)
 {
  
   /* If this doesn't concern us, return. */
@@ -114,7 +115,7 @@ int grid::CopyParentToGravitatingFieldBoundary(grid *ParentGrid)
     ParentGrid->CommunicationSendRegion
       (ParentGrid, ProcessorNumber, GRAVITATING_MASS_FIELD, NEW_ONLY, 
        ParentStartIndex, ParentTempDim, CommType, this, ParentGrid, 
-       Zero3, ZeroInt3);
+       Zero3, ZeroInt3, CommunicationIndex);
     if (Parallel::CommunicationDirection == COMMUNICATION_POST_RECEIVE ||
 	Parallel::CommunicationDirection == COMMUNICATION_SEND)
       return SUCCESS;

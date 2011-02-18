@@ -30,7 +30,8 @@
 using Parallel::CommunicationDirection;
  
 int grid::AddOverlappingParticleMassField(grid *OtherGrid,
-					  FLOAT EdgeOffset[MAX_DIMENSION])
+					  FLOAT EdgeOffset[MAX_DIMENSION],
+					  int CommunicationIndex)
 {
  
   if (MyProcessorNumber != ProcessorNumber &&
@@ -116,7 +117,7 @@ int grid::AddOverlappingParticleMassField(grid *OtherGrid,
     OtherGrid->CommunicationSendRegion
       (OtherGrid, ProcessorNumber, GRAVITATING_MASS_FIELD_PARTICLES, 
        NEW_ONLY, StartOther, Dim, CommType, this, OtherGrid, 
-       EdgeOffset, Zero3Int);
+       EdgeOffset, Zero3Int, CommunicationIndex);
     if (CommunicationDirection == COMMUNICATION_POST_RECEIVE ||
 	CommunicationDirection == COMMUNICATION_SEND)
       return SUCCESS;    

@@ -51,7 +51,8 @@ extern "C" void FORTRAN_NAME(copy3drel)(float *source, float *dest,
 int FindField(int field, int farray[], int numfields);
 
  
-int grid::CopyZonesFromGrid(grid *OtherGrid, FLOAT EdgeOffset[MAX_DIMENSION])
+int grid::CopyZonesFromGrid(grid *OtherGrid, FLOAT EdgeOffset[MAX_DIMENSION],
+			    int CommunicationIndex)
 {
  
   /* Return if this doesn't involve us. */
@@ -237,7 +238,7 @@ int grid::CopyZonesFromGrid(grid *OtherGrid, FLOAT EdgeOffset[MAX_DIMENSION])
 				       ALL_FIELDS, NEW_ONLY, StartOther, 
 				       ShearingCommunicationDims, CommType,
 				       this, OtherGrid, EdgeOffset,
-				       Zero3Int);
+				       Zero3Int, CommunicationIndex);
     
     if (CommunicationDirection == COMMUNICATION_POST_RECEIVE ||
 	CommunicationDirection == COMMUNICATION_SEND)
