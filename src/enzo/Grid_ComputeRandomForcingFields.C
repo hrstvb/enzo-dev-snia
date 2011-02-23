@@ -10,9 +10,10 @@
 /           mode = 1 ==> fill out random force
 ************************************************************************/
 
-#include <string.h>
 #include <stdio.h>
-#include <assert.h>
+#include <stdlib.h>
+#include <math.h>
+#include "ErrorExceptions.h"
 #include "macros_and_parameters.h"
 #include "typedefs.h"
 #include "global_data.h"
@@ -26,7 +27,7 @@
 extern "C" void FORTRAN_NAME(turboinit)(int *rank, int *nbox,
                           float *u, float *v, float *w,
                           int *in, int *jn, int *kn,
-					int *ig, int *jg, int *kg, float * RandomMachNumber);
+					int *ig, int *jg, int *kg, FLOAT * RandomMachNumber);
 
 int grid::ComputeRandomForcingFields(int mode)
 {
