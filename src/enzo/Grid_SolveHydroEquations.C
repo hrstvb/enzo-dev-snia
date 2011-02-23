@@ -420,20 +420,24 @@ int grid::SolveHydroEquations(int CycleNumber, int NumberOfSubgrids,
     int GravityOn = 0, FloatSize = sizeof(float);
     if (SelfGravity || UniformGravity || PointSourceGravity)
       GravityOn = 1;
+#ifdef TRANSFER
+    if (RadiationPressure)
+      GravityOn = 1;
+#endif    
 
     /* Call Solver on this grid.
        Notice that it is hard-wired for three dimensions, but it does
        the right thing for < 3 dimensions. */
     /* note: Start/EndIndex are zero based */
         
-    if (HydroMethod == PPM_DirectEuler && ProblemType != 70)
+    if (HydroMethod == PPM_DirectEuler)
       this->SolvePPM_DE(CycleNumber, NumberOfSubgrids, SubgridFluxes, 
 			CellWidthTemp, GridGlobalStart, GravityOn, 
 			NumberOfColours, colnum);
 
     /* PPM LR has been withdrawn. */
 
-    if (HydroMethod == PPM_LagrangeRemap && ProblemType != 70) {
+    if (HydroMethod == PPM_LagrangeRemap) {
 #ifdef PPM_LR
       FORTRAN_NAME(ppm_lr)(
 			density, totalenergy, velocity1, velocity2, velocity3,
@@ -460,7 +464,7 @@ int grid::SolveHydroEquations(int CycleNumber, int NumberOfSubgrids,
 #endif /* PPM_LR */
     }
 
-    if (HydroMethod == Zeus_Hydro && ProblemType != 70)
+    if (HydroMethod == Zeus_Hydro)
       if (this->ZeusSolver(GammaField, UseGammaField, CycleNumber, 
 			   CellWidthTemp[0], CellWidthTemp[1], CellWidthTemp[2],
 			   GravityOn, NumberOfSubgrids, GridGlobalStart,
@@ -469,6 +473,7 @@ int grid::SolveHydroEquations(int CycleNumber, int NumberOfSubgrids,
 			   MinimumSupportEnergyCoefficient) == FAIL)
 	ENZO_FAIL("ZeusSolver() failed!\n");
 	
+
 
     /* Clean up allocated fields. */
 
