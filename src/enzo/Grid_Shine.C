@@ -182,8 +182,12 @@ int grid::Shine(RadiationSourceEntry *RadiationSource)
 	  NewPack->NextPackage->PreviousPackage  = NewPack;
 	NewPack->Photons = photons_per_package;
 
-	// Type 4 = X-Ray
-	NewPack->Type = ((RS->Type == BlackHole || RS->Type == MBH) && i == 0) ? 4 : ebin;
+	// Type 4 = X-Ray (>100 eV always.  if not, use X-rays for BHs)
+	if (RS->Energy[ebin] > 100)
+	  NewPack->Type = 4;
+	else
+	  NewPack->Type = 
+	    ((RS->Type == BlackHole || RS->Type == MBH) && i == 0) ? 4 : ebin;
 
 	// Type 5 = tracing spectrum (check Grid_WalkPhotonPackage)
 	if (RadiativeTransferTraceSpectrum) NewPack->Type = 5;  //#####

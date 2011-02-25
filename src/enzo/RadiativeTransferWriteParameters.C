@@ -71,6 +71,8 @@ int RadiativeTransferWriteParameters(FILE *fptr)
 	  RadiativeTransferHydrogenOnly);
   fprintf(fptr, "RadiativeTransferColumnDensityField       = %"ISYM"\n", 
 	  RadiativeTransferColumnDensityField);
+  fprintf(fptr, "RadiativeTransferXDRCooling               = %"ISYM"\n", 
+	  RadiativeTransferXDRCooling);
   fprintf(fptr, "RadiativeTransferTraceSpectrum            = %"ISYM"\n", 
 	  RadiativeTransferTraceSpectrum);
   fprintf(fptr, "RadiativeTransferTraceSpectrumTable       = %s\n\n", 

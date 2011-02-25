@@ -58,6 +58,8 @@ int grid::FinalizeRadiationFields(void)
   IdentifyRadiativeTransferFields(kphHINum, gammaNum, kphHeINum, 
 				  kphHeIINum, kdissH2INum);
 
+  int XFluxNum = FindField(XRayFlux, FieldType, NumberOfBaryonFields);
+
   /* Get units. */
 
   float LengthUnits, TimeUnits, TemperatureUnits, VelocityUnits, 
@@ -93,9 +95,19 @@ int grid::FinalizeRadiationFields(void)
       } // ENDFOR j
   
   if (RadiativeTransferHIIRestrictedTimestep &&
-
       this->IndexOfMaximumkph >= 0)
     this->MaximumkphIfront /= (factor * BaryonField[HINum][IndexOfMaximumkph]);
+
+  if (RadiativeTransferXDRCooling) {
+    float CellAreaInv = 1.0/(CellWidth[0][0] * CellWidth[1][0]);
+    for (k = GridStartIndex[2]; k <= GridEndIndex[2]; k++)
+      for (j = GridStartIndex[1]; j <= GridEndIndex[1]; j++) {
+	index = GRIDINDEX_NOGHOST(GridStartIndex[0],j,k);
+	for (i = GridStartIndex[0]; i <= GridEndIndex[0]; i++, index++) {
+	  BaryonField[XFluxNum][index] *= CellAreaInv;
+	} // ENDFOR i
+      } // ENDFOR j
+  }
 
 #endif /* TRANSFER */  
   

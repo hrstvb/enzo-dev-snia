@@ -64,6 +64,7 @@ int RadiativeTransferInitialize(char *ParameterFile,
   const char    *Rad2Name      = "Radiation2";
   const char    *Rad3Name      = "Radiation3";
   const char    *ColDensName   = "Column_Density";
+  const char    *XRayFluxName  = "XRay_Flux";
 
   int i, j, k, level;
   FILE *fptr;
@@ -136,6 +137,8 @@ int RadiativeTransferInitialize(char *ParameterFile,
 	TypesToAdd[FieldsToAdd++] = RaySegments;
       if (RadiativeTransferColumnDensityField)
 	TypesToAdd[FieldsToAdd++] = ColumnDensity;
+      if (RadiativeTransferXDRCooling)
+	TypesToAdd[FieldsToAdd++] = XRayFlux;
     }
 
     if (StarParticleFeedback && !AddedMetallicity)
@@ -273,6 +276,9 @@ int RadiativeTransferInitialize(char *ParameterFile,
       break;
     case ColumnDensity:
       DataLabel[OldNumberOfBaryonFields+i] = (char*) ColDensName;
+      break;
+    case XRayFlux:
+      DataLabel[OldNumberOfBaryonFields+i] = (char*) XRayFluxName;
       break;
     } // ENDSWITCH
   } // ENDFOR fields

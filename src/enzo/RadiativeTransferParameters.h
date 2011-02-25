@@ -99,6 +99,11 @@ EXTERN char *RadiativeTransferTraceSpectrumTable;
 
 EXTERN int RadiativeTransferLoadBalance;
 
-/* Flag to create a field for column density (internal) */
+/* Flag to create a column density field (internal) */
 
 EXTERN int RadiativeTransferColumnDensityField;
+
+/* Flag to use cooling tables from a XDR (X-ray dissociation region)
+   code */
+
+EXTERN int RadiativeTransferXDRCooling;

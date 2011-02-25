@@ -45,7 +45,7 @@ int grid::WalkPhotonPackage(PhotonPackageEntry **PP,
 			    int kphHINum, int gammaNum, int kphHeINum, 
 			    int kphHeIINum, int kdissH2INum, int RPresNum1, 
 			    int RPresNum2, int RPresNum3, int RaySegNum, 
-			    int ColDensNum, int &DeleteMe, 
+			    int ColDensNum, int XFluxNum, int &DeleteMe, 
 			    int &PauseMe, int &DeltaLevel, float LightCrossingTime,
 			    float DensityUnits, float TemperatureUnits,
 			    float VelocityUnits, float LengthUnits,
@@ -745,6 +745,11 @@ int grid::WalkPhotonPackage(PhotonPackageEntry **PP,
 	BaryonField[ColDensNum][index] = (*PP)->ColumnDensity;
       else
 	BaryonField[ColDensNum][index] = (*PP)->ColumnDensity * LengthUnits;
+
+    if (RadiativeTransferXDRCooling)
+      if (type == 4)
+	BaryonField[XFluxNum][index] += (*PP)->Photons;
+	
 
     // return in case we're pausing to merge
     if (PauseMe)
