@@ -28,6 +28,7 @@
 #include "CosmologyParameters.h"
 
 // Function prototypes
+int CosmologyComputeExpansionFactor(FLOAT time, FLOAT *a, FLOAT *dadt);
 int GetUnits (float *DensityUnits, float *LengthUnits,
 	      float *TemperatureUnits, float *TimeUnits,
 	      float *VelocityUnits, double *MassUnits, FLOAT Time);
@@ -41,23 +42,37 @@ int grid::ComputeHeat (float dedt[]) {
   if (NumberOfBaryonFields == 0)
     return SUCCESS;
 
-  this->DebugCheck("ConductHeat");
+  this->DebugCheck("ComputeHeat");
 
   // Some locals
   int DensNum, TENum, GENum, Vel1Num, Vel2Num, Vel3Num;
   float TemperatureUnits = 1.0, DensityUnits = 1.0, LengthUnits = 1.0;
-  float VelocityUnits = 1.0, TimeUnits = 1.0;
+  float VelocityUnits = 1.0, TimeUnits = 1.0, aUnits = 1.0;
+  FLOAT a = 1.0, dadt;
   double MassUnits = 1.0;
-  float *rho;
+  float *rho,*Bx,*By,*Bz;
   double kappa_star = 6.0e-7 * ConductionSpitzerFraction;
+  float Bx_face, By_face, Bz_face, Bhat, Bmag;
 
-  int size = 1; 
-
-  for (int dim = 0; dim < GridRank; dim++) 
+  int size = 1, grid_index, right_side_index;
+  for (int dim = 0; dim < GridRank; dim++) {
     size *= GridDimension[dim];
+  }
 
   float *Temp = new float[size];
   FLOAT dx = CellWidth[0][0];
+
+  if (AnisotropicConduction){
+    // find fields
+    iBx=FindField(Bfield1, FieldType, NumberOfBaryonFields);
+    iBy=FindField(Bfield2, FieldType, NumberOfBaryonFields);
+    iBz=FindField(Bfield3, FieldType, NumberOfBaryonFields);
+    // make masks (easier later)
+    Bx = BaryonField[iBx];
+    By = BaryonField[iBy];
+    Bz = BaryonField[iBz];
+
+  }
 
   // Zero-out the de/dt array
   for (int i=0; i<size; i++) 
@@ -69,8 +84,20 @@ int grid::ComputeHeat (float dedt[]) {
     ENZO_FAIL("Error in GetUnits.");
   }
 
+  if (ComovingCoordinates) {
+ 
+    if (CosmologyComputeExpansionFactor(Time, &a, &dadt)
+	== FAIL) {
+      ENZO_FAIL("Error in CosmologyComputeExpansionFactors.\n");
+    }
+ 
+    aUnits = 1.0/(1.0 + InitialRedshift);
+ 
+  }
+
   // conversion from CGS to Enzo internal units for de/dt
-  double units = POW(TimeUnits, 3.0)/POW(LengthUnits, 4.0)/DensityUnits;
+  double units = a * POW(TimeUnits, 3.0) * POW(aUnits, 2.0) / 
+    POW(LengthUnits, 4.0) / DensityUnits;
 
   // for conduction saturation
   double saturation_factor = 4.874e-20 / (DensityUnits * LengthUnits * dx);
@@ -94,10 +121,10 @@ int grid::ComputeHeat (float dedt[]) {
   rho = BaryonField[DensNum];
 
   // Set up a struct to hold properties defined on cell faces
-  struct cellface {float T, dT, kappa, dedt;} l, r, cfzero;
+  struct cellface {float T, dT, kappa, dedt, rho;} l, r, cfzero;
 
   // zero struct
-  cfzero.T = cfzero.dT = cfzero.kappa = cfzero.dedt = 0.0;
+  cfzero.T = cfzero.dT = cfzero.kappa = cfzero.dedt = cfzero.rho = 0.0;
 
   /* When computing heat, loop over the whole grid, EXCEPT for the
      first and last cells.*/
@@ -105,8 +132,8 @@ int grid::ComputeHeat (float dedt[]) {
     GridEnd[] = {0, 0, 0};
 
   for (int dim = 0; dim<GridRank; dim++) {
-    GridStart[dim] = 1;
-    GridEnd[dim] = GridDimension[dim]-2;
+    GridStart[dim] = 0;
+    GridEnd[dim] = GridDimension[dim]-1;
   }
 
   /* for each grid rank (x,y,z) loop over 1D 'pencils' and calculate
@@ -122,18 +149,41 @@ int grid::ComputeHeat (float dedt[]) {
 	for (int i = GridStart[0]; i <= GridEnd[0]; i++) {
 	  l = r;
 
-	  // get temperature, temperature gradient on + face of cell
-	  // (the 'l' struct has it on the right face)
-	  r.T = POW(Temp[ELT(i,j,k)]*Temp[ELT(i+1,j,k)], 0.50);
-	  r.dT = Temp[ELT(i,j,k)] - Temp[ELT(i+1,j,k)];
+	  grid_index = ELT(i,j,k);
+	  right_side_index = ELT(i+1,j,k);
 
-	  // kappa is the spitzer conductivity, which scales as 
-	  // the temperature to the 2.5 power
-	  r.kappa = kappa_star*POW(r.T, 2.5);
-	  // conduction saturation
-	  r.kappa /= (1 + (saturation_factor * r.T * fabs(r.dT) / rho[ELT(i,j,k)]));
-	  r.dedt = r.kappa*r.dT;  // factors of dx and units done later.
-	  dedt[ELT(i,j,k)] += (l.dedt - r.dedt)/rho[ELT(i,j,k)];
+	  if(i == GridEnd[0]){
+	    r = cfzero;
+	  } else {
+
+	    // get temperature, temperature gradient on + face of cell
+	    // (the 'l' struct has it on the right face)
+	    r.T = 0.5 * (Temp[grid_index] + Temp[right_side_index]);
+	    r.rho = 0.5 * (rho[grid_index] + rho[right_side_index]);
+	    r.dT = Temp[grid_index] - Temp[right_side_index];
+
+	    // kappa is the spitzer conductivity, which scales as 
+	    // the temperature to the 2.5 power
+	    r.kappa = kappa_star*POW(r.T, 2.5);
+	    // conduction saturation
+	    r.kappa /= (1 + (saturation_factor * r.T * fabs(r.dT) / r.rho));
+
+	    // modify flux based on magnetic field orientation, if we are using
+	    // anisotropic conduction
+	    if(AnisotropicConduction){
+	      Bx_face = 0.5*(Bx[grid_index]+Bx[right_side_index]);
+	      By_face = 0.5*(By[grid_index]+By[right_side_index]);
+	      Bz_face = 0.5*(Bz[grid_index]+Bz[right_side_index]);
+	      Bmag = POW( (Bx_face*Bx_face + By_face*By_face + Bz_face*Bz_face), 0.5);
+	      Bhat = fabs(Bx_face)/Bmag;
+	      r.kappa *= Bhat;
+	    } 
+
+	    r.dedt = r.kappa*r.dT;  // factors of dx and units done later.
+
+	  }
+
+	  dedt[grid_index] += (l.dedt - r.dedt)/rho[grid_index];
 	}
       }
     }
@@ -146,13 +196,36 @@ int grid::ComputeHeat (float dedt[]) {
 	for (int j = GridStart[1]; j <= GridEnd[1]; j++) {
 	  l = r;
 
-	  r.T = POW(Temp[ELT(i,j,k)]*Temp[ELT(i,j+1,k)], 0.50);
-	  r.dT = Temp[ELT(i,j,k)] - Temp[ELT(i,j+1,k)];
+	  grid_index = ELT(i,j,k);
+	  right_side_index = ELT(i,j+1,k);
 
-	  r.kappa = kappa_star*POW(r.T, 2.5);
-	  r.kappa /= (1 + (saturation_factor * r.T * fabs(r.dT) / rho[ELT(i,j,k)]));
-	  r.dedt = r.kappa*r.dT;
-	  dedt[ELT(i,j,k)] += (l.dedt - r.dedt)/rho[ELT(i,j,k)];
+	  if(j==GridEnd[1]){
+	    r = cfzero;
+	  } else {
+
+	    r.T = 0.5 * (Temp[grid_index] + Temp[right_side_index]);
+	    r.rho = 0.5 * (rho[grid_index] + rho[right_side_index]);
+	    r.dT = Temp[grid_index] - Temp[right_side_index];
+	    
+	    r.kappa = kappa_star*POW(r.T, 2.5);
+	    r.kappa /= (1 + (saturation_factor * r.T * fabs(r.dT) / r.rho));
+
+	    // modify flux based on magnetic field orientation, if we are using
+	    // anisotropic conduction
+	    if(AnisotropicConduction){
+	      Bx_face = 0.5*(Bx[grid_index]+Bx[right_side_index]);
+	      By_face = 0.5*(By[grid_index]+By[right_side_index]);
+	      Bz_face = 0.5*(Bz[grid_index]+Bz[right_side_index]);
+	      Bmag = POW( (Bx_face*Bx_face + By_face*By_face + Bz_face*Bz_face), 0.5);
+	      Bhat = fabs(By_face)/Bmag;
+	      r.kappa *= Bhat;
+	    } 
+
+
+	    r.dedt = r.kappa*r.dT;
+	  }
+
+	  dedt[grid_index] += (l.dedt - r.dedt)/rho[grid_index];
 	}
       }
     }
@@ -165,13 +238,36 @@ int grid::ComputeHeat (float dedt[]) {
 	for (int k = GridStart[2]; k <= GridEnd[2]; k++) {
 	  l = r;
 
-	  r.T = POW(Temp[ELT(i,j,k)]*Temp[ELT(i,j,k+1)], 0.50);
-	  r.dT = Temp[ELT(i,j,k)] - Temp[ELT(i,j,k+1)];
+	  grid_index = ELT(i,j,k);
+	  right_side_index = ELT(i,j,k+1);
 
-	  r.kappa = kappa_star*POW(r.T, 2.5);
-	  r.kappa /= (1 + (saturation_factor * r.T * fabs(r.dT) / rho[ELT(i,j,k)]));
-	  r.dedt = r.kappa*r.dT;
-	  dedt[ELT(i,j,k)] += (l.dedt - r.dedt)/rho[ELT(i,j,k)];
+	  if(k==GridEnd[2]){
+	    r = cfzero;
+	  } else {
+
+	    r.T = 0.5 * (Temp[grid_index] + Temp[right_side_index]);
+	    r.rho = 0.5 * (rho[grid_index] + rho[right_side_index]);
+	    r.dT = Temp[grid_index] - Temp[right_side_index];
+
+	    r.kappa = kappa_star*POW(r.T, 2.5);
+	    r.kappa /= (1 + (saturation_factor * r.T * fabs(r.dT) / r.rho));
+
+	    // modify flux based on magnetic field orientation, if we are using
+	    // anisotropic conduction
+	    if(AnisotropicConduction){
+	      Bx_face = 0.5*(Bx[grid_index]+Bx[right_side_index]);
+	      By_face = 0.5*(By[grid_index]+By[right_side_index]);
+	      Bz_face = 0.5*(Bz[grid_index]+Bz[right_side_index]);
+	      Bmag = POW( (Bx_face*Bx_face + By_face*By_face + Bz_face*Bz_face), 0.5);
+	      Bhat = fabs(Bz_face)/Bmag;
+	      r.kappa *= Bhat;
+	    } 
+
+
+	    r.dedt = r.kappa*r.dT;
+	  }
+
+	  dedt[grid_index] += (l.dedt - r.dedt)/rho[grid_index];
 	}
       }
     }
