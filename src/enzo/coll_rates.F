@@ -121,7 +121,7 @@ C     ------- Compute various values of T.
 
 c     redefine k4 if case B recombination rates are requested
       if (casebrates .gt. 0) then
-         k4 = 1.26d-14 * (5.7067d5/T)**(0.75d0)
+         k4 = 1.26d-14 * (5.7067d5/T)**(0.75d0) / kunit
       endif
 
 c     set HII recombination rate as either case A or case B
