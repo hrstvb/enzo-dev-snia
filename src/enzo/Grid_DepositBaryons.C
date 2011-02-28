@@ -157,8 +157,7 @@ int grid::DepositBaryons(grid *TargetGrid, FLOAT DepositTime,
     mbuffer = new MPIBuffer(this, TargetGrid, CommType, MPI_SENDREGION_TAG,
 			    GridOffset, RegionDim, farg);
   } else {
-    MPIBuffer TempBuffer = GetMPIBuffer(CommunicationIndex);  // Grab from list.
-    mbuffer = &TempBuffer;
+    mbuffer = GetMPIBuffer(CommunicationIndex);  // Grab from list.
   }
  
   /* Prepare the density field. */
@@ -254,7 +253,9 @@ int grid::DepositBaryons(grid *TargetGrid, FLOAT DepositTime,
 #ifdef USE_MPI
  
     double time1 = MPI_Wtime();
-    mbuffer->FillBuffer(FloatDataType, size, dens_field);
+
+    if (CommunicationDirection != COMMUNICATION_RECEIVE)
+      mbuffer->FillBuffer(FloatDataType, size, dens_field);
 
     /* Send Mode */
 

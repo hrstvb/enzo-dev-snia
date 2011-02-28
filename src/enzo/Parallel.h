@@ -145,6 +145,7 @@ namespace Parallel
 
   private:
     int message_index;
+    int message_size;
     MPI_Datatype MessageType;
     MPI_Datatype BufferType;
     MPI_Request request;
@@ -179,13 +180,24 @@ namespace Parallel
     int FillBuffer(const MPI_Datatype BufferDataType, 
 		   const int BufferSize,
 		   void *buffer);
+
+    class RequestCompleted
+    {
+    public:
+      RequestCompleted() {}
+      bool operator()(const MPIBuffer* obj) {
+	return (obj->request == MPI_REQUEST_NULL &&
+		obj->grid_one == NULL);
+      }
+    }; // ENDCLASS
+
     
   }; // ENDCLASS    
 
-  EXTERN list<MPIBuffer> CommunicationMPIBuffer;
+  EXTERN list<MPIBuffer*> CommunicationMPIBuffer;
 
-  void GenerateMPIRequestArray(MPI_Request * &result);
-  MPIBuffer GetMPIBuffer(int num);
+  void GenerateMPIRequestArray(MPI_Request *result[]);
+  MPIBuffer* GetMPIBuffer(int num);
 
 #else /* USE_MPI */
   typedef MPIBuffer char*;

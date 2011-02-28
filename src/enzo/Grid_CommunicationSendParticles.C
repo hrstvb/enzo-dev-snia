@@ -78,8 +78,7 @@ int grid::CommunicationSendParticles(grid *ToGrid, int ToProcessor,
     mbuffer = new MPIBuffer(this, ToGrid, CommType, MPI_SENDPART_TAG,
 			    NULL, NULL, NULL, iarg);
   } else {
-    MPIBuffer TempBuffer = GetMPIBuffer(CommunicationIndex);  // Grab from list.
-    mbuffer = &TempBuffer;
+    mbuffer = GetMPIBuffer(CommunicationIndex);  // Grab from list.
   }
  
   /* Allocate buffer. */
@@ -199,7 +198,8 @@ int grid::CommunicationSendParticles(grid *ToGrid, int ToProcessor,
     starttime = MPI_Wtime();
 #endif
     
-    mbuffer->FillBuffer(MPI_ParticleMoveList, TransferSize, buffer);
+    if (CommunicationDirection != COMMUNICATION_RECEIVE)
+      mbuffer->FillBuffer(MPI_ParticleMoveList, TransferSize, buffer);
 
     if (MyProcessorNumber == ProcessorNumber) {
       mbuffer->SendBuffer(ToProcessor);

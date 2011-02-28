@@ -93,8 +93,7 @@ int grid::CommunicationReceiveRegion(grid *FromGrid, int FromProcessor,
     mbuffer = new MPIBuffer(grid_one, grid_two, CommType, 
 			    MPI_RECEIVEREGION_TAG, FromOffset, FromDim);
   } else {
-    MPIBuffer TempBuffer = GetMPIBuffer(CommunicationIndex);  // Grab from list.
-    mbuffer = &TempBuffer;
+    mbuffer = GetMPIBuffer(CommunicationIndex);  // Grab from list.
   }
  
   // Allocate buffer
@@ -154,7 +153,8 @@ int grid::CommunicationReceiveRegion(grid *FromGrid, int FromProcessor,
     starttime=MPI_Wtime();
 #endif /* MPI_INSTRUMENTATION */
 
-    mbuffer->FillBuffer(FloatDataType, TransferSize, buffer);
+    if (CommunicationDirection != COMMUNICATION_RECEIVE)
+      mbuffer->FillBuffer(FloatDataType, TransferSize, buffer);
 
     if (MyProcessorNumber == FromProcessor) {
 #ifdef MPI_INSTRUMENTATION

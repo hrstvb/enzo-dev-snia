@@ -300,11 +300,8 @@ int grid::InterpolateParticlesToGrid(FOFData *D, int CommunicationIndex)
 
 #ifdef USE_MPI
   mpi_header header;
-  MPIBuffer TempBuffer;
-  mbuffer = &TempBuffer;
   if (Parallel::CommunicationDirection == COMMUNICATION_RECEIVE) {
-    TempBuffer = GetMPIBuffer(CommunicationIndex);  // Grab from list.
-    mbuffer = &TempBuffer;
+    mbuffer = GetMPIBuffer(CommunicationIndex);  // Grab from list.
     buffer = (float*) mbuffer->ReturnBuffer();
     header = mbuffer->ReturnHeader();
     field = header.IArg[0];

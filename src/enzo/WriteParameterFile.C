@@ -604,8 +604,8 @@ int WriteParameterFile(FILE *fptr, TopGridData &MetaData)
 	  MinimumMassForRefinementLevelExponent[5],
 	  MinimumMassForRefinementLevelExponent[6]);
 
-  fprintf(fptr, "MinimumSlopeForRefinement             = %e\n",
-	  MinimumSlopeForRefinement);
+//  fprintf(fptr, "MinimumSlopeForRefinement             = %e\n",
+//	  MinimumSlopeForRefinement);
   fprintf(fptr, "MinimumShearForRefinement             = %e\n",
 	  MinimumShearForRefinement);
   fprintf(fptr, "MinimumPressureJumpForRefinement      = %e\n",

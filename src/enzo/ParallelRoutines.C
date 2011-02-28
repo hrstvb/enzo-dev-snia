@@ -28,32 +28,34 @@ namespace Parallel {
 
   /*----------------------------------------------------------------------*/
 
-  void GenerateMPIRequestArray(MPI_Request * &result)
+  void GenerateMPIRequestArray(MPI_Request *result[])
   {
     
     int i;
     int size = CommunicationMPIBuffer.size();
-    result = new MPI_Request[size];
-    list<MPIBuffer>::iterator it;
+    *result = new MPI_Request[size];
+    list<MPIBuffer*>::iterator it;
     for (it = CommunicationMPIBuffer.begin();
 	 it != CommunicationMPIBuffer.end(); ++it) {
-      i = (*it).ReturnIndex();
-      result[i] = (*it).ReturnRequest();
+      i = (*it)->ReturnIndex();
+      (*result)[i] = (*it)->ReturnRequest();
+      printf("GenerateMPIRequestArray: i=%d, request=%p\n", i,
+	     (*it)->ReturnRequest());
     }
 
   }
 
   /*----------------------------------------------------------------------*/
 
-  MPIBuffer GetMPIBuffer(int num)
+  MPIBuffer* GetMPIBuffer(int num)
   {
-    list<MPIBuffer>::iterator it = CommunicationMPIBuffer.begin();
+    list<MPIBuffer*>::iterator it = CommunicationMPIBuffer.begin();
     advance(it,num);
     return *it;
   }
 
   /*----------------------------------------------------------------------*/
-
+  
   MPIBuffer::MPIBuffer(void)
   {
     this->BufferType = MPI_DATATYPE_NULL;
@@ -62,6 +64,7 @@ namespace Parallel {
     this->tag = 0;
     this->grid_one = NULL;
     this->grid_two = NULL;
+    this->message_index = INT_UNDEFINED;
     this->message = new enzo_message;
   }
 
@@ -77,11 +80,8 @@ namespace Parallel {
 
     int i;
 
-#pragma omp critical
-    {
-      this->message_index = CommunicationReceiveIndex++;
-    }
-
+    this->message_index = INT_UNDEFINED;
+    this->message_size  = 0;
     this->request = MPI_REQUEST_NULL;
     this->tag = MPI_Tag;
     this->grid_one = grid1;
@@ -129,6 +129,7 @@ namespace Parallel {
   {
     MPI_Type_free(&BufferType);
     MPI_Type_free(&MessageType);
+    delete this->message;
     //delete [] this->message.buffer;
   }
 
@@ -146,6 +147,7 @@ namespace Parallel {
 
     /* Combine header and buffer, then register datatype */
 
+    this->message_size = BufferSize;
     this->message->buffer = buffer;
 
     MPI_Datatype type[2] = {MPI_Header, BufferType};
@@ -178,7 +180,10 @@ namespace Parallel {
     // Append to receive buffer list
 #pragma omp critical
     {
-      CommunicationMPIBuffer.push_front(*this);
+      this->message_index = CommunicationReceiveIndex++;
+      CommunicationMPIBuffer.push_back(this);
+      printf("P%d: Pushing MPIBuffer (index %d) %p.  CommunicationMPIBuffer.size() = %d\n",
+	     MyProcessorNumber, this->message_index, this, CommunicationMPIBuffer.size());
     }
     return SUCCESS;
   }

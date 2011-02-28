@@ -188,8 +188,7 @@ int grid::GetProjectedBoundaryFluxes(grid *ParentGrid, int grid_num,
     buffer = new MPIBuffer(this, ParentGrid, CallType, MPI_FLUX_TAG, 
 			   NULL, NULL, NULL, int_arg);
   } else if (CommunicationDirection == COMMUNICATION_RECEIVE) {
-    MPIBuffer TempBuffer = GetMPIBuffer(CommunicationIndex);  // Grab from list.
-    buffer = &TempBuffer;
+    buffer = GetMPIBuffer(CommunicationIndex);  // Grab from list.
   }
 #endif /* USE_MPI */
 

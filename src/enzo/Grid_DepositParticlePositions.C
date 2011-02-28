@@ -193,8 +193,7 @@ int grid::DepositParticlePositions(grid *TargetGrid, FLOAT DepositTime,
       mbuffer = new MPIBuffer(this, TargetGrid, CommType, MPI_SENDREGION_TAG,
 			      Offset, Dimension, farg, iarg);
     } else {
-      MPIBuffer TempBuffer = GetMPIBuffer(CommunicationIndex);  // Grab from list.
-      mbuffer = &TempBuffer;
+      mbuffer = GetMPIBuffer(CommunicationIndex);  // Grab from list.
     }
     
 
@@ -308,7 +307,9 @@ int grid::DepositParticlePositions(grid *TargetGrid, FLOAT DepositTime,
 #ifdef USE_MPI
 
     double time1 = ReturnWallTime();
-    mbuffer->FillBuffer(FloatDataType, size, DepositFieldPointer);
+
+    if (CommunicationDirection != COMMUNICATION_RECEIVE)
+      mbuffer->FillBuffer(FloatDataType, size, DepositFieldPointer);
 
     if (MyProcessorNumber == ProcessorNumber) {
       mbuffer->SendBuffer(TargetGrid->ProcessorNumber);

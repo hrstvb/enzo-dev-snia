@@ -155,8 +155,7 @@ int grid::SetSubgridMarkerFromParent(grid *Parent, int level,
       mbuffer = new MPIBuffer(this, Parent, CommType, MPI_SENDMARKER_TAG,
 			      ParentStart, NULL, NULL, iarg);
     } else {
-      MPIBuffer TempBuffer = GetMPIBuffer(CommunicationIndex);  // Grab from list.
-      mbuffer = &TempBuffer;
+      mbuffer = GetMPIBuffer(CommunicationIndex);  // Grab from list.
     }
 
     if (Parallel::CommunicationDirection == COMMUNICATION_RECEIVE)

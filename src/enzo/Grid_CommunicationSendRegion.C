@@ -82,14 +82,12 @@ int grid::CommunicationSendRegion(grid *ToGrid, int ToProcessor,int SendField,
 
   // Allocate MPI buffer
   MPIBuffer *mbuffer = NULL;
-  MPIBuffer TempBuffer;
   if (Parallel::CommunicationDirection != COMMUNICATION_RECEIVE)
     mbuffer = new MPIBuffer(grid_one, grid_two, CommType, 
 			    MPI_SENDREGION_TAG, RegionStart, RegionDim,
 			    CommArg, CommArgInt);
   else {
-    TempBuffer = GetMPIBuffer(CommunicationIndex);  // Grab from list.
-    mbuffer = &TempBuffer;
+    mbuffer = GetMPIBuffer(CommunicationIndex);  // Grab from list.
   }
 
 
@@ -104,7 +102,7 @@ int grid::CommunicationSendRegion(grid *ToGrid, int ToProcessor,int SendField,
  
   if (MyProcessorNumber == ProcessorNumber) {
  
-//  printf("SendRegion: RegionStart = %"ISYM" %"ISYM" %"ISYM"\n", RegionStart[0], RegionStart[1], RegionStart[2]);
+    //printf("SendRegion: RegionStart = %"ISYM" %"ISYM" %"ISYM"\n", RegionStart[0], RegionStart[1], RegionStart[2]);
  
     index = 0;
  
@@ -181,7 +179,8 @@ int grid::CommunicationSendRegion(grid *ToGrid, int ToProcessor,int SendField,
     /* Send the data if on send processor, but leave buffer until the data
        has been transfered out. */
 
-    mbuffer->FillBuffer(FloatDataType, TransferSize, buffer);
+    if (CommunicationDirection != COMMUNICATION_RECEIVE)
+      mbuffer->FillBuffer(FloatDataType, TransferSize, buffer);
 
     if (MyProcessorNumber == ProcessorNumber) {
 #ifdef MPI_INSTRUMENTATION
@@ -189,17 +188,15 @@ int grid::CommunicationSendRegion(grid *ToGrid, int ToProcessor,int SendField,
 	fprintf(tracePtr, "CSR Sending %"ISYM" floats from %"ISYM" to %"ISYM"\n", 
 		TransferSize, MyProcessorNumber, ToProcessor);
 #endif
-//      printf("CSR Sending %"ISYM" bytes from %"ISYM" to %"ISYM". Tag %d\n", 
-//	     TransferSize*sizeof(float), MyProcessorNumber, ToProcessor, 
-//	     Return_MPI_Tag(MPI_SENDREGION_TAG, CommunicationGridID, 
-//			    CommunicationTags));
+      printf("CSR Sending %d bytes from %"ISYM" to %"ISYM"\n", 
+	     TransferSize*sizeof(float), MyProcessorNumber, ToProcessor);
       mbuffer->SendBuffer(ToProcessor);
     }
 
     if (MyProcessorNumber == ToProcessor) {
 
-//      fprintf(stderr, "Waiting for %d floats at %d from %d\n", TransferSize, 
-//	      MyProcessorNumber, ProcessorNumber);
+      fprintf(stderr, "Waiting for %d floats at %d from %d\n", TransferSize, 
+	      MyProcessorNumber, ProcessorNumber);
 
       /* Post the receive message without waiting for the message to
 	 be received.  When the data arrives, this will be called again
@@ -207,10 +204,9 @@ int grid::CommunicationSendRegion(grid *ToGrid, int ToProcessor,int SendField,
 
       if (CommunicationDirection == COMMUNICATION_POST_RECEIVE) {
 
-//	printf("Posting (tag=%d) receive from P%"ISYM" for %"ISYM" bytes in "
-//	       "comm index %"ISYM"\n", Tag, ProcessorNumber, 
-//	       sizeof(float)*TransferSize, 
-//	       CommunicationReceiveIndex);
+	printf("Posting receive from P%"ISYM" for %"ISYM" floats in "
+	       "comm index %"ISYM"\n", ProcessorNumber, 
+	       TransferSize, mbuffer->ReturnIndex());
 	mbuffer->IRecvBuffer(ProcessorNumber);
       }
 
@@ -240,9 +236,9 @@ int grid::CommunicationSendRegion(grid *ToGrid, int ToProcessor,int SendField,
       (CommunicationDirection == COMMUNICATION_SEND_RECEIVE ||
        CommunicationDirection == COMMUNICATION_RECEIVE)) {
 
-//    if (ToProcessor != ProcessorNumber)
-//      fprintf(stderr, "Received %d floats at %d from %d\n", TransferSize, 
-//	      MyProcessorNumber, ProcessorNumber);
+    if (ToProcessor != ProcessorNumber)
+      fprintf(stderr, "Received %d floats at %d from %d\n", TransferSize, 
+	      MyProcessorNumber, ProcessorNumber);
 
     index = 0;
 

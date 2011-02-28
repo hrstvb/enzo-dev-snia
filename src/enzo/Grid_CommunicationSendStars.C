@@ -63,8 +63,7 @@ int grid::CommunicationSendStars(grid *ToGrid, int ToProcessor,
     mbuffer = new MPIBuffer(this, ToGrid, CommType, MPI_SENDSTAR_TAG,
 			    NULL, NULL, NULL, iarg);
   } else {
-    MPIBuffer TempBuffer = GetMPIBuffer(CommunicationIndex);  // Grab from list.
-    mbuffer = &TempBuffer;
+    mbuffer = GetMPIBuffer(CommunicationIndex);  // Grab from list.
   }
  
   /* Allocate buffer in ToProcessor.  This is automatically done in
@@ -97,7 +96,8 @@ int grid::CommunicationSendStars(grid *ToGrid, int ToProcessor,
     starttime = MPI_Wtime();
 #endif
 
-    mbuffer->FillBuffer(MPI_StarBuffer, TransferSize, buffer);
+    if (CommunicationDirection != COMMUNICATION_RECEIVE)
+      mbuffer->FillBuffer(MPI_StarBuffer, TransferSize, buffer);
 
     if (MyProcessorNumber == ProcessorNumber) {
       mbuffer->SendBuffer(ToProcessor);

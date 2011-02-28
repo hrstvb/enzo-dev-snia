@@ -61,10 +61,10 @@ int CommunicationReceiveFluxes(MPIBuffer *mbuffer, fluxes *Fluxes,
   TotalSize *= NumberOfFields;
   if (CommunicationDirection == COMMUNICATION_RECEIVE)
     buffer = (float*) mbuffer->ReturnBuffer();
-  else
+  else {
     buffer = new float[TotalSize];
-
-  mbuffer->FillBuffer(FloatDataType, TotalSize, buffer);
+    mbuffer->FillBuffer(FloatDataType, TotalSize, buffer);
+  }
  
   /* Receive into buffer. */
  

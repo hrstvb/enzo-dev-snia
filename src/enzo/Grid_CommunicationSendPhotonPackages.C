@@ -63,8 +63,7 @@ int grid::CommunicationSendPhotonPackages(grid *ToGrid, int ToProcessor,
     mbuffer = new MPIBuffer(this, ToGrid, CommType, MPI_PHOTON_TAG,
 			    NULL, NULL, NULL, iarg);
   } else {
-    MPIBuffer TempBuffer = GetMPIBuffer(CommunicationIndex);  // Grab from list.
-    mbuffer = &TempBuffer;
+    mbuffer = GetMPIBuffer(CommunicationIndex);  // Grab from list.
   }
  
   /* Allocate memory */
@@ -153,7 +152,8 @@ int grid::CommunicationSendPhotonPackages(grid *ToGrid, int ToProcessor,
 
   if (ProcessorNumber != ToProcessor) {
 
-    mbuffer->FillBuffer(MPI_PhotonBuffer, FromNumber, buffer);
+    if (CommunicationDirection != COMMUNICATION_RECEIVE)
+      mbuffer->FillBuffer(MPI_PhotonBuffer, FromNumber, buffer);
 
     if (MyProcessorNumber == ProcessorNumber) {
       if (DEBUG)

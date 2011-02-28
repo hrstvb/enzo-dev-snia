@@ -69,8 +69,7 @@ int grid::SetParticleMassFlaggingField(int CommunicationIndex,
   if (Parallel::CommunicationDirection != COMMUNICATION_RECEIVE)
     mbuffer = new MPIBuffer(this, NULL, CommType, MPI_SENDPMFLAG_TAG);
   else {
-    MPIBuffer TempBuffer = GetMPIBuffer(CommunicationIndex);  // Grab from list.
-    mbuffer = &TempBuffer;
+    mbuffer = GetMPIBuffer(CommunicationIndex);  // Grab from list.
   }
 
 #endif /* USE_MPI */

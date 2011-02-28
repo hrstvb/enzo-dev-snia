@@ -57,15 +57,15 @@ int CommunicationReceiveHandler(fluxes **SubgridFluxesEstimate[],
 //    printf("P(%"ISYM") in CRH with %"ISYM" requests\n", MyProcessorNumber,
 //	   CommunicationReceiveIndex);
 
-  MPI_Arg NumberOfCompleteRequests, TotalReceives;
+  MPI_Arg NumberOfCompleteRequests = 0, TotalReceives = 0;
   int ReceivesCompletedToDate = 0, index, errcode, SUBling, level,
     igrid, isubgrid, dim, FromStart, FromNumber, ToStart, ToNumber;
   int GridDimension[MAX_DIMENSION];
   FLOAT EdgeOffset[MAX_DIMENSION];
   grid *grid_one, *grid_two;
   MPI_Request *AllRequests = NULL;
-  MPIBuffer CurrentBuffer;
-  GenerateMPIRequestArray(AllRequests);
+  MPIBuffer *CurrentBuffer = NULL;
+  GenerateMPIRequestArray(&AllRequests);
   TotalReceives = CommunicationMPIBuffer.size();
   
 #ifdef TRANSFER
@@ -87,14 +87,14 @@ int CommunicationReceiveHandler(fluxes **SubgridFluxesEstimate[],
 
     float time1 = ReturnWallTime();
 
-//    printf("P%d ::: BEFORE MPI_Waitsome ::: %"ISYM" %"ISYM" %"ISYM"\n", 
-//	   MyProcessorNumber,
-//	   TotalReceives, ReceivesCompletedToDate, NumberOfCompleteRequests);
+    printf("P%d ::: BEFORE MPI_Waitsome ::: %"ISYM" %"ISYM" %"ISYM"\n", 
+	   MyProcessorNumber,
+	   TotalReceives, ReceivesCompletedToDate, NumberOfCompleteRequests);
     MPI_Waitsome(TotalReceives, AllRequests,
 		 &NumberOfCompleteRequests, ListOfIndices, ListOfStatuses);
-//    printf("P%d: MPI: %"ISYM" %"ISYM" %"ISYM"\n", MyProcessorNumber,
-//	   TotalReceives, 
-//	   ReceivesCompletedToDate, NumberOfCompleteRequests);
+    printf("P%d: MPI: %"ISYM" %"ISYM" %"ISYM"\n", MyProcessorNumber,
+	   TotalReceives, 
+	   ReceivesCompletedToDate, NumberOfCompleteRequests);
 
     CommunicationTime += ReturnWallTime() - time1;
 
@@ -112,7 +112,7 @@ int CommunicationReceiveHandler(fluxes **SubgridFluxesEstimate[],
     for (index = 0; index < NumberOfCompleteRequests; index++) {
       if (ListOfStatuses[index].MPI_ERROR != 0) {
 	CurrentBuffer = GetMPIBuffer(ListOfIndices[index]);
-	CurrentHeader = CurrentBuffer.ReturnHeader();
+	CurrentHeader = CurrentBuffer->ReturnHeader();
 	if (NoErrorSoFar) {
 	  fprintf(stderr, "MPI Error on processor %"ISYM". "
 		  "Error number %"ISYM" on request %"ISYM"\n",
@@ -125,7 +125,7 @@ int CommunicationReceiveHandler(fluxes **SubgridFluxesEstimate[],
 	fprintf(stdout, "%"ISYM": Type = %d, Grid1 = %d, Request = %p\n",
 		ListOfIndices[index], 
 		CurrentHeader.CallType,
-		CurrentBuffer.ReturnGridOne()->GetGridID(),
+		CurrentBuffer->ReturnGridOne()->GetGridID(),
 		AllRequests[ListOfIndices[index]]);
 	fprintf(stdout, "%"ISYM": buffer = %p\n", ListOfIndices[index],
 		CurrentBuffer);
@@ -149,17 +149,22 @@ int CommunicationReceiveHandler(fluxes **SubgridFluxesEstimate[],
 
       CurrentBuffer = GetMPIBuffer(index);
 
-      if (CurrentBuffer.ReturnGridOne() != NULL &&
+      if (CurrentBuffer->ReturnGridOne() != NULL &&
 	  AllRequests[index] == MPI_REQUEST_NULL) {
 
-// 	if(CommunicationReceiveCallType[index]==2)
-// 	  fprintf(stdout, "P%d: %d %d %d %d %d %d\n", MyProcessorNumber,
-//		  index, 
-// 		CommunicationReceiveCallType[index],
-// 		CommunicationReceiveGridOne[index]->GetGridID(),
-// 		CommunicationReceiveGridTwo[index]->GetGridID(),
-// 		CommunicationReceiveMPI_Request[index],
-// 		CommunicationReceiveDependsOn[index]);
+	CurrentHeader = CurrentBuffer->ReturnHeader();
+	grid_one = CurrentBuffer->ReturnGridOne();
+	grid_two = CurrentBuffer->ReturnGridTwo();
+	//CommunicationReceiveIndex = index;
+
+
+	fprintf(stdout, "P%d: %d %d %d %d %d %p\n", MyProcessorNumber,
+		index, CurrentBuffer->ReturnIndex(),
+		CurrentHeader.CallType,
+		CurrentBuffer->ReturnGridOne()->GetGridID(),
+		CurrentBuffer->ReturnGridTwo()->GetGridID(),
+		CurrentBuffer->ReturnRequest());
+
 
 	/* If this depends on an un-processed receive, then skip it. */
 	/* JHW (Feb. 2011): Removed.  Should re-implement dependencies later. */
@@ -169,11 +174,6 @@ int CommunicationReceiveHandler(fluxes **SubgridFluxesEstimate[],
 //	  if (CommunicationReceiveGridOne[CommunicationReceiveDependsOn[index]]
 //	      != NULL)
 //	    continue;
-
-	CurrentHeader = CurrentBuffer.ReturnHeader();
-	grid_one = CurrentBuffer.ReturnGridOne();
-	grid_two = CurrentBuffer.ReturnGridTwo();
-	//CommunicationReceiveIndex = index;
 
 	/* Copy out the argument if needed */
 
@@ -336,7 +336,7 @@ int CommunicationReceiveHandler(fluxes **SubgridFluxesEstimate[],
 
 	/* Mark this receive complete. */
 
-	CurrentBuffer.MarkComplete();
+	CurrentBuffer->MarkComplete();
 	//	MPI_Request_free(CommunicationReceiveMPI_Request+index);
 	ReceivesCompletedToDate++;
 
@@ -345,6 +345,14 @@ int CommunicationReceiveHandler(fluxes **SubgridFluxesEstimate[],
     } // end: loop over all receives
 
   } // end: while loop waiting for all receives to be processed
+
+  /* Remove all completed requests */
+
+  printf("P%d: CommunicationMPIBuffer.size(before) = %d\n", MyProcessorNumber,
+	 CommunicationMPIBuffer.size());
+  CommunicationMPIBuffer.remove_if(MPIBuffer::RequestCompleted());
+  printf("P%d: CommunicationMPIBuffer.size(after) = %d\n", MyProcessorNumber,
+	 CommunicationMPIBuffer.size());
 
   Parallel::CommunicationReceiveIndex = 0;
 
