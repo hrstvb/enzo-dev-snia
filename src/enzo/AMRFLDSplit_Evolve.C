@@ -219,6 +219,20 @@ int AMRFLDSplit::Evolve(LevelHierarchyEntry *LevelArray[], int level, float dthy
 
     //////////////////////////////////////////////////////////////////////
     // UPDATE THE FOLLOWING -- THIS CURRENTLY ONLY WORKS FOR THE TOPGRID!!
+    // 
+    // One option is to just call SetBoundaryConditions from this grid 
+    // down. However, this copies *all* BaryonFields between overlapping 
+    // regions, and at this moment I only need to copy any overlapping 
+    // radiation field values.  Moreover, it would require a number of 
+    // arguments that I do not currently have (ExternalBoundary, 
+    // SiblingList, NumberOfGrids, etc.).  While I could add these as 
+    // arguments to this Evolve() routine, I would then need to add 
+    // those same arguments to all implicit solver evolve() routine 
+    // interfaces.
+    //
+    // A second option would be to go through SetBoundaryConditions, 
+    // etc., to extract out a new routine that just communicates values 
+    // for one baryon field.
 
     // have U0 communicate neighbor information
     int ghZl = (rank > 2) ? DEFAULT_GHOST_ZONES : 0;
