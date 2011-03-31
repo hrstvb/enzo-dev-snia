@@ -31,7 +31,14 @@ int RadiationGetUnits(float *RadiationUnits, FLOAT Time);
 
 
 //int MFProb::Evolve(HierarchyEntry *ThisGrid, float deltat)
-int MFProb::Evolve(LevelHierarchyEntry *LevelArray[], int level, float deltat)
+//int MFProb::Evolve(LevelHierarchyEntry *LevelArray[], int level, float deltat)
+int MFProb::Evolve(LevelHierarchyEntry *LevelArray[], int level, 
+		   HierarchyEntry *Grids[], int NumberOfGrids,
+		   TopGridData *MetaData, ExternalBoundary *Exterior, 
+#ifdef FAST_SIB
+		   SiblingGridList SiblingList[],
+#endif
+		   float deltat)
 {
 
 //   if (debug)  printf("Entering MFProb::Evolve routine\n");
@@ -388,7 +395,12 @@ int MFProb::Evolve(LevelHierarchyEntry *LevelArray[], int level, float deltat)
 
   //   call the free-streaming solver Evolve routine
 //  FSSolve->Evolve(ThisGrid, deltat);
-  FSSolve->Evolve(LevelArray, level, deltat);
+//  FSSolve->Evolve(LevelArray, level, deltat);
+  FSSolve->Evolve(LevelArray, level, Grids, NumberOfGrids, MetaData, Exterior, 
+#ifdef FAST_SIB
+		  SiblingList,
+#endif
+		  deltat);
 
   //   obtain initial guess for time-evolved solution to the coupled system
   if (this->InitialGuess(sol) == FAIL) {

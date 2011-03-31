@@ -37,6 +37,11 @@ int FLDCorrectForImpulses(int field, LevelHierarchyEntry *LevelArray[],
 
 int RadiativeTransferCallFLD(LevelHierarchyEntry *LevelArray[], int level,
 			     TopGridData *MetaData, Star *AllStars, 
+			     HierarchyEntry *Grids[], int NumberOfGrids,
+			     ExternalBoundary *Exterior, 
+#ifdef FAST_SIB
+			     SiblingGridList SiblingList[],
+#endif
 			     ImplicitProblemABC *ImplicitSolver)
 
 {
@@ -111,7 +116,13 @@ int RadiativeTransferCallFLD(LevelHierarchyEntry *LevelArray[], int level,
       
 //       for (Temp = LevelArray[0]; Temp; Temp = Temp->NextGridThisLevel)
 // 	ImplicitSolver->Evolve(Temp->GridHierarchyEntry, MetaData->dtFLD);
-      ImplicitSolver->Evolve(LevelArray, level, MetaData->dtFLD);
+//      ImplicitSolver->Evolve(LevelArray, level, MetaData->dtFLD);
+      ImplicitSolver->Evolve(LevelArray, level, Grids, NumberOfGrids, 
+			     MetaData, Exterior, 
+#ifdef FAST_SIB
+			     SiblingList,
+#endif
+			     MetaData->dtFLD);
       
       /* Delete emissivity fields */
       
@@ -181,7 +192,13 @@ int RadiativeTransferCallFLD(LevelHierarchyEntry *LevelArray[], int level,
       // Call FLD solver
 //       for (Temp = LevelArray[0]; Temp; Temp = Temp->NextGridThisLevel)
 // 	ImplicitSolver->Evolve(Temp->GridHierarchyEntry, MetaData->dtFLD);
-      ImplicitSolver->Evolve(LevelArray, level, MetaData->dtFLD);
+//      ImplicitSolver->Evolve(LevelArray, level, MetaData->dtFLD);
+      ImplicitSolver->Evolve(LevelArray, level, Grids, NumberOfGrids, 
+			     MetaData, Exterior, 
+#ifdef FAST_SIB
+			     SiblingList,
+#endif
+			     MetaData->dtFLD);
       
       // If we made an emissivity field earlier, delete it here
 

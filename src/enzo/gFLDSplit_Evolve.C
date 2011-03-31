@@ -44,7 +44,14 @@ int RadiationGetUnits(float *RadiationUnits, FLOAT Time);
 // overall Grid module can take to meet a maximum subcycling ratio of 
 // radiation to hydrodynamics.
 //int gFLDSplit::Evolve(HierarchyEntry *ThisGrid, float dthydro)
-int gFLDSplit::Evolve(LevelHierarchyEntry *LevelArray[], int level, float dthydro)
+//int gFLDSplit::Evolve(LevelHierarchyEntry *LevelArray[], int level, float dthydro)
+int gFLDSplit::Evolve(LevelHierarchyEntry *LevelArray[], int level, 
+		      HierarchyEntry *Grids[], int NumberOfGrids,
+		      TopGridData *MetaData, ExternalBoundary *Exterior, 
+#ifdef FAST_SIB
+		      SiblingGridList SiblingList[],
+#endif
+		      float dthydro)
 {
 
 //   if (debug)  printf("Entering gFLDSplit::Evolve routine\n");

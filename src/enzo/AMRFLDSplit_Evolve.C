@@ -33,6 +33,12 @@ int GetUnits(float *DensityUnits, float *LengthUnits,
 	     float *TemperatureUnits, float *TimeUnits,
 	     float *VelocityUnits, double *MassUnits, FLOAT Time);
 int RadiationGetUnits(float *RadiationUnits, FLOAT Time);
+int SetBoundaryConditions(HierarchyEntry *Grids[], int NumberOfGrids,
+#ifdef FAST_SIB
+			  SiblingGridList SiblingList[],
+#endif
+			  int level, TopGridData *MetaData,
+			  ExternalBoundary *Exterior, LevelHierarchyEntry * Level);
 
 
 
@@ -43,7 +49,14 @@ int RadiationGetUnits(float *RadiationUnits, FLOAT Time);
 // overall Grid module can take to meet a maximum subcycling ratio of 
 // radiation to hydrodynamics.
 //int AMRFLDSplit::Evolve(HierarchyEntry *ThisGrid, float dthydro)
-int AMRFLDSplit::Evolve(LevelHierarchyEntry *LevelArray[], int level, float dthydro)
+//int AMRFLDSplit::Evolve(LevelHierarchyEntry *LevelArray[], int level, float dthydro)
+int AMRFLDSplit::Evolve(LevelHierarchyEntry *LevelArray[], int level, 
+			HierarchyEntry *Grids[], int NumberOfGrids,
+			TopGridData *MetaData, ExternalBoundary *Exterior, 
+#ifdef FAST_SIB
+			SiblingGridList SiblingList[],
+#endif
+			float dthydro)
 {
 
 #ifdef AMR_SOLVE
@@ -234,35 +247,48 @@ int AMRFLDSplit::Evolve(LevelHierarchyEntry *LevelArray[], int level, float dthy
     // etc., to extract out a new routine that just communicates values 
     // for one baryon field.
 
-    // have U0 communicate neighbor information
-    int ghZl = (rank > 2) ? DEFAULT_GHOST_ZONES : 0;
-    int ghYl = (rank > 1) ? DEFAULT_GHOST_ZONES : 0;
-    int ghXl = DEFAULT_GHOST_ZONES;
-    int n3[] = {1, 1, 1};
-    int dim;
-    for (dim=0; dim<rank; dim++)
-      n3[dim] = ThisGrid->GridData->GetGridEndIndex(dim)
- 	      - ThisGrid->GridData->GetGridStartIndex(dim) + 1;
-    int x0len = n3[0] + 2*ghXl;
-    int x1len = n3[1] + 2*ghYl;
-    int x2len = n3[2] + 2*ghZl;
-    int NBors[3][2];
-    for (dim=0; dim<rank; dim++) 
-      for (int face=0; face<2; face++) 
-	NBors[dim][face] = ThisGrid->GridData->GetProcessorNeighbors(dim,face);
-    for (dim=0; dim<rank; dim++) {
-      if ((OnBdry[dim][0]) && (BdryType[dim][0] != 0))
-	NBors[dim][0] = MPI_PROC_NULL;
-      if ((OnBdry[dim][1]) && (BdryType[dim][1] != 0))
-	NBors[dim][1] = MPI_PROC_NULL;
-    }
-    EnzoVector* U0 = new EnzoVector(n3[0], n3[1], n3[2], ghXl, ghXl,
-				    ghYl, ghYl, ghZl, ghZl, 1, NBors[0][0], 
-				    NBors[0][1], NBors[1][0], NBors[1][1], 
-				    NBors[2][0], NBors[2][1], 1);
-    U0->SetData(0, ThisGrid->GridData->AccessRadiationFrequency0());
-    if (U0->exchange() != SUCCESS) 
-      ENZO_FAIL("AMRFLDSplit Evolve: vector exchange error");
+//     // have U0 communicate neighbor information
+//     int ghZl = (rank > 2) ? DEFAULT_GHOST_ZONES : 0;
+//     int ghYl = (rank > 1) ? DEFAULT_GHOST_ZONES : 0;
+//     int ghXl = DEFAULT_GHOST_ZONES;
+//     int n3[] = {1, 1, 1};
+//     int dim;
+//     for (dim=0; dim<rank; dim++)
+//       n3[dim] = ThisGrid->GridData->GetGridEndIndex(dim)
+//  	      - ThisGrid->GridData->GetGridStartIndex(dim) + 1;
+//     int x0len = n3[0] + 2*ghXl;
+//     int x1len = n3[1] + 2*ghYl;
+//     int x2len = n3[2] + 2*ghZl;
+//     int NBors[3][2];
+//     for (dim=0; dim<rank; dim++) 
+//       for (int face=0; face<2; face++) 
+// 	NBors[dim][face] = ThisGrid->GridData->GetProcessorNeighbors(dim,face);
+//     for (dim=0; dim<rank; dim++) {
+//       if ((OnBdry[dim][0]) && (BdryType[dim][0] != 0))
+// 	NBors[dim][0] = MPI_PROC_NULL;
+//       if ((OnBdry[dim][1]) && (BdryType[dim][1] != 0))
+// 	NBors[dim][1] = MPI_PROC_NULL;
+//     }
+//     EnzoVector* U0 = new EnzoVector(n3[0], n3[1], n3[2], ghXl, ghXl,
+// 				    ghYl, ghYl, ghZl, ghZl, 1, NBors[0][0], 
+// 				    NBors[0][1], NBors[1][0], NBors[1][1], 
+// 				    NBors[2][0], NBors[2][1], 1);
+//     U0->SetData(0, ThisGrid->GridData->AccessRadiationFrequency0());
+//     if (U0->exchange() != SUCCESS) 
+//       ENZO_FAIL("AMRFLDSplit Evolve: vector exchange error");
+
+    //////////////////////////////////////////////////////////////////////
+    // Initial attempt at just reusing Enzo's SetBoundaryConditions 
+    // routine to handle ghost zone and overlap exchanges.
+    if (SetBoundaryConditions(Grids, NumberOfGrids, 
+#ifdef FAST_SIB
+			      SiblingList, 
+#endif
+			      level, MetaData,
+			      Exterior, NULL) == FAIL)
+      ENZO_FAIL("SetBoundaryConditions() failed!\n");
+
+    
 
     //////////////////////////////////////////////////////////////////////
 
@@ -436,6 +462,7 @@ int AMRFLDSplit::RadStep(LevelHierarchyEntry *LevelArray[], int level,
 //   amrsolve_params->set_parameter("dump_b","true");
 
   // set up and solve radiation equation via amrsolve
+  //    initialize amrfldsolve system
   Eflt64 HIconst   = intSigESigHI   / intSigE;
   Eflt64 HeIconst  = intSigESigHeI  / intSigE / 4.0;
   Eflt64 HeIIconst = intSigESigHeII / intSigE / 4.0;
@@ -452,6 +479,7 @@ int AMRFLDSplit::RadStep(LevelHierarchyEntry *LevelArray[], int level,
 
   if (debug)  printf(" ----------------------------------------------------------------------\n");
 
+  //    solve amrfldsolve system
   amrfldsolve.solve();
   Eflt64 finalresid = amrfldsolve.residual();
   Eint32 Sits = amrfldsolve.iterations();
@@ -510,7 +538,7 @@ int AMRFLDSplit::RadStep(LevelHierarchyEntry *LevelArray[], int level,
 	  // access old/new radiation fields (old stored in KPhHI)
 	  float *Enew = Temp->GridHierarchyEntry->GridData->AccessRadiationFrequency0();
 	  
-	  // copy new radiation field into into old field
+	  // enforce floor on new field
 	  for (int k=0; k<x0len*x1len*x2len; k++)  
 	    Enew[k] = max(Enew[k], epsilon);
 

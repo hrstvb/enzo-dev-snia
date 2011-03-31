@@ -310,7 +310,14 @@ class gFLDProblem : public virtual NonlinearProblemABC {
   
   // Problem Evolver
 //  int Evolve(HierarchyEntry *ThisGrid, float deltat);
-  int Evolve(LevelHierarchyEntry *LevelArray[], int level, float deltat);
+//  int Evolve(LevelHierarchyEntry *LevelArray[], int level, float deltat);
+  int Evolve(LevelHierarchyEntry *LevelArray[], int level, 
+	     HierarchyEntry *Grids[], int NumberOfGrids,
+	     TopGridData *MetaData, ExternalBoundary *Exterior, 
+#ifdef FAST_SIB
+	     SiblingGridList SiblingList[],
+#endif
+	     float deltat);
   
   // Write module parameters to file
   int WriteParameters(FILE *fptr);

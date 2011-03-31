@@ -33,7 +33,14 @@ int NullProblem::Initialize(HierarchyEntry &TopGrid, TopGridData &MetaData) {
   
 // Problem setup/solver
 //int NullProblem::Evolve(HierarchyEntry *ThisGrid, float deltat) { 
-int NullProblem::Evolve(LevelHierarchyEntry *LevelArray[], int level, float deltat) { 
+//int NullProblem::Evolve(LevelHierarchyEntry *LevelArray[], int level, float deltat) { 
+int NullProblem::Evolve(LevelHierarchyEntry *LevelArray[], int level, 
+			HierarchyEntry *Grids[], int NumberOfGrids,
+			TopGridData *MetaData, ExternalBoundary *Exterior, 
+#ifdef FAST_SIB
+			SiblingGridList SiblingList[],
+#endif
+			float deltat) { 
   return SUCCESS; }
 
 // Write module parameters to file

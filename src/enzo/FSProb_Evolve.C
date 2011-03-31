@@ -42,7 +42,14 @@ int GetUnits(float *DensityUnits, float *LengthUnits,
 
 
 //int FSProb::Evolve(HierarchyEntry *ThisGrid, float deltat) 
-int FSProb::Evolve(LevelHierarchyEntry *LevelArray[], int level, float deltat) 
+//int FSProb::Evolve(LevelHierarchyEntry *LevelArray[], int level, float deltat) 
+int FSProb::Evolve(LevelHierarchyEntry *LevelArray[], int level, 
+		   HierarchyEntry *Grids[], int NumberOfGrids,
+		   TopGridData *MetaData, ExternalBoundary *Exterior, 
+#ifdef FAST_SIB
+		   SiblingGridList SiblingList[],
+#endif
+		   float deltat) 
 {
   //  if (debug)  printf("Entering FSProb::Evolve routine\n");
 

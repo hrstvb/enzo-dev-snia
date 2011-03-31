@@ -31,7 +31,14 @@ int RadiationGetUnits(float *RadiationUnits, FLOAT Time);
 
 
 //int gFLDProblem::Evolve(HierarchyEntry *ThisGrid, float deltat)
-int gFLDProblem::Evolve(LevelHierarchyEntry *LevelArray[], int level, float deltat)
+//int gFLDProblem::Evolve(LevelHierarchyEntry *LevelArray[], int level, float deltat)
+int gFLDProblem::Evolve(LevelHierarchyEntry *LevelArray[], int level, 
+			HierarchyEntry *Grids[], int NumberOfGrids,
+			TopGridData *MetaData, ExternalBoundary *Exterior, 
+#ifdef FAST_SIB
+			SiblingGridList SiblingList[],
+#endif
+			float deltat)
 {
 
 //   if (debug)  printf("Entering gFLDProblem::Evolve routine\n");
