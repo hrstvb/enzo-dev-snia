@@ -24,7 +24,7 @@ Your code to do the cell flagging can be a grid method.
 
 A minimal code should look like this:
 
-::
+.. code-block:: c
 
     int grid::FlagCellsToBeRefinedByDensityOverTwelve(){
     
@@ -46,7 +46,7 @@ Edit the file ``Grid_SetFlaggingField.C`` In this routine, there's a
 loop over the ``CellFlaggingMethod`` array. In this loop, you'll see
 code like this:
 
-::
+.. code-block:: c
 
           /* ==== METHOD 47: By Density over 12 ==== */
     
