@@ -21,8 +21,7 @@
 //   based on it.
  
 #include <stdio.h>
-// #include <string.h>
-#include <string>
+#include <string.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <math.h>
@@ -39,6 +38,7 @@
 #include "hydro_rk/EOS.h" 
 
 #include "parameters.h"
+
 
 /* This variable is declared here and only used in Grid_ReadGrid. */
  
@@ -98,8 +98,9 @@ int ReadParameterFile(FILE *fptr, TopGridData &MetaData, float *Initialdt)
     MetaData.StopSteps   = Param.GetScalar <int> ("SimulationControl.StopSteps");
     MetaData.StopCPUTime = Param.GetScalar <float> ("StopCPUTime");
     MetaData.ResubmitOn  = Param.GetScalar <int> ("SimulationControl.ResubmitOn"); // should be bool
+
     /* check syntex of sscanf to MetaData */
-    if (sscanf(line, "ResubmitCommand = %s", dummy) == 1) MetaData.ResubmitCommand = dummy;
+    MetaData.ResubmitCommand = Param.GetScalar <string> ("SimulationControl.ResubmitCommand");
 
     MetaData.MaximumTopGridTimeStep = Param.GetScalar <float> ("SimulationControl.MaximumTopGridTimeStep");
 
@@ -155,20 +156,23 @@ int ReadParameterFile(FILE *fptr, TopGridData &MetaData, float *Initialdt)
     MetaData.HistoryDumpNumber = Param.GetScalar <int> ("InternalParameters.outputLabeling.HistoryDumpNumber");
     MetaData.TracerParticleDumpNumber = Param.GetScalar <int> ("InternalParameters.outputLabeling.TracerParticleDumpNumber");
  
-    if (sscanf(line, "RestartDumpName      = %s", dummy) == 1) MetaData.RestartDumpName = dummy;
-    if (sscanf(line, "DataDumpName         = %s", dummy) == 1) MetaData.DataDumpName = dummy;
-    if (sscanf(line, "HistoryDumpName      = %s", dummy) == 1) MetaData.HistoryDumpName = dummy;
-    if (sscanf(line, "TracerParticleDumpName = %s", dummy) == 1) MetaData.TracerParticleDumpName = dummy;
-    if (sscanf(line, "RedshiftDumpName     = %s", dummy) == 1) MetaData.RedshiftDumpName = dummy;
+    MetaData.RestartDumpName = Param.GetScalar <string> ("OutputControlParameters.restartDump.RestartDumpName");
+    MetaData.RestartDumpDir = Param.GetScalar <string> ("OutputControlParameters.restartDump.RestartDumpDir");
  
-    if (sscanf(line, "RestartDumpDir      = %s", dummy) == 1) MetaData.RestartDumpDir = dummy;
-    if (sscanf(line, "DataDumpDir         = %s", dummy) == 1) MetaData.DataDumpDir = dummy;
-    if (sscanf(line, "HistoryDumpDir      = %s", dummy) == 1) MetaData.HistoryDumpDir = dummy;
-    if (sscanf(line, "TracerParticleDumpDir = %s", dummy) == 1) MetaData.TracerParticleDumpDir = dummy;
-    if (sscanf(line, "RedshiftDumpDir     = %s", dummy) == 1) MetaData.RedshiftDumpDir = dummy;
+    MetaData.DataDumpName = Param.GetScalar <string> ("OutputControlParameters.dataDump.DataDumpName");
+    MetaData.DataDumpDir = Param.GetScalar <string> ("OutputControlParameters.dataDump.DataDumpDir");
+
+    MetaData.RedshiftDumpName = Param.GetScalar <string> ("OutputControlParameters.restartDump.RedshiftDumpName");
+    MetaData.RedshiftDumpDir = Param.GetScalar <string> ("OutputControlParameters.redshiftDump.RedshiftDumpDir");
+
+    MetaData.TracerParticleDumpName = Param.GetScalar <string> ("OutputControlParameters.tracerParticleDump.TracerParticleDumpName");
+    MetaData.TracerParticleDumpDir = Param.GetScalar <string> ("OutputControlParameters.tracerParticleDump.TracerParticleDumpDir");
+
+    MetaData.HistoryDumpName = Param.GetScalar <string> ("OutputControlParameters.historyDump.HistoryDumpName");
+    MetaData.HistoryDumpDir = Param.GetScalar <string> ("OutputControlParameters.historyDump.HistoryDumpDir");
  
-    if (sscanf(line, "LocalDir            = %s", dummy) == 1) MetaData.LocalDir = dummy;
-    if (sscanf(line, "GlobalDir           = %s", dummy) == 1) MetaData.GlobalDir = dummy;
+    MetaData.LocalDir = Param.GetScalar <string> ("LocalDir");
+    MetaData.GlobalDir = Param.GetScalar <string> ("GlobalDir");
 
     LoadBalancing = Param.GetScalar <int> ("SimulationControl.optimization.LoadBalancing");
     ResetLoadBalancing = Param.GetScalar <int> ("SimulationControl.optimization.ResetLoadBalancing");
@@ -177,23 +181,20 @@ int ReadParameterFile(FILE *fptr, TopGridData &MetaData, float *Initialdt)
     LoadBalancingMaxLevel = Param.GetScalar <int> ("SimulationControl.optimization.LoadBalancingMaxLevel");
  
 
-#ifdef UNUSED // need to re-visit
-    if (sscanf(line, "TimeActionType[%"ISYM"] = %"ISYM, &dim, &int_dummy) == 2) {
-      ret++; TimeActionType[dim] = int_dummy;
-      if (dim >= MAX_TIME_ACTIONS-1) {
-	ENZO_VFAIL("Time action %"ISYM" > maximum allowed.\n", dim)
-      }
+    int NumberOfTimeActions = Param.Size("SimulationControl.timeaction.actions");
+    if (NumberOfTimeActions > MAX_TIME_ACTIONS-1) {
+      ENZO_VFAIL("You've exceeded the maximum number of TimeActions (%d)!\n",MAX_TIME_ACTIONS)
     }
-    if (sscanf(line, "TimeActionRedshift[%"ISYM"] = ", &dim) == 1)
-      ret += sscanf(line, "TimeActionRedshift[%"ISYM"] = %"PSYM, &dim,
-		    TimeActionRedshift+dim);
-    if (sscanf(line, "TimeActionTime[%"ISYM"] = ", &dim) == 1)
-      ret += sscanf(line, "TimeActionTime[%"ISYM"] = %"PSYM, &dim,
-		    TimeActionTime+dim);
-    if (sscanf(line, "TimeActionParameter[%"ISYM"] = ", &dim) == 1)
-      ret += sscanf(line, "TimeActionParameter[%"ISYM"] = %"FSYM, &dim,
-		    TimeActionParameter+dim);
-#endif 
+
+    char TimeActionNames[MAX_LINE_LENGTH][NumberOfTimeActions];
+    Param.GetArray <string> ("SimulationControl.timeaction.actions",TimeActionNames);
+
+    for (i = 0; i < NumberOfTimeActions; i++) {
+      TimeActionType[i] = Param.GetScalar <int> ("SimulationControl.timeaction.%s.Type", TimeActionNames[i]);
+      TimeActionRedshift[i] = Param.GetScalar <FLOAT> ("SimulationControl.timeaction.%s.Redshift", TimeActionNames[i]);
+      TimeActionTime[i] = Param.GetScalar <FLOAT> ("SimulationControl.timeaction.%s.Time", TimeActionNames[i]);
+      TimeActionParameter[i] = Param.GetScalar <float> ("SimulationControl.timeaction.%s.Parameter", TimeActionParameter[i]);
+    }
 
     MetaData.StaticHierarchy = Param.GetScalar <int> ("SimulationControl.amr.StaticHierarchy");  // should be bool
  
@@ -203,7 +204,7 @@ int ReadParameterFile(FILE *fptr, TopGridData &MetaData, float *Initialdt)
     MetaData.GravityBoundary = Param.GetScalar <int> ("PhysicsParameters.TopGridGravityBoundary");
  
 #ifdef TRANSFER
-    if (sscanf(line, "RadHydroParamfile = %s", dummy) == 1) MetaData.RadHydroParameterFname = dummy;
+    MetaData.RadHydroParameterFname = Param.GetScalar <string> ("RadHydroParamfile");
 #endif
     ImplicitProblem = Param.GetScalar <int> ("PhysicsParameters.radiationTransfer.ImplicitProblem"); // should be bool
     RadiativeTransferFLD = Param.GetScalar <int> ("PhysicsParameters.radiationTransfer.RadiativeTransferFLD");
@@ -283,16 +284,21 @@ int ReadParameterFile(FILE *fptr, TopGridData &MetaData, float *Initialdt)
     /* Read evolving RefineRegion */
 
     RefineRegionTimeType = Param.GetScalar <int> ("SimulationControl.amr.RefineRegionTimeType");
-    if (sscanf(line, "RefineRegionFile = %s", dummy) == 1) {
-      RefineRegionFile = dummy;
-      ret++;
+    RefineRegionFile = Param.GetScalar <string> ("RefineRegionFile");
+
+    int NumberOfFields = Param.Size("InternalParameters.fields");
+    if (NumberOfFields > MAX_NUMBER_OF_BARYON_FIELDS) {
+      ENZO_VFAIL("You've exceeded the maximum number of BaryonFields (%d)!\n",MAX_NUMBER_OF_BARYON_FIELDS)
     }
-    
-    if (sscanf(line, "DataLabel[%"ISYM"] = %s\n", &dim, dummy) == 2)
-      DataLabel[dim] = dummy;
-    if (sscanf(line, "DataUnits[%"ISYM"] = %s\n", &dim, dummy) == 2)
-      DataUnits[dim] = dummy;
- 
+
+    char FieldNames[MAX_LINE_LENGTH][NumberOfFields];
+    Param.GetArray <string> ("InternalParameters.fields",StaticRefineRegionNames);
+
+    for (i = 0; i < NumberOfFields; i++) {
+      DataLabel[i] = Param.GetScalar <string> ("InternalParameters.%s.name", FieldNames[i]);
+      DataUnits[i] = Param.GetScalar <float> ("InternalParameters.%s.cgsConversionFactor", FieldNames[i]);
+    }
+
     UniformGravity          = Param.GetScalar <int> ("PhysicsParameters.gravity.UniformGravity");
     UniformGravityDirection = Param.GetScalar <int> ("PhysicsParameters.gravity.UniformGravityDirection");
     UniformGravityConstant  = Param.GetScalar <float> ("PhysicsParameters.gravity.UniformGravityConstant");
@@ -336,10 +342,8 @@ int ReadParameterFile(FILE *fptr, TopGridData &MetaData, float *Initialdt)
     H2OpticalDepthApproximation                      = Param.GetScalar <int> ("PhysicsParameters.atomicPhysics.H2OpticalDepthApproximation"); // should be bool
     ThreeBodyRate = Param.GetScalar <int> ("PhysicsParameters.atomicPhysics.ThreeBodyRate"); // should be bool
 
-    if (sscanf(line, "CloudyCoolingGridFile = %s", dummy) == 1) {
-      CloudyCoolingData.CloudyCoolingGridFile = dummy;
-      ret++;
-    }
+
+    CloudyCoolingData.CloudyCoolingGridFile = Param.GetScalar <string> ("PhysicsParameters.atomicPhysics.cloudyCooling");
     CloudyCoolingData.IncludeCloudyHeating           = Param.GetScalar <int> ("PhysicsParameters.atomicPhysics.cloudyCooling.IncludeCloudyHeating"); // should be bool
     CloudyCoolingData.IncludeCloudyMMW               = Param.GetScalar <int> ("PhysicsParameters.atomicPhysics.cloudyCooling.IncludeCloudyMMW"); // should be bool
     CloudyCoolingData.CMBTemperatureFloor            = Param.GetScalar <int> ("PhysicsParameters.atomicPhysics.cloudyCooling.CMBTemperatureFloor"); // should be bool
@@ -401,13 +405,13 @@ int ReadParameterFile(FILE *fptr, TopGridData &MetaData, float *Initialdt)
     MustRefineParticlesMinimumMass      = Param.GetScalar <float> ("SimulationControl.amr.MustRefineParticlesMinimumMass");
     ParticleTypeInFile                  = Param.GetScalar <int> ("OutputControlParameters.ParticleTypeInFile"); // should be bool 
 
-    int NumberOfStaticRefineRegions = Param.Size("StaticRefineRegion.Regions");
+    int NumberOfStaticRefineRegions = Param.Size("StaticRefineRegion.regions");
     if (NumberOfStaticRefineRegions > MAX_STATIC_REGIONS-1) {
       ENZO_VFAIL("You've exceeded the maximum number of StaticRefineRegions (%d)!\n",MAX_STATIC_REGIONS)
     }
 
-    std::string StaticRefineRegionNames[NumberOfStaticRefineRegions];
-    Param.GetArray <std::string> ("StaticRefineRegion.Regions",StaticRefineRegionNames);
+    char StaticRefineRegionNames[MAX_LINE_LENGTH][NumberOfStaticRefineRegions];
+    Param.GetArray <string> ("StaticRefineRegion.regions",StaticRefineRegionNames);
 
     for (i = 0; i < NumberOfStaticRefineRegions; i++) {
       StaticRefineRegionLevel[i] = Param.GetScalar <int> ("StaticRefineRegion.%s.Level",StaticRefineRegionNames[i]);
@@ -533,6 +537,17 @@ int ReadParameterFile(FILE *fptr, TopGridData &MetaData, float *Initialdt)
 = Param.GetScalar <int> ("");
 = Param.GetScalar <float> ("");
 = Param.GetScalar <float> ("");
+= Param.GetScalar <> ("");
+
+    ret += sscanf(line, "StarFeedbackDistRadius = %"ISYM, &StarFeedbackDistRadius);
+    ret += sscanf(line, "StarFeedbackDistCellStep = %"ISYM, &StarFeedbackDistCellStep);
+
+    ret += sscanf(line, "StarClusterUseMetalField = %"ISYM, 		  &StarClusterUseMetalField);
+    ret += sscanf(line, "StarClusterMinDynamicalTime = %"FSYM, 		  &StarClusterMinDynamicalTime);
+    ret += sscanf(line, "StarClusterHeliumIonization = %"ISYM, 		  &StarClusterHeliumIonization);
+    ret += sscanf(line, "StarClusterUnresolvedModel = %"ISYM, 		  &StarClusterUnresolvedModel);
+    ret += sscanf(line, "StarClusterIonizingLuminosity = %lf", 		  &StarClusterIonizingLuminosity);
+
 = Param.GetScalar <float> ("");
 = Param.GetScalar <float> ("");
 = Param.GetScalar <float> ("");
