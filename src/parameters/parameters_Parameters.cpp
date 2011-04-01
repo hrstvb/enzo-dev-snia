@@ -63,8 +63,10 @@ void Parameters::read ( const char * file_name )
   FILE * file_pointer = fopen(file_name,"r");
 
   if ( file_pointer == NULL ) {
-    fprintf (stderr,"%s:%d Error opening parameter file '%s' for reading\n",
-	     __FILE__,__LINE__,file_name);
+    char err_msg[255];
+    sprintf (err_msg,"Error opening parameter file '%s' for reading\n",
+	     file_name);
+    ENZO_FAIL(err_msg);
   }
   
   struct param_struct * parameter_list = cello_parameters_read(file_pointer);
@@ -98,7 +100,7 @@ void Parameters::read ( const char * file_name )
 
   fclose(file_pointer);
 
-  printf ("[Parameter] read in %s",file_name);
+  // printf ("[Parameter] read in %s",file_name);
 }
 
 //----------------------------------------------------------------------
@@ -110,8 +112,10 @@ void Parameters::write ( const char * file_name )
   FILE * file_pointer = fopen(file_name,"w");
 
   if ( file_pointer == NULL ) {
-    fprintf (stderr,"%s:%d Error opening parameter file '%s' for writing\n",
-	     __FILE__,__LINE__,file_name);
+    char err_msg[255];
+    sprintf (err_msg,"Error opening parameter file '%s' for writing\n",
+	     ,file_name);
+    ENZO_FAIL(err_msg);
   }
   std::map<std::string,Param *>::iterator it_param;
 
@@ -122,8 +126,10 @@ void Parameters::write ( const char * file_name )
     if (it_param->second) {
       it_param->second->write(file_pointer, it_param->first);
     } else {
-      fprintf (stderr,"%s:%d Uninitialized parameter %s accessed\n",
-	       __FILE__,__LINE__,it_param->first.c_str());
+      char err_msg[255];
+      sprintf (err_msg,"Uninitialized parameter %s accessed\n",
+	       it_param->first.c_str());
+      ENZO_FAIL(err_msg);
     }
   }
 
@@ -589,12 +595,12 @@ void Parameters::monitor_access_
     sprintf (index_string,"[%d]",index);
   }
 
-  printf("[Parameter] accessed %s:%s:%s%s %s\n",
-	   current_group_.c_str(),
-	   current_subgroup_.c_str(),
-	   parameter.c_str(),
-	   index_string,
-	   value.c_str());
+  // printf("[Parameter] accessed %s:%s:%s%s %s\n",
+  // 	   current_group_.c_str(),
+  // 	   current_subgroup_.c_str(),
+  // 	   parameter.c_str(),
+  // 	   index_string,
+  // 	   value.c_str());
 }
 
 //----------------------------------------------------------------------
@@ -602,11 +608,11 @@ void Parameters::monitor_access_
 void Parameters::monitor_write_ (std::string parameter) throw()
 {
   Param * param = parameter_(parameter);
-  printf ("Parameter write %s:%s:%s = %s\n",
-	   current_group_.c_str(),
-	   current_subgroup_.c_str(),
-	   parameter.c_str(),
-	   param ? param->value_to_string().c_str() : "[undefined]");
+  // printf ("Parameter write %s:%s:%s = %s\n",
+  // 	   current_group_.c_str(),
+  // 	   current_subgroup_.c_str(),
+  // 	   parameter.c_str(),
+  // 	   param ? param->value_to_string().c_str() : "[undefined]");
 
 }
 
