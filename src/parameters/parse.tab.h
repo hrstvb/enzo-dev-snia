@@ -39,50 +39,52 @@
    /* Put the tokens into the symbol table, so that GDB and other debuggers
       know about them.  */
    enum yytokentype {
-     TOK_BOOLEAN = 258,
-     TOK_INTEGER = 259,
-     TOK_HEX = 260,
-     TOK_INTEGER64 = 261,
-     TOK_HEX64 = 262,
-     TOK_FLOAT = 263,
-     TOK_STRING = 264,
-     TOK_NAME = 265,
-     TOK_EQUALS = 266,
-     TOK_NEWLINE = 267,
-     TOK_ARRAY_START = 268,
-     TOK_ARRAY_END = 269,
-     TOK_LIST_START = 270,
-     TOK_LIST_END = 271,
-     TOK_COMMA = 272,
-     TOK_GROUP_START = 273,
-     TOK_GROUP_END = 274,
-     TOK_END = 275,
-     TOK_GARBAGE = 276,
-     TOK_ERROR = 277
+     GROUP_NAME = 258,
+     STRING = 259,
+     IDENTIFIER = 260,
+     VARIABLE = 261,
+     SCALAR = 262,
+     INTEGER = 263,
+     LOGICAL = 264,
+     LE = 265,
+     GE = 266,
+     NE = 267,
+     EQ = 268,
+     AND = 269,
+     OR = 270,
+     ACOS = 271,
+     ACOSH = 272,
+     ASIN = 273,
+     ASINH = 274,
+     ATAN = 275,
+     ATANH = 276,
+     CBRT = 277,
+     CEIL = 278,
+     COS = 279,
+     COSH = 280,
+     ERFC = 281,
+     ERF = 282,
+     EXP = 283,
+     EXPM1 = 284,
+     FABS = 285,
+     FLOOR = 286,
+     J0 = 287,
+     J1 = 288,
+     LGAMMA = 289,
+     LOG10 = 290,
+     LOG1P = 291,
+     LOGB = 292,
+     LOG = 293,
+     SIN = 294,
+     SINH = 295,
+     SQRT = 296,
+     TAN = 297,
+     TANH = 298,
+     Y0 = 299,
+     Y1 = 300,
+     RINT = 301
    };
 #endif
-/* Tokens.  */
-#define TOK_BOOLEAN 258
-#define TOK_INTEGER 259
-#define TOK_HEX 260
-#define TOK_INTEGER64 261
-#define TOK_HEX64 262
-#define TOK_FLOAT 263
-#define TOK_STRING 264
-#define TOK_NAME 265
-#define TOK_EQUALS 266
-#define TOK_NEWLINE 267
-#define TOK_ARRAY_START 268
-#define TOK_ARRAY_END 269
-#define TOK_LIST_START 270
-#define TOK_LIST_END 271
-#define TOK_COMMA 272
-#define TOK_GROUP_START 273
-#define TOK_GROUP_END 274
-#define TOK_END 275
-#define TOK_GARBAGE 276
-#define TOK_ERROR 277
-
 
 
 
@@ -91,23 +93,25 @@ typedef union YYSTYPE
 {
 
 /* Line 1676 of yacc.c  */
-#line 85 "grammar.y"
-
-  int ival;
-  long long llval;
-  double fval;
-  char *sval;
-
+#line 388 "parse.y"
+ 
+  int logical_type;  
+  int integer_type; 
+  double scalar_type;  
+  char * string_type; 
+  char * subgroup_type;
+  struct node_expr * node_type;
+  
 
 
 /* Line 1676 of yacc.c  */
-#line 105 "grammar.h"
+#line 109 "parse.tab.h"
 } YYSTYPE;
 # define YYSTYPE_IS_TRIVIAL 1
 # define yystype YYSTYPE /* obsolescent; will be withdrawn */
 # define YYSTYPE_IS_DECLARED 1
 #endif
 
-
+extern YYSTYPE yylval;
 
 

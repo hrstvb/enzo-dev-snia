@@ -21,7 +21,8 @@
 //   based on it.
  
 #include <stdio.h>
-#include <string.h>
+// #include <string.h>
+#include <string>
 #include <stdlib.h>
 #include <unistd.h>
 #include <math.h>
@@ -84,32 +85,28 @@ int ReadParameterFile(FILE *fptr, TopGridData &MetaData, float *Initialdt)
  
     /* read MetaData parameters */
  
-    ret += sscanf(line, "InitialCycleNumber = %"ISYM, &MetaData.CycleNumber);
-    ret += sscanf(line, "InitialTime        = %"PSYM, &MetaData.Time);
-    ret += sscanf(line, "InitialCPUTime     = %lf", &MetaData.CPUTime);
-    ret += sscanf(line, "Initialdt          = %"FSYM, Initialdt);
+    MetaData.CycleNumber = Param.GetScalar <int> ("InitialCycleNumber");
+    MetaData.Time        = Param.GetScalar <FLOAT> ("InitialTime");
+    MetaData.CPUTime     = Param.GetScalar <float> ("InitialCPUTime");
+    (*Initialdt)         = Param.GetScalar <float> ("Initialdt");
  
-    ret += sscanf(line, "CheckpointRestart = %"ISYM, &CheckpointRestart);
-    ret += sscanf(line, "StopTime    = %"PSYM, &MetaData.StopTime);
-    ret += sscanf(line, "StopCycle   = %"ISYM, &MetaData.StopCycle);
-    ret += sscanf(line, "StopSteps   = %"ISYM, &MetaData.StopSteps);
-    ret += sscanf(line, "StopCPUTime = %"FSYM, &MetaData.StopCPUTime);
-    ret += sscanf(line, "ResubmitOn  = %"ISYM, &MetaData.ResubmitOn);
-    if (sscanf(line, "ResubmitCommand = %s", dummy) == 1) 
-      MetaData.ResubmitCommand = dummy;
+    CheckpointRestart    = Param.GetScalar <int> ("CheckpointRestart"); // should be bool
+    MetaData.StopTime    = Param.GetScalar <FLOAT> ("StopTime");
+    MetaData.StopCycle   = Param.GetScalar <int> ("StopCycle");
+    MetaData.StopSteps   = Param.GetScalar <int> ("StopSteps");
+    MetaData.StopCPUTime = Param.GetScalar <float> ("StopCPUTime");
+    MetaData.ResubmitOn  = Param.GetScalar <int> ("ResubmitOn"); // should be bool
 
-    ret += sscanf(line, "MaximumTopGridTimeStep = %"FSYM,
-		  &MetaData.MaximumTopGridTimeStep);
+    if (sscanf(line, "ResubmitCommand = %s", dummy) == 1) MetaData.ResubmitCommand = dummy;
 
-    ret += sscanf(line, "TimeLastRestartDump = %"FSYM,
-		  &MetaData.TimeLastRestartDump);
-    ret += sscanf(line, "dtRestartDump       = %"FSYM, &MetaData.dtRestartDump);
-    ret += sscanf(line, "TimeLastDataDump    = %"PSYM,
-		  &MetaData.TimeLastDataDump);
-    ret += sscanf(line, "dtDataDump          = %"PSYM, &MetaData.dtDataDump);
-    ret += sscanf(line, "TimeLastHistoryDump = %"PSYM,
-		  &MetaData.TimeLastHistoryDump);
-    ret += sscanf(line, "dtHistoryDump       = %"PSYM, &MetaData.dtHistoryDump);
+    MetaData.MaximumTopGridTimeStep = Param.GetScalar <float> ("MaximumTopGridTimeStep");
+
+    MetaData.TimeLastRestartDump    = Param.GetScalar <float> ("TimeLastRestartDump");
+    MetaData.dtRestartDump          = Param.GetScalar <float> ("dtRestartDump");
+    MetaData.TimeLastDataDump       = Param.GetScalar <FLOAT> ("TimeLastDataDump");
+    MetaData.dtDataDump             = Param.GetScalar <FLOAT> ("dtDataDump");
+    MetaData.TimeLastHistoryDump    = Param.GetScalar <FLOAT> ("TimeLastHistoryDump");
+    MetaData.dtHistoryDump          = Param.GetScalar <FLOAT> ("dtHistoryDump");
  
     ret += sscanf(line, "TracerParticleOn  = %"ISYM, &TracerParticleOn);
     ret += sscanf(line, "ParticleTypeInFile = %"ISYM, &ParticleTypeInFile);
