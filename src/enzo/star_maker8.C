@@ -154,7 +154,7 @@ int star_maker8(int *nx, int *ny, int *nz, int *size, float *d, float *te, float
 
 
   /* sink particle accretes gas from parent cell according to modified Bondi-Hoyle formula. 
-   Reference: M. Ruffert, ApJ (1994) 427 342. Kernal section from Krumholtz et al 2004 */
+   Reference: M. Ruffert, ApJ (1994) 427 342. Kernel section from Krumholtz et al 2004 */
      double G = GravConst*(*d1)*POW(*t1,2);    //MassUnits*POW(TimeUnits,2)/POW(LengthUnits,3)
      //printf("note:   G = %"FSYM" in code units \n",G);
      double csgrid2, radius2, radius;
@@ -166,9 +166,9 @@ int star_maker8(int *nx, int *ny, int *nz, int *size, float *d, float *te, float
   FLOAT radius2_cell[MAX_SUPERCELL_NUMBER];
   FLOAT weight_cell[MAX_SUPERCELL_NUMBER];
 
-  if (AccretionKernal == 2 ){
+  if (AccretionKernel == 2 ){
   }
-  else if (AccretionKernal == 1 ){ // KERNAL SECTION
+  else if (AccretionKernel == 1 ){ // KERNAL SECTION
     for (n = 0; n < nsinks; n++) {
 
       bb = sink_index[n];

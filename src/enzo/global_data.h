@@ -222,7 +222,7 @@ EXTERN float PointSourceGravityCoreRadius;
 
 EXTERN int SelfGravity;
 EXTERN int SelfGravityGasOff;
-EXTERN int AccretionKernal;
+EXTERN int AccretionKernel;
 
 /* CopyGravPotential (TRUE or FALSE) */
 
