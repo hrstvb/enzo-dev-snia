@@ -108,115 +108,74 @@ int ReadParameterFile(FILE *fptr, TopGridData &MetaData, float *Initialdt)
     MetaData.TimeLastHistoryDump    = Param.GetScalar <FLOAT> ("TimeLastHistoryDump");
     MetaData.dtHistoryDump          = Param.GetScalar <FLOAT> ("dtHistoryDump");
  
-    ret += sscanf(line, "TracerParticleOn  = %"ISYM, &TracerParticleOn);
-    ret += sscanf(line, "ParticleTypeInFile = %"ISYM, &ParticleTypeInFile);
-    ret += sscanf(line, "OutputParticleTypeGrouping = %"ISYM,
-                        &OutputParticleTypeGrouping);
-    ret += sscanf(line, "TimeLastTracerParticleDump = %"PSYM,
-                  &MetaData.TimeLastTracerParticleDump);
-    ret += sscanf(line, "dtTracerParticleDump       = %"PSYM,
-                  &MetaData.dtTracerParticleDump);
-    ret += sscanf(line, "TimeLastInterpolatedDataDump    = %"PSYM,
-		  &MetaData.TimeLastInterpolatedDataDump);
-    ret += sscanf(line, "dtInterpolatedDataDump          = %"PSYM, 
-		  &MetaData.dtInterpolatedDataDump);
- 
-    ret += sscanf(line, "NewMovieLeftEdge  = %"PSYM" %"PSYM" %"PSYM, 
-		  MetaData.NewMovieLeftEdge,
-		  MetaData.NewMovieLeftEdge+1, 
-		  MetaData.NewMovieLeftEdge+2);
-    ret += sscanf(line, "NewMovieRightEdge = %"PSYM" %"PSYM" %"PSYM, 
-		  MetaData.NewMovieRightEdge, 
-		  MetaData.NewMovieRightEdge+1,
-		  MetaData.NewMovieRightEdge+2);
+    TracerParticleOn                      = Param.GetScalar <int> ("TracerParticleOn"); // should be bool
+    ParticleTypeInFile                    = Param.GetScalar <int> ("ParticleTypeInFile"); // should be bool
+    OutputParticleTypeGrouping            = Param.GetScalar <int> ("OutputParticleTypeGrouping");
+    MetaData.TimeLastTracerParticleDump   = Param.GetScalar <FLOAT> ("TimeLastTracerParticleDump");
+    MetaData.dtTracerParticleDump         = Param.GetScalar <FLOAT> ("dtTracerParticleDump");
+    MetaData.TimeLastInterpolatedDataDump = Param.GetScalar <FLOAT> ("TimeLastInterpolatedDataDump");
+    MetaData.dtInterpolatedDataDump       = Param.GetScalar <FLOAT> ("dtInterpolatedDataDump");
 
-    ret += sscanf(line, "CycleLastRestartDump = %"ISYM,
-		  &MetaData.CycleLastRestartDump);
-    ret += sscanf(line, "CycleSkipRestartDump = %"ISYM,
-		  &MetaData.CycleSkipRestartDump);
-    ret += sscanf(line, "CycleLastDataDump    = %"ISYM,
-		  &MetaData.CycleLastDataDump);
-    ret += sscanf(line, "CycleSkipDataDump    = %"ISYM,
-		  &MetaData.CycleSkipDataDump);
-    ret += sscanf(line, "CycleLastHistoryDump = %"ISYM,
-		  &MetaData.CycleLastHistoryDump);
-    ret += sscanf(line, "CycleSkipHistoryDump = %"ISYM,
-		  &MetaData.CycleSkipHistoryDump);
-    ret += sscanf(line, "CycleSkipGlobalDataDump = %"ISYM, //AK
-                  &MetaData.CycleSkipGlobalDataDump);
-    ret += sscanf(line, "OutputFirstTimeAtLevel = %"ISYM,
-		  &MetaData.OutputFirstTimeAtLevel);
-    ret += sscanf(line, "StopFirstTimeAtLevel = %"ISYM,
-		  &MetaData.StopFirstTimeAtLevel);
+ 
+    Param.GetArray <FLOAT> ("NewMovieLeftEdge", MetaData.NewMovieLeftEdge);
+    Param.GetArray <FLOAT> ("NewMovieLeftEdge", MetaData.NewMovieRightEdge);
+
+    MetaData.CycleLastRestartDump    = Param.GetScalar <int> ("CycleLastRestartDump");
+    MetaData.CycleSkipRestartDump    = Param.GetScalar <int> ("CycleSkipRestartDump");
+    MetaData.CycleLastDataDump       = Param.GetScalar <int> ("CycleLastDataDump");
+    MetaData.CycleSkipDataDump       = Param.GetScalar <int> ("CycleSkipDataDump");
+    MetaData.CycleLastHistoryDump    = Param.GetScalar <int> ("CycleLastHistoryDump");
+    MetaData.CycleSkipHistoryDump    = Param.GetScalar <int> ("CycleSkipHistoryDump");
+    MetaData.CycleSkipGlobalDataDump = Param.GetScalar <int> ("CycleSkipGlobalDataDump");
+    MetaData.OutputFirstTimeAtLevel  = Param.GetScalar <int> ("OutputFirstTimeAtLevel");
+    MetaData.StopFirstTimeAtLevel    = Param.GetScalar <int> ("StopFirstTimeAtLevel");
+
  
     /* Maximum density directed output */
-    ret += sscanf(line, "OutputOnDensity = %"ISYM,
-           &OutputOnDensity);
-    ret += sscanf(line, "StartDensityOutputs = %"FSYM,
-           &StartDensityOutputs);
-    ret += sscanf(line, "CurrentDensityOutput = %"FSYM,
-           &CurrentDensityOutput);
-    ret += sscanf(line, "IncrementDensityOutput = %"FSYM,
-           &IncrementDensityOutput);
+    OutputOnDensity        = Param.GetScalar <int> ("OutputOnDensity");  // should be bool
+    StartDensityOutputs    = Param.GetScalar <float> ("StartDensityOutputs");
+    CurrentDensityOutput   = Param.GetScalar <float> ("CurrentDensityOutput");
+    IncrementDensityOutput = Param.GetScalar <float> ("IncrementDensityOutput");
+
 
     /* Subcycle directed output */
-    ret += sscanf(line, "SubcycleSkipDataDump = %"ISYM, 
-                  &MetaData.SubcycleSkipDataDump);
-    ret += sscanf(line, "SubcycleLastDataDump = %"ISYM, 
-                  &MetaData.SubcycleLastDataDump);
-    ret += sscanf(line, "SubcycleNumber = %"ISYM, 
-                  &MetaData.SubcycleNumber);
+    MetaData.SubcycleSkipDataDump = Param.GetScalar <int> ("SubcycleSkipDataDump");
+    MetaData.SubcycleLastDataDump = Param.GetScalar <int> ("SubcycleLastDataDump");
+    MetaData.SubcycleNumber = Param.GetScalar <int> ("SubcycleNumber");
 
-    ret += sscanf(line,"FileDirectedOutput = %"ISYM,
-		  &FileDirectedOutput);
-    ret += sscanf(line,"WriteBinaryHierarchy = %"ISYM,
-		  &WriteBinaryHierarchy);
 
-    ret += sscanf(line, "RestartDumpNumber = %"ISYM, &MetaData.RestartDumpNumber);
-    ret += sscanf(line, "DataDumpNumber    = %"ISYM, &MetaData.DataDumpNumber);
-    ret += sscanf(line, "HistoryDumpNumber = %"ISYM, &MetaData.HistoryDumpNumber);
-    ret += sscanf(line, "TracerParticleDumpNumber = %"ISYM, &MetaData.TracerParticleDumpNumber);
- 
-    if (sscanf(line, "RestartDumpName      = %s", dummy) == 1)
-      MetaData.RestartDumpName = dummy;
-    if (sscanf(line, "DataDumpName         = %s", dummy) == 1)
-      MetaData.DataDumpName = dummy;
-    if (sscanf(line, "HistoryDumpName      = %s", dummy) == 1)
-      MetaData.HistoryDumpName = dummy;
-    if (sscanf(line, "TracerParticleDumpName = %s", dummy) == 1)
-      MetaData.TracerParticleDumpName = dummy;
-    if (sscanf(line, "RedshiftDumpName     = %s", dummy) == 1)
-      MetaData.RedshiftDumpName = dummy;
- 
-    if (sscanf(line, "RestartDumpDir      = %s", dummy) == 1)
-      MetaData.RestartDumpDir = dummy;
-    if (sscanf(line, "DataDumpDir         = %s", dummy) == 1)
-      MetaData.DataDumpDir = dummy;
-    if (sscanf(line, "HistoryDumpDir      = %s", dummy) == 1)
-      MetaData.HistoryDumpDir = dummy;
-    if (sscanf(line, "TracerParticleDumpDir = %s", dummy) == 1)
-      MetaData.TracerParticleDumpDir = dummy;
-    if (sscanf(line, "RedshiftDumpDir     = %s", dummy) == 1)
-      MetaData.RedshiftDumpDir = dummy;
- 
-    if (sscanf(line, "LocalDir            = %s", dummy) == 1)
-      MetaData.LocalDir = dummy;
-    if (sscanf(line, "GlobalDir           = %s", dummy) == 1)
-      MetaData.GlobalDir = dummy;
- 
-    if (sscanf(line, "CubeDump[%"ISYM"] = %s", &dim, dummy) == 2) {
-      ret++; CubeDumps[dim] = dummy;
-      if (dim >= MAX_CUBE_DUMPS) {
-        ENZO_VFAIL("CubeDump %"ISYM" > maximum allowed.\n", dim)
-      }
-    }
+    FileDirectedOutput = Param.GetScalar <int> ("FileDirectedOutput");
+    WriteBinaryHierarchy = Param.GetScalar <int> ("WriteBinaryHierarchy");
 
-    ret += sscanf(line, "LoadBalancing = %"ISYM, &LoadBalancing);
-    ret += sscanf(line, "ResetLoadBalancing = %"ISYM, &ResetLoadBalancing);
-    ret += sscanf(line, "LoadBalancingCycleSkip = %"ISYM, &LoadBalancingCycleSkip);
-    ret += sscanf(line, "LoadBalancingMinLevel = %"ISYM, &LoadBalancingMinLevel);
-    ret += sscanf(line, "LoadBalancingMaxLevel = %"ISYM, &LoadBalancingMaxLevel);
+
+    MetaData.RestartDumpNumber = Param.GetScalar <int> ("RestartDumpNumber");
+    MetaData.DataDumpNumber = Param.GetScalar <int> ("DataDumpNumber");
+    MetaData.HistoryDumpNumber = Param.GetScalar <int> ("HistoryDumpNumber");
+    MetaData.TracerParticleDumpNumber = Param.GetScalar <int> ("TracerParticleDumpNumber");
  
+    if (sscanf(line, "RestartDumpName      = %s", dummy) == 1) MetaData.RestartDumpName = dummy;
+    if (sscanf(line, "DataDumpName         = %s", dummy) == 1) MetaData.DataDumpName = dummy;
+    if (sscanf(line, "HistoryDumpName      = %s", dummy) == 1) MetaData.HistoryDumpName = dummy;
+    if (sscanf(line, "TracerParticleDumpName = %s", dummy) == 1) MetaData.TracerParticleDumpName = dummy;
+    if (sscanf(line, "RedshiftDumpName     = %s", dummy) == 1) MetaData.RedshiftDumpName = dummy;
+ 
+    if (sscanf(line, "RestartDumpDir      = %s", dummy) == 1) MetaData.RestartDumpDir = dummy;
+    if (sscanf(line, "DataDumpDir         = %s", dummy) == 1) MetaData.DataDumpDir = dummy;
+    if (sscanf(line, "HistoryDumpDir      = %s", dummy) == 1) MetaData.HistoryDumpDir = dummy;
+    if (sscanf(line, "TracerParticleDumpDir = %s", dummy) == 1) MetaData.TracerParticleDumpDir = dummy;
+    if (sscanf(line, "RedshiftDumpDir     = %s", dummy) == 1) MetaData.RedshiftDumpDir = dummy;
+ 
+    if (sscanf(line, "LocalDir            = %s", dummy) == 1) MetaData.LocalDir = dummy;
+    if (sscanf(line, "GlobalDir           = %s", dummy) == 1) MetaData.GlobalDir = dummy;
+
+    LoadBalancing = Param.GetScalar <int> ("LoadBalancing");
+    ResetLoadBalancing = Param.GetScalar <int> ("ResetLoadBalancing");
+    LoadBalancingCycleSkip = Param.GetScalar <int> ("LoadBalancingCycleSkip");
+    LoadBalancingMinLevel = Param.GetScalar <int> ("LoadBalancingMinLevel");
+    LoadBalancingMaxLevel = Param.GetScalar <int> ("LoadBalancingMaxLevel");
+ 
+
+#ifdef UNUSED // need to re-visit
     if (sscanf(line, "TimeActionType[%"ISYM"] = %"ISYM, &dim, &int_dummy) == 2) {
       ret++; TimeActionType[dim] = int_dummy;
       if (dim >= MAX_TIME_ACTIONS-1) {
@@ -232,41 +191,34 @@ int ReadParameterFile(FILE *fptr, TopGridData &MetaData, float *Initialdt)
     if (sscanf(line, "TimeActionParameter[%"ISYM"] = ", &dim) == 1)
       ret += sscanf(line, "TimeActionParameter[%"ISYM"] = %"FSYM, &dim,
 		    TimeActionParameter+dim);
+#endif 
+
+    MetaData.StaticHierarchy = Param.GetScalar <int> ("StaticHierarchy");  // should be bool
  
-    ret += sscanf(line, "StaticHierarchy = %"ISYM, &MetaData.StaticHierarchy);
+    MetaData.TopGridRank = Param.GetScalar <int> ("TopGridRank");
+    Param.GetArray <int> ("TopGridDimensions", MetaData.TopGridDims);
  
-    ret += sscanf(line, "TopGridRank       = %"ISYM, &MetaData.TopGridRank);
-    ret += sscanf(line, "TopGridDimensions = %"ISYM" %"ISYM" %"ISYM, MetaData.TopGridDims,
-		  MetaData.TopGridDims+1, MetaData.TopGridDims+2);
- 
-    ret += sscanf(line, "TopGridGravityBoundary = %"ISYM,
-		  &MetaData.GravityBoundary);
+    MetaData.GravityBoundary = Param.GetScalar <int> ("TopGridGravityBoundary");
  
 #ifdef TRANSFER
-    if (sscanf(line, "RadHydroParamfile = %s", dummy) == 1)
-      MetaData.RadHydroParameterFname = dummy;
+    if (sscanf(line, "RadHydroParamfile = %s", dummy) == 1) MetaData.RadHydroParameterFname = dummy;
 #endif
-    ret += sscanf(line, "ImplicitProblem = %"ISYM, &ImplicitProblem);
-    ret += sscanf(line, "RadiativeTransferFLD   = %"ISYM, &RadiativeTransferFLD);
+    ImplicitProblem = Param.GetScalar <int> ("ImplicitProblem"); // should be bool
+    RadiativeTransferFLD = Param.GetScalar <int> ("RadiativeTransferFLD");
 #ifdef EMISSIVITY
-    ret += sscanf(line, "StarMakerEmissivityField = %"ISYM, 
-		  &StarMakerEmissivityField);
-    ret += sscanf(line, "uv_param = %"FSYM, &uv_param);
+    StarMakerEmissivityField = Param.GetScalar <int> ("StarMakerEmissivityField");
+    uv_param = Param.GetScalar <float> ("uv_param");
 #endif
 
-    ret += sscanf(line, "ParticleBoundaryType   = %"ISYM,
-		  &MetaData.ParticleBoundaryType);
-    ret += sscanf(line, "NumberOfParticles      = %"PISYM,
-		  &MetaData.NumberOfParticles);
+    MetaData.ParticleBoundaryType = Param.GetScalar <int> ("ParticleBoundaryType");
+    MetaData.NumberOfParticles = Param.GetScalar <int> ("NumberOfParticles");
  
-    ret += sscanf(line, "CourantSafetyNumber    = %"FSYM,
-		  &MetaData.CourantSafetyNumber);
-    ret += sscanf(line, "PPMFlatteningParameter = %"ISYM,
-		  &MetaData.PPMFlatteningParameter);
-    ret += sscanf(line, "PPMDiffusionParameter  = %"ISYM,
-		  &MetaData.PPMDiffusionParameter);
-    ret += sscanf(line, "PPMSteepeningParameter = %"ISYM,
-		  &MetaData.PPMSteepeningParameter);
+    MetaData.CourantSafetyNumber = Param.GetScalar <float> ("CourantSafetyNumber");
+    MetaData.PPMFlatteningParameter = Param.GetScalar <int> ("PPMFlatteningParameter");  // should be bool
+    MetaData.PPMDiffusionParameter = Param.GetScalar <int> ("PPMDiffusionParameter");  // should be bool
+    MetaData.PPMSteepeningParameter = Param.GetScalar <int> ("PPMSteepeningParameter");  // should be bool
+
+// **********************************************************************
  
     /* read global Parameters */
  
@@ -330,98 +282,87 @@ int ReadParameterFile(FILE *fptr, TopGridData &MetaData, float *Initialdt)
     ret += sscanf(line, "RefineRegionRightEdge = %"PSYM" %"PSYM" %"PSYM,
 		  RefineRegionRightEdge, RefineRegionRightEdge+1,
 		  RefineRegionRightEdge+2);
-     ret += sscanf(line, "MustRefineRegionLeftEdge  = %"PSYM" %"PSYM" %"PSYM,
+    ret += sscanf(line, "MustRefineRegionLeftEdge  = %"PSYM" %"PSYM" %"PSYM,
 		  MustRefineRegionLeftEdge, MustRefineRegionLeftEdge+1,
 		  MustRefineRegionLeftEdge+2);
     ret += sscanf(line, "MustRefineRegionRightEdge  = %"PSYM" %"PSYM" %"PSYM,
 		  MustRefineRegionRightEdge, MustRefineRegionRightEdge+1,
 		  MustRefineRegionRightEdge+2);
+    
+// **********************************************************************
 
     /* Read evolving RefineRegion */
 
-    ret += sscanf(line, "RefineRegionTimeType = %"ISYM, &RefineRegionTimeType);
+    RefineRegionTimeType = Param.GetScalar <int> ("RefineRegionTimeType");
     if (sscanf(line, "RefineRegionFile = %s", dummy) == 1) {
       RefineRegionFile = dummy;
       ret++;
     }
-
+    
     if (sscanf(line, "DataLabel[%"ISYM"] = %s\n", &dim, dummy) == 2)
       DataLabel[dim] = dummy;
     if (sscanf(line, "DataUnits[%"ISYM"] = %s\n", &dim, dummy) == 2)
       DataUnits[dim] = dummy;
  
-    ret += sscanf(line, "UniformGravity          = %"ISYM, &UniformGravity);
-    ret += sscanf(line, "UniformGravityDirection = %"ISYM,
-		  &UniformGravityDirection);
-    ret += sscanf(line, "UniformGravityConstant  = %"FSYM,
-		  &UniformGravityConstant);
+    UniformGravity          = Param.GetScalar <int> ("UniformGravity");
+    UniformGravityDirection = Param.GetScalar <int> ("UniformGravityDirection");
+    UniformGravityConstant  = Param.GetScalar <float> ("UniformGravityConstant");
  
-    ret += sscanf(line, "PointSourceGravity         = %"ISYM,&PointSourceGravity);
-    ret += sscanf(line, "PointSourceGravityPosition = %"PSYM" %"PSYM" %"PSYM,
-		  PointSourceGravityPosition, PointSourceGravityPosition+1,
-		  PointSourceGravityPosition+2);
-    ret += sscanf(line, "PointSourceGravityConstant = %"FSYM,
-		  &PointSourceGravityConstant);
-    ret += sscanf(line, "PointSourceGravityCoreRadius = %"FSYM,
-		  &PointSourceGravityCoreRadius);
+    PointSourceGravity           = Param.GetScalar <int> ("PointSourceGravity"); // should be bool
+    Param.GetArray <FLOAT> ("PointSourceGravityPosition", PointSourceGravityPosition);
+    PointSourceGravityConstant   = Param.GetScalar <float> ("PointSourceGravityConstant");
+    PointSourceGravityCoreRadius = Param.GetScalar <float> ("PointSourceGravityCoreRadius");
  
-    ret += sscanf(line, "ExternalGravity         = %"ISYM,&ExternalGravity);
+    ExternalGravity              = Param.GetScalar <int> ("ExternalGravity");
 
-    ret += sscanf(line, "SelfGravity           = %"ISYM, &SelfGravity);
-    ret += sscanf(line, "SelfGravityGasOff     = %"ISYM, &SelfGravityGasOff);
-    ret += sscanf(line, "AccretionKernal       = %"ISYM, &AccretionKernal);
-    ret += sscanf(line, "GravitationalConstant = %"FSYM, &GravitationalConstant);
-    ret += sscanf(line, "S2ParticleSize        = %"FSYM, &S2ParticleSize);
-    ret += sscanf(line, "GravityResolution     = %"FSYM, &GravityResolution);
-    ret += sscanf(line, "ComputePotential      = %"ISYM, &ComputePotential);
-    ret += sscanf(line, "PotentialIterations   = %"ISYM, &PotentialIterations);
-    ret += sscanf(line, "WritePotential        = %"ISYM, &WritePotential);
-    ret += sscanf(line, "BaryonSelfGravityApproximation = %"ISYM,
-		  &BaryonSelfGravityApproximation);
+    SelfGravity                  = Param.GetScalar <int> ("SelfGravity");
+    SelfGravityGasOff            = Param.GetScalar <int> ("SelfGravityGasOff");
+    AccretionKernel              = Param.GetScalar <int> ("AccretionKernel");
+    GravitationalConstant        = Param.GetScalar <float> ("GravitationalConstant");
+
+    S2ParticleSize                 = Param.GetScalar <float> ("S2ParticleSize");
+    GravityResolution              = Param.GetScalar <float> ("GravityResolution");
+    ComputePotential               = Param.GetScalar <int> ("ComputePotential"); // should be bool
+    PotentialIterations            = Param.GetScalar <int> ("PotentialIterations");
+    WritePotential                 = Param.GetScalar <int> ("WritePotential");  // should be bool
+    BaryonSelfGravityApproximation = Param.GetScalar <int> ("BaryonSelfGravityApproximation");  // should be bool
  
-    ret += sscanf(line, "GreensFunctionMaxNumber   = %"ISYM,
-		  &GreensFunctionMaxNumber);
-    ret += sscanf(line, "GreensFunctionMaxSize     = %"ISYM,
-		  &GreensFunctionMaxSize);
+    GreensFunctionMaxNumber = Param.GetScalar <int> ("GreensFunctionMaxNumber");
+    GreensFunctionMaxSize   = Param.GetScalar <int> ("GreensFunctionMaxSize");
  
-    ret += sscanf(line, "DualEnergyFormalism     = %"ISYM, &DualEnergyFormalism);
-    ret += sscanf(line, "DualEnergyFormalismEta1 = %"FSYM,
-		  &DualEnergyFormalismEta1);
-    ret += sscanf(line, "DualEnergyFormalismEta2 = %"FSYM,
-		  &DualEnergyFormalismEta2);
-    ret += sscanf(line, "ParticleCourantSafetyNumber = %"FSYM,
-		  &ParticleCourantSafetyNumber);
-    ret += sscanf(line, "RootGridCourantSafetyNumber = %"FSYM,
-		  &RootGridCourantSafetyNumber);
-    ret += sscanf(line, "RandomForcing = %"ISYM, &RandomForcing); //AK
-    ret += sscanf(line, "RandomForcingEdot = %"FSYM, &RandomForcingEdot); //AK
-    ret += sscanf(line, "RandomForcingMachNumber = %"FSYM, //AK
-                  &RandomForcingMachNumber);
-    ret += sscanf(line, "RadiativeCooling = %"ISYM, &RadiativeCooling);
-    ret += sscanf(line, "RadiativeCoolingModel = %"ISYM, &RadiativeCoolingModel);
-    ret += sscanf(line, "GadgetEquilibriumCooling = %"ISYM, &GadgetEquilibriumCooling);
-    ret += sscanf(line, "MultiSpecies = %"ISYM, &MultiSpecies);
-    ret += sscanf(line, "PrimordialChemistrySolver = %"ISYM, &PrimordialChemistrySolver);
-    ret += sscanf(line, "CIECooling = %"ISYM, &CIECooling);
-    ret += sscanf(line, "H2OpticalDepthApproximation = %"ISYM, &H2OpticalDepthApproximation);
-    ret += sscanf(line, "ThreeBodyRate = %"ISYM, &ThreeBodyRate);
+    DualEnergyFormalism                              = Param.GetScalar <int> ("DualEnergyFormalism"); // should be bool
+    DualEnergyFormalismEta1                          = Param.GetScalar <float> ("DualEnergyFormalismEta1");
+    DualEnergyFormalismEta2                          = Param.GetScalar <float> ("DualEnergyFormalismEta2");
+    ParticleCourantSafetyNumber                      = Param.GetScalar <float> ("ParticleCourantSafetyNumber");
+    RootGridCourantSafetyNumber                      = Param.GetScalar <int> ("RootGridCourantSafetyNumber");
+    RandomForcing                                    = Param.GetScalar <int> ("RandomForcing");
+    RandomForcingEdot                                = Param.GetScalar <int> ("RandomForcingEdot");
+    RandomForcingMachNumber                          = Param.GetScalar <float> ("RandomForcingMachNumber");
+    RadiativeCooling                                 = Param.GetScalar <int> ("RadiativeCooling"); // should be bool
+    RadiativeCoolingModel                            = Param.GetScalar <int> ("RadiativeCoolingModel");
+    GadgetEquilibriumCooling                         = Param.GetScalar <int> ("GadgetEquilibriumCooling");
+    MultiSpecies                                     = Param.GetScalar <int> ("MultiSpecies");
+    PrimordialChemistrySolver                        = Param.GetScalar <int> ("PrimordialChemistrySolver");
+    CIECooling                                       = Param.GetScalar <int> ("CIECooling"); // should be bool
+    H2OpticalDepthApproximation                      = Param.GetScalar <int> ("H2OpticalDepthApproximation"); // should be bool
+    ThreeBodyRate = Param.GetScalar <int> ("ThreeBodyRate"); // should be bool
     if (sscanf(line, "CloudyCoolingGridFile = %s", dummy) == 1) {
       CloudyCoolingData.CloudyCoolingGridFile = dummy;
       ret++;
     }
-    ret += sscanf(line, "IncludeCloudyHeating = %"ISYM, &CloudyCoolingData.IncludeCloudyHeating);
-    ret += sscanf(line, "IncludeCloudyMMW = %"ISYM, &CloudyCoolingData.IncludeCloudyMMW);
-    ret += sscanf(line, "CMBTemperatureFloor = %"ISYM, &CloudyCoolingData.CMBTemperatureFloor);
-    ret += sscanf(line, "CloudyMetallicityNormalization = %"FSYM,&CloudyCoolingData.CloudyMetallicityNormalization);
-    ret += sscanf(line, "CloudyElectronFractionFactor = %"FSYM,&CloudyCoolingData.CloudyElectronFractionFactor);
-    ret += sscanf(line, "MetalCooling = %d", &MetalCooling);
+    CloudyCoolingData.IncludeCloudyHeating           = Param.GetScalar <int> ("IncludeCloudyHeating"); // should be bool
+    CloudyCoolingData.IncludeCloudyMMW               = Param.GetScalar <int> ("IncludeCloudyMMW"); // should be bool
+    CloudyCoolingData.CMBTemperatureFloor            = Param.GetScalar <int> ("CMBTemperatureFloor"); // should be bool
+    CloudyCoolingData.CloudyMetallicityNormalization = Param.GetScalar <float> ("CloudyMetallicityNormalization");
+    CloudyCoolingData.CloudyElectronFractionFactor   = Param.GetScalar <float> ("CloudyElectronFractionFactor");
+    MetalCooling = Param.GetScalar <int> ("MetalCooling"); // should be bool
     if (sscanf(line, "MetalCoolingTable = %s", dummy) == 1) {
       MetalCoolingTable = dummy;
       ret++;
     }
 
-    ret += sscanf(line, "CRModel = %"ISYM, &CRModel);
-    ret += sscanf(line, "ShockMethod = %"ISYM, &ShockMethod);
+    CRModel = Param.GetScalar <int> ("CRModel");
+    ShockMethod = Param.GetScalar <int> ("ShockMethod");
     ret += sscanf(line, "ShockTemperatureFloor = %"FSYM, &ShockTemperatureFloor);
     ret += sscanf(line, "StorePreShockFields = %"ISYM, &StorePreShockFields);
 
@@ -969,7 +910,7 @@ int ReadParameterFile(FILE *fptr, TopGridData &MetaData, float *Initialdt)
     if (strstr(line, "CurrentTimeIdentifier")) ret++;
     if (strstr(line, "MetaDataRestart")     ) ret++;
     if (strstr(line, "MustRefine") ) ret++;
-    if (strstr(line, "AccretionKernal")     ) ret++;
+    if (strstr(line, "AccretionKernel")     ) ret++;
     if (strstr(line, "PopIII")              ) ret++;
 #ifdef TRANSFER
     if (strstr(line, "Radiative")           ) ret++;
