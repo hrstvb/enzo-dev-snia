@@ -243,68 +243,40 @@ int ReadParameterFile(FILE *fptr, TopGridData &MetaData, float *Initialdt)
     huge_number=Param.GetScalar <float> ("huge_number");
     tiny_number=Param.GetScalar <float> ("tiny_number");
     Gamma=param.GetScalar <float> ("Gamma");
-    PressureFree=Param.GetScalar <float> (PressureFree);
-    RefineBy=Param.GetScalar <float> (RefineBy);
-    MaximumRefinementLevel=Param.GetScalar <int> ("MaximumRefinementLevel");
-    MaximumGravityRefinementLevel=Param.GetScalar <int> ("MaximumGravityRefinementLevel");
-    MaximumParticleRefinementLevel= Param.GetScalar <int> ("MaximumParticleRefinementLevel");
-    
-    //param.GetArray <int> ("name of param", blah, blah, blah); 
+    PressureFree                           =Param.GetScalar <float> ("PressureFree");
+    RefineBy                               =Param.GetScalar <float> ("RefineBy");
+    MaximumRefinementLevel                 =Param.GetScalar <int> ("MaximumRefinementLevel");
+    MaximumGravityRefinementLevel          =Param.GetScalar <int> ("MaximumGravityRefinementLevel");
+    MaximumParticleRefinementLevel         =Param.GetScalar <int> ("MaximumParticleRefinementLevel");
     Param.GetArray <int> ("CellFlaggingMethod",CellFlaggingMethod+0,CellFlaggingMethod+1,
 			  CellFlaggingMethod+2,CellFlaggingMethod+3,CellFlaggingMethod+4,
 			  CellFlaggingMethod+5,CellFlaggingMethod+6);
 
-    FluxCorection=param.GetScalar. <int> ("Fluxcorrection");
-    InterpolationMethod =param.GetScalar. <int> ("InterpolationMethod");
-    ConservativeInterpolation=param.GetScalar. <> ("ConservativeInterpolation");
-    MinimumEfficiency=param.GetScalar. <> ("MinimumEfficiency");
-    SubgridSizeAutoAdjust=GetScalar. <> ("SubgridSizeAutoAdjust");
-    =GetScalar. <> ("");
-    =GetScalar. <> ("");
-    =GetScalar. <> ("");
-    =GetScalar. <> ("");
+    FluxCorection                          =Param.GetScalar <int> ("Fluxcorrection");
+    InterpolationMethod                    =Param.GetScalar <int> ("InterpolationMethod");
+    ConservativeInterpolation              =Param.GetScalar <int> ("ConservativeInterpolation");
+    MinimumEfficiency                      =Param.GetScalar <float> ("MinimumEfficiency");
+    SubgridSizeAutoAdjust                  =Param.GetScalar <int> ("SubgridSizeAutoAdjust");
+    OptimalSubgridsPerProcessor            =Param.GetScalar <int> ("OptimalSubgridsPerProcessor");
+    MinimumSubgridEdge                     =Param.GetScalar <int> ("MinimumSubgridEdge");
+    MaximumSubgridSize                     =Param.GetScalar <int> ("MaximumSubgridSize");
+    NumberOfBufferZones                    =Param.GetScalar <int> ("NumberOfBufferZones");
+    FastSiblingLocatorEntireDomain         =Param.GetScalar <int> ("FastSiblingLocatorEntireDomain");
+    MustRefineRegionMinRefinementLevel     =Param.GetScalar <int> ("MustRefineRegionMinRefinementLevel");
+    MetallicityRefinementMinLevel          =Param.GetScalar <int> ("MetallicityRefinementMinLevel");  
+    MetallicityRefinementMinMetallicity    =Param.GetScalar <int> ("MetallicityRefinementMinMetallicity"); 
+    MetallicityRefinementMinDensity        =Param.GetScalar <float> ("MetallicityRefinementMinDensity"); 
+    Param.GetArray <FLOAT> ("DomainLeftEdge",DomainLeftEdge,DomainLeftEdge+1,DomainLeftEdge+2);
+    Param.GetArray <FLOAT> ("DomainRighttEdge",DomainRightEdge,DomainRightEdge+1,DomainRightEdge+2);
+    Param.GetArray <float> ("GridVelocity",GridVelocity,GridVelocity+1,GridVelocity+2);
 
-    ret += sscanf(line, "FluxCorrection         = %"ISYM, &FluxCorrection);
+   RefineRegionAutoAdjust                  =Param.GetScalar <int> ("RefineRegionAutoAdjust"); 
+   Param.GetArray <FLOAT> ("RefineRegionLeftEdge",RefineRegionLeftEdge,RefineRegionLeftEdge+1,RefineRegionLeftEdge+2);
+   Param.GetArray <FLOAT> ("RefineRegionRightEdge",RefineRegionRightEdge,RefineRegionRightEdge+1,RefineRegionRightEdge+2);
+   Param.GetArray <FLOAT> ("MustRefineRegionLeftEdge",MustRefineRegionLeftEdge,MustRefineRegionLeftEdge+1,MustRefineRegionLeftEdge+2);
+   Param.GetArray <FLOAT> ("MustRefineRegionRightEdge",MustRefineRegionRightEdge,MustRefineRegionRightEdge+1,MustRefineRegionRightEdge+2);
 
-    ret += sscanf(line, "InterpolationMethod    = %"ISYM, &InterpolationMethod);
-    ret += sscanf(line, "ConservativeInterpolation = %"ISYM,
-		  &ConservativeInterpolation);
-    ret += sscanf(line, "MinimumEfficiency      = %"FSYM, &MinimumEfficiency);
-    ret += sscanf(line, "SubgridSizeAutoAdjust  = %"ISYM, &SubgridSizeAutoAdjust);
-    ret += sscanf(line, "OptimalSubgridsPerProcessor = %"ISYM, 
-		  &OptimalSubgridsPerProcessor);
-    ret += sscanf(line, "MinimumSubgridEdge     = %"ISYM, &MinimumSubgridEdge);
-    ret += sscanf(line, "MaximumSubgridSize     = %"ISYM, &MaximumSubgridSize);
-    ret += sscanf(line, "NumberOfBufferZones    = %"ISYM, &NumberOfBufferZones);
-    ret += sscanf(line, "FastSiblingLocatorEntireDomain = %"ISYM, &FastSiblingLocatorEntireDomain);
-    ret += sscanf(line, "MustRefineRegionMinRefinementLevel = %"ISYM,
-		  &MustRefineRegionMinRefinementLevel);
-    ret += sscanf(line, "MetallicityRefinementMinLevel = %"ISYM,
-		  &MetallicityRefinementMinLevel);
-    ret += sscanf(line, "MetallicityRefinementMinMetallicity = %"FSYM, 
-		  &MetallicityRefinementMinMetallicity);
-    ret += sscanf(line, "MetallicityRefinementMinDensity = %"FSYM, 
-		  &MetallicityRefinementMinDensity);
-
-    ret += sscanf(line, "DomainLeftEdge        = %"PSYM" %"PSYM" %"PSYM, DomainLeftEdge,
-		  DomainLeftEdge+1, DomainLeftEdge+2);
-    ret += sscanf(line, "DomainRightEdge       = %"PSYM" %"PSYM" %"PSYM, DomainRightEdge,
-		  DomainRightEdge+1, DomainRightEdge+2);
-    ret += sscanf(line, "GridVelocity          = %"FSYM" %"FSYM" %"FSYM, GridVelocity,
-		  GridVelocity+1, GridVelocity+2);
-    ret += sscanf(line, "RefineRegionAutoAdjust = %"ISYM, &RefineRegionAutoAdjust);
-    ret += sscanf(line, "RefineRegionLeftEdge  = %"PSYM" %"PSYM" %"PSYM,
-		  RefineRegionLeftEdge, RefineRegionLeftEdge+1,
-		  RefineRegionLeftEdge+2);
-    ret += sscanf(line, "RefineRegionRightEdge = %"PSYM" %"PSYM" %"PSYM,
-		  RefineRegionRightEdge, RefineRegionRightEdge+1,
-		  RefineRegionRightEdge+2);
-    ret += sscanf(line, "MustRefineRegionLeftEdge  = %"PSYM" %"PSYM" %"PSYM,
-		  MustRefineRegionLeftEdge, MustRefineRegionLeftEdge+1,
-		  MustRefineRegionLeftEdge+2);
-    ret += sscanf(line, "MustRefineRegionRightEdge  = %"PSYM" %"PSYM" %"PSYM,
-		  MustRefineRegionRightEdge, MustRefineRegionRightEdge+1,
-		  MustRefineRegionRightEdge+2);
+ 
     
 // **********************************************************************
 
@@ -615,7 +587,7 @@ int ReadParameterFile(FILE *fptr, TopGridData &MetaData, float *Initialdt)
       MetaData.InitialConditionsUUID = dummy;
       ret++;
     }
- 
+    /**************STARTING HERE***********************************/ 
     /* Check version number. */
  
     if (sscanf(line, "VersionNumber = %"FSYM, &TempFloat) == 1) {
