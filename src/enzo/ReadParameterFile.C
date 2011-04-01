@@ -298,7 +298,8 @@ int ReadParameterFile(FILE *fptr, TopGridData &MetaData, float *Initialdt)
     UniformGravityConstant  = Param.GetScalar <float> ("PhysicsParameters.gravity.UniformGravityConstant");
  
     PointSourceGravity           = Param.GetScalar <int> ("PhysicsParameters.gravity.PointSourceGravity"); // should be bool
-    Param.GetArray <FLOAT> ("PointSourceGravityPosition", PointSourceGravityPosition); // why is the syntax like this?
+    Param.GetArray <FLOAT> ("PhysicsParameters.gravity.PointSourceGravityPosition", PointSourceGravityPosition);
+
     PointSourceGravityConstant   = Param.GetScalar <float> ("PhysicsParameters.gravity.PointSourceGravityConstant");
     PointSourceGravityCoreRadius = Param.GetScalar <float> ("PhysicsParameters.gravity.PointSourceGravityCoreRadius");
  
