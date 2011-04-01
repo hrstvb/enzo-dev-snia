@@ -23,3 +23,8 @@ parameters_Parameters.o: parameters_Parameters.cpp
 
 clean:
 	rm -rf *.o *~ test_Parameters test_Parse test.in test.out html
+
+lex.yy.c: parse.l
+	flex -t parse.l > lex.yy.c
+parse.tab.c: parse.y
+	bison -d -t -o parse.tab.c parse.y
