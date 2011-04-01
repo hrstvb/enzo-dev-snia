@@ -415,23 +415,23 @@ int ReadParameterFile(FILE *fptr, TopGridData &MetaData, float *Initialdt)
       Param.GetArray <FLOAT> ("StaticRefineRegion.%s.RightEdge",StaticRefineRegionRightEdge[i]);
     }
     
-    ParallelRootGridIO = Param.GetScalar <int> ("ParallelRootGridIO"); // should be bool
-    ParallelParticleIO = Param.GetScalar <int> ("ParallelParticleIO"); // should be bool
+    ParallelRootGridIO = Param.GetScalar <int> ("InternalParameters.outputLabeling.ParallelRootGridIO"); // should be bool
+    ParallelParticleIO = Param.GetScalar <int> ("InternalParameters.outputLabeling.ParallelParticleIO"); // should be bool
  
-    Unigrid          = Param.GetScalar <int> ("Unigrid"); // should be bool
-    UnigridTranspose = Param.GetScalar <int> ("UnigridTranspose"); // should be bool
-    NumberOfRootGridTilesPerDimensionPerProcessor = Param.GetScalar <int> ("NumberOfRootGridTilesPerDimensionPerProcessor");
+    Unigrid          = Param.GetScalar <int> ("InternalParameters.outputLabeling.Unigrid"); // should be bool
+    UnigridTranspose = Param.GetScalar <int> ("InternalParameters.outputLabeling.UnigridTranspose"); // should be bool
+    NumberOfRootGridTilesPerDimensionPerProcessor = Param.GetScalar <int> ("InternalParameters.outputLabeling.NumberOfRootGridTilesPerDimensionPerProcessor");
  
-    PartitionNestedGrids = Param.GetScalar <int> ("PartitionNestedGrids");
-    StaticPartitionNestedGrids = Param.GetScalar <int> ("StaticPartitionNestedGrids"); // should be bool
+    PartitionNestedGrids = Param.GetScalar <int> ("Initialization.PartitionNestedGrids");
+    StaticPartitionNestedGrids = Param.GetScalar <int> ("Initialization.StaticPartitionNestedGrids"); // should be bool
  
-    ExtractFieldsOnly = Param.GetScalar <int> ("ExtractFieldsOnly"); // should be bool
+    ExtractFieldsOnly = Param.GetScalar <int> ("OutputControlParameters.ExtractFieldsOnly"); // should be bool
  
-    debug1 = Param.GetScalar <int> ("Debug1"); // should be bool
+    debug1 = Param.GetScalar <int> ("InternalParameters.Debug1"); // should be bool
 
-    debug2 = Param.GetScalar <int> ("Debug2"); // should be bool
+    debug2 = Param.GetScalar <int> ("InternalParameters.Debug2"); // should be bool
 
-    MemoryLimit = Param.GetScalar <int> ("MemoryLimit");
+    MemoryLimit = Param.GetScalar <int> ("SimulationControl.optimization.MemoryLimit");
 
 #ifdef STAGE_INPUT
     StageInput = Param.GetScalar <int> ("StageInput");
@@ -450,38 +450,38 @@ int ReadParameterFile(FILE *fptr, TopGridData &MetaData, float *Initialdt)
 
 #endif
 
-    Param.GetArray <int> ("SlopeFlaggingFields", SlopeFlaggingFields);
+    Param.GetArray <int> ("SimulationControl.amr.SlopeFlaggingFields", SlopeFlaggingFields);
 
-    Param.GetArray <float> ("MinimumSlopeForRefinement", MinimumSlopeForRefinement);
+    Param.GetArray <float> ("SimulationControl.amr.MinimumSlopeForRefinement", MinimumSlopeForRefinement);
  
-    Param.GetArray <float> ("MinimumOverDensityForRefinement", MinimumOverDensityForRefinement);
+    Param.GetArray <float> ("SimulationControl.amr.MinimumOverDensityForRefinement", MinimumOverDensityForRefinement);
  
-    Param.GetArray <float> ("MinimumMassForRefinement", MinimumMassForRefinement);
+    Param.GetArray <float> ("SimulationControl.amr.MinimumMassForRefinement", MinimumMassForRefinement);
 
-    Param.GetArray <float> ("MinimumMassForRefinementLevelExponent", MinimumMassForRefinementLevelExponent);
+    Param.GetArray <float> ("SimulationControl.amr.MinimumMassForRefinementLevelExponent", MinimumMassForRefinementLevelExponent);
 
 
-    MinimumPressureJumpForRefinement = Param.GetScalar <float> ("MinimumPressureJumpForRefinement");
-    MinimumShearForRefinement        = Param.GetScalar <float> ("MinimumShearForRefinement");
-    MinimumEnergyRatioForRefinement  = Param.GetScalar <float> ("MinimumEnergyRatioForRefinement");
-    ShockwaveRefinementMinMach       = Param.GetScalar <float> ("ShockwaveRefinementMinMach");
-    ShockwaveRefinementMinVelocity   = Param.GetScalar <float> ("ShockwaveRefinementMinVelocity");
-    ShockwaveRefinementMaxLevel      = Param.GetScalar <float> ("ShockwaveRefinementMaxLevel");
-    ComovingCoordinates              = Param.GetScalar <int> ("ComovingCoordinates"); // should be bool
-    StarParticleCreation             = Param.GetScalar <int> ("StarParticleCreation");
-    BigStarFormation                 = Param.GetScalar <int> ("BigStarFormation"); // should be bool
-    BigStarFormationDone             = Param.GetScalar <int> ("BigStarFormationDone"); // should be bool
-    BigStarSeparation                = Param.GetScalar <float> ("BigStarSeparation");
-    SimpleQ                          = Param.GetScalar <float> ("SimpleQ");
-    SimpleRampTime                   = Param.GetScalar <float> ("SimpleRampTime");
-    StarParticleFeedback             = Param.GetScalar <int> ("StarParticleFeedback");
-    NumberOfParticleAttributes       = Param.GetScalar <int> ("NumberOfParticleAttributes");
-    AddParticleAttributes            = Param.GetScalar <int> ("AddParticleAttributes"); // should be bool
+    MinimumPressureJumpForRefinement = Param.GetScalar <float> ("SimulationControl.amr.MinimumPressureJumpForRefinement");
+    MinimumShearForRefinement        = Param.GetScalar <float> ("SimulationControl.amr.MinimumShearForRefinement");
+    MinimumEnergyRatioForRefinement  = Param.GetScalar <float> ("SimulationControl.amr.MinimumEnergyRatioForRefinement");
+    ShockwaveRefinementMinMach       = Param.GetScalar <float> ("SimulationControl.amr.ShockwaveRefinementMinMach");
+    ShockwaveRefinementMinVelocity   = Param.GetScalar <float> ("SimulationControl.amr.ShockwaveRefinementMinVelocity");
+    ShockwaveRefinementMaxLevel      = Param.GetScalar <float> ("SimulationControl.amr.ShockwaveRefinementMaxLevel");
+    ComovingCoordinates              = Param.GetScalar <int> ("PhysicsParameters.cosmology.ComovingCoordinates"); // should be bool
+    StarParticleCreation             = Param.GetScalar <int> ("PhysicsParameters.otherParticles.StarParticleCreation");
+    BigStarFormation                 = Param.GetScalar <int> ("PhysicsParameters.otherParticles.bigStar.BigStarFormation"); // should be bool
+    BigStarFormationDone             = Param.GetScalar <int> ("PhysicsParameters.otherParticles.bigStar.BigStarFormationDone"); // should be bool
+    BigStarSeparation                = Param.GetScalar <float> ("PhysicsParameters.otherParticles.bigStar.BigStarSeparation");
+    SimpleQ                          = Param.GetScalar <float> ("SimulationControl.radiationTransfer.SimpleQ");
+    SimpleRampTime                   = Param.GetScalar <float> ("SimulationControl.radiationTransfer.SimpleRampTime");
+    StarParticleFeedback             = Param.GetScalar <int> ("PhysicsParameters.otherParticles.StarParticleFeedback");
+    NumberOfParticleAttributes       = Param.GetScalar <int> ("PhysicsParameters.otherParticles.NumberOfParticleAttributes");
+    AddParticleAttributes            = Param.GetScalar <int> ("PhysicsParameters.otherParticles.AddParticleAttributes"); // should be bool
 
 
     /* read data which defines the boundary conditions */
-    Param.GetArray <int> ("LeftFaceBoundaryCondition", MetaData.LeftFaceBoundaryCondition);
-    Param.GetArray <int> ("RightFaceBoundaryCondition", MetaData.RightFaceBoundaryCondition);
+    Param.GetArray <int> ("PhysicsParameters.LeftFaceBoundaryCondition", MetaData.LeftFaceBoundaryCondition);
+    Param.GetArray <int> ("PhysicsParameters.RightFaceBoundaryCondition", MetaData.RightFaceBoundaryCondition);
   
     if (sscanf(line, "BoundaryConditionName         = %s", dummy) == 1)
       MetaData.BoundaryConditionName = dummy;
@@ -514,54 +514,54 @@ int ReadParameterFile(FILE *fptr, TopGridData &MetaData, float *Initialdt)
  
     /* Read star particle parameters. */
 
-    StarMakerOverDensityThreshold = Param.GetScalar <float> ("StarMakerOverDensityThreshold");
-    StarMakerSHDensityThreshold      = Param.GetScalar <float> ("StarMakerSHDensityThreshold");
-    StarMakerMassEfficiency     = Param.GetScalar <float> ("StarMakerMassEfficiency");
-    StarMakerMinimumMass     = Param.GetScalar <float> ("StarMakerMinimumMass");
-    StarMakerMinimumDynamicalTime     = Param.GetScalar <float> ("StarMakerMinimumDynamicalTime");
-    StarMassEjectionFraction          = Param.GetScalar <float> ("StarMassEjectionFraction");
-    StarMetalYield                    = Param.GetScalar <float> ("StarMetalYield");
-    StarEnergyToThermalFeedback       = Param.GetScalar <float> ("StarEnergyToThermalFeedback");
-    StarEnergyToStellarUV = Param.GetScalar <float> ("StarEnergyToStellarUV");
-    StarEnergyToQuasarUV= Param.GetScalar <float> ("StarEnergyToQuasarUV");
+    StarMakerOverDensityThreshold = Param.GetScalar <float> ("PhysicsParameters.otherParticles.starMaker.StarMakerOverDensityThreshold");
+    StarMakerSHDensityThreshold      = Param.GetScalar <float> ("PhysicsParameters.otherParticles.starMaker.StarMakerSHDensityThreshold");
+    StarMakerMassEfficiency     = Param.GetScalar <float> ("PhysicsParameters.otherParticles.starMaker.StarMakerMassEfficiency");
+    StarMakerMinimumMass     = Param.GetScalar <float> ("PhysicsParameters.otherParticles.starMaker.StarMakerMinimumMass");
+    StarMakerMinimumDynamicalTime     = Param.GetScalar <float> ("PhysicsParameters.otherParticles.starMaker.StarMakerMinimumDynamicalTime");
+    StarMassEjectionFraction          = Param.GetScalar <float> ("PhysicsParameters.otherParticles.starMaker.StarMassEjectionFraction");
+    StarMetalYield                    = Param.GetScalar <float> ("PhysicsParameters.otherParticles.starMaker.StarMetalYield");
+    StarEnergyToThermalFeedback       = Param.GetScalar <float> ("PhysicsParameters.otherParticles.starEnergy.StarEnergyToThermalFeedback");
+    StarEnergyToStellarUV = Param.GetScalar <float> ("PhysicsParameters.otherParticles.starEnergy.StarEnergy.ToStellarUV");
+    StarEnergyToQuasarUV= Param.GetScalar <float> ("PhysicsParameters.otherParticles.starEnergy.StarEnergyToQuasarUV");
 
     StarFeedbackDistRadius= Param.GetScalar <int> ("StarFeedbackDistRadius");
     StarFeedbackDistCellStep= Param.GetScalar <int> ("StarFeedbackDistCellStep");
-    StarClusterUseMetalField= Param.GetScalar <int> ("StarClusterUseMetalField");
-    StarClusterMinDynamicalTime= Param.GetScalar <float> ("StarClusterMinDynamicalTime");
-    StarClusterHeliumIonization= Param.GetScalar <int> ("StarClusterHeliumIonization");
-    StarClusterUnresolvedModel= Param.GetScalar <int> ("StarClusterUnresolvedModel");
-    StarClusterIonizingLuminosity= Param.GetScalar <float> ("StarClusterIonizingLuminosity");
-    StarClusterSNEnergy= Param.GetScalar <float> ("StarClusterSNEnergy");
-    StarClusterSNRadius= Param.GetScalar <float> ("StarClusterSNRadius");
-    StarClusterFormEfficiency= Param.GetScalar <float> ("StarClusterFormEfficiency");
-    StarClusterMinimumMass= Param.GetScalar <float> ("StarClusterMinimumMass");
-    StarClusterCombineRadius= Param.GetScalar <float> ("StarClusterCombineRadius");
+    StarClusterUseMetalField= Param.GetScalar <int> ("PhysicsParameters.otherParticles.starClusterParticle.StarClusterUseMetalField");
+    StarClusterMinDynamicalTime= Param.GetScalar <float> ("PhysicsParameters.otherParticles.starClusterParticle.StarClusterMinDynamicalTime");
+    StarClusterHeliumIonization= Param.GetScalar <int> ("PhysicsParameters.otherParticles.starClusterParticle.StarClusterHeliumIonization");
+    StarClusterUnresolvedModel= Param.GetScalar <int> ("PhysicsParameters.otherParticles.starClusterParticle.StarClusterUnresolvedModel");
+    StarClusterIonizingLuminosity= Param.GetScalar <float> ("PhysicsParameters.otherParticles.starClusterParticle.StarClusterIonizingLuminosity");
+    StarClusterSNEnergy= Param.GetScalar <float> ("PhysicsParameters.otherParticles.starClusterParticle.StarClusterSNEnergy");
+    StarClusterSNRadius= Param.GetScalar <float> ("PhysicsParameters.otherParticles.starClusterParticle.StarClusterSNRadius");
+    StarClusterFormEfficiency= Param.GetScalar <float> ("PhysicsParameters.otherParticles.starClusterParticle.StarClusterFormEfficiency");
+    StarClusterMinimumMass= Param.GetScalar <float> ("PhysicsParameters.otherParticles.starClusterParticle.StarClusterMinimumMass");
+    StarClusterCombineRadius= Param.GetScalar <float> ("PhysicsParameters.otherParticles.starClusterParticle.StarClusterCombineRadius");
 
-    Param.GetArray <float> ("StarClusterRegionLeftEdge",StarClusterRegionLeftEdge,StarClusterRegionLeftEdge+1,StarClusterRegionLeftEdge+2);
-    Param.GetArray <float> ("StarClusterRegionRightEdge",StarClusterRegionRightEdge,StarClusterRegionRightEdge+1,StarClusterRegionRightEdge+2);
+    Param.GetArray <float> ("PhysicsParameters.otherParticles.starClusterParticle.StarClusterRegionLeftEdge",StarClusterRegionLeftEdge,StarClusterRegionLeftEdge+1,StarClusterRegionLeftEdge+2);
+    Param.GetArray <float> ("PhysicsParameters.otherParticles.starClusterParticle.StarClusterRegionRightEdge",StarClusterRegionRightEdge,StarClusterRegionRightEdge+1,StarClusterRegionRightEdge+2);
 
-    PopIIIStarMass =  Param.GetScalar <float> ("PopIIIStarMass");                           
-    PopIIIInitialMassFunctionSeed = Param.GetScalar <int> ("PopIIIInitialMassFunctionSeed");                 
-    PopIIIInitialMassFunctionCalls = Param.GetScalar <int> ("PopIIIInitialMassFunctionCalls"); 
-    PopIIILowerMassCutoff = Param.GetScalar <float> ("PopIIILowerMassCutoff");
-    PopIIIUpperMassCutoff = Param.GetScalar <float> ("PopIIIUpperMassCutoff");
+    PopIIIStarMass =  Param.GetScalar <float> ("PhysicsParameters.otherParticles.popIIIStarParticle.PopIIIStarMass");                           
+    PopIIIInitialMassFunctionSeed = Param.GetScalar <int> ("PhysicsParameters.otherParticles.popIIIStarParticle.PopIIIInitialMassFunctionSeed");                 
+    PopIIIInitialMassFunctionCalls = Param.GetScalar <int> ("PhysicsParameters.otherParticles.popIIIStarParticle.PopIIIInitialMassFunctionCalls"); 
+    PopIIILowerMassCutoff = Param.GetScalar <float> ("PhysicsParameters.otherParticles.popIIIStarParticle.PopIIILowerMassCutoff");
+    PopIIIUpperMassCutoff = Param.GetScalar <float> ("PhysicsParameters.otherParticles.popIIIStarParticle.PopIIIUpperMassCutoff");
 
     //   ret += sscanf(line,"PopIIIMassRange %"FSYM" %"FSYM, &PopIIILowerMassCutoff, &PopIIIUpperMassCutoff);
 
-    PopIIIInitialMassFunctionSlope =              Param.GetScalar <float> 	("PopIIIInitialMassFunctionSlope");
-    PopIIIBlackHoles =                            Param.GetScalar <int>             (" PopIIIBlackHoles");
-    PopIIIBHLuminosityEfficiency =                Param.GetScalar <float> 		 ("PopIIIBHLuminosityEfficiency");
-    PopIIIOverDensityThreshold =                  Param.GetScalar <float>		 ("PopIIIOverDensityThreshold");
-    PopIIIH2CriticalFraction =                    Param.GetScalar <float>		("PopIIIH2CriticalFraction");
-    PopIIIMetalCriticalFraction =                 Param.GetScalar <float>		("PopIIIMetalCriticalFraction");
-    PopIIISupernovaRadius =                       Param.GetScalar <float>           ("PopIIISupernovaRadius");
-    PopIIISupernovaUseColour =                    Param.GetScalar <int> 		("PopIIISupernovaUseColour");
-    PopIIISupernovaMustRefine =                   Param.GetScalar <int>		("PopIIISupernovaMustRefine");
-    PopIIISupernovaMustRefineResolution =         Param.GetScalar <int>		 ("PopIIISupernovaMustRefineResolution");
-    PopIIIHeliumIonization =                      Param.GetScalar <int> 		 ("PopIIIHeliumIonization");
-    PopIIIColorDensityThreshold =                 Param.GetScalar <float>		 ("PopIIIColorDensityThreshold");
-    PopIIIColorMass =                             Param.GetScalar <float>		 ("PopIIIColorMass");
+    PopIIIInitialMassFunctionSlope =              Param.GetScalar <float> 	("PhysicsParameters.otherParticles.popIIIStarParticle.PopIIIInitialMassFunctionSlope");
+    PopIIIBlackHoles =                            Param.GetScalar <int>             ("PhysicsParameters.otherParticles.popIIIStarParticle.PopIIIBlackHoles");
+    PopIIIBHLuminosityEfficiency =                Param.GetScalar <float> 		 ("PhysicsParameters.otherParticles.popIIIStarParticle.PopIIIBHLuminosityEfficiency");
+    PopIIIOverDensityThreshold =                  Param.GetScalar <float>		 ("PhysicsParameters.otherParticles.popIIIStarParticle.PopIIIOverDensityThreshold");
+    PopIIIH2CriticalFraction =                    Param.GetScalar <float>		("PhysicsParameters.otherParticles.popIIIStarParticle.PopIIIH2CriticalFraction");
+    PopIIIMetalCriticalFraction =                 Param.GetScalar <float>		("PhysicsParameters.otherParticles.popIIIStarParticle.PopIIIMetalCriticalFraction");
+    PopIIISupernovaRadius =                       Param.GetScalar <float>           ("PhysicsParameters.otherParticles.popIIIStarParticle.PopIIISupernovaRadius");
+    PopIIISupernovaUseColour =                    Param.GetScalar <int> 		("PhysicsParameters.otherParticles.popIIIStarParticle.PopIIISupernovaUseColour");
+    PopIIISupernovaMustRefine =                   Param.GetScalar <int>		("PhysicsParameters.otherParticles.popIIIStarParticle.PopIIISupernovaMustRefine");
+    PopIIISupernovaMustRefineResolution =         Param.GetScalar <int>		 ("PhysicsParameters.otherParticles.popIIIStarParticle.PopIIISupernovaMustRefineResolution");
+    PopIIIHeliumIonization =                      Param.GetScalar <int> 		 ("PhysicsParameters.otherParticles.popIIIStarParticle.PopIIIHeliumIonization");
+    PopIIIColorDensityThreshold =                 Param.GetScalar <float>		 ("PhysicsParameters.otherParticles.popIIIStarParticle.PopIIIColorDensityThreshold");
+    PopIIIColorMass =                             Param.GetScalar <float>		 ("PhysicsParameters.otherParticles.popIIIStarParticle.PopIIIColorMass");
 
     MBHAccretion = Param.GetScalar <int> ("PhysicsParameters.otherParticles.mbhParticle.MBHAccretion");
     MBHAccretionRadius = Param.GetScalar <float> ("PhysicsParameters.otherParticles.mbhParticle.MBHAccretionRadius");
