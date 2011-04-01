@@ -225,7 +225,7 @@ int ReadParameterFile(FILE *fptr, TopGridData &MetaData, float *Initialdt)
     /* read global Parameters */
 
 
-    ProblemType = Param.GetScalar <int> ("ProblemType");
+    ProblemType = Param.GetScalar <int> ("Initialization.ProblemType");
 
 #ifdef NEW_PROBLEM_TYPES
     if (sscanf(line, "ProblemTypeName = %s", dummy) == 1) {
@@ -235,46 +235,46 @@ int ReadParameterFile(FILE *fptr, TopGridData &MetaData, float *Initialdt)
     }
 #endif
    
-    HydroMethod=Param.GetScalar <int> ("HydroMethod");
+    HydroMethod=Param.GetScalar <int> ("PhysicsParameters.hydro.HydroMethod");
 
     if (HydroMethod==MHD_RK) useMHD = 1;
 
  
-    huge_number=Param.GetScalar <float> ("huge_number");
-    tiny_number=Param.GetScalar <float> ("tiny_number");
-    Gamma=param.GetScalar <float> ("Gamma");
-    PressureFree                           =Param.GetScalar <float> ("PressureFree");
-    RefineBy                               =Param.GetScalar <float> ("RefineBy");
-    MaximumRefinementLevel                 =Param.GetScalar <int> ("MaximumRefinementLevel");
-    MaximumGravityRefinementLevel          =Param.GetScalar <int> ("MaximumGravityRefinementLevel");
-    MaximumParticleRefinementLevel         =Param.GetScalar <int> ("MaximumParticleRefinementLevel");
-    Param.GetArray <int> ("CellFlaggingMethod",CellFlaggingMethod+0,CellFlaggingMethod+1,
+    huge_number=Param.GetScalar <float> ("SimulationControl.huge_number");
+    tiny_number=Param.GetScalar <float> ("SimulationControl.tiny_number");
+    Gamma=param.GetScalar <float> ("PhysicsParameters.hydro.Gamma");
+    PressureFree                           =Param.GetScalar <float> ("PhysicsParameters.hydro.PressureFree");
+    RefineBy                               =Param.GetScalar <float> ("SimulationControl.amr.RefineBy");
+    MaximumRefinementLevel                 =Param.GetScalar <int> ("SimulationControl.amr.MaximumRefinementLevel");
+    MaximumGravityRefinementLevel          =Param.GetScalar <int> ("SimulationControl.amr.MaximumGravityRefinementLevel");
+    MaximumParticleRefinementLevel         =Param.GetScalar <int> ("SimulationControl.amr.MaximumParticleRefinementLevel");
+    Param.GetArray <int> ("SimulationControl.amr.CellFlaggingMethod",CellFlaggingMethod+0,CellFlaggingMethod+1,
 			  CellFlaggingMethod+2,CellFlaggingMethod+3,CellFlaggingMethod+4,
 			  CellFlaggingMethod+5,CellFlaggingMethod+6);
 
-    FluxCorection                          =Param.GetScalar <int> ("Fluxcorrection");
-    InterpolationMethod                    =Param.GetScalar <int> ("InterpolationMethod");
-    ConservativeInterpolation              =Param.GetScalar <int> ("ConservativeInterpolation");
-    MinimumEfficiency                      =Param.GetScalar <float> ("MinimumEfficiency");
-    SubgridSizeAutoAdjust                  =Param.GetScalar <int> ("SubgridSizeAutoAdjust");
-    OptimalSubgridsPerProcessor            =Param.GetScalar <int> ("OptimalSubgridsPerProcessor");
-    MinimumSubgridEdge                     =Param.GetScalar <int> ("MinimumSubgridEdge");
-    MaximumSubgridSize                     =Param.GetScalar <int> ("MaximumSubgridSize");
-    NumberOfBufferZones                    =Param.GetScalar <int> ("NumberOfBufferZones");
-    FastSiblingLocatorEntireDomain         =Param.GetScalar <int> ("FastSiblingLocatorEntireDomain");
-    MustRefineRegionMinRefinementLevel     =Param.GetScalar <int> ("MustRefineRegionMinRefinementLevel");
-    MetallicityRefinementMinLevel          =Param.GetScalar <int> ("MetallicityRefinementMinLevel");  
-    MetallicityRefinementMinMetallicity    =Param.GetScalar <int> ("MetallicityRefinementMinMetallicity"); 
-    MetallicityRefinementMinDensity        =Param.GetScalar <float> ("MetallicityRefinementMinDensity"); 
-    Param.GetArray <FLOAT> ("DomainLeftEdge",DomainLeftEdge,DomainLeftEdge+1,DomainLeftEdge+2);
-    Param.GetArray <FLOAT> ("DomainRighttEdge",DomainRightEdge,DomainRightEdge+1,DomainRightEdge+2);
-    Param.GetArray <float> ("GridVelocity",GridVelocity,GridVelocity+1,GridVelocity+2);
+    FluxCorection                          =Param.GetScalar <int> ("PhysicsParameters.hydro.Fluxcorrection");
+    InterpolationMethod                    =Param.GetScalar <int> ("PhysicsParameters.hydro.InterpolationMethod");
+    ConservativeInterpolation              =Param.GetScalar <int> ("PhysicsParameters.hydro.ConservativeInterpolation");
+    MinimumEfficiency                      =Param.GetScalar <float> ("PhysicsParameters.optimization.MinimumEfficiency");
+    SubgridSizeAutoAdjust                  =Param.GetScalar <int> ("PhysicsParameters.optimization.SubgridSizeAutoAdjust");
+    OptimalSubgridsPerProcessor            =Param.GetScalar <int> ("PhysicsParameters.optimization.OptimalSubgridsPerProcessor");
+    MinimumSubgridEdge                     =Param.GetScalar <int> ("PhysicsParameters.optimization.MinimumSubgridEdge");
+    MaximumSubgridSize                     =Param.GetScalar <int> ("PhysicsParameters.optimization.MaximumSubgridSize");
+    NumberOfBufferZones                    =Param.GetScalar <int> ("PhysicsParameters.amr.NumberOfBufferZones");
+    FastSiblingLocatorEntireDomain         =Param.GetScalar <int> ("PhysicsParameters.optimization.FastSiblingLocatorEntireDomain");
+    MustRefineRegionMinRefinementLevel     =Param.GetScalar <int> ("PhysicsParameters.amr.MustRefineRegionMinRefinementLevel");
+    MetallicityRefinementMinLevel          =Param.GetScalar <int> ("PhysicsParameters.amr.MetallicityRefinementMinLevel");  
+    MetallicityRefinementMinMetallicity    =Param.GetScalar <int> ("PhysicsParameters.amr.MetallicityRefinementMinMetallicity"); 
+    MetallicityRefinementMinDensity        =Param.GetScalar <float> ("PhysicsParameters.amr.MetallicityRefinementMinDensity"); 
+    Param.GetArray <FLOAT> ("SimulationControl.domain.DomainLeftEdge",DomainLeftEdge,DomainLeftEdge+1,DomainLeftEdge+2);
+    Param.GetArray <FLOAT> ("SimulationControl.domain.DomainRightEdge",DomainRightEdge,DomainRightEdge+1,DomainRightEdge+2);
+    Param.GetArray <float> ("PhysicsParameters.GridVelocity",GridVelocity,GridVelocity+1,GridVelocity+2);
 
-   RefineRegionAutoAdjust                  =Param.GetScalar <int> ("RefineRegionAutoAdjust"); 
-   Param.GetArray <FLOAT> ("RefineRegionLeftEdge",RefineRegionLeftEdge,RefineRegionLeftEdge+1,RefineRegionLeftEdge+2);
-   Param.GetArray <FLOAT> ("RefineRegionRightEdge",RefineRegionRightEdge,RefineRegionRightEdge+1,RefineRegionRightEdge+2);
-   Param.GetArray <FLOAT> ("MustRefineRegionLeftEdge",MustRefineRegionLeftEdge,MustRefineRegionLeftEdge+1,MustRefineRegionLeftEdge+2);
-   Param.GetArray <FLOAT> ("MustRefineRegionRightEdge",MustRefineRegionRightEdge,MustRefineRegionRightEdge+1,MustRefineRegionRightEdge+2);
+   RefineRegionAutoAdjust                  =Param.GetScalar <int> ("SimulationControl.domain.RefineRegionAutoAdjust"); 
+   Param.GetArray <FLOAT> ("SimulationControl.domain.RefineRegionLeftEdge",RefineRegionLeftEdge,RefineRegionLeftEdge+1,RefineRegionLeftEdge+2);
+   Param.GetArray <FLOAT> ("SimulationControl.domain.RefineRegionRightEdge",RefineRegionRightEdge,RefineRegionRightEdge+1,RefineRegionRightEdge+2);
+   Param.GetArray <FLOAT> ("SimulationControl.domain.MustRefineRegionLeftEdge",MustRefineRegionLeftEdge,MustRefineRegionLeftEdge+1,MustRefineRegionLeftEdge+2);
+   Param.GetArray <FLOAT> ("SimulationControl.domain.MustRefineRegionRightEdge",MustRefineRegionRightEdge,MustRefineRegionRightEdge+1,MustRefineRegionRightEdge+2);
 
  
     
