@@ -87,32 +87,32 @@ int ReadParameterFile(FILE *fptr, TopGridData &MetaData, float *Initialdt)
  
     /* read MetaData parameters */
  
-    MetaData.CycleNumber = Param.GetScalar <int> ("InitialCycleNumber");
-    MetaData.Time        = Param.GetScalar <FLOAT> ("InitialTime");
-    MetaData.CPUTime     = Param.GetScalar <float> ("InitialCPUTime");
-    (*Initialdt)         = Param.GetScalar <float> ("Initialdt");
+    MetaData.CycleNumber = Param.GetScalar <int> ("InternalParameters.InitialCycleNumber");
+    MetaData.Time        = Param.GetScalar <FLOAT> ("InternalParameters.InitialTime");
+    MetaData.CPUTime     = Param.GetScalar <float> ("InternalParameters.InitialCPUTime");
+    (*Initialdt)         = Param.GetScalar <float> ("InternalParameters.Initialdt");
  
     CheckpointRestart    = Param.GetScalar <int> ("CheckpointRestart"); // should be bool
-    MetaData.StopTime    = Param.GetScalar <FLOAT> ("StopTime");
-    MetaData.StopCycle   = Param.GetScalar <int> ("StopCycle");
-    MetaData.StopSteps   = Param.GetScalar <int> ("StopSteps");
+    MetaData.StopTime    = Param.GetScalar <FLOAT> ("SimulationControl.StopTime");
+    MetaData.StopCycle   = Param.GetScalar <int> ("SimulationControl.StopCycle");
+    MetaData.StopSteps   = Param.GetScalar <int> ("SimulationControl.StopSteps");
     MetaData.StopCPUTime = Param.GetScalar <float> ("StopCPUTime");
-    MetaData.ResubmitOn  = Param.GetScalar <int> ("ResubmitOn"); // should be bool
-
+    MetaData.ResubmitOn  = Param.GetScalar <int> ("SimulationControl.ResubmitOn"); // should be bool
+    /* check syntex of sscanf to MetaData */
     if (sscanf(line, "ResubmitCommand = %s", dummy) == 1) MetaData.ResubmitCommand = dummy;
 
-    MetaData.MaximumTopGridTimeStep = Param.GetScalar <float> ("MaximumTopGridTimeStep");
+    MetaData.MaximumTopGridTimeStep = Param.GetScalar <float> ("SimulationControl.MaximumTopGridTimeStep");
 
-    MetaData.TimeLastRestartDump    = Param.GetScalar <float> ("TimeLastRestartDump");
-    MetaData.dtRestartDump          = Param.GetScalar <float> ("dtRestartDump");
-    MetaData.TimeLastDataDump       = Param.GetScalar <FLOAT> ("TimeLastDataDump");
-    MetaData.dtDataDump             = Param.GetScalar <FLOAT> ("dtDataDump");
-    MetaData.TimeLastHistoryDump    = Param.GetScalar <FLOAT> ("TimeLastHistoryDump");
+    MetaData.TimeLastRestartDump    = Param.GetScalar <float> ("InternalParameters.outputLabeling.TimeLastRestartDump");
+    MetaData.dtRestartDump          = Param.GetScalar <float> ("OutputControlParameters.restartDump.dtRestartDump");
+    MetaData.TimeLastDataDump       = Param.GetScalar <FLOAT> ("InternalParameters.outputLabeling.TimeLastDataDump");
+    MetaData.dtDataDump             = Param.GetScalar <FLOAT> ("OutputControlParameters.dataDump.dtDataDump");
+    MetaData.TimeLastHistoryDump    = Param.GetScalar <FLOAT> ("InternalParameters.outputLabeling.TimeLastHistoryDump");
     MetaData.dtHistoryDump          = Param.GetScalar <FLOAT> ("dtHistoryDump");
  
-    TracerParticleOn                      = Param.GetScalar <int> ("TracerParticleOn"); // should be bool
-    ParticleTypeInFile                    = Param.GetScalar <int> ("ParticleTypeInFile"); // should be bool
-    OutputParticleTypeGrouping            = Param.GetScalar <int> ("OutputParticleTypeGrouping");
+    TracerParticleOn                      = Param.GetScalar <int> ("SimulationControl.TracerParticleOn"); // should be bool
+    ParticleTypeInFile                    = Param.GetScalar <int> ("OutputControlParameters.ParticleTypeInFile"); // should be bool
+    OutputParticleTypeGrouping            = Param.GetScalar <int> ("OutputControlParameters.OutputParticleTypeGrouping");
     MetaData.TimeLastTracerParticleDump   = Param.GetScalar <FLOAT> ("TimeLastTracerParticleDump");
     MetaData.dtTracerParticleDump         = Param.GetScalar <FLOAT> ("dtTracerParticleDump");
     MetaData.TimeLastInterpolatedDataDump = Param.GetScalar <FLOAT> ("TimeLastInterpolatedDataDump");
