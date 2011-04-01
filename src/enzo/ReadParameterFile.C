@@ -310,7 +310,7 @@ int ReadParameterFile(FILE *fptr, TopGridData &MetaData, float *Initialdt)
 
     /* Read evolving RefineRegion */
 
-    RefineRegionTimeType = Param.GetScalar <int> ("RefineRegionTimeType");
+    RefineRegionTimeType = Param.GetScalar <int> ("SimulationControl.amr.RefineRegionTimeType");
     if (sscanf(line, "RefineRegionFile = %s", dummy) == 1) {
       RefineRegionFile = dummy;
       ret++;
@@ -321,58 +321,58 @@ int ReadParameterFile(FILE *fptr, TopGridData &MetaData, float *Initialdt)
     if (sscanf(line, "DataUnits[%"ISYM"] = %s\n", &dim, dummy) == 2)
       DataUnits[dim] = dummy;
  
-    UniformGravity          = Param.GetScalar <int> ("UniformGravity");
-    UniformGravityDirection = Param.GetScalar <int> ("UniformGravityDirection");
-    UniformGravityConstant  = Param.GetScalar <float> ("UniformGravityConstant");
+    UniformGravity          = Param.GetScalar <int> ("PhysicsParameters.gravity.UniformGravity");
+    UniformGravityDirection = Param.GetScalar <int> ("PhysicsParameters.gravity.UniformGravityDirection");
+    UniformGravityConstant  = Param.GetScalar <float> ("PhysicsParameters.gravity.UniformGravityConstant");
  
-    PointSourceGravity           = Param.GetScalar <int> ("PointSourceGravity"); // should be bool
-    Param.GetArray <FLOAT> ("PointSourceGravityPosition", PointSourceGravityPosition);
-    PointSourceGravityConstant   = Param.GetScalar <float> ("PointSourceGravityConstant");
-    PointSourceGravityCoreRadius = Param.GetScalar <float> ("PointSourceGravityCoreRadius");
+    PointSourceGravity           = Param.GetScalar <int> ("PhysicsParameters.gravity.PointSourceGravity"); // should be bool
+    Param.GetArray <FLOAT> ("PointSourceGravityPosition", PointSourceGravityPosition); // why is the syntax like this?
+    PointSourceGravityConstant   = Param.GetScalar <float> ("PhysicsParameters.gravity.PointSourceGravityConstant");
+    PointSourceGravityCoreRadius = Param.GetScalar <float> ("PhysicsParameters.gravity.PointSourceGravityCoreRadius");
  
-    ExternalGravity              = Param.GetScalar <int> ("ExternalGravity");
+    ExternalGravity              = Param.GetScalar <int> ("PhysicsParameters.gravity.ExternalGravity");
 
-    SelfGravity                  = Param.GetScalar <int> ("SelfGravity");
-    SelfGravityGasOff            = Param.GetScalar <int> ("SelfGravityGasOff");
-    AccretionKernel              = Param.GetScalar <int> ("AccretionKernel");
-    GravitationalConstant        = Param.GetScalar <float> ("GravitationalConstant");
+    SelfGravity                  = Param.GetScalar <int> ("PhysicsParameters.gravity.SelfGravity");
+    SelfGravityGasOff            = Param.GetScalar <int> ("PhysicsParameters.gravity.SelfGravityGasOff");
+    AccretionKernel              = Param.GetScalar <int> ("PhysicsParameters.AccretionKernel");
+    GravitationalConstant        = Param.GetScalar <float> ("PhysicsParameters.gravity.GravitationalConstant");
 
     S2ParticleSize                 = Param.GetScalar <float> ("S2ParticleSize");
-    GravityResolution              = Param.GetScalar <float> ("GravityResolution");
-    ComputePotential               = Param.GetScalar <int> ("ComputePotential"); // should be bool
-    PotentialIterations            = Param.GetScalar <int> ("PotentialIterations");
-    WritePotential                 = Param.GetScalar <int> ("WritePotential");  // should be bool
-    BaryonSelfGravityApproximation = Param.GetScalar <int> ("BaryonSelfGravityApproximation");  // should be bool
+    GravityResolution              = Param.GetScalar <float> ("PhysicsParameters.gravity.GravityResolution");
+    ComputePotential               = Param.GetScalar <int> ("PhysicsParameters.gravity.ComputePotential"); // should be bool
+    PotentialIterations            = Param.GetScalar <int> ("PhysicsParameters.gravity.PotentialIterations");
+    WritePotential                 = Param.GetScalar <int> ("OutputControlParameters.supplementalFields.WritePotential");  // should be bool
+    BaryonSelfGravityApproximation = Param.GetScalar <int> ("PhysicsParameters.gravity.BaryonSelfGravityApproximation");  // should be bool
  
-    GreensFunctionMaxNumber = Param.GetScalar <int> ("GreensFunctionMaxNumber");
-    GreensFunctionMaxSize   = Param.GetScalar <int> ("GreensFunctionMaxSize");
+    GreensFunctionMaxNumber = Param.GetScalar <int> ("PhysicsParameters.gravity.GreensFunctionMaxNumber");
+    GreensFunctionMaxSize   = Param.GetScalar <int> ("PhysicsParameters.gravity.GreensFunctionMaxSize");
  
-    DualEnergyFormalism                              = Param.GetScalar <int> ("DualEnergyFormalism"); // should be bool
-    DualEnergyFormalismEta1                          = Param.GetScalar <float> ("DualEnergyFormalismEta1");
-    DualEnergyFormalismEta2                          = Param.GetScalar <float> ("DualEnergyFormalismEta2");
-    ParticleCourantSafetyNumber                      = Param.GetScalar <float> ("ParticleCourantSafetyNumber");
-    RootGridCourantSafetyNumber                      = Param.GetScalar <int> ("RootGridCourantSafetyNumber");
-    RandomForcing                                    = Param.GetScalar <int> ("RandomForcing");
-    RandomForcingEdot                                = Param.GetScalar <int> ("RandomForcingEdot");
+    DualEnergyFormalism                              = Param.GetScalar <int> ("PhysicsParameters.hydro.DualEnergyFormalism"); // should be bool
+    DualEnergyFormalismEta1                          = Param.GetScalar <float> ("PhysicsParameters.hydro.DualEnergyFormalismEta1");
+    DualEnergyFormalismEta2                          = Param.GetScalar <float> ("PhysicsParameters.hydro.DualEnergyFormalismEta2");
+    ParticleCourantSafetyNumber                      = Param.GetScalar <float> ("PhysicsParameters.hydro.ParticleCourantSafetyNumber");
+    RootGridCourantSafetyNumber                      = Param.GetScalar <int> ("PhysicsParameters.hydro.RootGridCourantSafetyNumber");
+    RandomForcing                                    = Param.GetScalar <int> ("PhysicsParameters.miscellaneous.RandomForcing");
+    RandomForcingEdot                                = Param.GetScalar <int> ("PhysicsParameters.miscellaneous.RandomForcingEdot");
     RandomForcingMachNumber                          = Param.GetScalar <float> ("RandomForcingMachNumber");
     RadiativeCooling                                 = Param.GetScalar <int> ("RadiativeCooling"); // should be bool
-    RadiativeCoolingModel                            = Param.GetScalar <int> ("RadiativeCoolingModel");
-    GadgetEquilibriumCooling                         = Param.GetScalar <int> ("GadgetEquilibriumCooling");
-    MultiSpecies                                     = Param.GetScalar <int> ("MultiSpecies");
-    PrimordialChemistrySolver                        = Param.GetScalar <int> ("PrimordialChemistrySolver");
-    CIECooling                                       = Param.GetScalar <int> ("CIECooling"); // should be bool
-    H2OpticalDepthApproximation                      = Param.GetScalar <int> ("H2OpticalDepthApproximation"); // should be bool
-    ThreeBodyRate = Param.GetScalar <int> ("ThreeBodyRate"); // should be bool
+    RadiativeCoolingModel                            = Param.GetScalar <int> ("PhysicsParameters.atomicPhysics.RadiativeCoolingModel");
+    GadgetEquilibriumCooling                         = Param.GetScalar <int> ("PhysicsParameters.atomicPhysics.GadgetEquilibriumCooling");
+    MultiSpecies                                     = Param.GetScalar <int> ("PhysicsParameters.atomicPhysics.MultiSpecies");
+    PrimordialChemistrySolver                        = Param.GetScalar <int> ("PhysicsParameters.atomicPhysics.PrimordialChemistrySolver");
+    CIECooling                                       = Param.GetScalar <int> ("PhysicsParameters.atomicPhysics.CIECooling"); // should be bool
+    H2OpticalDepthApproximation                      = Param.GetScalar <int> ("PhysicsParameters.atomicPhysics.H2OpticalDepthApproximation"); // should be bool
+    ThreeBodyRate = Param.GetScalar <int> ("PhysicsParameters.atomicPhysics.ThreeBodyRate"); // should be bool
     if (sscanf(line, "CloudyCoolingGridFile = %s", dummy) == 1) {
       CloudyCoolingData.CloudyCoolingGridFile = dummy;
       ret++;
     }
-    CloudyCoolingData.IncludeCloudyHeating           = Param.GetScalar <int> ("IncludeCloudyHeating"); // should be bool
-    CloudyCoolingData.IncludeCloudyMMW               = Param.GetScalar <int> ("IncludeCloudyMMW"); // should be bool
-    CloudyCoolingData.CMBTemperatureFloor            = Param.GetScalar <int> ("CMBTemperatureFloor"); // should be bool
-    CloudyCoolingData.CloudyMetallicityNormalization = Param.GetScalar <float> ("CloudyMetallicityNormalization");
-    CloudyCoolingData.CloudyElectronFractionFactor   = Param.GetScalar <float> ("CloudyElectronFractionFactor");
-    MetalCooling = Param.GetScalar <int> ("MetalCooling"); // should be bool
+    CloudyCoolingData.IncludeCloudyHeating           = Param.GetScalar <int> ("PhysicsParameters.atomicPhysics.cloudyCooling.IncludeCloudyHeating"); // should be bool
+    CloudyCoolingData.IncludeCloudyMMW               = Param.GetScalar <int> ("PhysicsParameters.atomicPhysics.cloudyCooling.IncludeCloudyMMW"); // should be bool
+    CloudyCoolingData.CMBTemperatureFloor            = Param.GetScalar <int> ("PhysicsParameters.atomicPhysics.cloudyCooling.CMBTemperatureFloor"); // should be bool
+    CloudyCoolingData.CloudyMetallicityNormalization = Param.GetScalar <float> ("PhysicsParameters.atomicPhysics.cloudyCooling.CloudyMetallicityNormalization");
+    CloudyCoolingData.CloudyElectronFractionFactor   = Param.GetScalar <float> ("PhysicsParameters.atomicPhysics.cloudyCooling.CloudyElectronFractionFactor");
+    MetalCooling = Param.GetScalar <int> ("PhysicsParameters.atomicPhysics.MetalCooling"); // should be bool
     if (sscanf(line, "MetalCoolingTable = %s", dummy) == 1) {
       MetalCoolingTable = dummy;
       ret++;
@@ -380,67 +380,67 @@ int ReadParameterFile(FILE *fptr, TopGridData &MetaData, float *Initialdt)
 
     CRModel = Param.GetScalar <int> ("CRModel");
     ShockMethod = Param.GetScalar <int> ("ShockMethod");
-    ret += sscanf(line, "ShockTemperatureFloor = %"FSYM, &ShockTemperatureFloor);
-    ret += sscanf(line, "StorePreShockFields = %"ISYM, &StorePreShockFields);
+    ret += sscanf(line, "PhysicsParameters.miscellaneous.ShockTemperatureFloor = %"FSYM, &ShockTemperatureFloor);
+    ret += sscanf(line, "PhysicsParameters.miscellaneous.StorePreShockFields = %"ISYM, &StorePreShockFields);
 
-    ret += sscanf(line, "RadiationFieldType = %"ISYM, &RadiationFieldType);
+    ret += sscanf(line, "PhysicsParameters.radiationField.RadiationFieldType = %"ISYM, &RadiationFieldType);
     ret += sscanf(line, "TabulatedLWBackground = %"ISYM, &TabulatedLWBackground);
-    ret += sscanf(line, "AdjustUVBackground = %"ISYM, &AdjustUVBackground);
-    ret += sscanf(line, "SetUVBAmplitude = %"FSYM, &SetUVBAmplitude);
-    ret += sscanf(line, "SetHeIIHeatingScale = %"FSYM, &SetHeIIHeatingScale);
-    ret += sscanf(line, "RadiationFieldLevelRecompute = %"ISYM, &RadiationFieldLevelRecompute);    
-    ret += sscanf(line, "RadiationShield = %"ISYM, &RadiationData.RadiationShield);
-    ret += sscanf(line, "RadiationSpectrumNormalization = %"FSYM, &CoolData.f3);
-    ret += sscanf(line, "RadiationSpectrumSlope = %"FSYM, &CoolData.alpha0);
-    ret += sscanf(line, "CoolDataf0to3 = %"FSYM, &CoolData.f0to3);
-    ret += sscanf(line, "RadiationRedshiftOn = %"FSYM, &CoolData.RadiationRedshiftOn);
-    ret += sscanf(line, "RadiationRedshiftOff = %"FSYM, &CoolData.RadiationRedshiftOff);
-    ret += sscanf(line, "RadiationRedshiftFullOn = %"FSYM, &CoolData.RadiationRedshiftFullOn);
-    ret += sscanf(line, "RadiationRedshiftDropOff = %"FSYM, &CoolData.RadiationRedshiftDropOff);
-    ret += sscanf(line, "HydrogenFractionByMass = %"FSYM, &CoolData.HydrogenFractionByMass);
-    ret += sscanf(line, "DeuteriumToHydrogenRatio = %"FSYM, &CoolData.DeuteriumToHydrogenRatio);
-    ret += sscanf(line, "NumberOfTemperatureBins = %"ISYM, &CoolData.NumberOfTemperatureBins);
-    ret += sscanf(line, "CoolDataIh2co = %"ISYM, &CoolData.ih2co);
-    ret += sscanf(line, "CoolDataIpiht = %"ISYM, &CoolData.ipiht);
-    ret += sscanf(line, "TemperatureStart = %"FSYM, &CoolData.TemperatureStart);
-    ret += sscanf(line, "TemperatureEnd = %"FSYM, &CoolData.TemperatureEnd);
-    ret += sscanf(line, "CoolDataCompXray = %"FSYM, &CoolData.comp_xray);
-    ret += sscanf(line, "CoolDataTempXray = %"FSYM, &CoolData.temp_xray);
+    ret += sscanf(line, "PhysicsParameters.radiationField.AdjustUVBackground = %"ISYM, &AdjustUVBackground);
+    ret += sscanf(line, "PhysicsParameters.radiationField.SetUVBAmplitude = %"FSYM, &SetUVBAmplitude);
+    ret += sscanf(line, "PhysicsParameters.radiationField.SetHeIIHeatingScale = %"FSYM, &SetHeIIHeatingScale);
+    ret += sscanf(line, "PhysicsParameters.radiationField.RadiationFieldLevelRecompute = %"ISYM, &RadiationFieldLevelRecompute);    
+    ret += sscanf(line, "PhysicsParameters.radiationField.RadiationShield = %"ISYM, &RadiationData.RadiationShield);
+    ret += sscanf(line, "PhysicsParameters.radiationField.RadiationSpectrumNormalization = %"FSYM, &CoolData.f3);
+    ret += sscanf(line, "PhysicsParameters.radiationField.RadiationSpectrumSlope = %"FSYM, &CoolData.alpha0);
+    ret += sscanf(line, "PhysicsParameters.atomicPhysics.CoolDataf0to3 = %"FSYM, &CoolData.f0to3);
+    ret += sscanf(line, "PhysicsParameters.radiationField.RadiationRedshiftOn = %"FSYM, &CoolData.RadiationRedshiftOn);
+    ret += sscanf(line, "PhysicsParameters.radiationField.RadiationRedshiftOff = %"FSYM, &CoolData.RadiationRedshiftOff);
+    ret += sscanf(line, "PhysicsParameters.radiationField.RadiationRedshiftFullOn = %"FSYM, &CoolData.RadiationRedshiftFullOn);
+    ret += sscanf(line, "PhysicsParameters.radiationField.RadiationRedshiftDropOff = %"FSYM, &CoolData.RadiationRedshiftDropOff);
+    ret += sscanf(line, "PhysicsParameters.atomicPhysics.HydrogenFractionByMass = %"FSYM, &CoolData.HydrogenFractionByMass);
+    ret += sscanf(line, "PhysicsParameters.atomicPhysics.DeuteriumToHydrogenRatio = %"FSYM, &CoolData.DeuteriumToHydrogenRatio);
+    ret += sscanf(line, "PhysicsParameters.atomicPhysics.NumberOfTemperatureBins = %"ISYM, &CoolData.NumberOfTemperatureBins);
+    ret += sscanf(line, "PhysicsParameters.atomicPhysics.CoolDataIh2co = %"ISYM, &CoolData.ih2co);
+    ret += sscanf(line, "PhysicsParameters.atomicPhysics.CoolDataIpiht = %"ISYM, &CoolData.ipiht);
+    ret += sscanf(line, "PhysicsParameters.atomicPhysics.TemperatureStart = %"FSYM, &CoolData.TemperatureStart);
+    ret += sscanf(line, "PhysicsParameters.atomicPhysics.TemperatureEnd = %"FSYM, &CoolData.TemperatureEnd);
+    ret += sscanf(line, "PhysicsParameters.atomicPhysics.CoolDataCompXray = %"FSYM, &CoolData.comp_xray);
+    ret += sscanf(line, "PhysicsParameters.atomicPhysics.CoolDataTempXray = %"FSYM, &CoolData.temp_xray);
     ret += sscanf(line, "RateDataCaseBRecombination = %"ISYM, &RateData.CaseBRecombination);
-    ret += sscanf(line, "PhotoelectricHeating  = %"ISYM, &PhotoelectricHeating);
+    ret += sscanf(line, "PhysicsParameters.atomicPhysics.PhotoelectricHeating  = %"ISYM, &PhotoelectricHeating);
 
-    ret += sscanf(line, "OutputCoolingTime = %"ISYM, &OutputCoolingTime);
-    ret += sscanf(line, "OutputTemperature = %"ISYM, &OutputTemperature);
+    ret += sscanf(line, "OutputControlParameters.supplementalFields.OutputCoolingTime = %"ISYM, &OutputCoolingTime);
+    ret += sscanf(line, "OutputControlParameters.supplementalFields.OutputTemperature = %"ISYM, &OutputTemperature);
 
-    ret += sscanf(line, "OutputSmoothedDarkMatter = %"ISYM, 
+    ret += sscanf(line, "OutputControlParameters.supplementalFields.OutputSmoothedDarkMatter = %"ISYM, 
 		  &OutputSmoothedDarkMatter);
-    ret += sscanf(line, "SmoothedDarkMatterNeighbors = %"ISYM, 
+    ret += sscanf(line, "OutputControlParameters.supplementalFields.SmoothedDarkMatterNeighbors = %"ISYM, 
 		  &SmoothedDarkMatterNeighbors);
-    ret += sscanf(line, "OutputGriddedStarParticle = %"ISYM, 
+    ret += sscanf(line, "OutputControlParameters.supplementalFields.OutputGriddedStarParticle = %"ISYM, 
 		  &OutputGriddedStarParticle);
 
-    ret += sscanf(line, "ZEUSQuadraticArtificialViscosity = %"FSYM,
+    ret += sscanf(line, "PhysicsParameters.hydro.ZEUSQuadraticArtificialViscosity = %"FSYM,
 		  &ZEUSQuadraticArtificialViscosity);
-    ret += sscanf(line, "ZEUSLinearArtificialViscosity = %"FSYM,
+    ret += sscanf(line, "PhysicsParameters.hydro.ZEUSLinearArtificialViscosity = %"FSYM,
 		  &ZEUSLinearArtificialViscosity);
  
-    ret += sscanf(line, "UseMinimumPressureSupport = %"ISYM,
+    ret += sscanf(line, "PhysicsParameters.hydro.UseMinimumPressureSupport = %"ISYM,
 		  &UseMinimumPressureSupport);
-    ret += sscanf(line, "MinimumPressureSupportParameter = %"FSYM,
+    ret += sscanf(line, "PhysicsParameters.hydro.MinimumPressureSupportParameter = %"FSYM,
 		  &MinimumPressureSupportParameter);
-    ret += sscanf(line, "RefineByJeansLengthSafetyFactor = %"FSYM,
+    ret += sscanf(line, "SimulationControl.amr.RefineByJeansLengthSafetyFactor = %"FSYM,
 		  &RefineByJeansLengthSafetyFactor);
-    ret += sscanf(line, "JeansRefinementColdTemperature = %"FSYM,
+    ret += sscanf(line, "SimulationControl.amr.JeansRefinementColdTemperature = %"FSYM,
 		  &JeansRefinementColdTemperature);
-    ret += sscanf(line, "RefineByResistiveLengthSafetyFactor = %" FSYM,
+    ret += sscanf(line, "SimulationControl.amr.RefineByResistiveLengthSafetyFactor = %" FSYM,
 		  &RefineByResistiveLengthSafetyFactor);
-    ret += sscanf(line, "MustRefineParticlesRefineToLevel = %"ISYM,
+    ret += sscanf(line, "SimulationControl.amr.MustRefineParticlesRefineToLevel = %"ISYM,
                   &MustRefineParticlesRefineToLevel);
-    ret += sscanf(line, "MustRefineParticlesRefineToLevelAutoAdjust = %"ISYM,
+    ret += sscanf(line, "SimulationControl.amr.MustRefineParticlesRefineToLevelAutoAdjust = %"ISYM,
                   &MustRefineParticlesRefineToLevelAutoAdjust);
-    ret += sscanf(line, "MustRefineParticlesMinimumMass = %"FSYM,
+    ret += sscanf(line, "SimulationControl.amr.MustRefineParticlesMinimumMass = %"FSYM,
                   &MustRefineParticlesMinimumMass);
-    ret += sscanf(line, "ParticleTypeInFile = %"ISYM,
+    ret += sscanf(line, "OutputControlParameters.ParticleTypeInFile = %"ISYM,
                   &ParticleTypeInFile);
 
  
