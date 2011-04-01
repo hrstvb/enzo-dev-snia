@@ -114,7 +114,7 @@ void Parameters::write ( const char * file_name )
   if ( file_pointer == NULL ) {
     char err_msg[255];
     sprintf (err_msg,"Error opening parameter file '%s' for writing\n",
-	     ,file_name);
+	     file_name);
     ENZO_FAIL(err_msg);
   }
   std::map<std::string,Param *>::iterator it_param;

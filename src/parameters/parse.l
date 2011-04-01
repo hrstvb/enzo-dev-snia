@@ -4,6 +4,7 @@ D [0-9]
 LN [A-Za-z0-9_]
 LL [a-z]
 LU [A-Z]
+LLU [A-Za-z]
 E [Ee][+-]?{D}+
 S [-]?
 
@@ -90,14 +91,11 @@ rint   { return RINT; }
 
 false     { yylval.logical_type = 0; return LOGICAL; } 
 true      { yylval.logical_type = 1; return LOGICAL; } 
-{LU}{LN}+ { /* free (yylval.string_type); ILLEGAL */
-            yylval.string_type = strdup (yytext); /* MEMORY LEAK */
-            return GROUP_NAME; } /* Group names begin with upper-case */
 [xyzt]    { yylval.string_type = strdup (yytext);
             return VARIABLE; }
-{LL}{LN}* { yylval.string_type = strdup (yytext); /* MEMORY LEAK */
-            return IDENTIFIER; } /* group, parameter, and variables */
-                                 /* begin with lower-case */
+
+{LLU}{LN}* { yylval.string_type = strdup (yytext);
+            return IDENTIFIER; }
 
 "="        { return '='; }         /* = */
 
