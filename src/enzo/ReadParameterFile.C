@@ -134,26 +134,26 @@ int ReadParameterFile(FILE *fptr, TopGridData &MetaData, float *Initialdt)
 
  
     /* Maximum density directed output */
-    OutputOnDensity        = Param.GetScalar <int> ("OutputOnDensity");  // should be bool
-    StartDensityOutputs    = Param.GetScalar <float> ("StartDensityOutputs");
-    CurrentDensityOutput   = Param.GetScalar <float> ("CurrentDensityOutput");
-    IncrementDensityOutput = Param.GetScalar <float> ("IncrementDensityOutput");
+    OutputOnDensity        = Param.GetScalar <int> ("OutputControlParameters.outputTriggers.OutputOnDensity");  // should be bool
+    StartDensityOutputs    = Param.GetScalar <float> ("OutputControlParameters.outputTriggers.StartDensityOutputs");
+    CurrentDensityOutput   = Param.GetScalar <float> ("OutputControlParameters.outputTriggers.CurrentDensityOutput");
+    IncrementDensityOutput = Param.GetScalar <float> ("OutputControlParameters.outputTriggers.IncrementDensityOutput");
 
 
     /* Subcycle directed output */
-    MetaData.SubcycleSkipDataDump = Param.GetScalar <int> ("SubcycleSkipDataDump");
-    MetaData.SubcycleLastDataDump = Param.GetScalar <int> ("SubcycleLastDataDump");
-    MetaData.SubcycleNumber = Param.GetScalar <int> ("SubcycleNumber");
+    MetaData.SubcycleSkipDataDump = Param.GetScalar <int> ("OutputControlParameters.cycleDump.SubcycleSkipDataDump");
+    MetaData.SubcycleLastDataDump = Param.GetScalar <int> ("InternalParameters.outputLabeling.SubcycleLastDataDump");
+    MetaData.SubcycleNumber = Param.GetScalar <int> ("InternalParameters.SubcycleNumber");
 
 
-    FileDirectedOutput = Param.GetScalar <int> ("FileDirectedOutput");
-    WriteBinaryHierarchy = Param.GetScalar <int> ("WriteBinaryHierarchy");
+    FileDirectedOutput = Param.GetScalar <int> ("OutputControlParameters.FileDirectedOutput");
+    WriteBinaryHierarchy = Param.GetScalar <int> ("OutputControlParameters.WriteBinaryHierarchy");
 
 
-    MetaData.RestartDumpNumber = Param.GetScalar <int> ("RestartDumpNumber");
-    MetaData.DataDumpNumber = Param.GetScalar <int> ("DataDumpNumber");
-    MetaData.HistoryDumpNumber = Param.GetScalar <int> ("HistoryDumpNumber");
-    MetaData.TracerParticleDumpNumber = Param.GetScalar <int> ("TracerParticleDumpNumber");
+    MetaData.RestartDumpNumber = Param.GetScalar <int> ("InternalParameters.outputLabeling.RestartDumpNumber");
+    MetaData.DataDumpNumber = Param.GetScalar <int> ("InternalParameters.outputLabeling.DataDumpNumber");
+    MetaData.HistoryDumpNumber = Param.GetScalar <int> ("InternalParameters.outputLabeling.HistoryDumpNumber");
+    MetaData.TracerParticleDumpNumber = Param.GetScalar <int> ("InternalParameters.outputLabeling.TracerParticleDumpNumber");
  
     if (sscanf(line, "RestartDumpName      = %s", dummy) == 1) MetaData.RestartDumpName = dummy;
     if (sscanf(line, "DataDumpName         = %s", dummy) == 1) MetaData.DataDumpName = dummy;
@@ -170,11 +170,11 @@ int ReadParameterFile(FILE *fptr, TopGridData &MetaData, float *Initialdt)
     if (sscanf(line, "LocalDir            = %s", dummy) == 1) MetaData.LocalDir = dummy;
     if (sscanf(line, "GlobalDir           = %s", dummy) == 1) MetaData.GlobalDir = dummy;
 
-    LoadBalancing = Param.GetScalar <int> ("LoadBalancing");
-    ResetLoadBalancing = Param.GetScalar <int> ("ResetLoadBalancing");
-    LoadBalancingCycleSkip = Param.GetScalar <int> ("LoadBalancingCycleSkip");
-    LoadBalancingMinLevel = Param.GetScalar <int> ("LoadBalancingMinLevel");
-    LoadBalancingMaxLevel = Param.GetScalar <int> ("LoadBalancingMaxLevel");
+    LoadBalancing = Param.GetScalar <int> ("SimulationControl.optimization.LoadBalancing");
+    ResetLoadBalancing = Param.GetScalar <int> ("SimulationControl.optimization.ResetLoadBalancing");
+    LoadBalancingCycleSkip = Param.GetScalar <int> ("SimulationControl.optimization.LoadBalancingCycleSkip");
+    LoadBalancingMinLevel = Param.GetScalar <int> ("SimulationControl.optimization.LoadBalancingMinLevel");
+    LoadBalancingMaxLevel = Param.GetScalar <int> ("SimulationControl.optimization.LoadBalancingMaxLevel");
  
 
 #ifdef UNUSED // need to re-visit
@@ -195,30 +195,30 @@ int ReadParameterFile(FILE *fptr, TopGridData &MetaData, float *Initialdt)
 		    TimeActionParameter+dim);
 #endif 
 
-    MetaData.StaticHierarchy = Param.GetScalar <int> ("StaticHierarchy");  // should be bool
+    MetaData.StaticHierarchy = Param.GetScalar <int> ("SimulationControl.amr.StaticHierarchy");  // should be bool
  
-    MetaData.TopGridRank = Param.GetScalar <int> ("TopGridRank");
+    MetaData.TopGridRank = Param.GetScalar <int> ("SimulationControl.domain.TopGridRank");
     Param.GetArray <int> ("TopGridDimensions", MetaData.TopGridDims);
  
-    MetaData.GravityBoundary = Param.GetScalar <int> ("TopGridGravityBoundary");
+    MetaData.GravityBoundary = Param.GetScalar <int> ("PhysicsParameters.TopGridGravityBoundary");
  
 #ifdef TRANSFER
     if (sscanf(line, "RadHydroParamfile = %s", dummy) == 1) MetaData.RadHydroParameterFname = dummy;
 #endif
-    ImplicitProblem = Param.GetScalar <int> ("ImplicitProblem"); // should be bool
-    RadiativeTransferFLD = Param.GetScalar <int> ("RadiativeTransferFLD");
+    ImplicitProblem = Param.GetScalar <int> ("PhysicsParameters.radiationTransfer.ImplicitProblem"); // should be bool
+    RadiativeTransferFLD = Param.GetScalar <int> ("PhysicsParameters.radiationTransfer.RadiativeTransferFLD");
 #ifdef EMISSIVITY
     StarMakerEmissivityField = Param.GetScalar <int> ("StarMakerEmissivityField");
     uv_param = Param.GetScalar <float> ("uv_param");
 #endif
 
-    MetaData.ParticleBoundaryType = Param.GetScalar <int> ("ParticleBoundaryType");
-    MetaData.NumberOfParticles = Param.GetScalar <int> ("NumberOfParticles");
+    MetaData.ParticleBoundaryType = Param.GetScalar <int> ("PhysicsParameters.ParticleBoundaryType");
+    MetaData.NumberOfParticles = Param.GetScalar <int> ("InternalParameters.NumberOfParticles");
  
-    MetaData.CourantSafetyNumber = Param.GetScalar <float> ("CourantSafetyNumber");
-    MetaData.PPMFlatteningParameter = Param.GetScalar <int> ("PPMFlatteningParameter");  // should be bool
-    MetaData.PPMDiffusionParameter = Param.GetScalar <int> ("PPMDiffusionParameter");  // should be bool
-    MetaData.PPMSteepeningParameter = Param.GetScalar <int> ("PPMSteepeningParameter");  // should be bool
+    MetaData.CourantSafetyNumber = Param.GetScalar <float> ("PhysicsParameters.hydro.CourantSafetyNumber");
+    MetaData.PPMFlatteningParameter = Param.GetScalar <int> ("PhysicsParameters.hydro.PPMFlatteningParameter");  // should be bool
+    MetaData.PPMDiffusionParameter = Param.GetScalar <int> ("PhysicsParameters.hydro.PPMDiffusionParameter");  // should be bool
+    MetaData.PPMSteepeningParameter = Param.GetScalar <int> ("PhysicsParameters.hydro.PPMSteepeningParameter");  // should be bool
 
 // **********************************************************************
  
@@ -373,7 +373,7 @@ int ReadParameterFile(FILE *fptr, TopGridData &MetaData, float *Initialdt)
     ret += sscanf(line, "PhysicsParameters.atomicPhysics.DeuteriumToHydrogenRatio = %"FSYM, &CoolData.DeuteriumToHydrogenRatio);
     ret += sscanf(line, "PhysicsParameters.atomicPhysics.NumberOfTemperatureBins = %"ISYM, &CoolData.NumberOfTemperatureBins);
     ret += sscanf(line, "PhysicsParameters.atomicPhysics.CoolDataIh2co = %"ISYM, &CoolData.ih2co);
-    ret += sscanf(line, "PhysicsParameters.atomicPhysics.CoolDataIpiht = %"ISYM, &CoolData.ipiht);
+    ret += sscanf(line, "PhysicsParameters.atomicPhysics.CoolDataIpiht = %"ISYM, &CoolData.ipihdt);
     ret += sscanf(line, "PhysicsParameters.atomicPhysics.TemperatureStart = %"FSYM, &CoolData.TemperatureStart);
     ret += sscanf(line, "PhysicsParameters.atomicPhysics.TemperatureEnd = %"FSYM, &CoolData.TemperatureEnd);
     ret += sscanf(line, "PhysicsParameters.atomicPhysics.CoolDataCompXray = %"FSYM, &CoolData.comp_xray);
