@@ -113,24 +113,24 @@ int ReadParameterFile(FILE *fptr, TopGridData &MetaData, float *Initialdt)
     TracerParticleOn                      = Param.GetScalar <int> ("SimulationControl.TracerParticleOn"); // should be bool
     ParticleTypeInFile                    = Param.GetScalar <int> ("OutputControlParameters.ParticleTypeInFile"); // should be bool
     OutputParticleTypeGrouping            = Param.GetScalar <int> ("OutputControlParameters.OutputParticleTypeGrouping");
-    MetaData.TimeLastTracerParticleDump   = Param.GetScalar <FLOAT> ("TimeLastTracerParticleDump");
-    MetaData.dtTracerParticleDump         = Param.GetScalar <FLOAT> ("dtTracerParticleDump");
-    MetaData.TimeLastInterpolatedDataDump = Param.GetScalar <FLOAT> ("TimeLastInterpolatedDataDump");
-    MetaData.dtInterpolatedDataDump       = Param.GetScalar <FLOAT> ("dtInterpolatedDataDump");
+    MetaData.TimeLastTracerParticleDump   = Param.GetScalar <FLOAT> ("TimeLastTracerParticleDump"); //doc?
+    MetaData.dtTracerParticleDump         = Param.GetScalar <FLOAT> ("dtTracerParticleDump");//doc?
+    MetaData.TimeLastInterpolatedDataDump = Param.GetScalar <FLOAT> ("TimeLastInterpolatedDataDump");//doc?
+    MetaData.dtInterpolatedDataDump       = Param.GetScalar <FLOAT> ("dtInterpolatedDataDump");//doc?
 
  
-    Param.GetArray <FLOAT> ("NewMovieLeftEdge", MetaData.NewMovieLeftEdge);
-    Param.GetArray <FLOAT> ("NewMovieLeftEdge", MetaData.NewMovieRightEdge);
+    Param.GetArray <FLOAT> ("OutputControlParameters.movieDump.NewMovieLeftEdge", MetaData.NewMovieLeftEdge);
+    Param.GetArray <FLOAT> ("OutputControlParameters.movieDump.NewMovieLeftEdge", MetaData.NewMovieRightEdge);
 
-    MetaData.CycleLastRestartDump    = Param.GetScalar <int> ("CycleLastRestartDump");
-    MetaData.CycleSkipRestartDump    = Param.GetScalar <int> ("CycleSkipRestartDump");
-    MetaData.CycleLastDataDump       = Param.GetScalar <int> ("CycleLastDataDump");
-    MetaData.CycleSkipDataDump       = Param.GetScalar <int> ("CycleSkipDataDump");
-    MetaData.CycleLastHistoryDump    = Param.GetScalar <int> ("CycleLastHistoryDump");
-    MetaData.CycleSkipHistoryDump    = Param.GetScalar <int> ("CycleSkipHistoryDump");
+    MetaData.CycleLastRestartDump    = Param.GetScalar <int> ("CycleLastRestartDump"); //not used
+    MetaData.CycleSkipRestartDump    = Param.GetScalar <int> ("CycleSkipRestartDump"); //not used
+    MetaData.CycleLastDataDump       = Param.GetScalar <int> ("OutputControlParameters.outputLabeling.CycleLastDataDump");
+    MetaData.CycleSkipDataDump       = Param.GetScalar <int> ("OutputControlParameters.cycleDump.CycleSkipDataDump");
+    MetaData.CycleLastHistoryDump    = Param.GetScalar <int> ("OutputControlParameters.outputLabeling.CycleLastHistoryDump");
+    MetaData.CycleSkipHistoryDump    = Param.GetScalar <int> ("OutputControlParameters.cycleDump.CycleSkipHistoryDump");
     MetaData.CycleSkipGlobalDataDump = Param.GetScalar <int> ("CycleSkipGlobalDataDump");
-    MetaData.OutputFirstTimeAtLevel  = Param.GetScalar <int> ("OutputFirstTimeAtLevel");
-    MetaData.StopFirstTimeAtLevel    = Param.GetScalar <int> ("StopFirstTimeAtLevel");
+    MetaData.OutputFirstTimeAtLevel  = Param.GetScalar <int> ("OutputControlParameters.outputTriggers.OutputFirstTimeAtLevel");
+    MetaData.StopFirstTimeAtLevel    = Param.GetScalar <int> ("SimulationControl.StopFirstTimeAtLevel");
 
  
     /* Maximum density directed output */
