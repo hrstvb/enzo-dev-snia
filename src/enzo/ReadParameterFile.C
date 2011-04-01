@@ -525,88 +525,68 @@ int ReadParameterFile(FILE *fptr, TopGridData &MetaData, float *Initialdt)
     StarEnergyToStellarUV = Param.GetScalar <float> ("StarEnergyToStellarUV");
     StarEnergyToQuasarUV= Param.GetScalar <float> ("StarEnergyToQuasarUV");
 
-= Param.GetScalar <int> ("");
-= Param.GetScalar <int> ("");
-= Param.GetScalar <int> ("");
-= Param.GetScalar <float> ("");
-= Param.GetScalar <int> ("");
-= Param.GetScalar <int> ("");
-= Param.GetScalar <float> ("");
-= Param.GetScalar <float> ("");
-= Param.GetScalar <float> ("");
-= Param.GetScalar <float> ("");
-= Param.GetScalar <float> ("");
-= Param.GetScalar <float> ("");
+    StarFeedbackDistRadius= Param.GetScalar <int> ("StarFeedbackDistRadius");
+    StarFeedbackDistCellStep= Param.GetScalar <int> ("StarFeedbackDistCellStep");
+    StarClusterUseMetalField= Param.GetScalar <int> ("StarClusterUseMetalField");
+    StarClusterMinDynamicalTime= Param.GetScalar <float> ("StarClusterMinDynamicalTime");
+    StarClusterHeliumIonization= Param.GetScalar <int> ("StarClusterHeliumIonization");
+    StarClusterUnresolvedModel= Param.GetScalar <int> ("StarClusterUnresolvedModel");
+    StarClusterIonizingLuminosity= Param.GetScalar <float> ("StarClusterIonizingLuminosity");
+    StarClusterSNEnergy= Param.GetScalar <float> ("StarClusterSNEnergy");
+    StarClusterSNRadius= Param.GetScalar <float> ("StarClusterSNRadius");
+    StarClusterFormEfficiency= Param.GetScalar <float> ("StarClusterFormEfficiency");
+    StarClusterMinimumMass= Param.GetScalar <float> ("StarClusterMinimumMass");
+    StarClusterCombineRadius= Param.GetScalar <float> ("StarClusterCombineRadius");
 
-= Param.GetScalar <> ("");
+    Param.GetArray <float> ("StarClusterRegionLeftEdge",StarClusterRegionLeftEdge,StarClusterRegionLeftEdge+1,StarClusterRegionLeftEdge+2);
+    Param.GetArray <float> ("StarClusterRegionRightEdge",StarClusterRegionRightEdge,StarClusterRegionRightEdge+1,StarClusterRegionRightEdge+2);
 
-    ret += sscanf(line, "StarFeedbackDistRadius = %"ISYM, &StarFeedbackDistRadius);
-    ret += sscanf(line, "StarFeedbackDistCellStep = %"ISYM, &StarFeedbackDistCellStep);
+    PopIIIStarMass =  Param.GetScalar <float> ("PopIIIStarMass");                           
+    PopIIIInitialMassFunctionSeed = Param.GetScalar <int> ("PopIIIInitialMassFunctionSeed");                 
+    PopIIIInitialMassFunctionCalls = Param.GetScalar <int> ("PopIIIInitialMassFunctionCalls"); 
+    PopIIILowerMassCutoff = Param.GetScalar <float> ("PopIIILowerMassCutoff");
+    PopIIIUpperMassCutoff = Param.GetScalar <float> ("PopIIIUpperMassCutoff");
 
-    ret += sscanf(line, "StarClusterUseMetalField = %"ISYM, 		  &StarClusterUseMetalField);
-    ret += sscanf(line, "StarClusterMinDynamicalTime = %"FSYM, 		  &StarClusterMinDynamicalTime);
-    ret += sscanf(line, "StarClusterHeliumIonization = %"ISYM, 		  &StarClusterHeliumIonization);
-    ret += sscanf(line, "StarClusterUnresolvedModel = %"ISYM, 		  &StarClusterUnresolvedModel);
-    ret += sscanf(line, "StarClusterIonizingLuminosity = %lf", 		  &StarClusterIonizingLuminosity);
-    ret += sscanf(line, "StarClusterSNEnergy = %lf", &StarClusterSNEnergy);
-    ret += sscanf(line, "StarClusterSNRadius = %"FSYM, &StarClusterSNRadius);
-    ret += sscanf(line, "StarClusterFormEfficiency = %"FSYM, 		  &StarClusterFormEfficiency);
-    ret += sscanf(line, "StarClusterMinimumMass = %"FSYM, 		  &StarClusterMinimumMass);
-    ret += sscanf(line, "StarClusterCombineRadius = %"FSYM,		  &StarClusterCombineRadius);
-    ret += sscanf(line, "StarClusterRegionLeftEdge = %"FSYM" %"FSYM" %"FSYM,
-		  StarClusterRegionLeftEdge, StarClusterRegionLeftEdge+1, 
-		  StarClusterRegionLeftEdge+2);
-    ret += sscanf(line, "StarClusterRegionRightEdge = %"FSYM" %"FSYM" %"FSYM,
-		  StarClusterRegionRightEdge, StarClusterRegionRightEdge+1, 
-		  StarClusterRegionRightEdge+2);
+    //   ret += sscanf(line,"PopIIIMassRange %"FSYM" %"FSYM, &PopIIILowerMassCutoff, &PopIIIUpperMassCutoff);
 
-    ret += sscanf(line, "PopIIIStarMass = %"FSYM, &PopIIIStarMass);
-    ret += sscanf(line, "PopIIIInitialMassFunction = %"ISYM, 		  &PopIIIInitialMassFunction);
-    ret += sscanf(line, "PopIIIInitialMassFunctionSeed = %"ISYM, 		  &PopIIIInitialMassFunctionSeed);
-    ret += sscanf(line, "PopIIIInitialMassFunctionCalls = %"ISYM, 		  &PopIIIInitialMassFunctionCalls);
-    ret += sscanf(line, "PopIIIMassRange = %"FSYM" %"FSYM,		  &PopIIILowerMassCutoff, &PopIIIUpperMassCutoff);
-    ret += sscanf(line, "PopIIIInitialMassFunctionSlope = %"FSYM, 		  &PopIIIInitialMassFunctionSlope);
-    ret += sscanf(line, "PopIIIBlackHoles = %"ISYM, &PopIIIBlackHoles);
-    ret += sscanf(line, "PopIIIBHLuminosityEfficiency = %"FSYM, 		  &PopIIIBHLuminosityEfficiency);
-    ret += sscanf(line, "PopIIIOverDensityThreshold = %"FSYM,		  &PopIIIOverDensityThreshold);
-    ret += sscanf(line, "PopIIIH2CriticalFraction = %"FSYM,		  &PopIIIH2CriticalFraction);
-    ret += sscanf(line, "PopIIIMetalCriticalFraction = %"FSYM,		  &PopIIIMetalCriticalFraction);
-    ret += sscanf(line, "PopIIISupernovaRadius = %"FSYM, &PopIIISupernovaRadius);
-    ret += sscanf(line, "PopIIISupernovaUseColour = %"ISYM, 		  &PopIIISupernovaUseColour);
-    ret += sscanf(line, "PopIIISupernovaMustRefine = %"ISYM,		  &PopIIISupernovaMustRefine);
-    ret += sscanf(line, "PopIIISupernovaMustRefineResolution = %"ISYM,		  &PopIIISupernovaMustRefineResolution);
-    ret += sscanf(line, "PopIIIHeliumIonization = %"ISYM, 		  &PopIIIHeliumIonization);
+    PopIIIInitialMassFunctionSlope =              Param.GetScalar <float> 	("PopIIIInitialMassFunctionSlope");
+    PopIIIBlackHoles =                            Param.GetScalar <int>             (" PopIIIBlackHoles");
+    PopIIIBHLuminosityEfficiency =                Param.GetScalar <float> 		 ("PopIIIBHLuminosityEfficiency");
+    PopIIIOverDensityThreshold =                  Param.GetScalar <float>		 ("PopIIIOverDensityThreshold");
+    PopIIIH2CriticalFraction =                    Param.GetScalar <float>		("PopIIIH2CriticalFraction");
+    PopIIIMetalCriticalFraction =                 Param.GetScalar <float>		("PopIIIMetalCriticalFraction");
+    PopIIISupernovaRadius =                       Param.GetScalar <float>           ("PopIIISupernovaRadius");
+    PopIIISupernovaUseColour =                    Param.GetScalar <int> 		("PopIIISupernovaUseColour");
+    PopIIISupernovaMustRefine =                   Param.GetScalar <int>		("PopIIISupernovaMustRefine");
+    PopIIISupernovaMustRefineResolution =         Param.GetScalar <int>		 ("PopIIISupernovaMustRefineResolution");
+    PopIIIHeliumIonization =                      Param.GetScalar <int> 		 ("PopIIIHeliumIonization");
+    PopIIIColorDensityThreshold =                 Param.GetScalar <float>		 ("PopIIIColorDensityThreshold");
+    PopIIIColorMass =                             Param.GetScalar <float>		 ("PopIIIColorMass");
 
-    ret += sscanf(line, "PopIIIColorDensityThreshold = %"FSYM,		  &PopIIIColorDensityThreshold);
-    ret += sscanf(line, "PopIIIColorMass = %"FSYM,		  &PopIIIColorMass);
+    MBHAccretion = Param.GetScalar <int> ("MBHAccretion");
+    MBHAccretionRadius = Param.GetScalar <float> ("MBHAccretionRadius");
+    MBHAccretingMassRatio = Param.GetScalar <float> ("MBHAccretingMassRatio");
+    MBHAccretionFixedTemperature = Param.GetScalar <float> ("MBHAccretionFixedTemperature");
+    MBHAccretionFixedRate = Param.GetScalar <float> ("MBHAccretionFixedRate");
+    MBHTurnOffStarFormation = Param.GetScalar <int> ("MBHTurnOffStarFormation");
+    MBHCombineRadius = Param.GetScalar <float> ("MBHCombineRadius");
+    MBHMinDynamicalTime = Param.GetScalar <float> ("MBHMinDynamicalTime");
+    MBHMinimumMass = Param.GetScalar <float> ("MBHMinimumMass");
 
-    ret += sscanf(line, "MBHAccretion = %"ISYM, &MBHAccretion);
-    ret += sscanf(line, "MBHAccretionRadius = %"FSYM, &MBHAccretionRadius);
-    ret += sscanf(line, "MBHAccretingMassRatio = %"FSYM, &MBHAccretingMassRatio);
-    ret += sscanf(line, "MBHAccretionFixedTemperature = %"FSYM, &MBHAccretionFixedTemperature);
-    ret += sscanf(line, "MBHAccretionFixedRate = %"FSYM, &MBHAccretionFixedRate);
-    ret += sscanf(line, "MBHTurnOffStarFormation = %"ISYM, &MBHTurnOffStarFormation);
-    ret += sscanf(line, "MBHCombineRadius = %"FSYM, &MBHCombineRadius);
-    ret += sscanf(line, "MBHMinDynamicalTime = %"FSYM, &MBHMinDynamicalTime);
-    ret += sscanf(line, "MBHMinimumMass = %"FSYM, &MBHMinimumMass);
+    MBHFeedback = Param.GetScalar <int> ("MBHFeedback");
+    MBHFeedbackRadiativeEfficiency = Param.GetScalar <float> ("MBHFeedbackRadiativeEfficiency");
+    MBHFeedbackEnergyCoupling = Param.GetScalar <float> ("MBHFeedbackEnergyCoupling");
+    MBHFeedbackMassEjectionFraction = Param.GetScalar <float> ("MBHFeedbackMassEjectionFraction");
+    MBHFeedbackMetalYield = Param.GetScalar <float> ("MBHFeedbackMetalYield");
+    MBHFeedbackThermalRadius = Param.GetScalar <float> ("MBHFeedbackThermalRadius");
+    MBHFeedbackJetsThresholdMass = Param.GetScalar <float> ("MBHFeedbackJetsThresholdMass");
+    MBHParticleIO = Param.GetScalar <int>		  ("MBHParticleIO");
 
-    ret += sscanf(line, "MBHFeedback = %"ISYM, &MBHFeedback);
-    ret += sscanf(line, "MBHFeedbackRadiativeEfficiency = %"FSYM, &MBHFeedbackRadiativeEfficiency);
-    ret += sscanf(line, "MBHFeedbackEnergyCoupling = %"FSYM, &MBHFeedbackEnergyCoupling);
-    ret += sscanf(line, "MBHFeedbackMassEjectionFraction = %"FSYM, &MBHFeedbackMassEjectionFraction);
-    ret += sscanf(line, "MBHFeedbackMetalYield = %"FSYM, &MBHFeedbackMetalYield);
-    ret += sscanf(line, "MBHFeedbackThermalRadius = %"FSYM, &MBHFeedbackThermalRadius);
-    ret += sscanf(line, "MBHFeedbackJetsThresholdMass = %"FSYM, &MBHFeedbackJetsThresholdMass);
-
-    ret += sscanf(line, "MBHParticleIO = %"ISYM,
-		  &MBHParticleIO);
     if (sscanf(line, "MBHParticleIOFilename = %s", dummy) == 1)
       MBHParticleIOFilename = dummy;
     if (sscanf(line, "MBHInsertLocationFilename = %s", dummy) == 1)
       MBHInsertLocationFilename = dummy;
 
-
-    // **********************************************************************
 
     /* Read Movie Dump parameters */
 
