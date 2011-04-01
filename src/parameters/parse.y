@@ -16,8 +16,12 @@
 #include <math.h>
 #include <assert.h>
 #include <string.h>
-#include <malloc.h>
+#include <stdlib.h>
 
+#ifndef __APPLE__
+	#include <malloc.h>
+#endif
+	
 #define YYDEBUG 1
 
   /* Quiet a few -Wall errors */
