@@ -598,44 +598,46 @@ int ReadParameterFile(FILE *fptr, TopGridData &MetaData, float *Initialdt)
     }
  
     /* Read star particle parameters. */
- 
-    ret += sscanf(line, "StarMakerOverDensityThreshold = %"FSYM,
-		  &StarMakerOverDensityThreshold);
-    ret += sscanf(line, "StarMakerSHDensityThreshold = %"FSYM,
-		  &StarMakerSHDensityThreshold);
-    ret += sscanf(line, "StarMakerMassEfficiency = %"FSYM,
-		  &StarMakerMassEfficiency);
-    ret += sscanf(line, "StarMakerMinimumMass = %"FSYM, &StarMakerMinimumMass);
-    ret += sscanf(line, "StarMakerMinimumDynamicalTime = %"FSYM,
-                  &StarMakerMinimumDynamicalTime);
-    ret += sscanf(line, "StarMassEjectionFraction = %"FSYM,
-		  &StarMassEjectionFraction);
-    ret += sscanf(line, "StarMetalYield = %"FSYM, &StarMetalYield);
-    ret += sscanf(line, "StarEnergyToThermalFeedback = %"FSYM,
-		  &StarEnergyToThermalFeedback);
-    ret += sscanf(line, "StarEnergyToStellarUV = %"FSYM, &StarEnergyToStellarUV);
-    ret += sscanf(line, "StarEnergyToQuasarUV = %"FSYM, &StarEnergyToQuasarUV);
+
+    StarMakerOverDensityThreshold = Param.GetScalar <float> ("StarMakerOverDensityThreshold");
+    StarMakerSHDensityThreshold      = Param.GetScalar <float> ("StarMakerSHDensityThreshold");
+    StarMakerMassEfficiency     = Param.GetScalar <float> ("StarMakerMassEfficiency");
+    StarMakerMinimumMass     = Param.GetScalar <float> ("StarMakerMinimumMass");
+    StarMakerMinimumDynamicalTime     = Param.GetScalar <float> ("StarMakerMinimumDynamicalTime");
+    StarMassEjectionFraction          = Param.GetScalar <float> ("StarMassEjectionFraction");
+    StarMetalYield                    = Param.GetScalar <float> ("StarMetalYield");
+    StarEnergyToThermalFeedback       = Param.GetScalar <float> ("StarEnergyToThermalFeedback");
+    StarEnergyToStellarUV = Param.GetScalar <float> ("StarEnergyToStellarUV");
+    StarEnergyToQuasarUV= Param.GetScalar <float> ("StarEnergyToQuasarUV");
+
+= Param.GetScalar <int> ("");
+= Param.GetScalar <int> ("");
+= Param.GetScalar <int> ("");
+= Param.GetScalar <float> ("");
+= Param.GetScalar <int> ("");
+= Param.GetScalar <int> ("");
+= Param.GetScalar <float> ("");
+= Param.GetScalar <float> ("");
+= Param.GetScalar <float> ("");
+= Param.GetScalar <float> ("");
+= Param.GetScalar <float> ("");
+= Param.GetScalar <float> ("");
+
+= Param.GetScalar <> ("");
+
     ret += sscanf(line, "StarFeedbackDistRadius = %"ISYM, &StarFeedbackDistRadius);
     ret += sscanf(line, "StarFeedbackDistCellStep = %"ISYM, &StarFeedbackDistCellStep);
 
-    ret += sscanf(line, "StarClusterUseMetalField = %"ISYM, 
-		  &StarClusterUseMetalField);
-    ret += sscanf(line, "StarClusterMinDynamicalTime = %"FSYM, 
-		  &StarClusterMinDynamicalTime);
-    ret += sscanf(line, "StarClusterHeliumIonization = %"ISYM, 
-		  &StarClusterHeliumIonization);
-    ret += sscanf(line, "StarClusterUnresolvedModel = %"ISYM, 
-		  &StarClusterUnresolvedModel);
-    ret += sscanf(line, "StarClusterIonizingLuminosity = %lf", 
-		  &StarClusterIonizingLuminosity);
+    ret += sscanf(line, "StarClusterUseMetalField = %"ISYM, 		  &StarClusterUseMetalField);
+    ret += sscanf(line, "StarClusterMinDynamicalTime = %"FSYM, 		  &StarClusterMinDynamicalTime);
+    ret += sscanf(line, "StarClusterHeliumIonization = %"ISYM, 		  &StarClusterHeliumIonization);
+    ret += sscanf(line, "StarClusterUnresolvedModel = %"ISYM, 		  &StarClusterUnresolvedModel);
+    ret += sscanf(line, "StarClusterIonizingLuminosity = %lf", 		  &StarClusterIonizingLuminosity);
     ret += sscanf(line, "StarClusterSNEnergy = %lf", &StarClusterSNEnergy);
     ret += sscanf(line, "StarClusterSNRadius = %"FSYM, &StarClusterSNRadius);
-    ret += sscanf(line, "StarClusterFormEfficiency = %"FSYM, 
-		  &StarClusterFormEfficiency);
-    ret += sscanf(line, "StarClusterMinimumMass = %"FSYM, 
-		  &StarClusterMinimumMass);
-    ret += sscanf(line, "StarClusterCombineRadius = %"FSYM,
-		  &StarClusterCombineRadius);
+    ret += sscanf(line, "StarClusterFormEfficiency = %"FSYM, 		  &StarClusterFormEfficiency);
+    ret += sscanf(line, "StarClusterMinimumMass = %"FSYM, 		  &StarClusterMinimumMass);
+    ret += sscanf(line, "StarClusterCombineRadius = %"FSYM,		  &StarClusterCombineRadius);
     ret += sscanf(line, "StarClusterRegionLeftEdge = %"FSYM" %"FSYM" %"FSYM,
 		  StarClusterRegionLeftEdge, StarClusterRegionLeftEdge+1, 
 		  StarClusterRegionLeftEdge+2);
@@ -644,39 +646,24 @@ int ReadParameterFile(FILE *fptr, TopGridData &MetaData, float *Initialdt)
 		  StarClusterRegionRightEdge+2);
 
     ret += sscanf(line, "PopIIIStarMass = %"FSYM, &PopIIIStarMass);
-    ret += sscanf(line, "PopIIIInitialMassFunction = %"ISYM, 
-		  &PopIIIInitialMassFunction);
-    ret += sscanf(line, "PopIIIInitialMassFunctionSeed = %"ISYM, 
-		  &PopIIIInitialMassFunctionSeed);
-    ret += sscanf(line, "PopIIIInitialMassFunctionCalls = %"ISYM, 
-		  &PopIIIInitialMassFunctionCalls);
-    ret += sscanf(line, "PopIIIMassRange = %"FSYM" %"FSYM,
-		  &PopIIILowerMassCutoff, &PopIIIUpperMassCutoff);
-    ret += sscanf(line, "PopIIIInitialMassFunctionSlope = %"FSYM, 
-		  &PopIIIInitialMassFunctionSlope);
+    ret += sscanf(line, "PopIIIInitialMassFunction = %"ISYM, 		  &PopIIIInitialMassFunction);
+    ret += sscanf(line, "PopIIIInitialMassFunctionSeed = %"ISYM, 		  &PopIIIInitialMassFunctionSeed);
+    ret += sscanf(line, "PopIIIInitialMassFunctionCalls = %"ISYM, 		  &PopIIIInitialMassFunctionCalls);
+    ret += sscanf(line, "PopIIIMassRange = %"FSYM" %"FSYM,		  &PopIIILowerMassCutoff, &PopIIIUpperMassCutoff);
+    ret += sscanf(line, "PopIIIInitialMassFunctionSlope = %"FSYM, 		  &PopIIIInitialMassFunctionSlope);
     ret += sscanf(line, "PopIIIBlackHoles = %"ISYM, &PopIIIBlackHoles);
-    ret += sscanf(line, "PopIIIBHLuminosityEfficiency = %"FSYM, 
-		  &PopIIIBHLuminosityEfficiency);
-    ret += sscanf(line, "PopIIIOverDensityThreshold = %"FSYM,
-		  &PopIIIOverDensityThreshold);
-    ret += sscanf(line, "PopIIIH2CriticalFraction = %"FSYM,
-		  &PopIIIH2CriticalFraction);
-    ret += sscanf(line, "PopIIIMetalCriticalFraction = %"FSYM,
-		  &PopIIIMetalCriticalFraction);
+    ret += sscanf(line, "PopIIIBHLuminosityEfficiency = %"FSYM, 		  &PopIIIBHLuminosityEfficiency);
+    ret += sscanf(line, "PopIIIOverDensityThreshold = %"FSYM,		  &PopIIIOverDensityThreshold);
+    ret += sscanf(line, "PopIIIH2CriticalFraction = %"FSYM,		  &PopIIIH2CriticalFraction);
+    ret += sscanf(line, "PopIIIMetalCriticalFraction = %"FSYM,		  &PopIIIMetalCriticalFraction);
     ret += sscanf(line, "PopIIISupernovaRadius = %"FSYM, &PopIIISupernovaRadius);
-    ret += sscanf(line, "PopIIISupernovaUseColour = %"ISYM, 
-		  &PopIIISupernovaUseColour);
-    ret += sscanf(line, "PopIIISupernovaMustRefine = %"ISYM,
-		  &PopIIISupernovaMustRefine);
-    ret += sscanf(line, "PopIIISupernovaMustRefineResolution = %"ISYM,
-		  &PopIIISupernovaMustRefineResolution);
-    ret += sscanf(line, "PopIIIHeliumIonization = %"ISYM, 
-		  &PopIIIHeliumIonization);
+    ret += sscanf(line, "PopIIISupernovaUseColour = %"ISYM, 		  &PopIIISupernovaUseColour);
+    ret += sscanf(line, "PopIIISupernovaMustRefine = %"ISYM,		  &PopIIISupernovaMustRefine);
+    ret += sscanf(line, "PopIIISupernovaMustRefineResolution = %"ISYM,		  &PopIIISupernovaMustRefineResolution);
+    ret += sscanf(line, "PopIIIHeliumIonization = %"ISYM, 		  &PopIIIHeliumIonization);
 
-    ret += sscanf(line, "PopIIIColorDensityThreshold = %"FSYM,
-		  &PopIIIColorDensityThreshold);
-    ret += sscanf(line, "PopIIIColorMass = %"FSYM,
-		  &PopIIIColorMass);
+    ret += sscanf(line, "PopIIIColorDensityThreshold = %"FSYM,		  &PopIIIColorDensityThreshold);
+    ret += sscanf(line, "PopIIIColorMass = %"FSYM,		  &PopIIIColorMass);
 
     ret += sscanf(line, "MBHAccretion = %"ISYM, &MBHAccretion);
     ret += sscanf(line, "MBHAccretionRadius = %"FSYM, &MBHAccretionRadius);
