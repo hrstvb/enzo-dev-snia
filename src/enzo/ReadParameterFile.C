@@ -26,10 +26,6 @@
 #include <unistd.h>
 #include <math.h>
 
-#ifdef CONFIG_USE_LIBCONFIG
-#include <libconfig.h++>
-#endif
- 
 #include "ErrorExceptions.h"
 #include "macros_and_parameters.h"
 #include "typedefs.h"
