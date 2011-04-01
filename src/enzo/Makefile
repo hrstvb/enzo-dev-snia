@@ -351,6 +351,21 @@ dep:
 include DEPEND
 
 #-----------------------------------------------------------------------
+# INSTALL TARGET
+#-----------------------------------------------------------------------
+
+install: $(TOP_DIR)/bin
+	if [ ! -e $(TOP_DIR)/bin ]; then mkdir $(TOP_DIR)/bin; fi
+	-@cp $(EXE).exe $(TOP_DIR)/bin/$(EXE)
+	-$(MAKE) -s show-flags   >& $(TOP_DIR)/bin/$(EXE).show-flags
+	-$(MAKE) -s show-config  >& $(TOP_DIR)/bin/$(EXE).show-config
+	-$(MAKE) -s show-version >& $(TOP_DIR)/bin/$(EXE).show-version
+	-$(MAKE) -s show-diff    >& $(TOP_DIR)/bin/$(EXE).show-diff
+
+$(TOP_DIR)/bin:
+	mkdir $(TOP_DIR)/bin
+
+#-----------------------------------------------------------------------
 # Radiative transfer module
 #-----------------------------------------------------------------------
 
