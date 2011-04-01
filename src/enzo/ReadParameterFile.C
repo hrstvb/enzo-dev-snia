@@ -335,6 +335,7 @@ int ReadParameterFile(FILE *fptr, TopGridData &MetaData, float *Initialdt)
     CIECooling                                       = Param.GetScalar <int> ("PhysicsParameters.atomicPhysics.CIECooling"); // should be bool
     H2OpticalDepthApproximation                      = Param.GetScalar <int> ("PhysicsParameters.atomicPhysics.H2OpticalDepthApproximation"); // should be bool
     ThreeBodyRate = Param.GetScalar <int> ("PhysicsParameters.atomicPhysics.ThreeBodyRate"); // should be bool
+
     if (sscanf(line, "CloudyCoolingGridFile = %s", dummy) == 1) {
       CloudyCoolingData.CloudyCoolingGridFile = dummy;
       ret++;
@@ -350,223 +351,137 @@ int ReadParameterFile(FILE *fptr, TopGridData &MetaData, float *Initialdt)
       ret++;
     }
 
-    CRModel = Param.GetScalar <int> ("CRModel");
-    ShockMethod = Param.GetScalar <int> ("ShockMethod");
-    ret += sscanf(line, "PhysicsParameters.miscellaneous.ShockTemperatureFloor = %"FSYM, &ShockTemperatureFloor);
-    ret += sscanf(line, "PhysicsParameters.miscellaneous.StorePreShockFields = %"ISYM, &StorePreShockFields);
+    CRModel = Param.GetScalar <int> ("PhysicsParameters.miscellaneous.CRModel");
+    ShockMethod = Param.GetScalar <int> ("PhysicsParameters.miscellaneous.ShockMethod");
+    ShockTemperatureFloor = Param.GetScalar <int> ("PhysicsParameters.miscellaneous.ShockTemperatureFloor");
+    StorePreShockFields = Param.GetScalar <int> ("PhysicsParameters.miscellaneous.StorePreShockFields");
 
-    ret += sscanf(line, "PhysicsParameters.radiationField.RadiationFieldType = %"ISYM, &RadiationFieldType);
-    ret += sscanf(line, "TabulatedLWBackground = %"ISYM, &TabulatedLWBackground);
-    ret += sscanf(line, "PhysicsParameters.radiationField.AdjustUVBackground = %"ISYM, &AdjustUVBackground);
-    ret += sscanf(line, "PhysicsParameters.radiationField.SetUVBAmplitude = %"FSYM, &SetUVBAmplitude);
-    ret += sscanf(line, "PhysicsParameters.radiationField.SetHeIIHeatingScale = %"FSYM, &SetHeIIHeatingScale);
-    ret += sscanf(line, "PhysicsParameters.radiationField.RadiationFieldLevelRecompute = %"ISYM, &RadiationFieldLevelRecompute);    
-    ret += sscanf(line, "PhysicsParameters.radiationField.RadiationShield = %"ISYM, &RadiationData.RadiationShield);
-    ret += sscanf(line, "PhysicsParameters.radiationField.RadiationSpectrumNormalization = %"FSYM, &CoolData.f3);
-    ret += sscanf(line, "PhysicsParameters.radiationField.RadiationSpectrumSlope = %"FSYM, &CoolData.alpha0);
-    ret += sscanf(line, "PhysicsParameters.atomicPhysics.CoolDataf0to3 = %"FSYM, &CoolData.f0to3);
-    ret += sscanf(line, "PhysicsParameters.radiationField.RadiationRedshiftOn = %"FSYM, &CoolData.RadiationRedshiftOn);
-    ret += sscanf(line, "PhysicsParameters.radiationField.RadiationRedshiftOff = %"FSYM, &CoolData.RadiationRedshiftOff);
-    ret += sscanf(line, "PhysicsParameters.radiationField.RadiationRedshiftFullOn = %"FSYM, &CoolData.RadiationRedshiftFullOn);
-    ret += sscanf(line, "PhysicsParameters.radiationField.RadiationRedshiftDropOff = %"FSYM, &CoolData.RadiationRedshiftDropOff);
-    ret += sscanf(line, "PhysicsParameters.atomicPhysics.HydrogenFractionByMass = %"FSYM, &CoolData.HydrogenFractionByMass);
-    ret += sscanf(line, "PhysicsParameters.atomicPhysics.DeuteriumToHydrogenRatio = %"FSYM, &CoolData.DeuteriumToHydrogenRatio);
-    ret += sscanf(line, "PhysicsParameters.atomicPhysics.NumberOfTemperatureBins = %"ISYM, &CoolData.NumberOfTemperatureBins);
-    ret += sscanf(line, "PhysicsParameters.atomicPhysics.CoolDataIh2co = %"ISYM, &CoolData.ih2co);
-    ret += sscanf(line, "PhysicsParameters.atomicPhysics.CoolDataIpiht = %"ISYM, &CoolData.ipihdt);
-    ret += sscanf(line, "PhysicsParameters.atomicPhysics.TemperatureStart = %"FSYM, &CoolData.TemperatureStart);
-    ret += sscanf(line, "PhysicsParameters.atomicPhysics.TemperatureEnd = %"FSYM, &CoolData.TemperatureEnd);
-    ret += sscanf(line, "PhysicsParameters.atomicPhysics.CoolDataCompXray = %"FSYM, &CoolData.comp_xray);
-    ret += sscanf(line, "PhysicsParameters.atomicPhysics.CoolDataTempXray = %"FSYM, &CoolData.temp_xray);
-    ret += sscanf(line, "RateDataCaseBRecombination = %"ISYM, &RateData.CaseBRecombination);
-    ret += sscanf(line, "PhysicsParameters.atomicPhysics.PhotoelectricHeating  = %"ISYM, &PhotoelectricHeating);
+    RadiationFieldType = Param.GetScalar <int> ("PhysicsParameters.radiationField.RadiationFieldType");
+    TabulatedLWBackground = Param.GetScalar <int> ("TabulatedLWBackground"); // should be bool
+    AdjustUVBackground = Param.GetScalar <int> ("PhysicsParameters.radiationField.AdjustUVBackground");
+    SetUVBAmplitude = Param.GetScalar <float> ("PhysicsParameters.radiationField.SetUVBAmplitude");
+    SetHeIIHeatingScale = Param.GetScalar <float> ("PhysicsParameters.radiationField.SetHeIIHeatingScale");
+    RadiationFieldLevelRecompute   = Param.GetScalar <int> ("PhysicsParameters.radiationField.RadiationFieldLevelRecompute"); // should be bool
+    RadiationData.RadiationShield = Param.GetScalar <int> ("PhysicsParameters.radiationField.RadiationShield"); // should be bool
+    CoolData.f3 = Param.GetScalar <float> ("PhysicsParameters.radiationField.RadiationSpectrumNormalization");
+    CoolData.alpha0 = Param.GetScalar <float> ("PhysicsParameters.radiationField.RadiationSpectrumSlope");
+    CoolData.f0to3 = Param.GetScalar <float> ("PhysicsParameters.atomicPhysics.CoolDataf0to3");
+    CoolData.RadiationRedshiftOn = Param.GetScalar <float> ("PhysicsParameters.radiationField.RadiationRedshiftOn");
+    CoolData.RadiationRedshiftOff = Param.GetScalar <float> ("PhysicsParameters.radiationField.RadiationRedshiftOff");
+    CoolData.RadiationRedshiftFullOn = Param.GetScalar <float> ("PhysicsParameters.radiationField.RadiationRedshiftFullOn");
+    CoolData.RadiationRedshiftDropOff = Param.GetScalar <float> ("PhysicsParameters.radiationField.RadiationRedshiftDropOff");
+    CoolData.HydrogenFractionByMass = Param.GetScalar <float> ("PhysicsParameters.atomicPhysics.HydrogenFractionByMass");
+    CoolData.DeuteriumToHydrogenRatio = Param.GetScalar <float> ("PhysicsParameters.atomicPhysics.DeuteriumToHydrogenRatio");
+    CoolData.NumberOfTemperatureBins = Param.GetScalar <int> ("PhysicsParameters.atomicPhysics.NumberOfTemperatureBins");
+    CoolData.ih2co = Param.GetScalar <int> ("PhysicsParameters.atomicPhysics.CoolDataIh2co"); // should be bool
+    CoolData.ipihdt = Param.GetScalar <int> ("PhysicsParameters.atomicPhysics.CoolDataIpiht"); // should be bool
+    CoolData.TemperatureStart = Param.GetScalar <float> ("PhysicsParameters.atomicPhysics.TemperatureStart");
+    CoolData.TemperatureEnd = Param.GetScalar <float> ("PhysicsParameters.atomicPhysics.TemperatureEnd");
+    CoolData.comp_xray = Param.GetScalar <int> ("PhysicsParameters.atomicPhysics.CoolDataCompXray"); // should be bool
+    CoolData.temp_xray = Param.GetScalar <int> ("PhysicsParameters.atomicPhysics.CoolDataTempXray"); // should be bool
+    RateData.CaseBRecombination = Param.GetScalar <int> ("RateDataCaseBRecombination"); // should be bool
+    PhotoelectricHeating = Param.GetScalar <int> ("PhysicsParameters.atomicPhysics.PhotoelectricHeating"); // should be bool
+    
+    OutputCoolingTime           = Param.GetScalar <int> ("OutputControlParameters.supplementalFields.OutputCoolingTime"); // should be bool 
+    OutputTemperature           = Param.GetScalar <int> ("OutputControlParameters.supplementalFields.OutputTemperature"); // should be bool 
+    OutputSmoothedDarkMatter    = Param.GetScalar <int> ("OutputControlParameters.supplementalFields.OutputSmoothedDarkMatter"); // should be bool 
+    SmoothedDarkMatterNeighbors = Param.GetScalar <int> ("OutputControlParameters.supplementalFields.SmoothedDarkMatterNeighbors"); // should be bool 
+    OutputGriddedStarParticle   = Param.GetScalar <int> ("OutputControlParameters.supplementalFields.OutputGriddedStarParticle"); // should be bool 
 
-    ret += sscanf(line, "OutputControlParameters.supplementalFields.OutputCoolingTime = %"ISYM, &OutputCoolingTime);
-    ret += sscanf(line, "OutputControlParameters.supplementalFields.OutputTemperature = %"ISYM, &OutputTemperature);
-
-    ret += sscanf(line, "OutputControlParameters.supplementalFields.OutputSmoothedDarkMatter = %"ISYM, 
-		  &OutputSmoothedDarkMatter);
-    ret += sscanf(line, "OutputControlParameters.supplementalFields.SmoothedDarkMatterNeighbors = %"ISYM, 
-		  &SmoothedDarkMatterNeighbors);
-    ret += sscanf(line, "OutputControlParameters.supplementalFields.OutputGriddedStarParticle = %"ISYM, 
-		  &OutputGriddedStarParticle);
-
-    ret += sscanf(line, "PhysicsParameters.hydro.ZEUSQuadraticArtificialViscosity = %"FSYM,
-		  &ZEUSQuadraticArtificialViscosity);
-    ret += sscanf(line, "PhysicsParameters.hydro.ZEUSLinearArtificialViscosity = %"FSYM,
-		  &ZEUSLinearArtificialViscosity);
+    ZEUSQuadraticArtificialViscosity = Param.GetScalar <float> ("PhysicsParameters.hydro.ZEUSQuadraticArtificialViscosity");
+    ZEUSLinearArtificialViscosity     = Param.GetScalar <float> ("PhysicsParameters.hydro.ZEUSLinearArtificialViscosity");
  
-    ret += sscanf(line, "PhysicsParameters.hydro.UseMinimumPressureSupport = %"ISYM,
-		  &UseMinimumPressureSupport);
-    ret += sscanf(line, "PhysicsParameters.hydro.MinimumPressureSupportParameter = %"FSYM,
-		  &MinimumPressureSupportParameter);
-    ret += sscanf(line, "SimulationControl.amr.RefineByJeansLengthSafetyFactor = %"FSYM,
-		  &RefineByJeansLengthSafetyFactor);
-    ret += sscanf(line, "SimulationControl.amr.JeansRefinementColdTemperature = %"FSYM,
-		  &JeansRefinementColdTemperature);
-    ret += sscanf(line, "SimulationControl.amr.RefineByResistiveLengthSafetyFactor = %" FSYM,
-		  &RefineByResistiveLengthSafetyFactor);
-    ret += sscanf(line, "SimulationControl.amr.MustRefineParticlesRefineToLevel = %"ISYM,
-                  &MustRefineParticlesRefineToLevel);
-    ret += sscanf(line, "SimulationControl.amr.MustRefineParticlesRefineToLevelAutoAdjust = %"ISYM,
-                  &MustRefineParticlesRefineToLevelAutoAdjust);
-    ret += sscanf(line, "SimulationControl.amr.MustRefineParticlesMinimumMass = %"FSYM,
-                  &MustRefineParticlesMinimumMass);
-    ret += sscanf(line, "OutputControlParameters.ParticleTypeInFile = %"ISYM,
-                  &ParticleTypeInFile);
+    UseMinimumPressureSupport           = Param.GetScalar <int> ("PhysicsParameters.hydro.UseMinimumPressureSupport"); // should be bool 
+    MinimumPressureSupportParameter     = Param.GetScalar <float> ("PhysicsParameters.hydro.MinimumPressureSupportParameter");
+    RefineByJeansLengthSafetyFactor     = Param.GetScalar <float> ("SimulationControl.amr.RefineByJeansLengthSafetyFactor");
+    JeansRefinementColdTemperature      = Param.GetScalar <float> ("SimulationControl.amr.JeansRefinementColdTemperature");
+    RefineByResistiveLengthSafetyFactor = Param.GetScalar <float> ("SimulationControl.amr.RefineByResistiveLengthSafetyFactor");
+    MustRefineParticlesRefineToLevel    = Param.GetScalar <int> ("SimulationControl.amr.MustRefineParticlesRefineToLevel");
+    MustRefineParticlesRefineToLevelAutoAdjust = Param.GetScalar <int> ("SimulationControl.amr.MustRefineParticlesRefineToLevelAutoAdjust"); // should be bool 
+    MustRefineParticlesMinimumMass      = Param.GetScalar <float> ("SimulationControl.amr.MustRefineParticlesMinimumMass");
+    ParticleTypeInFile                  = Param.GetScalar <int> ("OutputControlParameters.ParticleTypeInFile"); // should be bool 
 
- 
-    if (sscanf(line, "StaticRefineRegionLevel[%"ISYM"] = %"ISYM,&dim,&int_dummy) == 2){
-      if (dim > MAX_STATIC_REGIONS-1) {
-        ENZO_VFAIL("StaticRegion number %"ISYM" > MAX allowed\n", dim)
-      }
-      ret++;
-      StaticRefineRegionLevel[dim] = int_dummy;
+    int NumberOfStaticRefineRegions = Param.Size("StaticRefineRegion.Regions");
+    if (NumberOfStaticRefineRegions > MAX_STATIC_REGIONS-1) {
+      ENZO_VFAIL("You've exceeded the maximum number of StaticRefineRegions (%d)!\n",MAX_STATIC_REGIONS)
     }
-    if (sscanf(line, "StaticRefineRegionLeftEdge[%"ISYM"] = ", &dim) == 1)
-      ret += sscanf(line,
-		    "StaticRefineRegionLeftEdge[%"ISYM"] = %"PSYM" %"PSYM" %"PSYM,
-		    &dim, StaticRefineRegionLeftEdge[dim],
-		    StaticRefineRegionLeftEdge[dim]+1,
-		    StaticRefineRegionLeftEdge[dim]+2);
-    if (sscanf(line, "StaticRefineRegionRightEdge[%"ISYM"] = ", &dim) == 1)
-      ret += sscanf(line,
-		    "StaticRefineRegionRightEdge[%"ISYM"] = %"PSYM" %"PSYM" %"PSYM,
-		    &dim, StaticRefineRegionRightEdge[dim],
-		    StaticRefineRegionRightEdge[dim]+1,
-		    StaticRefineRegionRightEdge[dim]+2);
- 
-    ret += sscanf(line, "ParallelRootGridIO = %"ISYM, &ParallelRootGridIO);
- 
-    ret += sscanf(line, "ParallelParticleIO = %"ISYM, &ParallelParticleIO);
- 
-    ret += sscanf(line, "Unigrid = %"ISYM, &Unigrid);
-    ret += sscanf(line, "UnigridTranspose = %"ISYM, &UnigridTranspose);
-    ret += sscanf(line, "NumberOfRootGridTilesPerDimensionPerProcessor = %"ISYM, &NumberOfRootGridTilesPerDimensionPerProcessor);
- 
-    ret += sscanf(line, "PartitionNestedGrids = %"ISYM, &PartitionNestedGrids);
-    ret += sscanf(line, "StaticPartitionNestedGrids = %"ISYM, 
-		  &StaticPartitionNestedGrids);
- 
-    ret += sscanf(line, "ExtractFieldsOnly = %"ISYM, &ExtractFieldsOnly);
- 
-    ret += sscanf(line, "CubeDumpEnabled = %"ISYM, &CubeDumpEnabled);
- 
-    ret += sscanf(line, "Debug1 = %"ISYM, &debug1);
 
-    ret += sscanf(line, "Debug2 = %"ISYM, &debug2);
+    std::string StaticRefineRegionNames[NumberOfStaticRefineRegions];
+    Param.GetArray <std::string> ("StaticRefineRegion.Regions",StaticRefineRegionNames);
 
-    ret += sscanf(line, "MemoryLimit = %lld", &MemoryLimit);
+    for (i = 0; i < NumberOfStaticRefineRegions; i++) {
+      StaticRefineRegionLevel[i] = Param.GetScalar <int> ("StaticRefineRegion.%s.Level",StaticRefineRegionNames[i]);
+      Param.GetArray <FLOAT> ("StaticRefineRegion.%s.LeftEdge",StaticRefineRegionLeftEdge[i]);
+      Param.GetArray <FLOAT> ("StaticRefineRegion.%s.RightEdge",StaticRefineRegionRightEdge[i]);
+    }
+    
+    ParallelRootGridIO = Param.GetScalar <int> ("ParallelRootGridIO"); // should be bool
+    ParallelParticleIO = Param.GetScalar <int> ("ParallelParticleIO"); // should be bool
+ 
+    Unigrid          = Param.GetScalar <int> ("Unigrid"); // should be bool
+    UnigridTranspose = Param.GetScalar <int> ("UnigridTranspose"); // should be bool
+    NumberOfRootGridTilesPerDimensionPerProcessor = Param.GetScalar <int> ("NumberOfRootGridTilesPerDimensionPerProcessor");
+ 
+    PartitionNestedGrids = Param.GetScalar <int> ("PartitionNestedGrids");
+    StaticPartitionNestedGrids = Param.GetScalar <int> ("StaticPartitionNestedGrids"); // should be bool
+ 
+    ExtractFieldsOnly = Param.GetScalar <int> ("ExtractFieldsOnly"); // should be bool
+ 
+    debug1 = Param.GetScalar <int> ("Debug1"); // should be bool
+
+    debug2 = Param.GetScalar <int> ("Debug2"); // should be bool
+
+    MemoryLimit = Param.GetScalar <int> ("MemoryLimit");
 
 #ifdef STAGE_INPUT
-    ret += sscanf(line, "StageInput = %"ISYM, &StageInput);
+    StageInput = Param.GetScalar <int> ("StageInput");
 #endif
 
 #ifdef OOC_BOUNDARY
 
-    ret += sscanf(line, "ExternalBoundaryIO = %"ISYM, &ExternalBoundaryIO);
+    ExternalBoundaryIO = Param.GetScalar <int> ("ExternalBoundaryIO"); // should be bool
 
-    ret += sscanf(line, "ExternalBoundaryTypeIO = %"ISYM, &ExternalBoundaryTypeIO);
+    ExternalBoundaryTypeIO = Param.GetScalar <int> ("ExternalBoundaryTypeIO"); // should be bool
 
-    ret += sscanf(line, "ExternalBoundaryValueIO = %"ISYM, &ExternalBoundaryValueIO);
+    ExternalBoundaryValueIO = Param.GetScalar <int> ("ExternalBoundaryValueIO");
+ // should be bool
 
-    ret += sscanf(line, "SimpleConstantBoundary = %"ISYM, &SimpleConstantBoundary);
+    SimpleConstantBoundary = Param.GetScalar <int> ("SimpleConstantBoundary"); // should be bool
 
 #endif
 
-    ret += sscanf(line, "SlopeFlaggingFields = "
-		  " %"ISYM" %"ISYM" %"ISYM" %"ISYM" %"ISYM" %"ISYM" %"ISYM,
-		  SlopeFlaggingFields+0, 
-		  SlopeFlaggingFields+1,
-		  SlopeFlaggingFields+2, 
-		  SlopeFlaggingFields+3,
-		  SlopeFlaggingFields+4,
-		  SlopeFlaggingFields+5,
-		  SlopeFlaggingFields+6);
-    
-    ret += sscanf(line, "MinimumSlopeForRefinement = " 	  
-		  " %"FSYM" %"FSYM" %"FSYM" %"FSYM" %"FSYM" %"FSYM" %"FSYM,
-	
-		  MinimumSlopeForRefinement+0,
-		  MinimumSlopeForRefinement+1,
-		  MinimumSlopeForRefinement+2,
-		  MinimumSlopeForRefinement+3,
-		  MinimumSlopeForRefinement+4,  
-		  MinimumSlopeForRefinement+5,
-		  MinimumSlopeForRefinement+6);
+    Param.GetArray <int> ("SlopeFlaggingFields", SlopeFlaggingFields);
 
+    Param.GetArray <float> ("MinimumSlopeForRefinement", MinimumSlopeForRefinement);
  
-    ret += sscanf(line, "MinimumOverDensityForRefinement  = "
-		  " %"FSYM" %"FSYM" %"FSYM" %"FSYM" %"FSYM" %"FSYM" %"FSYM,
-		  MinimumOverDensityForRefinement+0, 
-		  MinimumOverDensityForRefinement+1,
-		  MinimumOverDensityForRefinement+2, 
-		  MinimumOverDensityForRefinement+3,
-		  MinimumOverDensityForRefinement+4, 
-		  MinimumOverDensityForRefinement+5,
-		  MinimumOverDensityForRefinement+6);
-    ret += sscanf(line, "MinimumMassForRefinement  = "
-		  " %"FSYM" %"FSYM" %"FSYM" %"FSYM" %"FSYM" %"FSYM" %"FSYM,
-		  MinimumMassForRefinement+0, 
-		  MinimumMassForRefinement+1,
-		  MinimumMassForRefinement+2, 
-		  MinimumMassForRefinement+3,
-		  MinimumMassForRefinement+4, 
-		  MinimumMassForRefinement+5,
-		  MinimumMassForRefinement+6);
-    ret += sscanf(line, "MinimumMassForRefinementLevelExponent = "
-		  " %"FSYM" %"FSYM" %"FSYM" %"FSYM" %"FSYM" %"FSYM" %"FSYM,
-		  MinimumMassForRefinementLevelExponent+0,
-		  MinimumMassForRefinementLevelExponent+1,
-		  MinimumMassForRefinementLevelExponent+2,
-		  MinimumMassForRefinementLevelExponent+3,
-		  MinimumMassForRefinementLevelExponent+4,
-		  MinimumMassForRefinementLevelExponent+5,
-		  MinimumMassForRefinementLevelExponent+6);
-    ret += sscanf(line, "MinimumSlopeForRefinement ="
-		  " %"FSYM" %"FSYM" %"FSYM" %"FSYM" %"FSYM" %"FSYM" %"FSYM,
-		  MinimumSlopeForRefinement+0,
-		  MinimumSlopeForRefinement+1,
-		  MinimumSlopeForRefinement+2,
-		  MinimumSlopeForRefinement+3,
-		  MinimumSlopeForRefinement+4,
-		  MinimumSlopeForRefinement+5,
-		  MinimumSlopeForRefinement+6);
-    ret += sscanf(line, "MinimumPressureJumpForRefinement = %"FSYM,
-		  &MinimumPressureJumpForRefinement);
-    ret += sscanf(line, "MinimumShearForRefinement = %"FSYM,
-		  &MinimumShearForRefinement);
-    ret += sscanf(line, "MinimumEnergyRatioForRefinement = %"FSYM,
-		  &MinimumEnergyRatioForRefinement);
-    ret += sscanf(line, "ShockwaveRefinementMinMach = %"FSYM,
-                 &ShockwaveRefinementMinMach);
-    ret += sscanf(line, "ShockwaveRefinementMinVelocity = %"FSYM,
-                 &ShockwaveRefinementMinVelocity);
-    ret += sscanf(line, "ShockwaveRefinementMaxLevel = %"FSYM,
-                 &ShockwaveRefinementMaxLevel);
-    ret += sscanf(line, "ComovingCoordinates = %"ISYM,&ComovingCoordinates);
-    ret += sscanf(line, "StarParticleCreation = %"ISYM, &StarParticleCreation);
-    ret += sscanf(line, "BigStarFormation = %"ISYM, &BigStarFormation);
-    ret += sscanf(line, "BigStarFormationDone = %"ISYM, &BigStarFormationDone);
-    ret += sscanf(line, "BigStarSeparation = %"FSYM, &BigStarSeparation);
-    ret += sscanf(line, "SimpleQ = %"FSYM, &SimpleQ);
-    ret += sscanf(line, "SimpleRampTime = %"FSYM, &SimpleRampTime);
-    ret += sscanf(line, "StarParticleFeedback = %"ISYM, &StarParticleFeedback);
-    ret += sscanf(line, "NumberOfParticleAttributes = %"ISYM,
-		  &NumberOfParticleAttributes);
-    ret += sscanf(line, "AddParticleAttributes = %"ISYM, &AddParticleAttributes);
+    Param.GetArray <float> ("MinimumOverDensityForRefinement", MinimumOverDensityForRefinement);
+ 
+    Param.GetArray <float> ("MinimumMassForRefinement", MinimumMassForRefinement);
+
+    Param.GetArray <float> ("MinimumMassForRefinementLevelExponent", MinimumMassForRefinementLevelExponent);
+
+
+    MinimumPressureJumpForRefinement = Param.GetScalar <float> ("MinimumPressureJumpForRefinement");
+    MinimumShearForRefinement        = Param.GetScalar <float> ("MinimumShearForRefinement");
+    MinimumEnergyRatioForRefinement  = Param.GetScalar <float> ("MinimumEnergyRatioForRefinement");
+    ShockwaveRefinementMinMach       = Param.GetScalar <float> ("ShockwaveRefinementMinMach");
+    ShockwaveRefinementMinVelocity   = Param.GetScalar <float> ("ShockwaveRefinementMinVelocity");
+    ShockwaveRefinementMaxLevel      = Param.GetScalar <float> ("ShockwaveRefinementMaxLevel");
+    ComovingCoordinates              = Param.GetScalar <int> ("ComovingCoordinates"); // should be bool
+    StarParticleCreation             = Param.GetScalar <int> ("StarParticleCreation");
+    BigStarFormation                 = Param.GetScalar <int> ("BigStarFormation"); // should be bool
+    BigStarFormationDone             = Param.GetScalar <int> ("BigStarFormationDone"); // should be bool
+    BigStarSeparation                = Param.GetScalar <float> ("BigStarSeparation");
+    SimpleQ                          = Param.GetScalar <float> ("SimpleQ");
+    SimpleRampTime                   = Param.GetScalar <float> ("SimpleRampTime");
+    StarParticleFeedback             = Param.GetScalar <int> ("StarParticleFeedback");
+    NumberOfParticleAttributes       = Param.GetScalar <int> ("NumberOfParticleAttributes");
+    AddParticleAttributes            = Param.GetScalar <int> ("AddParticleAttributes"); // should be bool
+
 
     /* read data which defines the boundary conditions */
- 
-    ret += sscanf(line, "LeftFaceBoundaryCondition  = %"ISYM" %"ISYM" %"ISYM,
-		  MetaData.LeftFaceBoundaryCondition,
-		  MetaData.LeftFaceBoundaryCondition+1,
-		  MetaData.LeftFaceBoundaryCondition+2);
-    
-     ret += sscanf(line, "RightFaceBoundaryCondition = %"ISYM" %"ISYM" %"ISYM,
- 		  MetaData.RightFaceBoundaryCondition,
- 		  MetaData.RightFaceBoundaryCondition+1,
- 		  MetaData.RightFaceBoundaryCondition+2);
+    Param.GetArray <int> ("LeftFaceBoundaryCondition", MetaData.LeftFaceBoundaryCondition);
+    Param.GetArray <int> ("RightFaceBoundaryCondition", MetaData.RightFaceBoundaryCondition);
   
     if (sscanf(line, "BoundaryConditionName         = %s", dummy) == 1)
       MetaData.BoundaryConditionName = dummy;
@@ -587,7 +502,7 @@ int ReadParameterFile(FILE *fptr, TopGridData &MetaData, float *Initialdt)
       MetaData.InitialConditionsUUID = dummy;
       ret++;
     }
-    /**************STARTING HERE***********************************/ 
+
     /* Check version number. */
  
     if (sscanf(line, "VersionNumber = %"FSYM, &TempFloat) == 1) {
@@ -690,37 +605,39 @@ int ReadParameterFile(FILE *fptr, TopGridData &MetaData, float *Initialdt)
     if (sscanf(line, "MBHInsertLocationFilename = %s", dummy) == 1)
       MBHInsertLocationFilename = dummy;
 
+
+    // **********************************************************************
+
     /* Read Movie Dump parameters */
 
-    ret += sscanf(line, "MovieSkipTimestep = %"ISYM, &MovieSkipTimestep);
-    ret += sscanf(line, "Movie3DVolumes = %"ISYM, &Movie3DVolumes);
-    ret += sscanf(line, "MovieVertexCentered = %"ISYM, &MovieVertexCentered);
-    ret += sscanf(line, "NewMovieParticleOn = %"ISYM, &NewMovieParticleOn);
-    ret += sscanf(line, "MovieDataField = %"ISYM" %"ISYM" %"ISYM" %"ISYM" %"ISYM" %"ISYM,
-		  MovieDataField+0, MovieDataField+1, MovieDataField+2,
-		  MovieDataField+3, MovieDataField+4, MovieDataField+5);
-    ret += sscanf(line, "NewMovieDumpNumber = %"ISYM, &NewMovieDumpNumber);
+    MovieSkipTimestep   = Param.GetScalar <int> ("MovieSkipTimestep");
+    Movie3DVolumes      = Param.GetScalar <int> ("Movie3DVolumes");
+    MovieVertexCentered = Param.GetScalar <int> ("MovieVertexCentered");
+    NewMovieParticleOn  = Param.GetScalar <int> ("NewMovieParticleOn");
+    Param.GetArray <int> ("MovieDataField", MovieDataField);
+    NewMovieDumpNumber  = Param.GetScalar <int> ("NewMovieDumpNumber");
     if (sscanf(line, "NewMovieName = %s", dummy) == 1)
       NewMovieName = dummy;
-    ret += sscanf(line, "MovieTimestepCounter = %"ISYM, &MetaData.MovieTimestepCounter);
+    MetaData.MovieTimestepCounter = Param.GetScalar <int> ("MovieTimestepCounter");
 
-    ret += sscanf(line, "MultiMetals = %"ISYM, &MultiMetals);
-    ret += sscanf(line, "IsotropicConduction = %"ISYM, &IsotropicConduction);
-    ret += sscanf(line, "AnisotropicConduction = %"ISYM, &AnisotropicConduction);
-    ret += sscanf(line, "IsotropicConductionSpitzerFraction = %"FSYM, &IsotropicConductionSpitzerFraction);
-    ret += sscanf(line, "AnisotropicConductionSpitzerFraction = %"FSYM, &AnisotropicConductionSpitzerFraction);
-    ret += sscanf(line, "ConductionCourantSafetyNumber = %"FSYM, &ConductionCourantSafetyNumber);
+    MultiMetals           = Param.GetScalar <int> ("MultiMetals");
+    IsotropicConduction   = Param.GetScalar <int> ("IsotropicConduction"); // should be bool
+    AnisotropicConduction = Param.GetScalar <int> ("AnisotropicConduction"); // should be bool
+    IsotropicConductionSpitzerFraction   = Param.GetScalar <float> ("IsotropicConductionSpitzerFraction");
+    AnisotropicConductionSpitzerFraction = Param.GetScalar <float> ("AnisotropicConductionSpitzerFraction");
+    ConductionCourantSafetyNumber        = Param.GetScalar <float> ("ConductionCourantSafetyNumber");
 
-    ret += sscanf(line, "RadiativeTransfer = %"ISYM, &RadiativeTransfer);
-    ret += sscanf(line, "RadiationXRaySecondaryIon = %"ISYM, &RadiationXRaySecondaryIon);
-    ret += sscanf(line, "RadiationXRayComptonHeating = %"ISYM, &RadiationXRayComptonHeating);
+    RadiativeTransfer           = Param.GetScalar <int> ("RadiativeTransfer"); // should be bool
+    RadiationXRaySecondaryIon   = Param.GetScalar <int> ("RadiationXRaySecondaryIon"); // should be bool
+    RadiationXRayComptonHeating = Param.GetScalar <int> ("RadiationXRayComptonHeating"); // should be bool
+
 
     /* Shearing Box Boundary parameters */
 
-    ret += sscanf(line, "AngularVelocity = %"FSYM, &AngularVelocity);
-    ret += sscanf(line, "VelocityGradient = %"FSYM, &VelocityGradient);
-    ret += sscanf(line, "ShearingVelocityDirection = %"ISYM, &ShearingVelocityDirection);
-    ret += sscanf(line, "ShearingBoxProblemType = %"ISYM, &ShearingBoxProblemType);  
+    AngularVelocity           = Param.GetScalar <float> ("AngularVelocity");
+    VelocityGradient          = Param.GetScalar <float> ("VelocityGradient");
+    ShearingVelocityDirection = Param.GetScalar <int> ("ShearingVelocityDirection");
+    ShearingBoxProblemType    = Param.GetScalar <int> ("ShearingBoxProblemType");
     
 
 #ifdef STAGE_INPUT
@@ -729,109 +646,102 @@ int ReadParameterFile(FILE *fptr, TopGridData &MetaData, float *Initialdt)
 #endif
 
     /* Embedded Python */
-    ret += sscanf(line, "PythonTopGridSkip = %"ISYM, &PythonTopGridSkip);
-    ret += sscanf(line, "PythonSubcycleSkip = %"ISYM, &PythonSubcycleSkip);
+    PythonTopGridSkip  = Param.GetScalar <int> ("PythonTopGridSkip"); // should be bool
+    PythonSubcycleSkip = Param.GetScalar <int> ("PythonSubcycleSkip"); // should be bool
 
 #ifdef USE_PYTHON
-    ret += sscanf(line, "NumberOfPythonCalls = %"ISYM, &NumberOfPythonCalls);
-    ret += sscanf(line, "NumberOfPythonTopGridCalls = %"ISYM, &NumberOfPythonTopGridCalls);
-    ret += sscanf(line, "NumberOfPythonSubcycleCalls = %"ISYM, &NumberOfPythonSubcycleCalls);
+    NumberOfPythonCalls         = Param.GetScalar <int> ("NumberOfPythonCalls");
+    NumberOfPythonTopGridCalls  = Param.GetScalar <int> ("NumberOfPythonTopGridCalls");
+    NumberOfPythonSubcycleCalls = Param.GetScalar <int> ("NumberOfPythonSubcycleCalls");
 #endif
 
     /* Inline halo finder */
 
-    ret += sscanf(line, "InlineHaloFinder = %"ISYM, &InlineHaloFinder);
-    ret += sscanf(line, "HaloFinderSubfind = %"ISYM, &HaloFinderSubfind);
-    ret += sscanf(line, "HaloFinderOutputParticleList = %"ISYM, 
-		  &HaloFinderOutputParticleList);
-    ret += sscanf(line, "HaloFinderRunAfterOutput = %"ISYM, 
-		  &HaloFinderRunAfterOutput);
-    ret += sscanf(line, "HaloFinderLinkingLength = %"FSYM, 
-		  &HaloFinderLinkingLength);
-    ret += sscanf(line, "HaloFinderMinimumSize = %"ISYM, &HaloFinderMinimumSize);
-    ret += sscanf(line, "HaloFinderCycleSkip = %"ISYM, &HaloFinderCycleSkip);
-    ret += sscanf(line, "HaloFinderTimestep = %"FSYM, &HaloFinderTimestep);
-    ret += sscanf(line, "HaloFinderLastTime = %"PSYM, &HaloFinderLastTime);
+    InlineHaloFinder             = Param.GetScalar <int> ("InlineHaloFinder"); // should be bool
+    HaloFinderSubfind            = Param.GetScalar <int> ("HaloFinderSubfind"); // should be bool
+    HaloFinderOutputParticleList = Param.GetScalar <int> ("HaloFinderOutputParticleList"); // should be bool
+    HaloFinderRunAfterOutput     = Param.GetScalar <int> ("HaloFinderRunAfterOutput"); // should be bool
+    HaloFinderLinkingLength      = Param.GetScalar <float> ("HaloFinderLinkingLength");
+    HaloFinderMinimumSize        = Param.GetScalar <int> ("HaloFinderMinimumSize");
+    HaloFinderCycleSkip          = Param.GetScalar <int> ("HaloFinderCycleSkip");
+    HaloFinderTimestep           = Param.GetScalar <float> ("HaloFinderTimestep");
+    HaloFinderLastTime           = Param.GetScalar <FLOAT> ("HaloFinderLastTime");
 
     /* This Block for Stanford Hydro */
 
-    ret += sscanf(line, "UseHydro               = %"ISYM, &UseHydro);
+    UseHydro = Param.GetScalar <int> ("UseHydro"); // should be bool
 
 
     /* Sink particles (for present day star formation) & winds */
-    ret += sscanf(line, "SinkMergeDistance     = %"FSYM, &SinkMergeDistance); 
-    ret += sscanf(line, "SinkMergeMass         = %"FSYM, &SinkMergeMass);
-    ret += sscanf(line, "StellarWindFeedback   = %"ISYM, &StellarWindFeedback);
-    ret += sscanf(line, "StellarWindTurnOnMass = %"FSYM, &StellarWindTurnOnMass);
-    ret += sscanf(line, "MSStellarWindTurnOnMass = %"FSYM, &MSStellarWindTurnOnMass);
+    SinkMergeDistance       = Param.GetScalar <float> ("SinkMergeDistance");
+    SinkMergeMass           = Param.GetScalar <float> ("SinkMergeMass");
+    StellarWindFeedback     = Param.GetScalar <int> ("StellarWindFeedback"); // should be bool
+    StellarWindTurnOnMass   = Param.GetScalar <float> ("StellarWindTurnOnMass");
+    MSStellarWindTurnOnMass = Param.GetScalar <float> ("MSStellarWindTurnOnMass");
 
-    ret += sscanf(line, "VelAnyl = %"ISYM, &VelAnyl);
-    ret += sscanf(line, "BAnyl = %"ISYM, &BAnyl);
+    VelAnyl = Param.GetScalar <int> ("VelAnyl"); // should be bool
+    BAnyl   = Param.GetScalar <int> ("BAnyl"); // should be bool
+
 
 
     /* Read MHD Paramters */
-    ret += sscanf(line, "UseDivergenceCleaning = %d", &UseDivergenceCleaning);
-    ret += sscanf(line, "DivergenceCleaningBoundaryBuffer = %d", &DivergenceCleaningBoundaryBuffer);
-    ret += sscanf(line, "DivergenceCleaningThreshold = %"FSYM, &DivergenceCleaningThreshold);
-    ret += sscanf(line, "PoissonApproximationThreshold = %"FSYM, &PoissonApproximationThreshold);
-    ret += sscanf(line, "PoissonBoundaryType = %d", &PoissonBoundaryType);
+    UseDivergenceCleaning            = Param.GetScalar <int> ("UseDivergenceCleaning"); // should be bool
+    DivergenceCleaningBoundaryBuffer = Param.GetScalar <int> ("DivergenceCleaningBoundaryBuffer"); // should be bool
+    DivergenceCleaningThreshold      = Param.GetScalar <float> ("DivergenceCleaningThreshold");
+    PoissonApproximationThreshold    = Param.GetScalar <float> ("PoissonApproximationThreshold");
+    PoissonBoundaryType              = Param.GetScalar <int> ("PoissonBoundaryType");
    
 
-    ret += sscanf(line, "AngularVelocity = %"FSYM, &AngularVelocity);
-    ret += sscanf(line, "VelocityGradient = %"FSYM, &VelocityGradient);
-    ret += sscanf(line, "UseDrivingField = %d", &UseDrivingField);
-    ret += sscanf(line, "DrivingEfficiency = %"FSYM, &DrivingEfficiency);
+    AngularVelocity   = Param.GetScalar <float> ("AngularVelocity");
+    VelocityGradient  = Param.GetScalar <float> ("VelocityGradient");
+    UseDrivingField   = Param.GetScalar <int> ("UseDrivingField"); // should be bool
+    DrivingEfficiency = Param.GetScalar <float> ("DrivingEfficiency");
 
-    ret += sscanf(line, "StringKick = %"FSYM, &StringKick);
-    ret += sscanf(line, "StringKickDimension = %"ISYM, &StringKickDimension);
-    ret += sscanf(line, "UsePhysicalUnit = %d", &UsePhysicalUnit);
-    ret += sscanf(line, "Theta_Limiter = %"FSYM, &Theta_Limiter);
-    ret += sscanf(line, "RKOrder = %d", &RKOrder);
-    ret += sscanf(line, "UseFloor = %d", &UseFloor);
-    ret += sscanf(line, "UseViscosity = %d", &UseViscosity);
-    ret += sscanf(line, "ViscosityCoefficient = %"FSYM, &ViscosityCoefficient);  
-    ret += sscanf(line, "UseAmbipolarDiffusion = %d", &UseAmbipolarDiffusion);
-    ret += sscanf(line, "UseResistivity = %d", &UseResistivity);
-    ret += sscanf(line, "SmallRho = %g", &SmallRho);
-    ret += sscanf(line, "SmallP = %g", &SmallP);
-    ret += sscanf(line, "SmallT = %g", &SmallT);
-    ret += sscanf(line, "MaximumAlvenSpeed = %g", &MaximumAlvenSpeed);
-    ret += sscanf(line, "Coordinate = %"ISYM, &Coordinate);
-    ret += sscanf(line, "RiemannSolver = %"ISYM, &RiemannSolver);
-    ret += sscanf(line, "RiemannSolverFallback = %"ISYM, &RiemannSolverFallback);
-    ret += sscanf(line, "ConservativeReconstruction = %"ISYM, &ConservativeReconstruction);
-    ret += sscanf(line, "PositiveReconstruction = %"ISYM, &PositiveReconstruction);
-    ret += sscanf(line, "ReconstructionMethod = %"ISYM, &ReconstructionMethod);
+    StringKick            = Param.GetScalar <float> ("StringKick");
+    StringKickDimension   = Param.GetScalar <int> ("StringKickDimension");
+    UsePhysicalUnit       = Param.GetScalar <int> ("UsePhysicalUnit"); // should be bool
+    Theta_Limiter         = Param.GetScalar <float> ("Theta_Limiter");
+    RKOrder               = Param.GetScalar <int> ("RKOrder");
+    UseFloor              = Param.GetScalar <int> ("UseFloor"); // should be bool
+    UseViscosity          = Param.GetScalar <int> ("UseViscosity"); // should be bool
+    ViscosityCoefficient  = Param.GetScalar <float> ("ViscosityCoefficient");
 
-    ret += sscanf(line, "EOSType = %"ISYM, &EOSType);
-    ret += sscanf(line, "EOSSoundSpeed = %"FSYM, &EOSSoundSpeed);
-    ret += sscanf(line, "EOSCriticalDensity = %"FSYM, &EOSCriticalDensity);
-    ret += sscanf(line, "EOSGamma = %"FSYM, &EOSGamma);
-    ret += sscanf(line, "UseConstantAcceleration = %"ISYM, &UseConstantAcceleration);
-    ret += sscanf(line, "ConstantAcceleration = %"GSYM" %"GSYM" %"GSYM, &ConstantAcceleration[0],
-		  &ConstantAcceleration[1], &ConstantAcceleration[2]);
-    ret += sscanf(line, "Mu = %"GSYM, &Mu);
-    ret += sscanf(line, "DivBDampingLength = %"FSYM, &DivBDampingLength);
-    ret += sscanf(line, "CoolingCutOffDensity1 = %"GSYM, &CoolingCutOffDensity1);
-    ret += sscanf(line, "CoolingCutOffDensity2 = %"GSYM, &CoolingCutOffDensity2);
-    ret += sscanf(line, "CoolingCutOffTemperature = %"GSYM, &CoolingCutOffTemperature);
-    ret += sscanf(line, "CoolingPowerCutOffDensity1 = %"GSYM, &CoolingPowerCutOffDensity1);
-    ret += sscanf(line, "CoolingPowerCutOffDensity2 = %"GSYM, &CoolingPowerCutOffDensity2);
-    ret += sscanf(line, "UseH2OnDust           = %"ISYM, &UseH2OnDust);
-    ret += sscanf(line, "UseCUDA = %"ISYM,&UseCUDA);
+    UseAmbipolarDiffusion = Param.GetScalar <int> ("UseAmbipolarDiffusion"); // should be bool
+    UseResistivity        = Param.GetScalar <int> ("UseResistivity"); // should be bool
+    SmallRho              = Param.GetScalar <float> ("SmallRho");
+    SmallP                = Param.GetScalar <float> ("SmallP");
+    SmallT                = Param.GetScalar <float> ("SmallT");
+    MaximumAlvenSpeed     = Param.GetScalar <float> ("MaximumAlvenSpeed");
+    Coordinate            = Param.GetScalar <int> ("Coordinate");
+    RiemannSolver         = Param.GetScalar <int> ("RiemannSolver");
+    RiemannSolverFallback = Param.GetScalar <int> ("RiemannSolverFallback"); // should be bool
+    ConservativeReconstruction = Param.GetScalar <int> ("ConservativeReconstruction"); // should be bool
+    PositiveReconstruction = Param.GetScalar <int> ("PositiveReconstruction"); // should be bool
+    ReconstructionMethod  = Param.GetScalar <int> ("ReconstructionMethod");
 
-    ret += sscanf(line, "MoveParticlesBetweenSiblings = %"ISYM,
-		  &MoveParticlesBetweenSiblings);
-    ret += sscanf(line, "ParticleSplitterIterations = %"ISYM,
-		  &ParticleSplitterIterations);
-    ret += sscanf(line, "ParticleSplitterChildrenParticleSeparation = %"FSYM,
-		  &ParticleSplitterChildrenParticleSeparation);
-    ret += sscanf(line, "ResetMagneticField = %"ISYM,
-		  &ResetMagneticField);
-    ret += sscanf(line, "ResetMagneticFieldAmplitude  =  %"GSYM" %"GSYM" %"GSYM, 
-		  ResetMagneticFieldAmplitude,
-		  ResetMagneticFieldAmplitude+1,
-		  ResetMagneticFieldAmplitude+2);
+    EOSType               = Param.GetScalar <int> ("EOSType");
+    EOSSoundSpeed         = Param.GetScalar <float> ("EOSSoundSpeed");
+    EOSCriticalDensity    = Param.GetScalar <float> ("EOSCriticalDensity");
+    EOSGamma              = Param.GetScalar <float> ("EOSGamma");
+    UseConstantAcceleration = Param.GetScalar <int> ("UseConstantAcceleration");
+ // should be bool
+
+    Param.GetArray <float> ("ConstantAcceleration", ConstantAcceleration);
+    Mu = Param.GetScalar <float> ("Mu");
+    DivBDampingLength = Param.GetScalar <float> ("DivBDampingLength");
+    CoolingCutOffDensity1 = Param.GetScalar <float> ("CoolingCutOffDensity1");
+    CoolingCutOffDensity2 = Param.GetScalar <float> ("CoolingCutOffDensity2");
+    CoolingCutOffTemperature = Param.GetScalar <float> ("CoolingCutOffTemperature");
+    CoolingPowerCutOffDensity1 = Param.GetScalar <float> ("CoolingPowerCutOffDensity1");
+    CoolingPowerCutOffDensity2 = Param.GetScalar <float> ("CoolingPowerCutOffDensity2");
+    UseH2OnDust = Param.GetScalar <int> ("UseH2OnDust"); // should be bool
+    seCUDA = Param.GetScalar <int> ("UseCUDA"); // should be bool
+
+    MoveParticlesBetweenSiblings = Param.GetScalar <int> ("MoveParticlesBetweenSiblings"); // should be bool
+    ParticleSplitterIterations = Param.GetScalar <int> ("ParticleSplitterIterations");
+    ParticleSplitterChildrenParticleSeparation = Param.GetScalar <float> ("ParticleSplitterChildrenParticleSeparation");
+    ResetMagneticField = Param.GetScalar <int> ("ResetMagneticField"); // should be bool
+    Param.GetArray <float> ("ResetMagneticFieldAmplitude", ResetMagneticFieldAmplitude);
 
     /* If the dummy char space was used, then make another. */
  
