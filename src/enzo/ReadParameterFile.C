@@ -269,8 +269,14 @@ int ReadParameterFile(FILE *fptr, TopGridData &MetaData, float *Initialdt)
 		  &MetaData.PPMSteepeningParameter);
  
     /* read global Parameters */
+
+ //    MetaData.CycleNumber = Param.GetScalar <int> ("InitialCycleNumber");
+//     MetaData.Time        = Param.GetScalar <FLOAT> ("InitialTime");
+//     MetaData.CPUTime     = Param.GetScalar <float> ("InitialCPUTime");
+//     (*Initialdt)         = Param.GetScalar <float> ("Initialdt");
  
-    ret += sscanf(line, "ProblemType            = %"ISYM, &ProblemType);
+    ProblemType = Param.GetScalar <int> ("ProblemType");
+
 #ifdef NEW_PROBLEM_TYPES
     if (sscanf(line, "ProblemTypeName = %s", dummy) == 1) {
       ProblemTypeName = dummy;
@@ -278,20 +284,21 @@ int ReadParameterFile(FILE *fptr, TopGridData &MetaData, float *Initialdt)
       ret = 1;
     }
 #endif
-    ret += sscanf(line, "HydroMethod            = %"ISYM, &HydroMethod);
+   
+    HydroMethod=Param.GetScalar <int> ("HydroMethod");
+
     if (HydroMethod==MHD_RK) useMHD = 1;
 
-    ret += sscanf(line, "huge_number            = %"FSYM, &huge_number);
-    ret += sscanf(line, "tiny_number            = %"FSYM, &tiny_number);
-    ret += sscanf(line, "Gamma                  = %"FSYM, &Gamma);
-    ret += sscanf(line, "PressureFree           = %"ISYM, &PressureFree);
-    ret += sscanf(line, "RefineBy               = %"ISYM, &RefineBy);
-    ret += sscanf(line, "MaximumRefinementLevel = %"ISYM,
-		  &MaximumRefinementLevel);
-    ret += sscanf(line, "MaximumGravityRefinementLevel = %"ISYM,
-		  &MaximumGravityRefinementLevel);
-    ret += sscanf(line, "MaximumParticleRefinementLevel = %"ISYM,
-		  &MaximumParticleRefinementLevel);
+ 
+    huge_number=GetScalar <float> ("huge_number");
+    tiny_number=GetScalar <float> ("tiny_number");
+    Gamma=GetScalar <float> ("Gamma");
+    PressureFree=GetScalar <float> (PressureFree);
+    RefineBy=GetScalar <float> (RefineBy);
+    MaximumRefinementLevel=GetScalar <int> ("MaximumRefinementLevel");
+    MaximumGravityRefinementLevel=GetScalar <int> ("MaximumGravityRefinementLevel");
+    MaximumParticleRefinementLevel= GetScalar <int> ("MaximumParticleRefinementLevel");
+
     ret += sscanf(line, "CellFlaggingMethod     = %"ISYM" %"ISYM" %"ISYM" %"ISYM" %"ISYM" %"ISYM" %"ISYM,
 	     CellFlaggingMethod+0, CellFlaggingMethod+1, CellFlaggingMethod+2,
 	     CellFlaggingMethod+3, CellFlaggingMethod+4, CellFlaggingMethod+5,
