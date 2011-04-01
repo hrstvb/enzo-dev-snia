@@ -38,6 +38,8 @@
 #include "TopGridData.h"
 #include "hydro_rk/EOS.h" 
 
+#include "parameters.h"
+
 /* This variable is declared here and only used in Grid_ReadGrid. */
  
 
