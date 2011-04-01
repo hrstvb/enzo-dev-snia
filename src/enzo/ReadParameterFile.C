@@ -243,68 +243,40 @@ int ReadParameterFile(FILE *fptr, TopGridData &MetaData, float *Initialdt)
     huge_number=Param.GetScalar <float> ("huge_number");
     tiny_number=Param.GetScalar <float> ("tiny_number");
     Gamma=param.GetScalar <float> ("Gamma");
-    PressureFree=Param.GetScalar <float> (PressureFree);
-    RefineBy=Param.GetScalar <float> (RefineBy);
-    MaximumRefinementLevel=Param.GetScalar <int> ("MaximumRefinementLevel");
-    MaximumGravityRefinementLevel=Param.GetScalar <int> ("MaximumGravityRefinementLevel");
-    MaximumParticleRefinementLevel= Param.GetScalar <int> ("MaximumParticleRefinementLevel");
-    
-    //param.GetArray <int> ("name of param", blah, blah, blah); 
+    PressureFree                           =Param.GetScalar <float> ("PressureFree");
+    RefineBy                               =Param.GetScalar <float> ("RefineBy");
+    MaximumRefinementLevel                 =Param.GetScalar <int> ("MaximumRefinementLevel");
+    MaximumGravityRefinementLevel          =Param.GetScalar <int> ("MaximumGravityRefinementLevel");
+    MaximumParticleRefinementLevel         =Param.GetScalar <int> ("MaximumParticleRefinementLevel");
     Param.GetArray <int> ("CellFlaggingMethod",CellFlaggingMethod+0,CellFlaggingMethod+1,
 			  CellFlaggingMethod+2,CellFlaggingMethod+3,CellFlaggingMethod+4,
 			  CellFlaggingMethod+5,CellFlaggingMethod+6);
 
-    FluxCorection=param.GetScalar. <int> ("Fluxcorrection");
-    InterpolationMethod =param.GetScalar. <int> ("InterpolationMethod");
-    ConservativeInterpolation=param.GetScalar. <> ("ConservativeInterpolation");
-    MinimumEfficiency=param.GetScalar. <> ("MinimumEfficiency");
-    SubgridSizeAutoAdjust=GetScalar. <> ("SubgridSizeAutoAdjust");
-    =GetScalar. <> ("");
-    =GetScalar. <> ("");
-    =GetScalar. <> ("");
-    =GetScalar. <> ("");
+    FluxCorection                          =Param.GetScalar <int> ("Fluxcorrection");
+    InterpolationMethod                    =Param.GetScalar <int> ("InterpolationMethod");
+    ConservativeInterpolation              =Param.GetScalar <int> ("ConservativeInterpolation");
+    MinimumEfficiency                      =Param.GetScalar <float> ("MinimumEfficiency");
+    SubgridSizeAutoAdjust                  =Param.GetScalar <int> ("SubgridSizeAutoAdjust");
+    OptimalSubgridsPerProcessor            =Param.GetScalar <int> ("OptimalSubgridsPerProcessor");
+    MinimumSubgridEdge                     =Param.GetScalar <int> ("MinimumSubgridEdge");
+    MaximumSubgridSize                     =Param.GetScalar <int> ("MaximumSubgridSize");
+    NumberOfBufferZones                    =Param.GetScalar <int> ("NumberOfBufferZones");
+    FastSiblingLocatorEntireDomain         =Param.GetScalar <int> ("FastSiblingLocatorEntireDomain");
+    MustRefineRegionMinRefinementLevel     =Param.GetScalar <int> ("MustRefineRegionMinRefinementLevel");
+    MetallicityRefinementMinLevel          =Param.GetScalar <int> ("MetallicityRefinementMinLevel");  
+    MetallicityRefinementMinMetallicity    =Param.GetScalar <int> ("MetallicityRefinementMinMetallicity"); 
+    MetallicityRefinementMinDensity        =Param.GetScalar <float> ("MetallicityRefinementMinDensity"); 
+    Param.GetArray <FLOAT> ("DomainLeftEdge",DomainLeftEdge,DomainLeftEdge+1,DomainLeftEdge+2);
+    Param.GetArray <FLOAT> ("DomainRighttEdge",DomainRightEdge,DomainRightEdge+1,DomainRightEdge+2);
+    Param.GetArray <float> ("GridVelocity",GridVelocity,GridVelocity+1,GridVelocity+2);
 
-    ret += sscanf(line, "FluxCorrection         = %"ISYM, &FluxCorrection);
+   RefineRegionAutoAdjust                  =Param.GetScalar <int> ("RefineRegionAutoAdjust"); 
+   Param.GetArray <FLOAT> ("RefineRegionLeftEdge",RefineRegionLeftEdge,RefineRegionLeftEdge+1,RefineRegionLeftEdge+2);
+   Param.GetArray <FLOAT> ("RefineRegionRightEdge",RefineRegionRightEdge,RefineRegionRightEdge+1,RefineRegionRightEdge+2);
+   Param.GetArray <FLOAT> ("MustRefineRegionLeftEdge",MustRefineRegionLeftEdge,MustRefineRegionLeftEdge+1,MustRefineRegionLeftEdge+2);
+   Param.GetArray <FLOAT> ("MustRefineRegionRightEdge",MustRefineRegionRightEdge,MustRefineRegionRightEdge+1,MustRefineRegionRightEdge+2);
 
-    ret += sscanf(line, "InterpolationMethod    = %"ISYM, &InterpolationMethod);
-    ret += sscanf(line, "ConservativeInterpolation = %"ISYM,
-		  &ConservativeInterpolation);
-    ret += sscanf(line, "MinimumEfficiency      = %"FSYM, &MinimumEfficiency);
-    ret += sscanf(line, "SubgridSizeAutoAdjust  = %"ISYM, &SubgridSizeAutoAdjust);
-    ret += sscanf(line, "OptimalSubgridsPerProcessor = %"ISYM, 
-		  &OptimalSubgridsPerProcessor);
-    ret += sscanf(line, "MinimumSubgridEdge     = %"ISYM, &MinimumSubgridEdge);
-    ret += sscanf(line, "MaximumSubgridSize     = %"ISYM, &MaximumSubgridSize);
-    ret += sscanf(line, "NumberOfBufferZones    = %"ISYM, &NumberOfBufferZones);
-    ret += sscanf(line, "FastSiblingLocatorEntireDomain = %"ISYM, &FastSiblingLocatorEntireDomain);
-    ret += sscanf(line, "MustRefineRegionMinRefinementLevel = %"ISYM,
-		  &MustRefineRegionMinRefinementLevel);
-    ret += sscanf(line, "MetallicityRefinementMinLevel = %"ISYM,
-		  &MetallicityRefinementMinLevel);
-    ret += sscanf(line, "MetallicityRefinementMinMetallicity = %"FSYM, 
-		  &MetallicityRefinementMinMetallicity);
-    ret += sscanf(line, "MetallicityRefinementMinDensity = %"FSYM, 
-		  &MetallicityRefinementMinDensity);
-
-    ret += sscanf(line, "DomainLeftEdge        = %"PSYM" %"PSYM" %"PSYM, DomainLeftEdge,
-		  DomainLeftEdge+1, DomainLeftEdge+2);
-    ret += sscanf(line, "DomainRightEdge       = %"PSYM" %"PSYM" %"PSYM, DomainRightEdge,
-		  DomainRightEdge+1, DomainRightEdge+2);
-    ret += sscanf(line, "GridVelocity          = %"FSYM" %"FSYM" %"FSYM, GridVelocity,
-		  GridVelocity+1, GridVelocity+2);
-    ret += sscanf(line, "RefineRegionAutoAdjust = %"ISYM, &RefineRegionAutoAdjust);
-    ret += sscanf(line, "RefineRegionLeftEdge  = %"PSYM" %"PSYM" %"PSYM,
-		  RefineRegionLeftEdge, RefineRegionLeftEdge+1,
-		  RefineRegionLeftEdge+2);
-    ret += sscanf(line, "RefineRegionRightEdge = %"PSYM" %"PSYM" %"PSYM,
-		  RefineRegionRightEdge, RefineRegionRightEdge+1,
-		  RefineRegionRightEdge+2);
-    ret += sscanf(line, "MustRefineRegionLeftEdge  = %"PSYM" %"PSYM" %"PSYM,
-		  MustRefineRegionLeftEdge, MustRefineRegionLeftEdge+1,
-		  MustRefineRegionLeftEdge+2);
-    ret += sscanf(line, "MustRefineRegionRightEdge  = %"PSYM" %"PSYM" %"PSYM,
-		  MustRefineRegionRightEdge, MustRefineRegionRightEdge+1,
-		  MustRefineRegionRightEdge+2);
+ 
     
 // **********************************************************************
 
@@ -615,7 +587,7 @@ int ReadParameterFile(FILE *fptr, TopGridData &MetaData, float *Initialdt)
       MetaData.InitialConditionsUUID = dummy;
       ret++;
     }
- 
+    /**************STARTING HERE***********************************/ 
     /* Check version number. */
  
     if (sscanf(line, "VersionNumber = %"FSYM, &TempFloat) == 1) {
@@ -626,44 +598,46 @@ int ReadParameterFile(FILE *fptr, TopGridData &MetaData, float *Initialdt)
     }
  
     /* Read star particle parameters. */
- 
-    ret += sscanf(line, "StarMakerOverDensityThreshold = %"FSYM,
-		  &StarMakerOverDensityThreshold);
-    ret += sscanf(line, "StarMakerSHDensityThreshold = %"FSYM,
-		  &StarMakerSHDensityThreshold);
-    ret += sscanf(line, "StarMakerMassEfficiency = %"FSYM,
-		  &StarMakerMassEfficiency);
-    ret += sscanf(line, "StarMakerMinimumMass = %"FSYM, &StarMakerMinimumMass);
-    ret += sscanf(line, "StarMakerMinimumDynamicalTime = %"FSYM,
-                  &StarMakerMinimumDynamicalTime);
-    ret += sscanf(line, "StarMassEjectionFraction = %"FSYM,
-		  &StarMassEjectionFraction);
-    ret += sscanf(line, "StarMetalYield = %"FSYM, &StarMetalYield);
-    ret += sscanf(line, "StarEnergyToThermalFeedback = %"FSYM,
-		  &StarEnergyToThermalFeedback);
-    ret += sscanf(line, "StarEnergyToStellarUV = %"FSYM, &StarEnergyToStellarUV);
-    ret += sscanf(line, "StarEnergyToQuasarUV = %"FSYM, &StarEnergyToQuasarUV);
+
+    StarMakerOverDensityThreshold = Param.GetScalar <float> ("StarMakerOverDensityThreshold");
+    StarMakerSHDensityThreshold      = Param.GetScalar <float> ("StarMakerSHDensityThreshold");
+    StarMakerMassEfficiency     = Param.GetScalar <float> ("StarMakerMassEfficiency");
+    StarMakerMinimumMass     = Param.GetScalar <float> ("StarMakerMinimumMass");
+    StarMakerMinimumDynamicalTime     = Param.GetScalar <float> ("StarMakerMinimumDynamicalTime");
+    StarMassEjectionFraction          = Param.GetScalar <float> ("StarMassEjectionFraction");
+    StarMetalYield                    = Param.GetScalar <float> ("StarMetalYield");
+    StarEnergyToThermalFeedback       = Param.GetScalar <float> ("StarEnergyToThermalFeedback");
+    StarEnergyToStellarUV = Param.GetScalar <float> ("StarEnergyToStellarUV");
+    StarEnergyToQuasarUV= Param.GetScalar <float> ("StarEnergyToQuasarUV");
+
+= Param.GetScalar <int> ("");
+= Param.GetScalar <int> ("");
+= Param.GetScalar <int> ("");
+= Param.GetScalar <float> ("");
+= Param.GetScalar <int> ("");
+= Param.GetScalar <int> ("");
+= Param.GetScalar <float> ("");
+= Param.GetScalar <float> ("");
+= Param.GetScalar <float> ("");
+= Param.GetScalar <float> ("");
+= Param.GetScalar <float> ("");
+= Param.GetScalar <float> ("");
+
+= Param.GetScalar <> ("");
+
     ret += sscanf(line, "StarFeedbackDistRadius = %"ISYM, &StarFeedbackDistRadius);
     ret += sscanf(line, "StarFeedbackDistCellStep = %"ISYM, &StarFeedbackDistCellStep);
 
-    ret += sscanf(line, "StarClusterUseMetalField = %"ISYM, 
-		  &StarClusterUseMetalField);
-    ret += sscanf(line, "StarClusterMinDynamicalTime = %"FSYM, 
-		  &StarClusterMinDynamicalTime);
-    ret += sscanf(line, "StarClusterHeliumIonization = %"ISYM, 
-		  &StarClusterHeliumIonization);
-    ret += sscanf(line, "StarClusterUnresolvedModel = %"ISYM, 
-		  &StarClusterUnresolvedModel);
-    ret += sscanf(line, "StarClusterIonizingLuminosity = %lf", 
-		  &StarClusterIonizingLuminosity);
+    ret += sscanf(line, "StarClusterUseMetalField = %"ISYM, 		  &StarClusterUseMetalField);
+    ret += sscanf(line, "StarClusterMinDynamicalTime = %"FSYM, 		  &StarClusterMinDynamicalTime);
+    ret += sscanf(line, "StarClusterHeliumIonization = %"ISYM, 		  &StarClusterHeliumIonization);
+    ret += sscanf(line, "StarClusterUnresolvedModel = %"ISYM, 		  &StarClusterUnresolvedModel);
+    ret += sscanf(line, "StarClusterIonizingLuminosity = %lf", 		  &StarClusterIonizingLuminosity);
     ret += sscanf(line, "StarClusterSNEnergy = %lf", &StarClusterSNEnergy);
     ret += sscanf(line, "StarClusterSNRadius = %"FSYM, &StarClusterSNRadius);
-    ret += sscanf(line, "StarClusterFormEfficiency = %"FSYM, 
-		  &StarClusterFormEfficiency);
-    ret += sscanf(line, "StarClusterMinimumMass = %"FSYM, 
-		  &StarClusterMinimumMass);
-    ret += sscanf(line, "StarClusterCombineRadius = %"FSYM,
-		  &StarClusterCombineRadius);
+    ret += sscanf(line, "StarClusterFormEfficiency = %"FSYM, 		  &StarClusterFormEfficiency);
+    ret += sscanf(line, "StarClusterMinimumMass = %"FSYM, 		  &StarClusterMinimumMass);
+    ret += sscanf(line, "StarClusterCombineRadius = %"FSYM,		  &StarClusterCombineRadius);
     ret += sscanf(line, "StarClusterRegionLeftEdge = %"FSYM" %"FSYM" %"FSYM,
 		  StarClusterRegionLeftEdge, StarClusterRegionLeftEdge+1, 
 		  StarClusterRegionLeftEdge+2);
@@ -672,39 +646,24 @@ int ReadParameterFile(FILE *fptr, TopGridData &MetaData, float *Initialdt)
 		  StarClusterRegionRightEdge+2);
 
     ret += sscanf(line, "PopIIIStarMass = %"FSYM, &PopIIIStarMass);
-    ret += sscanf(line, "PopIIIInitialMassFunction = %"ISYM, 
-		  &PopIIIInitialMassFunction);
-    ret += sscanf(line, "PopIIIInitialMassFunctionSeed = %"ISYM, 
-		  &PopIIIInitialMassFunctionSeed);
-    ret += sscanf(line, "PopIIIInitialMassFunctionCalls = %"ISYM, 
-		  &PopIIIInitialMassFunctionCalls);
-    ret += sscanf(line, "PopIIIMassRange = %"FSYM" %"FSYM,
-		  &PopIIILowerMassCutoff, &PopIIIUpperMassCutoff);
-    ret += sscanf(line, "PopIIIInitialMassFunctionSlope = %"FSYM, 
-		  &PopIIIInitialMassFunctionSlope);
+    ret += sscanf(line, "PopIIIInitialMassFunction = %"ISYM, 		  &PopIIIInitialMassFunction);
+    ret += sscanf(line, "PopIIIInitialMassFunctionSeed = %"ISYM, 		  &PopIIIInitialMassFunctionSeed);
+    ret += sscanf(line, "PopIIIInitialMassFunctionCalls = %"ISYM, 		  &PopIIIInitialMassFunctionCalls);
+    ret += sscanf(line, "PopIIIMassRange = %"FSYM" %"FSYM,		  &PopIIILowerMassCutoff, &PopIIIUpperMassCutoff);
+    ret += sscanf(line, "PopIIIInitialMassFunctionSlope = %"FSYM, 		  &PopIIIInitialMassFunctionSlope);
     ret += sscanf(line, "PopIIIBlackHoles = %"ISYM, &PopIIIBlackHoles);
-    ret += sscanf(line, "PopIIIBHLuminosityEfficiency = %"FSYM, 
-		  &PopIIIBHLuminosityEfficiency);
-    ret += sscanf(line, "PopIIIOverDensityThreshold = %"FSYM,
-		  &PopIIIOverDensityThreshold);
-    ret += sscanf(line, "PopIIIH2CriticalFraction = %"FSYM,
-		  &PopIIIH2CriticalFraction);
-    ret += sscanf(line, "PopIIIMetalCriticalFraction = %"FSYM,
-		  &PopIIIMetalCriticalFraction);
+    ret += sscanf(line, "PopIIIBHLuminosityEfficiency = %"FSYM, 		  &PopIIIBHLuminosityEfficiency);
+    ret += sscanf(line, "PopIIIOverDensityThreshold = %"FSYM,		  &PopIIIOverDensityThreshold);
+    ret += sscanf(line, "PopIIIH2CriticalFraction = %"FSYM,		  &PopIIIH2CriticalFraction);
+    ret += sscanf(line, "PopIIIMetalCriticalFraction = %"FSYM,		  &PopIIIMetalCriticalFraction);
     ret += sscanf(line, "PopIIISupernovaRadius = %"FSYM, &PopIIISupernovaRadius);
-    ret += sscanf(line, "PopIIISupernovaUseColour = %"ISYM, 
-		  &PopIIISupernovaUseColour);
-    ret += sscanf(line, "PopIIISupernovaMustRefine = %"ISYM,
-		  &PopIIISupernovaMustRefine);
-    ret += sscanf(line, "PopIIISupernovaMustRefineResolution = %"ISYM,
-		  &PopIIISupernovaMustRefineResolution);
-    ret += sscanf(line, "PopIIIHeliumIonization = %"ISYM, 
-		  &PopIIIHeliumIonization);
+    ret += sscanf(line, "PopIIISupernovaUseColour = %"ISYM, 		  &PopIIISupernovaUseColour);
+    ret += sscanf(line, "PopIIISupernovaMustRefine = %"ISYM,		  &PopIIISupernovaMustRefine);
+    ret += sscanf(line, "PopIIISupernovaMustRefineResolution = %"ISYM,		  &PopIIISupernovaMustRefineResolution);
+    ret += sscanf(line, "PopIIIHeliumIonization = %"ISYM, 		  &PopIIIHeliumIonization);
 
-    ret += sscanf(line, "PopIIIColorDensityThreshold = %"FSYM,
-		  &PopIIIColorDensityThreshold);
-    ret += sscanf(line, "PopIIIColorMass = %"FSYM,
-		  &PopIIIColorMass);
+    ret += sscanf(line, "PopIIIColorDensityThreshold = %"FSYM,		  &PopIIIColorDensityThreshold);
+    ret += sscanf(line, "PopIIIColorMass = %"FSYM,		  &PopIIIColorMass);
 
     ret += sscanf(line, "MBHAccretion = %"ISYM, &MBHAccretion);
     ret += sscanf(line, "MBHAccretionRadius = %"FSYM, &MBHAccretionRadius);
