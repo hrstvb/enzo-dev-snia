@@ -270,11 +270,7 @@ int ReadParameterFile(FILE *fptr, TopGridData &MetaData, float *Initialdt)
  
     /* read global Parameters */
 
- //    MetaData.CycleNumber = Param.GetScalar <int> ("InitialCycleNumber");
-//     MetaData.Time        = Param.GetScalar <FLOAT> ("InitialTime");
-//     MetaData.CPUTime     = Param.GetScalar <float> ("InitialCPUTime");
-//     (*Initialdt)         = Param.GetScalar <float> ("Initialdt");
- 
+
     ProblemType = Param.GetScalar <int> ("ProblemType");
 
 #ifdef NEW_PROBLEM_TYPES
@@ -290,20 +286,32 @@ int ReadParameterFile(FILE *fptr, TopGridData &MetaData, float *Initialdt)
     if (HydroMethod==MHD_RK) useMHD = 1;
 
  
-    huge_number=GetScalar <float> ("huge_number");
-    tiny_number=GetScalar <float> ("tiny_number");
-    Gamma=GetScalar <float> ("Gamma");
-    PressureFree=GetScalar <float> (PressureFree);
-    RefineBy=GetScalar <float> (RefineBy);
-    MaximumRefinementLevel=GetScalar <int> ("MaximumRefinementLevel");
-    MaximumGravityRefinementLevel=GetScalar <int> ("MaximumGravityRefinementLevel");
-    MaximumParticleRefinementLevel= GetScalar <int> ("MaximumParticleRefinementLevel");
+    huge_number=Param.GetScalar <float> ("huge_number");
+    tiny_number=Param.GetScalar <float> ("tiny_number");
+    Gamma=param.GetScalar <float> ("Gamma");
+    PressureFree=Param.GetScalar <float> (PressureFree);
+    RefineBy=Param.GetScalar <float> (RefineBy);
+    MaximumRefinementLevel=Param.GetScalar <int> ("MaximumRefinementLevel");
+    MaximumGravityRefinementLevel=Param.GetScalar <int> ("MaximumGravityRefinementLevel");
+    MaximumParticleRefinementLevel= Param.GetScalar <int> ("MaximumParticleRefinementLevel");
+    
+    //param.GetArray <int> ("name of param", blah, blah, blah); 
+    Param.GetArray <int> ("CellFlaggingMethod",CellFlaggingMethod+0,CellFlaggingMethod+1,
+			  CellFlaggingMethod+2,CellFlaggingMethod+3,CellFlaggingMethod+4,
+			  CellFlaggingMethod+5,CellFlaggingMethod+6);
 
-    ret += sscanf(line, "CellFlaggingMethod     = %"ISYM" %"ISYM" %"ISYM" %"ISYM" %"ISYM" %"ISYM" %"ISYM,
-	     CellFlaggingMethod+0, CellFlaggingMethod+1, CellFlaggingMethod+2,
-	     CellFlaggingMethod+3, CellFlaggingMethod+4, CellFlaggingMethod+5,
-	     CellFlaggingMethod+6);
+    FluxCorection=param.GetScalar. <int> ("Fluxcorrection");
+    InterpolationMethod =param.GetScalar. <int> ("InterpolationMethod");
+    ConservativeInterpolation=param.GetScalar. <> ("ConservativeInterpolation");
+    MinimumEfficiency=param.GetScalar. <> ("MinimumEfficiency");
+    SubgridSizeAutoAdjust=GetScalar. <> ("SubgridSizeAutoAdjust");
+    =GetScalar. <> ("");
+    =GetScalar. <> ("");
+    =GetScalar. <> ("");
+    =GetScalar. <> ("");
+
     ret += sscanf(line, "FluxCorrection         = %"ISYM, &FluxCorrection);
+
     ret += sscanf(line, "InterpolationMethod    = %"ISYM, &InterpolationMethod);
     ret += sscanf(line, "ConservativeInterpolation = %"ISYM,
 		  &ConservativeInterpolation);
