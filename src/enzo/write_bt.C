@@ -3,7 +3,6 @@
 #include <string.h>
 #include <stdlib.h>
 
-
 #include "ErrorExceptions.h"
 #include "macros_and_parameters.h"
 
