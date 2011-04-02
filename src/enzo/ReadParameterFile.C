@@ -156,7 +156,7 @@ int ReadParameterFile(TopGridData &MetaData, float *Initialdt)
   Param.GetScalar(MetaData.HistoryDumpName, "OutputControlParameters.historyDump.HistoryDumpName");
   Param.GetScalar(MetaData.HistoryDumpDir, "OutputControlParameters.historyDump.HistoryDumpDir");
   
-  Param.GetScalar(MetaData.LocalDir, "LocalDir");
+  Param.GetScalar(MetaData.LocalDir, "OutputControlParameters.LocalDir");
   Param.GetScalar(MetaData.GlobalDir, "OutputControlParameters.GlobalDir");
   
   Param.GetScalar(LoadBalancing, "SimulationControl.optimization.LoadBalancing");
@@ -189,13 +189,13 @@ int ReadParameterFile(TopGridData &MetaData, float *Initialdt)
   Param.GetScalar(MetaData.GravityBoundary, "PhysicsParameters.TopGridGravityBoundary");
   
 #ifdef TRANSFER
-  Param.GetScalar(MetaData.RadHydroParameterFname, "RadHydroParamfile");
+  Param.GetScalar(MetaData.RadHydroParameterFname, "PhysicsParameters.radiationField.RadHydroParamfile");
 #endif
   Param.GetScalar(ImplicitProblem, "PhysicsParameters.radiationTransfer.ImplicitProblem");
   Param.GetScalar(RadiativeTransferFLD, "PhysicsParameters.radiationTransfer.RadiativeTransferFLD");
 #ifdef EMISSIVITY
-  Param.GetScalar(StarMakerEmissivityField, "StarMakerEmissivityField");
-  Param.GetScalar(uv_param, "uv_param");
+  Param.GetScalar(StarMakerEmissivityField, "PhysicsParameters.otherParticles.starMaker.StarMakerEmissivityField");
+  Param.GetScalar(uv_param, "PhysicsParameters.radiationField.uv_param");
 #endif
   
   Param.GetScalar(MetaData.ParticleBoundaryType, "PhysicsParameters.ParticleBoundaryType");
@@ -241,12 +241,12 @@ int ReadParameterFile(TopGridData &MetaData, float *Initialdt)
   Param.GetScalar(OptimalSubgridsPerProcessor, "PhysicsParameters.optimization.OptimalSubgridsPerProcessor");
   Param.GetScalar(MinimumSubgridEdge, "PhysicsParameters.optimization.MinimumSubgridEdge");
   Param.GetScalar(MaximumSubgridSize, "PhysicsParameters.optimization.MaximumSubgridSize");
-  Param.GetScalar(NumberOfBufferZones, "PhysicsParameters.amr.NumberOfBufferZones");
+  Param.GetScalar(NumberOfBufferZones, "SimulationControl.amr.NumberOfBufferZones");
   Param.GetScalar(FastSiblingLocatorEntireDomain, "PhysicsParameters.optimization.FastSiblingLocatorEntireDomain");
-  Param.GetScalar(MustRefineRegionMinRefinementLevel, "PhysicsParameters.amr.MustRefineRegionMinRefinementLevel");
-  Param.GetScalar(MetallicityRefinementMinLevel, "PhysicsParameters.amr.MetallicityRefinementMinLevel");  
-  Param.GetScalar(MetallicityRefinementMinMetallicity, "PhysicsParameters.amr.MetallicityRefinementMinMetallicity"); 
-  Param.GetScalar(MetallicityRefinementMinDensity, "PhysicsParameters.amr.MetallicityRefinementMinDensity"); 
+  Param.GetScalar(MustRefineRegionMinRefinementLevel, "SimulationControl.amr.MustRefineRegionMinRefinementLevel");
+  Param.GetScalar(MetallicityRefinementMinLevel, "SimulationControl.amr.MetallicityRefinementMinLevel");  
+  Param.GetScalar(MetallicityRefinementMinMetallicity, "SimulationControl.amr.MetallicityRefinementMinMetallicity"); 
+  Param.GetScalar(MetallicityRefinementMinDensity, "SimulationControl.amr.MetallicityRefinementMinDensity"); 
   Param.GetArray(DomainLeftEdge, "SimulationControl.domain.DomainLeftEdge");
   Param.GetArray(DomainRightEdge, "SimulationControl.domain.DomainRightEdge");
   Param.GetArray(GridVelocity, "PhysicsParameters.GridVelocity");
@@ -261,7 +261,7 @@ int ReadParameterFile(TopGridData &MetaData, float *Initialdt)
   /* Read evolving RefineRegion */
   
   Param.GetScalar(RefineRegionTimeType, "SimulationControl.amr.RefineRegionTimeType");
-  Param.GetScalar(RefineRegionFile, "RefineRegionFile");
+  Param.GetScalar(RefineRegionFile, "SimulationControl.amr.RefineRegionFile");
   
   int NumberOfFields = Param.Size("InternalParameters.fields");
   if (NumberOfFields > MAX_NUMBER_OF_BARYON_FIELDS) {
@@ -292,7 +292,7 @@ int ReadParameterFile(TopGridData &MetaData, float *Initialdt)
   Param.GetScalar(AccretionKernel, "PhysicsParameters.AccretionKernel");
   Param.GetScalar(GravitationalConstant, "PhysicsParameters.gravity.GravitationalConstant");
   
-  Param.GetScalar(S2ParticleSize, "S2ParticleSize");
+  Param.GetScalar(S2ParticleSize, "PhysicsParameters.otherParticles.S2ParticleSize");
   Param.GetScalar(GravityResolution, "PhysicsParameters.gravity.GravityResolution");
   Param.GetScalar(ComputePotential, "PhysicsParameters.gravity.ComputePotential");
   Param.GetScalar(PotentialIterations, "PhysicsParameters.gravity.PotentialIterations");
@@ -309,7 +309,7 @@ int ReadParameterFile(TopGridData &MetaData, float *Initialdt)
   Param.GetScalar(RootGridCourantSafetyNumber, "PhysicsParameters.hydro.RootGridCourantSafetyNumber");
   Param.GetScalar(RandomForcing, "PhysicsParameters.miscellaneous.RandomForcing");
   Param.GetScalar(RandomForcingEdot, "PhysicsParameters.miscellaneous.RandomForcingEdot");
-  Param.GetScalar(RandomForcingMachNumber, "RandomForcingMachNumber");
+  Param.GetScalar(RandomForcingMachNumber, "miscellaneous.RandomForcingMachNumber");
   Param.GetScalar(RadiativeCooling, "PhysicsParameters.atomicPhysics.RadiativeCooling");
   Param.GetScalar(RadiativeCoolingModel, "PhysicsParameters.atomicPhysics.RadiativeCoolingModel");
   Param.GetScalar(GadgetEquilibriumCooling, "PhysicsParameters.atomicPhysics.GadgetEquilibriumCooling");
@@ -336,7 +336,7 @@ int ReadParameterFile(TopGridData &MetaData, float *Initialdt)
   Param.GetScalar(StorePreShockFields, "PhysicsParameters.miscellaneous.StorePreShockFields");
   
   Param.GetScalar(RadiationFieldType, "PhysicsParameters.radiationField.RadiationFieldType");
-  Param.GetScalar(TabulatedLWBackground, "TabulatedLWBackground");
+  Param.GetScalar(TabulatedLWBackground, "PhysicsParameters.radiationField.TabulatedLWBackground");
   Param.GetScalar(AdjustUVBackground, "PhysicsParameters.radiationField.AdjustUVBackground");
   Param.GetScalar(SetUVBAmplitude, "PhysicsParameters.radiationField.SetUVBAmplitude");
   Param.GetScalar(SetHeIIHeatingScale, "PhysicsParameters.radiationField.SetHeIIHeatingScale");
@@ -416,13 +416,13 @@ int ReadParameterFile(TopGridData &MetaData, float *Initialdt)
   
 #ifdef OOC_BOUNDARY
   
-  Param.GetScalar(ExternalBoundaryIO, "ExternalBoundaryIO");
+  Param.GetScalar(ExternalBoundaryIO, "OutputControlParameters.supplementalFields.ExternalBoundaryIO");
   
-  Param.GetScalar(ExternalBoundaryTypeIO, "ExternalBoundaryTypeIO");
+  Param.GetScalar(ExternalBoundaryTypeIO, "OutputControlParameters.supplementalFields.ExternalBoundaryTypeIO");
   
-  Param.GetScalar(ExternalBoundaryValueIO, "ExternalBoundaryValueIO");
+  Param.GetScalar(ExternalBoundaryValueIO, "OutputControlParameters.supplementalFields.ExternalBoundaryValueIO");
   
-  Param.GetScalar(SimpleConstantBoundary, "SimpleConstantBoundary");
+  Param.GetScalar(SimpleConstantBoundary, "SimulationControl.domain.SimpleConstantBoundary");
   
 #endif
   
@@ -486,8 +486,8 @@ int ReadParameterFile(TopGridData &MetaData, float *Initialdt)
   Param.GetScalar(StarEnergyToStellarUV, "PhysicsParameters.otherParticles.starEnergy.StarEnergy.ToStellarUV");
   Param.GetScalar(StarEnergyToQuasarUV, "PhysicsParameters.otherParticles.starEnergy.StarEnergyToQuasarUV");
   
-  Param.GetScalar(StarFeedbackDistRadius, "StarFeedbackDistRadius");
-  Param.GetScalar(StarFeedbackDistCellStep, "StarFeedbackDistCellStep");
+  Param.GetScalar(StarFeedbackDistRadius, "PhysicsParameters.otherParticles.StarFeedbackDistRadius");
+  Param.GetScalar(StarFeedbackDistCellStep, "PhysicsParameters.otherParticles.StarFeedbackDistCellStep");
   Param.GetScalar(StarClusterUseMetalField, "PhysicsParameters.otherParticles.starClusterParticle.StarClusterUseMetalField");
   Param.GetScalar(StarClusterMinDynamicalTime, "PhysicsParameters.otherParticles.starClusterParticle.StarClusterMinDynamicalTime");
   Param.GetScalar(StarClusterHeliumIonization, "PhysicsParameters.otherParticles.starClusterParticle.StarClusterHeliumIonization");
