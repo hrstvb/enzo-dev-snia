@@ -264,8 +264,7 @@ int SetDefaultGlobalValues(TopGridData &MetaData)
  
   CubeDumpEnabled             = 0;
 
-#ifdef STAGE_INPUT
-  StageInput                  = 0;
+
 #endif
 
   First_Pass                  = 0;

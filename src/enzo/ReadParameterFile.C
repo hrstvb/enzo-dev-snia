@@ -358,7 +358,7 @@ int ReadParameterFile(TopGridData &MetaData, float *Initialdt)
   Param.GetScalar(CoolData.TemperatureEnd, "PhysicsParameters.atomicPhysics.TemperatureEnd");
   Param.GetScalar(CoolData.comp_xray, "PhysicsParameters.atomicPhysics.CoolDataCompXray");
   Param.GetScalar(CoolData.temp_xray, "PhysicsParameters.atomicPhysics.CoolDataTempXray");
-  Param.GetScalar(RateData.CaseBRecombination, "RateDataCaseBRecombination");
+  Param.GetScalar(RateData.CaseBRecombination, "PhysicsParameters.atomicPhysics.RateDataCaseBRecombination");
   Param.GetScalar(PhotoelectricHeating, "PhysicsParameters.atomicPhysics.PhotoelectricHeating");
   
   Param.GetScalar(OutputCoolingTime, "OutputControlParameters.supplementalFields.OutputCoolingTime"); 
@@ -559,10 +559,10 @@ int ReadParameterFile(TopGridData &MetaData, float *Initialdt)
   Param.GetScalar(MetaData.MovieTimestepCounter, "OutputControlParameters.movieDump.MovieTimestepCounter");
   
   Param.GetScalar(MultiMetals, "PhysicsParameters.atomicPhysics.MultiMetals");
-  Param.GetScalar(IsotropicConduction, "IsotropicConduction");
-  Param.GetScalar(AnisotropicConduction, "AnisotropicConduction");
-  Param.GetScalar(IsotropicConductionSpitzerFraction, "IsotropicConductionSpitzerFraction");
-  Param.GetScalar(AnisotropicConductionSpitzerFraction, "AnisotropicConductionSpitzerFraction");
+  Param.GetScalar(IsotropicConduction, "PhysicsParameters.conduction.IsotropicConduction");
+  Param.GetScalar(AnisotropicConduction, "PhysicsParameters.conduction.AnisotropicConduction");
+  Param.GetScalar(IsotropicConductionSpitzerFraction, "PhysicsParameters.conduction.IsotropicConductionSpitzerFraction");
+  Param.GetScalar(AnisotropicConductionSpitzerFraction, "PhysicsParameters.conduction.AnisotropicConductionSpitzerFraction");
   Param.GetScalar(ConductionCourantSafetyNumber, "PhysicsParameters.conduction.ConductionCourantSafetyNumber");
   
   Param.GetScalar(RadiativeTransfer, "PhysicsParameters.radiationTransfer.RadiativeTransfer");
@@ -588,9 +588,9 @@ int ReadParameterFile(TopGridData &MetaData, float *Initialdt)
   Param.GetScalar(PythonSubcycleSkip, "AnalysisParameters.python.PythonSubcycleSkip");
 
 #ifdef USE_PYTHON
-  Param.GetScalar(NumberOfPythonCalls, "NumberOfPythonCalls");
-  Param.GetScalar(NumberOfPythonTopGridCalls, "NumberOfPythonTopGridCalls");
-  Param.GetScalar(NumberOfPythonSubcycleCalls, "NumberOfPythonSubcycleCalls");
+  Param.GetScalar(NumberOfPythonCalls, "AnalysisParameters.python.NumberOfPythonCalls");
+  Param.GetScalar(NumberOfPythonTopGridCalls, "AnalysisParameters.python.NumberOfPythonTopGridCalls");
+  Param.GetScalar(NumberOfPythonSubcycleCalls, "AnalysisParameters.python.NumberOfPythonSubcycleCalls");
 #endif
 
     /* Inline halo finder */
@@ -635,8 +635,8 @@ int ReadParameterFile(TopGridData &MetaData, float *Initialdt)
   Param.GetScalar(UseDrivingField, "PhysicsParameters.miscellaneous.UseDrivingField");
   Param.GetScalar(DrivingEfficiency, "PhysicsParameters.miscellaneous.DrivingEfficiency");
   
-  Param.GetScalar(StringKick, "StringKick");
-  Param.GetScalar(StringKickDimension, "StringKickDimension");
+  Param.GetScalar(StringKick, "Initialization.StringKick");
+  Param.GetScalar(StringKickDimension, "Initialization.StringKickDimension");
   Param.GetScalar(UsePhysicalUnit, "PhysicsParameters.UsePhysicalUnit");
   Param.GetScalar(Theta_Limiter, "PhysicsParameters.hydro.Theta_Limiter");
   Param.GetScalar(RKOrder, "PhysicsParameters.hydro.RKOrder");
@@ -673,8 +673,8 @@ int ReadParameterFile(TopGridData &MetaData, float *Initialdt)
   Param.GetScalar(CoolingCutOffTemperature, "PhysicsParameters.atomicPhysics.CoolingCutOffTemperature");
   Param.GetScalar(CoolingPowerCutOffDensity1, "PhysicsParameters.atomicPhysics.CoolingPowerCutOffDensity1");
   Param.GetScalar(CoolingPowerCutOffDensity2, "PhysicsParameters.atomicPhysics.CoolingPowerCutOffDensity2");
-  Param.GetScalar(UseH2OnDust, "UseH2OnDust");
-  Param.GetScalar(seCUDA, "UseCUDA");
+  Param.GetScalar(UseH2OnDust, "PhysicsParameters.atomicPhysics.UseH2OnDust");
+  Param.GetScalar(seCUDA, "SimulationControl.UseCUDA");
   
   Param.GetScalar(MoveParticlesBetweenSiblings, "SimulationControl.optimization.MoveParticlesBetweenSiblings");
   Param.GetScalar(ParticleSplitterIterations, "SimulationControl.optimization.ParticleSplitterIterations");

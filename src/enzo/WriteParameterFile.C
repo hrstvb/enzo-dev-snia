@@ -539,7 +539,7 @@ int WriteParameterFile(FILE *fptr, TopGridData &MetaData)
   fprintf(fptr, "MemoryLimit                     = %lld\n", MemoryLimit);
 
 #ifdef STAGE_INPUT
-  fprintf(fptr, "StageInput                      = %"ISYM"\n", StageInput);
+  
   fprintf(fptr, "LocalPath                       = %s\n", LocalPath);
   fprintf(fptr, "GlobalPath                      = %s\n", GlobalPath);
 #endif
