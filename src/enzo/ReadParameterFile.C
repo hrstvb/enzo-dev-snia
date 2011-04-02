@@ -413,9 +413,6 @@ int ReadParameterFile(TopGridData &MetaData, float *Initialdt)
   
   Param.GetScalar(MemoryLimit, "SimulationControl.optimization.MemoryLimit");
   
-#ifdef STAGE_INPUT
-  Param.GetScalar(StageInput, "StageInput");
-#endif
   
 #ifdef OOC_BOUNDARY
   
