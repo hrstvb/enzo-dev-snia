@@ -83,7 +83,7 @@ int ReadParameterFile(TopGridData &MetaData, float *Initialdt)
   Param.GetScalar(MetaData.StopCycle, "SimulationControl.StopCycle");
   Param.GetScalar(MetaData.StopSteps, "SimulationControl.StopSteps");
   Param.GetScalar(MetaData.StopCPUTime, "InternalParameters.StopCPUTime");
-  Param.GetScalar(MetaData.ResubmitOn, "SimulationControl.ResubmitOn"); // should be bool
+  Param.GetScalar(MetaData.ResubmitOn, "SimulationControl.ResubmitOn");
   
   Param.GetScalar(MetaData.ResubmitCommand, "SimulationControl.ResubmitCommand");
   
@@ -96,8 +96,8 @@ int ReadParameterFile(TopGridData &MetaData, float *Initialdt)
   Param.GetScalar(MetaData.TimeLastHistoryDump, "InternalParameters.outputLabeling.TimeLastHistoryDump");
   Param.GetScalar(MetaData.dtHistoryDump, "OutputControlParameters.historyDump.dtHistoryDump");
   
-  Param.GetScalar(TracerParticleOn, "SimulationControl.TracerParticleOn"); // should be bool
-  Param.GetScalar(ParticleTypeInFile, "OutputControlParameters.ParticleTypeInFile"); // should be bool
+  Param.GetScalar(TracerParticleOn, "SimulationControl.TracerParticleOn");
+  Param.GetScalar(ParticleTypeInFile, "OutputControlParameters.ParticleTypeInFile");
   Param.GetScalar(OutputParticleTypeGrouping, "OutputControlParameters.OutputParticleTypeGrouping");
   Param.GetScalar(MetaData.TimeLastTracerParticleDump, "InternalParameters.outputLabeling.TimeLastTracerParticleDump"); //doc?
   Param.GetScalar(MetaData.dtTracerParticleDump, "OutputControlParameters.tracerParticleDump.dtTracerParticleDump");//doc?
@@ -120,7 +120,7 @@ int ReadParameterFile(TopGridData &MetaData, float *Initialdt)
   
   
   /* Maximum density directed output */
-  Param.GetScalar(OutputOnDensity, "OutputControlParameters.outputTriggers.OutputOnDensity");  // should be bool
+  Param.GetScalar(OutputOnDensity, "OutputControlParameters.outputTriggers.OutputOnDensity"); 
   Param.GetScalar(StartDensityOutputs, "OutputControlParameters.outputTriggers.StartDensityOutputs");
   Param.GetScalar(CurrentDensityOutput, "OutputControlParameters.outputTriggers.CurrentDensityOutput");
   IncrementDensityOutput = Param.GetScalar("OutputControlParameters.outputTriggers.IncrementDensityOutput");
@@ -181,7 +181,7 @@ int ReadParameterFile(TopGridData &MetaData, float *Initialdt)
     Param.GetScalar(TimeActionParameter[i], "SimulationControl.timeaction.%s.Parameter", TimeActionParameter[i]);
   }
   
-  Param.GetScalar(MetaData.StaticHierarchy, "SimulationControl.amr.StaticHierarchy");  // should be bool
+  Param.GetScalar(MetaData.StaticHierarchy, "SimulationControl.amr.StaticHierarchy"); 
   
   Param.GetScalar(MetaData.TopGridRank, "SimulationControl.domain.TopGridRank");
   Param.GetArray(MetaData.TopGridDims, "TopGridDimensions");
@@ -191,7 +191,7 @@ int ReadParameterFile(TopGridData &MetaData, float *Initialdt)
 #ifdef TRANSFER
   Param.GetScalar(MetaData.RadHydroParameterFname, "RadHydroParamfile");
 #endif
-  Param.GetScalar(ImplicitProblem, "PhysicsParameters.radiationTransfer.ImplicitProblem"); // should be bool
+  Param.GetScalar(ImplicitProblem, "PhysicsParameters.radiationTransfer.ImplicitProblem");
   Param.GetScalar(RadiativeTransferFLD, "PhysicsParameters.radiationTransfer.RadiativeTransferFLD");
 #ifdef EMISSIVITY
   Param.GetScalar(StarMakerEmissivityField, "StarMakerEmissivityField");
@@ -202,9 +202,9 @@ int ReadParameterFile(TopGridData &MetaData, float *Initialdt)
   Param.GetScalar(MetaData.NumberOfParticles, "InternalParameters.NumberOfParticles");
   
   Param.GetScalar(MetaData.CourantSafetyNumber, "PhysicsParameters.hydro.CourantSafetyNumber");
-  Param.GetScalar(MetaData.PPMFlatteningParameter, "PhysicsParameters.hydro.PPMFlatteningParameter");  // should be bool
-  Param.GetScalar(MetaData.PPMDiffusionParameter, "PhysicsParameters.hydro.PPMDiffusionParameter");  // should be bool
-  Param.GetScalar(MetaData.PPMSteepeningParameter, "PhysicsParameters.hydro.PPMSteepeningParameter");  // should be bool
+  Param.GetScalar(MetaData.PPMFlatteningParameter, "PhysicsParameters.hydro.PPMFlatteningParameter"); 
+  Param.GetScalar(MetaData.PPMDiffusionParameter, "PhysicsParameters.hydro.PPMDiffusionParameter"); 
+  Param.GetScalar(MetaData.PPMSteepeningParameter, "PhysicsParameters.hydro.PPMSteepeningParameter"); 
   
   
   /* read global Parameters */
@@ -280,7 +280,7 @@ int ReadParameterFile(TopGridData &MetaData, float *Initialdt)
   Param.GetScalar(UniformGravityDirection, "PhysicsParameters.gravity.UniformGravityDirection");
   Param.GetScalar(UniformGravityConstant, "PhysicsParameters.gravity.UniformGravityConstant");
   
-  Param.GetScalar(PointSourceGravity, "PhysicsParameters.gravity.PointSourceGravity"); // should be bool
+  Param.GetScalar(PointSourceGravity, "PhysicsParameters.gravity.PointSourceGravity");
   Param.GetArray(PointSourceGravityPosition, "PhysicsParameters.gravity.PointSourceGravityPosition");
   Param.GetScalar(PointSourceGravityConstant, "PhysicsParameters.gravity.PointSourceGravityConstant");
   Param.GetScalar(PointSourceGravityCoreRadius, "PhysicsParameters.gravity.PointSourceGravityCoreRadius");
@@ -294,15 +294,15 @@ int ReadParameterFile(TopGridData &MetaData, float *Initialdt)
   
   Param.GetScalar(S2ParticleSize, "S2ParticleSize");
   Param.GetScalar(GravityResolution, "PhysicsParameters.gravity.GravityResolution");
-  Param.GetScalar(ComputePotential, "PhysicsParameters.gravity.ComputePotential"); // should be bool
+  Param.GetScalar(ComputePotential, "PhysicsParameters.gravity.ComputePotential");
   Param.GetScalar(PotentialIterations, "PhysicsParameters.gravity.PotentialIterations");
-  Param.GetScalar(WritePotential, "OutputControlParameters.supplementalFields.WritePotential");  // should be bool
-  Param.GetScalar(BaryonSelfGravityApproximation, "PhysicsParameters.gravity.BaryonSelfGravityApproximation");  // should be bool
+  Param.GetScalar(WritePotential, "OutputControlParameters.supplementalFields.WritePotential"); 
+  Param.GetScalar(BaryonSelfGravityApproximation, "PhysicsParameters.gravity.BaryonSelfGravityApproximation"); 
   
   Param.GetScalar(GreensFunctionMaxNumber, "PhysicsParameters.gravity.GreensFunctionMaxNumber");
   Param.GetScalar(GreensFunctionMaxSize, "PhysicsParameters.gravity.GreensFunctionMaxSize");
   
-  Param.GetScalar(DualEnergyFormalism, "PhysicsParameters.hydro.DualEnergyFormalism"); // should be bool
+  Param.GetScalar(DualEnergyFormalism, "PhysicsParameters.hydro.DualEnergyFormalism");
   Param.GetScalar(DualEnergyFormalismEta1, "PhysicsParameters.hydro.DualEnergyFormalismEta1");
   Param.GetScalar(DualEnergyFormalismEta2, "PhysicsParameters.hydro.DualEnergyFormalismEta2");
   Param.GetScalar(ParticleCourantSafetyNumber, "PhysicsParameters.hydro.ParticleCourantSafetyNumber");
@@ -310,23 +310,23 @@ int ReadParameterFile(TopGridData &MetaData, float *Initialdt)
   Param.GetScalar(RandomForcing, "PhysicsParameters.miscellaneous.RandomForcing");
   Param.GetScalar(RandomForcingEdot, "PhysicsParameters.miscellaneous.RandomForcingEdot");
   Param.GetScalar(RandomForcingMachNumber, "RandomForcingMachNumber");
-  Param.GetScalar(RadiativeCooling, "PhysicsParameters.atomicPhysics.RadiativeCooling"); // should be bool
+  Param.GetScalar(RadiativeCooling, "PhysicsParameters.atomicPhysics.RadiativeCooling");
   Param.GetScalar(RadiativeCoolingModel, "PhysicsParameters.atomicPhysics.RadiativeCoolingModel");
   Param.GetScalar(GadgetEquilibriumCooling, "PhysicsParameters.atomicPhysics.GadgetEquilibriumCooling");
   Param.GetScalar(MultiSpecies, "PhysicsParameters.atomicPhysics.MultiSpecies");
   Param.GetScalar(PrimordialChemistrySolver, "PhysicsParameters.atomicPhysics.PrimordialChemistrySolver");
-  Param.GetScalar(CIECooling, "PhysicsParameters.atomicPhysics.CIECooling"); // should be bool
-  Param.GetScalar(H2OpticalDepthApproximation, "PhysicsParameters.atomicPhysics.H2OpticalDepthApproximation"); // should be bool
-  Param.GetScalar(ThreeBodyRate, "PhysicsParameters.atomicPhysics.ThreeBodyRate"); // should be bool
+  Param.GetScalar(CIECooling, "PhysicsParameters.atomicPhysics.CIECooling");
+  Param.GetScalar(H2OpticalDepthApproximation, "PhysicsParameters.atomicPhysics.H2OpticalDepthApproximation");
+  Param.GetScalar(ThreeBodyRate, "PhysicsParameters.atomicPhysics.ThreeBodyRate");
   
   
   Param.GetScalar(CloudyCoolingData.CloudyCoolingGridFile, "PhysicsParameters.atomicPhysics.cloudyCooling");
-  Param.GetScalar(CloudyCoolingData.IncludeCloudyHeating, "PhysicsParameters.atomicPhysics.cloudyCooling.IncludeCloudyHeating"); // should be bool
-  Param.GetScalar(CloudyCoolingData.IncludeCloudyMMW, "PhysicsParameters.atomicPhysics.cloudyCooling.IncludeCloudyMMW"); // should be bool
-  Param.GetScalar(CloudyCoolingData.CMBTemperatureFloor, "PhysicsParameters.atomicPhysics.cloudyCooling.CMBTemperatureFloor"); // should be bool
+  Param.GetScalar(CloudyCoolingData.IncludeCloudyHeating, "PhysicsParameters.atomicPhysics.cloudyCooling.IncludeCloudyHeating");
+  Param.GetScalar(CloudyCoolingData.IncludeCloudyMMW, "PhysicsParameters.atomicPhysics.cloudyCooling.IncludeCloudyMMW");
+  Param.GetScalar(CloudyCoolingData.CMBTemperatureFloor, "PhysicsParameters.atomicPhysics.cloudyCooling.CMBTemperatureFloor");
   Param.GetScalar(CloudyCoolingData.CloudyMetallicityNormalization, "PhysicsParameters.atomicPhysics.cloudyCooling.CloudyMetallicityNormalization");
   Param.GetScalar(CloudyCoolingData.CloudyElectronFractionFactor, "PhysicsParameters.atomicPhysics.cloudyCooling.CloudyElectronFractionFactor");
-  Param.GetScalar(MetalCooling, "PhysicsParameters.atomicPhysics.MetalCooling"); // should be bool
+  Param.GetScalar(MetalCooling, "PhysicsParameters.atomicPhysics.MetalCooling");
   
   Param.GetScalar(MetalCoolingTable, "PhysicsParameters.atomicPhysics.MetalCoolingTable");
   
@@ -336,12 +336,12 @@ int ReadParameterFile(TopGridData &MetaData, float *Initialdt)
   Param.GetScalar(StorePreShockFields, "PhysicsParameters.miscellaneous.StorePreShockFields");
   
   Param.GetScalar(RadiationFieldType, "PhysicsParameters.radiationField.RadiationFieldType");
-  Param.GetScalar(TabulatedLWBackground, "TabulatedLWBackground"); // should be bool
+  Param.GetScalar(TabulatedLWBackground, "TabulatedLWBackground");
   Param.GetScalar(AdjustUVBackground, "PhysicsParameters.radiationField.AdjustUVBackground");
   Param.GetScalar(SetUVBAmplitude, "PhysicsParameters.radiationField.SetUVBAmplitude");
   Param.GetScalar(SetHeIIHeatingScale, "PhysicsParameters.radiationField.SetHeIIHeatingScale");
-  Param.GetScalar(RadiationFieldLevelRecompute, "PhysicsParameters.radiationField.RadiationFieldLevelRecompute"); // should be bool
-  Param.GetScalar(RadiationData.RadiationShield, "PhysicsParameters.radiationField.RadiationShield"); // should be bool
+  Param.GetScalar(RadiationFieldLevelRecompute, "PhysicsParameters.radiationField.RadiationFieldLevelRecompute");
+  Param.GetScalar(RadiationData.RadiationShield, "PhysicsParameters.radiationField.RadiationShield");
   Param.GetScalar(CoolData.f3, "PhysicsParameters.radiationField.RadiationSpectrumNormalization");
   Param.GetScalar(CoolData.alpha0, "PhysicsParameters.radiationField.RadiationSpectrumSlope");
   Param.GetScalar(CoolData.f0to3, "PhysicsParameters.atomicPhysics.CoolDataf0to3");
@@ -352,34 +352,34 @@ int ReadParameterFile(TopGridData &MetaData, float *Initialdt)
   Param.GetScalar(CoolData.HydrogenFractionByMass, "PhysicsParameters.atomicPhysics.HydrogenFractionByMass");
   Param.GetScalar(CoolData.DeuteriumToHydrogenRatio, "PhysicsParameters.atomicPhysics.DeuteriumToHydrogenRatio");
   Param.GetScalar(CoolData.NumberOfTemperatureBins, "PhysicsParameters.atomicPhysics.NumberOfTemperatureBins");
-  Param.GetScalar(CoolData.ih2co, "PhysicsParameters.atomicPhysics.CoolDataIh2co"); // should be bool
-  Param.GetScalar(CoolData.ipihdt, "PhysicsParameters.atomicPhysics.CoolDataIpiht"); // should be bool
+  Param.GetScalar(CoolData.ih2co, "PhysicsParameters.atomicPhysics.CoolDataIh2co");
+  Param.GetScalar(CoolData.ipihdt, "PhysicsParameters.atomicPhysics.CoolDataIpiht");
   Param.GetScalar(CoolData.TemperatureStart, "PhysicsParameters.atomicPhysics.TemperatureStart");
   Param.GetScalar(CoolData.TemperatureEnd, "PhysicsParameters.atomicPhysics.TemperatureEnd");
-  Param.GetScalar(CoolData.comp_xray, "PhysicsParameters.atomicPhysics.CoolDataCompXray"); // should be bool
-  Param.GetScalar(CoolData.temp_xray, "PhysicsParameters.atomicPhysics.CoolDataTempXray"); // should be bool
-  Param.GetScalar(RateData.CaseBRecombination, "RateDataCaseBRecombination"); // should be bool
-  Param.GetScalar(PhotoelectricHeating, "PhysicsParameters.atomicPhysics.PhotoelectricHeating"); // should be bool
+  Param.GetScalar(CoolData.comp_xray, "PhysicsParameters.atomicPhysics.CoolDataCompXray");
+  Param.GetScalar(CoolData.temp_xray, "PhysicsParameters.atomicPhysics.CoolDataTempXray");
+  Param.GetScalar(RateData.CaseBRecombination, "RateDataCaseBRecombination");
+  Param.GetScalar(PhotoelectricHeating, "PhysicsParameters.atomicPhysics.PhotoelectricHeating");
   
-  Param.GetScalar(OutputCoolingTime, "OutputControlParameters.supplementalFields.OutputCoolingTime"); // should be bool 
-  Param.GetScalar(OutputTemperature, "OutputControlParameters.supplementalFields.OutputTemperature"); // should be bool 
-  Param.GetScalar(OutputSmoothedDarkMatter, "OutputControlParameters.supplementalFields.OutputSmoothedDarkMatter"); // should be bool 
-  Param.GetScalar(SmoothedDarkMatterNeighbors, "OutputControlParameters.supplementalFields.SmoothedDarkMatterNeighbors"); // should be bool 
-  Param.GetScalar(OutputGriddedStarParticle, "OutputControlParameters.supplementalFields.OutputGriddedStarParticle"); // should be bool 
+  Param.GetScalar(OutputCoolingTime, "OutputControlParameters.supplementalFields.OutputCoolingTime"); 
+  Param.GetScalar(OutputTemperature, "OutputControlParameters.supplementalFields.OutputTemperature"); 
+  Param.GetScalar(OutputSmoothedDarkMatter, "OutputControlParameters.supplementalFields.OutputSmoothedDarkMatter"); 
+  Param.GetScalar(SmoothedDarkMatterNeighbors, "OutputControlParameters.supplementalFields.SmoothedDarkMatterNeighbors"); 
+  Param.GetScalar(OutputGriddedStarParticle, "OutputControlParameters.supplementalFields.OutputGriddedStarParticle"); 
   
   Param.GetScalar(ZEUSQuadraticArtificialViscosity, "PhysicsParameters.hydro.ZEUSQuadraticArtificialViscosity");
   Param.GetScalar(ZEUSLinearArtificialViscosity, "PhysicsParameters.hydro.ZEUSLinearArtificialViscosity");
   
-  Param.GetScalar(UseMinimumPressureSupport, "PhysicsParameters.hydro.UseMinimumPressureSupport"); // should be bool 
+  Param.GetScalar(UseMinimumPressureSupport, "PhysicsParameters.hydro.UseMinimumPressureSupport"); 
   Param.GetScalar(MinimumPressureSupportParameter, "PhysicsParameters.hydro.MinimumPressureSupportParameter");
   Param.GetScalar(RefineByJeansLengthSafetyFactor, "SimulationControl.amr.RefineByJeansLengthSafetyFactor");
-  Param.GetScalar(RefineByJeansLengthUnits, "SimulationControl.amr.RefineByJeansLengthUnits"); // should be bool 
+  Param.GetScalar(RefineByJeansLengthUnits, "SimulationControl.amr.RefineByJeansLengthUnits"); 
   Param.GetScalar(JeansRefinementColdTemperature, "SimulationControl.amr.JeansRefinementColdTemperature");
   Param.GetScalar(RefineByResistiveLengthSafetyFactor, "SimulationControl.amr.RefineByResistiveLengthSafetyFactor");
   Param.GetScalar(MustRefineParticlesRefineToLevel, "SimulationControl.amr.MustRefineParticlesRefineToLevel");
-  Param.GetScalar(MustRefineParticlesRefineToLevelAutoAdjust, "SimulationControl.amr.MustRefineParticlesRefineToLevelAutoAdjust"); // should be bool 
+  Param.GetScalar(MustRefineParticlesRefineToLevelAutoAdjust, "SimulationControl.amr.MustRefineParticlesRefineToLevelAutoAdjust"); 
   Param.GetScalar(MustRefineParticlesMinimumMass, "SimulationControl.amr.MustRefineParticlesMinimumMass");
-  Param.GetScalar(ParticleTypeInFile, "OutputControlParameters.ParticleTypeInFile"); // should be bool 
+  Param.GetScalar(ParticleTypeInFile, "OutputControlParameters.ParticleTypeInFile"); 
   
   int NumberOfStaticRefineRegions = Param.Size("StaticRefineRegion.regions");
   if (NumberOfStaticRefineRegions > MAX_STATIC_REGIONS-1) {
@@ -395,21 +395,21 @@ int ReadParameterFile(TopGridData &MetaData, float *Initialdt)
     Param.GetArray(StaticRefineRegionRightEdge[i],"StaticRefineRegion.%s.RightEdge",StaticRefineRegionNames[i]);
   }
   
-  Param.GetScalar(ParallelRootGridIO, "InternalParameters.outputLabeling.ParallelRootGridIO"); // should be bool
-  Param.GetScalar(ParallelParticleIO, "InternalParameters.outputLabeling.ParallelParticleIO"); // should be bool
+  Param.GetScalar(ParallelRootGridIO, "InternalParameters.outputLabeling.ParallelRootGridIO");
+  Param.GetScalar(ParallelParticleIO, "InternalParameters.outputLabeling.ParallelParticleIO");
   
-  Param.GetScalar(Unigrid, "InternalParameters.outputLabeling.Unigrid"); // should be bool
-  Param.GetScalar(UnigridTranspose, "InternalParameters.outputLabeling.UnigridTranspose"); // should be bool
+  Param.GetScalar(Unigrid, "InternalParameters.outputLabeling.Unigrid");
+  Param.GetScalar(UnigridTranspose, "InternalParameters.outputLabeling.UnigridTranspose");
   Param.GetScalar(NumberOfRootGridTilesPerDimensionPerProcessor, "InternalParameters.outputLabeling.NumberOfRootGridTilesPerDimensionPerProcessor");
   
   Param.GetScalar(PartitionNestedGrids, "Initialization.PartitionNestedGrids");
-  Param.GetScalar(StaticPartitionNestedGrids, "Initialization.StaticPartitionNestedGrids"); // should be bool
+  Param.GetScalar(StaticPartitionNestedGrids, "Initialization.StaticPartitionNestedGrids");
   
-  Param.GetScalar(ExtractFieldsOnly, "OutputControlParameters.ExtractFieldsOnly"); // should be bool
+  Param.GetScalar(ExtractFieldsOnly, "OutputControlParameters.ExtractFieldsOnly");
   
-  Param.GetScalar(debug1, "InternalParameters.Debug1"); // should be bool
+  Param.GetScalar(debug1, "InternalParameters.Debug1");
   
-  Param.GetScalar(debug2, "InternalParameters.Debug2"); // should be bool
+  Param.GetScalar(debug2, "InternalParameters.Debug2");
   
   Param.GetScalar(MemoryLimit, "SimulationControl.optimization.MemoryLimit");
   
@@ -419,13 +419,13 @@ int ReadParameterFile(TopGridData &MetaData, float *Initialdt)
   
 #ifdef OOC_BOUNDARY
   
-  Param.GetScalar(ExternalBoundaryIO, "ExternalBoundaryIO"); // should be bool
+  Param.GetScalar(ExternalBoundaryIO, "ExternalBoundaryIO");
   
-  Param.GetScalar(ExternalBoundaryTypeIO, "ExternalBoundaryTypeIO"); // should be bool
+  Param.GetScalar(ExternalBoundaryTypeIO, "ExternalBoundaryTypeIO");
   
-  Param.GetScalar(ExternalBoundaryValueIO, "ExternalBoundaryValueIO"); // should be bool
+  Param.GetScalar(ExternalBoundaryValueIO, "ExternalBoundaryValueIO");
   
-  Param.GetScalar(SimpleConstantBoundary, "SimpleConstantBoundary"); // should be bool
+  Param.GetScalar(SimpleConstantBoundary, "SimpleConstantBoundary");
   
 #endif
   
@@ -446,16 +446,16 @@ int ReadParameterFile(TopGridData &MetaData, float *Initialdt)
   Param.GetScalar(ShockwaveRefinementMinMach, "SimulationControl.amr.ShockwaveRefinementMinMach");
   Param.GetScalar(ShockwaveRefinementMinVelocity, "SimulationControl.amr.ShockwaveRefinementMinVelocity");
   Param.GetScalar(ShockwaveRefinementMaxLevel, "SimulationControl.amr.ShockwaveRefinementMaxLevel");
-  Param.GetScalar(ComovingCoordinates, "PhysicsParameters.cosmology.ComovingCoordinates"); // should be bool
+  Param.GetScalar(ComovingCoordinates, "PhysicsParameters.cosmology.ComovingCoordinates");
   Param.GetScalar(StarParticleCreation, "PhysicsParameters.otherParticles.StarParticleCreation");
-  Param.GetScalar(BigStarFormation, "PhysicsParameters.otherParticles.bigStar.BigStarFormation"); // should be bool
-  Param.GetScalar(BigStarFormationDone, "PhysicsParameters.otherParticles.bigStar.BigStarFormationDone"); // should be bool
+  Param.GetScalar(BigStarFormation, "PhysicsParameters.otherParticles.bigStar.BigStarFormation");
+  Param.GetScalar(BigStarFormationDone, "PhysicsParameters.otherParticles.bigStar.BigStarFormationDone");
   Param.GetScalar(BigStarSeparation, "PhysicsParameters.otherParticles.bigStar.BigStarSeparation");
   Param.GetScalar(SimpleQ, "SimulationControl.radiationTransfer.SimpleQ");
   Param.GetScalar(SimpleRampTime, "SimulationControl.radiationTransfer.SimpleRampTime");
   Param.GetScalar(StarParticleFeedback, "PhysicsParameters.otherParticles.StarParticleFeedback");
   Param.GetScalar(NumberOfParticleAttributes, "PhysicsParameters.otherParticles.NumberOfParticleAttributes");
-  Param.GetScalar(AddParticleAttributes, "PhysicsParameters.otherParticles.AddParticleAttributes"); // should be bool
+  Param.GetScalar(AddParticleAttributes, "PhysicsParameters.otherParticles.AddParticleAttributes");
   
   
   /* read data which defines the boundary conditions */
@@ -513,19 +513,19 @@ int ReadParameterFile(TopGridData &MetaData, float *Initialdt)
   
   //   ret += sscanf(line,"PopIIIMassRange %"FSYM" %"FSYM, &PopIIILowerMassCutoff, &PopIIIUpperMassCutoff);
   
-  Param.GetScalar	(PopIIIInitialMassFunctionSlope, "PhysicsParameters.otherParticles.popIIIStarParticle.PopIIIInitialMassFunctionSlope");
-  Param.GetScalar            (PopIIIBlackHoles, "PhysicsParameters.otherParticles.popIIIStarParticle.PopIIIBlackHoles");
-  Param.GetScalar		 (PopIIIBHLuminosityEfficiency, "PhysicsParameters.otherParticles.popIIIStarParticle.PopIIIBHLuminosityEfficiency");
-  Param.GetScalar <float>		 (PopIIIOverDensityThreshold, "PhysicsParameters.otherParticles.popIIIStarParticle.PopIIIOverDensityThreshold");
-  Param.GetScalar <float>		(PopIIIH2CriticalFraction, "PhysicsParameters.otherParticles.popIIIStarParticle.PopIIIH2CriticalFraction");
-  Param.GetScalar <float>		(PopIIIMetalCriticalFraction, "PhysicsParameters.otherParticles.popIIIStarParticle.PopIIIMetalCriticalFraction");
-  Param.GetScalar          (PopIIISupernovaRadius, "PhysicsParameters.otherParticles.popIIIStarParticle.PopIIISupernovaRadius");
-  Param.GetScalar		(PopIIISupernovaUseColour, "PhysicsParameters.otherParticles.popIIIStarParticle.PopIIISupernovaUseColour");
-  Param.GetScalar <int>		(PopIIISupernovaMustRefine, "PhysicsParameters.otherParticles.popIIIStarParticle.PopIIISupernovaMustRefine");
-  Param.GetScalar <int>		 (PopIIISupernovaMustRefineResolution, "PhysicsParameters.otherParticles.popIIIStarParticle.PopIIISupernovaMustRefineResolution");
-  Param.GetScalar		 (PopIIIHeliumIonization, "PhysicsParameters.otherParticles.popIIIStarParticle.PopIIIHeliumIonization");
-  Param.GetScalar <float>		 (PopIIIColorDensityThreshold, "PhysicsParameters.otherParticles.popIIIStarParticle.PopIIIColorDensityThreshold");
-  Param.GetScalar <float>		 (PopIIIColorMass, "PhysicsParameters.otherParticles.popIIIStarParticle.PopIIIColorMass");
+  Param.GetScalar(PopIIIInitialMassFunctionSlope, "PhysicsParameters.otherParticles.popIIIStarParticle.PopIIIInitialMassFunctionSlope");
+  Param.GetScalar(PopIIIBlackHoles, "PhysicsParameters.otherParticles.popIIIStarParticle.PopIIIBlackHoles");
+  Param.GetScalar(PopIIIBHLuminosityEfficiency, "PhysicsParameters.otherParticles.popIIIStarParticle.PopIIIBHLuminosityEfficiency");
+  Param.GetScalar(PopIIIOverDensityThreshold, "PhysicsParameters.otherParticles.popIIIStarParticle.PopIIIOverDensityThreshold");
+  Param.GetScalar(PopIIIH2CriticalFraction, "PhysicsParameters.otherParticles.popIIIStarParticle.PopIIIH2CriticalFraction");
+  Param.GetScalar(PopIIIMetalCriticalFraction, "PhysicsParameters.otherParticles.popIIIStarParticle.PopIIIMetalCriticalFraction");
+  Param.GetScalar(PopIIISupernovaRadius, "PhysicsParameters.otherParticles.popIIIStarParticle.PopIIISupernovaRadius");
+  Param.GetScalar(PopIIISupernovaUseColour, "PhysicsParameters.otherParticles.popIIIStarParticle.PopIIISupernovaUseColour");
+  Param.GetScalar(PopIIISupernovaMustRefine, "PhysicsParameters.otherParticles.popIIIStarParticle.PopIIISupernovaMustRefine");
+  Param.GetScalar(PopIIISupernovaMustRefineResolution, "PhysicsParameters.otherParticles.popIIIStarParticle.PopIIISupernovaMustRefineResolution");
+  Param.GetScalar(PopIIIHeliumIonization, "PhysicsParameters.otherParticles.popIIIStarParticle.PopIIIHeliumIonization");
+  Param.GetScalar(PopIIIColorDensityThreshold, "PhysicsParameters.otherParticles.popIIIStarParticle.PopIIIColorDensityThreshold");
+  Param.GetScalar(PopIIIColorMass, "PhysicsParameters.otherParticles.popIIIStarParticle.PopIIIColorMass");
   
   Param.GetScalar(MBHAccretion, "PhysicsParameters.otherParticles.mbhParticle.MBHAccretion");
   Param.GetScalar(MBHAccretionRadius, "PhysicsParameters.otherParticles.mbhParticle.MBHAccretionRadius");
@@ -544,7 +544,7 @@ int ReadParameterFile(TopGridData &MetaData, float *Initialdt)
   Param.GetScalar(MBHFeedbackMetalYield, "PhysicsParameters.otherParticles.mbhParticle.MBHFeedbackMetalYield");
   Param.GetScalar(MBHFeedbackThermalRadius, "PhysicsParameters.otherParticles.mbhParticle.MBHFeedbackThermalRadius");
   Param.GetScalar(MBHFeedbackJetsThresholdMass, "PhysicsParameters.otherParticles.mbhParticle.MBHFeedbackJetsThresholdMass");
-  Param.GetScalar <int>		  (MBHParticleIO, "PhysicsParameters.otherParticles.mbhParticle.MBHParticleIO");
+  Param.GetScalar(MBHParticleIO, "PhysicsParameters.otherParticles.mbhParticle.MBHParticleIO");
   
   Param.GetScalar(MBHParticleIOFilename, "Initialization.MBHParticleIOFilename");
   Param.GetScalar(MBHInsertLocationFilename, "Initialization.MBHInsertLocationFilename");
@@ -562,15 +562,15 @@ int ReadParameterFile(TopGridData &MetaData, float *Initialdt)
   Param.GetScalar(MetaData.MovieTimestepCounter, "OutputControlParameters.movieDump.MovieTimestepCounter");
   
   Param.GetScalar(MultiMetals, "PhysicsParameters.atomicPhysics.MultiMetals");
-  Param.GetScalar(IsotropicConduction, "IsotropicConduction"); // should be bool
-  Param.GetScalar(AnisotropicConduction, "AnisotropicConduction"); // should be bool
+  Param.GetScalar(IsotropicConduction, "IsotropicConduction");
+  Param.GetScalar(AnisotropicConduction, "AnisotropicConduction");
   Param.GetScalar(IsotropicConductionSpitzerFraction, "IsotropicConductionSpitzerFraction");
   Param.GetScalar(AnisotropicConductionSpitzerFraction, "AnisotropicConductionSpitzerFraction");
   Param.GetScalar(ConductionCourantSafetyNumber, "PhysicsParameters.conduction.ConductionCourantSafetyNumber");
   
-  Param.GetScalar(RadiativeTransfer, "PhysicsParameters.radiationTransfer.RadiativeTransfer"); // should be bool
-  Param.GetScalar(RadiationXRaySecondaryIon, "PhysicsParameters.radiationTransfer.RadiationXRaySecondaryIon"); // should be bool
-  Param.GetScalar(RadiationXRayComptonHeating, "PhysicsParameters.radiationTransfer.RadiationXRayComptonHeating"); // should be bool
+  Param.GetScalar(RadiativeTransfer, "PhysicsParameters.radiationTransfer.RadiativeTransfer");
+  Param.GetScalar(RadiationXRaySecondaryIon, "PhysicsParameters.radiationTransfer.RadiationXRaySecondaryIon");
+  Param.GetScalar(RadiationXRayComptonHeating, "PhysicsParameters.radiationTransfer.RadiationXRayComptonHeating");
   
   
   /* Shearing Box Boundary parameters */
@@ -587,8 +587,8 @@ int ReadParameterFile(TopGridData &MetaData, float *Initialdt)
 #endif
   
   /* Embedded Python */
-  Param.GetScalar(PythonTopGridSkip, "AnalysisParameters.python.PythonTopGridSkip"); // should be bool
-  Param.GetScalar(PythonSubcycleSkip, "AnalysisParameters.python.PythonSubcycleSkip"); // should be bool
+  Param.GetScalar(PythonTopGridSkip, "AnalysisParameters.python.PythonTopGridSkip");
+  Param.GetScalar(PythonSubcycleSkip, "AnalysisParameters.python.PythonSubcycleSkip");
 
 #ifdef USE_PYTHON
   Param.GetScalar(NumberOfPythonCalls, "NumberOfPythonCalls");
@@ -598,10 +598,10 @@ int ReadParameterFile(TopGridData &MetaData, float *Initialdt)
 
     /* Inline halo finder */
 
-  Param.GetScalar(InlineHaloFinder, "AnalysisParameters.haloFinder.InlineHaloFinder"); // should be bool
-  Param.GetScalar(HaloFinderSubfind, "AnalysisParameters.haloFinder.HaloFinderSubfind"); // should be bool
-  Param.GetScalar(HaloFinderOutputParticleList, "AnalysisParameters.haloFinder.HaloFinderOutputParticleList"); // should be bool
-  Param.GetScalar(HaloFinderRunAfterOutput, "AnalysisParameters.haloFinder.HaloFinderRunAfterOutput"); // should be bool
+  Param.GetScalar(InlineHaloFinder, "AnalysisParameters.haloFinder.InlineHaloFinder");
+  Param.GetScalar(HaloFinderSubfind, "AnalysisParameters.haloFinder.HaloFinderSubfind");
+  Param.GetScalar(HaloFinderOutputParticleList, "AnalysisParameters.haloFinder.HaloFinderOutputParticleList");
+  Param.GetScalar(HaloFinderRunAfterOutput, "AnalysisParameters.haloFinder.HaloFinderRunAfterOutput");
   Param.GetScalar(HaloFinderLinkingLength, "AnalysisParameters.haloFinder.HaloFinderLinkingLength");
   Param.GetScalar(HaloFinderMinimumSize, "AnalysisParameters.haloFinder.HaloFinderMinimumSize");
   Param.GetScalar(HaloFinderCycleSkip, "AnalysisParameters.haloFinder.HaloFinderCycleSkip");
@@ -610,24 +610,24 @@ int ReadParameterFile(TopGridData &MetaData, float *Initialdt)
   
   /* This Block for Stanford Hydro */
   
-  Param.GetScalar(UseHydro, "PhysicsParameters.hydro.UseHydro"); // should be bool
+  Param.GetScalar(UseHydro, "PhysicsParameters.hydro.UseHydro");
   
   
   /* Sink particles (for present day star formation) & winds */
   Param.GetScalar(SinkMergeDistance, "PhysicsParameters.otherParticles.sinkParticle.SinkMergeDistance");
   Param.GetScalar(SinkMergeMass, "PhysicsParameters.otherParticles.sinkParticle.SinkMergeMass");
-  Param.GetScalar(StellarWindFeedback, "PhysicsParameters.otherParticles.StellarWindFeedback"); // should be bool
+  Param.GetScalar(StellarWindFeedback, "PhysicsParameters.otherParticles.StellarWindFeedback");
   Param.GetScalar(StellarWindTurnOnMass, "PhysicsParameters.otherParticles.StellarWindTurnOnMass");
   Param.GetScalar(MSStellarWindTurnOnMass, "PhysicsParameters.otherParticles.MSStellarWindTurnOnMass");
   
-  Param.GetScalar(VelAnyl, "OutputControlParameters.supplementalFields.VelAnyl"); // should be bool
-  Param.GetScalar(BAnyl, "OutputControlParameters.supplementalFields.BAnyl"); // should be bool
+  Param.GetScalar(VelAnyl, "OutputControlParameters.supplementalFields.VelAnyl");
+  Param.GetScalar(BAnyl, "OutputControlParameters.supplementalFields.BAnyl");
   
   
   
   /* Read MHD Paramters */
-  Param.GetScalar(UseDivergenceCleaning, "PhysicsParameters.mhd.UseDivergenceCleaning"); // should be bool
-  Param.GetScalar(DivergenceCleaningBoundaryBuffer, "PhysicsParameters.mhd.DivergenceCleaningBoundaryBuffer"); // should be bool
+  Param.GetScalar(UseDivergenceCleaning, "PhysicsParameters.mhd.UseDivergenceCleaning");
+  Param.GetScalar(DivergenceCleaningBoundaryBuffer, "PhysicsParameters.mhd.DivergenceCleaningBoundaryBuffer");
   Param.GetScalar(DivergenceCleaningThreshold, "PhysicsParameters.mhd.DivergenceCleaningThreshold");
   Param.GetScalar(PoissonApproximationThreshold, "PhysicsParameters.PoissonApproximationThreshold");
   Param.GetScalar(PoissonBoundaryType, "PhysicsParameters.PoissonBoundaryType");
@@ -635,36 +635,36 @@ int ReadParameterFile(TopGridData &MetaData, float *Initialdt)
   
   Param.GetScalar(AngularVelocity, "PhysicsParameters.AngularVelocity");
   Param.GetScalar(VelocityGradient, "PhysicsParameters.VelocityGradient");
-  Param.GetScalar(UseDrivingField, "PhysicsParameters.miscellaneous.UseDrivingField"); // should be bool
+  Param.GetScalar(UseDrivingField, "PhysicsParameters.miscellaneous.UseDrivingField");
   Param.GetScalar(DrivingEfficiency, "PhysicsParameters.miscellaneous.DrivingEfficiency");
   
   Param.GetScalar(StringKick, "StringKick");
   Param.GetScalar(StringKickDimension, "StringKickDimension");
-  Param.GetScalar(UsePhysicalUnit, "PhysicsParameters.UsePhysicalUnit"); // should be bool
+  Param.GetScalar(UsePhysicalUnit, "PhysicsParameters.UsePhysicalUnit");
   Param.GetScalar(Theta_Limiter, "PhysicsParameters.hydro.Theta_Limiter");
   Param.GetScalar(RKOrder, "PhysicsParameters.hydro.RKOrder");
-  Param.GetScalar(UseFloor, "PhysicsParameters.hydro.UseFloor"); // should be bool
-  Param.GetScalar(UseViscosity, "PhysicsParameters.hydro.UseViscosity"); // should be bool
+  Param.GetScalar(UseFloor, "PhysicsParameters.hydro.UseFloor");
+  Param.GetScalar(UseViscosity, "PhysicsParameters.hydro.UseViscosity");
   Param.GetScalar(ViscosityCoefficient, "PhysicsParameters.hydro.ViscosityCoefficient");
   
-  Param.GetScalar(UseAmbipolarDiffusion, "PhysicsParameters.hydro.UseAmbipolarDiffusion"); // should be bool
-  Param.GetScalar(UseResistivity, "PhysicsParameters.hydro.UseResistivity"); // should be bool
+  Param.GetScalar(UseAmbipolarDiffusion, "PhysicsParameters.hydro.UseAmbipolarDiffusion");
+  Param.GetScalar(UseResistivity, "PhysicsParameters.hydro.UseResistivity");
   Param.GetScalar(SmallRho, "PhysicsParameters.SmallRho");
   Param.GetScalar(SmallP, "PhysicsParameters.SmallP");
   Param.GetScalar(SmallT, "PhysicsParameters.SmallT");
   Param.GetScalar(MaximumAlvenSpeed, "PhysicsParameters.mhd.MaximumAlvenSpeed");
   Param.GetScalar(Coordinate, "PhysicsParameters.Coordinate");
   Param.GetScalar(RiemannSolver, "PhysicsParameters.hydro.RiemannSolver");
-  Param.GetScalar(RiemannSolverFallback, "PhysicsParameters.hydro.RiemannSolverFallback"); // should be bool
-  Param.GetScalar(ConservativeReconstruction, "PhysicsParameters.hydro.ConservativeReconstruction"); // should be bool
-  Param.GetScalar(PositiveReconstruction, "PhysicsParameters.hydro.PositiveReconstruction"); // should be bool
+  Param.GetScalar(RiemannSolverFallback, "PhysicsParameters.hydro.RiemannSolverFallback");
+  Param.GetScalar(ConservativeReconstruction, "PhysicsParameters.hydro.ConservativeReconstruction");
+  Param.GetScalar(PositiveReconstruction, "PhysicsParameters.hydro.PositiveReconstruction");
   Param.GetScalar(ReconstructionMethod, "PhysicsParameters.hydro.ReconstructionMethod");
   
   Param.GetScalar(EOSType, "PhysicsParameters.hydro.EOSType");
   Param.GetScalar(EOSSoundSpeed, "PhysicsParameters.hydro.EOSSoundSpeed");
   Param.GetScalar(EOSCriticalDensity, "PhysicsParameters.hydro.EOSCriticalDensity");
   Param.GetScalar(EOSGamma, "PhysicsParameters.hydro.EOSGamma");
-  Param.GetScalar(UseConstantAcceleration, "PhysicsParameters.gravity.UseConstantAcceleration"); // should be bool
+  Param.GetScalar(UseConstantAcceleration, "PhysicsParameters.gravity.UseConstantAcceleration");
   
   Param.GetScalar(IsothermalSoundSpeed, "PhysicsParameters.hydro.IsothermalSoundSpeed");
   
@@ -676,13 +676,13 @@ int ReadParameterFile(TopGridData &MetaData, float *Initialdt)
   Param.GetScalar(CoolingCutOffTemperature, "PhysicsParameters.atomicPhysics.CoolingCutOffTemperature");
   Param.GetScalar(CoolingPowerCutOffDensity1, "PhysicsParameters.atomicPhysics.CoolingPowerCutOffDensity1");
   Param.GetScalar(CoolingPowerCutOffDensity2, "PhysicsParameters.atomicPhysics.CoolingPowerCutOffDensity2");
-  Param.GetScalar(UseH2OnDust, "UseH2OnDust"); // should be bool
-  Param.GetScalar(seCUDA, "UseCUDA"); // should be bool
+  Param.GetScalar(UseH2OnDust, "UseH2OnDust");
+  Param.GetScalar(seCUDA, "UseCUDA");
   
-  Param.GetScalar(MoveParticlesBetweenSiblings, "SimulationControl.optimization.MoveParticlesBetweenSiblings"); // should be bool
+  Param.GetScalar(MoveParticlesBetweenSiblings, "SimulationControl.optimization.MoveParticlesBetweenSiblings");
   Param.GetScalar(ParticleSplitterIterations, "SimulationControl.optimization.ParticleSplitterIterations");
   Param.GetScalar(ParticleSplitterChildrenParticleSeparation, "SimulationControl.optimization.ParticleSplitterChildrenParticleSeparation");
-  Param.GetScalar(ResetMagneticField, "PhysicsParameters.mhd.ResetMagneticField"); // should be bool
+  Param.GetScalar(ResetMagneticField, "PhysicsParameters.mhd.ResetMagneticField");
   Param.GetArray(ResetMagneticFieldAmplitude, "PhysicsParameters.mhd.ResetMagneticFieldAmplitude");
   
   
