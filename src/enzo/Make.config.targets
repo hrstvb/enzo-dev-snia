@@ -36,6 +36,10 @@ help-config:
 	@echo
 	@echo "      gmake memory-pool-###"
 	@echo
+	@echo "   Set grid memory reduction level (0-6; 0 is off)"
+	@echo
+	@echo "      gmake memory-reduce-###"
+	@echo
 	@echo
 	@echo "CONFIGURATION SETTINGS"
 	@echo
@@ -250,6 +254,7 @@ show-config:
 	@echo "   PARAMETER_MAX_BARYONS  [max-baryons-###]                  : $(PARAMETER_MAX_BARYONS)"
 	@echo "   PARAMETER_MAX_TASKS_PER_NODE  [max-tasks-per-node-###]    : $(PARAMETER_MAX_TASKS_PER_NODE)"
 	@echo "   PARAMETER_MEMORY_POOL_SIZE  [memory-pool-###]             : $(PARAMETER_MEMORY_POOL_SIZE)"
+	@echo "   PARAMETER_MEMORY_REDUCE_LEVEL  [memory-reduce-###]        : $(PARAMETER_MEMORY_REDUCE_LEVEL)"
 	@echo
 	@echo "   CONFIG_PRECISION  [precision-{32,64}]                     : $(CONFIG_PRECISION)"
 	@echo "   CONFIG_PARTICLES  [particles-{32,64,128}]                 : $(CONFIG_PARTICLES)"
@@ -358,6 +363,16 @@ memory-pool-%:
 	$(MAKE)  show-config | grep PARAMETER_MEMORY_POOL_SIZE; \
 	echo
 
+
+#-----------------------------------------------------------------------
+
+memory-reduce-%:
+	@tmp=.config.temp; \
+        grep -v PARAMETER_MEMORY_REDUCE_LEVEL $(MAKE_CONFIG_OVERRIDE) > $${tmp}; \
+        mv $${tmp} $(MAKE_CONFIG_OVERRIDE); \
+        echo "PARAMETER_MEMORY_REDUCE_LEVEL = $*" >> $(MAKE_CONFIG_OVERRIDE); \
+	$(MAKE)  show-config | grep PARAMETER_MEMORY_REDUCE_LEVEL; \
+	echo
 
 #-----------------------------------------------------------------------
 
