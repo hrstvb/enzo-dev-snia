@@ -226,6 +226,8 @@ int ENZO_OptionsinEffect(void)
     fprintf(opf, "  MAX_DEPTH_OF_HIERARCHY              %8d\n", MAX_DEPTH_OF_HIERARCHY);
     fprintf(opf, "  MAX_LINE_LENGTH                     %8d\n", MAX_LINE_LENGTH);
 
+    fprintf(opf, "  GRID_MEMORY_REDUCE_LEVEL            %8d\n", GRID_MEMORY_REDUCE_LEVEL);
+
     fprintf(opf, "  MAX_NAME_LENGTH                     %8d\n", MAX_NAME_LENGTH);
     fprintf(opf, "  MAX_GRID_TAG_SIZE                   %8d\n", MAX_GRID_TAG_SIZE);
     fprintf(opf, "  MAX_TASK_TAG_SIZE                   %8d\n", MAX_TASK_TAG_SIZE);
