@@ -78,7 +78,7 @@ int ReadParameterFile(TopGridData &MetaData, float *Initialdt)
   Param.GetScalar(MetaData.CPUTime, "InternalParameters.InitialCPUTime");
   Param.GetScalar((*Initialdt), "Initialdt");
   
-  Param.GetScalar(CheckpointRestart, "CheckpointRestart"); // should be bool
+  Param.GetScalar(CheckpointRestart, "InternalParameters.outputLabeling.CheckpointRestart"); // should be bool
   Param.GetScalar(MetaData.StopTime, "SimulationControl.StopTime");
   Param.GetScalar(MetaData.StopCycle, "SimulationControl.StopCycle");
   Param.GetScalar(MetaData.StopSteps, "SimulationControl.StopSteps");
