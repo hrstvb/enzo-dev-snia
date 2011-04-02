@@ -47,8 +47,6 @@
 /* function prototypes */
 
 void my_exit(int status); 
-int ReadListOfFloats(FILE *fptr, int N, float floats[]);
-int ReadListOfInts(FILE *fptr, int N, int nums[]);
 int CosmologyReadParameters(FILE *fptr, FLOAT *StopTime, FLOAT *InitTime);
 int ReadUnits(FILE *fptr);
 int InitializeCosmicRayData();
@@ -513,19 +511,19 @@ int ReadParameterFile(TopGridData &MetaData, float *Initialdt)
   
   //   ret += sscanf(line,"PopIIIMassRange %"FSYM" %"FSYM, &PopIIILowerMassCutoff, &PopIIIUpperMassCutoff);
   
-  Param.GetScalar	(PopIIIInitialMassFunctionSlope, "PhysicsParameters.otherParticles.popIIIStarParticle.PopIIIInitialMassFunctionSlope");
-  Param.GetScalar            (PopIIIBlackHoles, "PhysicsParameters.otherParticles.popIIIStarParticle.PopIIIBlackHoles");
-  Param.GetScalar		 (PopIIIBHLuminosityEfficiency, "PhysicsParameters.otherParticles.popIIIStarParticle.PopIIIBHLuminosityEfficiency");
-  Param.GetScalar <float>		 (PopIIIOverDensityThreshold, "PhysicsParameters.otherParticles.popIIIStarParticle.PopIIIOverDensityThreshold");
-  Param.GetScalar <float>		(PopIIIH2CriticalFraction, "PhysicsParameters.otherParticles.popIIIStarParticle.PopIIIH2CriticalFraction");
-  Param.GetScalar <float>		(PopIIIMetalCriticalFraction, "PhysicsParameters.otherParticles.popIIIStarParticle.PopIIIMetalCriticalFraction");
-  Param.GetScalar          (PopIIISupernovaRadius, "PhysicsParameters.otherParticles.popIIIStarParticle.PopIIISupernovaRadius");
-  Param.GetScalar		(PopIIISupernovaUseColour, "PhysicsParameters.otherParticles.popIIIStarParticle.PopIIISupernovaUseColour");
-  Param.GetScalar <int>		(PopIIISupernovaMustRefine, "PhysicsParameters.otherParticles.popIIIStarParticle.PopIIISupernovaMustRefine");
-  Param.GetScalar <int>		 (PopIIISupernovaMustRefineResolution, "PhysicsParameters.otherParticles.popIIIStarParticle.PopIIISupernovaMustRefineResolution");
-  Param.GetScalar		 (PopIIIHeliumIonization, "PhysicsParameters.otherParticles.popIIIStarParticle.PopIIIHeliumIonization");
-  Param.GetScalar <float>		 (PopIIIColorDensityThreshold, "PhysicsParameters.otherParticles.popIIIStarParticle.PopIIIColorDensityThreshold");
-  Param.GetScalar <float>		 (PopIIIColorMass, "PhysicsParameters.otherParticles.popIIIStarParticle.PopIIIColorMass");
+  Param.GetScalar(PopIIIInitialMassFunctionSlope, "PhysicsParameters.otherParticles.popIIIStarParticle.PopIIIInitialMassFunctionSlope");
+  Param.GetScalar(PopIIIBlackHoles, "PhysicsParameters.otherParticles.popIIIStarParticle.PopIIIBlackHoles");
+  Param.GetScalar(PopIIIBHLuminosityEfficiency, "PhysicsParameters.otherParticles.popIIIStarParticle.PopIIIBHLuminosityEfficiency");
+  Param.GetScalar(PopIIIOverDensityThreshold, "PhysicsParameters.otherParticles.popIIIStarParticle.PopIIIOverDensityThreshold");
+  Param.GetScalar (PopIIIH2CriticalFraction, "PhysicsParameters.otherParticles.popIIIStarParticle.PopIIIH2CriticalFraction");
+  Param.GetScalar(PopIIIMetalCriticalFraction, "PhysicsParameters.otherParticles.popIIIStarParticle.PopIIIMetalCriticalFraction");
+  Param.GetScalar(PopIIISupernovaRadius, "PhysicsParameters.otherParticles.popIIIStarParticle.PopIIISupernovaRadius");
+  Param.GetScalar(PopIIISupernovaUseColour, "PhysicsParameters.otherParticles.popIIIStarParticle.PopIIISupernovaUseColour");
+  Param.GetScalar(PopIIISupernovaMustRefine, "PhysicsParameters.otherParticles.popIIIStarParticle.PopIIISupernovaMustRefine");
+  Param.GetScalar(PopIIISupernovaMustRefineResolution, "PhysicsParameters.otherParticles.popIIIStarParticle.PopIIISupernovaMustRefineResolution");
+  Param.GetScalar(PopIIIHeliumIonization, "PhysicsParameters.otherParticles.popIIIStarParticle.PopIIIHeliumIonization");
+  Param.GetScalar(PopIIIColorDensityThreshold, "PhysicsParameters.otherParticles.popIIIStarParticle.PopIIIColorDensityThreshold");
+  Param.GetScalar(PopIIIColorMass, "PhysicsParameters.otherParticles.popIIIStarParticle.PopIIIColorMass");
   
   Param.GetScalar(MBHAccretion, "PhysicsParameters.otherParticles.mbhParticle.MBHAccretion");
   Param.GetScalar(MBHAccretionRadius, "PhysicsParameters.otherParticles.mbhParticle.MBHAccretionRadius");
@@ -544,7 +542,7 @@ int ReadParameterFile(TopGridData &MetaData, float *Initialdt)
   Param.GetScalar(MBHFeedbackMetalYield, "PhysicsParameters.otherParticles.mbhParticle.MBHFeedbackMetalYield");
   Param.GetScalar(MBHFeedbackThermalRadius, "PhysicsParameters.otherParticles.mbhParticle.MBHFeedbackThermalRadius");
   Param.GetScalar(MBHFeedbackJetsThresholdMass, "PhysicsParameters.otherParticles.mbhParticle.MBHFeedbackJetsThresholdMass");
-  Param.GetScalar <int>		  (MBHParticleIO, "PhysicsParameters.otherParticles.mbhParticle.MBHParticleIO");
+  Param.GetScalar(MBHParticleIO, "PhysicsParameters.otherParticles.mbhParticle.MBHParticleIO");
   
   Param.GetScalar(MBHParticleIOFilename, "MBHParticleIOFilename");
   Param.GetScalar(MBHInsertLocationFilename, "MBHInsertLocationFilename");
