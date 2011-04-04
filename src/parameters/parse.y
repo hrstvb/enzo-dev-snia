@@ -398,7 +398,7 @@ const char * op_name[] = {
   struct node_expr * node_type;
   }
 
-%token <string_type>  GROUP_NAME
+/* %token <string_type>  GROUP_NAME */
 %token <string_type>  STRING
 %token <string_type>  IDENTIFIER
 %token <string_type> VARIABLE
@@ -494,7 +494,7 @@ parameter_item:
 | named_parameter_group                    {  }
  
 group_name :
-  GROUP_NAME                               { current_group = $1;
+  IDENTIFIER                               { current_group = $1;
                                              current_subgroup = ""; } 
 
 subgroup_name:

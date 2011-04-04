@@ -42,6 +42,9 @@ extern const char * parameter_type_name [];
 // #include "error.hpp"
 // #include "monitor.hpp"
 
+#include "ErrorExceptions.h"
+#include "macros_and_parameters.h"
+
 //----------------------------------------------------------------------
 // Component class includes
 //----------------------------------------------------------------------
