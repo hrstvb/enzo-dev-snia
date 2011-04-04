@@ -1,14 +1,10 @@
-// $Id: parameters_Parameters.cpp 2148 2011-03-25 01:29:44Z bordner $
+// $Id: parameters_Parameters.cpp 2174 2011-04-04 05:00:04Z bordner $
 // See LICENSE_CELLO file for license and copyright information
 
 /// @file     parameters_Parameters.cpp
 /// @author   James Bordner (jobordner@ucsd.edu)
 /// @date     Thu Jul  9 15:38:43 PDT 2009
-/// @bug      Probable memory leaks
-/// @todo     Add more info to Exception messages, e.g. parameter, expected type and actual type
 /// @brief    Read in a parameter file and access parameter values
-
-#include <string.h>
 
 #include "parameters.hpp"
 
@@ -18,23 +14,22 @@
 
 Parameters::Parameters() 
   throw()
-  :  current_group_(""),
-     current_subgroup_(""),
-     parameter_map_(),
-     parameter_tree_(new ParamNode("Parameters"))
-     ///
+  : current_group_depth_(0),
+    parameter_map_(),
+    parameter_tree_(new ParamNode("Parameters"))
 {
+  for (int i=0; i<MAX_GROUP_DEPTH; i++) current_group_[i] = 0;
 }
 
 //----------------------------------------------------------------------
 
 Parameters::Parameters(const char * file_name ) 
   throw()
-  : current_group_(""),
-    current_subgroup_(""),
+  : current_group_depth_(0),
     parameter_map_(),
     parameter_tree_(new ParamNode("Parameters"))
 {
+  for (int i=0; i<MAX_GROUP_DEPTH; i++) current_group_[i] = 0;
   read(file_name);
 }
 
@@ -63,10 +58,10 @@ void Parameters::read ( const char * file_name )
   FILE * file_pointer = fopen(file_name,"r");
 
   if ( file_pointer == NULL ) {
-    char err_msg[255];
-    sprintf (err_msg,"Error opening parameter file '%s' for reading\n",
-	     file_name);
-    ENZO_FAIL(err_msg);
+    char buffer[80];
+    sprintf (buffer,"Error opening parameter file '%s' for reading",file_name);
+    fprintf (stderr,"ERROR: Parameters::read\n%s",buffer);
+    exit(1);
   }
   
   struct param_struct * parameter_list = cello_parameters_read(file_pointer);
@@ -80,14 +75,14 @@ void Parameters::read ( const char * file_name )
 
     param->set(node);
 
-    new_param_(node->group,node->subgroup,node->parameter,param);
+    new_param_(node->group,node->parameter,param);
 
     node = node->next;
     
     // free not delete since allocated in parse.y
-    free (prev->group);
-    free (prev->subgroup);
-    free (prev->parameter);
+    for (int i=0; prev->group[i] && i < MAX_GROUP_DEPTH; i++) {
+      free (prev->group[i]);
+    }
     free (prev);
 
     prev = node;
@@ -97,10 +92,11 @@ void Parameters::read ( const char * file_name )
   // assert: node->type == enum_parameter_sentinel
 
   free (node);
+  node = NULL;
 
   fclose(file_pointer);
 
-  // printf ("[Parameter] read in %s",file_name);
+  printf ("[Parameter] read in %s\n",file_name);
 }
 
 //----------------------------------------------------------------------
@@ -112,10 +108,10 @@ void Parameters::write ( const char * file_name )
   FILE * file_pointer = fopen(file_name,"w");
 
   if ( file_pointer == NULL ) {
-    char err_msg[255];
-    sprintf (err_msg,"Error opening parameter file '%s' for writing\n",
-	     file_name);
-    ENZO_FAIL(err_msg);
+    char buffer[80];
+    sprintf (buffer,"Error opening parameter file '%s' for writing",file_name);
+    fprintf (stderr,"ERROR: Parameters::writing",buffer);
+    exit(1);
   }
   std::map<std::string,Param *>::iterator it_param;
 
@@ -126,10 +122,11 @@ void Parameters::write ( const char * file_name )
     if (it_param->second) {
       it_param->second->write(file_pointer, it_param->first);
     } else {
-      char err_msg[255];
-      sprintf (err_msg,"Uninitialized parameter %s accessed\n",
+      char message [ 80 ];
+      sprintf (message, 
+	       "uninitialized parameter %s accessed\n",
 	       it_param->first.c_str());
-      ENZO_FAIL(err_msg);
+      printf ("WARNING: Parameters::write",message);
     }
   }
 
@@ -167,7 +164,7 @@ void Parameters::set_integer
     if (! param->is_integer()) throw ExceptionParametersBadType();
   } else {
     param = new Param;
-    new_param_ (current_group_,current_subgroup_,parameter,param);
+    new_param_ (current_group_,parameter,param);
   }
   param->set_integer_(value);
   monitor_write_(parameter);
@@ -203,7 +200,7 @@ void Parameters::set_scalar
     if (! param->is_scalar()) throw ExceptionParametersBadType();
   } else {
     param = new Param;
-    new_param_ (current_group_,current_subgroup_,parameter,param);
+    new_param_ (current_group_,parameter,param);
   }
   param->set_scalar_(value);
   monitor_write_(parameter);
@@ -239,7 +236,7 @@ void Parameters::set_logical
     if (! param->is_logical()) throw ExceptionParametersBadType();
   } else {
     param = new Param;
-    new_param_ (current_group_,current_subgroup_,parameter,param);
+    new_param_ (current_group_,parameter,param);
   }
   param->set_logical_(value);
   monitor_write_(parameter);
@@ -273,76 +270,10 @@ void Parameters::set_string
     if (! param->is_string()) throw ExceptionParametersBadType();
   } else {
     param = new Param;
-    new_param_ (current_group_,current_subgroup_,parameter,param);
+    new_param_ (current_group_,parameter,param);
   }
   param->set_string_(strdup(value));
   monitor_write_(parameter);
-}
-
-//----------------------------------------------------------------------
-
-void Parameters::evaluate_scalar 
-  (
-   std::string parameter,
-   int         n, 
-   double    * result, 
-   double    * deflt,
-   double    * x, 
-   double    * y, 
-   double    * z, 
-   double    * t) throw(ExceptionParametersBadType)
-/// @param   parameter Parameter name
-/// @param   n         Length of variable arrays
-/// @param   result    Output array of evaluated scalar parameters values if it exists, or deflt if not
-/// @param   deflt     Array of default values
-/// @param   x         Array of X values
-/// @param   y         Array of Y values
-/// @param   z         Array of Z values
-/// @param   t         Array of T values
-{
-  Param * param = parameter_(parameter);
-  if (param && ! param->is_scalar_expr()) throw ExceptionParametersBadType();
-  if (param != NULL) {
-    param->evaluate_scalar(param->value_expr_,n,result,x,y,z,t);
-  } else {
-    for (int i=0; i<n; i++) result[i] = deflt[i];
-  }
-  // char deflt_string[MAX_PARAMETER_FILE_WIDTH];
-  // sprintf_expression (param->value_expr_,deflt_string);
-  // monitor_access_(parameter,deflt_string);
-}
-
-//----------------------------------------------------------------------
-
-void Parameters::evaluate_logical 
-  (
-   std::string parameter,
-   int         n, 
-   bool      * result, 
-   bool      * deflt,
-   double    * x, 
-   double    * y, 
-   double    * z, 
-   double    * t) throw(ExceptionParametersBadType)
-/// @param   parameter Parameter name
-/// @param   n         Length of variable arrays
-/// @param   result    Output array of evaluated logical parameters values if it exists, or deflt if not
-/// @param   deflt     Array of default values
-/// @param   x         Array of X values
-/// @param   y         Array of Y values
-/// @param   z         Array of Z values
-/// @param   t         Array of T values
-{
-  Param * param = parameter_(parameter);
-  if (param && ! param->is_logical_expr()) throw ExceptionParametersBadType();
-  if (param != NULL) {
-    param->evaluate_logical(param->value_expr_,n,result,x,y,z,t);
-  } else {
-    for (int i=0; i<n; i++) result[i] = deflt[i];
-  }
-  // char deflt_string[MAX_PARAMETER_FILE_WIDTH];
-  // sprintf_expression (param->value_expr_,deflt_string);
-  // monitor_access_(parameter,deflt_string);
 }
 
 //----------------------------------------------------------------------
@@ -431,109 +362,122 @@ const char * Parameters::list_value_string
 
 //----------------------------------------------------------------------
 
-void Parameters::list_evaluate_scalar 
-(
- int index,
- std::string parameter,
- int         n, 
- double    * result, 
- double    * deflt,
- double    * x, 
- double    * y, 
- double    * z, 
- double    * t
- ) throw(ExceptionParametersBadType)
-/// @param   index     Index into the list
-/// @param   parameter Parameter name
-/// @param   n         Length of variable arrays
-/// @param   result    Output array of evaluated scalar expression list parameter element values if it exists, or deflt if not
-/// @param   deflt     Array of default values
-/// @param   x         Array of X values
-/// @param   y         Array of Y values
-/// @param   z         Array of Z values
-/// @param   t         Array of T values
+std::string Parameters::group(int i) const throw()
 {
+  return (i < current_group_depth_) ? current_group_[i] : "";
+}
 
-  Param * param = list_element_(parameter,index);
-  if (param && ! param->is_scalar_expr()) throw ExceptionParametersBadType();
-  if (param != NULL) {
-    param->evaluate_scalar(param->value_expr_,n,result,x,y,z,t);
+//----------------------------------------------------------------------
+
+int Parameters::group_depth() const throw()
+{
+  return current_group_depth_;
+}
+
+//----------------------------------------------------------------------
+
+int Parameters::group_count() const throw()
+{
+  ParamNode * param_node = parameter_tree_;
+  for (int i=0; i<current_group_depth_; i++) {
+    if (param_node->subnode(current_group_[i]) != 0) {
+      param_node = param_node->subnode(current_group_[i]);
+    }
+  }
+  return (param_node) ? param_node->size() : 0;
+}
+
+//----------------------------------------------------------------------
+
+void Parameters::group_push(std::string str) throw()
+{
+  if (current_group_depth_ < MAX_GROUP_DEPTH - 1) {
+    current_group_[current_group_depth_++] = strdup(str.c_str());
   } else {
-    for (int i=0; i<n; i++) result[i] = deflt[i];
+    char message [ 80 ];
+    sprintf (message, 
+	     "Parameter grouping depth %d exceeds MAX_GROUP_DEPTH = %d",
+	     current_group_depth_,MAX_GROUP_DEPTH);
+    fprintf (stderr,"ERROR: Parameters::group_push",message);
+    exit(1);
   }
-  // char deflt_string[MAX_PARAMETER_FILE_WIDTH];
-  // sprintf_expression (param->value_expr_,deflt_string);
-  // monitor_access_(parameter,deflt_string,index);
 }
 
 //----------------------------------------------------------------------
 
-void Parameters::list_evaluate_logical 
-  (
-   int index,
-   std::string parameter,
-   int         n, 
-   bool      * result, 
-   bool      * deflt,
-   double    * x, 
-   double    * y, 
-   double    * z, 
-   double    * t) throw(ExceptionParametersBadType)
-/// @param   index     Index into the list
-/// @param   parameter Parameter name
-/// @param   n         Length of variable arrays
-/// @param   result    Output array of evaluated logical expression list parameter element values if it exists, or deflt if not
-/// @param   deflt     Array of default values
-/// @param   x         Array of X values
-/// @param   y         Array of Y values
-/// @param   z         Array of Z values
-/// @param   t         Array of T values
+void Parameters::group_pop(std::string group) throw()
 {
-  Param * param = list_element_(parameter,index);
-  if (param && ! param->is_logical_expr()) throw ExceptionParametersBadType();
-  if (param != NULL) {
-    param->evaluate_logical(param->value_expr_,n,result,x,y,z,t);
+  if (current_group_depth_ > 0) {
+    if (group != "" && group != current_group_[current_group_depth_-1]) {
+      char message [ 80 ];
+      sprintf (message, "group_pop(%s) does not match group_push(%s)",
+	       group.c_str(),current_group_[current_group_depth_-1]);
+      printf ("WARNING: Parameters::group_pop",message);
+    }
+    --current_group_depth_;
+    free (current_group_[current_group_depth_]);
+    current_group_[current_group_depth_] = NULL;
   } else {
-    for (int i=0; i<n; i++) result[i] = deflt[i];
+    fprintf (stderr,"ERROR: Parameters::group_pop",
+	     "More calls to group_pop() than group_push()");
+    exit(1);
   }
-  // char deflt_string[MAX_PARAMETER_FILE_WIDTH];
-  // sprintf_expression (param->value_expr_,deflt_string);
-  // monitor_access_(parameter,deflt_string,index);
 }
 
 //----------------------------------------------------------------------
 
-int Parameters::group_count() throw ()
+void Parameters::set_group(int index, std::string group) throw()
 {
-  return parameter_tree_->size();
-}
-
-//----------------------------------------------------------------------
-
-std::string Parameters::group(int group_index) throw ()
-{
-  return parameter_tree_->subgroup(group_index);
-}
-
-//----------------------------------------------------------------------
-
-int Parameters::subgroup_count() throw ()
-{
-  if (parameter_tree_->subnode(current_group_) != 0) {
-    return parameter_tree_->subnode(current_group_)->size();
+  if (index >= MAX_GROUP_DEPTH) {
+    char message [ 80 ];
+    sprintf (message, "set_group(%d,%s) index %d exceeds MAX_GROUP_DEPTH = %d",
+	     index,group.c_str(),index,MAX_GROUP_DEPTH);
+    fprintf (stderr,"ERROR: Parameters::set_group",message);
+    exit(1);
   }
-  return 0;
+  for (int i=index; i<current_group_depth_; i++) {
+    if (current_group_[i]) {
+      free (current_group_[i]);
+      current_group_[i] = NULL;
+    }
+  }
+  current_group_depth_ = index + 1;
+  current_group_[index] = strdup(group.c_str());
 }
 
 //----------------------------------------------------------------------
 
-std::string Parameters::subgroup(int group_index) throw ()
-{
-  if (parameter_tree_->subnode(current_group_) != 0) {
-    return parameter_tree_->subnode(current_group_)->subgroup(group_index);
-  }
-  return "";
-}
+// int Parameters::group_count() throw ()
+// {
+//   return parameter_tree_->size();
+// }
+
+// //----------------------------------------------------------------------
+
+// std::string Parameters::group(int group_index) throw ()
+// {
+//   return parameter_tree_->subgroup(group_index);
+// }
+
+// //----------------------------------------------------------------------
+
+// int Parameters::subgroup_count() throw ()
+// {
+//   if (parameter_tree_->subnode(current_group_) != 0) {
+//     return parameter_tree_->subnode(current_group_)->size();
+//   }
+//   return 0;
+// }
+
+// //----------------------------------------------------------------------
+
+// std::string Parameters::subgroup(int group_index) throw ()
+// {
+//   if (parameter_tree_->subnode(current_group_) != 0) {
+//     return parameter_tree_->subnode(current_group_)->subgroup(group_index);
+//   }
+//   return "";
+// }
 
 //----------------------------------------------------------------------
 
@@ -552,7 +496,7 @@ parameter_enum Parameters::list_type
 ( 
  int index,
  std::string  parameter
- ) throw()
+  ) throw()
 /// @param   index Index into the list
 /// @param   parameter Parameter name
 /// @return  Return type of the given parameter
@@ -575,9 +519,10 @@ void Parameters::monitor_access_
  std::string parameter,
  std::string deflt_string,
  int index
-) throw()
+ ) throw()
 {
   Param * param = 0;
+
   if (index == -1) {
     // not a list element
     param = parameter_(parameter);
@@ -595,12 +540,10 @@ void Parameters::monitor_access_
     sprintf (index_string,"[%d]",index);
   }
 
-  // printf("[Parameter] accessed %s:%s:%s%s %s\n",
-  // 	   current_group_.c_str(),
-  // 	   current_subgroup_.c_str(),
-  // 	   parameter.c_str(),
-  // 	   index_string,
-  // 	   value.c_str());
+  printf("[Parameter] accessed %s%s %s\n",
+		    parameter_name_(parameter).c_str(),
+		    index_string,
+		    value.c_str());
 }
 
 //----------------------------------------------------------------------
@@ -608,12 +551,11 @@ void Parameters::monitor_access_
 void Parameters::monitor_write_ (std::string parameter) throw()
 {
   Param * param = parameter_(parameter);
-  // printf ("Parameter write %s:%s:%s = %s\n",
-  // 	   current_group_.c_str(),
-  // 	   current_subgroup_.c_str(),
-  // 	   parameter.c_str(),
-  // 	   param ? param->value_to_string().c_str() : "[undefined]");
-
+  char buffer [80];
+  sprintf (buffer,"Parameter write %s = %s\n",
+    	   parameter_name_(parameter).c_str(),
+    	   param ? param->value_to_string().c_str() : "[undefined]");
+  printf ("%s",buffer);
 }
 
 //----------------------------------------------------------------------
@@ -682,26 +624,29 @@ Param * Parameters::list_element_ (std::string parameter, int index) throw()
 
 void Parameters::new_param_
 (
- std::string group,
- std::string subgroup,
+ char * group[],
  std::string parameter,
  Param * param
  ) throw()
 {
 
-  std::string full_parameter = 
-    group + ":" + subgroup + ":" + parameter;
+  std::string full_parameter = "";
+  for (int i=0; group[i] != 0 && i < MAX_GROUP_DEPTH; i++) {
+    full_parameter = full_parameter + group[i] + ":";
+  }
+  full_parameter = full_parameter + parameter;
 
   // Insert parameter into the parameter mapping
-  // "Group:subgroup:parameter" -> "Value"
+  // "Group:group[0]:group[1]:...:parameter" -> "Value"
 
   parameter_map_     [full_parameter] = param;
     
-  // Insert parameter into the parameter tree "Group" -> "subgroup"
-  // -> "parameter"
+  // Insert parameter into the parameter tree "Group" -> "group[0]" ->
+  // "group[1]" -> ... -> "parameter"
 
   ParamNode * param_node = parameter_tree_;
-  param_node = param_node->new_subnode(group);
-  param_node = param_node->new_subnode(subgroup);
+  for (int i=0; group[i] != NULL && i < MAX_GROUP_DEPTH; i++) {
+    param_node = param_node->new_subnode(group[i]);
+  }
   param_node = param_node->new_subnode(parameter);
 }

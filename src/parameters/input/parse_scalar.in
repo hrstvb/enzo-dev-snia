@@ -1,0 +1,4 @@
+Group { parameter = 1.6 }
+Group { parameter = 2.7e16 }
+Group { parameter = -3e+17 }
+Group { parameter = 4.523423e-2 }

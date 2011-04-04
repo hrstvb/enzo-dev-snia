@@ -1,15 +1,6 @@
 %{
 /*
- * ENZO: THE NEXT GENERATION
- *
- * A parallel astrophysics and cosmology application
- *
- * Copyright (C) 2009 James Bordner
- * Copyright (C) 2009 Laboratory for Computational Astrophysics
- * Copyright (C) 2009 Regents of the University of California
- *
- * See CELLO_LICENSE in the main directory for full license agreement
- *
+ * See LICENSE_CELLO in the main directory for full license agreement
  */
 
 #include <stdio.h>
@@ -63,97 +54,43 @@ const char * op_name[] = {
   const char * parameter_name[]  = {
     "unknown",
     "sentinel",
-    "subgroup",
+    "group",
     "integer",
     "scalar",
     "string",
     "identifier",
     "logical",
     "list",
-    "scalar_expr",
-    "logical_expr",
     "function" };
 
   /* Structure for storing a single parameter / value pair in a linked list */
-
-
-  struct node_expr * new_node_operation
-    (struct node_expr * left, 
-     enum enum_op oper,
-     struct node_expr * right)
-  {
-    
-    struct node_expr * node = malloc (sizeof (struct node_expr));
-
-    node->type          = enum_node_operation;
-    node->op_value      = oper;
-    node->left          = left;
-    node->right         = right;
-    node->function_name = NULL;
-    return node;
-  }
-
-  struct node_expr * new_node_scalar (double value)
-  {
-    struct node_expr * node = malloc (sizeof (struct node_expr));
-
-    node->type          = enum_node_scalar;
-    node->scalar_value  = value;
-    node->left          = NULL;
-    node->right         = NULL;
-    node->function_name = NULL;
-    return node;
-  }
-  struct node_expr * new_node_logical (int value)
-  {
-    struct node_expr * node = malloc (sizeof (struct node_expr));
-
-    node->type          = enum_node_integer;
-    node->integer_value = value;
-    node->left          = NULL;
-    node->right         = NULL;
-    node->function_name = NULL;
-    return node;
-  }
-  struct node_expr * new_node_variable (char * value)
-  {
-    struct node_expr * node = malloc (sizeof (struct node_expr));
-
-    node->type          = enum_node_variable;
-    node->var_value     = value[0];
-    node->left          = NULL;
-    node->right         = NULL;
-    node->function_name = NULL;
-    free (value);
-    return node;
-  }
-  struct node_expr * new_node_function
-    (double (*function)(double),
-     char * function_name,
-     struct node_expr * argument)
-  {
-    struct node_expr * node = malloc (sizeof (struct node_expr));
-
-    node->type          = enum_node_function;
-    node->fun_value     = function;
-    node->left          = argument;
-    node->right         = NULL;
-    node->function_name = strdup(function_name);
-    return node;
-  }
-
 
   /* The head of the linked list of parameter / value pairs */
 
   struct param_struct * param_head = NULL; /* head of entire list */
   struct param_struct * param_curr = NULL; /* head of current list */
 
-  /* The current group, subgroup, and parameter type */
+  /* The current groups and parameter type */
+
 
   char *              current_parameter = NULL;
-  char *              current_group     = NULL;
-  char *              current_subgroup  = NULL;
+  char *              current_group[MAX_GROUP_DEPTH];
+  int                 current_group_level = 0;
   enum enum_parameter current_type      = enum_parameter_sentinel;
+
+  void clear_groups (char * groups[]) {
+    int i;
+    for (i=0; i<MAX_GROUP_DEPTH; i++) {
+      groups[i] = 0; 
+    }
+  };
+
+  void copy_groups (char * group_dest[], char * group_src[]) {
+    int i;
+    for (i=0; i<MAX_GROUP_DEPTH; i++) {
+      group_dest[i] = (group_src[i]) ? strdup(group_src[i]) : 0;
+    }
+  };
 
   /* Function to update parameter's groups once the group is known */
 
@@ -241,8 +178,9 @@ const char * op_name[] = {
    /* Fill in the non-type-specific values for the new node */
 
      /* MEMORY LEAK */
-     p->group     = (current_group)     ? strdup(current_group)     : 0;
-     p->subgroup  = (current_subgroup)  ? strdup(current_subgroup)  : 0;
+     
+     copy_groups(p->group,current_group);
+
      p->parameter = (current_parameter) ? strdup(current_parameter) : 0;
 
      current_type = enum_parameter_unknown;
@@ -291,10 +229,10 @@ const char * op_name[] = {
   }
 
   /* New subgroup  */
-  void new_param_subgroup (char * value)
+  void new_param_group (char * value)
   {
     struct param_struct * p = new_param();
-    p->type         = enum_parameter_subgroup;
+    p->type         = enum_parameter_group;
     p->string_value = value;
   }
 
@@ -306,8 +244,7 @@ const char * op_name[] = {
     struct param_struct * p = 
       (struct param_struct *) malloc (sizeof (struct param_struct));
 
-    p->group     = NULL;
-    p->subgroup  = NULL;
+    clear_groups(p->group);
     p->parameter = NULL;
     p->type      = enum_parameter_sentinel;
     p->next       = p;
@@ -325,21 +262,11 @@ const char * op_name[] = {
     p->list_value = curr;
   }
 
-  /* New string parameter assignment */
-
-  void new_param_expr (enum enum_parameter type,
-		       struct node_expr * value)
-  {
-    struct param_struct * p = new_param();
-    p->type     = type;
-    p->op_value = value;
-  }
-
   void new_parameter()
   {
      switch (current_type) {
-     case enum_parameter_subgroup:
-       new_param_subgroup(yylval.subgroup_type);
+     case enum_parameter_group:
+       new_param_group(yylval.group_type);
        break;
      case enum_parameter_integer:
        new_param_integer(yylval.integer_type);
@@ -354,12 +281,6 @@ const char * op_name[] = {
        new_param_logical(yylval.logical_type);
        break;
      case enum_parameter_list:
-       break;
-     case enum_parameter_scalar_expr:
-       new_param_expr(enum_parameter_scalar_expr,yylval.node_type);
-       break;
-     case enum_parameter_logical_expr:
-       new_param_expr(enum_parameter_logical_expr,yylval.node_type);
        break;
     default:
        printf ("%s:%d Parse Error: unknown type %d\n",
@@ -394,8 +315,7 @@ const char * op_name[] = {
   int integer_type; 
   double scalar_type;  
   char * string_type; 
-  char * subgroup_type;
-  struct node_expr * node_type;
+  char * group_type;
   }
 
 /* %token <string_type>  GROUP_NAME */
@@ -405,13 +325,6 @@ const char * op_name[] = {
 %token <scalar_type>  SCALAR
 %token <integer_type> INTEGER
 %token <logical_type> LOGICAL
-
-%type <integer_type> cie
-%type <scalar_type>  cse
-%type <logical_type> cle
-
-%type <node_type>  vse
-%type <node_type>  vle
 
 %token LE
 %token GE
@@ -429,39 +342,6 @@ const char * op_name[] = {
 
 /* double foo (double) */
 
-%token ACOS
-%token ACOSH
-%token ASIN
-%token ASINH
-%token ATAN
-%token ATANH
-%token CBRT
-%token CEIL
-%token COS
-%token COSH
-%token ERFC
-%token ERF
-%token EXP
-%token EXPM1
-%token FABS
-%token FLOOR
-/* %token GAMMA */
-%token J0
-%token J1
-%token LGAMMA
-%token LOG10
-%token LOG1P
-%token LOGB
-%token LOG
-%token SIN
-%token SINH
-%token SQRT
-%token TAN
-%token TANH
-%token Y0
-%token Y1
-%token RINT
-
 /* double foo (double,double) */
 
  /* %token ATAN2 FMOD HYPOT NEXTAFTER POW REMAINDER SCALB */
@@ -473,35 +353,24 @@ file : /* nothing */
  ;
 
 group: 
-  group_name parameter_group                { current_group = ""; 
-                                              current_subgroup = "";  }
-| group_name named_parameter_group          { current_group = "";
-                                              current_subgroup = "";  }
-
-named_parameter_group : 
-   subgroup_name parameter_group           { current_subgroup = "";}
+group_name parameter_group  {  }
 
 parameter_group :
-  '{' parameter_list '}'                   { current_subgroup = ""; }
-| '{' parameter_list ';' '}'               { current_subgroup = ""; }
+'{' parameter_list '}'          { current_group[--current_group_level] = 0; }
+| '{' parameter_list ';' '}'    { current_group[--current_group_level] = 0; }
 
 parameter_list : 
-                      parameter_item       {  }
- | parameter_list ';' parameter_item       {  }
+                      parameter_assignment  {  }
+ | parameter_list ';' parameter_assignment  {  }
+ |                    group  {  }
+ | parameter_list ';' group  {  }
 
-parameter_item: 
-  parameter_assignment                     {  }
-| named_parameter_group                    {  }
  
 group_name :
-  IDENTIFIER                               { current_group = $1;
-                                             current_subgroup = ""; } 
-
-subgroup_name:
-   IDENTIFIER                              { current_subgroup = $1; } 
+  IDENTIFIER                    { current_group[current_group_level++] = $1; }
 
 parameter_name :
-  IDENTIFIER                               { current_parameter = $1;} 
+  IDENTIFIER                    { current_parameter = $1;} 
 
 parameter_assignment : 
   parameter_name '=' parameter_value { new_parameter(); }
@@ -509,15 +378,14 @@ parameter_assignment :
 
 parameter_value : 
  STRING { current_type = enum_parameter_string;       yylval.string_type = $1; }
- | cie  { current_type = enum_parameter_integer;      yylval.integer_type = $1;}
- | cse  { current_type = enum_parameter_scalar;       yylval.scalar_type = $1;}
- | cle  { current_type = enum_parameter_logical;      yylval.logical_type = $1; }
- | vse  { current_type = enum_parameter_scalar_expr;  yylval.node_type = $1; }
- | vle  { current_type = enum_parameter_logical_expr; yylval.node_type = $1; }
+ | INTEGER  { current_type = enum_parameter_integer;      yylval.integer_type = $1;}
+ | SCALAR   { current_type = enum_parameter_scalar;       yylval.scalar_type = $1;}
+ | LOGICAL  { current_type = enum_parameter_logical;      yylval.logical_type = $1; }
  | list { current_type = enum_parameter_list; }
  ;
 
 list: LIST_BEGIN list_elements LIST_END {  }
+    | LIST_BEGIN LIST_END {  }
 
 LIST_BEGIN:
  '[' { 
@@ -537,155 +405,13 @@ list_elements:
 { }
 ;
 
-
-cle: 
-'(' cle ')' { $$ = $2; }
- | cse LE  cse { $$ = $1 <= $3; }
- | cse GE  cse { $$ = $1 >= $3; }
- | cse '<' cse { $$ = $1 <  $3; }
- | cse '>' cse { $$ = $1 >  $3; }
- | cse EQ  cse { $$ = $1 == $3; }
- | cse NE  cse { $$ = $1 != $3; }
- | cle OR  cle { $$ = $1 || $3; }
- | cle AND cle { $$ = $1 && $3; }
- | LOGICAL { $$ = $1; }
-;
-
-cse: 
- '(' cse ')' { $$ = $2; }
- | cse '+' cse { $$ = $1 + $3;}
- | cse '-' cse { $$ = $1 - $3;}
- | cse '*' cse { $$ = $1 * $3;}
- | cse '/' cse { $$ = $1 / $3;}
-| ACOS '(' cse ')' { $$ = acos($3); }
-| ACOSH '(' cse ')' { $$ = acosh($3); }
-| ASIN '(' cse ')' { $$ = asin($3); }
-| ASINH '(' cse ')' { $$ = asinh($3); }
-| ATAN '(' cse ')' { $$ = atan($3); }
-| ATANH '(' cse ')' { $$ = atanh($3); }
-| CBRT '(' cse ')' { $$ = cbrt($3); }
-| CEIL '(' cse ')' { $$ = ceil($3); }
-| COS '(' cse ')' { $$ = cos($3); }
-| COSH '(' cse ')' { $$ = cosh($3); }
-| ERFC '(' cse ')' { $$ = erfc($3); }
-| ERF '(' cse ')' { $$ = erf($3); }
-| EXP '(' cse ')' { $$ = exp($3); }
-| EXPM1 '(' cse ')' { $$ = expm1($3); }
-| FABS '(' cse ')' { $$ = fabs($3); }
-| FLOOR '(' cse ')' { $$ = floor($3); }
-/* | GAMMA '(' cse ')' { $$ = gamma($3); } */
-| J0 '(' cse ')' { $$ = j0($3); }
-| J1 '(' cse ')' { $$ = j1($3); }
-| LGAMMA '(' cse ')' { $$ = lgamma($3); }
-| LOG10 '(' cse ')' { $$ = log10($3); }
-| LOG1P '(' cse ')' { $$ = log1p($3); }
-| LOGB '(' cse ')' { $$ = logb($3); }
-| LOG '(' cse ')' { $$ = log($3); }
-| SIN '(' cse ')' { $$ = sin($3); }
-| SINH '(' cse ')' { $$ = sinh($3); }
-| SQRT '(' cse ')' { $$ = sqrt($3); }
-| TAN '(' cse ')' { $$ = tan($3); }
-| TANH '(' cse ')' { $$ = tanh($3); }
-| Y0 '(' cse ')' { $$ = y0($3); }
-| Y1 '(' cse ')' { $$ = y1($3); }
-| RINT '(' cse ')' { $$ = rint($3); }
-| SCALAR { $$ = $1;}
- ;
-
-cie: 
- '(' cie ')' { $$ = $2; }
- | cie '+' cie { $$ = $1 + $3;}
- | cie '-' cie { $$ = $1 - $3;}
- | cie '*' cie { $$ = $1 * $3;}
- | cie '/' cie { $$ = $1 / $3;}
- | INTEGER { $$ = $1;}
- ;
-
-vse: 
-'(' vse ')'    { $$ = $2; }
- | vse '+' cse { $$ = new_node_operation ($1, enum_op_add,new_node_scalar($3)); }
- | cse '+' vse { $$ = new_node_operation (new_node_scalar($1), enum_op_add,$3); }
- | vse '+' vse { $$ = new_node_operation ($1, enum_op_add,$3); }
- | vse '-' cse { $$ = new_node_operation ($1, enum_op_sub,new_node_scalar($3)); }
- | cse '-' vse { $$ = new_node_operation (new_node_scalar($1), enum_op_sub,$3); }
- | vse '-' vse { $$ = new_node_operation ($1, enum_op_sub,$3); }
- | vse '*' cse { $$ = new_node_operation ($1, enum_op_mul,new_node_scalar($3)); }
- | cse '*' vse { $$ = new_node_operation (new_node_scalar($1), enum_op_mul,$3); }
- | vse '*' vse { $$ = new_node_operation ($1, enum_op_mul,$3); }
- | vse '/' cse { $$ = new_node_operation ($1, enum_op_div,new_node_scalar($3)); }
- | cse '/' vse { $$ = new_node_operation (new_node_scalar($1), enum_op_div,$3); }
- | vse '/' vse { $$ = new_node_operation ($1, enum_op_div,$3); }
- | ACOS   '(' vse ')' { $$ = new_node_function ( acos, "acos", $3); }
- | ACOSH  '(' vse ')' { $$ = new_node_function ( acosh, "acosh", $3); }
- | ASIN   '(' vse ')' { $$ = new_node_function ( asin, "asin", $3); }
- | ASINH  '(' vse ')' { $$ = new_node_function ( asinh, "asinh", $3); }
- | ATAN   '(' vse ')' { $$ = new_node_function ( atan, "atan", $3); }
- | ATANH  '(' vse ')' { $$ = new_node_function ( atanh, "atanh", $3); }
- | CBRT   '(' vse ')' { $$ = new_node_function ( cbrt, "cbrt", $3); }
- | CEIL   '(' vse ')' { $$ = new_node_function ( ceil, "ceil", $3); }
- | COS    '(' vse ')' { $$ = new_node_function ( cos, "cos", $3); }
- | COSH   '(' vse ')' { $$ = new_node_function ( cosh, "cosh", $3); }
- | ERFC   '(' vse ')' { $$ = new_node_function ( erfc, "erfc", $3); }
- | ERF    '(' vse ')' { $$ = new_node_function ( erf, "erf", $3); }
- | EXP    '(' vse ')' { $$ = new_node_function ( exp, "exp", $3); }
- | EXPM1  '(' vse ')' { $$ = new_node_function ( expm1, "expm1", $3); }
- | FABS   '(' vse ')' { $$ = new_node_function ( fabs, "fabs", $3); }
- | FLOOR  '(' vse ')' { $$ = new_node_function ( floor, "floor", $3); }
-/* | GAMMA '(' vse ')' { $$ = new_node_function ( gamma, "gamma", $3); } */
- | J0     '(' vse ')' { $$ = new_node_function ( j0, "j0", $3); }
- | J1     '(' vse ')' { $$ = new_node_function ( j1, "j1", $3); }
- | LGAMMA '(' vse ')' { $$ = new_node_function ( lgamma, "lgamma", $3); }
- | LOG10  '(' vse ')' { $$ = new_node_function ( log10, "log10", $3); }
- | LOG1P  '(' vse ')' { $$ = new_node_function ( log1p, "log1p", $3); }
- | LOGB   '(' vse ')' { $$ = new_node_function ( logb, "logb", $3); }
- | LOG    '(' vse ')' { $$ = new_node_function ( log, "log", $3); }
- | SIN    '(' vse ')' { $$ = new_node_function ( sin, "sin", $3); }
- | SINH   '(' vse ')' { $$ = new_node_function ( sinh, "sinh", $3); }
- | SQRT   '(' vse ')' { $$ = new_node_function ( sqrt, "sqrt", $3); }
- | TAN    '(' vse ')' { $$ = new_node_function ( tan, "tan", $3); }
- | TANH   '(' vse ')' { $$ = new_node_function ( tanh, "tanh", $3); }
- | Y0     '(' vse ')' { $$ = new_node_function ( y0, "y0", $3); }
- | Y1     '(' vse ')' { $$ = new_node_function ( y1, "y1", $3); }
- | RINT   '(' vse ')' { $$ = new_node_function ( rint, "rint", $3); }
- | VARIABLE { $$ = new_node_variable ($1);  }
- ;
-
-
-vle: 
- '(' vle ')' { }
- | vse LE cse  { $$ = new_node_operation ($1, enum_op_le,new_node_scalar($3)); }
- | cse LE vse  { $$ = new_node_operation (new_node_scalar($1), enum_op_le,$3); }
- | vse LE vse  { $$ = new_node_operation ($1, enum_op_le,$3); }
- | vse GE cse  { $$ = new_node_operation ($1, enum_op_ge,new_node_scalar($3)); }
- | cse GE vse  { $$ = new_node_operation (new_node_scalar($1), enum_op_ge,$3); }
- | vse GE vse  { $$ = new_node_operation ($1, enum_op_ge,$3); }
- | vse '<' cse { $$ = new_node_operation ($1, enum_op_lt,new_node_scalar($3)); }
- | cse '<' vse { $$ = new_node_operation (new_node_scalar($1), enum_op_lt,$3); }
- | vse '<' vse { $$ = new_node_operation ($1, enum_op_lt,$3); }
- | vse '>' cse { $$ = new_node_operation ($1, enum_op_gt,new_node_scalar($3)); }
- | cse '>' vse { $$ = new_node_operation (new_node_scalar($1), enum_op_gt,$3); }
- | vse '>' vse { $$ = new_node_operation ($1, enum_op_gt,$3); }
- | vse EQ cse  { $$ = new_node_operation ($1, enum_op_eq,new_node_scalar($3)); }
- | cse EQ vse  { $$ = new_node_operation (new_node_scalar($1), enum_op_eq,$3); }
- | vse EQ vse  { $$ = new_node_operation ($1, enum_op_eq,$3); }
- | vse NE cse  { $$ = new_node_operation ($1, enum_op_ne,new_node_scalar($3)); }
- | cse NE vse  { $$ = new_node_operation (new_node_scalar($1), enum_op_ne,$3); }
- | vse NE vse  { $$ = new_node_operation ($1, enum_op_ne,$3); }
- | vle OR cle  { $$ = new_node_operation ($1, enum_op_or,new_node_logical($3)); }
- | cle OR vle  { $$ = new_node_operation (new_node_logical($1), enum_op_or,$3); }
- | vle OR vle  { $$ = new_node_operation ($1, enum_op_or,$3); }
- | vle AND cle { $$ = new_node_operation ($1, enum_op_and,new_node_logical($3)); }
- | cle AND vle { $$ = new_node_operation (new_node_logical($1), enum_op_and,$3); }
- | vle AND vle { $$ = new_node_operation ($1, enum_op_and,$3); }
-;
-
-
-
 %%
 
 struct param_struct * 
 cello_parameters_read(FILE * fp)
 {
+  clear_groups(current_group);
+
   /* initialize the linked list with an initial sentinel (sentinel) node */
   param_head = param_curr = new_param_sentinel();
 
@@ -708,114 +434,20 @@ void indent (int level)
   }
 }
 
-void print_expression (struct node_expr * node,
-		       FILE * fp)
-{
-  if (node == NULL) {
-    fprintf (fp,"NULL");
-  } else {
-    char left,right;
-    switch (node->type) {
-    case enum_node_integer:
-      fprintf (fp,"%d",node->integer_value);
-      break;
-    case enum_node_scalar:
-      fprintf (fp,"%g",node->scalar_value);
-      break;
-    case enum_node_variable:
-      fprintf (fp,"%c",node->var_value);
-      break;
-    case enum_node_function:
-      fprintf (fp,"%s(",node->function_name);
-      print_expression(node->left,fp);
-      fprintf (fp,")");
-      break;
-    case enum_node_operation:
-      left  = (node->left->type == enum_node_operation) ? '(' : ' ';
-      right = (node->left->type == enum_node_operation) ? ')' : ' ';
-      fprintf (fp,"%c",left);
-      print_expression(node->left,fp);
-      fprintf (fp,"%c",right);
-      fprintf (fp," %s ",op_name[node->op_value]);
-      left  = (node->right->type == enum_node_operation) ? '(' : ' ';
-      right = (node->right->type == enum_node_operation) ? ')' : ' ';
-      fprintf (fp,"%c",left);
-      print_expression(node->right,fp);
-      fprintf (fp,"%c",right);
-      break;
-    default:
-      break;
-    }
-    fflush(fp);
-  }
-
-}
-
-void sprintf_expression (struct node_expr * node,
-			 char * buffer)
-/* WARNING: buffer is assumed to be big enough to hold the expression */
-{
-  if (node == NULL) {
-    sprintf (buffer,"NULL");
-  } else {
-    char left,right;
-    switch (node->type) {
-    case enum_node_integer:
-      sprintf (buffer,"%d",node->integer_value);
-      buffer += strlen(buffer);
-      break;
-    case enum_node_scalar:
-      sprintf (buffer,"%g",node->scalar_value);
-      buffer += strlen(buffer);
-      break;
-    case enum_node_variable:
-      sprintf (buffer,"%c",node->var_value);
-      buffer += strlen(buffer);
-      break;
-    case enum_node_function:
-      sprintf (buffer,"%s(",node->function_name);
-      buffer += strlen(buffer);
-      sprintf_expression(node->left,buffer+strlen(buffer));
-      buffer += strlen(buffer);
-      sprintf (buffer,")");
-      buffer += strlen(buffer);
-      break;
-    case enum_node_operation:
-      left  = (node->left->type == enum_node_operation) ? '(' : ' ';
-      right = (node->left->type == enum_node_operation) ? ')' : ' ';
-      sprintf (buffer,"%c",left);
-      buffer += strlen(buffer);
-      sprintf_expression(node->left,buffer+strlen(buffer));
-      buffer += strlen(buffer);
-      sprintf (buffer,"%c",right);
-      buffer += strlen(buffer);
-      sprintf (buffer," %s ",op_name[node->op_value]);
-      buffer += strlen(buffer);
-      left  = (node->right->type == enum_node_operation) ? '(' : ' ';
-      right = (node->right->type == enum_node_operation) ? ')' : ' ';
-      sprintf (buffer,"%c",left);
-      buffer += strlen(buffer);
-      sprintf_expression(node->right,buffer+strlen(buffer));
-      buffer += strlen(buffer);
-      sprintf (buffer,"%c",right);
-      buffer += strlen(buffer);
-      break;
-    default:
-      break;
-    }
-  }
-}
-
 void cello_parameters_print_list(struct param_struct * head, int level)
 {
   struct param_struct * p = head->next;
+  int i;
 
   while (p && p->type != enum_parameter_sentinel) {
 
     if (p->group != NULL) {
       indent(level);
-      printf ("%s %s:%s:%s = ", 
-	      parameter_name[p->type],p->group, p->subgroup, p->parameter);
+      printf ("%s ", parameter_name[p->type]);
+      for (i=0; p->group[i] != NULL && i < MAX_GROUP_DEPTH; i++) {
+	printf ("%s:",p->group[i]);
+      }
+      printf ("%s = ", p->parameter);
     } else {
       /* list element */
       indent(level);
@@ -832,8 +464,8 @@ void cello_parameters_print_list(struct param_struct * head, int level)
     case enum_parameter_string:  
       printf ("%s\n",p->string_value); 
       break;
-    case enum_parameter_subgroup:  
-      printf ("Uh oh: SUBGROUP %s (should be deleted)\n",p->string_value);
+    case enum_parameter_group:  
+      printf ("Uh oh: GROUP %s (should be deleted)\n",p->string_value);
       break;
     case enum_parameter_logical:
       printf ("%s\n",p->logical_value ? "true" : "false");
@@ -844,14 +476,6 @@ void cello_parameters_print_list(struct param_struct * head, int level)
       cello_parameters_print_list(p->list_value, level + 1);
       indent(level);
       printf ("]\n"); 
-      break;
-    case enum_parameter_logical_expr:
-      indent(level);
-      print_expression(p->op_value,stdout); printf ("\n");
-      break;
-    case enum_parameter_scalar_expr:
-      indent(level);
-      print_expression(p->op_value,stdout); printf ("\n");
       break;
     default: 
       indent(level);

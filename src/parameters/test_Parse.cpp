@@ -6,14 +6,15 @@
 /// @date     2009-10-06
 /// @brief    Test program for reading in parameters then displaying them
 
+#include <stdio.h>
 #include <string.h>
-#include "parameters.hpp"
 #include "test.hpp"
+#include "parameters.hpp"
 
+const int debug = true;
 
 int main()
 {
   cello_parameters_read(stdin);
   cello_parameters_print();
 }
-

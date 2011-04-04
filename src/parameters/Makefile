@@ -1,31 +1,56 @@
-SRC = parameters.o parameters_Param.o parameters_Parameters.o
-PARSE = lex.yy.o parse.tab.o
-OBJ = $(SRC) $(PARSE)
-INCLUDE = -I ../enzo
+SRC_CXX  = parameters.cpp parameters_Param.cpp parameters_Parameters.cpp
+SRC_C    = parse.tab.c lex.yy.c
 
-# compile everything
-all: test_Parameters test_Parse
-doc: 
-	doxygen
+OBJ  = $(patsubst %.cpp,%.o,$(SRC_CXX)) $(patsubst %.c,%.o,$(SRC_C))
+EXE    = test_Parse test_Parameters
 
-# tests
+
+all: run-exe
+
+#=======================================================================
+# TARGETS
+#=======================================================================
+
+.PHONY: compile
+compile: $(EXE)
+
+.PHONY: run-exe
+run-exe: $(EXE)
+	-./test_Parse < input/parse_groups.in > output/parse_groups.out
+	-./test_Parse < input/parse_implosion.in > output/parse_implosion.out
+	-./test_Parse < input/parse_integer.in > output/parse_integer.out
+	-./test_Parse < input/parse_list.in > output/parse_list.out
+	-./test_Parse < input/parse_logical.in > output/parse_logical.out
+	-./test_Parse < input/parse_scalar.in > output/parse_scalar.out
+	test_Parameters > output/test_Parameters.out
+	-egrep "FAIL|pass" output/*
+
+.PHONY: doc
+doc:
+	doxygen  # creates html/index.html
+
+#-----------------------------------------------------------------------
+
 test_Parameters: test_Parameters.o $(OBJ)
-	g++ -o test_Parameters $(INCLUDE) test_Parameters.o $(OBJ)
-test_Parse:test_Parse.o $(OBJ)
-	g++ -o test_Parse $(INCLUDE) test_Parse.o $(OBJ)
+	$(CXX) -o test_Parameters test_Parameters.o $(OBJ)
 
-# object files
-parameters.o: parameters.cpp
-	g++ -c parameters.cpp $(INCLUDE) 
-parameters_Param.o: parameters_Param.cpp
-	g++ -c parameters_Param.cpp $(INCLUDE) 
-parameters_Parameters.o: parameters_Parameters.cpp
-	g++ -c parameters_Parameters.cpp $(INCLUDE) 
+test_Parse: test_Parse.o $(OBJ)
+	$(CXX) -o test_Parse test_Parse.o $(OBJ)
 
-clean:
-	rm -rf *.o *~ test_Parameters test_Parse test.in test.out html
+parse.tab.o:parse.tab.c
+	$(CC) parse.tab.c -c
+lex.yy.o:lex.yy.c
+	$(CC) lex.yy.c -c
 
-lex.yy.c: parse.l
-	flex -t parse.l > lex.yy.c
+lex.yy.c:parse.l
+	flex parse.l
+parse.tab.h: parse.y
+	bison -d parse.y 
 parse.tab.c: parse.y
-	bison -d -t -o parse.tab.c parse.y
+	bison -d parse.y 
+
+.PHONY: clean
+clean:
+	-@(rm -rf output/* *~ *.o test.in test.out html $(EXE))
+
+

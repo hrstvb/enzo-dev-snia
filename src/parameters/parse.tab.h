@@ -50,38 +50,7 @@
      NE = 266,
      EQ = 267,
      AND = 268,
-     OR = 269,
-     ACOS = 270,
-     ACOSH = 271,
-     ASIN = 272,
-     ASINH = 273,
-     ATAN = 274,
-     ATANH = 275,
-     CBRT = 276,
-     CEIL = 277,
-     COS = 278,
-     COSH = 279,
-     ERFC = 280,
-     ERF = 281,
-     EXP = 282,
-     EXPM1 = 283,
-     FABS = 284,
-     FLOOR = 285,
-     J0 = 286,
-     J1 = 287,
-     LGAMMA = 288,
-     LOG10 = 289,
-     LOG1P = 290,
-     LOGB = 291,
-     LOG = 292,
-     SIN = 293,
-     SINH = 294,
-     SQRT = 295,
-     TAN = 296,
-     TANH = 297,
-     Y0 = 298,
-     Y1 = 299,
-     RINT = 300
+     OR = 269
    };
 #endif
 
@@ -92,19 +61,18 @@ typedef union YYSTYPE
 {
 
 /* Line 1676 of yacc.c  */
-#line 392 "parse.y"
+#line 313 "parse.y"
  
   int logical_type;  
   int integer_type; 
   double scalar_type;  
   char * string_type; 
-  char * subgroup_type;
-  struct node_expr * node_type;
+  char * group_type;
   
 
 
 /* Line 1676 of yacc.c  */
-#line 108 "parse.tab.h"
+#line 76 "parse.tab.h"
 } YYSTYPE;
 # define YYSTYPE_IS_TRIVIAL 1
 # define yystype YYSTYPE /* obsolescent; will be withdrawn */

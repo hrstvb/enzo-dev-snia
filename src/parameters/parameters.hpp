@@ -7,7 +7,6 @@
 /// @file     parameters.hpp
 /// @author   James Bordner (jobordner@ucsd.edu)
 /// @date     Thu Jul  9 15:44:21 PDT 2009
-/// @todo     rename parameter_enum parameter_type_enum, etc.
 /// @brief    Include file for the \ref Parameters component
 
 /// @enum     parameter_enum
@@ -19,11 +18,12 @@ enum parameter_enum {
   parameter_string,
   parameter_logical,
   parameter_list,
-  parameter_scalar_expr,
-  parameter_logical_expr
 };
 
 extern const char * parameter_type_name [];
+
+class ExceptionParametersBadType {};
+
 
 //----------------------------------------------------------------------
 // System includes
@@ -31,6 +31,7 @@ extern const char * parameter_type_name [];
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <map>
 #include <string>
 #include <vector>
@@ -38,12 +39,6 @@ extern const char * parameter_type_name [];
 //----------------------------------------------------------------------
 // Component dependencies
 //----------------------------------------------------------------------
-
-// #include "error.hpp"
-// #include "monitor.hpp"
-
-#include "ErrorExceptions.h"
-#include "macros_and_parameters.h"
 
 //----------------------------------------------------------------------
 // Component class includes

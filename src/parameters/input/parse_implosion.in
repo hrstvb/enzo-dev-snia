@@ -1,0 +1,65 @@
+
+   Domain { 
+      lower = [0.0, 0.0];
+      upper = [0.3, 0.3];
+   } 
+
+   Mesh { 
+      root_size      = [400,400];
+      block_size     = [8,8];
+   }
+
+   Field {
+
+      ghosts = 3;
+
+      fields = [
+        "density",
+        "velocity_x",
+        "velocity_y",
+        "total_energy",
+        "internal_energy"
+      ] ;
+
+      courant   = 0.8;
+
+   }
+
+   Method {
+
+      sequence = ["ppm"];
+
+      ppm {
+         diffusion   = true;
+         flattening  = 3;
+         steepening  = true;
+         dual_energy = false;
+     }
+   }
+
+   Physics {
+
+      dimensions = 2;
+      gamma = 1.4;
+
+   }
+
+   Initial { code = "implosion_2d" }
+
+   Boundary { type = "reflecting" }
+
+   Stopping {
+      time  = 2.5;
+      cycle = 100000;
+   }
+
+   Output { 
+
+      groups = ["cycle_step"];
+
+      cycle_step {
+         file_name      = "implosion2d-code-%04d";
+         type           = "image";
+         cycle_interval = 10;
+      }
+   }

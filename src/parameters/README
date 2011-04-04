@@ -1,0 +1,86 @@
+======================================================================
+CELLO PARAMETERS 1.0
+======================================================================
+
+This is a snapshot of the Enzo-P / Cello configuration system,
+intended for use with Enzo-3.0, with modifications indicated below
+
+   1. (*) Removed expression evaluation, since it was indicated that
+      this was not desired in Enzo-3.0, and it conflicted with using
+      parentheses instead of square brackets for delimiting lists for
+      libconfig compatibility.
+
+   2. (*) Both group and parameter names can now be either upper-case
+      or lower-case
+
+   3. (*) Accessing parameter values from within Enzo can include the
+      full grouping, using a colon as a delimiter (see BASIC USAGE
+      example #2 below)
+
+   4. ( ) [UNFINISHED] Allowing nested lists.
+
+
+EXECUTABLES
+
+   test_Parse: Reads parameters from standard input and echos to
+      standard output, to confirm that values and types are read in
+      correctly.  Sample input files are provided in the inputs/
+      subdirectory.
+
+   test_Parameters: Implements unit tests to exercise the Parameters
+      class API.  Creates the file "test.in", reads it in, and writes
+      pass / FAIL results to "test.out".  New tests can be added as
+      desired
+               
+
+DOCUMENTATION
+
+  For documentation, type "make doc", then point your browser to
+  html/classParameters.html for the "Parameters" class API.
+
+
+MAKEFILE
+
+    [default] Compiles and runs test_Parse and test_Parameters
+
+    compile: compiles test_Parse and test_Parameters
+
+    run-exe: runs test_Parse and test_Parameters
+
+    doc: generates doxygen documentation in html/*
+
+    clean: removes generated files, including object files, executables,
+       test output, and doxygen documentation
+
+
+BASIC USAGE
+
+   //--------------------------------------------------
+
+   // 1. Read in the configuration file "test.in" into the parameters
+   // object
+
+   Parameters parameters ("test.in");
+
+   //--------------------------------------------------
+
+   // 2. Access the integer parameter "dimensions" in the "Mesh" group,
+   // with default value of "0" if not defined.
+
+   int dim = parameters.value_integer ("Mesh:dimensions",0);
+
+   //--------------------------------------------------
+
+   // 3. Same thing as above, but setting the "Mesh" group separately,
+   // mirroring the grouping in the parameter file itself.
+
+   parameters.set_group (0,"Mesh");
+
+   int dim = parameters.value_integer ("dimensions",0);
+
+======================================================================
+
+James Bordner
+San Diego Supercomputer Center
+University of California, San Diego
+jobordner@ucsd.edu

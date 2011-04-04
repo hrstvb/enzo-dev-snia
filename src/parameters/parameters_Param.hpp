@@ -7,23 +7,9 @@
 /// @file     parameters_Param.hpp
 /// @author   James Bordner (jobordner@ucsd.edu)
 /// @date     Sun Oct 11 14:55:25 PDT 2009
-/// @todo     Rename print_expression to match cello_parameters_print_list
-/// @todo     Keep track of unaccessed parameters
 /// @brief    [\ref Parameters] Interface for the Param class
 
 //----------------------------------------------------------------------
-
-/// @brief Print a parameter expression
-extern "C" { 
-  void print_expression(struct node_expr * node,
-		      FILE * fp = stdout);
-}
-
-/// @brief Print a parameter expression
-extern "C" { 
-  void sprintf_expression(struct node_expr * node,
-			  char * buffer);
-}
 
 /// @brief Print a parameter list
 extern "C" { 
@@ -36,8 +22,7 @@ class Param {
 
   /// @class    Param
   /// @ingroup  Parameters
-  /// @brief    [\ref Parameters] Represent and evaluate various
-  /// parameter types and expressions
+  /// @brief    [\ref Parameters] Represent various type
 
   friend class Parameters;
 
@@ -50,8 +35,6 @@ class Param {
 //     param_logical_,
 //     param_string_,
 //     param_list_,
-//     param_scalar_expr_,
-//     param_logical_expr_
 //   };
 
 
@@ -69,32 +52,11 @@ public: // interface
 
   /// Copy constructor
   Param(const Param & param) throw()
-  { printf("%s:%d INCOMPLETE: Param::Param",__FILE__,__LINE__); };
+  { };
 
   /// Assignment operator
   Param & operator= (const Param & param) throw()
-  { printf("%s:%d INCOMPLETE: Param::operator=()",__FILE__,__LINE__);
-    return *this; };
-
-  /// Evaluate a scalar expression given vectos x,y,z,t
-  void evaluate_scalar  
-  ( struct node_expr * node, 
-    int                n, 
-    double *           result, 
-    double *           x, 
-    double *           y, 
-    double *           z, 
-    double *           t);
-
-  /// Evaluate a logical expression given vectos x,y,z,t
-  void evaluate_logical  
-  ( struct node_expr * node, 
-    int                n, 
-    bool *             result, 
-    double *           x, 
-    double *           y, 
-    double *           z, 
-    double *           t);
+  { return *this; };
 
   /// Set the parameter type and value
   void set(struct param_struct * param);
@@ -117,12 +79,6 @@ public: // interface
 
   /// Return whether the parameter is a list
   bool is_list()         { return type_ == parameter_list; };
-
-  /// Return whether the parameter is a scalar expression
-  bool is_scalar_expr()  { return type_ == parameter_scalar_expr; };
-
-  /// Return whether the parameter is a logical expression
-  bool is_logical_expr() { return type_ == parameter_logical_expr; };
 
   /// Get an integer parameter
   int get_integer () 
@@ -164,7 +120,6 @@ private: // attributes
     bool               value_logical_; 
     char *             value_string_;
     list_type        * value_list_;
-    struct node_expr * value_expr_;
   };
 
 private: // functions
@@ -214,20 +169,6 @@ private: // functions
     }
   };
 
-  /// Set a scalar expression parameter
-  void set_scalar_expr_ (struct node_expr * value)
-  { 
-    type_ = parameter_scalar_expr;
-    value_expr_     = value; 
-  };
-
-  /// Set a logical expression parameter
-  void set_logical_expr_ (struct node_expr * value)
-  { 
-    type_ = parameter_logical_expr;
-    value_expr_     = value; 
-  };
-
   /// Deallocate the parameter
   void dealloc_();
 
@@ -237,12 +178,6 @@ private: // functions
   /// Deallocate a list of parameters
   void dealloc_list_     (list_type *value_list_);
 
-  /// Deallocate an expression parameter
-  void dealloc_node_expr_ (struct node_expr * p);
-
-  ///
-  void write_scalar_expr_(FILE * file_pointer,
-			  struct node_expr * value_expr_);
 };
 
 //----------------------------------------------------------------------

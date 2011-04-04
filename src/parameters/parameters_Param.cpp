@@ -1,11 +1,9 @@
-// $Id: parameters_Param.cpp 2093 2011-03-12 01:17:05Z bordner $
+// $Id: parameters_Param.cpp 2169 2011-04-03 17:01:09Z bordner $
 // See LICENSE_CELLO file for license and copyright information
 
 /// @file     parameters_Param.cpp
 /// @author   James Bordner (jobordner@ucsd.edu)
 /// @date     Sun Oct 11 15:02:08 PDT 2009
-/// @bug      Minor memory leaks
-/// @todo     Fix buffer overruns if parameter file lines or fields too long
 /// @brief    Implementation of the Param class
 
 #include "parameters.hpp"
@@ -32,16 +30,10 @@ void Param::set (struct param_struct * node)
   case enum_parameter_list:
     set_list_(node->list_value);
     break;
-  case enum_parameter_scalar_expr:
-    set_scalar_expr_(node->op_value);
-    break;
-  case enum_parameter_logical_expr:
-    set_logical_expr_(node->op_value);
-    break;
   case enum_parameter_unknown:
   case enum_parameter_sentinel:
   case enum_parameter_function:
-  case enum_parameter_subgroup:
+  case enum_parameter_group:
   case enum_parameter_identifier:
     break;
   }
@@ -56,10 +48,6 @@ void Param::dealloc_()
     break;
   case parameter_list:   
     dealloc_list_(value_list_); 
-    break;
-  case parameter_logical_expr:
-  case parameter_scalar_expr:
-    dealloc_node_expr_(value_expr_);
     break;
   case parameter_unknown:
   case parameter_integer:
@@ -84,7 +72,9 @@ void Param::write(FILE * file_pointer,
   fprintf (file_pointer,"%s ",parameter.c_str());
 
   // Write the parameter value
-  fprintf (file_pointer,"%s\n", value_to_string().c_str());
+  fprintf (file_pointer,"%s", value_to_string().c_str());
+
+  fprintf (file_pointer,"\n");
 }
 
 
@@ -97,11 +87,7 @@ std::string Param::value_to_string ()
     break;
   case parameter_list:
     sprintf (string_buffer,"LIST\n");
-    printf("%s:%d Param::write\n",__FILE__,__LINE__);
-    break;
-  case parameter_logical_expr:
-  case parameter_scalar_expr:
-    sprintf_expression(value_expr_,string_buffer);
+    printf ("INCOMPLETE: Param::write");
     break;
   case parameter_integer:
     sprintf (string_buffer,"%d",value_integer_);
@@ -119,196 +105,6 @@ std::string Param::value_to_string ()
   return string_buffer;
 }
  
-void Param::evaluate_scalar
-(struct node_expr * node, 
- int                n, 
- double *           result, 
- double *           x, 
- double *           y, 
- double *           z, 
- double *           t)
-/// @param node Head node of the tree defining the scalar expression
-/// @param n Length of the result buffer
-/// @param result Array in which to store the expression evaluations
-/// @param x Array of X spatial values
-/// @param y Array of Y spatial values
-/// @param z Array of Z spatial values
-/// @param t Array of time values
-{
-  double * left  = NULL;
-  double * right = NULL;
-
-  value_accessed_ = true;
-
-  if (node->left) {
-    left = new double [n];
-    evaluate_scalar(node->left,n,left,x,y,z,t);
-  }
-  if (node->right) {
-    right = new double [n];
-    evaluate_scalar(node->right,n,right,x,y,z,t);
-  }
-      
-  int i;
-  switch (node->type) {
-  case enum_node_operation:
-    switch (node->op_value) {
-    case enum_op_add: for (i=0; i<n; i++) result[i] = left[i] + right[i]; break;
-    case enum_op_sub: for (i=0; i<n; i++) result[i] = left[i] - right[i]; break;
-    case enum_op_mul: for (i=0; i<n; i++) result[i] = left[i] * right[i]; break;
-    case enum_op_div: for (i=0; i<n; i++) result[i] = left[i] / right[i]; break;
-    default:
-    case enum_op_le:
-    case enum_op_lt:
-    case enum_op_ge:
-    case enum_op_gt:
-    case enum_op_eq:
-    case enum_op_ne:
-    case enum_op_and:
-    case enum_op_or:
-      fprintf (stderr,"%s:%d ERROR: logical operator %d in scalar expression\n",
-	       __FILE__,__LINE__,node->op_value);
-      break;
-    }
-    break;
-  case enum_node_scalar:
-    for (i=0; i<n; i++) result[i] = node->scalar_value;
-    break;
-  case enum_node_integer:
-    for (i=0; i<n; i++) result[i] = double(node->integer_value);
-    break;
-  case enum_node_variable:
-    switch (node->var_value) {
-    case 'x':	for (i=0; i<n; i++) result[i] = x[i]; break;
-    case 'y':	for (i=0; i<n; i++) result[i] = y[i]; break;
-    case 'z':	for (i=0; i<n; i++) result[i] = z[i]; break;
-    case 't':	for (i=0; i<n; i++) result[i] = t[i]; break;
-    default:
-      fprintf (stderr,"%s:%d ERROR: unknown variable %c in scalar expression\n",
-	       __FILE__,__LINE__,node->var_value);
-      break;
-    }
-    break;
-  case enum_node_function:
-    for (i=0; i<n; i++) result[i] = (*(node->fun_value))(left[i]);
-    break;
-  case enum_node_unknown:
-  default:
-    fprintf (stderr,"%s:%d ERROR: unknown expression type %d\n",
-	     __FILE__,__LINE__,node->type);
-    break;
-  }
-
-  delete [] left;
-  delete [] right;
-}
-
-void Param::evaluate_logical
-(struct node_expr * node, 
- int                n, 
- bool   *           result, 
- double *           x, 
- double *           y, 
- double *           z, 
- double *           t)
-/// @param node Head node of the tree defining the scalar expression
-/// @param n Length of the result buffer
-/// @param result Array in which to store the expression evaluations
-/// @param x Array of X spatial values
-/// @param y Array of Y spatial values
-/// @param z Array of Z spatial values
-/// @param t Array of time values
-{
-  double * left_scalar  = NULL;
-  double * right_scalar = NULL;
-  bool * left_logical  = NULL;
-  bool * right_logical = NULL;
-
-  value_accessed_ = true;
-
-  // Recurse on left subtree
-
-  if (node->left && node->left->type == enum_node_operation) {
-    // left node is an operation
-    if (node->op_value == enum_op_and || 
-	node->op_value == enum_op_or) {
-      // left node is a logical operation
-      left_logical = new bool [n];
-      evaluate_logical(node->left,n,left_logical,x,y,z,t);
-    } else {
-      // left node is a scalar operation
-      left_scalar = new double [n];
-      evaluate_scalar(node->left,n,left_scalar,x,y,z,t);
-    }
-  } else {
-    // left node is a scalar operation
-    left_scalar = new double [n];
-    evaluate_scalar(node->left,n,left_scalar,x,y,z,t);
-  }
-
-  // Recurse on left subtree
-
-  if (node->right && node->right->type == enum_node_operation) {
-    // right node exists
-    // right node is an operation
-    if (node->op_value == enum_op_and || 
-	node->op_value == enum_op_or) {
-      // right node is a logical operation
-      right_logical = new bool [n];
-      evaluate_logical(node->right,n,right_logical,x,y,z,t);
-    } else {
-      // right node is a scalar operation
-      right_scalar = new double [n];
-      evaluate_scalar(node->right,n,right_scalar,x,y,z,t);
-    }
-  } else {
-    // right node is a scalar operation
-    right_scalar = new double [n];
-    evaluate_scalar(node->right,n,right_scalar,x,y,z,t);
-  }
-      
-  int i;
-  if (node->type == enum_node_operation) {
-    switch (node->op_value) {
-    case enum_op_le:
-      for (i=0; i<n; i++) result[i] = left_scalar[i] <= right_scalar[i];
-      break;
-    case enum_op_lt:
-      for (i=0; i<n; i++) result[i] = left_scalar[i] <  right_scalar[i];
-      break;
-    case enum_op_ge:
-      for (i=0; i<n; i++) result[i] = left_scalar[i] >= right_scalar[i];
-      break;
-    case enum_op_gt:
-      for (i=0; i<n; i++) result[i] = left_scalar[i] >  right_scalar[i];
-      break;
-    case enum_op_eq:
-      // warning: comparing equality of doubles
-      for (i=0; i<n; i++) result[i] = left_scalar[i] == right_scalar[i];
-      break;
-    case enum_op_ne:
-      // warning: comparing inequality of doubles
-      for (i=0; i<n; i++) result[i] = left_scalar[i] != right_scalar[i];
-      break;
-    case enum_op_and:
-      for (i=0; i<n; i++) result[i] = left_logical[i] && right_logical[i];
-      break;
-    case enum_op_or:
-      for (i=0; i<n; i++) result[i] = left_logical[i] || right_logical[i];
-      break;
-    default:
-      fprintf (stderr,"%s:%d unknown expression type %d\n",
-	       __FILE__,__LINE__,node->type);
-      break;
-    }
-  }
-
-  delete [] left_scalar;
-  delete [] right_scalar;
-  delete [] left_logical;
-  delete [] right_logical;
-}
-
 void Param::dealloc_list_ (list_type * value)
 /// @param value List to be deallocated
 {
@@ -322,11 +118,3 @@ void Param::dealloc_list_ (list_type * value)
   delete value;
 }
 
-void Param::dealloc_node_expr_ (struct node_expr * p)
-/// @param p Head node of the tree defining the scalar expression to deallocate
-{
-  if (p->left != NULL)  dealloc_node_expr_(p->left);
-  if (p->right != NULL) dealloc_node_expr_(p->right);
-  free (p->function_name);
-  free (p);
-};

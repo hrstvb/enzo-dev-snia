@@ -1,0 +1,4 @@
+Group { parameter = 1 }
+Group { parameter = 13 }
+Group { parameter = -15 }
+Group { parameter = 0; }
