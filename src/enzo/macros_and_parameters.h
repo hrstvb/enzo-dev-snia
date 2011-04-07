@@ -54,8 +54,6 @@
 
 #define MEMORY_POOL_SIZE  __memory_pool_size
 
-#define GRID_MEMORY_REDUCE_LEVEL __memory_reduce_level
-
 #define DEFAULT_GHOST_ZONES                 3  /* at least 3 */
 
 #define MAX_NUMBER_OF_OUTPUT_REDSHIFTS    500
@@ -559,3 +557,24 @@ typedef int            HDF5_hid_t;
 #endif
 
 #endif
+
+
+#define GRID_MEMORY_REDUCE_LEVEL __memory_reduce_level
+
+
+// GRID_MEMORY_REDUCE_ANY:           Turn grid diet monitoring on (lcaperf counters)
+// GRID_MEMORY_REDUCE_MEMORY_LEAKS:  Fixed memory leaks found with valgrind
+// GRID_MEMORY_REDUCE_FLUXES:        Only allocate 'fluxes' object for local grids
+// GRID_MEMORY_REDUCE_CELL_ARRAYS:   CellLeftEdge[] and CellWidth[] allocated as needed
+// GRID_MEMORY_REDUCE_STATIC:        Hierarchy- and level-constant data promoted to static
+// GRID_MEMORY_REDUCE_BARYON_ARRAYS: [Old]BaryonField arrays allocated as needed
+// GRID_MEMORY_REDUCE_LOCAL_REMOTE:  Grid class split into grid_local and grid_remote
+
+#  define GRID_MEMORY_REDUCE_ANY           0 /* SHOULD BE SMALLEST */
+#  define GRID_MEMORY_REDUCE_MEMORY_LEAKS  1
+#  define GRID_MEMORY_REDUCE_FLUXES        2
+#  define GRID_MEMORY_REDUCE_CELL_ARRAYS   3 
+#  define GRID_MEMORY_REDUCE_STATIC        4
+#  define GRID_MEMORY_REDUCE_BARYON_ARRAYS 5
+#  define GRID_MEMORY_REDUCE_LOCAL_REMOTE  6
+
