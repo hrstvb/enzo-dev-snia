@@ -15,6 +15,10 @@
 /
 ************************************************************************/
 
+#include "ParameterControl/ParameterControl.h"
+extern Configuration Param; //declared in ReadParameterFile.C
+
+
 #include "preincludes.h"
  
 #ifdef USE_MPI
