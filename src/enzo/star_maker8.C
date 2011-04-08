@@ -168,7 +168,7 @@ int star_maker8(int *nx, int *ny, int *nz, int *size, float *d, float *te, float
 
   if (AccretionKernel == 2 ){
   }
-  else if (AccretionKernel == 1 ){ // KERNAL SECTION
+  else if (AccretionKernel == 1 ){ // KERNEL SECTION
     for (n = 0; n < nsinks; n++) {
 
       bb = sink_index[n];

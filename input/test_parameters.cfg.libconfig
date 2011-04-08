@@ -1,131 +1,137 @@
-InternalParameters:
+Internal:
 {
 	Fields = ["Density", "X-velocity", "Y-velocity", "Z-velocity", "TotalEnergy", "GasEnergy", "Bx", "By", "Bz", "Phi", "ElectronDensity", "HI_Density", "HII_Density", "HeI_Density", "HeII_Density", "HeIII_Density", "HM_Density", "H2I_Density", "H2II_Density", "DI_Density", "DII_Density", "HDI_Density"];
 
 	Density:
 	{
-		Name="Density";
-		cgsConversionFactor=2.29415e-26;
-	}	
+		Name = "Density";
+		cgsConversionFactor = "2.29415e-26";
+	};	
 	X-velocity:
 	{
-		Name="x-velocity";
-		cgsConversionFactor=1.94115e+07;
-	}
+		Name = "x-velocity";
+		cgsConversionFactor = "1.94115e+07";
+	};
 	Y-velocity:
 	{
-		Name="y-velocity";
-		cgsConversionFactor=1.94115e+07;
-	}
+		Name = "y-velocity";
+		cgsConversionFactor = "1.94115e+07";
+	};
 	Z-velocity:
 	{
-		Name="z-velocity";
-		cgsConversionFactor=1.94115e+07;
-	}
+		Name = "z-velocity";
+		cgsConversionFactor = "1.94115e+07";
+	};
 	TotalEnergy:
 	{
 		Name = "Totalenergy";
-
-	}
+		cgsConversionFactor = "";
+	};
 	GasEnergy:
 	{
-		name = "GasEnergy";
-	}
+		Name = "GasEnergy";
+		cgsConversionFactor = "";
+	};
 	Bx:
 	{
-		name = "Bx";
-	}
+		Name = "Bx";
+		cgsConversionFactor = "";
+	};
 	By:
 	{
-		name = "By";
-	}
+		Name = "By";
+		cgsConversionFactor = "";
+	};
 	Bz:
 	{
-		name = "Bz";
-	}
+		Name = "Bz";
+		cgsConversionFactor = "";
+	};
 	Phi:
 	{
-		name = "Phi";
-	}
+		Name = "Phi";
+		cgsConversionFactor = "";
+	};
 	ElectronDensity:
 	{
-		name = "Electron_Density";
-		cgsConversionFactor =  2.29415e-26;
-	}
+		Name = "Electron_Density";
+		cgsConversionFactor = "2.29415e-26";
+	};
 	HI_Density:
 	{
-		name = "HI_Density";
-		cgsConversionFactor =  2.29415e-26;
-	}
+		Name = "HI_Density";
+		cgsConversionFactor = "2.29415e-26";
+	};
 	HII_Density:
 	{
-		name = "HII_Density";
-		cgsConversionFactor =  2.29415e-26;
-	}
+		Name = "HII_Density";
+		cgsConversionFactor = "2.29415e-26";
+	};
 	HeI_Density:
 	{
-		name = "HeI_Density";
-		cgsConversionFactor =  2.29415e-26;
-	}
+		Name = "HeI_Density";
+		cgsConversionFactor = "2.29415e-26";
+	};
 	HeII_Density:
 	{
-		name = "HeII_Density";
-		cgsConversionFactor =  2.29415e-26;
-	}
+		Name = "HeII_Density";
+		cgsConversionFactor = "2.29415e-26";
+	};
 	HeIII_Density:
 	{
-		name = "HeIII_Density";
-		cgsConversionFactor =  2.29415e-26;
-	}
+		Name = "HeIII_Density";
+		cgsConversionFactor = "2.29415e-26";
+	};
 	HM_Density:
 	{
-		name = "HM_Density";
-		cgsConversionFactor =  2.29415e-26;
-	}
+		Name = "HM_Density";
+		cgsConversionFactor = "2.29415e-26";
+	};
 	H2I_Density:
 	{
-		name = "H2I_Density";
-		cgsConversionFactor =  2.29415e-26;
-	}
+		Name = "H2I_Density";
+		cgsConversionFactor = "2.29415e-26";
+	};
 	H2II_Density:
 	{
-		name = "H2II_Density";
-		cgsConversionFactor =  2.29415e-26;
-	}
+		Name = "H2II_Density";
+		cgsConversionFactor = "2.29415e-26";
+	};
 	DI_Density:
 	{
-		name = "DI_Density";
-		cgsConversionFactor =  2.29415e-26;
-	}
+		Name = "DI_Density";
+		cgsConversionFactor = "2.29415e-26";
+	};
 	DII_Density:
 	{
-		name = "DII_Density";
-		cgsConversionFactor =  2.29415e-26;
-	}
+		Name = "DII_Density";
+		cgsConversionFactor = "2.29415e-26";
+	};
 	HDI_Density:
 	{
-		name = "HDI_Density";
-		cgsConversionFactor =  2.29415e-26;
-	}
+		Name = "HDI_Density";
+		cgsConversionFactor = "2.29415e-26";
+	};
 	TimeUnits:
 	{
-		name = "TimeUnits";
-		cgsConversionFactor = 6.80582e+14;
-	}
+		Name = "TimeUnits";
+		cgsConversionFactor = "6.80582e+14";
+	};
 	TemperatureUnits:
 	{
-		name = "TemperatureUnits";
-		cgsConversionFactor = 4.72068e+06;
-	}
+		Name = "TemperatureUnits";
+		cgsConversionFactor = "4.72068e+06";
+	};
 
 	Provenance:
 	{
 		MetaDataIdentifier              = "SEED239_stringkick";
-		MetaDataSimulationUUID          = "943af25b-0fc3-4c6d-ab78-975fc2e60b26";
-		MetaDataDatasetUUID             = "7abfc462-5ff2-44ac-94f8-3a6a87642cf0";
-		MetaDataRestartDatasetUUID      = "ab6d835e-b480-4c55-9f29-d0bdcc63ff29";
+		SimulationUUID          = "943af25b-0fc3-4c6d-ab78-975fc2e60b26";
+#		DatasetUUID             = "7abfc462-5ff2-44ac-94f8-3a6a87642cf0";
+		RestartDatasetUUID      = "ab6d835e-b480-4c55-9f29-d0bdcc63ff29";
+		InitialConditionsUUID   = "";
 		VersionNumber              = "2.000000";
-	}
+	};
 
 	OutputLabeling:
 	{
@@ -144,20 +150,21 @@ InternalParameters:
 		HistoryDumpNumber   = 0;
 		TracerParticleDumpNumber = 0;
 		CheckpointRestart   = False;
-	}
+	};
 
 	InitialCycleNumber  = 137;
 	InitialTime         = 8.6542660853101879663;
+	Initialdt           = 0.01;
 	InitialCPUTime      = 305323;
 	StopCPUTime         = 2.592e+06;
 	SubcycleNumber          = 30157;
-	NumberOfParticles      = 21135360 #(do not modify)
+	NumberOfParticles      = 21135360;   # (do not modify)
 	Debug1                          = True;
 	Debug2                          = True;
 	CosmologyCurrentRedshift   = 19.7240495415692045043;
 	CurrentTimeIdentifier = 1300859297;
 	BoundaryConditionName      = "./DD0053/DD0053.boundary";
-}
+};
 
 
 SimulationControl: # (subgroup refinement for later on)
@@ -170,6 +177,7 @@ SimulationControl: # (subgroup refinement for later on)
 	MaximumTopGridTimeStep = 1e+20;
 	TracerParticleOn           = False;
 	StopFirstTimeAtLevel    = 48;
+	UseCUDA                        = False;
 	huge_number                    = 1.000000e+20;
 	tiny_number                    = 1.000000e-20;
 
@@ -184,7 +192,7 @@ SimulationControl: # (subgroup refinement for later on)
 		RefineRegionAutoAdjust = False;
 		MustRefineRegionLeftEdge = [0.0, 0.0, 0.0]; 
 		MustRefineRegionRightEdge  = [1.0, 1.0, 1.0]; 
-	}
+	};
 	
 	AMR:
 	{
@@ -204,14 +212,13 @@ SimulationControl: # (subgroup refinement for later on)
 		MustRefineRegionMinRefinementLevel  = -1;
 		MetallicityRefinementMinLevel       = -1;
 		MetallicityRefinementMinMetallicity = 1e-05;
-		MetallicityRefinementMinDensity     = ;  
+		MetallicityRefinementMinDensity     = 0.0;  
 		RefineRegionTimeType   = -1;
 		SlopeFlaggingFields = [];
 		MinimumSlopeForRefinement = [-0.3, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3];
 		MinimumOverDensityForRefinement = [0.0078125, 0.0078125, 1.5, 1.5, 1.5, 1.5, 1.5];
 		MinimumMassForRefinement = [6.16876028e-10, 3.10841427e-09, 1.18440197e-07, 1.18440197e-07, 1.18440197e-07, 1.18440197e-07, 1.18440197e-07];
 		MinimumMassForRefinementLevelExponent = [-0.300000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000];
-		MinimumSlopeForRefinement             = -3.000000e-01;
 		MinimumShearForRefinement             = 1.000000e+00;
 		MinimumPressureJumpForRefinement      = 3.300000e-01;
 		MinimumEnergyRatioForRefinement       = 1.000000e-01;
@@ -228,17 +235,19 @@ SimulationControl: # (subgroup refinement for later on)
 				Level = 0;
 				LeftEdge = [0.3,0.3,0.3];
 				RightEdge= [0.6,0.6,0.6];
-	   		}
+	   		};
 			Region2:
 			{
 				Level = 2;
 				LeftEdge = [0.4,0.4,0.4];
 				RightEdge= [0.55,0.55,0.55];
-			}
-		}
+			};
+		};
+
+		RefineRegionFile = "";
 	
 	
-	} # end amr
+	}; # end amr
 
 	Optimization:
 	{
@@ -264,7 +273,15 @@ SimulationControl: # (subgroup refinement for later on)
 		ParticleSplitterChildrenParticleSeparation     = 1.000000;
 		MemoryLimit                     = 4000000000;
 		FastSiblingLocatorEntireDomain      = True;
-	}
+	};
+
+	Units:
+	{
+		Mass = 1.0;
+		Density = 1.0;
+		Length = 1.0;
+		Time = 1.0;
+	};
 
 	Timeaction:
 	{
@@ -273,40 +290,40 @@ SimulationControl: # (subgroup refinement for later on)
 		Action1:
 		{
 			Type = 0;
+			Time = 0.0;
 			Redshift = 0.0;
 			Parameter = 1.0;
-		}
+		};
 
 		Action2:
 		{
 			Type = 1;
 			Time = 10.0;
+			Redshift = 0.0;
 			Parameter = 3.3;
-		}
+		};
 
 		Action3:
 		{
 			Type = 2;
 			Time =5.0;
+			Redshift = 0.0;
 			Parameter = 20.0;
-		}
-	}
+		};
+	};
 
-} # end SimulationControl
-
-
+}; # end SimulationControl
 
 
-}
 
-
-OutputControlParameters:
+OutputControl:
 {
 
 	dtInterpolatedDataDump          = 0.0;
 	FileDirectedOutput = True;
 	WriteBinaryHierarchy = False;
-	GlobalDir           = ".";    #(rethink)
+	GlobalDir           = ".";
+	LocalDir            = "";
 	ParticleTypeInFile               = True;
 	OutputParticleTypeGrouping       = False;
 	ExtractFieldsOnly               = True;
@@ -318,14 +335,14 @@ OutputControlParameters:
 		DataDumpName = "DD";
 		DataDumpDir       = "DD";
 		dtDataDump         = 0.2;
-	}
+	};
 
 	RestartDump:
 	{
 		RestartDumpDir       = "RS";
 		RestartDumpName = "restart";
 		dtRestartDump        = 22.373489611857021335;
-	}
+	};
 
 	MovieDump:
 	{
@@ -338,7 +355,7 @@ OutputControlParameters:
 		MovieDataField                 = 0;
 		NewMovieDumpNumber = 0;
 		NewMovieName               = "MoviePack";
-	}
+	};
 
 	CycleDump:
 	{
@@ -346,28 +363,29 @@ OutputControlParameters:
 		CycleSkipDataDump    = 0;
 		CycleSkipHistoryDump = 0;
 		SubcycleSkipDataDump    = 0;
-	}
+	};
 
 	RedshiftDump:
 	{
 		CosmologyOutputRedshift = [19.0, 18.0, 17.0, 16.0, 15.0, 14.0, 13.0, 12.0, 11.0, 10.0];
+		CosmologyOutputRedshiftName = [];
 		RedshiftDumpName    = "RedshiftOutput";
 		RedshiftDumpDir       = "RD";
-	}
+	};
 
 	HistoryDump:
 	{
 		dtHistoryDump       = 0.0;
 		HistoryDumpName     = "history";
 		HistoryDumpDir        = "HD";
-	}
+	};
 
 	TracerParticleDump:
 	{
 		TracerParticleDumpName = "TracerOutput";
 		TracerParticleDumpDir = "TD";
 		dtTracerParticleDump       = 0.0;
-	}
+	};
 
 	OutputTriggers:
 	{
@@ -376,7 +394,7 @@ OutputControlParameters:
 		OutputOnDensity = True;
 		CurrentDensityOutput = -18;
 		IncrementDensityOutput = 0.25;
-	}
+	};
 
 	SupplementalFields:
 	{
@@ -388,21 +406,21 @@ OutputControlParameters:
 		OutputGriddedStarParticle      = False;
 		BAnyl                          = False;
 		VelAnyl                        = False;
-	}
+	};
 
-} # end OutputControlParameters
-
-
+}; # end OutputControlParameters
 
 
 
-PhysicsParameters:
+
+
+Physics:
 {
 
 	TopGridGravityBoundary = 0;
 	ParticleBoundaryType   = 3;
 	GridVelocity           = [0.0 ,0.0, 0.0]; #(remove)
-	AccretionKernal                = 0;
+	AccretionKernel                = 0;
 	UsePhysicalUnit            = False;
 	UseFloor                   = False;
 	SmallRho                   = 9.99999e-31;
@@ -471,109 +489,111 @@ PhysicsParameters:
 		PositiveReconstruction     = 0;
 		ReconstructionMethod       = 0;
 		RKOrder                    = 2;
-	} # end hydro
+	}; # end hydro
 
 	OtherParticles:
 	{
 		StarParticleCreation                  = 0;
 		StarMetalYield                        = 0.02;
+		StarMassEjectionFraction              = 0.25;
+		StarEnergyToThermalFeedback           = 1e-05;
+		StarEnergyToStellarUV                 = 3e-06;
+		StarEnergyToQuasarUV                  = 5e-06;
 		StellarWindFeedback                   = 0;
 		StellarWindTurnOnMass                 = 0.100000;         #(please document)
 		MSStellarWindTurnOnMass                 = 10.000000;  #(please document)
 		StarParticleFeedback                  = 0;
 		NumberOfParticleAttributes            = 0;
 		AddParticleAttributes                 = 0;
+		S2ParticleSize                        = 0;
+
+		StarFeedbackDistRadius                = 0.0;
+		StarFeedbackDistCellStep	      = 0.0;
 
 		BigStar:
 		{
-			BigStarFormation                      = 0;
-			BigStarFormationDone                  = 0;
-			BigStarSeparation                     = 0.250000;
-		}
+			Formation                      = False;
+			FormationDone		       = False;
+			Separation                     = 0.250000;
+		};
 
 		StarMaker:
 		{
 			# Question: do any of the other star methods use these parameters?
-			StarMakerOverDensityThreshold         = 100;
-			StarMakerSHDensityThreshold           = 7e-26;
-			StarMakerMassEfficiency               = 1;
-			StarMakerMinimumMass                  = 1e+09;
-			StarMakerMinimumDynamicalTime         = 1e+06;
-			StarMakerEjectionFraction              = 0.25;
-		}
-
-		StarEnergy:
-		{
-			StarEnergyToThermalFeedback           = 1e-05;
-			StarEnergyToStellarUV                 = 3e-06;
-			StarEnergyToQuasarUV                  = 5e-06;
-		}
+			OverDensityThreshold         = 100;
+			SHDensityThreshold           = 7e-26;
+			MassEfficiency               = 1;
+			MinimumMass                  = 1e+09;
+			MinimumDynamicalTime         = 1e+06;
+		};
 
 		PopIIIStarParticle:
 		{
 
-			PopIIIStarMass                        = 100;
-			PopIIIInitialMassFunction             = 0;
-			PopIIIInitialMassFunctionSeed         = 0;
-			PopIIIInitialMassFunctionCalls        = 0;
-			PopIIIMassRange                       = [1.000000, 300.000000]; 
-			PopIIIInitialMassFunctionSlope        = -1.300000;
-			PopIIIHeliumIonization                = 0;
-			PopIIIBlackHoles                      = 0;
-			PopIIIBHLuminosityEfficiency          = 0.100000;
-			PopIIIOverDensityThreshold            = 1e+06;
-			PopIIIH2CriticalFraction              = 0.0005;
-			PopIIIMetalCriticalFraction           = 0.0001;
-			PopIIISupernovaRadius                 = 1;
-			PopIIISupernovaUseColour              = False;
-			PopIIISupernovaMustRefine             = False;
-			PopIIISupernovaMustRefineResolution   = 32;
-			PopIIIColorDensityThreshold           = 1e+06;
-			PopIIIColorMass                       = 1e+06;
-		}
+			StarMass                        = 100;
+			InitialMassFunction             = 0;
+			InitialMassFunctionSeed         = 0;
+			InitialMassFunctionCalls        = 0;
+			LowerMassCutoff                 = 1.0;
+			UpperMassCutoff                 = 300.0;
+			MassRange                       = [1.000000, 300.000000]; 
+			InitialMassFunctionSlope        = -1.300000;
+			HeliumIonization                = 0;
+			BlackHoles                      = 0;
+			BHLuminosityEfficiency          = 0.100000;
+			OverDensityThreshold            = 1e+06;
+			H2CriticalFraction              = 0.0005;
+			MetalCriticalFraction           = 0.0001;
+			SupernovaRadius                 = 1;
+			SupernovaUseColour              = False;
+			SupernovaMustRefine             = False;
+			SupernovaMustRefineResolution   = 32;
+			ColorDensityThreshold           = 1e+06;
+			ColorMass                       = 1e+06;
+		};
 
 		MBHParticle:
 		{	
-			MBHAccretion                          = False;
-			MBHAccretionRadius                    = 50.0;
-			MBHAccretingMassRatio                 = 1.0;
-			MBHAccretionFixedTemperature          = 300000.0;
-			MBHAccretionFixedRate                 = 0.001;
-			MBHTurnOffStarFormation               = False;
-			MBHCombineRadius                      = 50.0;
-			MBHMinDynamicalTime                   = 1e+07;
-			MBHMinimumMass                        = 1000.0;
-			MBHFeedback                           = False;
-			MBHFeedbackRadiativeEfficiency        = 0.1;
-			MBHFeedbackEnergyCoupling             = 0.05;
-			MBHFeedbackMassEjectionFraction       = 0.1;
-			MBHFeedbackMetalYield                 = 0.02;
-			MBHFeedbackThermalRadius              = 50.0;
-			MBHFeedbackJetsThresholdMass          = 10.0;
-		}			
+			Accretion                          = False;
+			AccretionRadius                    = 50.0;
+			AccretingMassRatio                 = 1.0;
+			AccretionFixedTemperature          = 300000.0;
+			AccretionFixedRate                 = 0.001;
+			TurnOffStarFormation               = False;
+			CombineRadius                      = 50.0;
+			MinDynamicalTime                   = 1e+07;
+			MinimumMass                        = 1000.0;
+			Feedback                           = False;
+			FeedbackRadiativeEfficiency        = 0.1;
+			FeedbackEnergyCoupling             = 0.05;
+			FeedbackMassEjectionFraction       = 0.1;
+			FeedbackMetalYield                 = 0.02;
+			FeedbackThermalRadius              = 50.0;
+			FeedbackJetsThresholdMass          = 10.0;
+		};			
 
 		StarClusterParticle:
 		{
-			StarClusterUseMetalField              = False;
-			StarClusterUnresolvedModel            = False;
-			StarClusterMinDynamicalTime           = 1e+07;
-			StarClusterIonizingLuminosity         = 1e+47;
-			StarClusterHeliumIonization           = False;
-			StarClusterSNEnergy                   = 6.8e+48;
-			StarClusterSNRadius                   = 10.0;
-			StarClusterFormEfficiency             = 0.1;
-			StarClusterMinimumMass                = 1000.0;
-			StarClusterCombineRadius              = 10.0;
-			StarClusterRegionLeftEdge             = [0.000000, 0.000000, 0.000000];
-			StarClusterRegionRightEdge            = [1.000000, 1.000000, 1.000000];
-		}
+			UseMetalField              = False;
+			UnresolvedModel            = False;
+			MinDynamicalTime           = 1e+07;
+			IonizingLuminosity         = 1e+47;
+			HeliumIonization           = False;
+			SNEnergy                   = 6.8e+48;
+			SNRadius                   = 10.0;
+			FormEfficiency             = 0.1;
+			MinimumMass                = 1000.0;
+			CombineRadius              = 10.0;
+			RegionLeftEdge             = [0.000000, 0.000000, 0.000000];
+			RegionRightEdge            = [1.000000, 1.000000, 1.000000];
+		};
 
 		SinkParticle:
 		{	
-			SinkMergeDistance                     = 10000000000000000.000000;
-			SinkMergeMass                         = 0.100000;
-		}
-	} # end otherParticles
+			MergeDistance                     = 10000000000000000.000000;
+			MergeMass                         = 0.100000;
+		};
+	}; # end otherParticles
 
 	Gravity:
 	{
@@ -596,7 +616,7 @@ PhysicsParameters:
 		GreensFunctionMaxSize       = 1;
 		UseConstantAcceleration    = False;
 		ConstantAcceleration       = [0, 0, 0];
-	}
+	};
 
 
 	AtomicPhysics:
@@ -608,7 +628,9 @@ PhysicsParameters:
 		CoolingCutOffTemperature   = 0.0;
 		CoolingPowerCutOffDensity1 = 0.0; 
 		CoolingPowerCutOffDensity2 = 1e+10;
+		UseH2OnDust                    = False;
 		RadiativeCooling               = True;
+		RadiativeCoolingModel          = 1;
 		GadgetEquilibriumCooling       = 0; #(is being fixed)
 		MultiSpecies                   = 3;
 		PrimordialChemistrySolver      = False;
@@ -625,6 +647,7 @@ PhysicsParameters:
 
 		CoolDataCompXray               = 0.000000;
 		CoolDataTempXray               = 0.000000;
+		RateDataCaseBRecombination     = False;
 		PhotoelectricHeating           = False;
 		HydrogenFractionByMass         = 0.760000;
 		DeuteriumToHydrogenRatio       = 0.000068;
@@ -638,9 +661,9 @@ PhysicsParameters:
 			CMBTemperatureFloor            = True;
 			CloudyMetallicityNormalization = 0.018477;
 			CloudyElectronFractionFactor   = 0.009154;
-		}
+		};
 
-	} # end atomicPhysics
+	}; # end atomicPhysics
 
 	RadiationField:
 	{
@@ -650,6 +673,7 @@ PhysicsParameters:
 		RadiationRedshiftDropOff       = 0.000000;
 
 		RadiationFieldType             = 0;
+		TabulatedLWBackground          = False;
 		AdjustUVBackground             = True;
 		SetUVBAmplitude                = True;
 		SetHeIIHeatingScale            = 1.8;
@@ -657,20 +681,22 @@ PhysicsParameters:
 		RadiationShield                = False;
 		RadiationSpectrumNormalization = 1e-21;
 		RadiationSpectrumSlope         = 1.5;
-	}
+
+		RadHydroParamfile = "";
+	};
 
 
 	Cosmology:
 	{
-		CosmologyHubbleConstantNow = 0.701;
-		CosmologyOmegaMatterNow    = 0.279;
-		CosmologyOmegaLambdaNow    = 0.721;
-		CosmologyComovingBoxSize   = 0.3;
-		CosmologyMaxExpansionRate  = 0.015;
-		CosmologyInitialRedshift   = 99.0 ; 
-		CosmologyFinalRedshift = 0.0; 
+		HubbleConstantNow = 0.701;
+		OmegaMatterNow    = 0.279;
+		OmegaLambdaNow    = 0.721;
+		ComovingBoxSize   = 0.3;
+		MaxExpansionRate  = 0.015;
+		InitialRedshift   = 99.0 ; 
+		FinalRedshift = 0.0; 
 		ComovingCoordinates                   = True;
-	}
+	};
 
 	RadiationTransfer:
 	{
@@ -708,14 +734,16 @@ PhysicsParameters:
 
 		SimpleQ = 1e50;
 		SimpleRampTime = 0.1;
-	}
+	};
 
 	Conduction:
 	{
-		Conduction                      = False;
-		ConductionSpitzerFraction       = 1.000000;
+		IsotropicConduction             = False;
+		IsotropicConductionSpitzerFraction       = 1.000000;
+		AnisotropicConduction           = False;
+		AnisotropicConductionSpitzerFraction       = 1.000000;
 		ConductionCourantSafetyNumber   = 0.500000;
-	}
+	};
 
 	MHD:
 	{
@@ -726,7 +754,7 @@ PhysicsParameters:
 		DivergenceCleaningBoundaryBuffer = 0;
 		UseDivergenceCleaning            = False;
 		DivergenceCleaningThreshold      = 0.001;
-	}
+	};
 
 	Miscellaneous:
 	{
@@ -736,11 +764,12 @@ PhysicsParameters:
 		StorePreShockFields            = False;
 		RandomForcing                  = False;
 		RandomForcingEdot              = 1.0;
+		RandomForcingMachNumber        = 0.0;
 		UseDrivingField            = False;
 		DrivingEfficiency          = 1.000000;
-	}
+	};
 
-} # end PhysicsParameters
+}; # end PhysicsParameters
 
 Initialization:
 {
@@ -751,9 +780,12 @@ Initialization:
 	MBHInsertLocationFilename           = "mbh_insert_location.in";
 	PartitionNestedGrids            = False;
 	StaticPartitionNestedGrids      = True;
-} # end Initialization
 
-AnalysisParameters:
+	StringKick = 0.0;
+	StringKickDimension = 0;
+}; # end Initialization
+
+Analysis:
 {
 
 	CycleSkipGlobalDataDump = 0; #(rename, something to do with analysis)
@@ -762,7 +794,7 @@ AnalysisParameters:
 	{	
 		PythonTopGridSkip       = 0;
 		PythonSubcycleSkip      = 100000000;
-	}
+	};
 
 	HaloFinder:
 	{
@@ -775,5 +807,124 @@ AnalysisParameters:
 		HaloFinderLinkingLength        = 0.100000;
 		HaloFinderTimestep             = 0.0;
 		HaloFinderLastTime             = 0.000000;
-	}
-} # end AnalysisParameters
+	};
+}; # end AnalysisParameters
+
+
+Problem:
+{
+	CollapseTest:
+	{
+		RefineAtStart = True;
+		UseParticles  = False;
+		ParticleMeanDensity = 0.0;
+		UseColour = False;
+		UseMetals = False;
+		InitialTemperature = 1000;
+		InitialDensity     = 1.0;
+
+		Spheres = ["Sphere1", "Sphere2"];
+
+	        Sphere1:
+		{
+			Density = 1.0;
+			Temperature = 1.0;
+			Velocity = [0.0, 0.0, 0.0];
+		  	UniformVelocity = 0.0;
+			FracKeplerianRot = 0.0;
+		  	Turbulence = 0.0;
+		  	Dispersion = 0.0;
+		  	CutOff = 6.5;
+		  	Ang1 = 0.0;
+		  	Ang2 = 0.0;
+		  	Metallicity = 0.0;
+			NumShells = 1;
+		  	InitialLevel = 0;
+		  	Type = 0;
+			Radius = 1.0;
+			CoreRadius = 0.1;
+			Position = [0.5, 0.5, 0.5];
+		};
+
+	        Sphere2:
+		{
+			Density = 1.0;
+			Temperature = 1.0;
+			Velocity = [0.0, 0.0, 0.0];
+		  	UniformVelocity = 0.0;
+			FracKeplerianRot = 0.0;
+		  	Turbulence = 0.0;
+		  	Dispersion = 0.0;
+		  	CutOff = 6.5;
+		  	Ang1 = 0.0;
+		  	Ang2 = 0.0;
+		  	Metallicity = 0.0;
+			NumShells = 1;
+		  	InitialLevel = 0;
+		  	Type = 0;
+			Radius = 1.0;
+			CoreRadius = 0.1;
+			Position = [0.5, 0.5, 0.5];
+		};
+	};
+
+	CosmologySimulation:
+	{
+		OmegaBaryonNow       = 1.0;
+		OmegaCDMNow          = 0.0;
+		InitialTemperature   = 0.0;
+ 
+                DensityName          = "";
+		TotalEnergyName      = "";
+		GasEnergyName        = "";
+		ParticlePositionName = "";
+		ParticleVelocityName = "";
+		ParticleDisplacementName = "";
+		ParticleMassName     = "";
+		ParticleTypeName     = "";
+		VelocityNames        = ["", "", ""];
+		ParticleVelocityNames = ["", "", ""];
+		ParticlePositionNames = ["", "", ""];
+		ParticleDisplacementNames = ["", "", ""];
+
+                InitialFractionHII   = 1.2e-5;
+		InitialFractionHeII  = 1.0e-14;
+		InitialFractionHeIII = 1.0e-17;
+		InitialFractionHM    = 2.0e-9;
+		InitialFractionH2I   = 2.0e-20;
+		InitialFractionH2II  = 3.0e-14;
+		InitialFractionMetal = 1.0e-10;
+		UseMetallicityField  = False;
+ 
+		ManuallySetParticleMassRatio = False;
+		ManualParticleMassRatio = 1.0;
+
+		CalculatePositions   = False; 
+
+		InitialUniformBField = [0.0, 0.0, 0.0];  # in proper Gauss
+
+		### don't know what to do with this one...
+		# RadHydroInitialRadiationEnergy = 1.0e-32;
+
+
+  		SubgridsAreStatic    = True;
+		InitialGrids = ["Grid1", "Grid2"];
+
+		Grid1:
+		{
+			Level = 0;
+			Dimension = [0, 0, 0];
+			LeftEdge = [0.0, 0.0, 0.0];	
+			RightEdge = [0.0, 0.0, 0.0];	
+                };
+
+		Grid2:
+		{
+			Level = 0;
+			Dimension = [0, 0, 0];
+			LeftEdge = [0.0, 0.0, 0.0];	
+			RightEdge = [0.0, 0.0, 0.0];	
+                };
+
+	};
+};

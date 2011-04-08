@@ -12,6 +12,9 @@
 /
 ************************************************************************/
  
+#include "ParameterControl/ParameterControl.h"
+extern Configuration Param;
+
 #include <string.h>
 #include <stdio.h>
 #include "ErrorExceptions.h"
@@ -22,7 +25,7 @@
  
 int CosmologyComputeTimeFromRedshift(FLOAT Redshift, FLOAT *TimeCodeUnits);
  
-int CosmologyReadParameters(FILE *fptr, FLOAT *StopTime, FLOAT *InitTime)
+int CosmologyReadParameters(FLOAT *StopTime, FLOAT *InitTime)
 {
  
   int i, OutputNumber;
@@ -45,46 +48,29 @@ int CosmologyReadParameters(FILE *fptr, FLOAT *StopTime, FLOAT *InitTime)
     CosmologyOutputRedshiftName[i] = NULL;
   }
  
-  /* read input from file */
+  /* read parameters */
  
-  while (fgets(line, MAX_LINE_LENGTH, fptr) != NULL) {
- 
-    int ret = 0;
- 
-    /* read parameters */
- 
-    ret += sscanf(line, "CosmologyHubbleConstantNow = %"FSYM,
-		  &HubbleConstantNow);
-    ret += sscanf(line, "CosmologyOmegaMatterNow = %"FSYM, &OmegaMatterNow);
-    ret += sscanf(line, "CosmologyOmegaLambdaNow = %"FSYM, &OmegaLambdaNow);
-    ret += sscanf(line, "CosmologyComovingBoxSize = %"FSYM, &ComovingBoxSize);
-    ret += sscanf(line, "CosmologyMaxExpansionRate = %"FSYM,
-		  &MaxExpansionRate);
-    ret += sscanf(line, "CosmologyInitialRedshift = %"PSYM, &InitialRedshift);
-    ret += sscanf(line, "CosmologyFinalRedshift = %"PSYM, &FinalRedshift);
-    ret += sscanf(line, "CosmologyCurrentRedshift = %"PSYM, &CurrentRedshift);
- 
-    if (sscanf(line, "CosmologyOutputRedshift[%"ISYM"] =", &OutputNumber) == 1)
-      ret += sscanf(line, "CosmologyOutputRedshift[%"ISYM"] = %"PSYM,
-		    &OutputNumber, &CosmologyOutputRedshift[OutputNumber]);
-    if (sscanf(line, "CosmologyOutputRedshiftName[%"ISYM"] = %s",
-	       &OutputNumber, dummy) == 2)
-      CosmologyOutputRedshiftName[OutputNumber] = dummy;
- 
-    /* If the dummy char space was used, then make another. */
- 
-    if (*dummy != 0) {
-      dummy = new char[MAX_LINE_LENGTH];
-      ret++;
-    }
- 
-    /* if the line is suspicious, issue a warning */
- 
-    if (ret == 0 && strstr(line, "=") != NULL && line[0] != '#' &&
-	strstr(line, "Cosmology") && !strstr(line, "CosmologySimulation"))
-      fprintf(stderr, "warning: the following parameter line was not interpreted:\n%s\n", line);
- 
+  
+
+  Param.GetScalar(HubbleConstantNow,"Physics.Cosmology.HubbleConstantNow");
+  Param.GetScalar(OmegaMatterNow, "Physics.Cosmology.OmegaMatterNow");
+  Param.GetScalar(OmegaLambdaNow, "Physics.Cosmology.OmegaLambdaNow");
+  Param.GetScalar(ComovingBoxSize, "Physics.Cosmology.ComovingBoxSize");
+  Param.GetScalar(MaxExpansionRate, "Physics.Cosmology.MaxExpansionRate");
+  Param.GetScalar(InitialRedshift, "Physics.Cosmology.InitialRedshift");
+  Param.GetScalar(FinalRedshift, "Physics.Cosmology.FinalRedshift");
+  Param.GetScalar(CurrentRedshift, "Internal.CosmologyCurrentRedshift");
+
+  Param.GetArray(CosmologyOutputRedshift, "OutputControl.RedshiftDump.CosmologyOutputRedshift");
+
+  int NumberOfOutputRedshiftNames = Param.Size("OutputControl.RedshiftDump.CosmologyOutputRedshiftName");
+  char OutputRedshiftNames[MAX_LINE_LENGTH][MAX_NUMBER_OF_OUTPUT_REDSHIFTS];
+  Param.GetArray(OutputRedshiftNames, "OutputControl.RedshiftDump.CosmologyOutputRedshiftName");
+  for (i = 0; i < NumberOfOutputRedshiftNames; i++) {
+    CosmologyOutputRedshiftName[i] = new char[MAX_LINE_LENGTH];
+    strcpy(CosmologyOutputRedshiftName[i], OutputRedshiftNames[i]);
   }
+
  
   /* Initialize by finding the time at the initial redshift. */
  

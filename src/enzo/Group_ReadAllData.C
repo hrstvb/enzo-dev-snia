@@ -22,6 +22,9 @@
 // This function reads in the data hierarchy (TopGrid), the External
 //   Boundary (Exterior), the TopGridData, and the global_data.
 
+#include "ParameterControl/ParameterControl.h"
+extern Configuration Param;
+
 #ifdef USE_MPI
 #include "mpi.h"
 #endif /* USE_MPI */
@@ -54,7 +57,7 @@ int Group_ReadDataHierarchy(FILE *fptr, HierarchyEntry *TopGrid, int GridID,
 			    HierarchyEntry *ParentGrid, hid_t file_id,
 			    int NumberOfRootGrids, int *RootGridProcessors,
 			    bool ReadParticlesOnly=false);
-int ReadParameterFile(FILE *fptr, TopGridData &MetaData, float *Initialdt);
+int ReadParameterFile(TopGridData &MetaData, float *Initialdt);
 int ReadStarParticleData(FILE *fptr);
 int ReadRadiationData(FILE *fptr);
 int AssignGridToTaskMap(Eint64 *GridIndex, Eint64 *Mem, int Ngrids);
@@ -114,16 +117,12 @@ int Group_ReadAllData(char *name, HierarchyEntry *TopGrid, TopGridData &MetaData
  
   /* Read TopGrid data. */
  
-  if ((fptr = fopen(name, "r")) == NULL) {
-    ENZO_VFAIL("Error opening input file %s.\n", name)
-  }
-  if (ReadParameterFile(fptr, MetaData, Initialdt) == FAIL) {
+  // needs error check
+  Param.FromFile("enzo2_libconfig",name);
+
+  if (ReadParameterFile(MetaData, Initialdt) == FAIL) {
         ENZO_FAIL("Error in ReadParameterFile.");
   }
- 
-  /* Close main file. */
- 
-  fclose(fptr);
 
   // name is something like /dsgpfs/harkness/NewL7/Dumps/DD0156/DD0156
   // open the hdf file on this processor /dsgpfs/harkness/NewL7/Dumps/DD0156/DD0156.cpu0000, etc.

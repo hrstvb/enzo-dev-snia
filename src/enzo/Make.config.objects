@@ -868,6 +868,23 @@ OBJS_CONFIG_LIB = \
         Zeus_zTransport.o
 
 #-----------------------------------------------------------------------
+# Objects for parameter control
+#-----------------------------------------------------------------------
+
+OBJS_PARAM_CONTROL = \
+        ParameterControl/ParameterControl.o \
+	ParameterControl/ParameterLibconfigBackend.o \
+	ParameterControl/libconfig/libconfig.o \
+	ParameterControl/libconfig/libconfigcpp.o \
+	ParameterControl/libconfig/scanner.o \
+	ParameterControl/libconfig/scanctx.o \
+	ParameterControl/libconfig/strbuf.o \
+	ParameterControl/libconfig/grammar.o
+
+OBJS_CONFIG_LIB += $(OBJS_PARAM_CONTROL)
+
+
+#-----------------------------------------------------------------------
 # Objects for radiative transfer module
 #-----------------------------------------------------------------------
 

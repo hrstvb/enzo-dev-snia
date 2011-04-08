@@ -18,6 +18,9 @@
 // This routine intializes a new simulation based on the parameter file.
 //
  
+#include "ParameterControl/ParameterControl.h"
+extern Configuration Param;
+
 #ifdef USE_MPI
 #include "mpi.h"
 #endif /* USE_MPI */
@@ -194,135 +197,70 @@ int CosmologySimulationInitialize(FILE *fptr, FILE *Outfptr,
  
   // Read input from file
  
-  char *dummy = new char[MAX_LINE_LENGTH];
-  dummy[0] = 0;
-  int comment_count = 0;
- 
-  while ((fgets(line, MAX_LINE_LENGTH, fptr) != NULL) 
-      && (comment_count < 2)) {
- 
-    ret = 0;
- 
-    // Read parameters
- 
-    ret += sscanf(line, "CosmologySimulationOmegaBaryonNow = %"FSYM,
-		  &CosmologySimulationOmegaBaryonNow);
-    ret += sscanf(line, "CosmologySimulationOmegaCDMNow = %"FSYM,
-		  &CosmologySimulationOmegaCDMNow);
-    ret += sscanf(line, "CosmologySimulationInitialTemperature = %"FSYM,
-		  &CosmologySimulationInitialTemperature);
- 
-    if (sscanf(line, "CosmologySimulationDensityName = %s", dummy) == 1)
-      CosmologySimulationDensityName = dummy;
-    if (sscanf(line, "CosmologySimulationTotalEnergyName = %s", dummy) == 1)
-      CosmologySimulationTotalEnergyName = dummy;
-    if (sscanf(line, "CosmologySimulationGasEnergyName = %s", dummy) == 1)
-      CosmologySimulationGasEnergyName = dummy;
-    if (sscanf(line, "CosmologySimulationVelocity1Name = %s", dummy) == 1)
-      CosmologySimulationVelocityNames[0] = dummy;
-    if (sscanf(line, "CosmologySimulationVelocity2Name = %s", dummy) == 1)
-      CosmologySimulationVelocityNames[1] = dummy;
-    if (sscanf(line, "CosmologySimulationVelocity3Name = %s", dummy) == 1)
-      CosmologySimulationVelocityNames[2] = dummy;
-    if (sscanf(line, "CosmologySimulationParticlePositionName = %s", dummy)
-	== 1) CosmologySimulationParticlePositionName = dummy;
-    if (sscanf(line, "CosmologySimulationParticleVelocityName = %s", dummy)
-	== 1) CosmologySimulationParticleVelocityName = dummy;
-    if (sscanf(line, "CosmologySimulationParticleDisplacementName = %s", dummy)
-	== 1) CosmologySimulationParticleDisplacementName = dummy;
-    if (sscanf(line, "CosmologySimulationParticleMassName = %s", dummy) == 1)
-      CosmologySimulationParticleMassName = dummy;
-    if (sscanf(line, "CosmologySimulationParticleTypeName = %s", dummy) == 1)
-      CosmologySimulationParticleTypeName = dummy;
-    if (sscanf(line, "CosmologySimulationParticlePosition1Name = %s", dummy) == 1)
-      CosmologySimulationParticlePositionNames[0] = dummy;
-    if (sscanf(line, "CosmologySimulationParticlePosition2Name = %s", dummy) == 1)
-      CosmologySimulationParticlePositionNames[1] = dummy;
-    if (sscanf(line, "CosmologySimulationParticlePosition3Name = %s", dummy) == 1)
-      CosmologySimulationParticlePositionNames[2] = dummy;    
-    if (sscanf(line, "CosmologySimulationParticleVelocity1Name = %s", dummy) == 1)
-      CosmologySimulationParticleVelocityNames[0] = dummy;
-    if (sscanf(line, "CosmologySimulationParticleVelocity2Name = %s", dummy) == 1)
-      CosmologySimulationParticleVelocityNames[1] = dummy;
-    if (sscanf(line, "CosmologySimulationParticleVelocity3Name = %s", dummy) == 1)
-      CosmologySimulationParticleVelocityNames[2] = dummy;  
-    if (sscanf(line, "CosmologySimulationParticleDisplacement1Name = %s", dummy) == 1)
-      CosmologySimulationParticleDisplacementNames[0] = dummy;
-    if (sscanf(line, "CosmologySimulationParticleDisplacement2Name = %s", dummy) == 1)
-      CosmologySimulationParticleDisplacementNames[1] = dummy;
-    if (sscanf(line, "CosmologySimulationParticleDisplacement3Name = %s", dummy) == 1)
-      CosmologySimulationParticleDisplacementNames[2] = dummy;  
+  Param.GetScalar(CosmologySimulationOmegaBaryonNow, "Problem.CosmologySimulation.OmegaBaryonNow");
+  Param.GetScalar(CosmologySimulationOmegaCDMNow, "Problem.CosmologySimulation.OmegaCDMNow");
+  Param.GetScalar(CosmologySimulationInitialTemperature, "Problem.CosmologySimulation.InitialTemperature");
+  
+  CosmologySimulationDensityName = new char[MAX_LINE_LENGTH];
+  Param.GetScalar(CosmologySimulationDensityName, "Problem.CosmologySimulation.DensityName");
+  CosmologySimulationTotalEnergyName = new char[MAX_LINE_LENGTH];
+  Param.GetScalar(CosmologySimulationTotalEnergyName, "Problem.CosmologySimulation.TotalEnergyName");
+  CosmologySimulationGasEnergyName = new char[MAX_LINE_LENGTH];
+  Param.GetScalar(CosmologySimulationGasEnergyName, "Problem.CosmologySimulation.GasEnergyName");
+  
+  CosmologySimulationParticlePositionName = new char[MAX_LINE_LENGTH];
+  Param.GetScalar(CosmologySimulationParticlePositionName, "Problem.CosmologySimulation.ParticlePositionName");
+  CosmologySimulationParticleVelocityName = new char[MAX_LINE_LENGTH];
+  Param.GetScalar(CosmologySimulationParticleVelocityName, "Problem.CosmologySimulation.ParticleVelocityName");
+  CosmologySimulationParticleMassName = new char[MAX_LINE_LENGTH];
+  Param.GetScalar(CosmologySimulationParticleMassName, "Problem.CosmologySimulation.ParticleMassName");
+  CosmologySimulationParticleTypeName = new char[MAX_LINE_LENGTH];
+  Param.GetScalar(CosmologySimulationParticleTypeName, "Problem.CosmologySimulation.ParticleTypeName");
+  CosmologySimulationParticleDisplacementName = new char[MAX_LINE_LENGTH];
+  Param.GetScalar(CosmologySimulationParticleDisplacementName, "Problem.CosmologySimulation.ParticleDisplacementName");
 
-    ret += sscanf(line, "CosmologySimulationNumberOfInitialGrids = %"ISYM,
-		  &CosmologySimulationNumberOfInitialGrids);
-    ret += sscanf(line, "CosmologySimulationSubgridsAreStatic = %"ISYM,
-		  &CosmologySimulationSubgridsAreStatic);
- 
-    if (sscanf(line, "CosmologySimulationGridLeftEdge[%"ISYM"]", &gridnum) > 0)
-      ret += sscanf(line, "CosmologySimulationGridLeftEdge[%"ISYM"] = %"PSYM" %"PSYM" %"PSYM,
-		    &gridnum, &CosmologySimulationGridLeftEdge[gridnum][0],
-		    &CosmologySimulationGridLeftEdge[gridnum][1],
-		    &CosmologySimulationGridLeftEdge[gridnum][2]);
-    if (sscanf(line, "CosmologySimulationGridRightEdge[%"ISYM"]", &gridnum) > 0)
-      ret += sscanf(line, "CosmologySimulationGridRightEdge[%"ISYM"] = %"PSYM" %"PSYM" %"PSYM,
-		    &gridnum, &CosmologySimulationGridRightEdge[gridnum][0],
-		    &CosmologySimulationGridRightEdge[gridnum][1],
-		    &CosmologySimulationGridRightEdge[gridnum][2]);
-    if (sscanf(line, "CosmologySimulationGridDimension[%"ISYM"]", &gridnum) > 0)
-      ret += sscanf(line, "CosmologySimulationGridDimension[%"ISYM"] = %"ISYM" %"ISYM" %"ISYM,
-		    &gridnum, &CosmologySimulationGridDimension[gridnum][0],
-		    &CosmologySimulationGridDimension[gridnum][1],
-		    &CosmologySimulationGridDimension[gridnum][2]);
-    if (sscanf(line, "CosmologySimulationGridLevel[%"ISYM"]", &gridnum) > 0)
-      ret += sscanf(line, "CosmologySimulationGridLevel[%"ISYM"] = %"ISYM,
-		    &gridnum, &CosmologySimulationGridLevel[gridnum]);
- 
-    ret += sscanf(line, "CosmologySimulationInitialFractionHII = %"FSYM,
-		  &CosmologySimulationInitialFractionHII);
-    ret += sscanf(line, "CosmologySimulationInitialFractionHeII = %"FSYM,
-		  &CosmologySimulationInitialFractionHeII);
-    ret += sscanf(line, "CosmologySimulationInitialFractionHeIII = %"FSYM,
-		  &CosmologySimulationInitialFractionHeIII);
-    ret += sscanf(line, "CosmologySimulationInitialFractionHM = %"FSYM,
-		  &CosmologySimulationInitialFractionHM);
-    ret += sscanf(line, "CosmologySimulationInitialFractionH2I = %"FSYM,
-		  &CosmologySimulationInitialFractionH2I);
-    ret += sscanf(line, "CosmologySimulationInitialFractionH2II = %"FSYM,
-		  &CosmologySimulationInitialFractionH2II);
-    ret += sscanf(line, "CosmologySimulationInitialFractionMetal = %"FSYM,
-		  &CosmologySimulationInitialFractionMetal);
-    ret += sscanf(line, "CosmologySimulationUseMetallicityField = %"ISYM,
-		  &CosmologySimulationUseMetallicityField);
- 
-    ret += sscanf(line, "CosmologySimulationManuallySetParticleMassRatio = %"ISYM,
-		  &CosmologySimulationManuallySetParticleMassRatio);
-    ret += sscanf(line, "CosmologySimulationManualParticleMassRatio = %"FSYM,
-		  &CosmologySimulationManualParticleMassRatio);
-
-    ret += sscanf(line, "CosmologySimulationCalculatePositions = %"ISYM,
-		  &CosmologySimulationCalculatePositions);
-
-    ret += sscanf(line, "CosmologySimulationInitialUniformBField = %"FSYM" %"FSYM" %"FSYM,
-		  CosmologySimulationInitialUniformBField,
-		  CosmologySimulationInitialUniformBField+1,
-		  CosmologySimulationInitialUniformBField+2);
-
-    // If the dummy char space was used, then make another
- 
-    if (dummy[0] != 0) {
-      dummy = new char[MAX_LINE_LENGTH];
-      ret++;
-    }
- 
-    // If the line is suspicious, issue a warning
-
-    if (strstr(line, "\"\"\"")) comment_count++;
- 
-    if (ret == 0 && strstr(line, "=") && strstr(line, "CosmologySimulation") &&
-	line[0] != '#' && MyProcessorNumber == ROOT_PROCESSOR)
-      fprintf(stderr, "warning: the following parameter line was not interpreted:\n%s\n", line);
- 
+  // this is broken. still need to allocate the char arrays...
+  // Param.GetArray(CosmologySimulationVelocityNames, "Problem.CosmologySimulation.VelocityNames");  
+  // Param.GetArray(CosmologySimulationParticlePositionNames, "Problem.CosmologySimulation.ParticlePositionNames");
+  // Param.GetArray(CosmologySimulationParticleVelocityNames, "Problem.CosmologySimulation.VelocityNames");
+  // Param.GetArray(CosmologySimulationParticleDisplacementNames, "Problem.CosmologySimulation.ParticleDisplacementNames");
+  
+  Param.GetScalar(CosmologySimulationSubgridsAreStatic, "Problem.CosmologySimulation.SubgridsAreStatic");
+  
+  int NumberOfInitialGrids = Param.Size("Problem.CosmologySimulation.InitialGrids");
+  if (NumberOfInitialGrids > MAX_INITIAL_GRIDS-1) {
+    ENZO_VFAIL("You've exceeded the maximum number of CosmologySimulation initial grids (%d)!\n",MAX_INITIAL_GRIDS)
+      }
+  CosmologySimulationNumberOfInitialGrids = NumberOfInitialGrids;
+  
+  char InitialGridNames[MAX_LINE_LENGTH][MAX_INITIAL_GRIDS];
+  Param.GetArray(InitialGridNames,"Problem.CosmologySimulation.InitialGrids");
+  
+  for (i = 0; i < NumberOfInitialGrids; i++) {
+    Param.GetArray(CosmologySimulationGridLeftEdge[i], "Problem.CosmologySimulation.%s.LeftEdge",InitialGridNames[i]);
+    Param.GetArray(CosmologySimulationGridRightEdge[i], "Problem.CosmologySimulation.%s.RightEdge",InitialGridNames[i]);
+    Param.GetArray(CosmologySimulationGridDimension[i], "Problem.CosmologySimulation.%s.Dimension",InitialGridNames[i]);
+    Param.GetScalar(CosmologySimulationGridLevel[i], "Problem.CosmologySimulation.%s.Level",InitialGridNames[i]);
   }
+  
+  
+  Param.GetScalar(CosmologySimulationInitialFractionHII, "Problem.CosmologySimulation.InitialFractionHII");
+  Param.GetScalar(CosmologySimulationInitialFractionHeII, "Problem.CosmologySimulation.InitialFractionHeII");
+  Param.GetScalar(CosmologySimulationInitialFractionHeIII, "Problem.CosmologySimulation.InitialFractionHeIII");
+  Param.GetScalar(CosmologySimulationInitialFractionHM, "Problem.CosmologySimulation.InitialFractionHM");
+  Param.GetScalar(CosmologySimulationInitialFractionH2I, "Problem.CosmologySimulation.InitialFractionH2I");
+  Param.GetScalar(CosmologySimulationInitialFractionH2II, "Problem.CosmologySimulation.InitialFractionH2II");
+  Param.GetScalar(CosmologySimulationInitialFractionMetal, "Problem.CosmologySimulation.InitialFractionMetal");
+  Param.GetScalar(CosmologySimulationUseMetallicityField, "Problem.CosmologySimulation.UseMetallicityField");
+  
+  Param.GetScalar(CosmologySimulationManuallySetParticleMassRatio, "Problem.CosmologySimulation.ManuallySetParticleMassRatio");
+  Param.GetScalar(CosmologySimulationManualParticleMassRatio, "Problem.CosmologySimulation.ManualParticleMassRatio");
+  
+  Param.GetScalar(CosmologySimulationCalculatePositions, "Problem.CosmologySimulation.CalculatePositions");
+  
+  Param.GetArray(CosmologySimulationInitialUniformBField, "Problem.CosmologySimulation.InitialUniformBField");
+
+
 
 #ifdef TRANSFER
   // if using FLD-based solver for radiation, initialize the relevant fields
@@ -333,6 +271,9 @@ int CosmologySimulationInitialize(FILE *fptr, FILE *Outfptr,
       if ((RHfptr = fopen(MetaData.RadHydroParameterFname, "r")) != NULL) {
 	while (fgets(line, MAX_LINE_LENGTH, RHfptr) != NULL) {
 	  ret = 0;
+
+	  // !!! this still needs to be converted to Param.GetScalar !!!
+
 	  // read relevant problem parameters
 	  ret += sscanf(line, "RadHydroRadiationEnergy = %"FSYM, 
 			&RadHydroInitialRadiationEnergy);
@@ -416,8 +357,8 @@ int CosmologySimulationInitialize(FILE *fptr, FILE *Outfptr,
  
   HierarchyEntry *GridsList[MAX_INITIAL_GRIDS];
   GridsList[0] = &TopGrid;
-  for (gridnum = 1; gridnum < CosmologySimulationNumberOfInitialGrids;
-       gridnum++) {
+  printf("CosmologySimulationNumberOfInitialGrids = %d\n",CosmologySimulationNumberOfInitialGrids);
+  for (gridnum = 1; gridnum < CosmologySimulationNumberOfInitialGrids; gridnum++) {
  
     // Create a spot in the hierarchy
  
@@ -866,8 +807,6 @@ int CosmologySimulationInitialize(FILE *fptr, FILE *Outfptr,
     WriteListOfFloats(Outfptr, 3, CSBField);
 
   }
- 
-  delete [] dummy;
  
   return SUCCESS;
 }

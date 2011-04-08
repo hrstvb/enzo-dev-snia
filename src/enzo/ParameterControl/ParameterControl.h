@@ -2,10 +2,13 @@
 #define PARAMETER_CONTROL_H
 
 #include <map>
-#include <string>
+#include <cstring>
 #include <stdexcept>
 #include <vector>
 #include <sstream>
+#include <typeinfo>
+#include <cstdarg>
+#include <cstdio>
 
 #include "ParameterBackends.h"
 

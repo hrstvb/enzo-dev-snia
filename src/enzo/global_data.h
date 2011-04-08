@@ -20,6 +20,7 @@
 #ifndef GLOBAL_DATA_DEFINED__
 #define GLOBAL_DATA_DEFINED__
 
+
 #include <stdio.h>
 #ifdef MEMORY_POOL
 #include "MemoryPool.h"
@@ -33,6 +34,7 @@
 #ifdef NEW_PROBLEM_TYPES
 class EnzoProblemType;
 #endif
+
 
 /* Load Balancing.  Currently only memory count method implemented
                           0 = off

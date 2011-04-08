@@ -16,8 +16,10 @@
 ************************************************************************/
 
 #include "ParameterControl/ParameterControl.h"
-extern Configuration Param; //declared in ReadParameterFile.C
-
+/* Param is a global variable, but it cannot go in global_data.h,
+   since there the type 'Configuration' is not known, and including
+   ParameterControl.h from within in fails. */
+Configuration Param;
 
 #include "preincludes.h"
  

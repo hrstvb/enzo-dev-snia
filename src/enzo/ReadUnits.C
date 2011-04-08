@@ -11,6 +11,9 @@
 /  NOTE: 
 /
 ************************************************************************/
+ 
+#include "ParameterControl/ParameterControl.h"
+extern Configuration Param;
 
 #include <string.h>
 #include <stdio.h>
@@ -22,7 +25,7 @@
 #include "global_data.h"
 #include "units.h"
 
-int ReadUnits(FILE *fptr)
+int ReadUnits()
 {
 
   char line[MAX_LINE_LENGTH];
@@ -34,18 +37,11 @@ int ReadUnits(FILE *fptr)
   GlobalLengthUnits      = 1.0;
   GlobalTimeUnits        = 1.0;
   
-  /* read input from file */
-
-  while (fgets(line, MAX_LINE_LENGTH, fptr) != NULL) {
-
-    int ret = 0;
-    /* read parameters */
-    ret += sscanf(line, "MassUnits = %lf", &GlobalMassUnits);
-    ret += sscanf(line, "DensityUnits = %"FSYM, &GlobalDensityUnits);
-    ret += sscanf(line, "LengthUnits = %"FSYM, &GlobalLengthUnits);
-    ret += sscanf(line, "TimeUnits = %"FSYM, &GlobalTimeUnits);
-  }
-
+  Param.GetScalar(GlobalMassUnits, "SimulationControl.Units.Mass");
+  Param.GetScalar(GlobalDensityUnits, "SimulationControl.Units.Density");
+  Param.GetScalar(GlobalLengthUnits, "SimulationControl.Units.Length");
+  Param.GetScalar(GlobalTimeUnits, "SimulationControl.Units.Time");
+  
   /* If both mass and density units specified, use only mass and print warning */
 
   if (GlobalDensityUnits != 1.0 && GlobalMassUnits != 1.0) {

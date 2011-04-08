@@ -19,6 +19,9 @@
  
 // This routine intializes a new simulation based on the parameter file.
  
+#include "ParameterControl/ParameterControl.h"
+extern Configuration Param;
+
 #ifdef USE_MPI
 #include "mpi.h"
 #endif /* USE_MPI */
@@ -43,7 +46,7 @@
 int InitializeMovieFile(TopGridData &MetaData, HierarchyEntry &TopGrid);
 int WriteHierarchyStuff(FILE *fptr, HierarchyEntry *Grid,
                         char* base_name, int &GridID, FLOAT WriteTime);
-int ReadParameterFile(FILE *fptr, TopGridData &MetaData, float *Initialdt);
+int ReadParameterFile(TopGridData &MetaData, float *Initialdt);
 int WriteParameterFile(FILE *fptr, TopGridData &MetaData);
 void ConvertTotalEnergyToGasEnergy(HierarchyEntry *Grid);
 int SetDefaultGlobalValues(TopGridData &MetaData);
@@ -244,10 +247,11 @@ int InitializeNew(char *filename, HierarchyEntry &TopGrid,
     Dummy[dim] = 0.0;
  
   // Open parameter file
- 
-  if ((fptr = fopen(filename, "r")) == NULL) {
-    ENZO_FAIL("Error opening parameter file.");
-  }
+
+  // needs error check
+  Param.FromFile("enzo2_libconfig",filename);
+
+
  
   // Clear OutputLog
 
@@ -270,7 +274,7 @@ int InitializeNew(char *filename, HierarchyEntry &TopGrid,
  
   // Read the MetaData/global values from the Parameter file
  
-  if (ReadParameterFile(fptr, MetaData, Initialdt) == FAIL) {
+  if (ReadParameterFile(MetaData, Initialdt) == FAIL) {
     ENZO_FAIL("Error in ReadParameterFile.");
   }
 
@@ -915,9 +919,6 @@ int InitializeNew(char *filename, HierarchyEntry &TopGrid,
   
   CommunicationBarrier();
  
-  // Close parameter files
-  
-  fclose(fptr);
   
   if (MyProcessorNumber == ROOT_PROCESSOR)
     fclose(Outfptr);

@@ -16,6 +16,9 @@
 // This routine intializes a new simulation based on the parameter file.
 //
 
+#include "ParameterControl/ParameterControl.h"
+extern Configuration Param;
+
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
@@ -122,92 +125,44 @@ int CollapseTestInitialize(FILE *fptr, FILE *Outfptr,
 
   /* read input from file */
 
-  while (fgets(line, MAX_LINE_LENGTH, fptr) != NULL) {
+  Param.GetScalar(CollapseTestRefineAtStart, "Problem.CollapseTest.RefineAtStart");
+  Param.GetScalar(CollapseTestUseParticles, "Problem.CollapseTest.UseParticles");
+  Param.GetScalar(CollapseTestParticleMeanDensity, "Problem.CollapseTest.ParticleMeanDensity");
+  Param.GetScalar(CollapseTestUseColour, "Problem.CollapseTest.UseColour");
+  Param.GetScalar(CollapseTestUseMetals, "Problem.CollapseTest.UseMetals");
+  Param.GetScalar(CollapseTestInitialTemperature, "Problem.CollapseTest.InitialTemperature");
+  Param.GetScalar(CollapseTestInitialDensity, "Problem.CollapseTest.InitialDensity");
+  Param.GetArray(CollapseTestUniformVelocity, "Problem.CollapseTest.UniformVelocity");
+  
+  int NumberOfSpheres = Param.Size("Problem.CollapseTest.Spheres");
+  if (NumberOfSpheres > MAX_SPHERES-1) {
+    ENZO_VFAIL("You've exceeded the maximum number of CollapseTest spheres (%d)!\n",MAX_SPHERES)
+      }
+  CollapseTestNumberOfSpheres = NumberOfSpheres;
+  
+  char SphereNames[MAX_LINE_LENGTH][MAX_SPHERES];
+  Param.GetArray(SphereNames,"Problem.CollapseTest.Spheres");
+  
+  for (i = 0; i < NumberOfSpheres; i++) {
+    Param.GetScalar(CollapseTestSphereType[i], "Problem.CollapseTest.%s.Type",SphereNames[i]);
+    Param.GetScalar(CollapseTestSphereRadius[i], "Problem.CollapseTest.%s.Radius",SphereNames[i]);
+    Param.GetScalar(CollapseTestSphereCoreRadius[i], "Problem.CollapseTest.%s.CoreRadius",SphereNames[i]);
+    Param.GetScalar(CollapseTestSphereDensity[i], "Problem.CollapseTest.%s.Density",SphereNames[i]);
+    Param.GetScalar(CollapseTestSphereTemperature[i], "Problem.CollapseTest.%s.Temperature",SphereNames[i]);
+    Param.GetScalar(CollapseTestSphereMetallicity[i], "Problem.CollapseTest.%s.Metallicity",SphereNames[i]);
+    Param.GetArray(CollapseTestSpherePosition[i], "Problem.CollapseTest.%s.Position",SphereNames[i]);
+    Param.GetArray(CollapseTestSphereVelocity[i], "Problem.CollapseTest.%s.Velocity",SphereNames[i]);
+    Param.GetScalar(CollapseTestFracKeplerianRot[i], "Problem.CollapseTest.%s.FracKeplerianRot",SphereNames[i]);
+    Param.GetScalar(CollapseTestSphereTurbulence[i], "Problem.CollapseTest.%s.Turbulence",SphereNames[i]);
+    Param.GetScalar(CollapseTestSphereDispersion[i], "Problem.CollapseTest.%s.Dispersion",SphereNames[i]);
+    Param.GetScalar(CollapseTestSphereCutOff[i], "Problem.CollapseTest.%s.CutOff",SphereNames[i]);
+    Param.GetScalar(CollapseTestSphereAng1[i], "Problem.CollapseTest.%s.Ang1",SphereNames[i]);
+    Param.GetScalar(CollapseTestSphereAng2[i], "Problem.CollapseTest.%s.Ang2",SphereNames[i]);
+    Param.GetScalar(CollapseTestSphereNumShells[i], "Problem.CollapseTest.%s.NumShells",SphereNames[i]);
+    Param.GetScalar(CollapseTestSphereInitialLevel[i], "Problem.CollapseTest.%s.InitialLevel",SphereNames[i]);
+  } 
 
-    ret = 0;
-
-    /* read parameters */
-
-    ret += sscanf(line, "CollapseTestNumberOfSpheres = %"ISYM,
-		  &CollapseTestNumberOfSpheres);
-    ret += sscanf(line, "CollapseTestRefineAtStart = %"ISYM, 
-		  &CollapseTestRefineAtStart);
-    ret += sscanf(line, "CollapseTestUseParticles = %"ISYM, 
-		  &CollapseTestUseParticles);
-    ret += sscanf(line, "CollapseTestParticleMeanDensity = %"FSYM,
-		  &CollapseTestParticleMeanDensity);
-    ret += sscanf(line, "CollapseTestUseColour = %"ISYM, 
-		  &CollapseTestUseColour);
-    ret += sscanf(line, "CollapseTestUseMetals = %"ISYM, 
-		  &CollapseTestUseMetals);
-    ret += sscanf(line, "CollapseTestInitialTemperature = %"FSYM, 
-		  &CollapseTestInitialTemperature);
-    ret += sscanf(line, "CollapseTestInitialDensity = %"FSYM,
-		  &CollapseTestInitialDensity);
-    ret += sscanf(line, "CollapseTestUniformVelocity = %"FSYM" %"FSYM" %"FSYM, 
-		  CollapseTestUniformVelocity, CollapseTestUniformVelocity+1,
-		  CollapseTestUniformVelocity+2);
-    if (sscanf(line, "CollapseTestSphereType[%"ISYM"]", &sphere) > 0)
-      ret += sscanf(line, "CollapseTestSphereType[%"ISYM"] = %"ISYM, &sphere,
-		    &CollapseTestSphereType[sphere]);
-    if (sscanf(line, "CollapseTestSphereRadius[%"ISYM"]", &sphere) > 0)
-      ret += sscanf(line, "CollapseTestSphereRadius[%"ISYM"] = %"PSYM, &sphere,
-		    &CollapseTestSphereRadius[sphere]);
-    if (sscanf(line, "CollapseTestSphereCoreRadius[%"ISYM"]", &sphere) > 0)
-      ret += sscanf(line, "CollapseTestSphereCoreRadius[%"ISYM"] = %"PSYM, &sphere,
-		    &CollapseTestSphereCoreRadius[sphere]);
-    if (sscanf(line, "CollapseTestSphereDensity[%"ISYM"]", &sphere) > 0)
-      ret += sscanf(line, "CollapseTestSphereDensity[%"ISYM"] = %"FSYM, &sphere,
-		    &CollapseTestSphereDensity[sphere]);
-    if (sscanf(line, "CollapseTestSphereTemperature[%"ISYM"]", &sphere) > 0)
-      ret += sscanf(line, "CollapseTestSphereTemperature[%"ISYM"] = %"FSYM, &sphere,
-		    &CollapseTestSphereTemperature[sphere]);
-    if (sscanf(line, "CollapseTestSphereMetallicity[%"ISYM"]", &sphere) > 0)
-      ret += sscanf(line, "CollapseTestSphereMetallicity[%"ISYM"] = %"FSYM, &sphere,
-		    &CollapseTestSphereMetallicity[sphere]);
-    if (sscanf(line, "CollapseTestSpherePosition[%"ISYM"]", &sphere) > 0)
-      ret += sscanf(line, "CollapseTestSpherePosition[%"ISYM"] = %"PSYM" %"PSYM" %"PSYM, 
-		    &sphere, &CollapseTestSpherePosition[sphere][0],
-		    &CollapseTestSpherePosition[sphere][1],
-		    &CollapseTestSpherePosition[sphere][2]);
-    if (sscanf(line, "CollapseTestSphereVelocity[%"ISYM"]", &sphere) > 0)
-      ret += sscanf(line, "CollapseTestSphereVelocity[%"ISYM"] = %"FSYM" %"FSYM" %"FSYM, 
-		    &sphere, &CollapseTestSphereVelocity[sphere][0],
-		    &CollapseTestSphereVelocity[sphere][1],
-		    &CollapseTestSphereVelocity[sphere][2]);
-    if (sscanf(line, "CollapseTestFracKeplerianRot[%"ISYM"]", &sphere) > 0)
-      ret += sscanf(line, "CollapseTestFracKeplerianRot[%"ISYM"] = %"FSYM, &sphere,
-                    &CollapseTestFracKeplerianRot[sphere]);
-    if (sscanf(line, "CollapseTestSphereTurbulence[%"ISYM"]", &sphere) > 0)
-      ret += sscanf(line, "CollapseTestSphereTurbulence[%"ISYM"] = %"FSYM, &sphere,
-                    &CollapseTestSphereTurbulence[sphere]);
-    if (sscanf(line, "CollapseTestSphereDispersion[%"ISYM"]", &sphere) > 0)
-      ret += sscanf(line, "CollapseTestSphereDispersion[%"ISYM"] = %"FSYM, &sphere,
-                    &CollapseTestSphereDispersion[sphere]);
-    if (sscanf(line, "CollapseTestSphereCutOff[%"ISYM"]", &sphere) > 0)
-      ret += sscanf(line, "CollapseTestSphereCutOff[%"ISYM"] = %"FSYM, &sphere,
-                    &CollapseTestSphereCutOff[sphere]);
-    if (sscanf(line, "CollapseTestSphereAng1[%"ISYM"]", &sphere) > 0)
-      ret += sscanf(line, "CollapseTestSphereAng1[%"ISYM"] = %"FSYM, &sphere,
-                    &CollapseTestSphereAng1[sphere]);
-    if (sscanf(line, "CollapseTestSphereAng2[%"ISYM"]", &sphere) > 0)
-      ret += sscanf(line, "CollapseTestSphereAng2[%"ISYM"] = %"FSYM, &sphere,
-                    &CollapseTestSphereAng2[sphere]);
-    if (sscanf(line, "CollapseTestSphereNumShells[%"ISYM"]", &sphere) > 0)
-      ret += sscanf(line, "CollapseTestSphereNumShells[%"ISYM"] = %"ISYM, &sphere,
-                    &CollapseTestSphereNumShells[sphere]);
-    if (sscanf(line, "CollapseTestSphereInitialLevel[%"ISYM"]", &sphere) > 0)
-      ret += sscanf(line, "CollapseTestSphereInitialLevel[%"ISYM"] = %"ISYM, &sphere,
-                    &CollapseTestSphereInitialLevel[sphere]);
-
-    /* if the line is suspicious, issue a warning */
-
-    if (ret == 0 && strstr(line, "=") && strstr(line, "CollapseTest") 
-	&& line[0] != '#')
-      fprintf(stderr, "warning: the following parameter line was not interpreted:\n%s\n", line);
-
-  } // end input from parameter file
-
+  
   /* set up grid */
 
   if (TopGrid.GridData->CollapseTestInitializeGrid(

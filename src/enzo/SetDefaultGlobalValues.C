@@ -264,9 +264,6 @@ int SetDefaultGlobalValues(TopGridData &MetaData)
  
   CubeDumpEnabled             = 0;
 
-
-#endif
-
   First_Pass                  = 0;
 
   MemoryLimit                 = 4000000000L;
