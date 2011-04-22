@@ -20,8 +20,9 @@
 /
 ************************************************************************/
  
-// This routine intializes a new simulation based on the parameter file.
- 
+#include "ParameterControl/ParameterControl.h"
+extern Configuration Param;
+
 #include <string.h>
 #include <stdio.h>
 #include <math.h>
@@ -37,51 +38,19 @@
 #include "Hierarchy.h"
 #include "TopGridData.h"
  
- 
- 
- 
-int TracerParticleCreation(FILE *fptr, HierarchyEntry &TopGrid,
+
+int TracerParticleCreation(HierarchyEntry &TopGrid,
 			   TopGridData &MetaData)
 {
  
-  char line[MAX_LINE_LENGTH];
   int dim;
+  
+  // Read tracer particle parameters
  
-  // Set default values for parameters
- 
-  //  Declared in global_data.h (RH)
-  //  FLOAT TracerParticleCreationLeftEdge[MAX_DIMENSION];
-  //  FLOAT TracerParticleCreationRightEdge[MAX_DIMENSION];
-  //  FLOAT TracerParticleCreationSpacing = FLOAT_UNDEFINED;
- 
-  TracerParticleCreationSpacing = FLOAT_UNDEFINED;
- 
-  for (dim = 0; dim < MAX_DIMENSION; dim++) {
-    TracerParticleCreationLeftEdge[dim] = FLOAT_UNDEFINED;
-    TracerParticleCreationRightEdge[dim] = FLOAT_UNDEFINED;
-  }
- 
-  // Read until out of lines
- 
-  rewind(fptr);
- 
-  while (fgets(line, MAX_LINE_LENGTH, fptr) != NULL) {
- 
-    // Read tracer particle parameters
- 
-    sscanf(line, "TracerParticleCreation = %"ISYM, &MetaData.CycleNumber);
-    sscanf(line, "TracerParticleCreationSpacing = %"PSYM,
-	   &TracerParticleCreationSpacing);
-    sscanf(line, "TracerParticleCreationLeftEdge = %"PSYM" %"PSYM" %"PSYM,
-		  TracerParticleCreationLeftEdge,
-		  TracerParticleCreationLeftEdge+1,
-		  TracerParticleCreationLeftEdge+2);
-    sscanf(line, "TracerParticleCreationRightEdge = %"PSYM" %"PSYM" %"PSYM,
-		  TracerParticleCreationRightEdge,
-		  TracerParticleCreationRightEdge+1,
-		  TracerParticleCreationRightEdge+2);
- 
-  }
+  // sscanf(line, "TracerParticleCreation = %"ISYM, &MetaData.CycleNumber);
+  Param.GetScalar(TracerParticleCreationSpacing, "Physics.OtherParticles.TracerParticle.CreationSpacing");
+  Param.GetArray(TracerParticleCreationLeftEdge, "Physics.OtherParticles.TracerParticle.CreationLeftEdge");
+  Param.GetArray(TracerParticleCreationRightEdge, "Physics.OtherParticles.TracerParticle.CreationRightEdge");
  
 /*
   fprintf(stderr, "TracerParticleCreation = %"ISYM"\n", MetaData.CycleNumber);
@@ -117,8 +86,6 @@ int TracerParticleCreation(FILE *fptr, HierarchyEntry &TopGrid,
       }
     }
   }
- 
-  rewind(fptr);
  
   return SUCCESS;
 }

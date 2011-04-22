@@ -49,8 +49,6 @@ int CosmologyReadParameters(FLOAT *StopTime, FLOAT *InitTime)
   }
  
   /* read parameters */
- 
-  
 
   Param.GetScalar(HubbleConstantNow,"Physics.Cosmology.HubbleConstantNow");
   Param.GetScalar(OmegaMatterNow, "Physics.Cosmology.OmegaMatterNow");

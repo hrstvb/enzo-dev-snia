@@ -62,7 +62,7 @@ public:
 		
 		if( setting == NULL )
 		{	
-		  fprintf(stderr, "No '%s' setting in configuration file.\n",key.c_str());
+		  //		  fprintf(stderr, "No '%s' setting in configuration file.\n",key.c_str());
 		  //		  throw std::runtime_error("element not found");
 		  return 0;
 		}
@@ -138,7 +138,7 @@ public:
 				}
 			}
 		}else{	
-		  fprintf(stderr, "No '%s' setting in configuration file.\n",key.c_str());
+		  //		  fprintf(stderr, "No '%s' setting in configuration file.\n",key.c_str());
 		  //		  throw std::runtime_error("element not found");
 		  return 0;
 		}

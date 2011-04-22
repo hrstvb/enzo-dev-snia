@@ -138,7 +138,7 @@ int TurbulenceSimulationInitialize(FILE *fptr, FILE *Outfptr,
 int TurbulenceSimulationReInitialize(HierarchyEntry *TopGrid,
                                     TopGridData &MetaData);
  
-int TracerParticleCreation(FILE *fptr, HierarchyEntry &TopGrid,
+int TracerParticleCreation(HierarchyEntry &TopGrid,
                            TopGridData &MetaData);
 
 int ShearingBoxInitialize(FILE *fptr, FILE *Outfptr, HierarchyEntry &TopGrid,
@@ -806,7 +806,7 @@ int InitializeNew(char *filename, HierarchyEntry &TopGrid,
   // Check for the creation of tracer particles
   // Tracer particles will not be created at this point if ||rgio in ON
   
-  if (TracerParticleCreation(fptr, TopGrid, MetaData) == FAIL) {
+  if (TracerParticleCreation(TopGrid, MetaData) == FAIL) {
     ENZO_FAIL("Error in TracerParticleCreation");
   }
   

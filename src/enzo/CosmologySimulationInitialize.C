@@ -57,43 +57,43 @@ int GetUnits(float *DensityUnits, float *LengthUnits,
 
 // Cosmology Parameters (that need to be shared)
  
-static float CosmologySimulationOmegaBaryonNow       = 1.0;  // standard
-static float CosmologySimulationOmegaCDMNow          = 0.0;  // no dark matter
-static float CosmologySimulationInitialTemperature   = FLOAT_UNDEFINED;
+static float CosmologySimulationOmegaBaryonNow;
+static float CosmologySimulationOmegaCDMNow;
+static float CosmologySimulationInitialTemperature;
  
-static char *CosmologySimulationDensityName          = NULL;
-static char *CosmologySimulationTotalEnergyName      = NULL;
-static char *CosmologySimulationGasEnergyName        = NULL;
-static char *CosmologySimulationParticlePositionName = NULL;
-static char *CosmologySimulationParticleVelocityName = NULL;
-static char *CosmologySimulationParticleDisplacementName = NULL;
-static char *CosmologySimulationParticleMassName     = NULL;
-static char *CosmologySimulationParticleTypeName     = NULL;
+static char *CosmologySimulationDensityName;
+static char *CosmologySimulationTotalEnergyName;
+static char *CosmologySimulationGasEnergyName;
+static char *CosmologySimulationParticlePositionName;
+static char *CosmologySimulationParticleVelocityName;
+static char *CosmologySimulationParticleDisplacementName;
+static char *CosmologySimulationParticleMassName;
+static char *CosmologySimulationParticleTypeName;
 static char *CosmologySimulationVelocityNames[MAX_DIMENSION];
 static char *CosmologySimulationParticleVelocityNames[MAX_DIMENSION];
 static char *CosmologySimulationParticlePositionNames[MAX_DIMENSION];
 static char *CosmologySimulationParticleDisplacementNames[MAX_DIMENSION];
 
-static int   CosmologySimulationSubgridsAreStatic    = TRUE;
+static int   CosmologySimulationSubgridsAreStatic;
  
-static float CosmologySimulationInitialFractionHII   = 1.2e-5;
-static float CosmologySimulationInitialFractionHeII  = 1.0e-14;
-static float CosmologySimulationInitialFractionHeIII = 1.0e-17;
-static float CosmologySimulationInitialFractionHM    = 2.0e-9;
-static float CosmologySimulationInitialFractionH2I   = 2.0e-20;
-static float CosmologySimulationInitialFractionH2II  = 3.0e-14;
-static float CosmologySimulationInitialFractionMetal = 1.0e-10;
-static int   CosmologySimulationUseMetallicityField  = FALSE;
+static float CosmologySimulationInitialFractionHII;
+static float CosmologySimulationInitialFractionHeII;
+static float CosmologySimulationInitialFractionHeIII;
+static float CosmologySimulationInitialFractionHM;
+static float CosmologySimulationInitialFractionH2I;
+static float CosmologySimulationInitialFractionH2II;
+static float CosmologySimulationInitialFractionMetal;
+static int   CosmologySimulationUseMetallicityField;
  
-static int CosmologySimulationManuallySetParticleMassRatio = FALSE;
-static float CosmologySimulationManualParticleMassRatio = 1.0;
+static int CosmologySimulationManuallySetParticleMassRatio;
+static float CosmologySimulationManualParticleMassRatio;
 
-static int   CosmologySimulationCalculatePositions   = FALSE; 
+static int   CosmologySimulationCalculatePositions;
 
 static float CosmologySimulationInitialUniformBField[MAX_DIMENSION];  // in proper Gauss
 
 #ifdef TRANSFER
-static float RadHydroInitialRadiationEnergy = 1.0e-32;
+static float RadHydroInitialRadiationEnergy;
 #endif
 
 #define MAX_INITIAL_GRIDS 10
@@ -144,33 +144,48 @@ int CosmologySimulationInitialize(FILE *fptr, FILE *Outfptr,
   char *EtaName    = "Emissivity";
 #endif
  
+  char *dummy = new char[MAX_LINE_LENGTH];
+  char dummy_arr[MAX_LINE_LENGTH][MAX_DIMENSION];
 
   char line[MAX_LINE_LENGTH];
   int i, j, dim, gridnum, ret, SubgridsAreStatic, region;
   HierarchyEntry *Subgrid;
  
-  char *DensityName = NULL, *TotalEnergyName = NULL, *GasEnergyName = NULL,
-    *ParticlePositionName = NULL, *ParticleVelocityName = NULL, 
-    *ParticleDisplacementName = NULL, *ParticleMassName = NULL, 
-    *VelocityNames[MAX_DIMENSION], *ParticleTypeName = NULL, 
-    *ParticlePositionNames[MAX_DIMENSION], *ParticleVelocityNames[MAX_DIMENSION], 
+  char *DensityName = NULL, 
+    *TotalEnergyName = NULL,
+    *GasEnergyName = NULL,
+    *ParticlePositionName = NULL,
+    *ParticleVelocityName = NULL, 
+    *ParticleDisplacementName = NULL,
+    *ParticleMassName = NULL, 
+    *VelocityNames[MAX_DIMENSION],
+    *ParticleTypeName = NULL, 
+    *ParticlePositionNames[MAX_DIMENSION],
+    *ParticleVelocityNames[MAX_DIMENSION], 
     *ParticleDisplacementNames[MAX_DIMENSION];
  
-  for (dim = 0; dim < MAX_DIMENSION; dim++)
-    VelocityNames[dim] = NULL;
  
-  // Set default parameters: parameters, names and subgrid info
- 
+  // Set all char arrays to NULL
+  
+  CosmologySimulationDensityName          = NULL;
+  CosmologySimulationTotalEnergyName      = NULL;
+  CosmologySimulationGasEnergyName        = NULL;
+  CosmologySimulationParticlePositionName = NULL;
+  CosmologySimulationParticleVelocityName = NULL;
+  CosmologySimulationParticleDisplacementName = NULL;
+  CosmologySimulationParticleMassName     = NULL;
+  CosmologySimulationParticleTypeName     = NULL;
+
   for (dim = 0; dim < MAX_DIMENSION; dim++) {
     VelocityNames[dim] = NULL;
     ParticlePositionNames[dim] = NULL;
     ParticleVelocityNames[dim] = NULL;
     ParticleDisplacementNames[dim] = NULL;
+
     CosmologySimulationParticlePositionNames[dim] = NULL;
     CosmologySimulationParticleVelocityNames[dim] = NULL;
     CosmologySimulationParticleDisplacementNames[dim] = NULL;
     CosmologySimulationVelocityNames[dim] = NULL;
-    CosmologySimulationInitialUniformBField[dim] = 0.0;
   }
  
   int   CosmologySimulationGridDimension[MAX_INITIAL_GRIDS][MAX_DIMENSION];
@@ -201,30 +216,95 @@ int CosmologySimulationInitialize(FILE *fptr, FILE *Outfptr,
   Param.GetScalar(CosmologySimulationOmegaCDMNow, "Problem.CosmologySimulation.OmegaCDMNow");
   Param.GetScalar(CosmologySimulationInitialTemperature, "Problem.CosmologySimulation.InitialTemperature");
   
-  CosmologySimulationDensityName = new char[MAX_LINE_LENGTH];
-  Param.GetScalar(CosmologySimulationDensityName, "Problem.CosmologySimulation.DensityName");
-  CosmologySimulationTotalEnergyName = new char[MAX_LINE_LENGTH];
-  Param.GetScalar(CosmologySimulationTotalEnergyName, "Problem.CosmologySimulation.TotalEnergyName");
-  CosmologySimulationGasEnergyName = new char[MAX_LINE_LENGTH];
-  Param.GetScalar(CosmologySimulationGasEnergyName, "Problem.CosmologySimulation.GasEnergyName");
-  
-  CosmologySimulationParticlePositionName = new char[MAX_LINE_LENGTH];
-  Param.GetScalar(CosmologySimulationParticlePositionName, "Problem.CosmologySimulation.ParticlePositionName");
-  CosmologySimulationParticleVelocityName = new char[MAX_LINE_LENGTH];
-  Param.GetScalar(CosmologySimulationParticleVelocityName, "Problem.CosmologySimulation.ParticleVelocityName");
-  CosmologySimulationParticleMassName = new char[MAX_LINE_LENGTH];
-  Param.GetScalar(CosmologySimulationParticleMassName, "Problem.CosmologySimulation.ParticleMassName");
-  CosmologySimulationParticleTypeName = new char[MAX_LINE_LENGTH];
-  Param.GetScalar(CosmologySimulationParticleTypeName, "Problem.CosmologySimulation.ParticleTypeName");
-  CosmologySimulationParticleDisplacementName = new char[MAX_LINE_LENGTH];
-  Param.GetScalar(CosmologySimulationParticleDisplacementName, "Problem.CosmologySimulation.ParticleDisplacementName");
+  Param.GetScalar(dummy, "Problem.CosmologySimulation.DensityName");
+  if( strlen(dummy) > 0 ) {
+    CosmologySimulationDensityName = new char[MAX_LINE_LENGTH];
+    strcpy(CosmologySimulationDensityName, dummy);
+  }
 
-  // this is broken. still need to allocate the char arrays...
-  // Param.GetArray(CosmologySimulationVelocityNames, "Problem.CosmologySimulation.VelocityNames");  
-  // Param.GetArray(CosmologySimulationParticlePositionNames, "Problem.CosmologySimulation.ParticlePositionNames");
-  // Param.GetArray(CosmologySimulationParticleVelocityNames, "Problem.CosmologySimulation.VelocityNames");
-  // Param.GetArray(CosmologySimulationParticleDisplacementNames, "Problem.CosmologySimulation.ParticleDisplacementNames");
+  Param.GetScalar(dummy, "Problem.CosmologySimulation.VelocitiesName");
+  if( strlen(dummy) > 0 ) {
+    for( i=0; i<MAX_DIMENSION; i++) {
+      CosmologySimulationVelocityNames[i] = new char[MAX_LINE_LENGTH];
+      strcpy(CosmologySimulationVelocityNames[i], dummy);
+    }
+  }
+
+  Param.GetScalar(dummy, "Problem.CosmologySimulation.TotalEnergyName");
+  if( strlen(dummy) > 0 ) {
+    CosmologySimulationTotalEnergyName = new char[MAX_LINE_LENGTH];
+    strcpy(CosmologySimulationTotalEnergyName, dummy);
+  }
+
+  Param.GetScalar(dummy, "Problem.CosmologySimulation.GasEnergyName");
+  if( strlen(dummy) > 0 ) {
+    CosmologySimulationGasEnergyName = new char[MAX_LINE_LENGTH];
+    strcpy(CosmologySimulationGasEnergyName, dummy);
+  }
   
+  Param.GetScalar(dummy, "Problem.CosmologySimulation.ParticlePositionName");
+  if( strlen(dummy) > 0 ) {
+    CosmologySimulationParticlePositionName = new char[MAX_LINE_LENGTH];
+    strcpy(CosmologySimulationParticlePositionName, dummy);
+  }
+
+  Param.GetScalar(dummy, "Problem.CosmologySimulation.ParticleVelocityName");
+  if( strlen(dummy) > 0 ) {
+    CosmologySimulationParticleVelocityName = new char[MAX_LINE_LENGTH];
+    strcpy(CosmologySimulationParticleVelocityName, dummy);
+  }
+
+  Param.GetScalar(dummy, "Problem.CosmologySimulation.ParticleMassName");
+  if( strlen(dummy) > 0 ) {
+    CosmologySimulationParticleMassName = new char[MAX_LINE_LENGTH];
+    strcpy(CosmologySimulationParticleMassName, dummy);
+  }
+
+  Param.GetScalar(dummy, "Problem.CosmologySimulation.ParticleTypeName");
+  if( strlen(dummy) > 0 ) {
+    CosmologySimulationParticleTypeName = new char[MAX_LINE_LENGTH];
+    strcpy(CosmologySimulationParticleTypeName, dummy);
+  }
+
+  Param.GetScalar(dummy, "Problem.CosmologySimulation.ParticleDisplacementName");
+  if( strlen(dummy) > 0 ) {
+    CosmologySimulationParticleDisplacementName = new char[MAX_LINE_LENGTH];
+    strcpy(CosmologySimulationParticleDisplacementName, dummy);
+  }
+
+  Param.GetArray(dummy_arr, "Problem.CosmologySimulation.VelocityNames");  
+  for( i=0; i<MAX_DIMENSION; i++) {
+    if( strlen(dummy_arr[i]) > 0 ) {
+      if( CosmologySimulationVelocityNames[i] == NULL )
+	CosmologySimulationVelocityNames[i] = new char[MAX_LINE_LENGTH];
+      strcpy(CosmologySimulationVelocityNames[i], dummy_arr[i]);
+    }
+  }
+
+  Param.GetArray(dummy_arr, "Problem.CosmologySimulation.ParticlePositionNames");
+  for( i=0; i<MAX_DIMENSION; i++) {
+    if( strlen(dummy_arr[i]) > 0 ) {
+      CosmologySimulationParticlePositionNames[i] = new char[MAX_LINE_LENGTH];
+      strcpy(CosmologySimulationParticlePositionNames[i], dummy_arr[i]);
+    }
+  }
+
+  Param.GetArray(dummy_arr, "Problem.CosmologySimulation.VelocityNames");
+  for( i=0; i<MAX_DIMENSION; i++) {
+    if( strlen(dummy_arr[i]) > 0 ) {
+      CosmologySimulationParticleVelocityNames[i] = new char[MAX_LINE_LENGTH];
+      strcpy(CosmologySimulationParticleVelocityNames[i], dummy_arr[i]);
+    }
+  }
+
+  Param.GetArray(dummy_arr, "Problem.CosmologySimulation.ParticleDisplacementNames");
+  for( i=0; i<MAX_DIMENSION; i++) {
+    if( strlen(dummy_arr[i]) > 0 ) {
+      CosmologySimulationParticleDisplacementNames[i] = new char[MAX_LINE_LENGTH];
+      strcpy(CosmologySimulationParticleDisplacementNames[i], dummy_arr[i]);
+    }
+  }
+
   Param.GetScalar(CosmologySimulationSubgridsAreStatic, "Problem.CosmologySimulation.SubgridsAreStatic");
   
   int NumberOfInitialSubgrids = Param.Size("Problem.CosmologySimulation.InitialSubgrids");
@@ -265,22 +345,29 @@ int CosmologySimulationInitialize(FILE *fptr, FILE *Outfptr,
 #ifdef TRANSFER
   // if using FLD-based solver for radiation, initialize the relevant fields
   if (RadiativeTransferFLD > 1) {
+
+    /* RadHydroInitialRadiationEnergy is now specified in the normal
+       input parameter file... */
+
     // Read RadHydro input from secondary input file
-    if (MetaData.RadHydroParameterFname != NULL) {
-      FILE *RHfptr;
-      if ((RHfptr = fopen(MetaData.RadHydroParameterFname, "r")) != NULL) {
-	while (fgets(line, MAX_LINE_LENGTH, RHfptr) != NULL) {
-	  ret = 0;
 
-	  // !!! this still needs to be converted to Param.GetScalar !!!
+    // if (MetaData.RadHydroParameterFname != NULL) {
+    //   FILE *RHfptr;
+    //   if ((RHfptr = fopen(MetaData.RadHydroParameterFname, "r")) != NULL) {
+    // 	while (fgets(line, MAX_LINE_LENGTH, RHfptr) != NULL) {
+    // 	  ret = 0;
 
-	  // read relevant problem parameters
-	  ret += sscanf(line, "RadHydroRadiationEnergy = %"FSYM, 
-			&RadHydroInitialRadiationEnergy);
-	} // end input from parameter file
-	fclose(RHfptr);
-      }
-    }
+    // 	  // !!! this still needs to be converted to Param.GetScalar !!!
+
+    // 	  // read relevant problem parameters
+    // 	  ret += sscanf(line, "RadHydroRadiationEnergy = %"FSYM, 
+    // 			&RadHydroInitialRadiationEnergy);
+    // 	} // end input from parameter file
+    // 	fclose(RHfptr);
+    //   }
+    // }
+
+    Param.GetScalar(RadHydroInitialRadiationEnergy, "Problem.CosmologySimulation.RadHydroInitialRadiationEnergy");
     
     // set up CoolData object if not already set up
     if (CoolData.ceHI == NULL) 

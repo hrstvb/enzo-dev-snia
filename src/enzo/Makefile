@@ -329,7 +329,6 @@ auto_show_version.C:
 .PHONY: auto_defaults_string.h
 auto_defaults_string.h:
 	-@awk 'BEGIN {print "char defaults_string[] = "}; {gsub(/"/,"\\\""); print "  \""$$0"\\n\""}; END {print "  \"\";"}' < defaults.cfg > auto_defaults_string.h
-#	-@awk 'BEGIN {print "#ifndef DEFAULTS_STRING_DEFINED__\nXXX = \n#define DEFAULTS_STRING_DEFINED__\n\n#ifdef DEFINE_STORAGE\n# define EXTERN\n#else /* DEFINE_STORAGE */\n# define EXTERN extern\n#endif\n\nEXTERN char defaults_string[] = "}; {gsub(/"/,"\\\""); print "  \""$$0"\\n\""}; END {print "  \"\";\n\n#endif"}' < defaults.cfg > auto_defaults_string.h
 
 #gsub(/"/,"\""); 
 

@@ -76,7 +76,34 @@ int ReadParameterFile(TopGridData &MetaData, float *Initialdt)
   int comment_count = 0;
 	
   char *dummy = new char[MAX_LINE_LENGTH];
- 
+
+
+  /* Initialize all MetaData char arrays to NULL */
+
+  MetaData.ResubmitCommand        = NULL;
+  MetaData.RestartDumpName        = NULL;
+  MetaData.DataDumpName           = NULL;
+  MetaData.HistoryDumpName        = NULL;
+  MetaData.MovieDumpName          = NULL;
+  MetaData.TracerParticleDumpName = NULL;
+  MetaData.RedshiftDumpName       = NULL;
+  MetaData.RestartDumpDir         = NULL;
+  MetaData.DataDumpDir            = NULL;
+  MetaData.HistoryDumpDir         = NULL;
+  MetaData.MovieDumpDir           = NULL;
+  MetaData.TracerParticleDumpDir  = NULL;
+  MetaData.RedshiftDumpDir        = NULL;
+  MetaData.LocalDir               = NULL;
+  MetaData.GlobalDir              = NULL;
+  MetaData.MetaDataIdentifier     = NULL;
+  MetaData.SimulationUUID         = NULL;
+  MetaData.RestartDatasetUUID     = NULL;
+  MetaData.InitialConditionsUUID  = NULL;
+  MetaData.BoundaryConditionName  = NULL;
+#ifdef TRANSFER
+  MetaData.RadHydroParameterFname = NULL;
+#endif  
+
   /* read MetaData parameters */
 
   Param.GetScalar(MetaData.CycleNumber, "Internal.InitialCycleNumber");
@@ -84,7 +111,7 @@ int ReadParameterFile(TopGridData &MetaData, float *Initialdt)
   Param.GetScalar(MetaData.CPUTime, "Internal.InitialCPUTime");
   Param.GetScalar((*Initialdt), "Internal.Initialdt");
   
-  Param.GetScalar(CheckpointRestart, "Internal.OutputLabeling.CheckpointRestart"); // should be bool
+  Param.GetScalar(CheckpointRestart, "Internal.OutputLabeling.CheckpointRestart");
   Param.GetScalar(MetaData.StopTime, "SimulationControl.StopTime");
   Param.GetScalar(MetaData.StopCycle, "SimulationControl.StopCycle");
   Param.GetScalar(MetaData.StopSteps, "SimulationControl.StopSteps");
@@ -93,9 +120,11 @@ int ReadParameterFile(TopGridData &MetaData, float *Initialdt)
   
 	//printf("Size of resubmitcommand = %d",Param.Size("SimulationControl.ResubmitCommand"));
 	
-  MetaData.ResubmitCommand = new char[MAX_LINE_LENGTH];
   Param.GetScalar(dummy, "SimulationControl.ResubmitCommand");
-  strcpy(MetaData.ResubmitCommand, dummy);
+  if( strlen(dummy) > 0 ) {
+    MetaData.ResubmitCommand = new char[MAX_LINE_LENGTH];
+    strcpy(MetaData.ResubmitCommand, dummy);
+  }
 
   Param.GetScalar(MetaData.MaximumTopGridTimeStep, "SimulationControl.MaximumTopGridTimeStep");
   
@@ -151,26 +180,78 @@ int ReadParameterFile(TopGridData &MetaData, float *Initialdt)
   Param.GetScalar(MetaData.HistoryDumpNumber, "Internal.OutputLabeling.HistoryDumpNumber");
   Param.GetScalar(MetaData.TracerParticleDumpNumber, "Internal.OutputLabeling.TracerParticleDumpNumber");
   
-  Param.GetScalar(MetaData.RestartDumpName, "OutputControl.RestartDump.Name");
-  Param.GetScalar(MetaData.RestartDumpDir, "OutputControl.RestartDump.Dir");
-  
-  Param.GetScalar(MetaData.DataDumpName, "OutputControl.DataDump.Name");
-  Param.GetScalar(MetaData.DataDumpDir, "OutputControl.DataDump.Dir");
-  
-  Param.GetScalar(MetaData.RedshiftDumpName, "OutputControl.RedshiftDump.Name");
-  Param.GetScalar(MetaData.RedshiftDumpDir, "OutputControl.RedshiftDump.Dir");
-  
-  Param.GetScalar(MetaData.TracerParticleDumpName, "OutputControl.TracerParticleDump.Name");
-  Param.GetScalar(MetaData.TracerParticleDumpDir, "OutputControl.TracerParticleDump.Dir");
-  
-  Param.GetScalar(MetaData.HistoryDumpName, "OutputControl.HistoryDump.Name");
-  Param.GetScalar(MetaData.HistoryDumpDir, "OutputControl.HistoryDump.Dir");
-  
-  MetaData.LocalDir = new char[MAX_LINE_LENGTH];
-  Param.GetScalar(MetaData.LocalDir, "OutputControl.LocalDir");
-  MetaData.GlobalDir = new char[MAX_LINE_LENGTH];
-  Param.GetScalar(MetaData.GlobalDir, "OutputControl.GlobalDir");
-  
+  Param.GetScalar(dummy, "OutputControl.RestartDump.Name");
+  if( strlen(dummy) > 0 ) {
+    MetaData.RestartDumpName = new char[MAX_LINE_LENGTH];
+    strcpy(MetaData.RestartDumpName, dummy);
+  }
+
+  Param.GetScalar(dummy, "OutputControl.RestartDump.Dir");
+  if( strlen(dummy) > 0 ) {
+    MetaData.RestartDumpDir = new char[MAX_LINE_LENGTH];
+    strcpy(MetaData.RestartDumpDir, dummy);
+  }
+
+  Param.GetScalar(dummy, "OutputControl.DataDump.Name");
+  if( strlen(dummy) > 0 ) {
+    MetaData.DataDumpName = new char[MAX_LINE_LENGTH];
+    strcpy(MetaData.DataDumpName, dummy);
+  }
+
+  Param.GetScalar(dummy, "OutputControl.DataDump.Dir");
+  if( strlen(dummy) > 0 ) {
+    MetaData.DataDumpDir = new char[MAX_LINE_LENGTH];
+    strcpy(MetaData.DataDumpDir, dummy);
+  }
+
+  Param.GetScalar(dummy, "OutputControl.RedshiftDump.Name");
+  if( strlen(dummy) > 0 ) {
+    MetaData.RedshiftDumpName = new char[MAX_LINE_LENGTH];
+    strcpy(MetaData.RedshiftDumpName, dummy);
+  }
+
+  Param.GetScalar(dummy, "OutputControl.RedshiftDump.Dir");
+  if( strlen(dummy) > 0 ) {
+    MetaData.RedshiftDumpDir = new char[MAX_LINE_LENGTH];
+    strcpy(MetaData.RedshiftDumpDir, dummy);
+  }
+
+  Param.GetScalar(dummy, "OutputControl.TracerParticleDump.Name");
+  if( strlen(dummy) > 0 ) {
+    MetaData.TracerParticleDumpName = new char[MAX_LINE_LENGTH];
+    strcpy(MetaData.TracerParticleDumpName, dummy);
+  }
+
+  Param.GetScalar(dummy, "OutputControl.TracerParticleDump.Dir");
+  if( strlen(dummy) > 0 ) {
+    MetaData.TracerParticleDumpDir = new char[MAX_LINE_LENGTH];
+    strcpy(MetaData.TracerParticleDumpDir, dummy);
+  }
+
+  Param.GetScalar(dummy, "OutputControl.HistoryDump.Name");
+  if( strlen(dummy) > 0 ) {
+    MetaData.HistoryDumpName = new char[MAX_LINE_LENGTH];
+    strcpy(MetaData.HistoryDumpName, dummy);
+  }
+
+  Param.GetScalar(dummy, "OutputControl.HistoryDump.Dir");
+  if( strlen(dummy) > 0 ) {
+    MetaData.HistoryDumpDir = new char[MAX_LINE_LENGTH];
+    strcpy(MetaData.HistoryDumpDir, dummy);
+  }
+
+  Param.GetScalar(dummy, "OutputControl.LocalDir");
+  if( strlen(dummy) > 0 ) {
+    MetaData.LocalDir = new char[MAX_LINE_LENGTH];
+    strcpy(MetaData.LocalDir, dummy);
+  }
+
+  Param.GetScalar(dummy, "OutputControl.GlobalDir");
+  if( strlen(dummy) > 0 ) {
+    MetaData.GlobalDir = new char[MAX_LINE_LENGTH];
+    strcpy(MetaData.GlobalDir, dummy);
+  }
+
   Param.GetScalar(LoadBalancing, "SimulationControl.Optimization.LoadBalancing");
   Param.GetScalar(ResetLoadBalancing, "SimulationControl.Optimization.ResetLoadBalancing");
   Param.GetScalar(LoadBalancingCycleSkip, "SimulationControl.Optimization.LoadBalancingCycleSkip");
@@ -201,10 +282,13 @@ int ReadParameterFile(TopGridData &MetaData, float *Initialdt)
   Param.GetScalar(MetaData.GravityBoundary, "Physics.TopGridGravityBoundary");
   
 #ifdef TRANSFER
-  MetaData.RadHydroParameterFname = new char[MAX_LINE_LENGTH];
-  Param.GetScalar(MetaData.RadHydroParameterFname, "Physics.RadiationField.RadHydroParamfile");
-  dummy;
+  Param.GetScalar(dummy, "Physics.RadiationField.RadHydroParamfile");
+  if( strlen(dummy) > 0 ) {
+    MetaData.RadHydroParameterFname = new char[MAX_LINE_LENGTH];
+    strcpy(MetaData.RadHydroParameterFname, dummy);
+  }
 #endif
+
   Param.GetScalar(ImplicitProblem, "Physics.RadiationTransfer.ImplicitProblem");
   Param.GetScalar(RadiativeTransferFLD, "Physics.RadiationTransfer.RadiativeTransferFLD");
 #ifdef EMISSIVITY
@@ -276,9 +360,12 @@ int ReadParameterFile(TopGridData &MetaData, float *Initialdt)
   
   Param.GetScalar(RefineRegionTimeType, "SimulationControl.AMR.RefineRegionTimeType");
     
-  RefineRegionFile = new char[MAX_LINE_LENGTH];
-  Param.GetScalar(RefineRegionFile, "SimulationControl.AMR.RefineRegionFile");
-  
+  Param.GetScalar(dummy, "SimulationControl.AMR.RefineRegionFile");
+  if( strlen(dummy) > 0 ) {
+    RefineRegionFile = new char[MAX_LINE_LENGTH];
+    strcpy(RefineRegionFile, dummy);
+  }
+
   int NumberOfFields = Param.Size("Internal.Fields");
   if (NumberOfFields > MAX_NUMBER_OF_BARYON_FIELDS) {
     ENZO_VFAIL("You've exceeded the maximum number of BaryonFields (%d > %d)!\n",NumberOfFields,MAX_NUMBER_OF_BARYON_FIELDS)
@@ -292,10 +379,17 @@ int ReadParameterFile(TopGridData &MetaData, float *Initialdt)
   // }
 	
   for (i = 0; i < NumberOfFields; i++) {
-    DataLabel[i] = new char[MAX_LINE_LENGTH];
-    DataUnits[i] = new char[MAX_LINE_LENGTH];
-    Param.GetScalar(dummy, "Internal.%s.Name", FieldNames[i]); strcpy(DataLabel[i], dummy);
-    Param.GetScalar(dummy, "Internal.%s.cgsConversionFactor", FieldNames[i]); strcpy(DataUnits[i], dummy);
+    Param.GetScalar(dummy, "Internal.%s.Name", FieldNames[i]);
+    if( strlen(dummy) > 0 ) {
+      DataLabel[i] = new char[MAX_LINE_LENGTH];
+      strcpy(DataLabel[i], dummy);
+    }
+
+    Param.GetScalar(dummy, "Internal.%s.cgsConversionFactor", FieldNames[i]);
+    if( strlen(dummy) > 0 ) {
+      DataUnits[i] = new char[MAX_LINE_LENGTH];
+      strcpy(DataUnits[i], dummy);
+    }
   }
   
   Param.GetScalar(UniformGravity, "Physics.Gravity.UniformGravity");
@@ -342,8 +436,12 @@ int ReadParameterFile(TopGridData &MetaData, float *Initialdt)
   Param.GetScalar(ThreeBodyRate, "Physics.AtomicPhysics.ThreeBodyRate");
   
 
-  CloudyCoolingData.CloudyCoolingGridFile = new char[MAX_LINE_LENGTH];
-  Param.GetScalar(CloudyCoolingData.CloudyCoolingGridFile, "Physics.AtomicPhysics.CloudyCooling.CloudyCoolingGridFile");
+  Param.GetScalar(dummy, "Physics.AtomicPhysics.CloudyCooling.CloudyCoolingGridFile");
+  if( strlen(dummy) > 0 ) {
+    CloudyCoolingData.CloudyCoolingGridFile = new char[MAX_LINE_LENGTH];
+    strcpy(CloudyCoolingData.CloudyCoolingGridFile, dummy);
+  }
+
   Param.GetScalar(CloudyCoolingData.IncludeCloudyHeating, "Physics.AtomicPhysics.CloudyCooling.IncludeCloudyHeating");
   Param.GetScalar(CloudyCoolingData.IncludeCloudyMMW, "Physics.AtomicPhysics.CloudyCooling.IncludeCloudyMMW");
   Param.GetScalar(CloudyCoolingData.CMBTemperatureFloor, "Physics.AtomicPhysics.CloudyCooling.CMBTemperatureFloor");
@@ -351,9 +449,12 @@ int ReadParameterFile(TopGridData &MetaData, float *Initialdt)
   Param.GetScalar(CloudyCoolingData.CloudyElectronFractionFactor, "Physics.AtomicPhysics.CloudyCooling.CloudyElectronFractionFactor");
   Param.GetScalar(MetalCooling, "Physics.AtomicPhysics.MetalCooling");
 
-  MetalCoolingTable = new char[MAX_LINE_LENGTH];
-  Param.GetScalar(MetalCoolingTable, "Physics.AtomicPhysics.MetalCoolingTable");
-  
+  Param.GetScalar(dummy, "Physics.AtomicPhysics.MetalCoolingTable");
+  if( strlen(dummy) > 0 ) {
+    MetalCoolingTable = new char[MAX_LINE_LENGTH];
+    strcpy(MetalCoolingTable, dummy);
+  }
+
   Param.GetScalar(CRModel, "Physics.Miscellaneous.CRModel");
   Param.GetScalar(ShockMethod, "Physics.Miscellaneous.ShockMethod");
   Param.GetScalar(ShockTemperatureFloor, "Physics.Miscellaneous.ShockTemperatureFloor");
@@ -482,25 +583,43 @@ int ReadParameterFile(TopGridData &MetaData, float *Initialdt)
   /* read data which defines the boundary conditions */
   Param.GetArray(MetaData.LeftFaceBoundaryCondition, "SimulationControl.Domain.LeftFaceBoundaryCondition");
   Param.GetArray(MetaData.RightFaceBoundaryCondition, "SimulationControl.Domain.RightFaceBoundaryCondition");
-  
-  MetaData.BoundaryConditionName = new char[MAX_LINE_LENGTH];
-  Param.GetScalar(MetaData.BoundaryConditionName, "Internal.BoundaryConditionName");
+
+  Param.GetScalar(dummy, "Internal.BoundaryConditionName");
+  if( strlen(dummy) > 0 ) {
+    MetaData.BoundaryConditionName = new char[MAX_LINE_LENGTH];
+    strcpy(MetaData.BoundaryConditionName, dummy);
+  }
 	
-  MetaData.MetaDataIdentifier = new char[MAX_LINE_LENGTH];
-  Param.GetScalar(MetaData.MetaDataIdentifier, "Internal.Provenance.MetaDataIdentifier");
+  Param.GetScalar(dummy, "Internal.Provenance.MetaDataIdentifier");
+  if( strlen(dummy) > 0 ) {
+    MetaData.MetaDataIdentifier = new char[MAX_LINE_LENGTH];
+    strcpy(MetaData.MetaDataIdentifier, dummy);
+  }
 
-  MetaData.SimulationUUID = new char[MAX_LINE_LENGTH];
-  Param.GetScalar(MetaData.SimulationUUID, "Internal.Provenance.SimulationUUID");
+  Param.GetScalar(dummy, "Internal.Provenance.SimulationUUID");
+  if( strlen(dummy) > 0 ) {
+    MetaData.SimulationUUID = new char[MAX_LINE_LENGTH];
+    strcpy(MetaData.SimulationUUID, dummy);
+  }
 
-  // MetaData.DatasetUUID = new char[MAX_LINE_LENGTH];
-  // Param.GetScalar(MetaData.DatasetUUID, "Internal.Provenance.DatasetUUID");
+  // Param.GetScalar(dummy, "Internal.Provenance.DatasetUUID");
+  // if( strlen(dummy) > 0 ) {
+  //   MetaData.DatasetUUID = new char[MAX_LINE_LENGTH];
+  //   strcpy(MetaData.DatasetUUID, dummy);
+  // }
 
-  MetaData.RestartDatasetUUID = new char[MAX_LINE_LENGTH];
-  Param.GetScalar(MetaData.RestartDatasetUUID, "Internal.Provenance.RestartDatasetUUID");
+  Param.GetScalar(dummy, "Internal.Provenance.RestartDatasetUUID");
+  if( strlen(dummy) > 0 ) {
+    MetaData.RestartDatasetUUID = new char[MAX_LINE_LENGTH];
+    strcpy(MetaData.RestartDatasetUUID, dummy);
+  }
 
-  MetaData.InitialConditionsUUID = new char[MAX_LINE_LENGTH];
-  Param.GetScalar(MetaData.InitialConditionsUUID, "Internal.Provenance.InitialConditionsUUID");
-  
+  Param.GetScalar(dummy, "Internal.Provenance.InitialConditionsUUID");
+  if( strlen(dummy) > 0 ) {
+    MetaData.InitialConditionsUUID = new char[MAX_LINE_LENGTH];
+    strcpy(MetaData.InitialConditionsUUID, dummy);
+  }
+
   /* Check version number. */
   
   Param.GetScalar(TempFloat, "Internal.Provenance.VersionNumber");
@@ -579,11 +698,17 @@ int ReadParameterFile(TopGridData &MetaData, float *Initialdt)
   Param.GetScalar(MBHFeedbackJetsThresholdMass, "Physics.OtherParticles.MBHParticle.FeedbackJetsThresholdMass");
   Param.GetScalar(MBHParticleIO, "Initialization.MBHParticleIO");
   
-  MBHParticleIOFilename = new char[MAX_LINE_LENGTH];
-  Param.GetScalar(MBHParticleIOFilename, "Initialization.MBHParticleIOFilename");
+  Param.GetScalar(dummy, "Initialization.MBHParticleIOFilename");
+  if( strlen(dummy) > 0 ) {
+    MBHParticleIOFilename = new char[MAX_LINE_LENGTH];
+    strcpy(MBHParticleIOFilename, dummy);
+  }
 
-  MBHInsertLocationFilename = new char[MAX_LINE_LENGTH];
-  Param.GetScalar(MBHInsertLocationFilename, "Initialization.MBHInsertLocationFilename");
+  Param.GetScalar(dummy, "Initialization.MBHInsertLocationFilename");
+  if( strlen(dummy) > 0 ) {
+    MBHInsertLocationFilename = new char[MAX_LINE_LENGTH];
+    strcpy(MBHInsertLocationFilename, dummy);
+  }
 
   
   
@@ -595,7 +720,13 @@ int ReadParameterFile(TopGridData &MetaData, float *Initialdt)
   Param.GetScalar(NewMovieParticleOn, "OutputControl.MovieDump.ParticleOn");
   Param.GetArray(MovieDataField, "OutputControl.MovieDump.DataField");
   Param.GetScalar(NewMovieDumpNumber, "OutputControl.MovieDump.DumpNumber");
-  Param.GetScalar(NewMovieName, "OutputControl.MovieDump.Name");
+
+  Param.GetScalar(dummy, "OutputControl.MovieDump.Name");
+  if( strlen(dummy) > 0 ) {
+    NewMovieName = new char[MAX_LINE_LENGTH];
+    strcpy(NewMovieName, dummy);
+  }
+
   Param.GetScalar(MetaData.MovieTimestepCounter, "Internal.OutputLabeling.MovieTimestepCounter");
   
   Param.GetScalar(MultiMetals, "Physics.AtomicPhysics.MultiMetals");
