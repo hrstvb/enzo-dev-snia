@@ -11,8 +11,6 @@ START_TESTS()
   HierarchyEntry TopGrid;
   ExternalBoundary Exterior;
 
-  SetDefaultGlobalValues(MetaData);
-
   LoadGridDataAtStart = FALSE;
 
 #ifndef USE_HDF5_GROUPS

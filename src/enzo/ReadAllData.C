@@ -20,6 +20,7 @@
 //   Boundary (Exterior), the TopGridData, and the global_data.
  
 #include "ParameterControl/ParameterControl.h"
+extern char defaults_string[];
 extern Configuration Param;
 
 #ifdef USE_MPI
@@ -40,6 +41,7 @@ extern Configuration Param;
 #include "Hierarchy.h"
 #include "TopGridData.h"
 #include "CommunicationUtilities.h"
+
 void my_exit(int status);
  
 /* function prototypes */
@@ -87,8 +89,10 @@ int ReadAllData(char *name, HierarchyEntry *TopGrid, TopGridData &MetaData,
  
   /* Read TopGrid data. */
  
-  // needs error check
-  Param.FromFile("enzo2_libconfig", name);
+  // defaults_string is set in auto_defaults_string.h (created at
+  // compile time from defaults.cfg and #include'd from enzo.C)
+  Param.Initialize("enzo2_libconfig", name, defaults_string);
+
   if (ReadParameterFile(MetaData, Initialdt) == FAIL) {
         ENZO_FAIL("Error in ReadParameterFile.");
   }

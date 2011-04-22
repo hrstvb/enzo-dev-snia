@@ -16,7 +16,6 @@ START_TESTS(){
   }
 
   TopGridData MetaData;
-  int set_result = SetDefaultGlobalValues(MetaData);
 
   {
     START_TEST("get uniform grid"){

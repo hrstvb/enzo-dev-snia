@@ -28,8 +28,6 @@ START_TESTS()
   char ParameterFile[MAX_LINE_LENGTH]          = "collapse_packed";
 #endif
 
-  SetDefaultGlobalValues(MetaData);
-
   LoadGridDataAtStart = FALSE;
 
 // A new group of tests, with an identifier

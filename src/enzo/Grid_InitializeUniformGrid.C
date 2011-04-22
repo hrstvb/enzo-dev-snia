@@ -202,9 +202,10 @@ int grid::InitializeUniformGrid(float UniformDensity,
 	BaryonField[B1Num+dim][i] = UniformBField[dim];
   }
 
-   /* set density of color fields to user-specified values (if user doesn't specify, 
-     the defaults are set in SetDefaultGlobalValues.  Do some minimal amount of error
-     checking to try to ensure charge conservation when appropriate */
+   /* set density of color fields to user-specified values (if user
+     doesn't specify, the defaults are set in defaults.cfg).  Do some
+     minimal amount of error checking to try to ensure charge
+     conservation when appropriate */
   for (i = 0; i < size; i++){
 
     // Set multispecies fields!

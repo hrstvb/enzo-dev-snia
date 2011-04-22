@@ -301,7 +301,7 @@ verbose: $(EXE).exe
 #-----------------------------------------------------------------------
 
 .PHONY: autogen
-autogen: svn_version.def auto_show_config.C auto_show_flags.C auto_show_version.C
+autogen: svn_version.def auto_show_config.C auto_show_flags.C auto_show_version.C auto_defaults_string.h
 
 # Force update of auto_show_config.C
 
@@ -323,6 +323,15 @@ auto_show_flags.C:
 auto_show_version.C:
 	-@$(MAKE) -s show-version  >& temp.show-version
 	-@awk 'BEGIN {print "#include <stdio.h>\nvoid auto_show_version(FILE *fp) {"}; {print "   fprintf (fp,\""$$0"\\n\");"}; END {print "}"}' < temp.show-version > auto_show_version.C
+
+# Force update of auto_defaults_string.h
+
+.PHONY: auto_defaults_string.h
+auto_defaults_string.h:
+	-@awk 'BEGIN {print "char defaults_string[] = "}; {gsub(/"/,"\\\""); print "  \""$$0"\\n\""}; END {print "  \"\";"}' < defaults.cfg > auto_defaults_string.h
+#	-@awk 'BEGIN {print "#ifndef DEFAULTS_STRING_DEFINED__\nXXX = \n#define DEFAULTS_STRING_DEFINED__\n\n#ifdef DEFINE_STORAGE\n# define EXTERN\n#else /* DEFINE_STORAGE */\n# define EXTERN extern\n#endif\n\nEXTERN char defaults_string[] = "}; {gsub(/"/,"\\\""); print "  \""$$0"\\n\""}; END {print "  \"\";\n\n#endif"}' < defaults.cfg > auto_defaults_string.h
+
+#gsub(/"/,"\""); 
 
 #-----------------------------------------------------------------------
 # Generate SVN version source file 'svn_version.def'
@@ -406,7 +415,7 @@ help:
 
 clean:
 	-@rm -f *.so *.o uuid/*.o *.mod *.f *.f90 DEPEND.bak *~ $(OUTPUT) *.exe \
-          auto_show*.C svn_version.def hydro_rk/*.o *.oo hydro_rk/*.oo \
+          auto_show*.C auto_defaults_string.h svn_version.def hydro_rk/*.o *.oo hydro_rk/*.oo \
           uuid/*.oo DEPEND \
           python_bridge/problemtype_handler.C \
           python_bridge/problemtype_handler.h \

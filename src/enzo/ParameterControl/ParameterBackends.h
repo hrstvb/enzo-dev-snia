@@ -15,8 +15,8 @@ public:
 	virtual ~interpreter()
 	{ }
 	
-	virtual void query( const std::string key, std::string& ret ) = 0;
-	virtual void query_list( const std::string key, std::vector< std::string >& ret ) = 0;
+	virtual int query( const std::string key, std::string& ret ) = 0;
+	virtual int query_list( const std::string key, std::vector< std::string >& ret ) = 0;
 	
 	virtual size_t size( const std::string key ) = 0;
 };
@@ -24,7 +24,7 @@ public:
 // abstract factory pattern
 struct interpreter_creator
 {
-	virtual interpreter* create( std::string fname ) const = 0;
+  virtual interpreter* create( std::string fname, bool from_string=false ) const = 0;
 	virtual ~interpreter_creator() { }
 };
 
@@ -38,9 +38,9 @@ struct interpreter_creator_concrete : public interpreter_creator
 		get_interpreter()[ interpreter_name ] = this;
 	}
 	
-	interpreter * create( std::string fname ) const
+	interpreter * create( std::string fname, bool from_string=false ) const
 	{
-		return new Derived( fname );
+	  return new Derived( fname, from_string );
 	}
 	
 };
@@ -55,11 +55,5 @@ public:
 	: std::runtime_error( errmsg )
 	{}
 };
-
-
-
-
-
-
 
 #endif

@@ -88,7 +88,7 @@ int ReadParameterFile(TopGridData &MetaData, float *Initialdt)
   Param.GetScalar(MetaData.StopTime, "SimulationControl.StopTime");
   Param.GetScalar(MetaData.StopCycle, "SimulationControl.StopCycle");
   Param.GetScalar(MetaData.StopSteps, "SimulationControl.StopSteps");
-  Param.GetScalar(MetaData.StopCPUTime, "Internal.StopCPUTime");
+  Param.GetScalar(MetaData.StopCPUTime, "SimulationControl.StopCPUTime");
   Param.GetScalar(MetaData.ResubmitOn, "SimulationControl.ResubmitOn");
   
 	//printf("Size of resubmitcommand = %d",Param.Size("SimulationControl.ResubmitCommand"));
@@ -100,31 +100,31 @@ int ReadParameterFile(TopGridData &MetaData, float *Initialdt)
   Param.GetScalar(MetaData.MaximumTopGridTimeStep, "SimulationControl.MaximumTopGridTimeStep");
   
   Param.GetScalar(MetaData.TimeLastRestartDump, "Internal.OutputLabeling.TimeLastRestartDump");
-  Param.GetScalar(MetaData.dtRestartDump, "OutputControl.RestartDump.dtRestartDump");
+  Param.GetScalar(MetaData.dtRestartDump, "OutputControl.RestartDump.dt");
   Param.GetScalar(MetaData.TimeLastDataDump, "Internal.OutputLabeling.TimeLastDataDump");
-  Param.GetScalar(MetaData.dtDataDump, "OutputControl.DataDump.dtDataDump");
+  Param.GetScalar(MetaData.dtDataDump, "OutputControl.DataDump.dt");
   Param.GetScalar(MetaData.TimeLastHistoryDump, "Internal.OutputLabeling.TimeLastHistoryDump");
-  Param.GetScalar(MetaData.dtHistoryDump, "OutputControl.HistoryDump.dtHistoryDump");
+  Param.GetScalar(MetaData.dtHistoryDump, "OutputControl.HistoryDump.dt");
   
   Param.GetScalar(TracerParticleOn, "SimulationControl.TracerParticleOn");
   Param.GetScalar(ParticleTypeInFile, "OutputControl.ParticleTypeInFile");
   Param.GetScalar(OutputParticleTypeGrouping, "OutputControl.OutputParticleTypeGrouping");
   Param.GetScalar(MetaData.TimeLastTracerParticleDump, "Internal.OutputLabeling.TimeLastTracerParticleDump"); //doc?
-  Param.GetScalar(MetaData.dtTracerParticleDump, "OutputControl.TracerParticleDump.dtTracerParticleDump");//doc?
+  Param.GetScalar(MetaData.dtTracerParticleDump, "OutputControl.TracerParticleDump.dt");//doc?
   Param.GetScalar(MetaData.TimeLastInterpolatedDataDump, "Internal.OutputLabeling.TimeLastInterpolatedDataDump");//doc?
   Param.GetScalar(MetaData.dtInterpolatedDataDump, "OutputControl.dtInterpolatedDataDump");//doc?
   
   
-  Param.GetArray(MetaData.NewMovieLeftEdge, "OutputControl.MovieDump.NewMovieLeftEdge");
-  Param.GetArray(MetaData.NewMovieRightEdge, "OutputControl.MovieDump.NewMovieLeftEdge");
+  Param.GetArray(MetaData.NewMovieLeftEdge, "OutputControl.MovieDump.LeftEdge");
+  Param.GetArray(MetaData.NewMovieRightEdge, "OutputControl.MovieDump.RightEdge");
   
   Param.GetScalar(MetaData.CycleLastRestartDump, "Internal.OutputLabeling.CycleLastRestartDump"); //not used
-  Param.GetScalar(MetaData.CycleSkipRestartDump, "OutputControl.CycleDump.CycleSkipRestartDump"); //not used
+  Param.GetScalar(MetaData.CycleSkipRestartDump, "OutputControl.CycleDump.SkipRestartDump"); //not used
   Param.GetScalar(MetaData.CycleLastDataDump, "Internal.OutputLabeling.CycleLastDataDump");
-  Param.GetScalar(MetaData.CycleSkipDataDump, "OutputControl.CycleDump.CycleSkipDataDump");
+  Param.GetScalar(MetaData.CycleSkipDataDump, "OutputControl.CycleDump.SkipDataDump");
   Param.GetScalar(MetaData.CycleLastHistoryDump, "Internal.OutputLabeling.CycleLastHistoryDump");
-  Param.GetScalar(MetaData.CycleSkipHistoryDump, "OutputControl.CycleDump.CycleSkipHistoryDump");
-  Param.GetScalar(MetaData.CycleSkipGlobalDataDump, "Analysis.CycleSkipGlobalDataDump");
+  Param.GetScalar(MetaData.CycleSkipHistoryDump, "OutputControl.CycleDump.SkipHistoryDump");
+  Param.GetScalar(MetaData.CycleSkipGlobalDataDump, "OutputControl.CycleDump.SkipGlobalDataDump");
   Param.GetScalar(MetaData.OutputFirstTimeAtLevel, "OutputControl.OutputTriggers.OutputFirstTimeAtLevel");
   Param.GetScalar(MetaData.StopFirstTimeAtLevel, "SimulationControl.StopFirstTimeAtLevel");
   
@@ -151,20 +151,20 @@ int ReadParameterFile(TopGridData &MetaData, float *Initialdt)
   Param.GetScalar(MetaData.HistoryDumpNumber, "Internal.OutputLabeling.HistoryDumpNumber");
   Param.GetScalar(MetaData.TracerParticleDumpNumber, "Internal.OutputLabeling.TracerParticleDumpNumber");
   
-  Param.GetScalar(MetaData.RestartDumpName, "OutputControl.RestartDump.RestartDumpName");
-  Param.GetScalar(MetaData.RestartDumpDir, "OutputControl.RestartDump.RestartDumpDir");
+  Param.GetScalar(MetaData.RestartDumpName, "OutputControl.RestartDump.Name");
+  Param.GetScalar(MetaData.RestartDumpDir, "OutputControl.RestartDump.Dir");
   
-  Param.GetScalar(MetaData.DataDumpName, "OutputControl.DataDump.DataDumpName");
-  Param.GetScalar(MetaData.DataDumpDir, "OutputControl.DataDump.DataDumpDir");
+  Param.GetScalar(MetaData.DataDumpName, "OutputControl.DataDump.Name");
+  Param.GetScalar(MetaData.DataDumpDir, "OutputControl.DataDump.Dir");
   
-  Param.GetScalar(MetaData.RedshiftDumpName, "OutputControl.RedshiftDump.RedshiftDumpName");
-  Param.GetScalar(MetaData.RedshiftDumpDir, "OutputControl.RedshiftDump.RedshiftDumpDir");
+  Param.GetScalar(MetaData.RedshiftDumpName, "OutputControl.RedshiftDump.Name");
+  Param.GetScalar(MetaData.RedshiftDumpDir, "OutputControl.RedshiftDump.Dir");
   
-  Param.GetScalar(MetaData.TracerParticleDumpName, "OutputControl.TracerParticleDump.TracerParticleDumpName");
-  Param.GetScalar(MetaData.TracerParticleDumpDir, "OutputControl.TracerParticleDump.TracerParticleDumpDir");
+  Param.GetScalar(MetaData.TracerParticleDumpName, "OutputControl.TracerParticleDump.Name");
+  Param.GetScalar(MetaData.TracerParticleDumpDir, "OutputControl.TracerParticleDump.Dir");
   
-  Param.GetScalar(MetaData.HistoryDumpName, "OutputControl.HistoryDump.HistoryDumpName");
-  Param.GetScalar(MetaData.HistoryDumpDir, "OutputControl.HistoryDump.HistoryDumpDir");
+  Param.GetScalar(MetaData.HistoryDumpName, "OutputControl.HistoryDump.Name");
+  Param.GetScalar(MetaData.HistoryDumpDir, "OutputControl.HistoryDump.Dir");
   
   MetaData.LocalDir = new char[MAX_LINE_LENGTH];
   Param.GetScalar(MetaData.LocalDir, "OutputControl.LocalDir");
@@ -410,7 +410,7 @@ int ReadParameterFile(TopGridData &MetaData, float *Initialdt)
     ENZO_VFAIL("You've exceeded the maximum number of StaticRefineRegions (%d > %d)!\n", NumberOfStaticRefineRegions, MAX_STATIC_REGIONS)
       }
   
-	char StaticRefineRegionNames[MAX_LINE_LENGTH][MAX_STATIC_REGIONS];//NumberOfStaticRefineRegions];
+  char StaticRefineRegionNames[MAX_LINE_LENGTH][MAX_STATIC_REGIONS];//NumberOfStaticRefineRegions];
   Param.GetArray(StaticRefineRegionNames, "SimulationControl.AMR.StaticRefineRegion.Regions");
   
   for (i = 0; i < NumberOfStaticRefineRegions; i++) {
@@ -480,8 +480,8 @@ int ReadParameterFile(TopGridData &MetaData, float *Initialdt)
   
   
   /* read data which defines the boundary conditions */
-  Param.GetArray(MetaData.LeftFaceBoundaryCondition, "Physics.LeftFaceBoundaryCondition");
-  Param.GetArray(MetaData.RightFaceBoundaryCondition, "Physics.RightFaceBoundaryCondition");
+  Param.GetArray(MetaData.LeftFaceBoundaryCondition, "SimulationControl.Domain.LeftFaceBoundaryCondition");
+  Param.GetArray(MetaData.RightFaceBoundaryCondition, "SimulationControl.Domain.RightFaceBoundaryCondition");
   
   MetaData.BoundaryConditionName = new char[MAX_LINE_LENGTH];
   Param.GetScalar(MetaData.BoundaryConditionName, "Internal.BoundaryConditionName");
@@ -589,13 +589,13 @@ int ReadParameterFile(TopGridData &MetaData, float *Initialdt)
   
   /* Read Movie Dump parameters */
   
-  Param.GetScalar(MovieSkipTimestep, "OutputControl.MovieDump.MovieSkipTimestep");
-  Param.GetScalar(Movie3DVolumes, "OutputControl.MovieDump.Movie3DVolumes");
-  Param.GetScalar(MovieVertexCentered, "OutputControl.MovieDump.MovieVertexCentered");
-  Param.GetScalar(NewMovieParticleOn, "OutputControl.MovieDump.NewMovieParticleOn");
-  Param.GetArray(MovieDataField, "OutputControl.MovieDump.MovieDataField");
-  Param.GetScalar(NewMovieDumpNumber, "OutputControl.MovieDump.NewMovieDumpNumber");
-  Param.GetScalar(NewMovieName, "OutputControl.MovieDump.NewMovieName");
+  Param.GetScalar(MovieSkipTimestep, "OutputControl.MovieDump.SkipTimestep");
+  Param.GetScalar(Movie3DVolumes, "OutputControl.MovieDump.Volumes3D");
+  Param.GetScalar(MovieVertexCentered, "OutputControl.MovieDump.VertexCentered");
+  Param.GetScalar(NewMovieParticleOn, "OutputControl.MovieDump.ParticleOn");
+  Param.GetArray(MovieDataField, "OutputControl.MovieDump.DataField");
+  Param.GetScalar(NewMovieDumpNumber, "OutputControl.MovieDump.DumpNumber");
+  Param.GetScalar(NewMovieName, "OutputControl.MovieDump.Name");
   Param.GetScalar(MetaData.MovieTimestepCounter, "Internal.OutputLabeling.MovieTimestepCounter");
   
   Param.GetScalar(MultiMetals, "Physics.AtomicPhysics.MultiMetals");
@@ -717,7 +717,6 @@ int ReadParameterFile(TopGridData &MetaData, float *Initialdt)
   Param.GetArray(ResetMagneticFieldAmplitude, "Physics.MHD.ResetMagneticFieldAmplitude");
 
   
-  
   /* Now we know which hydro solver we're using, we can assign the
      default Riemann solver and flux reconstruction methods.  These
      parameters aren't used for PPM_LagrangeRemap and Zeus. */
@@ -757,9 +756,11 @@ int ReadParameterFile(TopGridData &MetaData, float *Initialdt)
   /* Count static nested grids since this isn't written in the
      parameter file */
   
-  for (i = 0; i < MAX_STATIC_REGIONS; i++)
-    if (StaticRefineRegionLevel[i] != INT_UNDEFINED)
-      CosmologySimulationNumberOfInitialGrids++;
+  // for (i = 0; i < MAX_STATIC_REGIONS; i++)
+  //   if (StaticRefineRegionLevel[i] != INT_UNDEFINED)
+  //     CosmologySimulationNumberOfInitialGrids++;
+
+  CosmologySimulationNumberOfInitialGrids += NumberOfStaticRefineRegions;
 	
 	
   /* If we have turned on Comoving coordinates, read cosmology parameters. */
@@ -840,12 +841,14 @@ int ReadParameterFile(TopGridData &MetaData, float *Initialdt)
     
   }
   
-  /* For !restart, this only ruins the units because MinimumOverDensityForRefinement is already 
-     set in SetDefaultGlobalValues and not FLOAT_UNDEFINED.
-     For restart, MinimumOverDensityForRefinement is not even needs to be read because only 
-     MinimumMassForRefinement is used for CellFlagging.  
-     So, why did we have to do this in the first place?  - Ji-hoon Kim in Apr.2010
-     (The counterpart in WriteParameterFile is also commented out) */   //#####
+  /* For !restart, this only ruins the units because
+     MinimumOverDensityForRefinement is already set in defaults.cfg
+     and not FLOAT_UNDEFINED.  For restart,
+     MinimumOverDensityForRefinement is not even needs to be read
+     because only MinimumMassForRefinement is used for CellFlagging.
+     So, why did we have to do this in the first place?  - Ji-hoon Kim
+     in Apr.2010 (The counterpart in WriteParameterFile is also
+     commented out) */   //#####
   
   /*
   if (!ComovingCoordinates && UsePhysicalUnit) 

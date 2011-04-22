@@ -21,52 +21,27 @@ protected:
 	
 	char strbuf_[2048];
 	
-	/*void get_path( const std::string& instr, std::string& path, std::string& key )
-	{
-		size_t i=instr.find_last_of('.');
-		path = instr.substr(0,i);
-		key  = instr.substr(i+1);
-	}*/
-	
-	/*std::string conv( const Setting& elem )
-	{
-		int intval; double doubleval; std::string stringval;
-		std::stringstream returnval;
-		
-		switch( elem.getType() )
-		{
-			case Setting::TypeInt: intval = elem; returnval << intval; break;
-			case Setting::TypeFloat: doubleval = elem; returnval << std::setw(20) << std::setprecision(19) << doubleval; break;
-			case Setting::TypeString: std::string dummy = elem; return dummy; break;
-		}
-		
-		return returnval.str();
-	}*/
-	
 	
 public:
-	explicit enzo_libconfig_backend( std::string fname )
+  explicit enzo_libconfig_backend( std::string fname, bool from_string=false )
 	: interpreter(fname), fname_(fname)
 	{
 		config_init(&cfg_);
 		
-		if(! config_read_file(&cfg_, fname_.c_str()))
-		{
-			fprintf(stderr, "%s:%d - %s\n", config_error_file(&cfg_),
-					config_error_line(&cfg_), config_error_text(&cfg_));
-			throw std::runtime_error("parse error");
+		if( from_string ) {
+		  if(! config_read_string(&cfg_, fname_.c_str()))
+		    {
+		      fprintf(stderr, "string:%d - %s\n", config_error_line(&cfg_), config_error_text(&cfg_));
+		      throw std::runtime_error("parse error");
+		    }
+		} else {
+		  if(! config_read_file(&cfg_, fname_.c_str()))
+		    {
+		      fprintf(stderr, "%s:%d - %s\n", config_error_file(&cfg_),
+			      config_error_line(&cfg_), config_error_text(&cfg_));
+		      throw std::runtime_error("parse error");
+		    }
 		}
-		
-		/*try{
-			//cfg_.readFile( fname_.c_str() );
-			//cfg_.setAutoConvert( true );	
-			
-		}
-		catch( ParseException p)
-		{
-			std::cerr << "enzo_libconfig_backend: ";
-			std::cerr << p.getError() << " " << p.getFile() << ":" << p.getLine() << std::endl;
-		}*/
 		
 	}
 	
@@ -76,7 +51,7 @@ public:
 		config_destroy(&cfg_);
 	}
 	
-	void query( const std::string key, std::string &ret )
+  int query( const std::string key, std::string &ret )
 	{
 		std::cerr << "accessing scalar " << key << std::endl;
 		
@@ -87,8 +62,9 @@ public:
 		
 		if( setting == NULL )
 		{	
-			fprintf(stderr, "No '%s' setting in configuration file.\n",key.c_str());
-			throw std::runtime_error("element not found");
+		  fprintf(stderr, "No '%s' setting in configuration file.\n",key.c_str());
+		  //		  throw std::runtime_error("element not found");
+		  return 0;
 		}
 		
 		switch( config_setting_type(setting) )
@@ -113,42 +89,14 @@ public:
 				   ret = "0";
 				break;
 			default:
-				std::cerr << "unknown type" << config_setting_get_format(setting) << "\n";
+   			        std::cerr << "unknown type" << config_setting_get_format(setting) << "\n";
+				return 0;
 				
 		}
-		//returnval << "1";
-		
+		return 1;		
 	}
-#if 0
-	void query( const std::string key, std::string& ret )
-	{   
-		/*const char *buf;
-		if( !config_lookup_string(&cfg_, key.c_str(), &buf) )
-		{	
-			fprintf(stderr, "No '%s' setting in configuration file.\n",key.c_str());
-			throw std::runtime_error("element not found");
-		}
-		ret = buf;*/
-		std::cerr << key << std::endl;
-		ret = lookup( key );
-		
-		/*
-		try{
-			const Setting &set = cfg_.getRoot()[key];
-			ret = conv(set);			
-			std::cerr << "successful access to \'" << key << "\'\n";
-		}catch( SettingNotFoundException p )
-		{
-			std::cerr << "enzo_libconfig_backend: ";
-			std::cerr << p.what() << " when looking up \'" << key << "\'" << std::endl;
-		}*/
-		
-
-		//cfg_.lookupValue(key.c_str(),ret); 
-	}
-#endif
 	
-	void query_list( const std::string key, std::vector< std::string >& ret )
+  int query_list( const std::string key, std::vector< std::string >& ret )
 	{
 		
 		std::cerr << "accessing array " << key << std::endl;
@@ -186,53 +134,20 @@ public:
 						break;
 					default:
 						std::cerr << "unknown type\n";
+						return 0;
 				}
 			}
 		}else{	
-			fprintf(stderr, "No '%s' setting in configuration file.\n",key.c_str());
-			throw std::runtime_error("element not found");
+		  fprintf(stderr, "No '%s' setting in configuration file.\n",key.c_str());
+		  //		  throw std::runtime_error("element not found");
+		  return 0;
 		}
-		
-			
-		
-		/*try{
-			const Setting &array = cfg_.getRoot()[key];
-			
-			int count = array.getLength();
-			
-			for( int i=0; i<count; ++i )
-			{
-				const Setting &elem = array[i];
-				std::string tmp = conv(elem);
-				ret.push_back(tmp);
-			}
-		}catch( SettingNotFoundException p )
-		{
-			std::cerr << "enzo_libconfig_backend: ";
-			std::cerr << p.what() << " when looking up \'" << key << "\'" << std::endl;
-		}
-		*/
-		
-		
+		return 1;
 	}
 	
 	size_t size( const std::string key )
 	{
-		/*Setting &array;
-		size_t len = 0;
-		try{
-			std::string element_key;
-			array = open_group( key, element_key );
-			len = array[element_key].getLength();//array.getLength();
-			std::cerr << "queried length of \'" << key << "\' is " << len << std::endl;
-		}catch( SettingNotFoundException p )
-		{
-			std::cerr << "enzo_libconfig_backend: ";
-			std::cerr << p.what() << " when looking up \'" << key << "\'" << std::endl;
-		}
-		return len;*/
-		
-		
+				
 		config_setting_t *setting;
 		setting = config_lookup(&cfg_, key.c_str());
 		int len = 0;
@@ -240,8 +155,9 @@ public:
 		{
 			len = config_setting_length(setting);
 		}else{
-			fprintf(stderr, "No '%s' setting in configuration file.\n",key.c_str());
-			throw std::runtime_error("element not found");
+		  fprintf(stderr, "No '%s' setting in configuration file.\n",key.c_str());
+		  //		  throw std::runtime_error("element not found");
+		  return 0;
 		}
 			
 		std::cerr << "length of " << key << " = " << len;

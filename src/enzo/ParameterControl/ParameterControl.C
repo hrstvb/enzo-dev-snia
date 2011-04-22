@@ -1,6 +1,6 @@
 #include "ParameterControl.h"
 
-
+#include <iostream>
 
 template<>
 void Configuration::GetScalar<char*>( char*& str, const char* key, ... ) const
@@ -9,9 +9,21 @@ void Configuration::GetScalar<char*>( char*& str, const char* key, ... ) const
 	va_start(argptr, key);
 	va_end(argptr);
 	vsprintf(argbuf,key,argptr);
-	
+
 	std::string strval;
-	the_interpreter->query(std::string(argbuf),strval);
+	int status = 0;
+	status = the_interpreter->query(std::string(argbuf),strval);	
+	if( status != 1 ) {
+	  
+	  fprintf(stderr, "Did not find <%s> in parameter file, trying defaults.\n",argbuf);
+	  
+	  status = the_defaults_interpreter->query(std::string(argbuf),strval);
+	  if( status != 1 ) {
+	    fprintf(stderr, "Did not find <%s> in defaults either.\n",argbuf);
+	    throw std::runtime_error("parameter not found!");
+	  }
+	  
+	}
 	
 	strcpy( str, strval.c_str() );
 }
@@ -27,14 +39,26 @@ void Configuration::GetArray<char*>( char** val, const char* key, ... ) const
 	vsprintf(argbuf,key,argptr);
 	
 	std::vector<std::string> s;
-	
+	int status = 0;
 	the_interpreter->query_list(std::string(argbuf),s);
+	if( status != 1 ) {
+	  
+	  fprintf(stderr, "Did not find <%s> in parameter file, trying defaults.\n",argbuf);
+	  
+	  status = the_defaults_interpreter->query_list(std::string(argbuf),s);
+	  if( status != 1 ) {
+	    fprintf(stderr, "Did not find <%s> in defaults either.\n",argbuf);
+	    throw std::runtime_error("parameter not found!");
+	  }
+	  
+	}
 	
+
 	for( size_t i=0; i<s.size(); ++i )
-	{
+	  {
 		strcpy(*val,s[i].c_str());
 		++val;
-	}
+	  }
 }
 
 

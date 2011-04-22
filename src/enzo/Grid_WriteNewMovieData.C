@@ -63,8 +63,7 @@ void WriteListOfFloats(FILE *fptr, int N, FLOAT floats[]);
 //  also had to change : WriteStreamData.C, WriteDataHierarchy.C, Grid.h
 //  import MovieTimestepCounter to calculate the timeStep
 //  also had to look at : TopGridData.C, WriteStreamData.C,
-//  WriteDataHierarchy.C, EvolveLevel.C, SetDefaultGlobalValues.C,
-//  Grid.h
+//  WriteDataHierarchy.C, EvolveLevel.C, Grid.h
 
 int grid::WriteNewMovieData(FLOAT RegionLeftEdge[], FLOAT RegionRightEdge[], 
 			    int RootResolution, FLOAT StopTime, 

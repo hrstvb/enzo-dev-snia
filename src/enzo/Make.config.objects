@@ -744,7 +744,6 @@ OBJS_CONFIG_LIB = \
         SedovBlastInitialize.o \
         select_fft.o \
 	SetBoundaryConditions.o \
-        SetDefaultGlobalValues.o \
         SetLevelTimeStep.o \
         SetEvolveRefineRegion.o \
         sgi_st1_fft64.o \

@@ -56,11 +56,13 @@ Configuration Param;
 #include "PhotonCommunication.h"
 #include "ImplicitProblemABC.h"
 #endif
+#include "auto_defaults_string.h"
 #undef DEFINE_STORAGE
 #ifdef USE_PYTHON
 int InitializePythonInterface(int argc, char **argv);
 int FinalizePythonInterface();
 #endif
+
  
 // Function prototypes
  
@@ -129,7 +131,6 @@ int InterpretCommandLine(int argc, char *argv[], char *myname,
 			 int &SmoothedDarkMatterOnly,
 			 int MyProcessorNumber);
 void AddLevel(LevelHierarchyEntry *Array[], HierarchyEntry *Grid, int level);
-int SetDefaultGlobalValues(TopGridData &MetaData);
 
 int WriteAllData(char *basename, int filenumber, HierarchyEntry *TopGrid,
                  TopGridData &MetaData, ExternalBoundary *Exterior,
@@ -459,8 +460,6 @@ Eint32 MAIN_NAME(Eint32 argc, char *argv[])
   // If we need to read the parameter file as a restart file, do it now
  
   if (restart || OutputAsParticleDataFlag || extract || InformationOutput || project  ||  velanyl) {
- 
-    SetDefaultGlobalValues(MetaData);
  
     if (debug) printf("Reading parameter file %s\n", ParameterFile);
 

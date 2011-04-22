@@ -455,10 +455,9 @@ int RadiationFieldCalculateRates(FLOAT Time)
   }
   if (AdjustUVBackground == 2) {
 
-/* Alters the HM-type rates by the user supplied values.
-If some are not supplied then it uses the default 
-values defined in the previous if statement and set
-in the SetDefaultGlobalValues.C  */
+/* Alters the HM-type rates by the user supplied values.  If some are
+not supplied then it uses the default values defined in the previous
+if statement and set in defaults.cfg  */
 
 /*
   fprintf(fp, "In Loop with RadiationFieldType = %"ISYM"\n", RadiationFieldType);

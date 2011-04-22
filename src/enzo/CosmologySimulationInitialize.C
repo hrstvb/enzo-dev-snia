@@ -227,20 +227,20 @@ int CosmologySimulationInitialize(FILE *fptr, FILE *Outfptr,
   
   Param.GetScalar(CosmologySimulationSubgridsAreStatic, "Problem.CosmologySimulation.SubgridsAreStatic");
   
-  int NumberOfInitialGrids = Param.Size("Problem.CosmologySimulation.InitialGrids");
-  if (NumberOfInitialGrids > MAX_INITIAL_GRIDS-1) {
+  int NumberOfInitialSubgrids = Param.Size("Problem.CosmologySimulation.InitialSubgrids");
+  if (NumberOfInitialSubgrids+1 > MAX_INITIAL_GRIDS) {
     ENZO_VFAIL("You've exceeded the maximum number of CosmologySimulation initial grids (%d)!\n",MAX_INITIAL_GRIDS)
       }
-  CosmologySimulationNumberOfInitialGrids = NumberOfInitialGrids;
+  CosmologySimulationNumberOfInitialGrids = NumberOfInitialSubgrids + 1;  // add 1 for the root grid
   
-  char InitialGridNames[MAX_LINE_LENGTH][MAX_INITIAL_GRIDS];
-  Param.GetArray(InitialGridNames,"Problem.CosmologySimulation.InitialGrids");
+  char InitialSubgridNames[MAX_LINE_LENGTH][MAX_INITIAL_GRIDS];
+  Param.GetArray(InitialSubgridNames,"Problem.CosmologySimulation.InitialSubgrids");
   
-  for (i = 0; i < NumberOfInitialGrids; i++) {
-    Param.GetArray(CosmologySimulationGridLeftEdge[i], "Problem.CosmologySimulation.%s.LeftEdge",InitialGridNames[i]);
-    Param.GetArray(CosmologySimulationGridRightEdge[i], "Problem.CosmologySimulation.%s.RightEdge",InitialGridNames[i]);
-    Param.GetArray(CosmologySimulationGridDimension[i], "Problem.CosmologySimulation.%s.Dimension",InitialGridNames[i]);
-    Param.GetScalar(CosmologySimulationGridLevel[i], "Problem.CosmologySimulation.%s.Level",InitialGridNames[i]);
+  for (i = 0; i < NumberOfInitialSubgrids; i++) {
+    Param.GetArray(CosmologySimulationGridLeftEdge[i+1], "Problem.CosmologySimulation.%s.LeftEdge",InitialSubgridNames[i]);
+    Param.GetArray(CosmologySimulationGridRightEdge[i+1], "Problem.CosmologySimulation.%s.RightEdge",InitialSubgridNames[i]);
+    Param.GetArray(CosmologySimulationGridDimension[i+1], "Problem.CosmologySimulation.%s.Dimension",InitialSubgridNames[i]);
+    Param.GetScalar(CosmologySimulationGridLevel[i+1], "Problem.CosmologySimulation.%s.Level",InitialSubgridNames[i]);
   }
   
   

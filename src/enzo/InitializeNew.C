@@ -20,6 +20,7 @@
 // This routine intializes a new simulation based on the parameter file.
  
 #include "ParameterControl/ParameterControl.h"
+extern char defaults_string[];
 extern Configuration Param;
 
 #ifdef USE_MPI
@@ -49,7 +50,6 @@ int WriteHierarchyStuff(FILE *fptr, HierarchyEntry *Grid,
 int ReadParameterFile(TopGridData &MetaData, float *Initialdt);
 int WriteParameterFile(FILE *fptr, TopGridData &MetaData);
 void ConvertTotalEnergyToGasEnergy(HierarchyEntry *Grid);
-int SetDefaultGlobalValues(TopGridData &MetaData);
 int CommunicationPartitionGrid(HierarchyEntry *Grid, int gridnum);
 int CommunicationBroadcastValue(PINT *Value, int BroadcastProcessor);
  
@@ -248,10 +248,9 @@ int InitializeNew(char *filename, HierarchyEntry &TopGrid,
  
   // Open parameter file
 
-  // needs error check
-  Param.FromFile("enzo2_libconfig",filename);
-
-
+  // defaults_string is set in auto_defaults_string.h (created at
+  // compile time from defaults.cfg and #include'd from enzo.C)
+  Param.Initialize("enzo2_libconfig", filename, defaults_string);
  
   // Clear OutputLog
 
@@ -267,11 +266,7 @@ int InitializeNew(char *filename, HierarchyEntry &TopGrid,
     if ((Outfptr = fopen(outfilename, "w")) == NULL) {
       ENZO_VFAIL("Error opening parameter output file %s\n", outfilename)
     }
- 
-  // set the default MetaData values
- 
-  SetDefaultGlobalValues(MetaData);
- 
+  
   // Read the MetaData/global values from the Parameter file
  
   if (ReadParameterFile(MetaData, Initialdt) == FAIL) {

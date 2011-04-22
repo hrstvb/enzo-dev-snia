@@ -61,11 +61,11 @@ int CosmologyReadParameters(FLOAT *StopTime, FLOAT *InitTime)
   Param.GetScalar(FinalRedshift, "Physics.Cosmology.FinalRedshift");
   Param.GetScalar(CurrentRedshift, "Internal.CosmologyCurrentRedshift");
 
-  Param.GetArray(CosmologyOutputRedshift, "OutputControl.RedshiftDump.CosmologyOutputRedshift");
+  Param.GetArray(CosmologyOutputRedshift, "OutputControl.RedshiftDump.OutputRedshifts");
 
-  int NumberOfOutputRedshiftNames = Param.Size("OutputControl.RedshiftDump.CosmologyOutputRedshiftName");
+  int NumberOfOutputRedshiftNames = Param.Size("OutputControl.RedshiftDump.OutputRedshiftNames");
   char OutputRedshiftNames[MAX_LINE_LENGTH][MAX_NUMBER_OF_OUTPUT_REDSHIFTS];
-  Param.GetArray(OutputRedshiftNames, "OutputControl.RedshiftDump.CosmologyOutputRedshiftName");
+  Param.GetArray(OutputRedshiftNames, "OutputControl.RedshiftDump.OutputRedshiftNames");
   for (i = 0; i < NumberOfOutputRedshiftNames; i++) {
     CosmologyOutputRedshiftName[i] = new char[MAX_LINE_LENGTH];
     strcpy(CosmologyOutputRedshiftName[i], OutputRedshiftNames[i]);

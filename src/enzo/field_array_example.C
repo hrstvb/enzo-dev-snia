@@ -38,7 +38,6 @@
 
 void my_exit(int status);
 
-int SetDefaultGlobalValues(TopGridData &MetaData);
 int CommunicationInitialize(Eint32 *argc, char **argv[]);
 int CommunicationFinalize();
 

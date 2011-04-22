@@ -72,7 +72,6 @@ int InterpretCommandLine(int argc, char *argv[], char *myname,
 			 FLOAT RegionEndCoordinates[],
 			 int &Level, int MyProcessorNumber);
 void AddLevel(LevelHierarchyEntry *Array[], HierarchyEntry *Grid, int level);
-int SetDefaultGlobalValues(TopGridData &MetaData);
 int CommunicationInitialize(int *argc, char **argv[]);
 int CommunicationFinalize();
 int CommunicationPartitionGrid(HierarchyEntry *Grid, int gridnum);

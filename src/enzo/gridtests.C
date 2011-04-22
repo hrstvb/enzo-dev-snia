@@ -9,7 +9,6 @@ START_TESTS(){
   CommunicationInitialize(&argc, &argv);
 
   TopGridData MetaData;
-  int set_result = SetDefaultGlobalValues(MetaData);
 
   {
     START_TEST("get density float array"){
