@@ -348,13 +348,14 @@ class EnzoTestRun(object):
             compare_dir = os.path.join(cur_dir, compare_dir,
                             self.test_data['fulldir'])
         os.chdir(self.run_dir)
-        print "Running test: %s" % self.test_data['name']
+        print "Running test: %s" % self.test_data['fulldir']
         self.run_finished = os.path.exists("RunFinished")
         fn = self.test_data['answer_testing_script']
         if RegressionTestRunner is None:
             print "This installation of yt does not support testing, please update."
             return
         clear_registry()
+
         handler = logging.FileHandler("testing.log")
         f = logging.Formatter(ufstring)
         handler.setFormatter(f)
