@@ -4,6 +4,7 @@
 # imports
 from pylab import *
 import numpy as np
+execfile("../utilities.py")
 
 # set the total number of snapshots and graphics output type
 te = 50
@@ -19,76 +20,11 @@ nH = 1.0e-3            # input hydrogen number density [cm^(-3)]
 trec = 1.0/(aHII*nH)   # recombination time [sec]
 tS = 0
 
-
 # initialize time-history outputs
 #    row 1: time (t)
 #    row 2: computed i-front radius
 rdata = zeros( (5, te+1), dtype=float);
 HIfraction = zeros( (2, te+1), dtype=float);
-
-# define some helpful functions
-def get_params(file):
-    """Returns t, vol, gamma, dUnit, tUnit, lUnit from a given parameter file"""
-    import shlex
-    f = open(file)
-    for line in f:
-        text = shlex.split(line)
-        if ("InitialTime" in text):
-            tval = float(text[len(text)-1])
-        elif ("DensityUnits" in text):
-            dUnit = float(text[len(text)-1])
-        elif ("TimeUnits" in text):
-            tUnit = float(text[len(text)-1])
-        elif ("LengthUnits" in text):
-            lUnit = float(text[len(text)-1])
-        elif ("Gamma" in text):
-            gamma = float(text[len(text)-1])
-        elif ("DomainLeftEdge" in text):
-            xL = float(text[len(text)-3])
-            yL = float(text[len(text)-2])
-            zL = float(text[len(text)-1])
-        elif ("DomainRightEdge" in text):
-            xR = float(text[len(text)-3])
-            yR = float(text[len(text)-2])
-            zR = float(text[len(text)-1])
-    xL = xL*lUnit
-    xR = xR*lUnit
-    yL = yL*lUnit
-    yR = yR*lUnit
-    zL = zL*lUnit
-    zR = zR*lUnit
-    vol = (xR-xL)*(yR-yL)*(zR-zL)
-    tval = tval*tUnit
-    return [tval, vol, xR, yR, zR, gamma, dUnit, tUnit, lUnit]
-
-def load_vals(tdump):
-    """Returns t, vol, gamma, rho, HI, HII, Eg, tE, vx, vy, vz from a given data dump"""
-    import h5py
-    import numpy as np
-    sdump = repr(tdump).zfill(4)
-    pfile = 'DD' + sdump + '/data' + sdump
-    hfile = pfile + '.cpu0000'
-    tval, vol, xR, yR, zR, gamma, dUnit, tUnit, lUnit = get_params(pfile)
-    f = h5py.File(hfile,'r')
-    Eg = f.get('/Grid00000001/Grey_Radiation_Energy')
-    tE = f.get('/Grid00000001/Total_Energy')
-    HI = f.get('/Grid00000001/HI_Density')
-    HII = f.get('/Grid00000001/HII_Density')
-    rho = f.get('/Grid00000001/Density')
-    vx = f.get('/Grid00000001/x-velocity')
-    vy = f.get('/Grid00000001/y-velocity')
-    vz = f.get('/Grid00000001/z-velocity')
-    HI = np.multiply(HI,dUnit)
-    HII = np.multiply(HII,dUnit)
-    rho = np.multiply(rho,dUnit)
-    Eg = np.multiply(Eg,dUnit*lUnit*lUnit/tUnit/tUnit)
-    tE = np.multiply(tE,lUnit*lUnit/tUnit/tUnit)
-    vx = np.multiply(vx,lUnit/tUnit)
-    vy = np.multiply(vy,lUnit/tUnit)
-    vz = np.multiply(vz,lUnit/tUnit)
-    return [tval, vol, gamma, xR, yR, zR, rho, HI, HII, Eg, tE, vx, vy, vz]
-
-
 
 # overlay the profile plots, so generate storage arrays here
 t, vol, gamma, xR, yR, zR, rho, HI, HII, Eg, tE, vx, vy, vz = load_vals(0)
@@ -104,11 +40,9 @@ nH_multiprof  = zeros((Nradii, 5), dtype=float)
 for tstep in range(0,te+1):
     
     # load relevant information
-    t, vol, gamma, xR, yR, zR, rho, HI, HII, Eg, tE, vx, vy, vz = load_vals(tstep)
+    t, vol, gamma, xR, yR, zR, rho, xHI, xHII, Eg, tE, vx, vy, vz = load_vals_hydro(tstep)
 
     # compute some derived quantities
-    xHI  = np.divide(HI, rho)
-    xHII = np.divide(HII,rho)
     kE = 0.5*(np.multiply(vx,vx) + np.multiply(vy,vy) + np.multiply(vz,vz))
     Press = (gamma-1.0)*np.multiply(rho,tE-kE)
     Temp = mp/kb*np.divide(Press,2.0*rho - HI)
@@ -135,23 +69,12 @@ for tstep in range(0,te+1):
     DensIn  = 0.0
     TempIn  = 0.0
     TempOut = 0.0
-#    ncells = 0.0
     for k in range(nz):
         for j in range(ny):
             for i in range(nx):
                 if (sqrt(1.0*i*i+1.0*j*j+1.0*k*k) <= Icells):
-                    #PressIn += Te[i][j][k]*rho[i][j][k]*(gamma-1) - 0.5*(
-                    #    vx[i][j][k]**2 + vy[i][j][k]**2 + vz[i][j][k]**2) 
                     PressIn += tE[i][j][k]*rho[i][j][k]*(gamma-1.0)
                     DensIn += rho[i][j][k]
-#                     TempIn += tE[i][j][k]*rho[i][j][k]*(gamma-1.0)/(
-#                         2.0*rho[i][j][k] - HI[i][j][k])*mp/kb
-#                     ncells += 1.0
-#                 else:
-#                     TempOut += tE[i][j][k]*rho[i][j][k]*(gamma-1.0)/(
-#                         2.0*rho[i][j][k] - HI[i][j][k])*mp/kb
-#     TempIn  = TempIn/ncells                    # average temperature behind i-front
-#     TempOut = TempOut/(1.0*(nx*ny*nz - ncells))  # average temperature beyond i-front
     rs0 = (3.0*Ngammadot/4.0/pi/aHII/nH/nH)**(1.0/3.0)
     TempIn  = 1.0e4                            # temperature inside HII region
     TempOut = 1.0e2                            # temperature outside HII region
