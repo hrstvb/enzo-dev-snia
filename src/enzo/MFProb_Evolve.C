@@ -51,7 +51,7 @@ int MFProb::Evolve(LevelHierarchyEntry *LevelArray[], int level,
 
   // Only continue if we own this grid
   if (MyProcessorNumber != ThisGrid->GridData->ReturnProcessorNumber())
-    return SUCCESS;
+    continue;
 
 #ifdef USE_MPI
   //  check that MyProcessorNumber agrees with MPI process ID

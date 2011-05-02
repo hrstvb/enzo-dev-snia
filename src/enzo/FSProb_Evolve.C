@@ -61,7 +61,7 @@ int FSProb::Evolve(LevelHierarchyEntry *LevelArray[], int level,
 
   // Only continue if we own this grid
   if (MyProcessorNumber != ThisGrid->GridData->ReturnProcessorNumber())
-    break;
+    continue;
 
   // declare some variables
   int i, j, k;
