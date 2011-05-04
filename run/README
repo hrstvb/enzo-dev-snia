@@ -18,32 +18,35 @@ Example: python test_runner.py -o ~/temp --AMR=True --Author="John Wise"
 The test tags are (with defaults first followed by alternatives):
 
 name = ''
-answer_testing_script = None  `my_test_file.py'
+answer_testing_script = None  'my_test_file.py'
 nprocs = 1
-runtime = 'short' `medium' `long'
+runtime = 'short', 'medium', 'long'
 critical = True False
 cadence = 'nightly'
-hydro = False  True
-mhd = False  True
-gravity = False True
-cosmology = False  True
-chemistry = False True
-cooling = False True
-AMR = False True
-dimensionality = 1 2 3
-author = `' `John Wise'
-radiation = None, `fld', `ray'
+hydro = False, True
+mhd = False, True
+gravity = False, True
+cosmology = False, True
+chemistry = False, True
+cooling = False, True
+AMR = False, True
+dimensionality = 1, 2, 3
+author = 'John Wise'
+radiation = None, 'fld', 'ray'
 max_time_minutes = 1  
 
 Additional flags are:
---clobber           For clobbering files in the test_dest_dir and 
-                    rerunning each test from scratch. The default will not
-                    clobber. 
---interleave        For copying, running, and testing each test set in order.
-                    It's kind of like colate on a copy machine.  The default 
-                    copies all tests, then runs them all, then tests them all.  
---repo=<enzo_dir>   To specify a repository other than the current enzo 
-                    directory structure.
---machine=<machine> To specify on which machine you are running.
-                    The default is local, but there are presets for kraken,
-                    ranger, etc.
+  -h, --help            show this help message and exit
+  -c COMPARE_DIR, --compare-dir=COMPARE_DIR
+                        The directory structure to compare against
+  --clobber             Recopies tests and tests from scratch.
+  --interleave          Option to interleave preparation, running, and
+                        testing.
+  -m MACHINE, --machine=MACHINE
+                        Machine to run tests on.
+  -o OUTPUT_DIR, --output-dir=OUTPUT_DIR
+                        Where to place the run directory
+  --repo=REPOSITORY     Path to repository being tested.
+  --sim-only            Only run simulations.
+  --test-only           Only perform tests.
+  -v, --verbose         Slightly more verbose output.
