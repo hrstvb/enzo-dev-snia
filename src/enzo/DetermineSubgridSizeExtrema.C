@@ -34,7 +34,7 @@
 #define MINIMUM_EDGE 4
 #define MINIMUM_SIZE 2000
 
-int DetermineSubgridSizeExtrema(int NumberOfCells, int level, int MaximumStaticSubgridLevel)
+int DetermineSubgridSizeExtrema(long_int NumberOfCells, int level, int MaximumStaticSubgridLevel)
 {
 
   if (SubgridSizeAutoAdjust == FALSE)
@@ -43,19 +43,19 @@ int DetermineSubgridSizeExtrema(int NumberOfCells, int level, int MaximumStaticS
   /* Now determine subgrid size parameters */
 
   int grids_per_proc = (level > MaximumStaticSubgridLevel) ?
-    OptimalSubgridsPerProcessor : 2;
+    OptimalSubgridsPerProcessor : 12;
 
-  MaximumSubgridSize = NumberOfCells / NumberOfProcessors / 
-    grids_per_proc;
+  MaximumSubgridSize = NumberOfCells / 
+    (NumberOfProcessors * grids_per_proc);
   MaximumSubgridSize = max(MaximumSubgridSize, MINIMUM_SIZE);
   MinimumSubgridEdge = nint(pow(MaximumSubgridSize, 0.33333) * 0.25);
   MinimumSubgridEdge += MinimumSubgridEdge % 2;
   MinimumSubgridEdge = max(MinimumSubgridEdge, MINIMUM_EDGE);
 
-//  if (debug)
-//    printf("DetermineSGSize: MaxSubgridSize = %"ISYM", MinSubgridEdge = %"
-//	   ISYM", ncells = %"ISYM"\n",
-//	   MaximumSubgridSize, MinimumSubgridEdge, NumberOfCells);
+  if (debug)
+    printf("DetermineSGSize: MaxSubgridSize = %"ISYM", MinSubgridEdge = %"
+	   ISYM", ncells = %"ISYM"\n",
+	   MaximumSubgridSize, MinimumSubgridEdge, NumberOfCells);
 
   return SUCCESS;
 
