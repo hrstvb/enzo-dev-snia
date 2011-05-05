@@ -746,6 +746,7 @@ int ReadParameterFile(TopGridData &MetaData, float *Initialdt)
   Param.GetScalar(AngularVelocity, "Physics.AngularVelocity");
   Param.GetScalar(VelocityGradient, "Physics.VelocityGradient");
   Param.GetScalar(ShearingVelocityDirection, "Physics.ShearingVelocityDirection");
+  Param.GetScalar(ShearingBoundaryDirection, "Physics.ShearingBoundaryDirection");
   Param.GetScalar(ShearingBoxProblemType, "Physics.ShearingBoxProblemType");
   
   /* Embedded Python */

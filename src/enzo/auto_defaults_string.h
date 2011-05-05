@@ -402,6 +402,7 @@ char defaults_string[] =
   "	AngularVelocity              = 0.001;\n"
   "	VelocityGradient             = 1.0;\n"
   "	ShearingVelocityDirection    = -1;\n"
+  "	ShearingBoundaryDirection    = -1;\n"
   "	ShearingBoxProblemType       = 0;\n"
   "\n"
   "	Hydro:\n"
