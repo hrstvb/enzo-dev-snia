@@ -16,6 +16,9 @@
 //
 ////////////////////////////////////////////////////////////////////////////////
  
+#include "ParameterControl/ParameterControl.h"
+extern Configuration Param;
+
 #include <string.h>
 #include <stdio.h>
 #include <math.h>
@@ -62,27 +65,16 @@ int ConductionBubbleInitialize(FILE *fptr, FILE *Outfptr, HierarchyEntry &TopGri
 
   // Read parameters
 
-  while (fgets(line, MAX_LINE_LENGTH, fptr) != NULL) {
-    ret = 0;
-    ret += sscanf(line, "ConductionBubbleRadiusOfBubble = %"PSYM, &ConductionBubbleRadiusOfBubble);
-    ret += sscanf(line, "ConductionBubblePulseType = %"ISYM, &ConductionBubblePulseType);
-    ret += sscanf(line, "ConductionBubbleDeltaEntropy = %"FSYM, &ConductionBubbleDeltaEntropy);
-    ret += sscanf(line, "ConductionBubbleMidpointEntropy = %"FSYM, &ConductionBubbleMidpointEntropy);
-    ret += sscanf(line, "ConductionBubbleEntropyGradient = %"FSYM, &ConductionBubbleEntropyGradient);
-    ret += sscanf(line, "ConductionBubbleMidpointTemperature = %"FSYM, &ConductionBubbleMidpointTemperature);
-    ret += sscanf(line, "ConductionBubbleCenter = %"PSYM" %"PSYM" %"PSYM, &ConductionBubbleCenter[0],
-		  &ConductionBubbleCenter[1],&ConductionBubbleCenter[2]);
-    ret += sscanf(line, "TestProblemUseMetallicityField  = %"ISYM, &TestProblemData.UseMetallicityField);
-    ret += sscanf(line, "TestProblemInitialMetallicityFraction  = %"FSYM, &TestProblemData.MetallicityField_Fraction);
-    ret += sscanf(line, "ConductionBubbleBField = %"FSYM" %"FSYM" %"FSYM,&ConductionBubbleInitialUniformBField[0],
-		  &ConductionBubbleInitialUniformBField[1], &ConductionBubbleInitialUniformBField[2]);
-
-    if (ret == 0 && 
-	strstr(line, "=") && strstr(line, "ConductionBubble") &&
-	line[0] != '#' && MyProcessorNumber == ROOT_PROCESSOR) {
-      fprintf(stderr, "*** warning: the following parameter line was not interpreted:\n%s\n", line);
-    }
-  }
+  Param.GetScalar(ConductionBubbleRadiusOfBubble, "Problem.ConductionBubble.RadiusOfBubble");
+  Param.GetScalar(ConductionBubblePulseType, "Problem.ConductionBubble.PulseType");
+  Param.GetScalar(ConductionBubbleDeltaEntropy, "Problem.ConductionBubble.DeltaEntropy");
+  Param.GetScalar(ConductionBubbleMidpointEntropy, "Problem.ConductionBubble.MidpointEntropy");
+  Param.GetScalar(ConductionBubbleEntropyGradient, "Problem.ConductionBubble.EntropyGradient");
+  Param.GetScalar(ConductionBubbleMidpointTemperature, "Problem.ConductionBubble.MidpointTemperature");
+  Param.GetArray(ConductionBubbleCenter, "Problem.ConductionBubble.Center");
+  Param.GetScalar(TestProblemData.UseMetallicityField, "Problem.ConductionBubble.UseMetallicityField");
+  Param.GetScalar(TestProblemData.MetallicityField_Fraction, "Problem.ConductionBubble.InitialMetallicityFraction");
+  Param.GetArray(ConductionBubbleInitialUniformBField, "Problem.ConductionBubble.BField");
 
   ConductionBubbleGasEnergy = ConductionBubbleTotalEnergy;
 

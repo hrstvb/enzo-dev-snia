@@ -14,6 +14,9 @@
 //
 ////////////////////////////////////////////////////////////////////////////////
  
+#include "ParameterControl/ParameterControl.h"
+extern Configuration Param;
+
 #include <string.h>
 #include <stdio.h>
 #include <math.h>
@@ -59,29 +62,17 @@ int ConductionTestInitialize(FILE *fptr, FILE *Outfptr, HierarchyEntry &TopGrid,
   int ConductionTestPulseType = 0, ConductionTestFieldGeometry=0;
 
   // Read parameters
-  while (fgets(line, MAX_LINE_LENGTH, fptr) != NULL) {
-    ret = 0;
-    ret += sscanf(line, "ConductionTestPulseHeight = %"FSYM, &ConductionTestPulseHeight);
-    ret += sscanf(line, "ConductionTestTotalEnergy = %"FSYM, &ConductionTestTotalEnergy);
-    ret += sscanf(line, "ConductionTestTemperature = %"FSYM, &ConductionTestTemperature);
-    ret += sscanf(line, "ConductionTestDensity = %"FSYM, &ConductionTestDensity);
-    ret += sscanf(line, "ConductionTestPulseWidth = %"PSYM, &ConductionTestPulseWidth);
-    ret += sscanf(line, "ConductionTestPulseCenter = %"PSYM" %"PSYM" %"PSYM, &ConductionTestPulseCenter[0],
-		  &ConductionTestPulseCenter[1], &ConductionTestPulseCenter[2]);
-    ret += sscanf(line, "ConductionTestPulseType = %"ISYM, &ConductionTestPulseType);
-    ret += sscanf(line, "ConductionTestFieldGeometry = %"ISYM, &ConductionTestFieldGeometry);
-    ret += sscanf(line, "ConductionTestPulseBFieldX = %"FSYM,&ConductionTestInitialUniformBField[0]);
-    ret += sscanf(line, "ConductionTestPulseBFieldY = %"FSYM,&ConductionTestInitialUniformBField[1]);
-    ret += sscanf(line, "ConductionTestPulseBFieldZ = %"FSYM,&ConductionTestInitialUniformBField[2]);
-    ret += sscanf(line, "TestProblemUseMetallicityField  = %"ISYM, &TestProblemData.UseMetallicityField);
-    ret += sscanf(line, "TestProblemInitialMetallicityFraction  = %"FSYM, &TestProblemData.MetallicityField_Fraction);
-
-    if (ret == 0 && 
-	strstr(line, "=") && strstr(line, "ConductionTest") &&
-	line[0] != '#' && MyProcessorNumber == ROOT_PROCESSOR) {
-      fprintf(stderr, "*** warning: the following parameter line was not interpreted:\n%s\n", line);
-    }
-  }
+  Param.GetScalar(ConductionTestPulseHeight, "Problem.ConductionTest.PulseHeight");
+  Param.GetScalar(ConductionTestTotalEnergy, "Problem.ConductionTest.TotalEnergy");
+  Param.GetScalar(ConductionTestTemperature, "Problem.ConductionTest.Temperature");
+  Param.GetScalar(ConductionTestDensity, "Problem.ConductionTest.Density");
+  Param.GetScalar(ConductionTestPulseWidth, "Problem.ConductionTest.PulseWidth");
+  Param.GetArray(ConductionTestPulseCenter, "Problem.ConductionTest.PulseCenter");
+  Param.GetScalar(ConductionTestPulseType, "Problem.ConductionTest.PulseType");
+  Param.GetScalar(ConductionTestFieldGeometry, "Problem.ConductionTest.FieldGeometry");
+  Param.GetArray(ConductionTestInitialUniformBField, "Problem.ConductionTest.InitialUniformBField");
+  Param.GetScalar(TestProblemData.UseMetallicityField, "Problem.ConductionCloud.UseMetallicityField ");
+  Param.GetScalar(TestProblemData.MetallicityField_Fraction, "Problem.ConductionCloud.InitialMetallicityFraction ");
 
   float BFieldVal=0.0;
 

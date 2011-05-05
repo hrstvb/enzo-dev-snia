@@ -12,6 +12,9 @@
 //
 ////////////////////////////////////////////////////////////////////////////////
  
+#include "ParameterControl/ParameterControl.h"
+extern Configuration Param;
+
 #include <string.h>
 #include <stdio.h>
 #include <math.h>
@@ -57,61 +60,52 @@ int ConductionCloudInitialize(FILE *fptr, FILE *Outfptr, HierarchyEntry &TopGrid
   TestProblemData.MultiSpecies = MultiSpecies;  // set this from global data (kind of a hack, but necessary)
 
   // Read parameters
-  while (fgets(line, MAX_LINE_LENGTH, fptr) != NULL) {
-    ret = 0;
-    ret += sscanf(line, "ConductionCloudPulseHeight = %"FSYM, &ConductionCloudPulseHeight);
-    ret += sscanf(line, "ConductionCloudTotalEnergy = %"FSYM, &ConductionCloudTotalEnergy);
-    ret += sscanf(line, "ConductionCloudTemperature = %"FSYM, &ConductionCloudTemperature);
-    ret += sscanf(line, "ConductionCloudDensity = %"FSYM, &ConductionCloudDensity);
-    ret += sscanf(line, "ConductionCloudPulseWidth = %"PSYM, &ConductionCloudPulseWidth);
-    ret += sscanf(line, "ConductionCloudPulseType = %"ISYM, &ConductionCloudPulseType);
+  Param.GetScalar(ConductionCloudPulseHeight, "Problem.ConductionCloud.PulseHeight");
+  Param.GetScalar(ConductionCloudTotalEnergy, "Problem.ConductionCloud.TotalEnergy");
+  Param.GetScalar(ConductionCloudTemperature, "Problem.ConductionCloud.Temperature");
+  Param.GetScalar(ConductionCloudDensity, "Problem.ConductionCloud.Density");
+  Param.GetScalar(ConductionCloudPulseWidth, "Problem.ConductionCloud.PulseWidth");
+  Param.GetScalar(ConductionCloudPulseType, "Problem.ConductionCloud.PulseType");
 
-    ret += sscanf(line, "TestProblemUseMetallicityField  = %"ISYM, &TestProblemData.UseMetallicityField);
-    ret += sscanf(line, "TestProblemInitialMetallicityFraction  = %"FSYM, &TestProblemData.MetallicityField_Fraction);
+  Param.GetScalar(TestProblemData.UseMetallicityField, "Problem.ConductionCloud.UseMetallicityField ");
+  Param.GetScalar(TestProblemData.MetallicityField_Fraction, "Problem.ConductionCloud.InitialMetallicityFraction ");
 
-    /* read in more general test parameters to set species, turn on color fields, etc. */
-    ret += sscanf(line, "TestProblemHydrogenFractionByMass = %"FSYM, &TestProblemData.HydrogenFractionByMass);
-    ret += sscanf(line, "TestProblemDeuteriumToHydrogenRatio = %"FSYM, &TestProblemData.DeuteriumToHydrogenRatio);
+  /* read in more general test parameters to set species, turn on color fields, etc. */
+  Param.GetScalar(TestProblemData.HydrogenFractionByMass, "Problem.ConductionCloud.HydrogenFractionByMass");
+  Param.GetScalar(TestProblemData.DeuteriumToHydrogenRatio, "Problem.ConductionCloud.DeuteriumToHydrogenRatio");
 
-    ret += sscanf(line, "TestProblemInitialHIFractionInner  = %"FSYM, &TestProblemData.HI_Fraction_Inner);
-    ret += sscanf(line, "TestProblemInitialHIIFractionInner  = %"FSYM, &TestProblemData.HII_Fraction_Inner);
-    ret += sscanf(line, "TestProblemInitialHeIFractionInner  = %"FSYM, &TestProblemData.HeI_Fraction_Inner);
-    ret += sscanf(line, "TestProblemInitialHeIIFractionInner  = %"FSYM, &TestProblemData.HeII_Fraction_Inner);
-    ret += sscanf(line, "TestProblemInitialHeIIIFractionInner  = %"FSYM, &TestProblemData.HeIII_Fraction_Inner);
-    ret += sscanf(line, "TestProblemInitialHMFractionInner  = %"FSYM, &TestProblemData.HM_Fraction_Inner);
-    ret += sscanf(line, "TestProblemInitialH2IFractionInner  = %"FSYM, &TestProblemData.H2I_Fraction_Inner);
-    ret += sscanf(line, "TestProblemInitialH2IIFractionInner  = %"FSYM, &TestProblemData.H2II_Fraction_Inner);
+  Param.GetScalar(TestProblemData.HI_Fraction_Inner, "Problem.ConductionCloud.InitialHIFractionInner ");
+  Param.GetScalar(TestProblemData.HII_Fraction_Inner, "Problem.ConductionCloud.InitialHIIFractionInner ");
+  Param.GetScalar(TestProblemData.HeI_Fraction_Inner, "Problem.ConductionCloud.InitialHeIFractionInner ");
+  Param.GetScalar(TestProblemData.HeII_Fraction_Inner, "Problem.ConductionCloud.InitialHeIIFractionInner ");
+  Param.GetScalar(TestProblemData.HeIII_Fraction_Inner, "Problem.ConductionCloud.InitialHeIIIFractionInner ");
+  Param.GetScalar(TestProblemData.HM_Fraction_Inner, "Problem.ConductionCloud.InitialHMFractionInner ");
+  Param.GetScalar(TestProblemData.H2I_Fraction_Inner, "Problem.ConductionCloud.InitialH2IFractionInner ");
+  Param.GetScalar(TestProblemData.H2II_Fraction_Inner, "Problem.ConductionCloud.InitialH2IIFractionInner ");
 
-    ret += sscanf(line, "TestProblemInitialDIFractionInner  = %"FSYM, &TestProblemData.DI_Fraction_Inner);
-    ret += sscanf(line, "TestProblemInitialDIIFractionInner  = %"FSYM, &TestProblemData.DII_Fraction_Inner);
-    ret += sscanf(line, "TestProblemInitialHDIFractionInner  = %"FSYM, &TestProblemData.HDI_Fraction_Inner);
+  Param.GetScalar(TestProblemData.DI_Fraction_Inner, "Problem.ConductionCloud.InitialDIFractionInner ");
+  Param.GetScalar(TestProblemData.DII_Fraction_Inner, "Problem.ConductionCloud.InitialDIIFractionInner ");
+  Param.GetScalar(TestProblemData.HDI_Fraction_Inner, "Problem.ConductionCloud.InitialHDIFractionInner ");
 
-    ret += sscanf(line, "TestProblemInitialHIFraction  = %"FSYM, &TestProblemData.HI_Fraction);
-    ret += sscanf(line, "TestProblemInitialHIIFraction  = %"FSYM, &TestProblemData.HII_Fraction);
-    ret += sscanf(line, "TestProblemInitialHeIFraction  = %"FSYM, &TestProblemData.HeI_Fraction);
-    ret += sscanf(line, "TestProblemInitialHeIIFraction  = %"FSYM, &TestProblemData.HeII_Fraction);
-    ret += sscanf(line, "TestProblemInitialHeIIIFraction  = %"FSYM, &TestProblemData.HeIII_Fraction);
-    ret += sscanf(line, "TestProblemInitialHMFraction  = %"FSYM, &TestProblemData.HM_Fraction);
-    ret += sscanf(line, "TestProblemInitialH2IFraction  = %"FSYM, &TestProblemData.H2I_Fraction);
-    ret += sscanf(line, "TestProblemInitialH2IIFraction  = %"FSYM, &TestProblemData.H2II_Fraction);
+  Param.GetScalar(TestProblemData.HI_Fraction, "Problem.ConductionCloud.InitialHIFraction ");
+  Param.GetScalar(TestProblemData.HII_Fraction, "Problem.ConductionCloud.InitialHIIFraction ");
+  Param.GetScalar(TestProblemData.HeI_Fraction, "Problem.ConductionCloud.InitialHeIFraction ");
+  Param.GetScalar(TestProblemData.HeII_Fraction, "Problem.ConductionCloud.InitialHeIIFraction ");
+  Param.GetScalar(TestProblemData.HeIII_Fraction, "Problem.ConductionCloud.InitialHeIIIFraction ");
+  Param.GetScalar(TestProblemData.HM_Fraction, "Problem.ConductionCloud.InitialHMFraction ");
+  Param.GetScalar(TestProblemData.H2I_Fraction, "Problem.ConductionCloud.InitialH2IFraction ");
+  Param.GetScalar(TestProblemData.H2II_Fraction, "Problem.ConductionCloud.InitialH2IIFraction ");
 
-    ret += sscanf(line, "TestProblemInitialDIFraction  = %"FSYM, &TestProblemData.DI_Fraction);
-    ret += sscanf(line, "TestProblemInitialDIIFraction  = %"FSYM, &TestProblemData.DII_Fraction);
-    ret += sscanf(line, "TestProblemInitialHDIFraction  = %"FSYM, &TestProblemData.HDI_Fraction);
+  Param.GetScalar(TestProblemData.DI_Fraction, "Problem.ConductionCloud.InitialDIFraction ");
+  Param.GetScalar(TestProblemData.DII_Fraction, "Problem.ConductionCloud.InitialDIIFraction ");
+  Param.GetScalar(TestProblemData.HDI_Fraction, "Problem.ConductionCloud.InitialHDIFraction ");
 
-    ret += sscanf(line, "TestProblemUseMetallicityField  = %"ISYM, &TestProblemData.UseMetallicityField);
-    ret += sscanf(line, "TestProblemInitialMetallicityFraction  = %"FSYM, &TestProblemData.MetallicityField_Fraction);
+  Param.GetScalar(TestProblemData.UseMetallicityField, "Problem.ConductionCloud.UseMetallicityField ");
+  Param.GetScalar(TestProblemData.MetallicityField_Fraction, "Problem.ConductionCloud.InitialMetallicityFraction ");
 
-    ret += sscanf(line, "TestProblemMultiMetals  = %"ISYM, &TestProblemData.MultiMetals);
-    ret += sscanf(line, "TestProblemInitialMultiMetalsField1Fraction  = %"FSYM, &TestProblemData.MultiMetalsField1_Fraction);
-    ret += sscanf(line, "TestProblemInitialMultiMetalsField2Fraction  = %"FSYM, &TestProblemData.MultiMetalsField2_Fraction);
-
-    if (ret == 0 && 
-	strstr(line, "=") && strstr(line, "ConductionCloud") &&
-	line[0] != '#' && MyProcessorNumber == ROOT_PROCESSOR) {
-      fprintf(stderr, "*** warning: the following parameter line was not interpreted:\n%s\n", line);
-    }
-  }
+  Param.GetScalar(TestProblemData.MultiMetals, "Problem.ConductionCloud.MultiMetals ");
+  Param.GetScalar(TestProblemData.MultiMetalsField1_Fraction, "Problem.ConductionCloud.InitialMultiMetalsField1Fraction ");
+  Param.GetScalar(TestProblemData.MultiMetalsField2_Fraction, "Problem.ConductionCloud.InitialMultiMetalsField2Fraction ");
 
   float DensityUnits=1.0, LengthUnits=1.0, TemperatureUnits=1.0, TimeUnits=1.0,
     VelocityUnits=1.0;

@@ -15,6 +15,9 @@
 // This routine intializes a new simulation based on the parameter file.
 //
  
+#include "ParameterControl/ParameterControl.h"
+extern Configuration Param;
+
 #include <string.h>
 #include <stdio.h>
 #include <math.h>
@@ -85,31 +88,13 @@ int AdiabaticExpansionInitialize(FILE *fptr, FILE *Outfptr,
 
   /* read input from file */
  
-  while (fgets(line, MAX_LINE_LENGTH, fptr) != NULL) {
- 
-    ret = 0;
- 
     /* read parameters */
- 
-    ret += sscanf(line, "AdiabaticExpansionOmegaBaryonNow = %"FSYM,
-		  &AdiabaticExpansionOmegaBaryonNow);
-    ret += sscanf(line, "AdiabaticExpansionOmegaCDMNow = %"FSYM,
-		  &AdiabaticExpansionOmegaCDMNow);
-    ret += sscanf(line, "AdiabaticExpansionInitialTemperature = %"FSYM,
-		  &AdiabaticExpansionInitialTemperature);
-    ret += sscanf(line, "AdiabaticExpansionInitialUniformBField = %"FSYM" %"FSYM" %"FSYM,
-		  AdiabaticExpansionInitialUniformBField,
-		  AdiabaticExpansionInitialUniformBField+1,
-		  AdiabaticExpansionInitialUniformBField+2);
-    ret += sscanf(line, "AdiabaticExpansionInitialVelocity = %"FSYM,
-		  &AdiabaticExpansionInitialVelocity);
- 
-    /* if the line is suspicious, issue a warning */
- 
-    if (ret == 0 && strstr(line, "=") && strstr(line, "AdiabaticExpansion"))
-      fprintf(stderr, "warning: the following parameter line was not interpreted:\n%s\n", line);
- 
-  }
+
+  Param.GetScalar(AdiabaticExpansionOmegaBaryonNow, "Problem.AdiabaticExpansion.OmegaBaryonNow");
+  Param.GetScalar(AdiabaticExpansionOmegaCDMNow, "Problem.AdiabaticExpansion.OmegaCDMNow");
+  Param.GetScalar(AdiabaticExpansionInitialTemperature, "Problem.AdiabaticExpansion.InitialTemperature");
+  Param.GetArray(AdiabaticExpansionInitialUniformBField, "Problem.AdiabaticExpansion.InitialUniformBField");
+  Param.GetScalar(AdiabaticExpansionInitialVelocity, "Problem.AdiabaticExpansion.InitialVelocity");
  
   /* Get the units so we can convert temperature later. */
  
