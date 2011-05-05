@@ -34,6 +34,19 @@ extern Configuration Param;
 #include "CosmologyParameters.h"
  
 /* Set the mean molecular mass as in Grid_ComputeTemperatureField.C */
+
+const char config_adiabatic_expansion_defaults[] = 
+"### ADIABATIC EXPANSION INITIALIZATION DEFAULTS ###\n"
+"\n"
+"Problem: {\n"
+"    AdiabaticExpansion: {\n"
+"        OmegaBaryonNow = 1.0;\n"
+"        OmegaCDMNow = 0.0;\n"
+"        InitialTemperature = 200;\n"
+"        InitialUniformBField = [0.0, 0.0, 0.0];\n"
+"        InitialVelocity = 100; # km / s\n"
+"   };\n"
+"};\n";
  
 #define DEFAULT_MU 0.6
  
@@ -60,6 +73,9 @@ int AdiabaticExpansionInitialize(FILE *fptr, FILE *Outfptr,
   char *PhiName = "Phi";
   char *DebugName = "Debug";
   char *Phi_pName = "Phip";
+
+  // This is how it should look eventually.
+  //Param.UpdateDefaults(config_adiabatic_expansion_defaults);
  
   /* declarations */
  
@@ -74,17 +90,12 @@ int AdiabaticExpansionInitialize(FILE *fptr, FILE *Outfptr,
  
   /* set default parameters */
  
-  float AdiabaticExpansionOmegaBaryonNow     = 1.0;  // standard
-  float AdiabaticExpansionOmegaCDMNow        = 0.0;  // no dark matter
-  float AdiabaticExpansionInitialTemperature = 200;  // degrees K
-  float AdiabaticExpansionInitialUniformBField[MAX_DIMENSION];  // in Gauss
-  float AdiabaticExpansionInitialVelocity    = 100;  // km/s
- 
-  float InitialVels[MAX_DIMENSION];  // Initialize arrays
-  for (int dim = 0; dim < MAX_DIMENSION; dim++) {
-    AdiabaticExpansionInitialUniformBField[dim] = 0.0;
-    InitialVels[dim] = 0.0;
-  }
+  float AdiabaticExpansionOmegaBaryonNow;
+  float AdiabaticExpansionOmegaCDMNow;
+  float AdiabaticExpansionInitialTemperature;
+  float AdiabaticExpansionInitialUniformBField[MAX_DIMENSION];
+  float AdiabaticExpansionInitialVelocity;
+  float InitialVels[MAX_DIMENSION];
 
   /* read input from file */
  
