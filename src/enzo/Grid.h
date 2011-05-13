@@ -2188,6 +2188,9 @@ int zEulerSweep(int j, int NumberOfSubgrids, fluxes *SubgridFluxes[],
   int StarParticleHandler(HierarchyEntry* SubgridPointer, int level,
 			  float dtLevelAbove);
 
+  int ActiveParticleHandler(HierarchyEntry* SubgridPointer, int level,
+			  float dtLevelAbove);
+
 /* Particle splitter routine. */
 
   int ParticleSplitter(int level);

@@ -291,6 +291,7 @@ OBJS_CONFIG_LIB = \
 	GravityEquilibriumTestInitialize.o \
 	Grid_AccelerationBoundaryRoutines.o \
 	Grid_AccessBaryonFields.o \
+	Grid_ActiveParticleHandler.o \
 	Grid_AddBaryonsToGravitatingMassField.o \
 	Grid_AddExternalAcceleration.o \
 	Grid_AddFeedbackSphere.o \

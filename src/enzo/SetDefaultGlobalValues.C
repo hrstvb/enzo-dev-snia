@@ -742,5 +742,8 @@ int SetDefaultGlobalValues(TopGridData &MetaData)
   VelAnyl                     = 0;
   BAnyl                     = 0;
 
+  EnabledActiveParticles = NULL;
+  EnabledActiveParticlesCount = 0;
+
   return SUCCESS;
 }
