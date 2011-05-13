@@ -23,8 +23,11 @@
 #include "LevelHierarchy.h"
 #include "StarBuffer.h"
 
+class ActiveParticleType_info;
+
 class ActiveParticleType
 {
+#ifdef ACTIVE_PARTICLE_IMPLEMENTED
   public:
     /* Several pure virtual functions */
 
@@ -52,10 +55,10 @@ class ActiveParticleType
 
   FLOAT *ReturnPosition(void) { return pos; }
   float *ReturnVelocity(void) { return vel; }
-  void	ConvertMassToSolar(void);
-  void	Merge(Star a);
-  void	Merge(Star *a);
-  bool	Mergable(Star a);
+  void    ConvertMassToSolar(void);
+  void    Merge(Star a);
+  void    Merge(Star *a);
+  bool    Mergable(Star a);
   bool  Mergable(Star *a);
   float Separation(Star a);
   float Separation(Star *a);
@@ -64,9 +67,9 @@ class ActiveParticleType
   float RelativeVelocity2(Star a);
   float RelativeVelocity2(Star *a);
   void  UpdatePositionVelocity(void);
-  void	DeleteCopyInGrid(void);
+  void    DeleteCopyInGrid(void);
   int   DeleteCopyInGridGlobal(LevelHierarchyEntry *LevelArray[]);
-  void	CopyToGrid(void);
+  void    CopyToGrid(void);
   void  MirrorToParticle(void);
   virtual bool  IsARadiationSource(FLOAT Time) { return FALSE };
   int   DeleteParticle(LevelHierarchyEntry *LevelArray[]);
@@ -74,28 +77,30 @@ class ActiveParticleType
   void  ActivateNewStar(FLOAT Time, float Timestep);
 
   int SphereContained(LevelHierarchyEntry *LevelArray[], int level, 
-		      float Radius);
+              float Radius);
 
   ActiveParticle* StarBufferToList(StarBuffer *buffer, int n);
   StarBuffer* StarListToBuffer(int n);
     
   protected:
-    grid		*CurrentGrid;
-    FLOAT	 pos[MAX_DIMENSION];
-    float		 vel[MAX_DIMENSION];
-    double       	 Mass;		// Msun
-    float		 BirthTime;
-    PINT		 Identifier;
-    int		 level;
-    int		 GridID;
-    star_type	 type;
+    grid        *CurrentGrid;
+    FLOAT     pos[MAX_DIMENSION];
+    float         vel[MAX_DIMENSION];
+    double            Mass;        // Msun
+    float         BirthTime;
+    PINT         Identifier;
+    int         level;
+    int         GridID;
+    star_type     type;
 
     bool Active;
 
-  friend class grid;
-
   private: /* Cannot be accessed by subclasses! */
   
+#endif /* IMPLEMENTED */
+  friend class grid;
+  friend class ActiveParticleType_info;
+
 };
 
 //! maps the name of a plug-in to a pointer of the factory pattern
@@ -117,6 +122,8 @@ class ActiveParticleType_info
         this->formation_function = ffunc;
         get_active_particle_types()[this_name] = this;
        }
+
+       static int count(){return get_active_particle_types().size();}
 
        int (*formation_function)(grid *thisgrid_orig);
 };
