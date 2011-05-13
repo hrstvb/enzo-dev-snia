@@ -7,7 +7,8 @@
 /  date:       September, 2005
 /  modified1:  John Wise
 /  date:       March, 2009 (converted into a class)
-/  modified2:  John Wise, Greg Bryan, Britton Smith, Cameron Hummels, Matt Turk
+/  modified2:  John Wise, Greg Bryan, Britton Smith, Cameron Hummels,
+/              Matt Turk
 /  date:       May, 2011 (converting from Star to ActiveParticle)
 /
 /  PURPOSE:
@@ -25,52 +26,39 @@
 class ActiveParticleType
 {
   public:
+    /* Several pure virtual functions */
 
+    /* This should return the number of new star particles created, and should
+     * create them. */
+    
   protected:
 
   private:
   
 };
 
-/*!
- * @brief implements abstract factory design pattern for plug-ins
- */
-struct ActiveParticleType_creator
-{
-    //! create an instance of a plug-in
-    virtual ActiveParticleType * create( ) const = 0;
-    
-    //! destroy an instance of a plug-in
-    virtual ~ActiveParticleType_creator() { }
-};
+//! maps the name of a plug-in to a pointer of the factory pattern
+class ActiveParticleType_info;
+typedef std::map<std::string, ActiveParticleType_info *> ActiveParticleMap;
 
-typedef std::map<std::string, ActiveParticleType_creator *> ActiveParticleMap;
-
-//! maps the name of a plug-in to a pointer of the factory pattern 
 ActiveParticleMap &get_active_particle_types();
 
-/*!
- * @brief concrete factory pattern for plug-ins
- */
-template< class DerivedActiveParticleType >
-struct ActiveParticle_creator_concrete : public ActiveParticleType_creator
-{
-    //! register the plug-in by its name
-    ActiveParticle_creator_concrete( const std::string& active_particle_type_name )
-    {
-        get_active_particle_types()[ active_particle_type_name ] = this;
-    }
-    
-    //! create an instance of the plug-in
-    ActiveParticleType * create( ) const
-    {
-        return new DerivedActiveParticleType( );
-    }
-};
-
-//! failsafe version to select the plug-in
 ActiveParticleType *select_active_particle_type( std::string active_particle_type_name );
 
+class ActiveParticleType_info
+{
+    public:
+       
+       /* We will add more functions to this as necessary */
+       ActiveParticleType_info(
+           std::string this_name,
+           int (*ffunc)(grid *thisgrid_orig) ){
+        this->formation_function = ffunc;
+        get_active_particle_types()[this_name] = this;
+       }
+
+       int (*formation_function)(grid *thisgrid_orig);
+};
 
 #endif
 
