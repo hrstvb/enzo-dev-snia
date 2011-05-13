@@ -23,8 +23,6 @@
 #include "LevelHierarchy.h"
 #include "StarBuffer.h"
 
-class ActiveParticleType_info;
-
 class ActiveParticleType
 {
 #ifdef ACTIVE_PARTICLE_IMPLEMENTED
