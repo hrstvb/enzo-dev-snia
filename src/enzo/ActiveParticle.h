@@ -101,6 +101,19 @@ class ActiveParticleType
 
 };
 
+struct ActiveParticleFormationData {
+    /* This is where all the pointers that normally get passed into formation
+     * routines gets placed. Things like fractional h2, dark matter density,
+     * etc etc. Anything that's derived.  It's okay to add to this.  */
+    float *DarkMatterDensity;
+};
+
+struct ActiveParticleFormationDataFlags {
+    /* For every entry in the ActiveParticleFormationData struct, we have a
+     * bool here. */
+    bool DarkMatterDensity;
+};
+
 //! maps the name of a plug-in to a pointer of the factory pattern
 class ActiveParticleType_info;
 typedef std::map<std::string, ActiveParticleType_info *> ActiveParticleMap;
@@ -116,14 +129,18 @@ class ActiveParticleType_info
        /* We will add more functions to this as necessary */
        ActiveParticleType_info(
            std::string this_name,
-           int (*ffunc)(grid *thisgrid_orig) ){
+           int (*ffunc)(grid *thisgrid_orig),
+           void (*dfunc)(ActiveParticleFormationDataFlags &flags)
+           ){
         this->formation_function = ffunc;
+        this->describe_data_flags = dfunc;
         get_active_particle_types()[this_name] = this;
        }
 
        static int count(){return get_active_particle_types().size();}
 
        int (*formation_function)(grid *thisgrid_orig);
+       void (*describe_data_flags)(ActiveParticleFormationDataFlags &flags);
 };
 
 #endif

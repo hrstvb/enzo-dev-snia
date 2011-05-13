@@ -45,6 +45,7 @@ class ActiveParticleType_SampleParticle : public ActiveParticleType
 {
     public:
         static int EvaluateFormation(grid *thisgrid_orig);
+        static void DescribeSupplementalData(ActiveParticleFormationDataFlags &flags);
 };
 
 int ActiveParticleType_SampleParticle::EvaluateFormation(grid *thisgrid_orig)
@@ -54,7 +55,13 @@ int ActiveParticleType_SampleParticle::EvaluateFormation(grid *thisgrid_orig)
   return 0;
 }
 
+void ActiveParticleType_SampleParticle::DescribeSupplementalData(ActiveParticleFormationDataFlags &flags)
+{
+  flags.DarkMatterDensity = true;
+}
+
 namespace {
     ActiveParticleType_info *SampleInfo = new ActiveParticleType_info(
-            "SampleParticle", (&ActiveParticleType_SampleParticle::EvaluateFormation));
+            "SampleParticle", (&ActiveParticleType_SampleParticle::EvaluateFormation),
+                              (&ActiveParticleType_SampleParticle::DescribeSupplementalData));
 }
