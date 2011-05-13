@@ -16,6 +16,7 @@
 
 OBJS_CONFIG_LIB = \
         acml_st1.o \
+        ActiveParticle.o \
         AdiabaticExpansionInitialize.o \
         AdjustRefineRegion.o \
         AdjustMustRefineParticlesRefineToLevel.o \
