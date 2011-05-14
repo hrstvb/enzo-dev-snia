@@ -23,10 +23,22 @@
 #include "LevelHierarchy.h"
 #include "StarBuffer.h"
 
+struct ActiveParticleFormationData;
+struct ActiveParticleFormationDataFlags;
+
 class ActiveParticleType
 {
+    void static ConstructData(grid *_grid,
+            ActiveParticleFormationDataFlags &flags,
+            ActiveParticleFormationData &data) { return; }
+    void static DestroyData(
+            ActiveParticleFormationDataFlags &flags,
+            ActiveParticleFormationData &data) { return; }
 #ifdef ACTIVE_PARTICLE_IMPLEMENTED
   public:
+    void static ConstructData(grid *_grid,
+            ActiveParticleFormationDataFlags &flags,
+            ActiveParticleFormationData &data);
     /* Several pure virtual functions */
 
     /* This should return the number of new star particles created, and should
@@ -136,6 +148,11 @@ struct ActiveParticleFormationDataFlags {
   bool DataFieldNumbers;
   bool MetalField;
 };
+
+const struct ActiveParticleFormationDataFlags flags_default {
+    false
+};
+
 
 //! maps the name of a plug-in to a pointer of the factory pattern
 class ActiveParticleType_info;
