@@ -43,6 +43,7 @@ OBJS_CONFIG_LIB = \
         CheckEmissivity.o \
         ClearEmissivity.o \
         CalculateSubtractionParameters.o \
+	CalculatePopIIILifetime.o \
         CallProblemSpecificRoutines.o \
         CallPython.o \
         CheckEnergyConservation.o \
@@ -305,6 +306,7 @@ OBJS_CONFIG_LIB = \
 	Grid_AnalyzeTrackPeaks.o \
 	Grid_AppendForcingToBaryonFields.o \
 	Grid_ApplyTimeAction.o \
+	Grid_AveragedVelocityAtCell.o \
 	Grid_CalculateAngularMomentum.o \
 	Grid_ChangeParticleTypeBeforeSN.o \
 	Grid_CheckForExternalReflections.o \

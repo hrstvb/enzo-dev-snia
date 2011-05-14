@@ -2191,6 +2191,10 @@ int zEulerSweep(int j, int NumberOfSubgrids, fluxes *SubgridFluxes[],
   int ActiveParticleHandler(HierarchyEntry* SubgridPointer, int level,
 			  float dtLevelAbove);
 
+  /* Returns averaged velocity from the 6 neighbor cells and itself */
+
+  float* AveragedVelocityAtCell(int index, int DensNum, int Vel1Num);
+
 /* Particle splitter routine. */
 
   int ParticleSplitter(int level);

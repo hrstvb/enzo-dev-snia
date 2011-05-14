@@ -56,4 +56,10 @@
 #define kpc                             3.0857e21
 #define pc                              3.0857e18
 
+/* Time [s] */
+
+#define Myr                             3.1557e13
+#define kyr                             3.1557e10
+#define yr                              3.1557e07
+
 #endif

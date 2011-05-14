@@ -102,16 +102,39 @@ class ActiveParticleType
 };
 
 struct ActiveParticleFormationData {
-    /* This is where all the pointers that normally get passed into formation
-     * routines gets placed. Things like fractional h2, dark matter density,
-     * etc etc. Anything that's derived.  It's okay to add to this.  */
-    float *DarkMatterDensity;
+  /* This is where all the pointers that normally get passed into
+   * formation routines gets placed. Things like fractional h2, dark
+   * matter density, etc etc. Anything that's derived.  It's okay to
+   * add to this.  */
+  float *DarkMatterDensity;
+  float *H2Fraction;
+  float *CoolingTime;
+  float *Temperature;
+  float *TotalMetals;
+  float DensityUnits;
+  float LengthUnits;
+  float TemperatureUnits;
+  float TimeUnits;
+  float VelocityUnits;
+  double MassUnits;
+  int DensNum;
+  int Vel1Num;
+  int Vel2Num;
+  int Vel3Num;
+  int MetalNum;
+  int ColourNum;
 };
 
 struct ActiveParticleFormationDataFlags {
-    /* For every entry in the ActiveParticleFormationData struct, we have a
-     * bool here. */
-    bool DarkMatterDensity;
+  /* For every entry in the ActiveParticleFormationData struct, we
+   * have a bool here. */
+  bool DarkMatterDensity;
+  bool H2Fraction;
+  bool CoolingTime;
+  bool Temperature;
+  bool UnitConversions;
+  bool DataFieldNumbers;
+  bool MetalField;
 };
 
 //! maps the name of a plug-in to a pointer of the factory pattern
