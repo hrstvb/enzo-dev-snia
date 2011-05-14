@@ -149,8 +149,14 @@ struct ActiveParticleFormationDataFlags {
   bool MetalField;
 };
 
-const struct ActiveParticleFormationDataFlags flags_default {
-    false
+const struct ActiveParticleFormationDataFlags flags_default = {
+  false,    // DarkMatterDensity
+  false,    // H2Fraction
+  false,    // CoolingTime
+  false,    // Temperature
+  false,    // UnitConversions
+  false,    // DataFieldNumbers
+  false     // MetalField
 };
 
 
