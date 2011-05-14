@@ -98,13 +98,29 @@ int grid::ActiveParticleHandler(HierarchyEntry* SubgridPointer, int level,
 
     /* This is where everything used to be! */
 
+  /* First we identify the data dependencies */
+
+  struct ActiveParticleFormationDataFlags flags = flags_default;
+
+  for (i = 0; i < EnabledActiveParticlesCount; i++)
+  {
+    ActiveParticleType_info *ActiveParticleTypeToEvaluate = EnabledActiveParticles[i];
+    ActiveParticleTypeToEvaluate->describe_data_flags(flags);
+  }
+
+  struct ActiveParticleFormationData supplemental_data;
+
+  ActiveParticleType::ConstructData(this, flags, supplemental_data);
+
   int NumberOfNewParticles = 0;
   /* Now we iterate */
   for (i = 0; i < EnabledActiveParticlesCount; i++)
   {
-    ActiveParticleType_info *ActiveParticleTypeToEvaluate;
+    ActiveParticleType_info *ActiveParticleTypeToEvaluate = EnabledActiveParticles[i];
     NumberOfNewParticles += ActiveParticleTypeToEvaluate->formation_function(this);
   }
+
+  ActiveParticleType::DestroyData(flags, supplemental_data);
 
   //if (debug) printf("StarParticle: end\n");
 
