@@ -32,9 +32,9 @@ float* grid::AveragedVelocityAtCell(int index, int DensNum, int Vel1Num)
   float weight;
   float vel[MAX_DIMENSION];
   float *rho = BaryonField[DensNum];
-  float *allv = {BaryonField[Vel1Num], 
-		 BaryonField[Vel1Num+1], 
-		 BaryonField[Vel1Num+2]};
+  float *allv[] = {BaryonField[Vel1Num], 
+		   BaryonField[Vel1Num+1], 
+		   BaryonField[Vel1Num+2]};
 
   indices[0] = index;  //(i,j,k)
   indices[1] = index - offset[0]; //(i-1,j,k)

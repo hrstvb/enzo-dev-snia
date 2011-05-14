@@ -10,6 +10,9 @@
 ************************************************************************/
 
 #include <string.h>
+#include <map>
+#include <iostream>
+#include <stdexcept>
 #include <stdio.h>
 #include <math.h>
 #include <iostream>
@@ -32,7 +35,7 @@
 class ActiveParticleType_SampleParticle;
 
 class SampleParticleGrid : private grid {
-    friend class ActiveParticleType_SampleParticle;
+  friend class ActiveParticleType_SampleParticle;
 };
 
 /* Note that we only refer to SampleParticleGrid here. 
@@ -43,9 +46,9 @@ class SampleParticleGrid : private grid {
 
 class ActiveParticleType_SampleParticle : public ActiveParticleType
 {
-    public:
-        static int EvaluateFormation(grid *thisgrid_orig);
-        static void DescribeSupplementalData(ActiveParticleFormationDataFlags &flags);
+public:
+  static int EvaluateFormation(grid *thisgrid_orig);
+  static void DescribeSupplementalData(ActiveParticleFormationDataFlags &flags);
 };
 
 int ActiveParticleType_SampleParticle::EvaluateFormation(grid *thisgrid_orig)
@@ -61,7 +64,7 @@ void ActiveParticleType_SampleParticle::DescribeSupplementalData(ActiveParticleF
 }
 
 namespace {
-    ActiveParticleType_info *SampleInfo = new ActiveParticleType_info(
-            "SampleParticle", (&ActiveParticleType_SampleParticle::EvaluateFormation),
-                              (&ActiveParticleType_SampleParticle::DescribeSupplementalData));
+  ActiveParticleType_info *SampleInfo = new ActiveParticleType_info
+    ("SampleParticle", (&ActiveParticleType_SampleParticle::EvaluateFormation),
+     (&ActiveParticleType_SampleParticle::DescribeSupplementalData));
 }
