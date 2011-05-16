@@ -55,6 +55,7 @@ int ActiveParticleType_SampleParticle::EvaluateFormation(grid *thisgrid_orig)
 {
   SampleParticleGrid *thisgrid =
     static_cast<SampleParticleGrid *>(thisgrid_orig);
+  fprintf(stderr, "Checking formation of sample particles.\n");
   return 0;
 }
 
