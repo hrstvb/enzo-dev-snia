@@ -35,3 +35,15 @@ ActiveParticleMap& get_active_particle_types()
     static ActiveParticleMap active_particle_type_map;
     return active_particle_type_map;
 }
+
+void EnableActiveParticleType(char *active_particle_type_name) {
+    std::string dummy = std::string(active_particle_type_name);
+    ActiveParticleType_info *my_type =
+        get_active_particle_types()[dummy];
+    if (my_type == NULL) {
+        ENZO_FAIL("Unknown ParticleType");
+    }
+    EnabledActiveParticles[EnabledActiveParticlesCount++] = my_type;
+    return;
+}
+

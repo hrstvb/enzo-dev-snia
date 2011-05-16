@@ -84,6 +84,8 @@
 
 #define MAX_ENERGY_BINS                    10
 
+#define MAX_ACTIVE_PARTICLE_TYPES          30
+
 #define ROOT_PROCESSOR                      0
 
 #define VERSION                             2.0  /* current version number */

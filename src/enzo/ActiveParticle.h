@@ -17,7 +17,10 @@
 #ifndef __ACTIVE_PARTICLE_H
 #define __ACTIVE_PARTICLE_H
 
+#include "ErrorExceptions.h"
+#include "macros_and_parameters.h"
 #include "typedefs.h"
+#include "global_data.h"
 #include "Grid.h"
 #include "Hierarchy.h"
 #include "LevelHierarchy.h"
@@ -166,7 +169,7 @@ typedef std::map<std::string, ActiveParticleType_info *> ActiveParticleMap;
 
 ActiveParticleMap &get_active_particle_types();
 
-ActiveParticleType *select_active_particle_type( std::string active_particle_type_name );
+void EnableActiveParticleType(char *active_particle_type_name);
 
 class ActiveParticleType_info
 {

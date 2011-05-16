@@ -21,6 +21,8 @@
 //   based on it.
  
 #include <stdio.h>
+#include <string>
+#include <map>
 #include <string.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -40,6 +42,8 @@
 #include "Grid.h"
 #include "TopGridData.h"
 #include "hydro_rk/EOS.h" 
+
+#include "ActiveParticle.h"
 
 /* This variable is declared here and only used in Grid_ReadGrid. */
  
@@ -939,6 +943,12 @@ int ReadParameterFile(FILE *fptr, TopGridData &MetaData, float *Initialdt)
 		  ResetMagneticFieldAmplitude,
 		  ResetMagneticFieldAmplitude+1,
 		  ResetMagneticFieldAmplitude+2);
+
+    int ActiveParticleTypeIndex;
+    if (sscanf(line, "AppendActiveParticleType = %s", dummy) == 1) {
+        fprintf(stdout, "Enabling particle type %s\n", dummy);
+        EnableActiveParticleType(dummy);
+    }
 
     /* If the dummy char space was used, then make another. */
  
