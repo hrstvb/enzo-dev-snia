@@ -33,7 +33,7 @@ class ActiveParticleType
 {
     void static ConstructData(grid *_grid,
             ActiveParticleFormationDataFlags &flags,
-            ActiveParticleFormationData &data) { return; }
+            ActiveParticleFormationData &data);
     void static DestroyData(
             ActiveParticleFormationDataFlags &flags,
             ActiveParticleFormationData &data) { return; }
@@ -138,6 +138,7 @@ struct ActiveParticleFormationData {
   int Vel3Num;
   int MetalNum;
   int ColourNum;
+  int level;
 };
 
 struct ActiveParticleFormationDataFlags {

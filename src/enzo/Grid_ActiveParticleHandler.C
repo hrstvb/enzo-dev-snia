@@ -63,38 +63,8 @@ int grid::ActiveParticleHandler(HierarchyEntry* SubgridPointer, int level,
     this->ZeroSolutionUnderSubgrid(Subgrid->GridData, ZERO_UNDER_SUBGRID_FIELD);
 
   /* initialize */
- 
-  int dim, i, j, k, index, size, field, GhostZones = DEFAULT_GHOST_ZONES;
-  int DensNum, GENum, TENum, Vel1Num, Vel2Num, Vel3Num, B1Num, B2Num, B3Num,H2INum, H2IINum;
-  const double m_h = 1.673e-24;
 
   LCAPERF_START("grid_ActiveParticleHandler");
-
-  /* Compute size (in floats) of the current grid. */
- 
-  size = 1;
-  for (dim = 0; dim < GridRank; dim++)
-    size *= GridDimension[dim];
- 
-  float zred;
-  FLOAT a = 1, dadt;
-  if (ComovingCoordinates)
-    CosmologyComputeExpansionFactor(Time, &a, &dadt);
-  zred = 1.0*(1.0+InitialRedshift)/a - 1.0;
- 
-  /* Compute the temperature field. */
- 
-  float *temperature = new float[size];
-  this->ComputeTemperatureField(temperature);
- 
-  /* Set the units. */
- 
-  float DensityUnits = 1, LengthUnits = 1, TemperatureUnits = 1,
-    TimeUnits = 1, VelocityUnits = 1;
-  if (GetUnits(&DensityUnits, &LengthUnits, &TemperatureUnits,
-	       &TimeUnits, &VelocityUnits, Time) == FAIL) {
-        ENZO_FAIL("Error in GetUnits.");
-  }
 
     /* This is where everything used to be! */
 
@@ -102,6 +72,7 @@ int grid::ActiveParticleHandler(HierarchyEntry* SubgridPointer, int level,
 
   struct ActiveParticleFormationDataFlags flags = flags_default;
 
+  int i;
   for (i = 0; i < EnabledActiveParticlesCount; i++)
   {
     ActiveParticleType_info *ActiveParticleTypeToEvaluate = EnabledActiveParticles[i];
@@ -109,6 +80,7 @@ int grid::ActiveParticleHandler(HierarchyEntry* SubgridPointer, int level,
   }
 
   struct ActiveParticleFormationData supplemental_data;
+  supplemental_data.level = level;
 
   ActiveParticleType::ConstructData(this, flags, supplemental_data);
 
