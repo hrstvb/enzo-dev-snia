@@ -35,7 +35,8 @@ class ActiveParticleType
     void static ConstructData(grid *_grid,
             ActiveParticleFormationDataFlags &flags,
             ActiveParticleFormationData &data);
-    void static DestroyData(ActiveParticleFormationData &data);
+    void static DestroyData(grid *_grid,
+            ActiveParticleFormationData &data);
     /* Several pure virtual functions */
 
     /* This should return the number of new star particles created, and should

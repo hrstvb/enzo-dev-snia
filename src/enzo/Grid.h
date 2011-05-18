@@ -2420,6 +2420,7 @@ int zEulerSweep(int j, int NumberOfSubgrids, fluxes *SubgridFluxes[],
   }
 
   void ConvertColorFieldsToFractions(); 
+  void ConvertColorFieldsFromFractions(); 
 
 //-----------------------------------------------------------------------
 //  Returns radiative cooling by component

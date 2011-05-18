@@ -239,7 +239,8 @@ void ActiveParticleType::ConstructData(grid *_grid,
   return;
 }
 
-void ActiveParticleType::DestroyData(ActiveParticleFormationData &data) {
+void ActiveParticleType::DestroyData(grid *_grid,
+        ActiveParticleFormationData &data) {
 
     /* We don't actually need to inspect the flags.
      * We just need to know if the data has been allocated. */
@@ -249,6 +250,9 @@ void ActiveParticleType::DestroyData(ActiveParticleFormationData &data) {
     if (data.CoolingTime != NULL) delete data.CoolingTime;
     if (data.Temperature != NULL) delete data.Temperature;
     if (data.TotalMetals != NULL) delete data.TotalMetals;
+
+    /* We convert back from Fractions to Values */
+    _grid->ConvertColorFieldsFromFractions();
 
     /* We don't need to reset anything else. */
 

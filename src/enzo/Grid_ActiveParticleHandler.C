@@ -93,7 +93,7 @@ int grid::ActiveParticleHandler(HierarchyEntry* SubgridPointer, int level,
                                 this, supplemental_data);
   }
 
-  ActiveParticleType::DestroyData(supplemental_data);
+  ActiveParticleType::DestroyData(this, supplemental_data);
 
   //if (debug) printf("StarParticle: end\n");
 
