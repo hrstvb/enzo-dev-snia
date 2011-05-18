@@ -25,6 +25,7 @@
 #include "ExternalBoundary.h"
 #include "Grid.h"
 #include "Hierarchy.h"
+#include "LevelHierarchy.h"
 #include "TopGridData.h"
 
 
@@ -48,6 +49,14 @@ int RHIonizationTestInitialize(FILE *fptr, FILE *Outfptr,
 #ifdef TRANSFER
 //   if (MyProcessorNumber == ROOT_PROCESSOR)
 //     fprintf(stdout,"Entering RHIonizationTestInitialize routine\n");
+
+  // if ParallelRootGridIO is disabled, only perform this routine the first pass 
+  // through (when local==0).  This enables initialization of an initially refined 
+  // mesh (otherwise things do not get set up properly)
+  if (!ParallelRootGridIO) {
+    if (local == 1)   return SUCCESS;
+    else              local = 1;
+  }
 
   char *kphHIName    = "HI_kph";
   char *kphHeIName   = "HeI_kph";
@@ -101,11 +110,13 @@ int RHIonizationTestInitialize(FILE *fptr, FILE *Outfptr,
   int   AMRPatchLevel[MAX_INITIAL_PATCHES];
   FLOAT AMRPatchLeftEdge[MAX_INITIAL_PATCHES][MAX_DIMENSION];
   FLOAT AMRPatchRightEdge[MAX_INITIAL_PATCHES][MAX_DIMENSION];
+  int   AMRPatchDims[MAX_INITIAL_PATCHES][MAX_DIMENSION];
   for (i=0; i<MAX_INITIAL_PATCHES; i++) {
     AMRPatchLevel[i] = 0;
     for (dim=0; dim<MetaData.TopGridRank; dim++) {
       AMRPatchLeftEdge[i][dim] = 0.0;
       AMRPatchRightEdge[i][dim] = 0.0;
+      AMRPatchDims[i][dim] = 0;
     }
   }
 
@@ -166,10 +177,28 @@ int RHIonizationTestInitialize(FILE *fptr, FILE *Outfptr,
     ENZO_FAIL("Too many InitialPatches! increase MAX_INITIAL_PATCHES\n");
   }
 
+
+  // if both an initially refined mesh and ParallelRootGridIO are enabled, issue 
+  // an error message since that functionality is not currently supported
+  if (ParallelRootGridIO && AMRNumberOfInitialPatches) 
+    ENZO_FAIL("ParallelRootGridIO and initial refined mesh (AMRNumberOfInitialPatches) incompatible!\n");
+
+
+  // set grid dimensions of each patch
+  float dx;
+  for (patch=0; patch<AMRNumberOfInitialPatches; patch++) 
+    for (dim=0; dim<MetaData.TopGridRank; dim++) {
+      dx = 1.0 / float(MetaData.TopGridDims[dim]) / POW(RefineBy, AMRPatchLevel[patch]);
+      AMRPatchDims[patch][dim] = 
+	nint((AMRPatchRightEdge[patch][dim] - AMRPatchLeftEdge[patch][dim]) / 
+	     (DomainRightEdge[dim] - DomainLeftEdge[dim]) / dx);		
+    }  
+
+
   // output requested initial AMR hierarchy structure
   if (debug && local && AMRNumberOfInitialPatches) {
-    printf("  Initializing with prescribed AMR hierarchy:\n");
-    printf("    AMRNumberOfInitialPatches = %"ISYM"\n",
+    printf("\n  Initializing with prescribed AMR hierarchy:\n");
+    printf("    AMRNumberOfInitialPatches = %"ISYM"\n\n",
 	   AMRNumberOfInitialPatches);
     for (patch=0; patch<AMRNumberOfInitialPatches; patch++) {
       printf("    AMRPatchLevel[%"ISYM"] = %"ISYM"\n", patch, 
@@ -180,6 +209,8 @@ int RHIonizationTestInitialize(FILE *fptr, FILE *Outfptr,
       printf("    AMRPatchRightEdge[%"ISYM"] = %g %g %g\n", patch, 
 	     AMRPatchRightEdge[patch][0], AMRPatchRightEdge[patch][1], 
 	     AMRPatchRightEdge[patch][2]);
+      printf("    AMRPatchDims[%"ISYM"] = %"ISYM" %"ISYM" %"ISYM"\n\n", patch, 
+	     AMRPatchDims[patch][0], AMRPatchDims[patch][1], AMRPatchDims[patch][2]);
     }
   }
 
@@ -225,9 +256,6 @@ int RHIonizationTestInitialize(FILE *fptr, FILE *Outfptr,
       }
       // compute the internal energy
       RadHydroIEnergy = kb*RadHydroTemperature/mu/mp/(Gamma-1.0);	
-
-      printf("RHIonizationTestInitialize: ne = %g, num_dens = %g, mu = %g\n",ne,num_dens,mu);
-
     }
   }
 
@@ -248,90 +276,114 @@ int RHIonizationTestInitialize(FILE *fptr, FILE *Outfptr,
   
 
   /////////////////
-  // If requested, refine the grid to the desired level (second go around)
-  // NOTE: this only works if the requested patches are nested, i.e. this 
-  //       approach can only currently handle one patch per AMR level.
+  // If requested, add patches -- currently requires strict nesting of subgrids, 
+  // with one patch per level
   if (AMRNumberOfInitialPatches > 0  &&  local==1) {
 
-    // Declare, initialize and fill out the LevelArray
+    // determine how many levels we'll fill in
     int numlevels = 0;
     for (patch=0; patch<AMRNumberOfInitialPatches; patch++)
       numlevels = max(numlevels,AMRPatchLevel[patch]);
     if (numlevels > MAX_DEPTH_OF_HIERARCHY) 
       ENZO_FAIL("Too many initial patch levels! increase MAX_DEPTH_OF_HIERARCHY!\n");
+    if (numlevels != AMRNumberOfInitialPatches)
+      ENZO_FAIL("Error: patches must be strictly nested, one per level (for now)!\n");
+
+    if (numlevels > 0) {
+      
+      // data for setting up initially-refined regions
+      HierarchyEntry **Subgrid = new HierarchyEntry*[numlevels];
+      for (patch=0; patch<numlevels; patch++) 
+	Subgrid[patch] = new HierarchyEntry;
+
+      for (patch=0; patch<numlevels; patch++) {
+	
+	int level = AMRPatchLevel[patch];
+	if (AMRPatchDims[patch][0] > 0) {
+
+	  for (dim = 0; dim < MetaData.TopGridRank; dim++)
+	    AMRPatchDims[patch][dim] += 2*DEFAULT_GHOST_ZONES;
+	  
+	  // Insert into AMR hierarchy
+	  if (level == 1) {
+	    Subgrid[patch]->NextGridThisLevel = TopGrid.NextGridNextLevel;
+	    TopGrid.NextGridNextLevel = Subgrid[patch];
+	    Subgrid[patch]->ParentGrid = &TopGrid;
+	  } else {
+	    Subgrid[patch]->NextGridThisLevel = NULL;
+	    Subgrid[patch]->ParentGrid = Subgrid[patch-1];
+	  }
+	  if (level == numlevels) 
+	    Subgrid[patch]->NextGridNextLevel = NULL;
+	  else 
+	    Subgrid[patch]->NextGridNextLevel = Subgrid[patch+1];
+	  
+	  // Create grid
+	  Subgrid[patch]->GridData = new grid;
+	  Subgrid[patch]->GridData->InheritProperties(Subgrid[patch]->ParentGrid->GridData);
+	  Subgrid[patch]->GridData->PrepareGrid(MetaData.TopGridRank, 
+						AMRPatchDims[patch],
+						AMRPatchLeftEdge[patch],
+						AMRPatchRightEdge[patch], 0);
+
+	  if (Subgrid[patch]->GridData->RHIonizationTestInitializeGrid(
+		        RadHydroChemistry, RadHydroDensity, RadHydroX0Velocity, 
+			RadHydroX1Velocity, RadHydroX2Velocity, RadHydroIEnergy, 
+			RadHydroRadiationEnergy, RadHydroHydrogenMassFraction, 
+			RadHydroInitialFractionHII, RadHydroInitialFractionHeII, 
+			RadHydroInitialFractionHeIII, local) == FAIL)
+		ENZO_FAIL("Error in RHIonizationTestInitializeGrid.\n");
+	} // endif (AMRPatchDims[patch][0] > 0)
+      } // endfor (patch)
+    } // endif (numlevels > 0)
+
+
+    // All patches and data have been set up fully at this time.  However, we'll now 
+    // build a temporary LevelArray so that we can ensure "consistency" between levels
+    
+    // Declare, initialize and fill out the LevelArray
     LevelHierarchyEntry *LevelArray[MAX_DEPTH_OF_HIERARCHY];
     for (level=0; level<MAX_DEPTH_OF_HIERARCHY; level++)
       LevelArray[level] = NULL;
     AddLevel(LevelArray, &TopGrid, 0);
 
-    // store the current values for MustRefineRegion, StaticHierarchy
-    int MRRMRL_save = MustRefineRegionMinRefinementLevel;
-    int CFM_save[MAX_FLAGGING_METHODS];
-    for (i=0; i<MAX_FLAGGING_METHODS; i++) {
-      CFM_save[i] = CellFlaggingMethod[i];
-      CellFlaggingMethod[i] = 0;
-    }
-    CellFlaggingMethod[0] = 12;
-    FLOAT MRRLE_save[MAX_DIMENSION], MRRRE_save[MAX_DIMENSION];
-    for (i=0; i<MAX_DIMENSION; i++) {
-      MRRLE_save[i] = MustRefineRegionLeftEdge[i];
-      MRRRE_save[i] = MustRefineRegionRightEdge[i];
-    }
-    int SH_save = MetaData.StaticHierarchy;
-    MetaData.StaticHierarchy = FALSE;
-
-    // For each patch, adjust the MustRefineRegion parameters and re-call
-    // RebuildHierarchy to refine that region as needed.  Then re-initialize
-    // the grids after they are.
-    for (patch=0; patch<AMRNumberOfInitialPatches; patch++) {
-
-      // set level for this patch
-      level = AMRPatchLevel[patch]-1;
-
-      // set MustRefineRegion and level for this patch
-      MustRefineRegionMinRefinementLevel = level+1;
-      for (i=0; i<MAX_DIMENSION; i++) {
-	MustRefineRegionLeftEdge[i]  = AMRPatchLeftEdge[patch][i];
-	MustRefineRegionRightEdge[i] = AMRPatchRightEdge[patch][i];
-      }
-      
-      // call RebuildHierarchy and initialize grid on this level
-      if (RebuildHierarchy(&MetaData, LevelArray, level) == FAIL)
-	ENZO_FAIL("Error in RebuildHierarchy.\n");
-      LevelHierarchyEntry *Temp = LevelArray[level+1];
-      while (Temp != NULL) {
-	if (Temp->GridData->RHIonizationTestInitializeGrid(
-		        RadHydroChemistry, RadHydroDensity, RadHydroX0Velocity, 
-			RadHydroX1Velocity, RadHydroX2Velocity, RadHydroIEnergy, 
-			RadHydroRadiationEnergy, RadHydroHydrogenMassFraction, 
-			RadHydroInitialFractionHII, RadHydroInitialFractionHeII, 
-			RadHydroInitialFractionHeIII, 1) == FAIL)
-	  ENZO_FAIL("Error in RHIonizationTestInitializeGrid.\n");
-	Temp = Temp->NextGridThisLevel;
-      }
-    }
-
     // Loop back from the bottom, restoring the consistency among levels
-    for (level=numlevels; level>0; level--) {
+    for (level=MaximumRefinementLevel; level>0; level--) {
       LevelHierarchyEntry *Temp = LevelArray[level];
       while (Temp != NULL) {
 	if (Temp->GridData->ProjectSolutionToParentGrid(
-				   *LevelArray[level-1]->GridData) == FAIL)
-	  ENZO_FAIL("Error in grid->ProjectSolutionToParentGrid.\n");
+			      *LevelArray[level-1]->GridData) == FAIL) {
+	  ENZO_FAIL("Error in grid->ProjectSolutionToParentGrid.");
+	}
+	//	Temp->GridData->ClearBoundaryFluxes();
 	Temp = Temp->NextGridThisLevel;
       }
     }
 
-    // re-set the original values for MustRefineRegion*, StaticHierarchy
-    MustRefineRegionMinRefinementLevel = MRRMRL_save;
-    for (i=0; i<MAX_FLAGGING_METHODS; i++)  CellFlaggingMethod[i] = CFM_save[i];
-    for (i=0; i<MAX_DIMENSION; i++) {
-      MustRefineRegionLeftEdge[i] = MRRLE_save[i];
-      MustRefineRegionRightEdge[i] = MRRRE_save[i];
-    }
-    MetaData.StaticHierarchy = SH_save;
+  } // end if (AMRNumberOfInitialPatches > 0  &&  local==1) {
 
-  }  // end if (AMRNumberOfInitialPatches > 0  &&  local==0) {
+
+//   // output initial grid properties
+//   printf("\nRHIonizationTestInitialize: grids and their properties:\n");
+//   for (HierarchyEntry* Temp=&TopGrid; Temp; Temp=Temp->NextGridNextLevel) {
+//     for (HierarchyEntry* Temp2=Temp; Temp; Temp2=Temp2->NextGridThisLevel) {
+//       if (Temp2 == NULL) break;
+//       printf("   p%"ISYM": Temp = %p, Temp2 = %p\n",
+// 	     MyProcessorNumber,Temp,Temp2);
+//       printf("   p%"ISYM": grid %p: NumberOfBaryonFields = %"ISYM", location = (%g,%g) x (%g,%g) x (%g,%g)\n",
+// 	     MyProcessorNumber, Temp2, 
+// 	     Temp2->GridData->ReturnNumberOfBaryonFields(), 
+// 	     Temp2->GridData->GetGridLeftEdge(0), 
+// 	     Temp2->GridData->GetGridRightEdge(0), 
+// 	     Temp2->GridData->GetGridLeftEdge(1), 
+// 	     Temp2->GridData->GetGridRightEdge(1), 
+// 	     Temp2->GridData->GetGridLeftEdge(2), 
+// 	     Temp2->GridData->GetGridRightEdge(2));
+//       printf("   p%"ISYM": grid %p: NGNL = %p, NGTL = %p, PG = %p\n\n",
+// 	     MyProcessorNumber,Temp2, 
+// 	     Temp2->NextGridNextLevel, Temp2->NextGridThisLevel, Temp2->ParentGrid);
+//     }
+//   }  // end loop over grids
 
 
   // set up field names and units
