@@ -89,8 +89,8 @@ class AMRFLDSplit : public virtual ImplicitProblemABC {
   float mindt;         // minimum radiation time step size
   float maxsubcycles;  // max subcycle factor for rad time step within hydro step
   float dtfac;         // desired relative change in radiation per step
-  float dtnorm;        // norm choice for computing relative change:
-                       //    0 -> max pointwise norm (default)
+  float dtnorm;        // norm choice for computing relative change (default=2.0):
+                       //    0 -> max pointwise norm
                        //   >0 -> rms p-norm over entire domain
   float tnew;          // new time
   float told;          // old time
@@ -148,7 +148,7 @@ class AMRFLDSplit : public virtual ImplicitProblemABC {
   int FillRates(LevelHierarchyEntry *LevelArray[], int level);
 #ifdef AMR_SOLVE
   int RadStep(LevelHierarchyEntry *LevelArray[], int level, 
-	      AMRsolve_Hypre_FLD amrfldsolve);
+	      AMRsolve_Hierarchy *hierarchy, Eflt64 *Echange);
 #endif
 
  public:
@@ -192,7 +192,7 @@ class AMRFLDSplit : public virtual ImplicitProblemABC {
   int SetupBoundary(int Dimension, int Face, int BdryConst, float *BdryData);
 
   // Return the maximum rad-hydro time step size
-  float ComputeTimeStep(LevelHierarchyEntry *LevelArray[], int level);
+  float ComputeTimeStep(Eflt64 Echange);
 
 };
 
