@@ -89,10 +89,11 @@ int grid::ActiveParticleHandler(HierarchyEntry* SubgridPointer, int level,
   for (i = 0; i < EnabledActiveParticlesCount; i++)
   {
     ActiveParticleType_info *ActiveParticleTypeToEvaluate = EnabledActiveParticles[i];
-    NumberOfNewParticles += ActiveParticleTypeToEvaluate->formation_function(this);
+    NumberOfNewParticles += ActiveParticleTypeToEvaluate->formation_function(
+                                this, supplemental_data);
   }
 
-  ActiveParticleType::DestroyData(flags, supplemental_data);
+  ActiveParticleType::DestroyData(supplemental_data);
 
   //if (debug) printf("StarParticle: end\n");
 
