@@ -34,9 +34,7 @@ class ActiveParticleType
     void static ConstructData(grid *_grid,
             ActiveParticleFormationDataFlags &flags,
             ActiveParticleFormationData &data);
-    void static DestroyData(
-            ActiveParticleFormationDataFlags &flags,
-            ActiveParticleFormationData &data) { return; }
+    void static DestroyData(ActiveParticleFormationData &data);
 #ifdef ACTIVE_PARTICLE_IMPLEMENTED
   public:
     void static ConstructData(grid *_grid,
@@ -140,6 +138,28 @@ struct ActiveParticleFormationData {
   int ColourNum;
   int level;
 };
+
+const struct ActiveParticleFormationData data_default = {
+  NULL,     // DarkMatterDensity
+  NULL,     // H2Fraction
+  NULL,     // CoolingTime
+  NULL,     // Temperature
+  NULL,     // TotalMetals
+  0.0,      // DensityUnits
+  0.0,      // LengthUnits
+  0.0,      // TemperatureUnits
+  0.0,      // TimeUnits
+  0.0,      // VelocityUnits
+  0.0,      //  MassUnits
+  -1,       // DensNum
+  -1,       // Vel1Num
+  -1,       // Vel2Num
+  -1,       // Vel3Num
+  -1,       // MetalNum
+  -1,       // ColourNum
+  -1        // level
+};
+
 
 struct ActiveParticleFormationDataFlags {
   /* For every entry in the ActiveParticleFormationData struct, we

@@ -228,10 +228,28 @@ void ActiveParticleType::ConstructData(grid *_grid,
         ENZO_FAIL("Error in GetUnits.");
   }
 
-  /* If we're using physical units for the overdensity threshold and
-     it is more than 10 times the cosmic mean, convert it from /cm3 to
-     overdensity.  Currently only for Pop II (radiating clusters)/III
-     star particles.  */
+  /* Now we fill in the *Num attributes of data */
+  data.DensNum = DensNum;
+  data.Vel1Num = Vel1Num;
+  data.Vel2Num = Vel2Num;
+  data.Vel3Num = Vel3Num;
+  data.MetalNum = MetalNum;
+  /*data.ColourNum = ColourNum;*/
 
-    return;
+  return;
+}
+
+void ActiveParticleType::DestroyData(ActiveParticleFormationData &data) {
+
+    /* We don't actually need to inspect the flags.
+     * We just need to know if the data has been allocated. */
+
+    if (data.DarkMatterDensity != NULL) delete data.DarkMatterDensity;
+    if (data.H2Fraction != NULL) delete data.H2Fraction;
+    if (data.CoolingTime != NULL) delete data.CoolingTime;
+    if (data.Temperature != NULL) delete data.Temperature;
+    if (data.TotalMetals != NULL) delete data.TotalMetals;
+
+    /* We don't need to reset anything else. */
+
 }
