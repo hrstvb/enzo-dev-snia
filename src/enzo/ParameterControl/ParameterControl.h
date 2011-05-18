@@ -63,6 +63,8 @@ public:
 	{
 		ic = NULL;
 		the_interpreter = NULL;
+
+		icd = NULL;
 		the_defaults_interpreter = NULL;
 		
 		argbuf = new char[1024];
@@ -75,7 +77,9 @@ public:
 		
 		ic = get_interpreter()[interpreter_name];
 		the_interpreter = ic->create( input_file );
-		the_defaults_interpreter = ic->create( std::string(defaults_string), true);
+
+		icd = get_interpreter()["enzo2_libconfig"];
+		the_defaults_interpreter = icd->create( std::string(defaults_string), true);
 	}
 
 	~Configuration()
