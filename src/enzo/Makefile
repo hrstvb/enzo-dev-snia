@@ -416,6 +416,7 @@ clean:
 	-@rm -f *.so *.o uuid/*.o *.mod *.f *.f90 DEPEND.bak *~ $(OUTPUT) *.exe \
           auto_show*.C auto_defaults_string.h svn_version.def hydro_rk/*.o *.oo hydro_rk/*.oo \
           uuid/*.oo DEPEND \
+          ParameterControl/*.o \
           python_bridge/problemtype_handler.C \
           python_bridge/problemtype_handler.h \
           python_bridge/problemtype_handler.o

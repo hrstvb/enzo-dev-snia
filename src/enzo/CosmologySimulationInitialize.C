@@ -145,7 +145,7 @@ int CosmologySimulationInitialize(FILE *fptr, FILE *Outfptr,
 #endif
  
   char *dummy = new char[MAX_LINE_LENGTH];
-  char dummy_arr[MAX_LINE_LENGTH][MAX_DIMENSION];
+  char dummy_arr[MAX_DIMENSION][MAX_LINE_LENGTH];
 
   char line[MAX_LINE_LENGTH];
   int i, j, dim, gridnum, ret, SubgridsAreStatic, region;
@@ -166,7 +166,6 @@ int CosmologySimulationInitialize(FILE *fptr, FILE *Outfptr,
  
  
   // Set all char arrays to NULL
-  
   CosmologySimulationDensityName          = NULL;
   CosmologySimulationTotalEnergyName      = NULL;
   CosmologySimulationGasEnergyName        = NULL;
@@ -200,6 +199,10 @@ int CosmologySimulationInitialize(FILE *fptr, FILE *Outfptr,
     CosmologySimulationGridDimension[0][dim] = MetaData.TopGridDims[dim];
   }
   CosmologySimulationGridLevel[0] = 0;
+
+  dummy[0] = 0;
+  for( i=0; i<MAX_DIMENSION; i++) dummy_arr[i][0] = 0;
+  
  
   if (!ComovingCoordinates) {
     ENZO_FAIL("ComovingCoordinates must be TRUE!\n");
