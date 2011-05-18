@@ -51,9 +51,9 @@ inline void convert<std::string,std::string>( const std::string & ival, std::str
 
 class Configuration
 {
-	interpreter_creator *ic;
-	interpreter* the_interpreter;
-	interpreter* the_defaults_interpreter;
+        interpreter_creator *ic, *icd;
+        interpreter* the_interpreter;
+        interpreter* the_defaults_interpreter;
 	
 	char *argbuf;
 	
