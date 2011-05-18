@@ -60,6 +60,7 @@ public:
 		     double HIconst, double HeIconst, double HeIIconst, 
 		     double nUn, double nUn0, double lUn, double lUn0, 
 		     double rUn, double rUn0, int BdryType[3][2]);
+  double rdiff_norm(double pnorm, double atol);
   void solve();
   int  evaluate();
   void update_enzo();

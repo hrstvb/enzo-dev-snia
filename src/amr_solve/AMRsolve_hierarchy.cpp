@@ -331,7 +331,7 @@ void AMRsolve_Hierarchy::enzo_attach_fld(LevelHierarchyEntry *LevelArray[],
 	il[dim] = int((xl[dim] - DomainLeftEdge[dim]) 
 		       / (DomainRightEdge[dim]-DomainLeftEdge[dim]) * nd[dim]);
       }
-	      
+
       // Create a new amr_solve grid
       AMRsolve_Grid* grid = new AMRsolve_Grid(id,id_parent,ip,xl,xu,il,n);
       insert_grid(grid);
@@ -345,6 +345,7 @@ void AMRsolve_Hierarchy::enzo_attach_fld(LevelHierarchyEntry *LevelArray[],
 	// Set pointers to the relevant Enzo data arrays for setting up the 
 	// linear system later on.
 	grid->set_E(enzo_grid->AccessRadiationFrequency0());
+	grid->set_E0(enzo_grid->AccessKPhHI());
 	grid->set_eta(enzo_grid->AccessEmissivity0());
 	grid->set_HI(enzo_grid->AccessHIDensity());
 	grid->set_HeI(enzo_grid->AccessHeIDensity());

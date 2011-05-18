@@ -870,7 +870,144 @@ void AMRsolve_Hypre_FLD::init_elements_rhs_()
 
   }  // while grid = itg++
 
+  //// WHY DO WE NOT CALL HYPRE_SStructFACZeroAMRVectorData HERE???? ////
+  
+
 } // init_elements_rhs_()
+
+//------------------------------------------------------------------------
+
+/// Compute a relative difference norm between E and E0, using the pnorm
+/// and absolute tolerances given as input.  This routine ensures that 
+/// for (pnorm != 0), the vector values are scaled by the cell volume, 
+/// and that overlapped cells are not double-counted.
+double AMRsolve_Hypre_FLD::rdiff_norm(double pnorm, double atol)
+{
+
+  // local variables
+  int n0, n1, n2, en0, en1, en2, ghosts[3][2], part, lower[3], upper[3];
+  int i, i0, i1, i2, k;
+  Scalar *E, *E0, *values;
+  Scalar hx, hy, hz, dV, weight, diff;
+  double tmp, loc_diff, proc_diff=0.0, glob_diff=0.0;
+
+  _TRACE_;
+  // for each local grid, fill the "b" array to store difference values 
+  //    iterate over all grids local to this processor
+  ItHierarchyGridsLocal itg (*hierarchy_);
+  while (AMRsolve_Grid* grid = itg++) {
+
+    // access AMRsolve array
+    values = grid->get_f(&n0,&n1,&n2);
+
+    // access relevant arrays from this grid to compute RHS
+    E  = grid->get_E();
+    E0 = grid->get_E0();
+
+    // get buffering information on relating amrsolve grid to Enzo data
+    grid->get_Ghosts(ghosts);
+    en0 = n0 + ghosts[0][0] + ghosts[0][1];  // enzo data dimensions
+    en1 = n1 + ghosts[1][0] + ghosts[1][1];  // enzo data dimensions
+    en2 = n2 + ghosts[2][0] + ghosts[2][1];  // enzo data dimensions
+
+    // access this grid's mesh spacing, and set relevant shortcuts
+    grid->h(hx,hy,hz);
+    dV = (pnorm > 0.0) ? hx*hy*hz : 1.0;
+
+    // iterate over the domain, computing the difference array
+    for (i2=0; i2<n2; i2++)
+      for (i1=0; i1<n1; i1++)
+	for (i0=0; i0<n0; i0++) {
+
+	  // compute Enzo cell index (k), AMRsolve grid index (i)
+	  k = (ghosts[0][0] + i0) + en0*((ghosts[1][0] + i1) + en1*(ghosts[2][0] + i2));
+	  i = i0 + n0*(i1 + n1*i2);
+
+	  // compute local weight factor
+	  weight = sqrt(fabs(E[k]*E0[k]) + atol);
+
+	  // compute local weighted difference, and store inside b
+	  values[i] = fabs(E[k] - E0[k])*dV/weight;
+	}
+
+    // Set Hypre B_ vector to RHS values
+    part = grid->level();
+    grid->get_limits(lower,upper);
+    HYPRE_SStructVectorSetBoxValues(B_,part,lower,upper,0,values);
+    
+  }  // while grid = itg++
+
+  // call HYPRE to zero out overlapped cell values
+  int nlevels = hierarchy_->num_levels();
+  if (nlevels > 1) {
+    int plevels[nlevels];
+    int rfactors[nlevels][3];
+    for (int part=0; part<nlevels; part++) {
+      plevels[part] = part;
+      rfactors[part][0] = r_factor_;
+      rfactors[part][1] = r_factor_;
+      rfactors[part][2] = r_factor_;
+    }
+    HYPRE_SStructFACZeroAMRVectorData(B_, plevels, rfactors);
+  }
+
+  
+  // iterate back over local grids, accumulating the difference norm
+  ItHierarchyGridsLocal itg2(*hierarchy_);
+  while (AMRsolve_Grid* grid = itg++) {
+
+    // get level, grid information
+    int level = grid->level();
+    grid->get_limits(lower,upper);
+
+    // extract Enzo solution
+    values = grid->get_f(&n0,&n1,&n2);
+    HYPRE_SStructVectorGather(B_);
+    HYPRE_SStructVectorGetBoxValues(B_, level, lower, upper, 0, values);  
+
+    // iterate over the domain, updating local p-norm 
+    loc_diff = 0.0;
+    if (pnorm > 0.0) { 
+      for (i2=0; i2<n2; i2++)
+	for (i1=0; i1<n1; i1++)
+	  for (i0=0; i0<n0; i0++) {
+	    tmp = values[i0 + n0*(i1 + n1*i2)];
+	    loc_diff += pow(tmp,pnorm);
+	  }
+      proc_diff += loc_diff;
+    // iterate over the domain, updating local max norm 
+    } else { 
+      for (i2=0; i2<n2; i2++)
+	for (i1=0; i1<n1; i1++)
+	  for (i0=0; i0<n0; i0++) {
+	    tmp = values[i0 + n0*(i1 + n1*i2)];
+	    loc_diff = (loc_diff > tmp) ? loc_diff : tmp;
+	  }
+      proc_diff = (loc_diff > proc_diff) ? loc_diff : proc_diff;
+    }
+   
+  } // grid = itg2++
+
+  // communicate to obtain overall sum/max
+  if (pnorm > 0.0) {
+    if (MPI_Allreduce(&proc_diff,&glob_diff,1,MPI_DOUBLE,MPI_SUM,MPI_COMM_WORLD) != 0) {
+      char error_message[80];
+      strcpy(error_message,"rdiff_norm: Error in MPI_Allreduce!\n");
+      ERROR(error_message);
+    }
+    glob_diff = pow(glob_diff, 1.0/pnorm);
+  } else {
+    if (MPI_Allreduce(&proc_diff,&glob_diff,1,MPI_DOUBLE,MPI_MAX,MPI_COMM_WORLD) != 0) {
+      char error_message[80];
+      strcpy(error_message,"rdiff_norm: Error in MPI_Allreduce!\n");
+      ERROR(error_message);
+    }
+  }
+
+  // return with overall difference value
+  return glob_diff;
+
+} // rdiff_norm()
 
 //------------------------------------------------------------------------
 

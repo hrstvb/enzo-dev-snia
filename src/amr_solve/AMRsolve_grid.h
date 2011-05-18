@@ -84,6 +84,7 @@ class AMRsolve_Grid
   
   // optional pointers to Enzo data arrays (if used; set using set_* routines)
   Scalar* E_;               /// ptr to Radiation energy density array
+  Scalar* E0_;              /// ptr to old Radiation energy density array
   Scalar* eta_;             /// ptr to emissivity array
   Scalar* HI_;              /// ptr to HI density array
   Scalar* HeI_;             /// ptr to HeI density array
@@ -177,6 +178,7 @@ class AMRsolve_Grid
   /// Return a pointer to the specified Enzo data array associated with the Grid
   /// (does not check for non-NULL value)
   Scalar* get_E()    throw() { assert(E_);    return E_;    }; 
+  Scalar* get_E0()   throw() { assert(E0_);   return E0_;   }; 
   Scalar* get_eta()  throw() { assert(eta_);  return eta_;  };
   Scalar* get_HI()   throw() { assert(HI_);   return HI_;   };
   Scalar* get_HeI()  throw() { assert(HeI_);  return HeI_;  };
@@ -185,6 +187,7 @@ class AMRsolve_Grid
   /// Set a pointer to the specified Enzo data array associated with the Grid
   /// (does not check for non-NULL value)
   void set_E(Scalar* E)       throw() { E_    = E;    };
+  void set_E0(Scalar* E0)     throw() { E0_    = E0;    };
   void set_eta(Scalar* eta)   throw() { eta_  = eta;  };
   void set_HI(Scalar* HI)     throw() { HI_   = HI;   };
   void set_HeI(Scalar* HeI)   throw() { HeI_  = HeI;  };
