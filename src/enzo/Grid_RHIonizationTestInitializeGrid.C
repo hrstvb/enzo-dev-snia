@@ -58,6 +58,14 @@ int grid::RHIonizationTestInitializeGrid(int NumChemicals,
   if ((NumberOfBaryonFields > 5) && (BaryonField[5] != NULL))
     return SUCCESS;
 
+  // determine whether diagnostic output is necessary
+  int debug1 = debug;
+  for (int i=0; i<GridRank; i++) {
+    if (GridLeftEdge[i]  != DomainLeftEdge[i])   debug1 = 0;
+    if (GridRightEdge[i] != DomainRightEdge[i])  debug1 = 0;
+  }
+
+
   // create necessary baryon fields
   int RhoNum, TENum, IENum, V0Num, V1Num, V2Num, EgNum, DeNum, 
     HINum, HIINum, HeINum, HeIINum, HeIIINum, kphHINum, kphHeINum, 
@@ -113,7 +121,7 @@ int grid::RHIonizationTestInitializeGrid(int NumChemicals,
     fprintf(stderr,"Error in GetUnits.\n");
     return FAIL;
   }
-  if (debug  &&  NewData) {
+  if (debug1  &&  NewData) {
     fprintf(stdout,"  Internal Unit Conversion Factors:\n");
     fprintf(stdout,"         length = %g\n",LengthUnits);
     fprintf(stdout,"           mass = %lg\n",MassUnits);
@@ -186,7 +194,7 @@ int grid::RHIonizationTestInitializeGrid(int NumChemicals,
       for (i=0; i<size; i++)  BaryonField[etaNum][i] = 0.0;
 
     
-    if (debug  &&  NewData) {
+    if (debug1  &&  NewData) {
       fprintf(stdout,"\n  Initializing constant fields using CGS values:\n");
       fprintf(stdout,"        density = %g\n",DensityConstant);
       fprintf(stdout,"   total energy = %g\n",TEConstant);

@@ -151,7 +151,7 @@ int AMRFLDSplit::Initialize(HierarchyEntry &TopGrid, TopGridData &MetaData)
 
   // set default solver parameters
   sol_tolerance = 1e-8;  // HYPRE solver tolerance
-  sol_maxit     = 50;    // HYPRE max linear iters
+  sol_maxit     = 200;   // HYPRE max linear iters
   sol_type      = 1;     // HYPRE solver
   sol_printl    = 1;     // HYPRE print level
   sol_log       = 1;     // HYPRE logging level
@@ -409,13 +409,8 @@ int AMRFLDSplit::Initialize(HierarchyEntry &TopGrid, TopGridData &MetaData)
     printf("AMRFLDSplit::Initialize p%"ISYM": rank = %"ISYM", Nchem = %"ISYM"\n",
 	   MyProcessorNumber, rank, Nchem);
     printf("AMRFLDSplit::Initialize p%"ISYM": layout = (%"ISYM",%"ISYM",%"ISYM")\n",MyProcessorNumber,layout[0],layout[1],layout[2]);
-    printf("AMRFLDSplit::Initialize p%"ISYM": location = (%"ISYM",%"ISYM",%"ISYM")\n",MyProcessorNumber,location[0],location[1],location[2]);
   }
   if (debug) {
-    printf("AMRFLDSplit::Initialize p%"ISYM": OnBdry = (%i:%i,%i:%i,%i:%i)\n",
-	   MyProcessorNumber, Eint32(OnBdry[0][0]), Eint32(OnBdry[0][1]), 
-	   Eint32(OnBdry[1][0]), Eint32(OnBdry[1][1]), Eint32(OnBdry[2][0]), 
-	   Eint32(OnBdry[2][1]));
     printf("AMRFLDSplit::Initialize p%"ISYM": BdryType = (%i:%i,%i:%i,%i:%i)\n",
 	   MyProcessorNumber, BdryType[0][0], BdryType[0][1], BdryType[1][0], 
 	   BdryType[1][1], BdryType[2][0], BdryType[2][1]);
@@ -430,11 +425,6 @@ int AMRFLDSplit::Initialize(HierarchyEntry &TopGrid, TopGridData &MetaData)
   // set initial time step into TopGrid
   ThisGrid->GridData->SetMaxRadiationDt(dt);
   
-  if (debug)
-    printf("AMRFLDSplit::Initialize p%"ISYM": LocDims = (%"ISYM",%"ISYM",%"ISYM")\n",
-	   MyProcessorNumber, LocDims[0], LocDims[1], LocDims[2]);
-
-
   // set up vector container for previous time step (empty data)
   int xghosts = DEFAULT_GHOST_ZONES, yghosts=0, zghosts=0;
   if (rank > 1) {
@@ -483,10 +473,19 @@ int AMRFLDSplit::Initialize(HierarchyEntry &TopGrid, TopGridData &MetaData)
   amrsolve_params->set_parameter("solver_npre",numstr);
   sprintf(numstr, "%i", sol_npost);
   amrsolve_params->set_parameter("solver_npost",numstr);
+ 
+
+//   amrsolve_params->set_parameter("dump_x","true");
+//   amrsolve_params->set_parameter("dump_b","true");
+//   amrsolve_params->set_parameter("dump_a","true");
+
+
   if (debug) {
     printf("AMRFLDSplit::Initialize, customized amrsolve parameters:\n");
     amrsolve_params->print();
   }
+
+
 
 #ifdef USE_MPI
   float ftime = MPI_Wtime();
