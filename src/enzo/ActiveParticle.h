@@ -31,25 +31,22 @@ struct ActiveParticleFormationDataFlags;
 
 class ActiveParticleType
 {
-    void static ConstructData(grid *_grid,
-            ActiveParticleFormationDataFlags &flags,
-            ActiveParticleFormationData &data);
-    void static DestroyData(ActiveParticleFormationData &data);
-#ifdef ACTIVE_PARTICLE_IMPLEMENTED
   public:
     void static ConstructData(grid *_grid,
             ActiveParticleFormationDataFlags &flags,
             ActiveParticleFormationData &data);
+    void static DestroyData(ActiveParticleFormationData &data);
     /* Several pure virtual functions */
 
     /* This should return the number of new star particles created, and should
      * create them. */
-    ActiveParticleType();
+    ActiveParticleType(){};
+    ~ActiveParticleType(){};
+#ifdef ACTIVE_PARTICLE_IMPLEMENTED
     ActiveParticleType(grid *_grid, int _id, int _level);
-    ActiveParticle(StarBuffer *buffer, int n);
-    ActiveParticle(StarBuffer buffer) ;
-    ~ActiveParticle();
-    ActiveParticle* copy(void);
+    ActiveParticleType(StarBuffer *buffer, int n);
+    ActiveParticleType(StarBuffer buffer) ;
+    ActiveParticleType* copy(void);
 
   int   ReturnID(void) { return Identifier; };
   double ReturnMass(void) { return Mass; };
@@ -92,6 +89,7 @@ class ActiveParticleType
 
   ActiveParticle* StarBufferToList(StarBuffer *buffer, int n);
   StarBuffer* StarListToBuffer(int n);
+#endif /* IMPLEMENTED */
     
   protected:
     grid        *CurrentGrid;
@@ -108,7 +106,6 @@ class ActiveParticleType
 
   private: /* Cannot be accessed by subclasses! */
   
-#endif /* IMPLEMENTED */
   friend class grid;
   friend class ActiveParticleType_info;
 
@@ -199,7 +196,7 @@ class ActiveParticleType_info
        /* We will add more functions to this as necessary */
        ActiveParticleType_info(
            std::string this_name,
-           int (*ffunc)(grid *thisgrid_orig),
+           int (*ffunc)(grid *thisgrid_orig, ActiveParticleFormationData &data),
            void (*dfunc)(ActiveParticleFormationDataFlags &flags)
            ){
         this->formation_function = ffunc;
@@ -209,7 +206,7 @@ class ActiveParticleType_info
 
        static int count(){return get_active_particle_types().size();}
 
-       int (*formation_function)(grid *thisgrid_orig);
+       int (*formation_function)(grid *thisgrid_orig, ActiveParticleFormationData &data);
        void (*describe_data_flags)(ActiveParticleFormationDataFlags &flags);
 };
 

@@ -47,11 +47,11 @@ class SampleParticleGrid : private grid {
 class ActiveParticleType_SampleParticle : public ActiveParticleType
 {
 public:
-  static int EvaluateFormation(grid *thisgrid_orig);
+  static int EvaluateFormation(grid *thisgrid_orig, ActiveParticleFormationData &data);
   static void DescribeSupplementalData(ActiveParticleFormationDataFlags &flags);
 };
 
-int ActiveParticleType_SampleParticle::EvaluateFormation(grid *thisgrid_orig)
+int ActiveParticleType_SampleParticle::EvaluateFormation(grid *thisgrid_orig, ActiveParticleFormationData &data)
 {
   SampleParticleGrid *thisgrid =
     static_cast<SampleParticleGrid *>(thisgrid_orig);

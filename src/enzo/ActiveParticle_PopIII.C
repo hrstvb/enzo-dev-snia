@@ -25,6 +25,7 @@
 #include "TopGridData.h"
 #include "EventHooks.h"
 #include "ActiveParticle.h"
+#include "phys_constants.h"
 
 float CalculatePopIIILifetime(float Mass);
 
@@ -46,15 +47,18 @@ class PopIIIGrid : private grid {
 class ActiveParticleType_PopIII : public ActiveParticleType
 {
 public:
-  static int EvaluateFormation(grid *thisgrid_orig);
+  static int EvaluateFormation(grid *thisgrid_orig, ActiveParticleFormationData &data);
   static void DescribeSupplementalData(ActiveParticleFormationDataFlags &flags);
+private:
+  float LifeTime;
+  float Metallicity;
 };
 
 int ActiveParticleType_PopIII::EvaluateFormation
-(grid *thisgrid_orig, ActiveParticleFormationData supp_data)
+(grid *thisgrid_orig, ActiveParticleFormationData &supp_data)
 {
-  SampleParticleGrid *tg =
-    static_cast<SampleParticleGrid *>(thisgrid_orig);
+  PopIIIGrid *tg =
+    static_cast<PopIIIGrid *>(thisgrid_orig);
 
   float bmass, div, dtot, tdyn, LifetimeInYears;
   int i, j, k, dim, index, offset_y, offset_z;
@@ -67,7 +71,11 @@ int ActiveParticleType_PopIII::EvaluateFormation
   float *velz = tg->BaryonField[supp_data.Vel3Num];
 
   bool HasMetalField = (supp_data.MetalNum != -1 ||
-			supp_data.ColourNum != -1)
+			supp_data.ColourNum != -1);
+
+  int GridDimension[3] = {tg->GridDimension[0],
+                          tg->GridDimension[1],
+                          tg->GridDimension[2]};
 
   // Pre-calculate serialized offsets for the 3D data field.  Used for
   // the divergence.
@@ -94,11 +102,11 @@ int ActiveParticleType_PopIII::EvaluateFormation
 	if (HydroMethod == Zeus_Hydro) {
 	  div = velx[index+1] - velx[index] +
 	    vely[index+offset_y] - vely[index] + 
-	    velz[index+offset_z] - velz[index]
+	    velz[index+offset_z] - velz[index];
 	} else {
 	  div = velx[index+1] - velx[index-1] + 
 	    vely[index+offset_y] - vely[index-offset_y] + 
-	    velz[index+offset_z] - velz[index-offset_z]
+	    velz[index+offset_z] - velz[index-offset_z];
 	}
 
 	if (div > 0.0) continue;
@@ -130,24 +138,26 @@ int ActiveParticleType_PopIII::EvaluateFormation
 	   Note for an IMF, we have to recompute this after the random
 	   sampling. */
 
+    ActiveParticleType_PopIII *np = new ActiveParticleType_PopIII();
+
 	LifetimeInYears = CalculatePopIIILifetime(PopIIIStarMass);
 
 	// Mass of the star will be assigned by the accretion routines.
 	if (RadiativeTransfer) {
-	  this->Mass = 0.0;
-	  this->LifeTime = LifetimeInYears * yr / supp_data.TimeUnits;
+	  np->Mass = 0.0;
+	  np->LifeTime = LifetimeInYears * yr / supp_data.TimeUnits;
 	} else {
-	  bmass = density[index] * MassUnits;
-	  this->Mass = min(0.5 * bmass, PopIIIStarMass / supp_data.MassUnits);
-	  this->LifeTime = LifetimeInYears * yr / supp_data.TimeUnits;
+	  bmass = density[index] * supp_data.MassUnits;
+	  np->Mass = min(0.5 * bmass, PopIIIStarMass / supp_data.MassUnits);
+	  np->LifeTime = LifetimeInYears * yr / supp_data.TimeUnits;
 	}
 
-	this->type = PopIII;
-	this->BirthTime = tg->Time;
+	np->type = PopIII;
+	np->BirthTime = tg->Time;
 	
-	this->pos[0] = tg->CellLeftEdge[0][i] + 0.5*CellWidth[0][i];
-	this->pos[1] = tg->CellLeftEdge[1][j] + 0.5*CellWidth[1][j];
-	this->pos[2] = tg->CellLeftEdge[2][k] + 0.5*CellWidth[2][k];
+	np->pos[0] = tg->CellLeftEdge[0][i] + 0.5*tg->CellWidth[0][i];
+	np->pos[1] = tg->CellLeftEdge[1][j] + 0.5*tg->CellWidth[1][j];
+	np->pos[2] = tg->CellLeftEdge[2][k] + 0.5*tg->CellWidth[2][k];
 
 	/*
 	  Star velocities averaged over multiple cells to avoid
@@ -155,15 +165,19 @@ int ActiveParticleType_PopIII::EvaluateFormation
 	  otherwise PPM
 	*/
 
-	this->vel = tg->AveragedVelocityAtCell(index, supp_data.DensNum,
+
+	double *tvel = tg->AveragedVelocityAtCell(index, supp_data.DensNum,
 					       supp_data.Vel1Num);
+    np->vel[0] = tvel[0];
+    np->vel[1] = tvel[1];
+    np->vel[2] = tvel[2];
 
 	/* Set the metallicity */
 
 	if (HasMetalField)
-	  this->Metallicity = TotalMetals[index];
+	  np->Metallicity = supp_data.TotalMetals[index];
 	else
-	  this->Metallicity = 0.0;
+	  np->Metallicity = 0.0;
 
       } // ENDFOR i
     } // ENDFOR j
