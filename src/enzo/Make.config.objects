@@ -364,6 +364,7 @@ OBJS_CONFIG_LIB = \
 	Grid_constructor.o \
 	Grid_ConvertTotalEnergyToGasEnergy.o \
 	Grid_ConvertToNumpy.o \
+	Grid_ConvertColorFieldsToFractions.o \
 	Grid_CoolingTestResetEnergies.o \
 	Grid_CoolingTestInitializeGrid.o \
 	Grid_CopyBaryonFieldToOldBaryonField.o \
