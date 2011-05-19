@@ -22,8 +22,8 @@
 #include <stdio.h>
 #include <math.h>
 #include <iostream>
-#include <vector>
 #include <math.h>
+#include <assert.h>
 #include "ErrorExceptions.h"
 #include "performance.h"
 #include "macros_and_parameters.h"
@@ -56,6 +56,9 @@ int grid::ActiveParticleHandler(HierarchyEntry* SubgridPointer, int level,
  
   if (NumberOfBaryonFields == 0)
     return SUCCESS;
+
+  /*fprintf(stderr, "G_APH: Currently have %"ISYM"\n",
+          this->NumberOfActiveParticles);*/
  
   /* First, set under_subgrid field */
   HierarchyEntry *Subgrid;
@@ -80,47 +83,47 @@ int grid::ActiveParticleHandler(HierarchyEntry* SubgridPointer, int level,
     ActiveParticleTypeToEvaluate->describe_data_flags(flags);
   }
 
-  struct ActiveParticleFormationData supplemental_data;
+  struct ActiveParticleFormationData supplemental_data = data_default;
   supplemental_data.level = level;
-  std::vector<ActiveParticleType> temp_particles;
-  supplemental_data.particles = &temp_particles;
 
   ActiveParticleType::ConstructData(this, flags, supplemental_data);
-
-  std::vector<ActiveParticleType> NewParticles;
 
   int NumberOfNewParticles = 0;
   /* Now we iterate */
   for (i = 0; i < EnabledActiveParticlesCount; i++)
   {
     ActiveParticleType_info *ActiveParticleTypeToEvaluate = EnabledActiveParticles[i];
-    NumberOfNewParticles += ActiveParticleTypeToEvaluate->formation_function(
+    ActiveParticleTypeToEvaluate->formation_function(
                                 this, supplemental_data);
-    NewParticles.insert(NewParticles.end(),
-                        supplemental_data.particles->begin(),
-                        supplemental_data.particles->end());
-    supplemental_data.particles->clear();
+    NumberOfNewParticles = supplemental_data.NumberOfNewParticles;
+    
   }
-
-  ActiveParticleType::DestroyData(this, supplemental_data);
+  /*fprintf(stderr, "G_APH: Have created %"ISYM" new particles\n",
+          NumberOfNewParticles);*/
+  
 
   /* Now we copy the particles from NewParticles into a statically allocated
    * array */
 
-  int OldNumberOfActiveParticles = this->NumberOfActiveParticles;
-  ActiveParticleType *OldActiveParticles = this->ActiveParticles;
+  if (NumberOfNewParticles > 0) {
+    int OldNumberOfActiveParticles = this->NumberOfActiveParticles;
+    ActiveParticleType *OldActiveParticles = this->ActiveParticles;
 
-  this->NumberOfActiveParticles += NumberOfNewParticles;
-  this->ActiveParticles = new ActiveParticleType[this->NumberOfActiveParticles];
-  for (i = 0; i < OldNumberOfActiveParticles; i++) {
-    this->ActiveParticles[i] = OldActiveParticles[i];
+    this->NumberOfActiveParticles += NumberOfNewParticles;
+    this->ActiveParticles = new ActiveParticleType[this->NumberOfActiveParticles];
+    for (i = 0; i < OldNumberOfActiveParticles; i++) {
+      this->ActiveParticles[i] = OldActiveParticles[i];
+    }
+    for (i = 0; i < NumberOfNewParticles; i++) {
+      this->ActiveParticles[OldNumberOfActiveParticles + i] =
+        supplemental_data.NewParticles[i];
+    }
+    assert((NumberOfNewParticles + OldNumberOfActiveParticles)
+        == this->NumberOfActiveParticles);
   }
-  for (i = 0; i < NumberOfNewParticles; i++) {
-    this->ActiveParticles[this->NumberOfActiveParticles - i] =
-        NewParticles.back();
-    NewParticles.pop_back();
-  }
-  NewParticles.clear();
+
+  ActiveParticleType::DestroyData(this, supplemental_data);
+
   //if (debug) printf("StarParticle: end\n");
 
 

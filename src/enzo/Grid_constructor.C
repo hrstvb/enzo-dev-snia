@@ -165,4 +165,7 @@ grid::grid()
   NumberOfStars = 0;
   Stars = NULL;
 
+  NumberOfActiveParticles = 0;
+  ActiveParticles = NULL;
+
 }

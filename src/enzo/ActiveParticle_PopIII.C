@@ -66,6 +66,7 @@ int ActiveParticleType_PopIII::EvaluateFormation
 
   float bmass, div, dtot, tdyn, LifetimeInYears;
   int i, j, k, dim, index, offset_y, offset_z;
+  int NumberOfNewParticles = 0;
 
   /* Make it pretty */
 
@@ -90,6 +91,11 @@ int ActiveParticleType_PopIII::EvaluateFormation
     for (j = tg->GridStartIndex[1]; j <= tg->GridEndIndex[1]; j++) {
       index = GRIDINDEX_NOGHOST(tg->GridStartIndex[0], j, k);
       for (i = tg->GridStartIndex[0]; i <= tg->GridEndIndex[0]; i++, index++) {
+
+    // 0. If no more room for particles, quit.
+    if (supp_data.NumberOfNewParticles >=
+        supp_data.MaxNumberOfNewParticles)
+          continue;
 
 	// 1. Finest level of refinement
 	if (tg->BaryonField[tg->NumberOfBaryonFields][index] != 0.0) 
@@ -143,6 +149,8 @@ int ActiveParticleType_PopIII::EvaluateFormation
 	   sampling. */
 
     ActiveParticleType_PopIII *np = new ActiveParticleType_PopIII();
+    supp_data.NewParticles[supp_data.NumberOfNewParticles++] = np;
+    //fprintf(stderr, "G_APH: Creating !\n");
 
 	LifetimeInYears = CalculatePopIIILifetime(PopIIIStarMass);
 
@@ -187,7 +195,7 @@ int ActiveParticleType_PopIII::EvaluateFormation
     } // ENDFOR j
   } // ENDFOR k
 
-  return 0;
+  return NumberOfNewParticles;
 }
 
 void ActiveParticleType_PopIII::DescribeSupplementalData

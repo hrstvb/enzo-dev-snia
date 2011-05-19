@@ -13,7 +13,6 @@
 #include <map>
 #include <iostream>
 #include <stdexcept>
-#include <vector>
 #include <stdio.h>
 #include <string.h>
 #include <math.h>
@@ -140,6 +139,7 @@ void ActiveParticleType::ConstructData(grid *_grid,
 
     float *temperature = new float[size];
     _grid->ComputeTemperatureField(temperature);
+    data.Temperature = temperature;
   }
  
   if (flags.DarkMatterDensity) {
@@ -197,7 +197,7 @@ void ActiveParticleType::ConstructData(grid *_grid,
   /* If both metal fields exist, make a total metal field */
 
   if (flags.MetalField) {
-    float *MetalPointer;
+    float *MetalPointer = NULL;
     float *TotalMetals = NULL;
     int MetallicityField;
 
@@ -237,6 +237,9 @@ void ActiveParticleType::ConstructData(grid *_grid,
   data.MetalNum = MetalNum;
   /*data.ColourNum = ColourNum;*/
 
+  data.MaxNumberOfNewParticles = size;
+  data.NewParticles = new ActiveParticleType*[size];
+
   return;
 }
 
@@ -255,7 +258,7 @@ void ActiveParticleType::DestroyData(grid *_grid,
     /* We convert back from Fractions to Values */
     _grid->ConvertColorFieldsFromFractions();
 
-    data.particles->clear();
+    delete data.NewParticles;
 
     /* We don't need to reset anything else. */
 
