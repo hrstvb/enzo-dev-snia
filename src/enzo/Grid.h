@@ -58,6 +58,7 @@ struct HierarchyEntry;
 extern int CommunicationDirection;
 int FindField(int f, int farray[], int n);
 struct LevelHierarchyEntry;
+class ActiveParticleType;
 
 class grid
 {
@@ -120,6 +121,12 @@ class grid
 //
   int NumberOfStars;
   Star *Stars;
+
+//
+//  Active particle data
+//
+  int NumberOfActiveParticles;
+  ActiveParticleType *ActiveParticles;
 //
 //  Gravity data
 // 

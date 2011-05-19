@@ -13,6 +13,7 @@
 #include <map>
 #include <iostream>
 #include <stdexcept>
+#include <vector>
 #include <stdio.h>
 #include <string.h>
 #include <math.h>
@@ -253,6 +254,8 @@ void ActiveParticleType::DestroyData(grid *_grid,
 
     /* We convert back from Fractions to Values */
     _grid->ConvertColorFieldsFromFractions();
+
+    data.particles->clear();
 
     /* We don't need to reset anything else. */
 

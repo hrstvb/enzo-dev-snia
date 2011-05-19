@@ -113,6 +113,7 @@ class ActiveParticleType
 };
 
 struct ActiveParticleFormationData {
+  std::vector<ActiveParticleType> *particles;
   /* This is where all the pointers that normally get passed into
    * formation routines gets placed. Things like fractional h2, dark
    * matter density, etc etc. Anything that's derived.  It's okay to
@@ -138,6 +139,7 @@ struct ActiveParticleFormationData {
 };
 
 const struct ActiveParticleFormationData data_default = {
+  NULL,     // particles
   NULL,     // DarkMatterDensity
   NULL,     // H2Fraction
   NULL,     // CoolingTime

@@ -22,6 +22,7 @@
 #include <stdio.h>
 #include <math.h>
 #include <iostream>
+#include <vector>
 #include <math.h>
 #include "ErrorExceptions.h"
 #include "performance.h"
@@ -81,8 +82,12 @@ int grid::ActiveParticleHandler(HierarchyEntry* SubgridPointer, int level,
 
   struct ActiveParticleFormationData supplemental_data;
   supplemental_data.level = level;
+  std::vector<ActiveParticleType> temp_particles;
+  supplemental_data.particles = &temp_particles;
 
   ActiveParticleType::ConstructData(this, flags, supplemental_data);
+
+  std::vector<ActiveParticleType> NewParticles;
 
   int NumberOfNewParticles = 0;
   /* Now we iterate */
@@ -91,10 +96,31 @@ int grid::ActiveParticleHandler(HierarchyEntry* SubgridPointer, int level,
     ActiveParticleType_info *ActiveParticleTypeToEvaluate = EnabledActiveParticles[i];
     NumberOfNewParticles += ActiveParticleTypeToEvaluate->formation_function(
                                 this, supplemental_data);
+    NewParticles.insert(NewParticles.end(),
+                        supplemental_data.particles->begin(),
+                        supplemental_data.particles->end());
+    supplemental_data.particles->clear();
   }
 
   ActiveParticleType::DestroyData(this, supplemental_data);
 
+  /* Now we copy the particles from NewParticles into a statically allocated
+   * array */
+
+  int OldNumberOfActiveParticles = this->NumberOfActiveParticles;
+  ActiveParticleType *OldActiveParticles = this->ActiveParticles;
+
+  this->NumberOfActiveParticles += NumberOfNewParticles;
+  this->ActiveParticles = new ActiveParticleType[this->NumberOfActiveParticles];
+  for (i = 0; i < OldNumberOfActiveParticles; i++) {
+    this->ActiveParticles[i] = OldActiveParticles[i];
+  }
+  for (i = 0; i < NumberOfNewParticles; i++) {
+    this->ActiveParticles[this->NumberOfActiveParticles - i] =
+        NewParticles.back();
+    NewParticles.pop_back();
+  }
+  NewParticles.clear();
   //if (debug) printf("StarParticle: end\n");
 
 
