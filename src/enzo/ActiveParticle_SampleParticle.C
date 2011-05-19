@@ -34,6 +34,7 @@
  * necessary to make sure that grid is 'friend' to this particle type. */
 
 class ActiveParticleType_SampleParticle;
+class SampleParticleBufferHandler;
 
 class SampleParticleGrid : private grid {
   friend class ActiveParticleType_SampleParticle;
@@ -50,6 +51,7 @@ class ActiveParticleType_SampleParticle : public ActiveParticleType
 public:
   static int EvaluateFormation(grid *thisgrid_orig, ActiveParticleFormationData &data);
   static void DescribeSupplementalData(ActiveParticleFormationDataFlags &flags);
+  static ParticleBufferHandler *AllocateBuffers(int NumberOfParticles);
 };
 
 int ActiveParticleType_SampleParticle::EvaluateFormation(grid *thisgrid_orig, ActiveParticleFormationData &data)
@@ -65,8 +67,22 @@ void ActiveParticleType_SampleParticle::DescribeSupplementalData(ActiveParticleF
   flags.DarkMatterDensity = true;
 }
 
+class SampleParticleBufferHandler : public ParticleBufferHandler
+{
+  public:
+    SampleParticleBufferHandler(int NumberOfParticles) { }
+};
+
+ParticleBufferHandler *ActiveParticleType_SampleParticle::AllocateBuffers(int NumberOfParticles)
+{
+    SampleParticleBufferHandler *handler = new SampleParticleBufferHandler(NumberOfParticles);
+    return handler;
+}
+
+
 namespace {
   ActiveParticleType_info *SampleInfo = new ActiveParticleType_info
     ("SampleParticle", (&ActiveParticleType_SampleParticle::EvaluateFormation),
-     (&ActiveParticleType_SampleParticle::DescribeSupplementalData));
+     (&ActiveParticleType_SampleParticle::DescribeSupplementalData),
+     (&ActiveParticleType_SampleParticle::AllocateBuffers));
 }

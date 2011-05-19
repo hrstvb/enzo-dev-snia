@@ -17,6 +17,7 @@
 #ifndef __ACTIVE_PARTICLE_H
 #define __ACTIVE_PARTICLE_H
 
+#include "hdf5.h"
 #include "ErrorExceptions.h"
 #include "macros_and_parameters.h"
 #include "typedefs.h"
@@ -197,6 +198,14 @@ ActiveParticleMap &get_active_particle_types();
 
 void EnableActiveParticleType(char *active_particle_type_name);
 
+class ParticleBufferHandler
+{
+  public:
+    ParticleBufferHandler() {};
+    ~ParticleBufferHandler() {};
+    /*virtual void WriteBuffers(hid_t group);*/
+};
+
 class ActiveParticleType_info
 {
     public:
@@ -205,10 +214,12 @@ class ActiveParticleType_info
        ActiveParticleType_info(
            std::string this_name,
            int (*ffunc)(grid *thisgrid_orig, ActiveParticleFormationData &data),
-           void (*dfunc)(ActiveParticleFormationDataFlags &flags)
+           void (*dfunc)(ActiveParticleFormationDataFlags &flags),
+           ParticleBufferHandler *(*abfunc)(int NumberOfParticles)
            ){
         this->formation_function = ffunc;
         this->describe_data_flags = dfunc;
+        this->allocate_buffers = abfunc;
         get_active_particle_types()[this_name] = this;
        }
 
@@ -216,6 +227,7 @@ class ActiveParticleType_info
 
        int (*formation_function)(grid *thisgrid_orig, ActiveParticleFormationData &data);
        void (*describe_data_flags)(ActiveParticleFormationDataFlags &flags);
+       ParticleBufferHandler* (*allocate_buffers)(int NumberOfParticles);
 };
 
 #endif

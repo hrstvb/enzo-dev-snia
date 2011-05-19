@@ -37,6 +37,7 @@ float CalculatePopIIILifetime(float Mass);
  * necessary to make sure that grid is 'friend' to this particle type. */
 
 class ActiveParticleType_PopIII;
+class PopIIIParticleBufferHandler;
 
 class PopIIIGrid : private grid {
     friend class ActiveParticleType_PopIII;
@@ -53,6 +54,7 @@ class ActiveParticleType_PopIII : public ActiveParticleType
 public:
   static int EvaluateFormation(grid *thisgrid_orig, ActiveParticleFormationData &data);
   static void DescribeSupplementalData(ActiveParticleFormationDataFlags &flags);
+  static ParticleBufferHandler *AllocateBuffers(int NumberOfParticles);
 private:
   float LifeTime;
   float Metallicity;
@@ -210,9 +212,22 @@ void ActiveParticleType_PopIII::DescribeSupplementalData
   flags.MetalField = true;
 }
 
+class PopIIIParticleBufferHandler : public ParticleBufferHandler
+{
+  public:
+    PopIIIParticleBufferHandler(int NumberOfParticles) { }
+};
+
+ParticleBufferHandler *ActiveParticleType_PopIII::AllocateBuffers(int NumberOfParticles)
+{
+    PopIIIParticleBufferHandler *handler = new PopIIIParticleBufferHandler(NumberOfParticles);
+    return handler;
+}
+
 namespace {
     ActiveParticleType_info *SampleInfo = new ActiveParticleType_info(
             "PopIII", (&ActiveParticleType_PopIII::EvaluateFormation),
-	    (&ActiveParticleType_PopIII::DescribeSupplementalData));
+	    (&ActiveParticleType_PopIII::DescribeSupplementalData),
+	    (&ActiveParticleType_PopIII::AllocateBuffers));
 
 }
