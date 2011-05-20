@@ -81,7 +81,33 @@ AMRsolve_Hypre_FLD::AMRsolve_Hypre_FLD(AMRsolve_Hierarchy& hierarchy,
 /// AMRsolve_Hypre_FLD destructor
 AMRsolve_Hypre_FLD::~AMRsolve_Hypre_FLD()
 {
-  //
+  // destroy HYPRE objects that we created along the way
+  char error_message[100];
+  if (HYPRE_SStructVectorDestroy(B_) != 0) {
+    sprintf(error_message, "AMRsolve_Hypre_FLD::could not destroy B_\n");
+    ERROR(error_message);
+  }
+  if (HYPRE_SStructVectorDestroy(X_) != 0) {
+    sprintf(error_message, "AMRsolve_Hypre_FLD::could not destroy X_\n");
+    ERROR(error_message);
+  }
+  if (HYPRE_SStructMatrixDestroy(A_) != 0) {
+    sprintf(error_message, "AMRsolve_Hypre_FLD::could not destroy A_\n");
+    ERROR(error_message);
+  }
+  if (HYPRE_SStructGraphDestroy(graph_) != 0) {
+    sprintf(error_message, "AMRsolve_Hypre_FLD::could not destroy graph_\n");
+    ERROR(error_message);
+  }
+  if (HYPRE_SStructStencilDestroy(stencil_) != 0) {
+    sprintf(error_message, "AMRsolve_Hypre_FLD::could not destroy stencil_\n");
+    ERROR(error_message);
+  }
+  if (HYPRE_SStructGridDestroy(grid_) != 0) {
+    sprintf(error_message, "AMRsolve_Hypre_FLD::could not destroy grid_\n");
+    ERROR(error_message);
+  }
+
 }
 
 //----------------------------------------------------------------------
@@ -1630,7 +1656,8 @@ void AMRsolve_Hypre_FLD::solve_bicgstab_boomer_(int itmax, double restol)
   }
 
 
-  // Delete the solver
+  // Delete the solver and preconditiner
+  HYPRE_BoomerAMGDestroy(par_precond);
   HYPRE_BiCGSTABDestroy(solver);
 
   _TRACE_;
