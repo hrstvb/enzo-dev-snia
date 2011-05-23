@@ -256,10 +256,11 @@ const enum_type Isotropic = 1, Beamed = -2, Episodic = -3;
 /* These are the different types of poisson cleaining boundary conditions. */
 //enum{Neumann, Dirichlet};
 #ifdef MHDCT
-const mhd_ct_method CT_BalsaraSpicer = 0,
-  CT_Athena_LF = 1,
-  CT_Athena_Switch = 2,
-  CT_None = 3;
+const mhd_ct_method 
+  CT_None = 0,
+CT_BalsaraSpicer = 1,
+  CT_Athena_LF = 2,
+  CT_Athena_Switch = 3;
 
 #endif
 
