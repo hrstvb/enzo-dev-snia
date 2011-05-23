@@ -12,6 +12,10 @@
 
 int grid::CenterMagneticField(int * Start, int * End){
 
+    //Only if CT is on.
+    if(  MHD_CT_Method == CT_None )
+        return SUCCESS;
+
   //Setting default start & end indicies.  If there's a slicker way to do this, I'm all ears, but I think
   // default setting in C++ must be a static variable.
 
