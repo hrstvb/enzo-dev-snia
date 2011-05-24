@@ -2689,6 +2689,8 @@ int zEulerSweep(int j, int NumberOfSubgrids, fluxes *SubgridFluxes[],
                              float Radius, float MHDBlastCenter[], int LongDimension,
                              float PerturbAmplitude, int PerturbMethod, float PerturbWavelength[],
                              int InitStyle, float Normal[]);
+  int MHDOrszagTangInitGrid(float Density,float Pressure, float V0, float B0 );
+
 
 #endif //MHDCT
 

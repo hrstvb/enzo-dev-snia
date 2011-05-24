@@ -215,6 +215,8 @@ int PoissonSolverTestInitialize(FILE *fptr, FILE *Outfptr,
 int MHDCT_ParameterJuggle(); //updates old style MHDCT parameter files to reflect new values
 int MHDBlastInitialize(FILE *fptr, FILE *Outfptr, HierarchyEntry &TopGrid,
                           TopGridData &MetaData, ExternalBoundary &Exterior);
+int MHDOrszagTangInit(FILE *fptr, FILE *Outfptr, HierarchyEntry &TopGrid,
+		      TopGridData &MetaData, ExternalBoundary &Exterior);
 #endif //MHDCT
 
 void PrintMemoryUsage(char *str);
@@ -495,6 +497,8 @@ int InitializeNew(char *filename, HierarchyEntry &TopGrid,
   if (ProblemType == 500)
     ret = MHDBlastInitialize(fptr, Outfptr, TopGrid, MetaData, Exterior);
 
+  if (ProblemType == 103) //This doesn't actually need all those arguments
+    ret = MHDOrszagTangInit(fptr, Outfptr, TopGrid, MetaData, Exterior);
 #endif
 
 

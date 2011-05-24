@@ -1048,4 +1048,6 @@ OBJS_MHDCT = MHDBlastInitialize.o \
 	Grid_CenterMagneticField.o\
 	mhd_hlld_isothermal.o \
 	mhd_dt.o\
+	Grid_MHDOrszagTangInitGrid.o \
+	MHDOrszagTangInit.o \
     ExternalBoundary_SetMagneticBoundary.o 
