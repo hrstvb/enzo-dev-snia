@@ -104,7 +104,60 @@ int grid::SetExternalBoundaryValues(ExternalBoundary *Exterior)
     }
  
   }
- 
+#ifdef MHDCT
+  /*If there's a magnetic field, set it as well.
+    It is still unclear if this is a valid way to do things: 
+    The Pseudo-Vecor nature of B poses a problem that I haven't sorted out all the way.
+    Currently, it's being set as if it were a Plain vector.*/
+  //if( this->MHDAnis(" +++ SEBV: After BarryonFields ") == FAIL ) return FAIL;
+
+  if(useMHDCT && NumberOfBaryonFields > 0)
+    {
+
+	if(Exterior->SetMagneticBoundary(GridRank, GridDimension, GridOffset,
+					 GridStartIndex, GridEndIndex,
+					 MagneticField[0],Bfield1) == FAIL){
+	  fprintf(stderr, "Error in Exterior->SetMagneticBoundary, B1\n");
+	    return FAIL;
+	}
+	if(Exterior->SetMagneticBoundary(GridRank, GridDimension, GridOffset,
+					 GridStartIndex, GridEndIndex,
+					 MagneticField[1],Bfield2) == FAIL){
+	  fprintf(stderr, "Error in Exterior->SetMagneticBoundary, B2\n");
+	    return FAIL;
+	}
+	if(Exterior->SetMagneticBoundary(GridRank, GridDimension, GridOffset,
+					 GridStartIndex, GridEndIndex,
+					 MagneticField[2],Bfield1) == FAIL){
+	  fprintf(stderr, "Error in Exterior->SetMagneticBoundary, B3\n");
+	  return FAIL;
+	}
+
+    //centeredB is set using FieldType == VelocityX since the FieldType array is 
+    //compared against.  This will be irrelevant when CenteredB gets stored in BaryonField.
+      if( Exterior->SetExternalBoundary(GridRank, GridDimension, GridOffset,
+					GridStartIndex, GridEndIndex,
+					CenteredB[0], Velocity1) == FAIL){
+	fprintf( stderr, "Shit!  Something's wrong with the CenteredB[0] boundary\n");
+	return FAIL;
+      }
+      
+      if( Exterior->SetExternalBoundary(GridRank, GridDimension, GridOffset,
+					GridStartIndex, GridEndIndex,
+					CenteredB[1], Velocity2) == FAIL){
+	fprintf( stderr, "Shit!  Something's wrong with the CenteredB[1] boundary\n");
+	return FAIL;
+      }
+
+      if( Exterior->SetExternalBoundary(GridRank, GridDimension, GridOffset,
+					GridStartIndex, GridEndIndex,
+					CenteredB[2], Velocity3) == FAIL){
+	fprintf( stderr, "Shit!  Something's wrong with the CenteredB[2] boundary\n");
+	return FAIL;
+      }
+          
+    }// if(useMHDCT)
+#endif //MHDCT
   /* Now we handle the particles (if any). */
  
   if (NumberOfParticles > 0)

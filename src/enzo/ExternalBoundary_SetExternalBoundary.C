@@ -57,6 +57,8 @@ int ExternalBoundary::SetExternalBoundary(int FieldRank, int GridDims[],
     if (FieldType == BoundaryFieldType[field]) break;
   if (field == NumberOfBaryonFields) {
     ENZO_VFAIL("Field type (%"ISYM") not found in Boundary.\n", FieldType)
+#ifdef SAB
+#endif SAB
   }
  
   /* error check: make sure the boundary type array exists */

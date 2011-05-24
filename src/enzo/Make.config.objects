@@ -1047,4 +1047,5 @@ OBJS_MHDCT = MHDBlastInitialize.o \
 	Grid_MHD_Curl.o \
 	Grid_CenterMagneticField.o\
 	mhd_hlld_isothermal.o \
-	mhd_dt.o
+	mhd_dt.o\
+    ExternalBoundary_SetMagneticBoundary.o 

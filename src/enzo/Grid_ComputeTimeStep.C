@@ -159,9 +159,6 @@ float grid::ComputeTimeStep()
 
 #ifdef MHDCT
     if(HydroMethod == MHD_Li){
-      //<dbg>
-      fprintf(stderr,"moo: proper timestep\n");
-      //</dbg>
       /* 1.5) Calculate minimum dt due to MHD: Maximum Fast MagnetoSonic Shock Speed */
       
       //Cosmos nees this, for some reason.

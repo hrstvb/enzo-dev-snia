@@ -53,6 +53,9 @@ int ExternalBoundary::ReadExternalBoundary(FILE *fptr, int ReadText, int ReadDat
  
   int Dims[MAX_DIMENSION], index, size, i;
   int BoundaryValuePresent[2*MAX_DIMENSION];
+#ifdef MHDCT
+  int MagneticBoundaryValuePresent[2*MAX_DIMENSION];
+#endif //MHDCT
   int dim, field, TempInt, j;
  
   float32 *buffer;
@@ -174,6 +177,70 @@ int ExternalBoundary::ReadExternalBoundary(FILE *fptr, int ReadText, int ReadDat
 	return FAIL;
       }
     }
+#ifdef MHDCT
+    if(MHD_Used){
+      //This code will be finished later.  dcc spring 04
+      fscanf(fptr, "MagneticBoundaryValuePresent = ");
+      ReadListOfInts( fptr, BoundaryRank*2, MagneticBoundaryValuePresent);
+      for(dim=0; dim<3; dim++)
+	for(int i=0;i<2;i++){
+	if( MagneticBoundaryValuePresent[2*dim+i] == TRUE ){
+	  fprintf(stderr, "Shit!  You're not reading in the Inflow Conditions.\n");
+	  fprintf(stderr, "You'd better write the code to write the value to HDF5 files.\n");
+	  fprintf(stderr, "When you do, make sure you change WriteExternalBoundary, too\n");
+	  return FAIL;
+	}
+	else{
+	  for(int field = 0; field<3; field++){
+	    MagneticBoundaryValue[field][dim][i] = NULL;
+	  }
+	}
+	
+
+      }
+
+      /*
+	Since MHD Boundary isn't as arbitrary as Hydro, we can read
+	the boundary conditions in this file instead of HDF5 files.
+	More generality may come later, when the BC bugs are worked out.
+	dcc march 04.
+      */
+
+      int ret = 0;
+
+
+    
+      ret += fscanf(fptr, "MagneticBoundaryType 1 = %d %d %d %d %d %d  ",
+		    &MagneticBoundaryType[0][0][0],
+		    &MagneticBoundaryType[0][1][0],
+		    &MagneticBoundaryType[0][2][0],
+		    &MagneticBoundaryType[0][0][1],
+		    &MagneticBoundaryType[0][1][1],
+		    &MagneticBoundaryType[0][2][1]);
+
+      ret += fscanf(fptr, "MagneticBoundaryType 2 = %d %d %d %d %d %d  ",
+		    &MagneticBoundaryType[1][0][0],
+		    &MagneticBoundaryType[1][1][0],
+		    &MagneticBoundaryType[1][2][0],
+		    &MagneticBoundaryType[1][0][1],
+		    &MagneticBoundaryType[1][1][1],
+		    &MagneticBoundaryType[1][2][1]);
+
+      ret += fscanf(fptr, "MagneticBoundaryType 3 = %d %d %d %d %d %d  ",
+		    &MagneticBoundaryType[2][0][0],
+		    &MagneticBoundaryType[2][1][0],
+		    &MagneticBoundaryType[2][2][0],
+		    &MagneticBoundaryType[2][0][1],
+		    &MagneticBoundaryType[2][1][1],
+		    &MagneticBoundaryType[2][2][1]);
+
+      if( ret != 18 ){
+	fprintf(stderr, "Shit.  MagneticBoundaryType not defined ret = %d \n", ret);
+	return FAIL;
+      }
+    }//mhd used
+
+#endif //MHDCT
   }
 
   if (ReadData && NumberOfBaryonFields > 0) { 
