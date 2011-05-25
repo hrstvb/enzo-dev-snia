@@ -378,6 +378,8 @@ typedef int            HDF5_hid_t;
 /* Definitions for grid::CommunicationSend/ReceiveRegion and 
    grid::DepositPositions */
 #ifdef MHDCT
+//If MAX_EXTRA_OUTPUTS neesd to be changed, change statements in ReadParameterFile and WriteParameterFile.
+#define MAX_EXTRA_OUTPUTS                10 
 #define BARYONS_ELECTRIC                 -13
 #define BARYONS_MAGNETIC                 -12
 #define JUST_BARYONS                     -11

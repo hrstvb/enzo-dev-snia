@@ -148,7 +148,13 @@ int CallPython(LevelHierarchyEntry *LevelArray[], TopGridData *MetaData,
  
 #define NO_REDUCE_FRAGMENTATION
  
- 
+#ifdef MHDCT 
+int ExtraOutput(int output_flag, LevelHierarchyEntry *LevelArray[],TopGridData *MetaData, int level, ExternalBoundary *Exterior
+#ifdef TRANSFER
+			  , ImplicitProblemABC *ImplicitSolver
+#endif
+        );
+#endif //MHDCT
  
  
 int EvolveHierarchy(HierarchyEntry &TopGrid, TopGridData &MetaData,
@@ -282,6 +288,13 @@ int EvolveHierarchy(HierarchyEntry &TopGrid, TopGridData &MetaData,
   if(CheckpointRestart == FALSE) {
     RebuildHierarchy(&MetaData, LevelArray, 0);
   }
+#ifdef MHDCT
+  ExtraOutput(0,LevelArray,&MetaData,0,Exterior
+#ifdef TRANSFER
+		      , ImplicitSolver
+#endif
+          );
+#endif //MHDCT
 
   PrintMemoryUsage("1st rebuild");
  

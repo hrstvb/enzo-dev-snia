@@ -206,7 +206,67 @@ int Group_WriteAllData(char *basename, int filenumber,
  
     sprintf(id, "%"CYCLE_TAG_FORMAT""ISYM, filenumber);
     sprintf(pid, "%"TASK_TAG_FORMAT""ISYM, MyProcessorNumber);
-
+#ifdef MHDCT
+    /******************** Extra Output ********************/
+ 
+    if ( (cptr = strstr(basename, MetaData.ExtraDumpName)) ) {
+ 
+      if (MetaData.ExtraDumpDir != NULL)
+      {
+        if (MetaData.LocalDir != NULL) {
+          // Local fs
+          strcpy(dumpdirname, MetaData.LocalDir);
+          strcat(dumpdirname, "/");
+          strcat(dumpdirname, MetaData.ExtraDumpDir);
+          strcat(dumpdirname, id);
+  
+          // Create once per node...
+#ifdef USE_NODE_LOCAL
+            strcat(dumpdirname, "/mpi");
+            strcat(dumpdirname, pid);
+#endif /* USE_NODE_LOCAL */
+ 
+          strcpy(name, dumpdirname);
+          strcat(name, "/");
+          strcat(name, basename);
+        } // if LocalDir
+ 
+        else
+ 
+        {
+          if (MetaData.GlobalDir != NULL) {
+            // Global fs
+            strcpy(dumpdirname, MetaData.GlobalDir);
+            strcat(dumpdirname, "/");
+            strcat(dumpdirname, MetaData.ExtraDumpDir);
+            strcat(dumpdirname, id);
+            // Do mkdir on cpu 0 only
+            strcpy(name, dumpdirname);
+            strcat(name, "/");
+            strcat(name, basename);
+          } // if GlobalDir
+ 
+          else
+ 
+          {
+            // No local or global specified
+            strcpy(name, basename);
+          } // else GlobalDir
+ 
+        } // else LocalDir
+ 
+      } // if DataDumpDir
+ 
+      else
+ 
+      {
+        strcpy(name, basename);
+      } // else DataDumpDir
+ 
+      if (debug) fprintf(stdout, "Extra dump: %s\n", name);
+ 
+    } // if ExtraDumpName
+#endif //MHDCT
     /******************** CYCLE / DT BASED OUTPUTS ********************/
  
     if ( (cptr = strstr(basename, MetaData.DataDumpName)) ) {

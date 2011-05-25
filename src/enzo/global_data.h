@@ -891,6 +891,8 @@ EXTERN float AnisotropicConductionSpitzerFraction;  // f_Spitzer
 EXTERN float ConductionCourantSafetyNumber;
 
 #ifdef MHDCT
+EXTERN int ExtraOutputs[MAX_EXTRA_OUTPUTS];
+EXTERN mhd_ct_interpolation_type MHD_InterpolationMethod;
 //MHDCT variables
 EXTERN int TracerParticlesAddToRestart;// forces addition of tracer particles to already initialized simulations
 EXTERN int RefineByJeansLengthUnits;// determines method for computing jeans length. 0==std cosmology, 1==isothermal, 2==adiabatic ( code units )

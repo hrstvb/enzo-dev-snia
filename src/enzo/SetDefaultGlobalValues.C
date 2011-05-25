@@ -42,7 +42,10 @@ char DefaultDataDir[] = "DD";
 char DefaultHistoryDir[] = "HD";
 char DefaultRedshiftDir[] = "RD";
 char DefaultTracerParticleDir[] = "TD";
- 
+#ifdef MHDCT
+char DefaultExtraName[] = "ExtraDumpXX";
+char DefaultExtraDir[]="ED00";
+#endif //MHDCT
  
  
  
@@ -113,6 +116,10 @@ int SetDefaultGlobalValues(TopGridData &MetaData)
   //MetaData.RedshiftDumpNumber  = 0;
   MetaData.RedshiftDumpName    = DefaultRedshiftName;
   MetaData.RedshiftDumpDir     = DefaultRedshiftDir;
+#ifdef MHDCT
+  MetaData.ExtraDumpDir        = DefaultExtraDir;
+  MetaData.ExtraDumpName        = DefaultExtraName;
+#endif //MHDCT
 
   MetaData.MetaDataIdentifier    = NULL;
   MetaData.SimulationUUID        = NULL;
@@ -721,6 +728,7 @@ int SetDefaultGlobalValues(TopGridData &MetaData)
   useMHD=0;
 #ifdef MHDCT
   //MHDCT variables
+  MHD_InterpolationMethod   = BalsaraDirect;
   CT_AthenaDissipation = 0.0;
   MHD_WriteElectric = TRUE;
   MHDLi[0]                 = 2;
@@ -739,6 +747,7 @@ int SetDefaultGlobalValues(TopGridData &MetaData)
   useMHDCT = FALSE;
   EquationOfState = 0;
   for(int dccdbg=0; dccdbg<N_DbgWrites;dccdbg++) SingleGridDumpList[dccdbg]=0;
+  for(int dccdbg=0; dccdbg<MAX_EXTRA_OUTPUTS;dccdbg++) ExtraOutputs[dccdbg]=INT_UNDEFINED;
 
 #endif //MHDCT
 

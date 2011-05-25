@@ -932,6 +932,10 @@ int ReadParameterFile(FILE *fptr, TopGridData &MetaData, float *Initialdt)
 		  SingleGridDumpList +1,SingleGridDumpList +2,SingleGridDumpList +3,
 		  SingleGridDumpList +4,SingleGridDumpList +5,SingleGridDumpList +6,
 		  SingleGridDumpList +7,SingleGridDumpList +8,SingleGridDumpList +9);
+    ret += sscanf(line, "ExtraOutputs = %d %d %d %d %d %d %d %d %d %d", ExtraOutputs,
+		  ExtraOutputs +1,ExtraOutputs +2,ExtraOutputs +3,
+		  ExtraOutputs +4,ExtraOutputs +5,ExtraOutputs +6,
+		  ExtraOutputs +7,ExtraOutputs +8,ExtraOutputs +9);
 		  
     ret += sscanf(line,"DEFAULT_GHOST_ZONES = %"ISYM,&DEFAULT_GHOST_ZONES);
     //ret += sscanf(line,"MHD_Used = %"ISYM,&MHD_Used);
