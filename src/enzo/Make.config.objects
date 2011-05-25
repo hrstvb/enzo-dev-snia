@@ -15,6 +15,7 @@
 #-----------------------------------------------------------------------
 
 OBJS_CONFIG_LIB = \
+        MakeFieldConservative.o \
         acml_st1.o \
         AdiabaticExpansionInitialize.o \
         AdjustRefineRegion.o \
@@ -1036,6 +1037,7 @@ OBJS_ECUDA_ALL = \
 #	hydro_rk/overlapping_MHDSweep_CUDA.o
 #
 OBJS_MHDCT = MHDBlastInitialize.o \
+    ExtraOutput.o \
 	Grid_MHDBlastInitializeGrid.o \
 	MHDCT_ParameterJuggle.o \
 	DaveTools.o \
@@ -1050,4 +1052,8 @@ OBJS_MHDCT = MHDBlastInitialize.o \
 	mhd_dt.o\
 	Grid_MHDOrszagTangInitGrid.o \
 	MHDOrszagTangInit.o \
+    Grid_MHD_CID.o\
+    Grid_MHD_SendOldFineGrids.o\
+    mhd_interpolate.o\
+    Grid_MHD_ProlongAllocate.o\
     ExternalBoundary_SetMagneticBoundary.o 

@@ -32,6 +32,7 @@ typedef int enum_type;
 typedef int staggering;
 typedef int fieldtype;
 typedef int mhd_ct_method;
+typedef int mhd_ct_interpolation_type;
 #endif
 
 #ifdef LARGE_INTS
@@ -45,6 +46,7 @@ typedef long_int enum_type;
 typedef long_int staggering;
 typedef long_int fieldtype;
 typedef int mhd_ct_method;
+typedef int mhd_ct_interpolation_type;
 #endif
 
 const field_type 
@@ -256,6 +258,7 @@ const enum_type Isotropic = 1, Beamed = -2, Episodic = -3;
 /* These are the different types of poisson cleaining boundary conditions. */
 //enum{Neumann, Dirichlet};
 #ifdef MHDCT
+const mhd_ct_interpolation_type BalsaraDirect = 0, BalsaraAverage = 1, CTInterpolationUndefined = 2;
 const mhd_ct_method 
   CT_None = 0,
 CT_BalsaraSpicer = 1,

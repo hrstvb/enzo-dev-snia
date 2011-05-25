@@ -436,7 +436,12 @@ int RebuildHierarchy(TopGridData *MetaData,
         }
 
 	SubgridHierarchyPointer[j]->GridData->InterpolateFieldValues
-	  (SubgridHierarchyPointer[j]->ParentGrid->GridData);
+	  (SubgridHierarchyPointer[j]->ParentGrid->GridData
+#ifdef MHDCT
+		,TempLevelArray[i+1],
+        MetaData
+#endif //MHDCT
+       );
 
         if (RandomForcing) { //AK
           SubgridHierarchyPointer[j]->GridData->RemoveForcingFromBaryonFields();

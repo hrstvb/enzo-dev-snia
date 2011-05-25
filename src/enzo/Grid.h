@@ -886,7 +886,13 @@ public:
 /* baryons: interpolate field values from the Parent Grid (gg #6).
             Returns SUCCESS or FAIL. */
 
+#ifndef MHDCT
    int InterpolateFieldValues(grid *ParentGrid);
+#else
+   int InterpolateFieldValues(grid *ParentGrid , 
+        LevelHierarchyEntry * OldFineLevel, TopGridData * MetaData);
+#endif //MHDCT
+
 
 /* Interpolate one radiation field.  Based on InterpolateFieldValues
    but removed all of the conservative stuff. */   
@@ -2674,6 +2680,13 @@ int zEulerSweep(int j, int NumberOfSubgrids, fluxes *SubgridFluxes[],
   float *DxBy, *DzBy, *DxzBy;
   float *DxBz, *DyBz, *DxyBz;
   int * DBxFlag, *DByFlag, *DBzFlag;
+
+  int MHD_CID(LevelHierarchyEntry * OldFineLevel, TopGridData * MetaData, int Offset[], int TempDim[], int Refinement[]);
+  int MHD_CIDWorker(grid* OtherGrid, FLOAT EdgeOffset[MAX_DIMENSION]);
+  int MHD_SendOldFineGrids(LevelHierarchyEntry * OldFineLevel, grid *ParentGrid, TopGridData *MetaData);
+  int MHD_ProlongAllocate(int * ChildDim);
+  int MHD_DCheck(int * ChildDim, char * mess);
+  int MHD_ProlongFree();
   //Evolution/AMR routines
   int SolveMHDEquations(int CycleNumber, int NumberOfSubgrids,
 			fluxes *SubgridFluxes[], int level, int grid);
