@@ -1088,13 +1088,13 @@
                $(ASSEMBLE_PAPI_INCLUDES) \
                $(MAKEFILE_INCLUDES)   -I.
 
-    OBJS_LIB = $(OBJS_CONFIG_LIB) \
+    OBJS_LIB = $(ASSEMBLE_OBJS_MHDCT) \
+                $(OBJS_CONFIG_LIB)  \
     	       $(OBJS_PHOTON_LIB) \
     	       $(OBJS_LCAPERF_LIB) \
 	       $(OBJS_HYDRO_RK) \
 	       $(OBJS_ECUDA_LIB) \
 	       $(OBJS_PYTHON)  \
-           $(ASSEMBLE_OBJS_MHDCT)
 
     LIBS = $(MACH_LIBS) \
            $(ASSEMBLE_MPI_LIBS) \
