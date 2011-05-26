@@ -59,8 +59,7 @@ int CosmologyComputeExpansionFactor(FLOAT time, FLOAT *a, FLOAT *dadt);
 int CommunicationReduceValues(float *values, int number, MPI_Op ReduceOp);
 #endif /* USE_MPI */
 #ifdef TRANSFER
-int RadiativeTransferInitialize(char *ParameterFile, 
-				HierarchyEntry &TopGrid, 
+int RadiativeTransferInitialize(HierarchyEntry &TopGrid, 
 				TopGridData &MetaData,
 				ExternalBoundary &Exterior, 
 				ImplicitProblemABC* &ImplicitSolver,
@@ -95,7 +94,7 @@ int ProjectToPlane2(char *ParameterFile, HierarchyEntry &TopGrid,
   /* Read radiative transfer parameters */
 
 #ifdef TRANSFER
-  RadiativeTransferInitialize(ParameterFile, TopGrid, MetaData, *Exterior,
+  RadiativeTransferInitialize(TopGrid, MetaData, *Exterior,
 			      ImplicitSolver, LevelArray);
 #endif
 

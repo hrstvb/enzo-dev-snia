@@ -59,8 +59,7 @@ int HydroShockTubesInitialize(FILE *fptr, FILE *Outfptr,
 			      HierarchyEntry &TopGrid, TopGridData &MetaData);
 int WavePoolInitialize(FILE *fptr, FILE *Outfptr, HierarchyEntry &TopGrid,
 		       TopGridData &MetaData);
-int ShockPoolInitialize(FILE *fptr, FILE *Outfptr, HierarchyEntry &TopGrid,
-			TopGridData &MetaData);
+int ShockPoolInitialize(FILE *Outfptr, HierarchyEntry &TopGrid, TopGridData &MetaData);
 int DoubleMachInitialize(FILE *fptr, FILE *Outfptr, HierarchyEntry &TopGrid,
 			TopGridData &MetaData, ExternalBoundary &Exterior);
 int ShockInABoxInitialize(FILE *fptr, FILE *Outfptr, HierarchyEntry &TopGrid,
@@ -81,30 +80,26 @@ int KHInitialize(FILE *fptr, FILE *Outfptr, HierarchyEntry &TopGrid,
                           TopGridData &MetaData);
 int NohInitialize(FILE *fptr, FILE *Outfptr, HierarchyEntry &TopGrid,
                           TopGridData &MetaData);
-int SedovBlastInitialize(FILE *fptr, FILE *Outfptr, HierarchyEntry &TopGrid,
-                          TopGridData &MetaData);
+int SedovBlastInitialize(FILE *Outfptr, HierarchyEntry &TopGrid, TopGridData &MetaData);
 int RadiatingShockInitialize(FILE *fptr, FILE *Outfptr, HierarchyEntry &TopGrid,
 			     TopGridData &MetaData);
 int ZeldovichPancakeInitialize(FILE *fptr, FILE *Outfptr,
 			       HierarchyEntry &TopGrid, TopGridData &MetaData);
 int PressurelessCollapseInitialize(FILE *fptr, FILE *Outfptr,
 			       HierarchyEntry &TopGrid, TopGridData &MetaData);
-int AdiabaticExpansionInitialize(FILE *fptr, FILE *Outfptr,
-				 HierarchyEntry &TopGrid);
+int AdiabaticExpansionInitialize(FILE *Outfptr, HierarchyEntry &TopGrid);
 int TestGravityInitialize(FILE *fptr, FILE *Outfptr, HierarchyEntry &TopGrid,
 			  TopGridData &MetaData);
 int TestOrbitInitialize(FILE *fptr, FILE *Outfptr, HierarchyEntry &TopGrid,
                         TopGridData &MetaData);
 int GalaxySimulationInitialize(FILE *fptr, FILE *Outfptr, HierarchyEntry &TopGrid,
                         TopGridData &MetaData);
-int TestGravitySphereInitialize(FILE *fptr, FILE *Outfptr,
-			       HierarchyEntry &TopGrid, TopGridData &MetaData);
+int TestGravitySphereInitialize(FILE *Outfptr, HierarchyEntry &TopGrid, TopGridData &MetaData);
 int SphericalInfallInitialize(FILE *fptr, FILE *Outfptr,
 			      HierarchyEntry &TopGrid, TopGridData &MetaData);
 int GravityEquilibriumTestInitialize(FILE *fptr, FILE *Outfptr,
 			      HierarchyEntry &TopGrid, TopGridData &MetaData);
-int CollapseTestInitialize(FILE *fptr, FILE *Outfptr,
-			  HierarchyEntry &TopGrid, TopGridData &MetaData);
+int CollapseTestInitialize(FILE *Outfptr, HierarchyEntry &TopGrid, TopGridData &MetaData);
 int TestGravityMotion(FILE *fptr, FILE *Outfptr, HierarchyEntry &TopGrid,
 			  TopGridData &MetaData);
 int SupernovaRestartInitialize(FILE *fptr, FILE *Outfptr,
@@ -120,15 +115,11 @@ int CoolingTestInitialize(FILE *fptr, FILE *Outfptr,
 			  HierarchyEntry &TopGrid, TopGridData &MetaData); 
 int OneZoneFreefallTestInitialize(FILE *fptr, FILE *Outfptr, 
 				  HierarchyEntry &TopGrid, TopGridData &MetaData);
-int CosmologySimulationInitialize(FILE *fptr, FILE *Outfptr,
-                                  HierarchyEntry &TopGrid,
-                                  TopGridData &MetaData);
+int CosmologySimulationInitialize(FILE *Outfptr, HierarchyEntry &TopGrid, TopGridData &MetaData);
 int CosmologySimulationReInitialize(HierarchyEntry *TopGrid,
                                     TopGridData &MetaData);
  
-int NestedCosmologySimulationInitialize(FILE *fptr, FILE *Outfptr,
-                                        HierarchyEntry &TopGrid,
-                                        TopGridData &MetaData);
+int NestedCosmologySimulationInitialize(FILE *Outfptr, HierarchyEntry &TopGrid, TopGridData &MetaData);
 int NestedCosmologySimulationReInitialize(HierarchyEntry *TopGrid,
                                           TopGridData &MetaData);
  
@@ -208,11 +199,9 @@ int GalaxyDiskInitialize(FILE *fptr, FILE *Outfptr,
 			 HierarchyEntry &TopGrid, TopGridData &MetaData);
 int AGNDiskInitialize(FILE *fptr, FILE *Outfptr, 
 		      HierarchyEntry &TopGrid, TopGridData &MetaData);
-int FreeExpansionInitialize(FILE *fptr, FILE *Outfptr, HierarchyEntry &TopGrid,
-			    TopGridData &MetaData);
+int FreeExpansionInitialize(FILE *Outfptr, HierarchyEntry &TopGrid, TopGridData &MetaData);
 
-int PoissonSolverTestInitialize(FILE *fptr, FILE *Outfptr, 
-				HierarchyEntry &TopGrid, TopGridData &MetaData);
+int PoissonSolverTestInitialize(FILE *Outfptr, HierarchyEntry &TopGrid, TopGridData &MetaData);
 
 void PrintMemoryUsage(char *str);
 
@@ -366,7 +355,7 @@ int InitializeNew(char *filename, HierarchyEntry &TopGrid,
   // 3) Shock pool
  
   if (ProblemType == 3)
-    ret = ShockPoolInitialize(fptr, Outfptr, TopGrid, MetaData);
+    ret = ShockPoolInitialize(Outfptr, TopGrid, MetaData);
  
   // 4) Double Mach reflection
  
@@ -386,7 +375,7 @@ int InitializeNew(char *filename, HierarchyEntry &TopGrid,
   // 7) SedovBlast
  
   if (ProblemType == 7)
-    ret = SedovBlastInitialize(fptr, Outfptr, TopGrid, MetaData);
+    ret = SedovBlastInitialize(Outfptr, TopGrid, MetaData);
 
   // 8) KH Instability
 
@@ -410,7 +399,7 @@ int InitializeNew(char *filename, HierarchyEntry &TopGrid,
 
   // 12) Free expansion blast wave
   if (ProblemType == 12)
-    ret = FreeExpansionInitialize(fptr, Outfptr, TopGrid, MetaData);
+    ret = FreeExpansionInitialize(Outfptr, TopGrid, MetaData);
  
   // 20) Zeldovich Pancake
  
@@ -425,7 +414,7 @@ int InitializeNew(char *filename, HierarchyEntry &TopGrid,
   // 22) Adiabatic expansion
  
   if (ProblemType == 22)
-    ret = AdiabaticExpansionInitialize(fptr, Outfptr, TopGrid);
+    ret = AdiabaticExpansionInitialize(Outfptr, TopGrid);
  
   // 23) GravityTest
  
@@ -440,7 +429,7 @@ int InitializeNew(char *filename, HierarchyEntry &TopGrid,
   // 25) TestGravitySphere
  
   if (ProblemType == 25)
-    ret = TestGravitySphereInitialize(fptr, Outfptr, TopGrid, MetaData);
+    ret = TestGravitySphereInitialize(Outfptr, TopGrid, MetaData);
  
   // 26) GravityEquilibriumTest
  
@@ -450,7 +439,7 @@ int InitializeNew(char *filename, HierarchyEntry &TopGrid,
   // 27) CollapseTest
  
   if (ProblemType == 27)
-    ret = CollapseTestInitialize(fptr, Outfptr, TopGrid, MetaData);
+    ret = CollapseTestInitialize(Outfptr, TopGrid, MetaData);
  
   // 28) TestGravityMotion
  
@@ -465,9 +454,9 @@ int InitializeNew(char *filename, HierarchyEntry &TopGrid,
  
   if (ProblemType == 30) {
     if (PartitionNestedGrids) {
-      ret = NestedCosmologySimulationInitialize(fptr, Outfptr, TopGrid, MetaData);
+      ret = NestedCosmologySimulationInitialize(Outfptr, TopGrid, MetaData);
     } else {
-      ret = CosmologySimulationInitialize(fptr, Outfptr, TopGrid, MetaData);
+      ret = CosmologySimulationInitialize(Outfptr, TopGrid, MetaData);
     }
   }
   
@@ -601,7 +590,7 @@ int InitializeNew(char *filename, HierarchyEntry &TopGrid,
 
   /* ???? */
   if (ProblemType ==300) {
-    ret = PoissonSolverTestInitialize(fptr, Outfptr, TopGrid, MetaData);
+    ret = PoissonSolverTestInitialize(Outfptr, TopGrid, MetaData);
   }
 
 

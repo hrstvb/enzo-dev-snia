@@ -12,6 +12,9 @@
 /
 ************************************************************************/
 
+#include "ParameterControl/ParameterControl.h"
+extern Configuration Param;
+
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
@@ -20,19 +23,52 @@
 #include "typedefs.h"
 #include "global_data.h"
 
-int RadiativeTransferReadParameters(FILE *fptr)
+/* Set default parameter values. */
+
+const char config_radiative_transfer_defaults[] = 
+"### RADIATIVE TRANSFER INITIALIZATION DEFAULTS ###\n"
+"\n"
+"Problem: {\n"
+"    RadiativeTransfer: {\n"
+"        RadiationPressure          = False;\n"
+"        RadiationPressureScale     = 1.0;\n"
+"        PhotonTime                 = 0;\n"
+"        dtPhoton                   = -9999.0;\n"
+"        SourceRadius               = 0;\n"
+"        PropagationSpeedFraction   = 1.0;\n"
+"        PropagationDistance        = 0.1;\n"
+"        CoupledRateSolver          = True;\n"
+"        OpticallyThinH2            = True;\n"
+"        FluxBackgroundLimit        = 0.01;\n"
+"        SplitPhotonRadius          = -99999.0;  # kpc\n"
+"        RaysPerCell                = 5.1;\n"
+"        InitialHEALPixLevel        = 3;\n"
+"        PhotonEscapeRadius         = 0.0;  # kpc\n"
+"        InterpolateField           = False;\n"
+"        SourceClustering           = False;\n"
+"        PhotonMergeRadius          = 10.0;\n"
+"        TimestepVelocityLimit      = 100.0;  # km/s\n"
+"        PeriodicBoundary           = False;\n"
+"        FLDCallOnLevel             = 0;\n"
+"        HIIRestrictedTimestep      = False;\n"
+"        AdaptiveTimestep           = False;\n"
+"        HydrogenOnly               = False;\n"
+"        TraceSpectrum              = False;\n"
+"        TraceSpectrumTable         = \"spectrum_table.dat\";\n"
+"        SourceBeamAngle            = 30.0;\n"
+"        LoadBalance                = False;\n"
+"        OpticallyThinH2            = False;\n"
+"    }\n"
+"}\n";  
+
+
+int RadiativeTransferReadParameters()
 {
   int i;
-
-  char line[MAX_LINE_LENGTH], *dummy = new char[MAX_LINE_LENGTH];
+  char *dummy = new char[MAX_LINE_LENGTH];
   dummy[0] = 0;
 
-  /* Set defaults. */
-
-  RadiationPressure           = FALSE;             // off
-  RadiationPressureScale      = 1.0;
-  PhotonTime                  = 0; 
-  dtPhoton                    = FLOAT_UNDEFINED;
+  /* Set some defaults for non-parameter variables */
   for (i = 0; i < 4; i++) {
     EscapedPhotonCount[i] = 0.0;
     TotalEscapedPhotonCount[i] = 0.0;
@@ -44,109 +80,43 @@ int RadiativeTransferReadParameters(FILE *fptr)
   SourceClusteringTree = NULL;
   OldSourceClusteringTree = NULL;
 
-  RadiativeTransferSourceRadius               = 0;
-  RadiativeTransferPropagationSpeedFraction   = 1.0;
-  RadiativeTransferPropagationDistance        = 0.1;
-  RadiativeTransferCoupledRateSolver          = TRUE;
-  RadiativeTransferOpticallyThinH2            = TRUE;
-  RadiativeTransferFluxBackgroundLimit        = 0.01;
-  RadiativeTransferSplitPhotonRadius          = FLOAT_UNDEFINED; // kpc
-  RadiativeTransferRaysPerCell                = 5.1;
-  RadiativeTransferInitialHEALPixLevel        = 3;
-  RadiativeTransferPhotonEscapeRadius         = 0.0;   // kpc
-  RadiativeTransferInterpolateField           = FALSE;
-  RadiativeTransferSourceClustering           = FALSE;
-  RadiativeTransferPhotonMergeRadius          = 10.0;
-  RadiativeTransferTimestepVelocityLimit      = 100.0; // km/s
-  RadiativeTransferPeriodicBoundary           = FALSE;
-  RadiativeTransferFLDCallOnLevel             = 0;
-  RadiativeTransferHIIRestrictedTimestep      = FALSE;
-  RadiativeTransferAdaptiveTimestep           = FALSE;
-  RadiativeTransferHydrogenOnly               = FALSE;
-  RadiativeTransferTraceSpectrum              = FALSE;
-  RadiativeTransferTraceSpectrumTable         = (char*) "spectrum_table.dat";
-  RadiativeTransferSourceBeamAngle            = 30.0;
-  RadiativeTransferLoadBalance                = FALSE;
+  // This is how it should look eventually.
+  //Param.UpdateDefaults(config_radiative_transfer_defaults);
 
-  if (MultiSpecies == 0)
-    RadiativeTransferOpticallyThinH2 = FALSE;
-
-  /* read input from file */
-
-  while (fgets(line, MAX_LINE_LENGTH, fptr) != NULL) {
-
-    int ret = 0;
-
-    /* read parameters */
+  /* read parameters */
     
-    ret += sscanf(line, "RadiativeTransferRadiationPressure = %"ISYM, 
-		  &RadiationPressure);
-    ret += sscanf(line, "RadiativeTransferRadiationPressureScale = %"FSYM, 
-		  &RadiationPressureScale);
-    ret += sscanf(line, "RadiativeTransferSourceRadius = %"FSYM, 
-		  &RadiativeTransferSourceRadius);
-    ret += sscanf(line, "RadiativeTransferPropagationSpeedFraction = %"FSYM, 
-		  &RadiativeTransferPropagationSpeedFraction);
-    ret += sscanf(line, "RadiativeTransferPropagationDistance = %"FSYM, 
-		  &RadiativeTransferPropagationDistance);
-    ret += sscanf(line, "RadiativeTransferCoupledRateSolver = %"ISYM, 
-		  &RadiativeTransferCoupledRateSolver);
-    ret += sscanf(line, "RadiativeTransferOpticallyThinH2 = %"ISYM, 
-		  &RadiativeTransferOpticallyThinH2);
-    ret += sscanf(line, "RadiativeTransferPeriodicBoundary = %"ISYM, 
-		  &RadiativeTransferPeriodicBoundary);
-    ret += sscanf(line, "RadiativeTransferSplitPhotonRadius = %"FSYM, 
-		  &RadiativeTransferSplitPhotonRadius);
-    ret += sscanf(line, "RadiativeTransferFluxBackgroundLimit = %"FSYM, 
-		  &RadiativeTransferFluxBackgroundLimit);
-    ret += sscanf(line, "RadiativeTransferRaysPerCell = %"FSYM, 
-		  &RadiativeTransferRaysPerCell);
-    ret += sscanf(line, "RadiativeTransferTimestepVelocityLimit = %"FSYM, 
-		  &RadiativeTransferTimestepVelocityLimit);
-    ret += sscanf(line, "RadiativeTransferInitialHEALPixLevel = %"ISYM, 
-		  &RadiativeTransferInitialHEALPixLevel);
-    ret += sscanf(line, "RadiativeTransferPhotonEscapeRadius = %"FSYM, 
-		  &RadiativeTransferPhotonEscapeRadius);
-    ret += sscanf(line, "RadiativeTransferInterpolateField = %"ISYM, 
-		  &RadiativeTransferInterpolateField);
-    ret += sscanf(line, "RadiativeTransferSourceClustering = %"ISYM, 
-		  &RadiativeTransferSourceClustering);
-    ret += sscanf(line, "RadiativeTransferPhotonMergeRadius = %"FSYM, 
-		  &RadiativeTransferPhotonMergeRadius);
-    ret += sscanf(line, "RadiativeTransferFLDCallOnLevel = %"ISYM, 
-		  &RadiativeTransferFLDCallOnLevel);
-    ret += sscanf(line, "RadiativeTransferSourceBeamAngle = %"FSYM, 
-		  &RadiativeTransferSourceBeamAngle);
-    ret += sscanf(line, "RadiativeTransferHIIRestrictedTimestep = %"ISYM, 
-		  &RadiativeTransferHIIRestrictedTimestep);
-    ret += sscanf(line, "RadiativeTransferAdaptiveTimestep = %"ISYM, 
-		  &RadiativeTransferAdaptiveTimestep);
-    ret += sscanf(line, "RadiativeTransferHydrogenOnly = %"ISYM, 
-		  &RadiativeTransferHydrogenOnly);
-    ret += sscanf(line, "RadiativeTransferTraceSpectrum = %"ISYM, 
-		  &RadiativeTransferTraceSpectrum);
-    ret += sscanf(line, "RadiativeTransferLoadBalance = %"ISYM, 
-		  &RadiativeTransferLoadBalance);
-    if (sscanf(line, "RadiativeTransferTraceSpectrumTable = %s", dummy) == 1)
-      RadiativeTransferTraceSpectrumTable = dummy;  
-    ret += sscanf(line, "dtPhoton = %"FSYM, &dtPhoton);
+  Param.GetScalar(RadiationPressure, "Problem.RadiativeTransfer.RadiationPressure");
+  Param.GetScalar(RadiationPressureScale, "Problem.RadiativeTransfer.RadiationPressureScale");
+  Param.GetScalar(RadiativeTransferSourceRadius, "Problem.RadiativeTransfer.SourceRadius");
+  Param.GetScalar(RadiativeTransferPropagationSpeedFraction, "Problem.RadiativeTransfer.PropagationSpeedFraction");
+  Param.GetScalar(RadiativeTransferPropagationDistance, "Problem.RadiativeTransfer.PropagationDistance");
+  Param.GetScalar(RadiativeTransferCoupledRateSolver, "Problem.RadiativeTransfer.CoupledRateSolver");
+  Param.GetScalar(RadiativeTransferOpticallyThinH2, "Problem.RadiativeTransfer.OpticallyThinH2");
+  Param.GetScalar(RadiativeTransferPeriodicBoundary, "Problem.RadiativeTransfer.PeriodicBoundary");
+  Param.GetScalar(RadiativeTransferSplitPhotonRadius, "Problem.RadiativeTransfer.SplitPhotonRadius");
+  Param.GetScalar(RadiativeTransferFluxBackgroundLimit, "Problem.RadiativeTransfer.FluxBackgroundLimit");
+  Param.GetScalar(RadiativeTransferRaysPerCell, "Problem.RadiativeTransfer.RaysPerCell");
+  Param.GetScalar(RadiativeTransferTimestepVelocityLimit, "Problem.RadiativeTransfer.TimestepVelocityLimit");
+  Param.GetScalar(RadiativeTransferInitialHEALPixLevel, "Problem.RadiativeTransfer.InitialHEALPixLevel");
+  Param.GetScalar(RadiativeTransferPhotonEscapeRadius, "Problem.RadiativeTransfer.PhotonEscapeRadius");
+  Param.GetScalar(RadiativeTransferInterpolateField, "Problem.RadiativeTransfer.InterpolateField");
+  Param.GetScalar(RadiativeTransferSourceClustering, "Problem.RadiativeTransfer.SourceClustering");
+  Param.GetScalar(RadiativeTransferPhotonMergeRadius, "Problem.RadiativeTransfer.PhotonMergeRadius");
+  Param.GetScalar(RadiativeTransferFLDCallOnLevel, "Problem.RadiativeTransfer.FLDCallOnLevel");
+  Param.GetScalar(RadiativeTransferSourceBeamAngle, "Problem.RadiativeTransfer.SourceBeamAngle");
+  Param.GetScalar(RadiativeTransferHIIRestrictedTimestep, "Problem.RadiativeTransfer.HIIRestrictedTimestep");
+  Param.GetScalar(RadiativeTransferAdaptiveTimestep, "Problem.RadiativeTransfer.AdaptiveTimestep");
+  Param.GetScalar(RadiativeTransferHydrogenOnly, "Problem.RadiativeTransfer.HydrogenOnly");
+  Param.GetScalar(RadiativeTransferTraceSpectrum, "Problem.RadiativeTransfer.TraceSpectrum");
+  Param.GetScalar(RadiativeTransferLoadBalance, "Problem.RadiativeTransfer.LoadBalance");
+  Param.GetScalar(dtPhoton, "Problem.RadiativeTransfer.dtPhoton");
 
-    /* If the dummy char space was used, then make another. */
- 
-    if (*dummy != 0) {
-      dummy = new char[MAX_LINE_LENGTH];
-      ret++;
-    }
- 
-    /* if the line is suspicious, issue a warning */
-
-    if (ret == 0 && strstr(line, "=") != NULL && line[0] != '#' && 
-	MyProcessorNumber == ROOT_PROCESSOR &&
-	strstr(line, "RadiativeTransfer") && !strstr(line, "RadiativeTransfer ")
-	&& !strstr(line, "RadiativeTransferFLD "))
-      fprintf(stderr, "warning: the following parameter line was not "
-	      "interpreted:\n%s\n", line);
+  Param.GetScalar(dummy, "Problem.RadiativeTransfer.TraceSpectrumTable");
+  if( strlen(dummy) > 0 ) {
+    RadiativeTransferTraceSpectrumTable = new char[MAX_LINE_LENGTH];
+    strcpy(RadiativeTransferTraceSpectrumTable, dummy);
   }
+  
 
   /* Error check */
 
@@ -171,7 +141,7 @@ int RadiativeTransferReadParameters(FILE *fptr)
   if (RadiativeTransferFLDCallOnLevel < 0) {
     if (MyProcessorNumber == ROOT_PROCESSOR)
       fprintf(stderr, "Warning: RadiativeTransferFLDCallOnLevel = %"ISYM
-	      " cannot be negative!  Setting to 0.\n");
+	      " cannot be negative!  Setting to 0.\n", RadiativeTransferFLDCallOnLevel);
     RadiativeTransferFLDCallOnLevel = 0;
   }
 
@@ -204,7 +174,6 @@ int RadiativeTransferReadParameters(FILE *fptr)
   // If RadiativeTransferFLD > 1, ensure that ImplicitProblem > 0
   if (RadiativeTransferFLD > 1  &&  (ImplicitProblem == 0)) 
     ENZO_FAIL("Error: RadiativeTransferFLD > 1 requires ImplicitProblem > 0!")
-
 
   delete [] dummy;
 

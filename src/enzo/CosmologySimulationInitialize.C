@@ -43,6 +43,55 @@ extern Configuration Param;
 #include "fortran.def"
 #include "CommunicationUtilities.h"
  
+/* Set default parameter values. */
+
+const char config_cosmology_simulation_defaults[] = 
+"### COSMOLOGY SIMULATION DEFAULTS ###\n"
+"\n"
+"Problem: {\n"
+"    CosmologySimulation: {\n"
+"        OmegaBaryonNow       = 1.0;\n"
+"        OmegaCDMNow          = 0.0;\n"
+"        InitialTemperature   = -99999.0;\n"
+"\n" 
+"        DensityName           = \"\";\n"
+"        VelocitiesNames       = \"\";\n"
+"        TotalEnergyName       = \"\";\n"
+"        GasEnergyName         = \"\";\n"
+"        ParticlePositionName  = \"\";\n"
+"        ParticleVelocityName  = \"\";\n"
+"        ParticleDisplacementName = \"\";\n"
+"        ParticleMassName      = \"\";\n"
+"        ParticleTypeName      = \"\";\n"
+"        VelocityNames         = [\"\", \"\", \"\"];\n"
+"        ParticleVelocityNames = [\"\", \"\", \"\"];\n"
+"        ParticlePositionNames = [\"\", \"\", \"\"];\n"
+"        ParticleDisplacementNames = [\"\", \"\", \"\"];\n"
+"\n" 
+"        InitialFractionHII   = 1.2e-5;\n"
+"        InitialFractionHeII  = 1.0e-14;\n"
+"        InitialFractionHeIII = 1.0e-17;\n"
+"        InitialFractionHM    = 2.0e-9;\n"
+"        InitialFractionH2I   = 2.0e-20;\n"
+"        InitialFractionH2II  = 3.0e-14;\n"
+"        InitialFractionMetal = 1.0e-10;\n"
+"        UseMetallicityField  = False;\n"
+"\n"  
+"        ManuallySetParticleMassRatio = False;\n"
+"        ManualParticleMassRatio = 1.0;\n"
+"\n"  		
+"        CalculatePositions   = False; \n"
+"\n"  
+"        InitialUniformBField = [0.0, 0.0, 0.0];  # in proper Gauss\n"
+"\n"  
+"        RadHydroInitialRadiationEnergy = 1.0e-32;\n"
+"\n"  
+"        SubgridsAreStatic    = True;\n"
+"        InitialSubgrids = [];\n"
+"    };\n"
+"};\n";
+
+
 // Function prototypes
  
 void WriteListOfFloats(FILE *fptr, int N, float floats[]);
@@ -101,8 +150,7 @@ static float RadHydroInitialRadiationEnergy;
  
  
  
-int CosmologySimulationInitialize(FILE *fptr, FILE *Outfptr,
-			       HierarchyEntry &TopGrid, TopGridData &MetaData)
+int CosmologySimulationInitialize(FILE *Outfptr, HierarchyEntry &TopGrid, TopGridData &MetaData)
 {
   char *DensName = "Density";
   char *TEName   = "TotalEnergy";
@@ -147,8 +195,7 @@ int CosmologySimulationInitialize(FILE *fptr, FILE *Outfptr,
   char *dummy = new char[MAX_LINE_LENGTH];
   char dummy_arr[MAX_DIMENSION][MAX_LINE_LENGTH];
 
-  char line[MAX_LINE_LENGTH];
-  int i, j, dim, gridnum, ret, SubgridsAreStatic, region;
+  int i, j, dim, gridnum, SubgridsAreStatic, region;
   HierarchyEntry *Subgrid;
  
   char *DensityName = NULL, 
@@ -164,7 +211,9 @@ int CosmologySimulationInitialize(FILE *fptr, FILE *Outfptr,
     *ParticleVelocityNames[MAX_DIMENSION], 
     *ParticleDisplacementNames[MAX_DIMENSION];
  
- 
+  // This is how it should look eventually.
+  //Param.UpdateDefaults(config_cosmology_simulation_defaults);
+
   // Set all char arrays to NULL
   CosmologySimulationDensityName          = NULL;
   CosmologySimulationTotalEnergyName      = NULL;
@@ -898,6 +947,8 @@ int CosmologySimulationInitialize(FILE *fptr, FILE *Outfptr,
 
   }
  
+  delete [] dummy;
+
   return SUCCESS;
 }
  

@@ -10,6 +10,7 @@
 /          ray tracer that is not included in the normal routines.
 /
 ************************************************************************/
+ 
 #include "preincludes.h"
 
 #include <stdlib.h>
@@ -35,13 +36,13 @@
 // #include "MFSplit.h"
 #include "NullProblem.h"
 
-int RadiativeTransferReadParameters(FILE *fptr);
-int ReadPhotonSources(FILE *fptr, FLOAT CurrentTime);
+
+int RadiativeTransferReadParameters();
+int ReadPhotonSources(FLOAT CurrentTime);
 int DetermineParallelism(HierarchyEntry *TopGrid, TopGridData &MetaData);
 int InitializeRadiativeTransferSpectrumTable(FLOAT Time);
 
-int RadiativeTransferInitialize(char *ParameterFile, 
-				HierarchyEntry &TopGrid, 
+int RadiativeTransferInitialize(HierarchyEntry &TopGrid, 
 				TopGridData &MetaData,
 				ExternalBoundary &Exterior, 
 				ImplicitProblemABC* &ImplicitSolver,
@@ -65,7 +66,6 @@ int RadiativeTransferInitialize(char *ParameterFile,
   const char    *Rad3Name      = "Radiation3";
 
   int i, j, k, level;
-  FILE *fptr;
   LevelHierarchyEntry *Temp;
 
   if (RadiativeTransfer == FALSE && RadiativeTransferFLD == FALSE)
@@ -73,20 +73,14 @@ int RadiativeTransferInitialize(char *ParameterFile,
 
   /* Read and set parameter values and static radiation sources */
 
-  if ((fptr = fopen(ParameterFile, "r")) == NULL) {
-    ENZO_VFAIL("Error opening ParameterFile %s\n", ParameterFile)
-  }
-
-  RadiativeTransferReadParameters(fptr);
-  rewind(fptr);
+  RadiativeTransferReadParameters();
   if (ProblemType == 50)
-    ReadPhotonSources(fptr, MetaData.Time);
+    ReadPhotonSources(MetaData.Time);
 
   PhotonTime = MetaData.Time;
   MetaData.FLDTime = MetaData.Time;
   MetaData.dtFLD = 0.0;
 
-  fclose(fptr);
 
   if (RadiativeTransferPhotonEscapeRadius > 0) {
     PhotonEscapeFilename = new char[80];

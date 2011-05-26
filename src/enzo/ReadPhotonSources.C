@@ -1,3 +1,6 @@
+#include "ParameterControl/ParameterControl.h"
+extern Configuration Param;
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -15,20 +18,41 @@
 #include "LevelHierarchy.h"
 
 #define RT_ENERGY_BINS 4
+#define MAX_RT_ENERGY_BINS 100
+
+/* Set default parameter values. */
+
+const char config_radiative_transfer_photon_sources_defaults[] = 
+"### RADIATIVE TRANSFER PHOTON SOURCES DEFAULTS ###\n"
+"\n"
+"Problem: {\n"
+"    RadiativeTransfer: {\n"
+"        PhotonSources = [\"Source1\"];\n"
+"        Source1: {\n"
+"            Type = 1;  # isotropic\n"
+"            Luminosity = 0.0;\n"
+"            LifeTime = 0.;"
+"            CreationTime = -99999.0;\n"
+"            RampTime = 0.0;\n"
+"            SED = [1.0];\n"
+"            Energy = [14.6];\n"
+"            Position = [-99999.0, -99999.0, -99999.0];\n"
+"        }\n"
+"    }\n"
+"}\n";  
 
 int GetUnits(float *DensityUnits, float *LengthUnits,
 	     float *TemperatureUnits, float *TimeUnits,
 	     float *VelocityUnits, FLOAT Time);
-void ReadListOfFloats(FILE *fptr, int N, float floats[]);
 int CreateSourceClusteringTree(int nShine, SuperSourceData *SourceList,
 			       LevelHierarchyEntry *LevelArray[]);
 
-int ReadPhotonSources(FILE *fptr, FLOAT CurrentTime)
+int ReadPhotonSources(FLOAT CurrentTime)
 {
 
-  int i, source, dim, ret;
+  int i, source, dim;
 
-  int   PhotonTestNumberOfSources=1;
+  int   PhotonTestNumberOfSources;
   int   PhotonTestSourceType[MAX_SOURCES];
   int   PhotonTestSourceEnergyBins[MAX_SOURCES];
   double PhotonTestSourceLuminosity[MAX_SOURCES];
@@ -39,22 +63,21 @@ int ReadPhotonSources(FILE *fptr, FLOAT CurrentTime)
   float *PhotonTestSourceSED[MAX_SOURCES];
   float *PhotonTestSourceEnergy[MAX_SOURCES];
 
-  // Set defaults
+  // This is how it should look eventually.
+  //Param.UpdateDefaults(config_radiative_transfer_photon_sources_defaults);
 
-  for (source = 0; source < MAX_SOURCES; source++) {
-    PhotonTestSourceType[source] = Isotropic;
-    PhotonTestSourceLuminosity[source] = 0.;
-    PhotonTestSourceLifeTime[source] = 0.;
-    PhotonTestSourceCreationTime[source] = CurrentTime;
-    PhotonTestSourceRampTime[source] = 0.;
-    PhotonTestSourceEnergyBins[source] = 1;
-    PhotonTestSourceSED[source] = NULL;
-    PhotonTestSourceEnergy[source] = NULL;
-    for (dim=0; dim < MAX_DIMENSION; dim++){
-      PhotonTestSourcePosition[source][dim] =
-	0.5*(DomainLeftEdge[dim] + DomainRightEdge[dim]);
-    }
-  }
+  // We need to update the Source1.CreationTime and Position
+  // parameters in the defaults settings, since they depends on
+  // runtime parameters (CreationTime, DomainLeftEdge,
+  // DomainRightEdge). Super kludgy...
+
+  // Param.UpdateDefaults("Problem.RadiativeTransfer.Source1.CreationTime", CurrentTime);
+  FLOAT DefaultSourcePosition[MAX_DIMENSION];
+  for (dim = 0; dim < MAX_DIMENSION; dim++)
+    DefaultSourcePosition[dim] = 0.5*(DomainLeftEdge[dim] +
+				      DomainRightEdge[dim]);
+  //  Param.UpdateDefaults("Problem.RadiativeTransfer.Source1.Position",DefaultSource1Position);
+
 
   float DensityUnits, LengthUnits, TemperatureUnits, TimeUnits, 
     VelocityUnits;
@@ -63,100 +86,42 @@ int ReadPhotonSources(FILE *fptr, FLOAT CurrentTime)
     ENZO_FAIL("Error in GetUnits.\n");
   }
 
-  char line[MAX_LINE_LENGTH];
   char *numbers;
   char *delims = (char*) " ";
   char *value;
   int count;
   bool EnergyBinsDefined = false;
 
-  /* read input from file */
-  while (fgets(line, MAX_LINE_LENGTH, fptr) != NULL) {
-     ret = 0;
-    ret += sscanf(line, "PhotonTestNumberOfSources = %"ISYM,
-		  &PhotonTestNumberOfSources);
-     if (sscanf(line, "PhotonTestSourceType[%"ISYM"]", &source) > 0) {
-      ret += sscanf(line, "PhotonTestSourceType[%"ISYM"] = %"ISYM, &source,
-		    &PhotonTestSourceType[source]);
-      if (debug)
-	fprintf(stdout, "ReadPhotonSources: Reading Parameters of "
-		"Source %"ISYM"...\n", source);
-    }
-    if (sscanf(line, "PhotonTestSourcePosition[%"ISYM"]", &source) > 0)
-      ret += sscanf(line, "PhotonTestSourcePosition[%"ISYM"] = %"PSYM" %"PSYM" %"PSYM, 
-		    &source, &PhotonTestSourcePosition[source][0],
-		    &PhotonTestSourcePosition[source][1],
-		    &PhotonTestSourcePosition[source][2]);
-    if (sscanf(line, "PhotonTestSourceLuminosity[%"ISYM"]", &source) > 0)
-      ret += sscanf(line, "PhotonTestSourceLuminosity[%"ISYM"] = %lf", &source,
-		    &PhotonTestSourceLuminosity[source]);
-    if (sscanf(line, "PhotonTestSourceCreationTime[%"ISYM"]", &source) > 0)
-      ret += sscanf(line, "PhotonTestSourceCreationTime[%"ISYM"] = %"FSYM, &source,
-		    &PhotonTestSourceCreationTime[source]);
-    if (sscanf(line, "PhotonTestSourceLifeTime[%"ISYM"]", &source) > 0)
-      ret += sscanf(line, "PhotonTestSourceLifeTime[%"ISYM"] = %"FSYM, &source,
-		    &PhotonTestSourceLifeTime[source]);
-    if (sscanf(line, "PhotonTestSourceRampTime[%"ISYM"]", &source) > 0)
-      ret += sscanf(line, "PhotonTestSourceRampTime[%"ISYM"] = %"FSYM, &source,
-		    &PhotonTestSourceRampTime[source]);
-    if (sscanf(line, "PhotonTestSourceEnergyBins[%"ISYM"]", &source) > 0) {
-      ret += sscanf(line, "PhotonTestSourceEnergyBins[%"ISYM"] = %"ISYM, &source,
-		    &PhotonTestSourceEnergyBins[source]);
-      EnergyBinsDefined = true;
-    }
-    if (sscanf(line, "PhotonTestSourceSED[%"ISYM"]", &source) > 0) {
-      if (!EnergyBinsDefined)
-	ENZO_FAIL("Must define PhotonTestSourceEnergyBins before SED!");
-      PhotonTestSourceSED[source] = new float[PhotonTestSourceEnergyBins[source]+1];
-      numbers = strstr(line, "=")+2;
-      value = strtok(numbers, delims);
-      count = 0;
-      while (value != NULL) {
-	PhotonTestSourceSED[source][count++] = atof(value);
-	value = strtok(NULL, delims);
-	ret++;
-      }
-    }
-    if (sscanf(line, "PhotonTestSourceEnergy[%"ISYM"]", &source) > 0) {
-      if (!EnergyBinsDefined)
-	ENZO_FAIL("Must define PhotonTestSourceEnergyBins before Energies!");
-      PhotonTestSourceEnergy[source] = new float[PhotonTestSourceEnergyBins[source]+1];
-      numbers = strstr(line, "=")+2;
-      value = strtok(numbers, delims);
-      count = 0;
-      while (value != NULL) {
-	PhotonTestSourceEnergy[source][count++] = atof(value);
-	value = strtok(NULL, delims);
-	ret++;
-      }
-    }
 
-    /* if the line is suspicious, issue a warning */
-
-    if (ret == 0 && strstr(line, "=") &&
-	strstr(line, "PhotonTestSource") && line[0] != '#')
-      if (MyProcessorNumber == ROOT_PROCESSOR)
-	fprintf(stderr, "warning: the following parameter line was not"
-		" interpreted:\n%s\n", line);
-    
-  } // ENDWHILE line
-
-  // Set default SED and energies if not user-defined
-
-  for (source = 0; source < PhotonTestNumberOfSources; source++) {
-    if (PhotonTestSourceSED[source] == NULL) {
-      PhotonTestSourceSED[source] = new float[PhotonTestSourceEnergyBins[source]];
-      PhotonTestSourceSED[source][0] = 1;
-      for (i = 1; i < PhotonTestSourceEnergyBins[source]; i++)
-	PhotonTestSourceSED[source][i] = 0;
-    }
-    if (PhotonTestSourceEnergy[source] == NULL) {
-      PhotonTestSourceEnergy[source] = new float[PhotonTestSourceEnergyBins[source]];
-      PhotonTestSourceEnergy[source][0] = 14.6;
-      for (i = 1; i < PhotonTestSourceEnergyBins[source]; i++)
-	PhotonTestSourceEnergy[source][i] = 0;
-    }
+  /* read parameters */
+  PhotonTestNumberOfSources = Param.Size("Problem.RadiativeTransfer.PhotonSources");
+  if (PhotonTestNumberOfSources > MAX_SOURCES) {
+    ENZO_VFAIL("You've exceeded the maximum number of RadiativeTransfer.PhotonSources (%d)!\n",MAX_SOURCES)
   }
+
+  char PhotonSourceNames[MAX_LINE_LENGTH][MAX_SOURCES];
+  Param.GetArray(PhotonSourceNames, "Problem.RadiativeTransfer.PhotonSources");
+
+  for (i = 0; i < PhotonTestNumberOfSources; i++) {
+    if (debug)
+      fprintf(stdout, "ReadPhotonSources: Reading Parameters of Source %"ISYM"...\n", i);
+
+    Param.GetScalar(PhotonTestSourceType[i], "Problem.RadiativeTransfer.%s.Type",PhotonSourceNames[i]);
+    Param.GetArray(PhotonTestSourcePosition[i], "Problem.RadiativeTransfer.%s.Position",PhotonSourceNames[i]);
+    Param.GetScalar(PhotonTestSourceLuminosity[i], "Problem.RadiativeTransfer.%s.Luminosity",PhotonSourceNames[i]);
+    Param.GetScalar(PhotonTestSourceCreationTime[i], "Problem.RadiativeTransfer.%s.CreationTime",PhotonSourceNames[i]);
+    Param.GetScalar(PhotonTestSourceLifeTime[i], "Problem.RadiativeTransfer.%s.LifeTime",PhotonSourceNames[i]);
+    Param.GetScalar(PhotonTestSourceRampTime[i], "Problem.RadiativeTransfer.%s.RampTime",PhotonSourceNames[i]);
+    
+    PhotonTestSourceSED[i] = new float[MAX_RT_ENERGY_BINS];
+    PhotonTestSourceEnergy[i] = new float[MAX_RT_ENERGY_BINS];
+
+    PhotonTestSourceEnergyBins[i] = Param.Size("Problem.RadiativeTransfer.%s.SED",PhotonSourceNames[i]);
+    Param.GetArray(PhotonTestSourceSED[i], "Problem.RadiativeTransfer.%s.SED",PhotonSourceNames[i]);
+    Param.GetArray(PhotonTestSourceEnergy[i], "Problem.RadiativeTransfer.%s.Energy",PhotonSourceNames[i]);
+
+  }
+
 
   // normalize SED
 

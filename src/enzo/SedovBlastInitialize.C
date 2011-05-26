@@ -26,6 +26,9 @@
 ************************************************************************/
 
 // This routine intializes a new simulation based on the parameter file.
+ 
+#include "ParameterControl/ParameterControl.h"
+extern Configuration Param;
 
 #include <string.h>
 #include <stdio.h>
@@ -44,8 +47,27 @@
 #include "SedovBlastGlobalData.h"
 #undef DEFINE_STORAGE
 
-int SedovBlastInitialize(FILE *fptr, FILE *Outfptr, HierarchyEntry &TopGrid,
-			 TopGridData &MetaData)
+/* Set default parameter values. */
+
+const char config_sedov_blast_defaults[] = 
+"### SEDOV BLAST INITIALIZATION DEFAULTS ###\n"
+"\n"
+"Problem: {\n"
+"    SedovBlast: {\n"
+"        FullBox             = 0;  # full box or one quadrant\n"
+"        InitialTime   = 0.0;\n"
+"        Density             = 1.0;\n"
+"        Pressure      = 1e-5;\n  # can be arbitrarily small\n"
+"        Energy        = 1.0;\n"
+"        SubgridLeft         = 0.0;  # start of subgrid(s)\n"
+"        SubgridRight        = 0.0;  # end of subgrid(s)\n"
+"        Velocity   = [0.0, 0.0, 0.0];  # gas initally (t=0) at rest\n"
+"        BField   = [0.0, 0.0, 0.0];  # gas initally (t=0) at rest\n"
+"    }\n"
+"}\n";  
+
+
+int SedovBlastInitialize(FILE *Outfptr, HierarchyEntry &TopGrid, TopGridData &MetaData)
 {
   char *DensName = "Density";
   char *TEName   = "TotalEnergy";
@@ -61,10 +83,10 @@ int SedovBlastInitialize(FILE *fptr, FILE *Outfptr, HierarchyEntry &TopGrid,
   
   /* local declarations */
 
-  char line[MAX_LINE_LENGTH];
-  int  dim, ret, NumberOfSubgridZones[MAX_DIMENSION],
-                          SubgridDims[MAX_DIMENSION];
+  int  dim, NumberOfSubgridZones[MAX_DIMENSION],
+    SubgridDims[MAX_DIMENSION];
  
+
   /* make sure this is 2D or 3D */
 
   if (MetaData.TopGridRank < 2 || MetaData.TopGridRank > 3) {
@@ -81,13 +103,12 @@ int SedovBlastInitialize(FILE *fptr, FILE *Outfptr, HierarchyEntry &TopGrid,
      Set their default values here. */
 
   float Pi                      = 3.14159;
-  SedovBlastFullBox             = 0;                 // full box or one quadrant
-  float SedovBlastVelocity[3]   = {0.0, 0.0, 0.0};   // gas initally (t=0) at rest
-  float SedovBlastBField[3]   = {0.0, 0.0, 0.0};   // gas initally (t=0) at rest
-  FLOAT SedovBlastInitialTime   = 0.0;
-  float SedovBlastPressure      = 1e-5;              // can be arbitrarily small
-  SedovBlastDensity             = 1.0;
-  float SedovBlastEnergy        = 1.0;
+  float SedovBlastVelocity[3];
+  float SedovBlastBField[3];
+  FLOAT SedovBlastInitialTime;
+  float SedovBlastPressure;
+  float SedovBlastEnergy;
+
   float dx = (DomainRightEdge[0] - DomainLeftEdge[0])/
                                                    MetaData.TopGridDims[0];
 
@@ -95,38 +116,22 @@ int SedovBlastInitialize(FILE *fptr, FILE *Outfptr, HierarchyEntry &TopGrid,
 
   float dr = 3.5*dx*max(POW(RefineBy,-MaximumRefinementLevel), 0.25);
 
-  /* set no subgrids by default. */
 
-  SedovBlastSubgridLeft         = 0.0;    // start of subgrid(s)
-  SedovBlastSubgridRight        = 0.0;    // end of subgrid(s)
+  // This is how it should look eventually.
+  //Param.UpdateDefaults(config_sedov_blast_defaults);
 
-  /* read input from file */
+  /* read parameters */
 
-  while (fgets(line, MAX_LINE_LENGTH, fptr) != NULL) {
+  Param.GetScalar(SedovBlastFullBox, "Problem.SedovBlast.FullBox");
+  Param.GetScalar(SedovBlastInitialTime, "Problem.SedovBlast.InitialTime");
+  Param.GetScalar(SedovBlastDensity, "Problem.SedovBlast.Density");
+  Param.GetScalar(SedovBlastPressure, "Problem.SedovBlast.Pressure");
+  Param.GetScalar(SedovBlastEnergy, "Problem.SedovBlast.Energy");
+  Param.GetScalar(SedovBlastSubgridLeft, "Problem.SedovBlast.SubgridLeft");
+  Param.GetScalar(SedovBlastSubgridRight, "Problem.SedovBlast.SubgridRight");
 
-    ret = 0;
-
-    /* read parameters */
-
-    ret += sscanf(line, "SedovBlastFullBox  = %"ISYM, &SedovBlastFullBox);
-    ret += sscanf(line, "SedovBlastInitialTime  = %"PSYM, &SedovBlastInitialTime);
-    ret += sscanf(line, "SedovBlastDensity  = %"FSYM, &SedovBlastDensity);
-    ret += sscanf(line, "SedovBlastPressure = %"FSYM, &SedovBlastPressure);
-    ret += sscanf(line, "SedovBlastEnergy   = %"FSYM, &SedovBlastEnergy);
-    ret += sscanf(line, "SedovBlastSubgridLeft = %"PSYM, 
-		        &SedovBlastSubgridLeft);
-    ret += sscanf(line, "SedovBlastSubgridRight = %"PSYM, 
-		        &SedovBlastSubgridRight);
-
-    /* if the line is suspicious, issue a warning */
-
-    if (ret == 0 && strstr(line, "=") && strstr(line, "SedovBlast") && 
-	line[0] != '#' && MyProcessorNumber == ROOT_PROCESSOR)
-      fprintf(stderr, 
-	 "warning: the following parameter line was not interpreted:\n%s\n", 
-	      line);
-
-  } // end input from parameter file
+  Param.GetArray(SedovBlastVelocity, "Problem.SedovBlast.Velocity");
+  Param.GetArray(SedovBlastBField, "Problem.SedovBlast.BField");
 
 
   /* Set up current problem time, ambient total energy. */

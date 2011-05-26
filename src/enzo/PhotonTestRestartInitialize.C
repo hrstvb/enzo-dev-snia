@@ -44,8 +44,8 @@ int Group_ReadAllData(char *filename, HierarchyEntry *TopGrid, TopGridData &tgd,
 		      ExternalBoundary *Exterior, float *Initialdt,
 		      bool ReadParticlesOnly=false);
 void AddLevel(LevelHierarchyEntry *Array[], HierarchyEntry *Grid, int level);
-int RadiativeTransferReadParameters(FILE *fptr);
-int ReadPhotonSources(FILE *fptr, FLOAT CurrentTime);
+int RadiativeTransferReadParameters();
+int ReadPhotonSources(FLOAT CurrentTime);
 int GetUnits(float *DensityUnits, float *LengthUnits,
 	     float *TemperatureUnits, float *TimeUnits,
 	     float *VelocityUnits, FLOAT Time);
@@ -169,10 +169,10 @@ int PhotonTestRestartInitialize(FILE *fptr, FILE *Outfptr,
 
   }
   
-  RadiativeTransferReadParameters(fptr);
+  RadiativeTransferReadParameters();
   rewind(fptr);
   if (ProblemType == 51)
-    ReadPhotonSources(fptr, MetaData.Time);
+    ReadPhotonSources(MetaData.Time);
 
   PhotonTime = MetaData.Time;
   MetaData.FLDTime = MetaData.Time;

@@ -35,8 +35,10 @@
 ************************************************************************/
  
 // This routine intializes a new simulation based on the parameter file.
-//
- 
+  
+#include "ParameterControl/ParameterControl.h"
+extern Configuration Param;
+
 #include <string.h>
 #include <stdio.h>
 #include <math.h>
@@ -54,8 +56,25 @@
 #include "ShockPoolGlobalData.h"
 #undef DEFINE_STORAGE
  
-int ShockPoolInitialize(FILE *fptr, FILE *Outfptr, HierarchyEntry &TopGrid,
-		       TopGridData &MetaData)
+/* Set default parameter values. */
+
+const char config_shock_pool_defaults[] = 
+"### SHOCK POOL INITIALIZATION DEFAULTS ###\n"
+"\n"
+"Problem: {\n"
+"    ShockPool: {\n"
+"        Angle         = 0.0;  # x direction\n"
+"        MachNumber    = 2.0;  # Velocity[0] / SoundSpeed\n"
+"        Density       = 1.0;  # Density in region 1 (preshock)\n"
+"        Pressure      = 1.0;  # Pressure in region 1\n"
+"        Velocity      = [0.0, 0.0, 0.0];  # LabVelocity in region (these should all be zero for the MachNumber to be correct)\n"
+"        SubgridLeft   = 0.0;  # start of subgrid\n"
+"        SubgridRight  = 0.0;  # end of subgrid\n"
+"    }\n"
+"}\n";  
+
+ 
+int ShockPoolInitialize(FILE *Outfptr, HierarchyEntry &TopGrid, TopGridData &MetaData)
 {
   char *DensName = "Density";
   char *TEName   = "TotalEnergy";
@@ -70,8 +89,7 @@ int ShockPoolInitialize(FILE *fptr, FILE *Outfptr, HierarchyEntry &TopGrid,
  
   /* local declarations */
  
-  char line[MAX_LINE_LENGTH];
-  int  dim, ret, NumberOfSubgridZones[MAX_DIMENSION],
+  int  dim, NumberOfSubgridZones[MAX_DIMENSION],
        SubgridDims[MAX_DIMENSION];
   FLOAT LeftEdge[MAX_DIMENSION], RightEdge[MAX_DIMENSION];
   float MachSquared, SoundSpeed1;
@@ -79,47 +97,22 @@ int ShockPoolInitialize(FILE *fptr, FILE *Outfptr, HierarchyEntry &TopGrid,
   const float TwoPi = 6.283185;
   float ZeroBField[3] = {0.0, 0.0, 0.0} ;
 
-  /* set default parameters */
  
-  ShockPoolAngle         = 0.0;    // x direction
-  ShockPoolMachNumber    = 2.0;    // Velocity1 / SoundSpeed1
+  // This is how it should look eventually.
+  //Param.UpdateDefaults(config_shock_pool_defaults);
+
+  /* read parameters */
  
-  ShockPoolDensity       = 1.0;    // Density in region 1 (preshock)
-  ShockPoolPressure      = 1.0;    // Pressure in region 1
-  ShockPoolVelocity[0]   = 0.0;    // LabVelocity in region 1
-  ShockPoolVelocity[1]   = 0.0;    //  Note: these should all be zero for
-  ShockPoolVelocity[2]   = 0.0;    //        the MachNumber to be correct
+  Param.GetScalar(ShockPoolAngle, "Problem.ShockPool.Angle");
+  Param.GetScalar(ShockPoolMachNumber, "Problem.ShockPool.MachNumber");
+  Param.GetScalar(ShockPoolDensity, "Problem.ShockPool.Density");
+  Param.GetScalar(ShockPoolPressure, "Problem.ShockPool.Pressure");
+
+  Param.GetArray(ShockPoolVelocity, "Problem.ShockPool.Velocity");
  
-  ShockPoolSubgridLeft   = 0.0;    // start of subgrid
-  ShockPoolSubgridRight  = 0.0;    // end of subgrid
- 
-  /* read input from file */
- 
-  while (fgets(line, MAX_LINE_LENGTH, fptr) != NULL) {
- 
-    ret = 0;
- 
-    /* read parameters */
- 
-    ret += sscanf(line, "ShockPoolAngle = %"FSYM, &ShockPoolAngle);
-    ret += sscanf(line, "ShockPoolMachNumber = %"FSYM, &ShockPoolMachNumber);
- 
-    ret += sscanf(line, "ShockPoolDensity = %"FSYM, &ShockPoolDensity);
-    ret += sscanf(line, "ShockPoolPressure = %"FSYM, &ShockPoolPressure);
-    ret += sscanf(line, "ShockPoolVelocity1 = %"FSYM, &ShockPoolVelocity[0]);
-    ret += sscanf(line, "ShockPoolVelocity2 = %"FSYM, &ShockPoolVelocity[1]);
-    ret += sscanf(line, "ShockPoolVelocity3 = %"FSYM, &ShockPoolVelocity[2]);
- 
-    ret += sscanf(line, "ShockPoolSubgridLeft = %"PSYM, &ShockPoolSubgridLeft);
-    ret += sscanf(line, "ShockPoolSubgridRight = %"PSYM, &ShockPoolSubgridRight);
- 
-    /* if the line is suspicious, issue a warning */
- 
-    if (ret == 0 && strstr(line, "=") && strstr(line, "ShockPool") &&
-	line[0] != '#' && MyProcessorNumber == ROOT_PROCESSOR)
-      fprintf(stderr, "warning: the following parameter line was not interpreted:\n%s\n", line);
- 
-  } // end input from parameter file
+  Param.GetScalar(ShockPoolSubgridLeft, "Problem.ShockPool.SubgridLeft");
+  Param.GetScalar(ShockPoolSubgridRight, "Problem.ShockPool.SubgridRight");
+
  
   /* Compute the physical variables in the postshock region */
  

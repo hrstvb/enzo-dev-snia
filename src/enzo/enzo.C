@@ -217,8 +217,7 @@ int GetNodeFreeMemory(void);
 #endif
 
 #ifdef TRANSFER
-int RadiativeTransferInitialize(char *ParameterFile, 
-				HierarchyEntry &TopGrid, 
+int RadiativeTransferInitialize(HierarchyEntry &TopGrid, 
 				TopGridData &MetaData,
 				ExternalBoundary &Exterior, 
 				ImplicitProblemABC* &ImplicitSolver,
@@ -695,7 +694,7 @@ Eint32 MAIN_NAME(Eint32 argc, char *argv[])
   /* Initialize the radiative transfer */
 
 #ifdef TRANSFER
-  if (RadiativeTransferInitialize(ParameterFile, TopGrid, MetaData, Exterior, 
+  if (RadiativeTransferInitialize(TopGrid, MetaData, Exterior, 
 				  ImplicitSolver, LevelArray) == FAIL) {
     fprintf(stderr, "Error in RadiativeTransferInitialize.\n");
     my_exit(EXIT_FAILURE);

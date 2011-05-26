@@ -35,14 +35,52 @@ extern Configuration Param;
 #include "LevelHierarchy.h"
 #include "TopGridData.h"
 
+/* Set default parameter values. */
+
+const char config_collapse_test_defaults[] = 
+"### COLLAPSE TEST INITIALIZATION DEFAULTS ###\n"
+"\n"
+"Problem: {\n"
+"    CollapseTest: {\n"
+"        RefineAtStart = True;\n"
+"        UseParticles  = False;\n"
+"        ParticleMeanDensity = 0.0;\n"
+"        UseColour = False;\n"
+"        UseMetals = False;\n"
+"        InitialTemperature = 1000;\n"
+"        InitialDensity     = 1.0;\n"
+"\n"
+"        Spheres = [\"Sphere1\"];\n"
+"\n"
+"        Sphere1: {\n"
+"            Density = 1.0;\n"
+"            Temperature = 1.0;\n"
+"            Velocity = [0.0, 0.0, 0.0];\n"
+"            UniformVelocity = 0.0;\n"
+"            FracKeplerianRot = 0.0;\n"
+"            Turbulence = 0.0;\n"
+"            Dispersion = 0.0;\n"
+"            CutOff = 6.5;\n"
+"            Ang1 = 0.0;\n"
+"            Ang2 = 0.0;\n"
+"            Metallicity = 0.0;\n"
+"            NumShells = 1;\n"
+"            InitialLevel = 0;\n"
+"            Type = 0;\n"
+"            Radius = 1.0;\n"
+"            CoreRadius = 0.1;\n"
+"            Position = [-99999.0, -99999.0, -99999.0];\n"
+"        };\n"
+"    };\n"
+"};\n";
+ 
 void WriteListOfFloats(FILE *fptr, int N, float floats[]);
 void WriteListOfFloats(FILE *fptr, int N, FLOAT floats[]);
 void AddLevel(LevelHierarchyEntry *Array[], HierarchyEntry *Grid, int level);
 int RebuildHierarchy(TopGridData *MetaData,
 		     LevelHierarchyEntry *LevelArray[], int level);
 
-int CollapseTestInitialize(FILE *fptr, FILE *Outfptr, 
-			  HierarchyEntry &TopGrid, TopGridData &MetaData)
+int CollapseTestInitialize(FILE *Outfptr, HierarchyEntry &TopGrid, TopGridData &MetaData)
 {
   const char *DensName = "Density";
   const char *TEName   = "TotalEnergy";
@@ -67,8 +105,7 @@ int CollapseTestInitialize(FILE *fptr, FILE *Outfptr,
 
   /* declarations */
 
-  char  line[MAX_LINE_LENGTH];
-  int   dim, ret, level, sphere, i;
+  int   dim, level, sphere, i;
 
   /* set default parameters */
 
@@ -98,30 +135,20 @@ int CollapseTestInitialize(FILE *fptr, FILE *Outfptr,
     CollapseTestSphereCoreRadius[MAX_SPHERES],
     CollapseTestSpherePosition[MAX_SPHERES][MAX_DIMENSION];
 
-  for (sphere = 0; sphere < MAX_SPHERES; sphere++) {
-    CollapseTestSphereRadius[sphere]     = 1.0;
-    CollapseTestSphereCoreRadius[sphere] = 0.1;
-    CollapseTestSphereDensity[sphere]    = 1.0;
-    CollapseTestSphereTemperature[sphere] = 1.0;
-    CollapseTestFracKeplerianRot[sphere] = 0.0;
-    CollapseTestSphereTurbulence[sphere] = 0.0;
-    CollapseTestSphereDispersion[sphere] = 0.0;
-    CollapseTestSphereCutOff[sphere] = 6.5;
-    CollapseTestSphereAng1[sphere] = 0;
-    CollapseTestSphereAng2[sphere] = 0;
-    CollapseTestSphereNumShells[sphere] = 1;
-    CollapseTestSphereMetallicity[sphere] = 0;
-    CollapseTestSphereInitialLevel[sphere] = 0;
 
-    for (dim = 0; dim < MAX_DIMENSION; dim++) {
-      CollapseTestSpherePosition[sphere][dim] = 0.5*(DomainLeftEdge[dim] +
-						     DomainRightEdge[dim]);
-      CollapseTestSphereVelocity[sphere][dim] = 0;
-    }
-    CollapseTestSphereType[sphere]       = 0;
-  }
+  // This is how it should look eventually.
+  //Param.UpdateDefaults(config_collapse_test_defaults);
+
+  // We need to update the Sphere1.Position parameter in the defaults
+  // settings, since it depends on runtime parameters (DomainLeftEdge,
+  // DomainRightEdge). Super kludgy...
+
+  FLOAT DefaultSphere1Position[MAX_DIMENSION];
   for (dim = 0; dim < MAX_DIMENSION; dim++)
-    CollapseTestUniformVelocity[dim] = 0;
+      DefaultSphere1Position[dim] = 0.5*(DomainLeftEdge[dim] +
+					 DomainRightEdge[dim]);
+  //  Param.UpdateDefaults("Problem.CollapseTest.Sphere1.Position",DefaultSphere1Position);
+
 
   /* read input from file */
 

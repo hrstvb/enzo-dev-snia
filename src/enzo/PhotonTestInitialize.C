@@ -37,7 +37,7 @@ void WriteListOfFloats(FILE *fptr, int N, float floats[]);
 void WriteListOfFloats(FILE *fptr, int N, FLOAT floats[]);
 void AddLevel(LevelHierarchyEntry *Array[], HierarchyEntry *Grid, int level);
 RadiationSourceEntry* DeleteRadiationSource(RadiationSourceEntry *RS);
-int ReadPhotonSources(FILE *fptr, FLOAT CurrentTime);
+int ReadPhotonSources(FLOAT CurrentTime);
 int RebuildHierarchy(TopGridData *MetaData,
 		     LevelHierarchyEntry *LevelArray[], int level);
 
@@ -265,7 +265,7 @@ int PhotonTestInitialize(FILE *fptr, FILE *Outfptr,
 
   rewind(fptr);
   if (ProblemType == 50)
-    if (ReadPhotonSources(fptr, MetaData.Time) == FAIL) {
+    if (ReadPhotonSources(MetaData.Time) == FAIL) {
       ENZO_FAIL("Error in ReadPhotonSources.\n");
     }
   

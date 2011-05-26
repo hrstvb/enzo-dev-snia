@@ -33,7 +33,7 @@ extern Configuration Param;
 #include "TopGridData.h"
 #include "CosmologyParameters.h"
  
-/* Set the mean molecular mass as in Grid_ComputeTemperatureField.C */
+/* Set default parameter values. */
 
 const char config_adiabatic_expansion_defaults[] = 
 "### ADIABATIC EXPANSION INITIALIZATION DEFAULTS ###\n"
@@ -48,6 +48,9 @@ const char config_adiabatic_expansion_defaults[] =
 "   };\n"
 "};\n";
  
+
+/* Set the mean molecular mass as in Grid_ComputeTemperatureField.C */
+
 #define DEFAULT_MU 0.6
  
 /* function prototypes */
@@ -58,8 +61,7 @@ int GetUnits(float *DensityUnits, float *LengthUnits,
 	     float *TemperatureUnits, float *TimeUnits,
 	     float *VelocityUnits, FLOAT Time);
  
-int AdiabaticExpansionInitialize(FILE *fptr, FILE *Outfptr,
-			       HierarchyEntry &TopGrid)
+int AdiabaticExpansionInitialize(FILE *Outfptr, HierarchyEntry &TopGrid)
 {
   char *DensName = "Density";
   char *TEName   = "TotalEnergy";
@@ -74,14 +76,6 @@ int AdiabaticExpansionInitialize(FILE *fptr, FILE *Outfptr,
   char *DebugName = "Debug";
   char *Phi_pName = "Phip";
 
-  // This is how it should look eventually.
-  //Param.UpdateDefaults(config_adiabatic_expansion_defaults);
- 
-  /* declarations */
- 
-  char line[MAX_LINE_LENGTH];
-  int ret;
- 
   /* Error check. */
  
   if (!ComovingCoordinates) {
@@ -97,6 +91,9 @@ int AdiabaticExpansionInitialize(FILE *fptr, FILE *Outfptr,
   float AdiabaticExpansionInitialVelocity;
   float InitialVels[MAX_DIMENSION];
 
+  // This is how it should look eventually.
+  //Param.UpdateDefaults(config_adiabatic_expansion_defaults);
+ 
   /* read input from file */
  
     /* read parameters */

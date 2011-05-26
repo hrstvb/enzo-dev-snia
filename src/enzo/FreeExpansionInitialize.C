@@ -19,6 +19,9 @@
 ************************************************************************/
 
 // This routine intializes a new simulation based on the parameter file.
+ 
+#include "ParameterControl/ParameterControl.h"
+extern Configuration Param;
 
 #include <string.h>
 #include <stdio.h>
@@ -34,11 +37,32 @@
 #include "Hierarchy.h"
 #include "TopGridData.h"
 
+/* Set default parameter values. */
+
+const char config_free_expansion_defaults[] = 
+"### FREE EXPANSION INITIALIZATION DEFAULTS ###\n"
+"\n"
+"Problem: {\n"
+"    FreeExpansion: {\n"
+"        FullBox      = False;\n"
+"        Mass         = 1.0;  # Msun\n"
+"        Radius       = 0.1;\n"
+"        Density      = 1.0;\n"
+"        Energy       = 1e51;  # ergs\n"
+"        MaxVelocity  = -99999.0;  # km/s\n"
+"        Temperature  = 100;  # K\n"
+"        Velocity     = [0.0, 0.0, 0.0];  # initially at rest\n"
+"        BField       = [0.0, 0.0, 0.0];  # Gauss\n"
+"        SubgridLeft  = 0.0;  # start of subgrid(s)\n"
+"        SubgridRight = 0.0;  # end of subgrid(s)\n"
+"    }\n"
+"}\n";  
+
 int GetUnits(float *DensityUnits, float *LengthUnits,
 	     float *TemperatureUnits, float *TimeUnits,
 	     float *VelocityUnits, FLOAT Time);
 
-int FreeExpansionInitialize(FILE *fptr, FILE *Outfptr, HierarchyEntry &TopGrid,
+int FreeExpansionInitialize(FILE *Outfptr, HierarchyEntry &TopGrid,
 			    TopGridData &MetaData)
 {
   char	*DensName  = "Density";
@@ -62,63 +86,42 @@ int FreeExpansionInitialize(FILE *fptr, FILE *Outfptr, HierarchyEntry &TopGrid,
   
   /* local declarations */
 
-  char line[MAX_LINE_LENGTH];
-  int  dim, ret, NumberOfSubgridZones[MAX_DIMENSION],
-                          SubgridDims[MAX_DIMENSION];
+  int  dim, NumberOfSubgridZones[MAX_DIMENSION],
+    SubgridDims[MAX_DIMENSION];
 
-  int   FreeExpansionFullBox     = FALSE;
-  float FreeExpansionVelocity[3]   = {0.0, 0.0, 0.0};   // gas initally (t=0) at rest
-  float FreeExpansionBField[3]   = {0.0, 0.0, 0.0};     // Gauss
-  float FreeExpansionDensity    = 1.0;
-  float FreeExpansionMaxVelocity = FLOAT_UNDEFINED;  // km/s
-  float FreeExpansionRadius    = 0.1;
-  float FreeExpansionMass    = 1.0;   // Msun
-  double FreeExpansionEnergy        = 1e51;   // ergs
-  float FreeExpansionTemperature = 100;  // K
+  int FreeExpansionFullBox;
+  float FreeExpansionVelocity[3];
+  float FreeExpansionBField[3];
+  float FreeExpansionDensity;
+  float FreeExpansionMaxVelocity;
+  float FreeExpansionRadius;
+  float FreeExpansionMass;
+  double FreeExpansionEnergy;
+  float FreeExpansionTemperature;
+
   float dx = (DomainRightEdge[0] - DomainLeftEdge[0]) / MetaData.TopGridDims[0];
 
   /* Use 3.5 zones on the finest level to resolve the initial explosion at t=0. */
-
   float dr = 3.5*dx*max(POW(RefineBy,-MaximumRefinementLevel), 0.25);
+  
 
-  /* set no subgrids by default. */
+  // This is how it should look eventually.
+  //Param.UpdateDefaults(config_free_expansion_defaults);
 
-  FreeExpansionSubgridLeft         = 0.0;    // start of subgrid(s)
-  FreeExpansionSubgridRight        = 0.0;    // end of subgrid(s)
+  /* read parameters */
 
-  /* read input from file */
+  Param.GetScalar(FreeExpansionFullBox, "Problem.FreeExpansion.FullBox");
+  Param.GetScalar(FreeExpansionMass, "Problem.FreeExpansion.Mass");
+  Param.GetScalar(FreeExpansionRadius, "Problem.FreeExpansion.Radius");
+  Param.GetScalar(FreeExpansionDensity, "Problem.FreeExpansion.Density");
+  Param.GetScalar(FreeExpansionEnergy, "Problem.FreeExpansion.Energy");
+  Param.GetScalar(FreeExpansionMaxVelocity, "Problem.FreeExpansion.MaxVelocity");
+  Param.GetScalar(FreeExpansionTemperature, "Problem.FreeExpansion.Temperature");
+  Param.GetScalar(FreeExpansionSubgridLeft, "Problem.FreeExpansion.SubgridLeft");
+  Param.GetScalar(FreeExpansionSubgridRight, "Problem.FreeExpansion.SubgridRight");
 
-  while (fgets(line, MAX_LINE_LENGTH, fptr) != NULL) {
-
-    ret = 0;
-
-    /* read parameters */
-
-    ret += sscanf(line, "FreeExpansionFullBox  = %"ISYM, &FreeExpansionFullBox);
-    ret += sscanf(line, "FreeExpansionMass  = %"FSYM, &FreeExpansionMass);
-    ret += sscanf(line, "FreeExpansionRadius  = %"FSYM, &FreeExpansionRadius);
-    ret += sscanf(line, "FreeExpansionDensity  = %"FSYM, &FreeExpansionDensity);
-    ret += sscanf(line, "FreeExpansionEnergy   = %"FSYM, &FreeExpansionEnergy);
-    ret += sscanf(line, "FreeExpansionMaxVelocity   = %"FSYM, &FreeExpansionMaxVelocity);
-    ret += sscanf(line, "FreeExpansionTemperature   = %"FSYM, &FreeExpansionTemperature);
-    ret += sscanf(line, "FreeExpansionVelocity = %"FSYM" %"FSYM" %"FSYM, 
-		  FreeExpansionVelocity, FreeExpansionVelocity+1, FreeExpansionVelocity+2);
-    ret += sscanf(line, "FreeExpansionBField = %"FSYM" %"FSYM" %"FSYM, 
-		  FreeExpansionBField, FreeExpansionBField+1, FreeExpansionBField+2);
-    ret += sscanf(line, "FreeExpansionSubgridLeft = %"FSYM, 
-		  &FreeExpansionSubgridLeft);
-    ret += sscanf(line, "FreeExpansionSubgridRight = %"FSYM, 
-		  &FreeExpansionSubgridRight);
-
-    /* if the line is suspicious, issue a warning */
-
-    if (ret == 0 && strstr(line, "=") && strstr(line, "FreeExpansion") && 
-	line[0] != '#' && MyProcessorNumber == ROOT_PROCESSOR)
-      fprintf(stderr, 
-	 "warning: the following parameter line was not interpreted:\n%s\n", 
-	      line);
-
-  } // end input from parameter file
+  Param.GetArray(FreeExpansionVelocity, "Problem.FreeExpansion.Velocity");
+  Param.GetArray(FreeExpansionBField, "Problem.FreeExpansion.BField");
 
 
   /* get units */

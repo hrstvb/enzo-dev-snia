@@ -1,3 +1,6 @@
+#include "ParameterControl/ParameterControl.h"
+extern Configuration Param;
+
 #include <string.h>
 #include <stdio.h>
 #include <math.h>
@@ -13,6 +16,19 @@
 #include "LevelHierarchy.h"
 #include "TopGridData.h"
 
+/* Set default parameter values */
+const char config_poisson_solver_test_defaults[] = 
+"### POISSON SOLVER TEST INITIALIZATION DEFAULTS ###\n"
+"\n"
+"Problem: {\n"
+"    PoissonSolverTest: {\n"
+"        Type            = 0;\n"
+"        GeometryControl = 1;\n"
+"        RefineAtStart   = 0;\n"
+"    }\n"
+"}\n";  
+
+
 void WriteListOfFloats(FILE *fptr, int N, float floats[]);
 void WriteListOfFloats(FILE *fptr, int N, FLOAT floats[]);
 void AddLevel(LevelHierarchyEntry *Array[], HierarchyEntry *Grid, int level);
@@ -22,8 +38,7 @@ int GetUnits(float *DensityUnits, float *LengthUnits,
 		      float *TemperatureUnits, float *TimeUnits,
 		      float *VelocityUnits, FLOAT Time);
 
-int PoissonSolverTestInitialize(FILE *fptr, FILE *Outfptr, 
-			    HierarchyEntry &TopGrid, TopGridData &MetaData)
+int PoissonSolverTestInitialize(FILE *Outfptr, HierarchyEntry &TopGrid, TopGridData &MetaData)
 {
   if (!useMHD) 
     ENZO_FAIL("DivergenceCleaning only useful with MHD simulations");
@@ -40,37 +55,24 @@ int PoissonSolverTestInitialize(FILE *fptr, FILE *Outfptr,
   char *PhiName = "Phi";
   char *DebugName = "Debug";
   char *Phi_pName = "Phip";
-  
-
-
-  /* declarations */
-
-  char  line[MAX_LINE_LENGTH];
-  int   dim, ret, level, sphere, i;
-
-  /* set default parameters */
-
-  int TestType=0;
-  float TestGeometryControl=1;
-  int RefineAtStart=0;
-
-  /* read input from file */
-
-
-  while (fgets(line, MAX_LINE_LENGTH, fptr) != NULL) {
-
-    ret = 0;
-
-    /* read parameters */
-
-    ret += sscanf(line, "PoissonSolverTestType = %d", &TestType);
-    ret += sscanf(line, "PoissonSolverTestGeometryControl = %f", &TestGeometryControl);
-    ret += sscanf(line, "PoissonSolverTestRefineAtStart = %d", &RefineAtStart);
-    /* if the line is suspicious, issue a warning */
-
-  } // end input from parameter file
-  
  
+  /* declarations */
+  int   dim, level, sphere, i;
+
+  int TestType;
+  float TestGeometryControl;
+  int RefineAtStart;
+
+
+  // This is how it should look eventually.
+  //Param.UpdateDefaults(config_poisson_solver_test_defaults);
+
+  /* read parameters */
+
+  Param.GetScalar(TestType, "Problem.PoissonSolverTest.Type");
+  Param.GetScalar(TestGeometryControl, "Problem.PoissonSolverTest.GeometryControl");
+  Param.GetScalar(RefineAtStart, "Problem.PoissonSolverTest.RefineAtStart");
+   
 
   if (TopGrid.GridData->PoissonSolverTestInitializeGrid(TestType, TestGeometryControl) == FAIL) {
     fprintf(stderr, "Error in PoissonSolverTestInitializeGrid.\n");

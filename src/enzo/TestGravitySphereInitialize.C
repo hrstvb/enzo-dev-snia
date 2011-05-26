@@ -14,8 +14,10 @@
 ************************************************************************/
  
 // This routine intializes a new simulation based on the parameter file.
-//
- 
+  
+#include "ParameterControl/ParameterControl.h"
+extern Configuration Param;
+
 #include <string.h>
 #include <stdio.h>
 #include <math.h>
@@ -34,14 +36,31 @@
 #include "TestGravitySphereGlobalData.h"
 #undef DEFINE_STORAGE
  
- 
+ /* Set default parameter values. */
+
+const char config_test_gravity_sphere_defaults[] = 
+"### TEST GRAVITY SPHERE INITIALIZATION DEFAULTS ###\n"
+"\n"
+"Problem: {\n"
+"    TestGravitySphere: {\n"
+"        InteriorDensity   = 1.0;  # density inside sphere\n"
+"        ExteriorDensity   = 1e-20;  # outside sphere\n"
+"        Radius            = 0.1;\n"
+"        Type              = 0;  # uniform density\n"
+"        SubgridLeft       = 0.0;  # start of subgrid\n"
+"        SubgridRight      = 0.0;  # end of subgrid\n"
+"        UseBaryons        = True;\n"
+"        RefineAtStart     = False;\n"
+"        Center            = [-99999.0, -99999.0, -99999.0]\n"
+"    }\n"
+"}\n";  
+
 void AddLevel(LevelHierarchyEntry *Array[], HierarchyEntry *Grid, int level);
 int RebuildHierarchy(TopGridData *MetaData,
 		     LevelHierarchyEntry *LevelArray[], int level);
 void WriteListOfFloats(FILE *fptr, int N, FLOAT floats[]);
  
-int TestGravitySphereInitialize(FILE *fptr, FILE *Outfptr,
-				HierarchyEntry &TopGrid, TopGridData &MetaData)
+int TestGravitySphereInitialize(FILE *Outfptr, HierarchyEntry &TopGrid, TopGridData &MetaData)
 {
   char *DensName = "Density";
   char *TEName   = "TotalEnergy";
@@ -52,8 +71,7 @@ int TestGravitySphereInitialize(FILE *fptr, FILE *Outfptr,
  
   /* declarations */
  
-  char  line[MAX_LINE_LENGTH];
-  int   dim, ret, level;
+  int   dim, level;
   int   NumberOfSubgridZones[MAX_DIMENSION], SubgridDims[MAX_DIMENSION];
   FLOAT LeftEdge[MAX_DIMENSION], RightEdge[MAX_DIMENSION];
  
@@ -64,54 +82,39 @@ int TestGravitySphereInitialize(FILE *fptr, FILE *Outfptr,
  
   /* set default parameters */
  
-        TestGravitySphereInteriorDensity   = 1.0;  // density inside sphere
-        TestGravitySphereExteriorDensity   = tiny_number;  // outside sphere
-        TestGravitySphereRadius            = 0.1;
-        TestGravitySphereType              = 0;    // uniform density
-  FLOAT TestGravitySphereSubgridLeft       = 0.0;  // start of subgrid
-  FLOAT TestGravitySphereSubgridRight      = 0.0;  // end of subgrid
-  int   TestGravitySphereUseBaryons        = TRUE;
-  int   TestGravitySphereRefineAtStart     = FALSE;
+  FLOAT TestGravitySphereSubgridLeft;
+  FLOAT TestGravitySphereSubgridRight;
+  int   TestGravitySphereUseBaryons;
+  int   TestGravitySphereRefineAtStart;
   FLOAT TestGravitySphereCenter[MAX_DIMENSION];
+
+ 
+  // This is how it should look eventually.
+  //Param.UpdateDefaults(config_test_gravity_sphere_defaults);
+
+  // We need to update the Center parameter in the defaults settings,
+  // since it depends on runtime parameters (DomainLeftEdge,
+  // DomainRightEdge). Super kludgy...
+
+  FLOAT DefaultCenter[MAX_DIMENSION];
   for (dim = 0; dim < MAX_DIMENSION; dim++)
-    TestGravitySphereCenter[dim] = 0.5*(DomainLeftEdge[dim] +
-					DomainRightEdge[dim]);
+    DefaultCenter[dim] = 0.5*(DomainLeftEdge[dim] +
+			      DomainRightEdge[dim]);
+  //  Param.UpdateDefaults("Problem.TestGravitySphere.Center",DefaultCenter);  
+
+  /* read parameters */
  
-  /* read input from file */
- 
-  while (fgets(line, MAX_LINE_LENGTH, fptr) != NULL) {
- 
-    ret = 0;
- 
-    /* read parameters */
- 
-    ret += sscanf(line, "TestGravitySphereInteriorDensity = %"FSYM,
-		  &TestGravitySphereInteriorDensity);
-    ret += sscanf(line, "TestGravitySphereExteriorDensity = %"FSYM,
-		  &TestGravitySphereExteriorDensity);
-    ret += sscanf(line, "TestGravitySphereRadius = %"FSYM,
-		  &TestGravitySphereRadius);
-    ret += sscanf(line, "TestGravitySphereType = %"ISYM,
-		  &TestGravitySphereType);
-    ret += sscanf(line, "TestGravitySphereSubgridLeft = %"PSYM,
-		  &TestGravitySphereSubgridLeft);
-    ret += sscanf(line, "TestGravitySphereSubgridRight = %"PSYM,
-		  &TestGravitySphereSubgridRight);
-    ret += sscanf(line, "TestGravitySphereUseBaryons = %"ISYM,
-		  &TestGravitySphereUseBaryons);
-    ret += sscanf(line, "TestGravitySphereRefineAtStart = %"ISYM,
-		  &TestGravitySphereRefineAtStart);
-    ret += sscanf(line, "TestGravitySphereCenter = %"PSYM" %"PSYM" %"PSYM,
-		  TestGravitySphereCenter, TestGravitySphereCenter+1,
-		  TestGravitySphereCenter+2);
- 
-    /* if the line is suspicious, issue a warning */
- 
-    if (ret == 0 && strstr(line, "=") && strstr(line, "TestGravitySphere")
-	&& line[0] != '#')
-      fprintf(stderr, "warning: the following parameter line was not interpreted:\n%s\n", line);
- 
-  } // end input from parameter file
+  Param.GetScalar(TestGravitySphereInteriorDensity, "Problem.TestGravitySphere.InteriorDensity");
+  Param.GetScalar(TestGravitySphereExteriorDensity, "Problem.TestGravitySphere.ExteriorDensity");
+  Param.GetScalar(TestGravitySphereRadius, "Problem.TestGravitySphere.Radius");
+  Param.GetScalar(TestGravitySphereType, "Problem.TestGravitySphere.Type");
+  Param.GetScalar(TestGravitySphereSubgridLeft, "Problem.TestGravitySphere.SubgridLeft");
+  Param.GetScalar(TestGravitySphereSubgridRight, "Problem.TestGravitySphere.SubgridRight");
+  Param.GetScalar(TestGravitySphereUseBaryons, "Problem.TestGravitySphere.UseBaryons");
+  Param.GetScalar(TestGravitySphereRefineAtStart, "Problem.TestGravitySphere.RefineAtStart");
+
+  Param.GetArray(TestGravitySphereCenter, "Problem.TestGravitySphere.Center");
+
  
   /* set up grid */
  
