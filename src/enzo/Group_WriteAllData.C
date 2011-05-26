@@ -494,7 +494,20 @@ int Group_WriteAllData(char *basename, int filenumber,
         CommunicationBarrier();
         if( pe == ii )
         {
- 
+#ifdef MHDCT
+          if ( (cptr = strstr(basename, MetaData.ExtraDumpName)) ) {
+            if (MetaData.ExtraDumpDir != NULL) {
+#ifdef SYSCALL
+              unixresult = SysMkdir("", dumpdirname);
+              if (debug) fprintf(stdout, "Extra dump: dumpdirname=(%s) == unixresult=%"ISYM"\n", dumpdirname, unixresult);
+#else
+              strcat(strcpy(unixcommand, "mkdir -p "), dumpdirname);
+              unixresult = system(unixcommand);
+              if (debug) fprintf(stdout, "DATA dump: %s == %"ISYM"\n", unixcommand, unixresult);
+#endif
+            }
+          } // ENDIF extradump
+#endif //MHDCT
           if ( (cptr = strstr(basename, MetaData.DataDumpName)) ) {
             if (MetaData.DataDumpDir != NULL) {
 #ifdef SYSCALL
@@ -542,7 +555,20 @@ int Group_WriteAllData(char *basename, int filenumber,
     {
       if ( MyProcessorNumber == ROOT_PROCESSOR )
       {
- 
+#ifdef MHDCT
+        if ( (cptr = strstr(basename, MetaData.ExtraDumpName)) ) {
+          if (MetaData.ExtraDumpDir != NULL) {
+#ifdef SYSCALL
+            unixresult = SysMkdir("", dumpdirname);
+            if (debug) fprintf(stdout, "Extra dump: dumpdirname=(%s) == unixresult=%"ISYM"\n", dumpdirname, unixresult);
+#else
+            strcat(strcpy(unixcommand, "mkdir -p "), dumpdirname);
+            unixresult = system(unixcommand);
+            if (debug) fprintf(stdout, "Extra dump: %s == %"ISYM"\n", unixcommand, unixresult);
+#endif
+          }
+        } // ENDIF datadump
+#endif //MDHCT
         if ( (cptr = strstr(basename, MetaData.DataDumpName)) ) {
           if (MetaData.DataDumpDir != NULL) {
 #ifdef SYSCALL

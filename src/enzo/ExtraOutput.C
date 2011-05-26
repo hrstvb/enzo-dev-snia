@@ -5,8 +5,19 @@
 // Written by: David Collins 
 // date      : May 25, 2011.  3:36 pm.  Cold in my office.
 // 
-// Purpose   : To provide a horrific amount of data.  Calls to ExtraOutput(int) are sprinkled throughout the code,
-//             which helps debug events throughout the evolution.
+// Purpose   : To provide a horrific amount of data.  Calls to ExtraOutput(), thus WriteAllData, 
+//             are sprinkled throughout the code,which helps debug events throughout the evolution.
+//             Output positions are indicated by an integer, and outputs are of the form 
+//             EDXX_YYYY/ExtraOutputXX_YYYY, where XX is the identifier of the dump and YYYY is a counter
+//             for that dump location.  
+//
+//             Output is controlled by the parameter ExtraOutput, a list of integers.  Each integer
+//             corresponds to a location in the code.  Each dump is performed every time the location is reached,
+//             which will result in qute a lot of data if one is not careful.
+//
+//             ExtraOuput is, by design, not re-written into the parameter file when data dumps are made,
+//             to prevent writing too much data.  
+//
 #include "preincludes.h"
  
 #ifdef USE_MPI
@@ -48,21 +59,19 @@ int ExtraOutput(int output_flag, LevelHierarchyEntry *LevelArray[],TopGridData *
         ){
     int WriteOut = FALSE;
     for( int i=0; i<MAX_EXTRA_OUTPUTS; i++){
-        fprintf(stderr,"CRACKER lies ExtraOutputs[%d]=%d, output_flag = %d, %d\n",i,ExtraOutputs[i],output_flag, output_flag - ExtraOutputs[i]);
         if( output_flag == ExtraOutputs[i]){
             WriteOut = TRUE;
-            fprintf(stderr,"FUCK THIS SHIT\n");
+            break;
         }
     }
-        fprintf(stderr,"DERPx %s %d\n",MetaData->ExtraDumpName,TRUE);
+
     if( WriteOut ){
         LevelHierarchyEntry *Temp2 = LevelArray[0];
         while (Temp2->NextGridThisLevel != NULL)
           Temp2 = Temp2->NextGridThisLevel; /* ugh: find last in linked list */
         //#ifdef USE_HDF5_GROUPS
-        sprintf(MetaData->ExtraDumpName,"ExtraDump%02d",output_flag);
-        sprintf(MetaData->ExtraDumpDir,"ED%02d",output_flag);
-        fprintf(stderr,"DERP2 %s\n",MetaData->ExtraDumpName);
+        sprintf(MetaData->ExtraDumpName,"ExtraDump%02"ISYM"_",output_flag);
+        sprintf(MetaData->ExtraDumpDir,"ED%02"ISYM"_",output_flag);
         if (Group_WriteAllData(MetaData->ExtraDumpName, output_number[output_flag]++,
                    Temp2->GridHierarchyEntry, *MetaData, Exterior,
 #ifdef TRANSFER
