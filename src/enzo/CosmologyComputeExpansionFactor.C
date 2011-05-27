@@ -17,6 +17,8 @@
 #include "ErrorExceptions.h"
 #include "macros_and_parameters.h"
 #include "CosmologyParameters.h"
+#include "typedefs.h"
+#include "global_data.h"
  
 #define OMEGA_TOLERANCE 1.0e-5
  
@@ -38,6 +40,13 @@ double arcsinh(double x);
 int CosmologyComputeExpansionFactor(FLOAT time, FLOAT *a, FLOAT *dadt)
 {
  
+  // if we're using a fixed redshift, dadt = 0 and return 1 for a.
+  if(UseFixedRedshift==TRUE){
+    *a = 1.0;
+    *dadt = 0.0;
+    return SUCCESS;
+  }
+
   /* Error check. */
  
   if (InitialTimeInCodeUnits == 0) {

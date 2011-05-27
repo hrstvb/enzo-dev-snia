@@ -85,7 +85,7 @@ int RadiationFieldCalculateRates(FLOAT Time)
     ENZO_FAIL("Error in GetUnits.\n");
   }
 
-  if (ComovingCoordinates) {
+  if (ComovingCoordinates || UseFixedRedshift) {
     CosmologyComputeExpansionFactor(Time, &a, &dadt);
 
     aUnits = 1.0/(1.0 + InitialRedshift);

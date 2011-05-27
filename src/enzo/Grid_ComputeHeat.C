@@ -105,7 +105,7 @@ int grid::ComputeHeat (float dedt[]) {
     ENZO_FAIL("Error in GetUnits.");
   }
 
-  if (ComovingCoordinates) {
+  if (ComovingCoordinates || UseFixedRedshift) {
  
     if (CosmologyComputeExpansionFactor(Time, &a, &dadt)
 	== FAIL) {

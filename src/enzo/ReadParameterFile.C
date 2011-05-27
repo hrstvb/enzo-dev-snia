@@ -39,7 +39,8 @@
 #include "ExternalBoundary.h"
 #include "Grid.h"
 #include "TopGridData.h"
-#include "hydro_rk/EOS.h" 
+#include "hydro_rk/EOS.h"
+#include "CosmologyParameters.h" 
 
 /* This variable is declared here and only used in Grid_ReadGrid. */
  
@@ -945,6 +946,9 @@ int ReadParameterFile(FILE *fptr, TopGridData &MetaData, float *Initialdt)
 		  ResetMagneticFieldAmplitude+1,
 		  ResetMagneticFieldAmplitude+2);
 
+    ret += sscanf(line, "UseFixedRedshift = %"ISYM, &UseFixedRedshift);
+    ret += sscanf(line, "FixedRedshift = %"FSYM, &FixedRedshift);
+
     /* If the dummy char space was used, then make another. */
  
     if (*dummy != 0) {
@@ -1082,6 +1086,18 @@ int ReadParameterFile(FILE *fptr, TopGridData &MetaData, float *Initialdt)
       ENZO_FAIL("Error in ReadUnits. ");
     }
     rewind(fptr);
+  }
+
+  // don't want comoving coordinates _and_ UseFixedRedshift on at the same time,
+  // because that would be chaos.
+  if(ComovingCoordinates && UseFixedRedshift){
+    ENZO_FAIL("You cannot have both ComovingCoordinates and UseFixedRedshift set to 1!\n");
+  }
+
+  // if we are using fixed redshift, set InitialRedshift (usually set by cosmology routines)
+  // (this is needed basically everywhere)
+  if(UseFixedRedshift){
+    InitialRedshift = FixedRedshift;
   }
 
   // make sure that MHD is turned on if we're trying to use anisotropic conduction.

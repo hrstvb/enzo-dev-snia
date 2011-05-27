@@ -125,16 +125,16 @@ int grid::ConductionCloudInitialize (float CloudOverdensity, FLOAT CloudWidth, i
 	}
 
 	/*--------- MODIFY THE DENSITY HERE -----------*/
-	BaryonField[DensNum][ELT(i,j,k)] /= val;
+	BaryonField[DensNum][ELT(i,j,k)] *= val;
 
 	if(HydroMethod==Zeus_Hydro){  // ZEUS
-	  BaryonField[TENum][ELT(i,j,k)] *= val;  // TE = gas energy
+	  BaryonField[TENum][ELT(i,j,k)] /= val;  // TE = gas energy
 	} else{ // PPM
 	  
-	  BaryonField[TENum][ELT(i,j,k)] *= val;  // TE = total energy energy, but velocity=0 here.
+	  BaryonField[TENum][ELT(i,j,k)] /= val;  // TE = total energy energy, but velocity=0 here.
 
 	  if(DualEnergyFormalism)
-	    BaryonField[GENum][ELT(i,j,k)] *= val;  // if DEF=1, need to separately set the gas internal energy.
+	    BaryonField[GENum][ELT(i,j,k)] /= val;  // if DEF=1, need to separately set the gas internal energy.
 	}
 
 	if(TestProblemData.MultiSpecies>1){

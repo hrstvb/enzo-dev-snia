@@ -22,6 +22,7 @@
 #include "global_data.h"
 #include "phys_constants.h"
 #include "TopGridData.h"
+#include "CosmologyParameters.h"
 
 /* function prototypes */
 int CosmologyGetUnits(float *DensityUnits, float *LengthUnits,
@@ -49,6 +50,16 @@ int GetUnits(float *DensityUnits, float *LengthUnits,
       *TemperatureUnits = mh*pow(GlobalLengthUnits/GlobalTimeUnits,2)/kboltz;   //K
       *TimeUnits        = GlobalTimeUnits;
       *VelocityUnits    = GlobalLengthUnits/GlobalTimeUnits; //cms-1
+
+      if(UseFixedRedshift){
+	FLOAT CurrentRedshift = InitialRedshift;
+	*DensityUnits *= POW(1. + CurrentRedshift,3);
+	*LengthUnits  *= (1. + CurrentRedshift);
+	*TemperatureUnits *=  (1. + InitialRedshift);
+	*TimeUnits *= POW(1 + InitialRedshift,FLOAT(1.5));
+	*VelocityUnits *= sqrt(1 + InitialRedshift);
+      }
+
   
     }
   return SUCCESS;
@@ -76,6 +87,16 @@ int GetUnits(float *DensityUnits, float *LengthUnits,
       *TemperatureUnits = mh*pow(GlobalLengthUnits/GlobalTimeUnits,2)/kboltz;   //K
       *TimeUnits        = GlobalTimeUnits;
       *VelocityUnits    = GlobalLengthUnits/GlobalTimeUnits; //cms-1
+
+      if(UseFixedRedshift){
+	FLOAT CurrentRedshift = InitialRedshift;
+	*DensityUnits *= POW(1. + CurrentRedshift,3);
+	*LengthUnits  *= (1. + CurrentRedshift);
+	*TemperatureUnits *=  (1. + InitialRedshift);
+	*TimeUnits *= POW(1 + InitialRedshift,FLOAT(1.5));
+        *VelocityUnits *= sqrt(1 + InitialRedshift);
+      }
+
     }
   return SUCCESS;
 }

@@ -161,7 +161,7 @@ int grid::SolveHighDensityPrimordialChemistry()
   float TemperatureUnits = 1, DensityUnits = 1, LengthUnits = 1, 
     VelocityUnits = 1, TimeUnits = 1, MassUnits = 1, aUnits = 1;
 
-  if (ComovingCoordinates) {
+  if (ComovingCoordinates || UseFixedRedshift) {
 
     if (CosmologyComputeExpansionFactor(Time+0.5*dtFixed, &a, &dadt) 
 	== FAIL) {

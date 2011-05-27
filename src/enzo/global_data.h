@@ -719,8 +719,6 @@ EXTERN float DivergenceCleaningThreshold;
 EXTERN float PoissonApproximationThreshold;
 EXTERN int PoissonBoundaryType;
 
-
-
 /* Star Particle paramters */
 
 EXTERN int ShiningParticleID;
@@ -900,5 +898,9 @@ EXTERN float ConductionCourantSafetyNumber;
 
 /* For the database */
 EXTERN char *DatabaseLocation;
+
+/* Fixed redshift */
+EXTERN int UseFixedRedshift; // TRUE or FALSE
+EXTERN float FixedRedshift; // just a redshift
 
 #endif

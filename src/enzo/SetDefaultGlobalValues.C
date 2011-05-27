@@ -432,6 +432,9 @@ int SetDefaultGlobalValues(TopGridData &MetaData)
   AnisotropicConductionSpitzerFraction = 1.0;
   ConductionCourantSafetyNumber = 0.5;
 
+  UseFixedRedshift = FALSE;
+  FixedRedshift = 0.0;
+
   PythonTopGridSkip                = 0;
   PythonSubcycleSkip               = 1;
 
