@@ -103,6 +103,13 @@ void RunEventHooks(char *, HierarchyEntry *Grid[], TopGridData &MetaData) {}
 /* function prototypes */
  
 
+#ifdef MHDCT 
+int ExtraOutput(int output_flag, LevelHierarchyEntry *LevelArray[],TopGridData *MetaData, int level, ExternalBoundary *Exterior
+#ifdef TRANSFER
+			  , ImplicitProblemABC *ImplicitSolver
+#endif
+        );
+#endif //MHDCT
 int  RebuildHierarchy(TopGridData *MetaData,
 		      LevelHierarchyEntry *LevelArray[], int level);
 int  ReportMemoryUsage(char *header = NULL);
@@ -355,6 +362,13 @@ int EvolveLevel(TopGridData *MetaData, LevelHierarchyEntry *LevelArray[],
   /* Loop over grid timesteps until the elapsed time equals the timestep
      from the level above (or loop once for the top level). */
  
+#ifdef MHDCT
+  ExtraOutput(1,LevelArray,MetaData,level,Exterior
+#ifdef TRANSFER
+		      , ImplicitSolver
+#endif
+          );
+#endif //MHDCT
   while ((CheckpointRestart == TRUE)
         || (dtThisLevelSoFar[level] < dtLevelAbove)) {
     if(CheckpointRestart == FALSE) {
@@ -546,11 +560,15 @@ int EvolveLevel(TopGridData *MetaData, LevelHierarchyEntry *LevelArray[],
  
       if (ComovingCoordinates)
 	Grids[grid1]->GridData->ComovingExpansionTerms();
- 
     }  // end loop over grids
- 
+#ifdef MHDCT
+  ExtraOutput(3,LevelArray,MetaData,level,Exterior
+#ifdef TRANSFER
+		      , ImplicitSolver
+#endif
+          );
+#endif //MHDCT
     /* Finalize (accretion, feedback, etc.) star particles */
-
     StarParticleFinalize(Grids, MetaData, NumberOfGrids, LevelArray,
 			 level, AllStars, TotalStarParticleCountPrevious);
 
@@ -594,7 +612,6 @@ int EvolveLevel(TopGridData *MetaData, LevelHierarchyEntry *LevelArray[],
 
     } // if WritePotential
  
-
     /* For each grid, delete the GravitatingMassFieldParticles. */
  
     for (grid1 = 0; grid1 < NumberOfGrids; grid1++)
@@ -613,7 +630,6 @@ int EvolveLevel(TopGridData *MetaData, LevelHierarchyEntry *LevelArray[],
         for (grid1 = 0; grid1 < NumberOfGrids; grid1++)
           Grids[grid1]->GridData->SetTimeStep(dtThisLevel[level]);
     }
-
     if (LevelArray[level+1] != NULL) {
       if (EvolveLevel(MetaData, LevelArray, level+1, dtThisLevel[level], Exterior
 #ifdef TRANSFER
@@ -623,7 +639,6 @@ int EvolveLevel(TopGridData *MetaData, LevelHierarchyEntry *LevelArray[],
 	ENZO_VFAIL("Error in EvolveLevel (%"ISYM").\n", level)
       }
     }
-
 #ifdef USE_LCAPERF
     // Update lcaperf "level" attribute
 
@@ -670,7 +685,6 @@ int EvolveLevel(TopGridData *MetaData, LevelHierarchyEntry *LevelArray[],
     CreateSUBlingList(MetaData, LevelArray, level, &SUBlingList);
 #endif /* FAST_SIB */
 #endif /* FLUX_FIX */
-
 #ifdef FLUX_FIX
     UpdateFromFinerGrids(level, Grids, NumberOfGrids, NumberOfSubgrids,
 			     SubgridFluxesEstimate,SUBlingList,MetaData);
@@ -678,11 +692,10 @@ int EvolveLevel(TopGridData *MetaData, LevelHierarchyEntry *LevelArray[],
     UpdateFromFinerGrids(level, Grids, NumberOfGrids, NumberOfSubgrids,
 			 SubgridFluxesEstimate);
 #endif
-
 #ifdef FLUX_FIX
     DeleteSUBlingList( NumberOfGrids, SUBlingList );
 #endif
-
+    
   /* ------------------------------------------------------- */
   /* Add the saved fluxes (in the last subsubgrid entry) to the exterior
      fluxes for this subgrid .
@@ -713,8 +726,15 @@ int EvolveLevel(TopGridData *MetaData, LevelHierarchyEntry *LevelArray[],
  
     cycle++;
     LevelCycleCount[level]++;
- 
+
   } // end of loop over subcycles
+#ifdef MHDCT
+  ExtraOutput(2,LevelArray,MetaData,level,Exterior
+#ifdef TRANSFER
+		      , ImplicitSolver
+#endif
+          );
+#endif //MHDCT
  
   if (debug)
     fprintf(stdout, "EvolveLevel[%"ISYM"]: NumberOfSubCycles = %"ISYM" (%"ISYM" total)\n", level,
