@@ -70,14 +70,14 @@ int ExtraOutput(int output_flag, LevelHierarchyEntry *LevelArray[],TopGridData *
         while (Temp2->NextGridThisLevel != NULL)
           Temp2 = Temp2->NextGridThisLevel; /* ugh: find last in linked list */
         //#ifdef USE_HDF5_GROUPS
-        sprintf(MetaData->ExtraDumpName,"ExtraDump%02"ISYM"_",output_flag);
+        sprintf(MetaData->ExtraDumpName,"Extra%02"ISYM"_",output_flag);
         sprintf(MetaData->ExtraDumpDir,"ED%02"ISYM"_",output_flag);
         if (Group_WriteAllData(MetaData->ExtraDumpName, output_number[output_flag]++,
                    Temp2->GridHierarchyEntry, *MetaData, Exterior,
 #ifdef TRANSFER
                    ImplicitSolver,
 #endif
-                   LevelArray[level]->GridData->ReturnTime(), FALSE) == FAIL) {
+                   -1, FALSE) == FAIL) {
                 ENZO_FAIL("Error in Group_WriteAllData.");
         }
     }
