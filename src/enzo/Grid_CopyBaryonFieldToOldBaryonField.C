@@ -73,7 +73,54 @@ int grid::CopyBaryonFieldToOldBaryonField()
       OldBaryonField[field][i] = BaryonField[field][i];
  
   } // end loop over fields
+#ifdef MHDCT
 
+  if(useMHDCT){   
+    for(field=0;field<3;field++){
+
+      if(MagneticField[field] == NULL ){
+	fprintf(stderr, "MagneticField mising in CopyBaryonFieldToOld \n");
+	return FAIL;
+      }
+      
+      if(OldMagneticField[field] == NULL) {
+	OldMagneticField[field] = new float[MagneticSize[field]];
+      }
+      
+      for(i=0;i<MagneticSize[field];i++){
+	OldMagneticField[field][i] = MagneticField[field][i];
+      }
+
+      if(CenteredB[field] == NULL) {
+	fprintf(stderr, "CenteredB missing in CopyBaryonFieldToOld... \n");
+	return FAIL;
+      }
+      
+      if(OldCenteredB[field] == NULL) {
+	OldCenteredB[field] = new float[size];
+      }
+      
+      for(i=0;i<size;i++){
+	OldCenteredB[field][i] = CenteredB[field][i];
+      }
+/*      
+	if(ElectricField[field] == NULL ){
+	fprintf(stderr, "ElectricField Missing in CopyBaryonFieldToOld... \n");
+	return FAIL;
+	}
+	
+	if(OldElectricField[field] == NULL) {
+	OldElectricField[field] = new float[ElectricSize[field]];
+	}
+	
+	for(i=0;i<ElectricSize[field];i++){
+	OldElectricField[field][i] = ElectricField[field][i];
+	}
+*/
+
+    }//for(field < 3;)
+  }//end if(MHD_Used)
+#endif //MHDCT
   // AccelerationHack
 
 #ifdef SAB
