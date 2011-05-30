@@ -12,8 +12,7 @@
 /
 ************************************************************************/
  
-// This routine intializes a new simulation based on the parameter file.
-//
+// This routine intializes a new simulation based on the enzo parameter file
  
 #include <string.h>
 #include <stdio.h>
@@ -37,6 +36,8 @@ int RotatingSphereInitialize(FILE *fptr, FILE *Outfptr, HierarchyEntry &TopGrid,
     fflush(stdout);
   }
 
+  /* initialize field names */
+
   char *DensName = "Density";
   char *TEName   = "TotalEnergy";
   char *GEName   = "GasEnergy";
@@ -57,37 +58,38 @@ int RotatingSphereInitialize(FILE *fptr, FILE *Outfptr, HierarchyEntry &TopGrid,
   char *HDIName   = "HDI_Density";
   char *MetalName = "Metal_Density";
 
-  /* parameter declarations */
- 
-  FLOAT RotatingSphereSubgridLeft[MAX_DIMENSION], RotatingSphereSubgridRight[MAX_DIMENSION];
-  FLOAT LeftEdge[MAX_DIMENSION], RightEdge[MAX_DIMENSION];
-  FLOAT RotatingSphereCenterPosition[MAX_DIMENSION];
-
-  /* local declarations */
+/* local declarations */
  
   char line[MAX_LINE_LENGTH];
   int  i, j, dim, ret, NumberOfSubgridZones[MAX_DIMENSION],
     SubgridDims[MAX_DIMENSION];
  
-  /* make sure it is 3D */
+  /* make sure it is 3D - this particular problem type breaks down for dims < 3 */
  
   if (MetaData.TopGridRank != 3) {
     ENZO_VFAIL("Cannot do RotatingSphere in %"ISYM" dimension(s)\n", MetaData.TopGridRank)
   }
+
+  /* position information */
+ 
+  FLOAT RotatingSphereSubgridLeft[MAX_DIMENSION], RotatingSphereSubgridRight[MAX_DIMENSION];
+  FLOAT LeftEdge[MAX_DIMENSION], RightEdge[MAX_DIMENSION];
+  FLOAT RotatingSphereCenterPosition[MAX_DIMENSION];
+
+  /* some declarations and default settings for problem-specific parameters */
  
   for(i=0; i<MAX_DIMENSION; i++)
     RotatingSphereCenterPosition[i] = 0.5;  // right in the middle of the box
 
   float RotatingSphereVelocity[3]   = {0.0, 0.0, 0.0};   // gas initally at rest
   float RotatingSphereBField[3]   = {0.0, 0.0, 0.0};   // gas initally at rest
-  FLOAT RotatingSphereCoreRadius = 0.3;
+  FLOAT RotatingSphereCoreRadius = 0.1;
   float RotatingSphereLambda = 0.05;
   float RotatingSphereCentralDensity = 100.0;
   float RotatingSphereCentralTemperature = 1000.0;
   float RotatingSphereDensity = 1.0;
   float RotatingSphereTotalEnergy = 1.0;
   float Pi                      = 3.14159;
-
   int RotatingSphereInitialRefinementLevel = 0;
 
   /* set no subgrids by default. */
@@ -98,7 +100,8 @@ int RotatingSphereInitialize(FILE *fptr, FILE *Outfptr, HierarchyEntry &TopGrid,
   RotatingSphereSubgridRight[0] = RotatingSphereSubgridRight[1] = 
     RotatingSphereSubgridRight[2] = 0.0;    // end of subgrid(s)
 
-  /* read input from file */
+  /* read input from enzo parameter file - just the stuff for this problem type and
+     any TestProblem data. */
  
   while (fgets(line, MAX_LINE_LENGTH, fptr) != NULL) {
  
@@ -164,14 +167,14 @@ int RotatingSphereInitialize(FILE *fptr, FILE *Outfptr, HierarchyEntry &TopGrid,
         ENZO_FAIL("Error in InitializeUniformGrid.");
   }
  
-  /* Create as many subgrids as there are refinement levels
-     needed to resolve the initial explosion region upon the start-up. */
+  /* Create as many subgrids as there are initial refinement levels.  This is
+     needed to resolve the initial region of interest upon the start-up. */
  
   HierarchyEntry ** Subgrid;
   if (RotatingSphereInitialRefinementLevel > 0)
     Subgrid   = new HierarchyEntry*[RotatingSphereInitialRefinementLevel];
  
-  /* Create new HierarchyEntries. */
+  /* Create new HierarchyEntries and fill in info about number of zones, etc.. */
  
   int lev;
   for (lev = 0; lev < RotatingSphereInitialRefinementLevel; lev++)
@@ -221,32 +224,31 @@ int RotatingSphereInitialize(FILE *fptr, FILE *Outfptr, HierarchyEntry &TopGrid,
       Subgrid[lev]->GridData->PrepareGrid(MetaData.TopGridRank, SubgridDims,
 				     LeftEdge, RightEdge, 0);
       if (Subgrid[lev]->GridData->InitializeUniformGrid(RotatingSphereDensity,
-						   RotatingSphereTotalEnergy,
-						   RotatingSphereTotalEnergy,
+						        RotatingSphereTotalEnergy,
+						        RotatingSphereTotalEnergy,
 							RotatingSphereVelocity,
 							RotatingSphereBField) == FAIL) {
 		ENZO_FAIL("Error in InitializeUniformGrid (subgrid).");
       }
  
-      /* set up the initial explosion area on the finest resolution subgrid */
+      /* set up the initial sphere on all subgrids */
  
-      if (lev == RotatingSphereInitialRefinementLevel - 1)
-	if (Subgrid[lev]->GridData->RotatingSphereInitializeGrid(RotatingSphereCoreRadius,
-								   RotatingSphereCenterPosition,
-								   RotatingSphereLambda,
-								 RotatingSphereCentralDensity,
-								   RotatingSphereCentralTemperature) 
-	    == FAIL) {
-	  	  ENZO_FAIL("Error in RotatingSphereInitialize[Sub]Grid.");
+      if (Subgrid[lev]->GridData->RotatingSphereInitializeGrid(RotatingSphereCoreRadius,
+							       RotatingSphereCenterPosition,
+							       RotatingSphereLambda,
+							       RotatingSphereCentralDensity,
+							       RotatingSphereCentralTemperature) 
+	  == FAIL) {
+	            ENZO_FAIL("Error in RotatingSphereInitialize[Sub]Grid.");
 	}
 
-    }
+    } // if (NumberOfSubgridZones[0] > 0)
     else{
       printf("RotatingSphere: single grid start-up.\n");
     }
   }
 
- 
+
   /* set up subgrids from level 1 to max refinement level -1 */
  
   for (lev = RotatingSphereInitialRefinementLevel - 1; lev > 0; lev--)
@@ -266,10 +268,10 @@ int RotatingSphereInitialize(FILE *fptr, FILE *Outfptr, HierarchyEntry &TopGrid,
   }
   else
     if (TopGrid.GridData->RotatingSphereInitializeGrid(RotatingSphereCoreRadius,
-							 RotatingSphereCenterPosition,
-							 RotatingSphereLambda,
+						       RotatingSphereCenterPosition,
+						       RotatingSphereLambda,
 						       RotatingSphereCentralDensity,
-						         RotatingSphereCentralTemperature) == FAIL) {
+						       RotatingSphereCentralTemperature) == FAIL) {
             ENZO_FAIL("Error in RotatingSphereInitializeGrid.");
     }
 
