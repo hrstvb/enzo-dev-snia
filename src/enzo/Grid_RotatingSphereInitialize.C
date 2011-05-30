@@ -25,10 +25,11 @@
 
 int FindField(int field, int farray[], int numfields);
 
-int grid::RotatingSphereInitializeGrid(FLOAT RotatingSphereRadius,
+int grid::RotatingSphereInitializeGrid(FLOAT RotatingSphereCoreRadius,
 					 FLOAT RotatingSphereCenterPosition[MAX_DIMENSION],
 					 float RotatingSphereLambda,
-					 float RotatingSphereOverdensity)
+				       float RotatingSphereCentralDensity,
+				         float RotatingSphereCentralTemperature)
 {
  
   if (ProcessorNumber != MyProcessorNumber)
@@ -39,13 +40,13 @@ int grid::RotatingSphereInitializeGrid(FLOAT RotatingSphereRadius,
     fflush(stdout);
   }
  
-  printf("RotatingSphereRadius = %e\n",RotatingSphereRadius);
+  printf("RotatingSphereCoreRadius = %e\n",RotatingSphereCoreRadius);
   printf("RotatingSphereCenterPosition = %e %e %e\n", 
 	 RotatingSphereCenterPosition[0],
 	 RotatingSphereCenterPosition[1],
 	 RotatingSphereCenterPosition[2]);
   printf("RotatingSphereLambda = %e\n",RotatingSphereLambda);
-  printf("RotatingSphereOverdensity = %e\n",RotatingSphereOverdensity);
+  printf("RotatingSphereCentralDensity = %e\n",RotatingSphereCentralDensity);
 
 
   /* declarations */
@@ -80,7 +81,7 @@ int grid::RotatingSphereInitializeGrid(FLOAT RotatingSphereRadius,
   outside_rho =  BaryonField[DensNum][0];
 
   // updated to include correct gravitational constant and more accurate constant (corrections by J-H Choi, U. Kentucky)
-  omega = RotatingSphereLambda * sqrt((GravitationalConstant / (4.0*M_PI)) * RotatingSphereOverdensity * outside_rho) / 0.146;
+  omega = RotatingSphereLambda * sqrt((GravitationalConstant / (4.0*M_PI)) * RotatingSphereCentralDensity * outside_rho) / 0.146;
 
   if(HydroMethod==2){  // ZEUS
 
@@ -119,9 +120,9 @@ int grid::RotatingSphereInitializeGrid(FLOAT RotatingSphereRadius,
 
 	zdist = fabs(z-RotatingSphereCenterPosition[2]);
 
-	if ( (radius <= RotatingSphereRadius) && (zdist <= RotatingSphereRadius) ){
+	if ( (radius <= RotatingSphereCoreRadius) && (zdist <= RotatingSphereCoreRadius) ){
 
-	  BaryonField[DensNum][cellindex] = outside_rho * RotatingSphereOverdensity;
+	  BaryonField[DensNum][cellindex] = outside_rho * RotatingSphereCentralDensity;
 
 	  if(TestProblemData.UseMetallicityField>0 && MetalNum != FALSE)
 	    BaryonField[MetalNum][cellindex] = BaryonField[DensNum][cellindex]*TestProblemData.MetallicityField_Fraction;
@@ -140,23 +141,23 @@ int grid::RotatingSphereInitializeGrid(FLOAT RotatingSphereRadius,
 	  if(HydroMethod == 2){
 
 	    // ZEUS
-	    BaryonField[TENum][cellindex] = outside_TE / RotatingSphereOverdensity;
+	    BaryonField[TENum][cellindex] = outside_TE / RotatingSphereCentralDensity;
 
 	  } else {
 	    
 	    // PPM
-	    BaryonField[TENum][cellindex] = outside_TE / RotatingSphereOverdensity
+	    BaryonField[TENum][cellindex] = outside_TE / RotatingSphereCentralDensity
 	      + 0.5 * BaryonField[Vel1Num][cellindex] * BaryonField[Vel1Num][cellindex]
 	      + 0.5 * BaryonField[Vel2Num][cellindex] * BaryonField[Vel2Num][cellindex]
 	      + 0.5 * BaryonField[Vel3Num][cellindex] * BaryonField[Vel3Num][cellindex];
 	    
 	    // gas energy (PPM dual energy formalims)
 	    if(DualEnergyFormalism)
-	      BaryonField[GENum][cellindex] = outside_GE / RotatingSphereOverdensity;
+	      BaryonField[GENum][cellindex] = outside_GE / RotatingSphereCentralDensity;
 	    
 	  } // if(HydroMethod == 2)
 	  
-	} // if (r <= RotatingSphereRadius)
+	} // if (r <= RotatingSphereCoreRadius)
 
       } // for (i = 0; i < GridDimension[0]; i++)
 

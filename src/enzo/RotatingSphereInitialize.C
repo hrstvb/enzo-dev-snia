@@ -80,12 +80,15 @@ int RotatingSphereInitialize(FILE *fptr, FILE *Outfptr, HierarchyEntry &TopGrid,
 
   float RotatingSphereVelocity[3]   = {0.0, 0.0, 0.0};   // gas initally at rest
   float RotatingSphereBField[3]   = {0.0, 0.0, 0.0};   // gas initally at rest
-  FLOAT RotatingSphereRadius = 0.3;
+  FLOAT RotatingSphereCoreRadius = 0.3;
   float RotatingSphereLambda = 0.05;
-  float RotatingSphereOverdensity = 20.0;
+  float RotatingSphereCentralDensity = 100.0;
+  float RotatingSphereCentralTemperature = 1000.0;
   float RotatingSphereDensity = 1.0;
   float RotatingSphereTotalEnergy = 1.0;
   float Pi                      = 3.14159;
+
+  int RotatingSphereInitialRefinementLevel = 0;
 
   /* set no subgrids by default. */
  
@@ -103,7 +106,8 @@ int RotatingSphereInitialize(FILE *fptr, FILE *Outfptr, HierarchyEntry &TopGrid,
  
     /* read parameters specifically for radiating shock problem*/
 
-    ret += sscanf(line, "RotatingSphereOverdensity  = %"FSYM, &RotatingSphereOverdensity);
+    ret += sscanf(line, "RotatingSphereCentralDensity  = %"FSYM, &RotatingSphereCentralDensity);
+    ret += sscanf(line, "RotatingSphereCentralTemperature  = %"FSYM, &RotatingSphereCentralTemperature);
     ret += sscanf(line, "RotatingSphereSubgridLeft = %"PSYM" %"PSYM" %"PSYM,
 		  RotatingSphereSubgridLeft,RotatingSphereSubgridLeft+1,RotatingSphereSubgridLeft+2);
     ret += sscanf(line, "RotatingSphereSubgridRight = %"PSYM" %"PSYM" %"PSYM,
@@ -114,11 +118,28 @@ int RotatingSphereInitialize(FILE *fptr, FILE *Outfptr, HierarchyEntry &TopGrid,
     ret += sscanf(line, "RotatingSphereTotalEnergy = %"FSYM,
 		        &RotatingSphereTotalEnergy);
 
-    ret += sscanf(line, "RotatingSphereRadius = %"PSYM,
-		        &RotatingSphereRadius);
+    ret += sscanf(line, "RotatingSphereInitialRefinementLevel = %"ISYM,
+		        &RotatingSphereInitialRefinementLevel);
+
+    ret += sscanf(line, "RotatingSphereCoreRadius = %"PSYM,
+		        &RotatingSphereCoreRadius);
     ret += sscanf(line, "RotatingSphereCenterPosition = %"PSYM" %"PSYM" %"PSYM,
 		  RotatingSphereCenterPosition, RotatingSphereCenterPosition+1,
 		  RotatingSphereCenterPosition+2);
+
+    ret += sscanf(line, "TestProblemHydrogenFractionByMass = %"FSYM, &TestProblemData.HydrogenFractionByMass);
+    ret += sscanf(line, "TestProblemDeuteriumToHydrogenRatio = %"FSYM, &TestProblemData.DeuteriumToHydrogenRatio);
+    ret += sscanf(line, "TestProblemInitialHIFraction  = %"FSYM, &TestProblemData.HI_Fraction);
+    ret += sscanf(line, "TestProblemInitialHIIFraction  = %"FSYM, &TestProblemData.HII_Fraction);
+    ret += sscanf(line, "TestProblemInitialHeIFraction  = %"FSYM, &TestProblemData.HeI_Fraction);
+    ret += sscanf(line, "TestProblemInitialHeIIFraction  = %"FSYM, &TestProblemData.HeII_Fraction);
+    ret += sscanf(line, "TestProblemInitialHeIIIFraction  = %"FSYM, &TestProblemData.HeIII_Fraction);
+    ret += sscanf(line, "TestProblemInitialHMFraction  = %"FSYM, &TestProblemData.HM_Fraction);
+    ret += sscanf(line, "TestProblemInitialH2IFraction  = %"FSYM, &TestProblemData.H2I_Fraction);
+    ret += sscanf(line, "TestProblemInitialH2IIFraction  = %"FSYM, &TestProblemData.H2II_Fraction);
+    ret += sscanf(line, "TestProblemInitialDIFraction  = %"FSYM, &TestProblemData.DI_Fraction);
+    ret += sscanf(line, "TestProblemInitialDIIFraction  = %"FSYM, &TestProblemData.DII_Fraction);
+    ret += sscanf(line, "TestProblemInitialHDIFraction  = %"FSYM, &TestProblemData.HDI_Fraction);
 
     ret += sscanf(line, "TestProblemUseMetallicityField  = %"ISYM, &TestProblemData.UseMetallicityField);
     ret += sscanf(line, "TestProblemInitialMetallicityFraction  = %"FSYM, &TestProblemData.MetallicityField_Fraction);
@@ -133,7 +154,8 @@ int RotatingSphereInitialize(FILE *fptr, FILE *Outfptr, HierarchyEntry &TopGrid,
  
   } // end input from parameter file
  
- 
+  TestProblemData.MultiSpecies = MultiSpecies;  // set this from global data (kind of a hack, but necessary)
+
   if (TopGrid.GridData->InitializeUniformGrid(RotatingSphereDensity,
 					      RotatingSphereTotalEnergy,
 					      RotatingSphereTotalEnergy,
@@ -146,16 +168,16 @@ int RotatingSphereInitialize(FILE *fptr, FILE *Outfptr, HierarchyEntry &TopGrid,
      needed to resolve the initial explosion region upon the start-up. */
  
   HierarchyEntry ** Subgrid;
-  if (MaximumRefinementLevel > 0)
-    Subgrid   = new HierarchyEntry*[MaximumRefinementLevel];
+  if (RotatingSphereInitialRefinementLevel > 0)
+    Subgrid   = new HierarchyEntry*[RotatingSphereInitialRefinementLevel];
  
   /* Create new HierarchyEntries. */
  
   int lev;
-  for (lev = 0; lev < MaximumRefinementLevel; lev++)
+  for (lev = 0; lev < RotatingSphereInitialRefinementLevel; lev++)
     Subgrid[lev] = new HierarchyEntry;
  
-  for (lev = 0; lev < MaximumRefinementLevel; lev++) {
+  for (lev = 0; lev < RotatingSphereInitialRefinementLevel; lev++) {
  
     for (dim = 0; dim < MetaData.TopGridRank; dim++)
       NumberOfSubgridZones[dim] =
@@ -175,7 +197,7 @@ int RotatingSphereInitialize(FILE *fptr, FILE *Outfptr, HierarchyEntry &TopGrid,
       if (lev == 0)
 	TopGrid.NextGridNextLevel  = Subgrid[0];
       Subgrid[lev]->NextGridThisLevel = NULL;
-      if (lev == MaximumRefinementLevel-1)
+      if (lev == RotatingSphereInitialRefinementLevel-1)
 	Subgrid[lev]->NextGridNextLevel = NULL;
       else
 	Subgrid[lev]->NextGridNextLevel = Subgrid[lev+1];
@@ -208,11 +230,12 @@ int RotatingSphereInitialize(FILE *fptr, FILE *Outfptr, HierarchyEntry &TopGrid,
  
       /* set up the initial explosion area on the finest resolution subgrid */
  
-      if (lev == MaximumRefinementLevel - 1)
-	if (Subgrid[lev]->GridData->RotatingSphereInitializeGrid(RotatingSphereRadius,
+      if (lev == RotatingSphereInitialRefinementLevel - 1)
+	if (Subgrid[lev]->GridData->RotatingSphereInitializeGrid(RotatingSphereCoreRadius,
 								   RotatingSphereCenterPosition,
 								   RotatingSphereLambda,
-								   RotatingSphereOverdensity) 
+								 RotatingSphereCentralDensity,
+								   RotatingSphereCentralTemperature) 
 	    == FAIL) {
 	  	  ENZO_FAIL("Error in RotatingSphereInitialize[Sub]Grid.");
 	}
@@ -226,7 +249,7 @@ int RotatingSphereInitialize(FILE *fptr, FILE *Outfptr, HierarchyEntry &TopGrid,
  
   /* set up subgrids from level 1 to max refinement level -1 */
  
-  for (lev = MaximumRefinementLevel - 1; lev > 0; lev--)
+  for (lev = RotatingSphereInitialRefinementLevel - 1; lev > 0; lev--)
     if (Subgrid[lev]->GridData->ProjectSolutionToParentGrid(
 				       *(Subgrid[lev-1]->GridData))
 	== FAIL) {
@@ -235,17 +258,18 @@ int RotatingSphereInitialize(FILE *fptr, FILE *Outfptr, HierarchyEntry &TopGrid,
  
   /* set up the root grid */
  
-  if (MaximumRefinementLevel > 0) {
+  if (RotatingSphereInitialRefinementLevel > 0) {
     if (Subgrid[0]->GridData->ProjectSolutionToParentGrid(*(TopGrid.GridData))
 	== FAIL) {
             ENZO_FAIL("Error in ProjectSolutionToParentGrid.");
     }
   }
   else
-    if (TopGrid.GridData->RotatingSphereInitializeGrid(RotatingSphereRadius,
+    if (TopGrid.GridData->RotatingSphereInitializeGrid(RotatingSphereCoreRadius,
 							 RotatingSphereCenterPosition,
 							 RotatingSphereLambda,
-							 RotatingSphereOverdensity) == FAIL) {
+						       RotatingSphereCentralDensity,
+						         RotatingSphereCentralTemperature) == FAIL) {
             ENZO_FAIL("Error in RotatingSphereInitializeGrid.");
     }
 
@@ -296,15 +320,32 @@ int RotatingSphereInitialize(FILE *fptr, FILE *Outfptr, HierarchyEntry &TopGrid,
   /* Write parameters to parameter output file */
  
   if (MyProcessorNumber == ROOT_PROCESSOR) {
-    fprintf(Outfptr, "RotatingSphereOverdensity         = %"FSYM"\n"  , RotatingSphereOverdensity);
+    fprintf(Outfptr, "RotatingSphereCentralDensity         = %"FSYM"\n"  , RotatingSphereCentralDensity);
+    fprintf(Outfptr, "RotatingSphereCentralTemperature         = %"FSYM"\n"  , RotatingSphereCentralTemperature);
     fprintf(Outfptr, "RotatingSphereLambda         = %"FSYM"\n"  , RotatingSphereLambda);
     fprintf(Outfptr, "RotatingSphereTotalEnergy         = %"FSYM"\n"  , RotatingSphereTotalEnergy);
-    fprintf(Outfptr, "RotatingSphereRadius         = %"PSYM"\n"  , RotatingSphereRadius);
+    fprintf(Outfptr, "RotatingSphereCoreRadius         = %"PSYM"\n"  , RotatingSphereCoreRadius);
     fprintf(Outfptr, "RotatingSphereCenterPosition = %"PSYM" %"PSYM" %"PSYM"\n",
 		  RotatingSphereCenterPosition, RotatingSphereCenterPosition+1,
 		  RotatingSphereCenterPosition+2);
+    fprintf(Outfptr, "RotatingSphereInitialRefinementLevel = %"ISYM"\n", RotatingSphereInitialRefinementLevel);
+
+    fprintf(Outfptr, "TestProblemInitialHIFraction  = %"FSYM"\n", TestProblemData.HI_Fraction);
+    fprintf(Outfptr, "TestProblemInitialHIIFraction  = %"FSYM"\n", TestProblemData.HII_Fraction);
+    fprintf(Outfptr, "TestProblemInitialHeIFraction  = %"FSYM"\n", TestProblemData.HeI_Fraction);
+    fprintf(Outfptr, "TestProblemInitialHeIIFraction  = %"FSYM"\n", TestProblemData.HeII_Fraction);
+    fprintf(Outfptr, "TestProblemInitialHeIIIFraction  = %"FSYM"\n", TestProblemData.HeIII_Fraction);
+    fprintf(Outfptr, "TestProblemInitialHMFraction  = %"FSYM"\n", TestProblemData.HM_Fraction);
+    fprintf(Outfptr, "TestProblemInitialH2IFraction  = %"FSYM"\n", TestProblemData.H2I_Fraction);
+    fprintf(Outfptr, "TestProblemInitialH2IIFraction  = %"FSYM"\n", TestProblemData.H2II_Fraction);
+
+    fprintf(Outfptr, "TestProblemInitialDIFraction  = %"FSYM"\n", TestProblemData.DI_Fraction);
+    fprintf(Outfptr, "TestProblemInitialDIIFraction  = %"FSYM"\n", TestProblemData.DII_Fraction);
+    fprintf(Outfptr, "TestProblemInitialHDIFraction  = %"FSYM"\n", TestProblemData.HDI_Fraction);
+
     fprintf(Outfptr, "TestProblemUseMetallicityField  = %"ISYM"\n", TestProblemData.UseMetallicityField);
     fprintf(Outfptr, "TestProblemInitialMetallicityFraction  = %"FSYM"\n", TestProblemData.MetallicityField_Fraction);
+
 
   } //   if (MyProcessorNumber == ROOT_PROCESSOR) 
 
