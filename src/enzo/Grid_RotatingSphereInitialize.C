@@ -29,6 +29,8 @@ int GetUnits(float *DensityUnits, float *LengthUnits,
 	     float *TemperatureUnits, float *TimeUnits,
 	     float *VelocityUnits, double *MassUnits, FLOAT Time);
 
+void my_exit(int status);
+
 // routines needed to get hydrostatic equilibrium set up
 static void get_dens_temp(void);
 static double enclosed_mass(double r);
@@ -75,7 +77,7 @@ int grid::RotatingSphereInitializeGrid(FLOAT RotatingSphereCoreRadius,
   for (dim = 0; dim < GridRank; dim++)
     size *= GridDimension[dim];
 
-  FLOAT r,x,y,z, radius, zdist;
+  FLOAT r,x,y,z, radius, radius_in_plane, zdist;
 
   float sintheta, costheta, omega;
 
@@ -189,7 +191,12 @@ int grid::RotatingSphereInitializeGrid(FLOAT RotatingSphereCoreRadius,
 	  POW(y-RotatingSphereCenterPosition[1], 2.0) +
 	  POW(z-RotatingSphereCenterPosition[2], 2.0);
 
+	radius_in_plane = POW(x-RotatingSphereCenterPosition[0], 2.0) +
+	  POW(y-RotatingSphereCenterPosition[1], 2.0);
+
 	radius = sqrt(radius);  // ok, now it's just radius
+
+	radius_in_plane = sqrt(radius_in_plane);
 
 	for(int ii=0;ii<ncells-2;ii++){
 	  if(radius > rad[ii] && radius <= rad[ii+1] ){
@@ -199,24 +206,19 @@ int grid::RotatingSphereInitializeGrid(FLOAT RotatingSphereCoreRadius,
 	if(radius >= rad[ncells-1])
 	  distindex=ncells-1;
 
-	/*
-	if(debug)
-	  printf("i,j,k,distindex:  %d %d %d %d\n",i,j,k,distindex);
-	*/
-
 	if(radius <= r_ambient){
 	  BaryonField[DensNum][cellindex] = nofr[distindex];
 	} 
 	
 
 	if(radius <= r_ambient){
-	  sintheta = (y-RotatingSphereCenterPosition[1])/radius;
-	  costheta = (x-RotatingSphereCenterPosition[0])/radius;
+	  sintheta = (y-RotatingSphereCenterPosition[1])/radius_in_plane;
+	  costheta = (x-RotatingSphereCenterPosition[0])/radius_in_plane;
 
 	  // x,y, and maybe z velocity.  
-	  BaryonField[Vel1Num][cellindex] = -1.0*sintheta*omega*radius;
+	  BaryonField[Vel1Num][cellindex] = -1.0*sintheta*omega*radius_in_plane;
 
-	  BaryonField[Vel2Num][cellindex] = costheta*omega*radius;
+	  BaryonField[Vel2Num][cellindex] = costheta*omega*radius_in_plane;
 	  
 	  BaryonField[Vel3Num][cellindex] = 0.0;
 	}
@@ -368,20 +370,12 @@ static void get_dens_temp(void){
 			    (in case the user does something silly) */
   r_ambient=rad[ncells-1];
 
-  fprintf(stderr,"(1)\n");
   for(i=ncells-1; i>0; i--){  // loop backward
-    printf("*** %d %e  %e  %e ***\n",
-	   i, nofr[i], exterior_density, nofr[i]/exterior_density);
-
     if(nofr[i] <= exterior_density){ 
-      printf("*** BAZINGA! ***\n");
       r_ambient = rad[i];
       amb_index = i;
     }
   }
-  fflush(stdout);
-  fprintf(stderr,"(2)\n");
-    
 
   if(debug){
     printf("r_ambient, amb_index, nofr[amb_index], rad[amb_index] = %e %d %e %e  (exterior_density = %e)\n",
@@ -460,7 +454,7 @@ static double enclosed_mass(double r){
   // check that I'm not doing something completely stupid.
   if(encmass<0.0){
     fprintf(stderr,"enclosed mass is < 0 %e\n",encmass);
-    exit(-123);
+    my_exit(EXIT_FAILURE);
   }
 
   return encmass;
@@ -511,7 +505,7 @@ static double dens_at_r(double r){
   
   if(value < 0.0){
     fprintf(stderr,"Grid::RotatingSphereInitialize: error in dens_at_r!\n");
-    exit(-123);
+    my_exit(EXIT_FAILURE);
   }
 
   return value;
