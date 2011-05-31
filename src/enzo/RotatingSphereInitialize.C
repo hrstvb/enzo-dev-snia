@@ -28,6 +28,10 @@
 #include "Hierarchy.h"
 #include "TopGridData.h"
  
+void AddLevel(LevelHierarchyEntry *Array[], HierarchyEntry *Grid, int level);
+int RebuildHierarchy(TopGridData *MetaData,
+		     LevelHierarchyEntry *LevelArray[], int level);
+
 int RotatingSphereInitialize(FILE *fptr, FILE *Outfptr, HierarchyEntry &TopGrid,
 			 TopGridData &MetaData)
 {
@@ -61,8 +65,7 @@ int RotatingSphereInitialize(FILE *fptr, FILE *Outfptr, HierarchyEntry &TopGrid,
 /* local declarations */
  
   char line[MAX_LINE_LENGTH];
-  int  i, j, dim, ret, NumberOfSubgridZones[MAX_DIMENSION],
-    SubgridDims[MAX_DIMENSION];
+  int  i, j, dim, ret, level;
  
   /* make sure it is 3D - this particular problem type breaks down for dims < 3 */
  
@@ -90,7 +93,7 @@ int RotatingSphereInitialize(FILE *fptr, FILE *Outfptr, HierarchyEntry &TopGrid,
   float RotatingSphereDensity = 1.0;
   float RotatingSphereTotalEnergy = 1.0;
   float Pi                      = 3.14159;
-  int RotatingSphereInitialRefinementLevel = 0;
+  int RotatingSphereRefineAtStart = FALSE;
 
   /* set no subgrids by default. */
  
@@ -121,8 +124,8 @@ int RotatingSphereInitialize(FILE *fptr, FILE *Outfptr, HierarchyEntry &TopGrid,
     ret += sscanf(line, "RotatingSphereTotalEnergy = %"FSYM,
 		        &RotatingSphereTotalEnergy);
 
-    ret += sscanf(line, "RotatingSphereInitialRefinementLevel = %"ISYM,
-		        &RotatingSphereInitialRefinementLevel);
+    ret += sscanf(line, "RotatingSphereRefineAtStart = %"ISYM,
+		        &RotatingSphereRefineAtStart);
 
     ret += sscanf(line, "RotatingSphereCoreRadius = %"PSYM,
 		        &RotatingSphereCoreRadius);
@@ -160,122 +163,92 @@ int RotatingSphereInitialize(FILE *fptr, FILE *Outfptr, HierarchyEntry &TopGrid,
  
   TestProblemData.MultiSpecies = MultiSpecies;  // set this from global data (kind of a hack, but necessary)
 
+  /* ----------------------------------------------------------------------- */
+
+
   if (TopGrid.GridData->InitializeUniformGrid(RotatingSphereDensity,
 					      RotatingSphereTotalEnergy,
 					      RotatingSphereTotalEnergy,
 					      RotatingSphereVelocity,
 					      RotatingSphereBField) == FAIL) {
-        ENZO_FAIL("Error in InitializeUniformGrid.");
+    ENZO_FAIL("Error in InitializeUniformGrid.");
+  }
+
+  if (TopGrid.GridData->RotatingSphereInitializeGrid(RotatingSphereCoreRadius,
+						     RotatingSphereCenterPosition,
+						     RotatingSphereLambda,
+						     RotatingSphereCentralDensity,
+						     RotatingSphereCentralTemperature) == FAIL) {
+    ENZO_FAIL("Error in RotatingSphereInitializeGrid.");
   }
  
-  /* Create as many subgrids as there are initial refinement levels.  This is
-     needed to resolve the initial region of interest upon the start-up. */
- 
-  HierarchyEntry ** Subgrid;
-  if (RotatingSphereInitialRefinementLevel > 0)
-    Subgrid   = new HierarchyEntry*[RotatingSphereInitialRefinementLevel];
- 
-  /* Create new HierarchyEntries and fill in info about number of zones, etc.. */
- 
-  int lev;
-  for (lev = 0; lev < RotatingSphereInitialRefinementLevel; lev++)
-    Subgrid[lev] = new HierarchyEntry;
- 
-  for (lev = 0; lev < RotatingSphereInitialRefinementLevel; lev++) {
- 
-    for (dim = 0; dim < MetaData.TopGridRank; dim++)
-      NumberOfSubgridZones[dim] =
-	nint((RotatingSphereSubgridRight[dim] - RotatingSphereSubgridLeft[dim])/
-	     ((DomainRightEdge[dim] - DomainLeftEdge[dim] )/
-	      float(MetaData.TopGridDims[dim])))
-        *int(POW(RefineBy, lev + 1));
- 
-    if (debug)
-      printf("RotatingSphere:: Level[%"ISYM"]: NumberOfSubgridZones[0] = %"ISYM"\n", lev+1,
-	     NumberOfSubgridZones[0]);
- 
-    if (NumberOfSubgridZones[0] > 0) {
- 
-      /* fill them out */
- 
-      if (lev == 0)
-	TopGrid.NextGridNextLevel  = Subgrid[0];
-      Subgrid[lev]->NextGridThisLevel = NULL;
-      if (lev == RotatingSphereInitialRefinementLevel-1)
-	Subgrid[lev]->NextGridNextLevel = NULL;
-      else
-	Subgrid[lev]->NextGridNextLevel = Subgrid[lev+1];
-      if (lev == 0)
-	Subgrid[lev]->ParentGrid        = &TopGrid;
-      else
-	Subgrid[lev]->ParentGrid        = Subgrid[lev-1];
- 
-      /* compute the dimensions and left/right edges for the subgrid */
- 
-      for (dim = 0; dim < MetaData.TopGridRank; dim++) {
-	SubgridDims[dim] = NumberOfSubgridZones[dim] + 2*DEFAULT_GHOST_ZONES;
-	LeftEdge[dim]    = RotatingSphereSubgridLeft[dim];
-	RightEdge[dim]   = RotatingSphereSubgridRight[dim];
+  /* Convert minimum initial overdensity for refinement to mass
+     (unless MinimumMass itself was actually set). */
+
+  if (MinimumMassForRefinement[0] == FLOAT_UNDEFINED) {
+    MinimumMassForRefinement[0] = MinimumOverDensityForRefinement[0];
+    for (int dim = 0; dim < MetaData.TopGridRank; dim++)
+      MinimumMassForRefinement[0] *= (DomainRightEdge[dim]-DomainLeftEdge[dim])/
+	float(MetaData.TopGridDims[dim]);
+  }
+
+  printf("%e %e\n",MinimumMassForRefinement[0],MinimumOverDensityForRefinement[0]);
+
+  /* If requested, refine the grid to the desired level. */
+
+  if (RotatingSphereRefineAtStart) {
+
+    /* Declare, initialize and fill out the LevelArray. */
+
+    LevelHierarchyEntry *LevelArray[MAX_DEPTH_OF_HIERARCHY];
+    for (level = 0; level < MAX_DEPTH_OF_HIERARCHY; level++)
+      LevelArray[level] = NULL;
+    AddLevel(LevelArray, &TopGrid, 0);
+
+    /* Add levels to the maximum depth or until no new levels are created,
+       and re-initialize the level after it is created. */
+
+    for (level = 0; level < MaximumRefinementLevel; level++) {
+      printf("In level %"ISYM"\n", level);
+      if (RebuildHierarchy(&MetaData, LevelArray, level) == FAIL) {
+	fprintf(stderr, "Error in RebuildHierarchy.\n");
+	return FAIL;
       }
- 
-      /* create a new subgrid and initialize it */
- 
-      Subgrid[lev]->GridData = new grid;
-      Subgrid[lev]->GridData->InheritProperties(TopGrid.GridData);
-      Subgrid[lev]->GridData->PrepareGrid(MetaData.TopGridRank, SubgridDims,
-				     LeftEdge, RightEdge, 0);
-      if (Subgrid[lev]->GridData->InitializeUniformGrid(RotatingSphereDensity,
-						        RotatingSphereTotalEnergy,
-						        RotatingSphereTotalEnergy,
-							RotatingSphereVelocity,
-							RotatingSphereBField) == FAIL) {
-		ENZO_FAIL("Error in InitializeUniformGrid (subgrid).");
+      if (LevelArray[level+1] == NULL)
+	break;
+
+      printf("Going to create a new grid!\n");
+      fflush(stdout);
+
+      LevelHierarchyEntry *Temp = LevelArray[level+1];
+      while (Temp != NULL) {
+	Temp->GridData->RotatingSphereInitializeGrid(RotatingSphereCoreRadius,
+						     RotatingSphereCenterPosition,
+						     RotatingSphereLambda,
+						     RotatingSphereCentralDensity,
+						     RotatingSphereCentralTemperature) ;
+	Temp = Temp->NextGridThisLevel;
       }
- 
-      /* set up the initial sphere on all subgrids */
- 
-      if (Subgrid[lev]->GridData->RotatingSphereInitializeGrid(RotatingSphereCoreRadius,
-							       RotatingSphereCenterPosition,
-							       RotatingSphereLambda,
-							       RotatingSphereCentralDensity,
-							       RotatingSphereCentralTemperature) 
-	  == FAIL) {
-	            ENZO_FAIL("Error in RotatingSphereInitialize[Sub]Grid.");
+    } // end: loop over levels
+
+
+    /* Loop back from the bottom, restoring the consistency among levels. */
+
+    for (level = MaximumRefinementLevel; level > 0; level--) {
+      LevelHierarchyEntry *Temp = LevelArray[level];
+      while (Temp != NULL) {
+	if (Temp->GridData->ProjectSolutionToParentGrid(
+				    *LevelArray[level-1]->GridData) == FAIL) {
+	  fprintf(stderr, "Error in grid->ProjectSolutionToParentGrid.\n");
+	  return FAIL;
 	}
-
-    } // if (NumberOfSubgridZones[0] > 0)
-    else{
-      printf("RotatingSphere: single grid start-up.\n");
-    }
-  }
-
-
-  /* set up subgrids from level 1 to max refinement level -1 */
- 
-  for (lev = RotatingSphereInitialRefinementLevel - 1; lev > 0; lev--)
-    if (Subgrid[lev]->GridData->ProjectSolutionToParentGrid(
-				       *(Subgrid[lev-1]->GridData))
-	== FAIL) {
-            ENZO_FAIL("Error in ProjectSolutionToParentGrid.");
-    }
- 
-  /* set up the root grid */
- 
-  if (RotatingSphereInitialRefinementLevel > 0) {
-    if (Subgrid[0]->GridData->ProjectSolutionToParentGrid(*(TopGrid.GridData))
-	== FAIL) {
-            ENZO_FAIL("Error in ProjectSolutionToParentGrid.");
-    }
-  }
-  else
-    if (TopGrid.GridData->RotatingSphereInitializeGrid(RotatingSphereCoreRadius,
-						       RotatingSphereCenterPosition,
-						       RotatingSphereLambda,
-						       RotatingSphereCentralDensity,
-						       RotatingSphereCentralTemperature) == FAIL) {
-            ENZO_FAIL("Error in RotatingSphereInitializeGrid.");
+	Temp = Temp->NextGridThisLevel;
+      }
     }
 
+  } // end: if (RotatingSphereRefineAtStart)
+
+  /* ----------------------------------------------------------------------- */
  
   /* set up field names and units -- NOTE: these absolutely MUST be in 
      the same order that they are in Grid_InitializeUniformGrids.C, or 
@@ -331,7 +304,7 @@ int RotatingSphereInitialize(FILE *fptr, FILE *Outfptr, HierarchyEntry &TopGrid,
     fprintf(Outfptr, "RotatingSphereCenterPosition = %"PSYM" %"PSYM" %"PSYM"\n",
 		  RotatingSphereCenterPosition, RotatingSphereCenterPosition+1,
 		  RotatingSphereCenterPosition+2);
-    fprintf(Outfptr, "RotatingSphereInitialRefinementLevel = %"ISYM"\n", RotatingSphereInitialRefinementLevel);
+    fprintf(Outfptr, "RotatingSphereRefineAtStart = %"ISYM"\n", RotatingSphereRefineAtStart);
 
     fprintf(Outfptr, "TestProblemHydrogenFractionByMass = %"FSYM"\n",   TestProblemData.HydrogenFractionByMass);
     fprintf(Outfptr, "TestProblemDeuteriumToHydrogenRatio = %"FSYM"\n", TestProblemData.DeuteriumToHydrogenRatio);
