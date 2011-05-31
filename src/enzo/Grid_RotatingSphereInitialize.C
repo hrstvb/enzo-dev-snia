@@ -29,6 +29,7 @@ int GetUnits(float *DensityUnits, float *LengthUnits,
 	     float *TemperatureUnits, float *TimeUnits,
 	     float *VelocityUnits, double *MassUnits, FLOAT Time);
 
+// routines needed to get hydrostatic equilibrium set up
 static void get_dens_temp(void);
 static double enclosed_mass(double r);
 static double dTdr(double r, double T);
@@ -36,7 +37,8 @@ static double dens_at_r(double r);
 static double drhodr(double r);
 static double accel_at_r(double r);
 
-static double cent_dens, cent_temp, core_radius, exterior_density, maxrad, r_amb, *rad, *nofr, *Tofr;
+// some global (to this file) variables needed for HSE
+static double cent_dens, cent_temp, core_radius, exterior_density, maxrad, r_ambient, *rad, *nofr, *Tofr;
 static int ncells;
 
 #define DEFAULT_MU 1.22   // assume everything's neutral!
@@ -56,19 +58,20 @@ int grid::RotatingSphereInitializeGrid(FLOAT RotatingSphereCoreRadius,
     fflush(stdout);
   }
  
-  printf("RotatingSphereCoreRadius = %e\n",RotatingSphereCoreRadius);
-  printf("RotatingSphereCenterPosition = %e %e %e\n", 
-	 RotatingSphereCenterPosition[0],
-	 RotatingSphereCenterPosition[1],
-	 RotatingSphereCenterPosition[2]);
-  printf("RotatingSphereLambda = %e\n",RotatingSphereLambda);
-  printf("RotatingSphereCentralDensity = %e\n",RotatingSphereCentralDensity);
-  printf("RotatingSphereCentralTemperature = %e\n",RotatingSphereCentralTemperature);
-
+  if(debug){
+    printf("RotatingSphereCoreRadius = %e\n",RotatingSphereCoreRadius);
+    printf("RotatingSphereCenterPosition = %e %e %e\n", 
+	   RotatingSphereCenterPosition[0],
+	   RotatingSphereCenterPosition[1],
+	   RotatingSphereCenterPosition[2]);
+    printf("RotatingSphereLambda = %e\n",RotatingSphereLambda);
+    printf("RotatingSphereCentralDensity = %e\n",RotatingSphereCentralDensity);
+    printf("RotatingSphereCentralTemperature = %e\n",RotatingSphereCentralTemperature);
+  }
 
   /* declarations */
  
-  int size = 1, dim, cellindex;
+  int size = 1, dim, cellindex, distindex;
   for (dim = 0; dim < GridRank; dim++)
     size *= GridDimension[dim];
 
@@ -80,6 +83,7 @@ int grid::RotatingSphereInitializeGrid(FLOAT RotatingSphereCoreRadius,
   int DeNum, HINum, HIINum, HeINum, HeIINum, HeIIINum, HMNum, H2INum, H2IINum,
     DINum, DIINum, HDINum, MetalNum;
 
+  // get physical quantities, metallicity, species information
   if (this->IdentifyPhysicalQuantities(DensNum, GENum, Vel1Num, Vel2Num,
 				       Vel3Num, TENum) == FAIL) {
     ENZO_FAIL("Error in IdentifyPhysicalQuantities.\n");
@@ -99,6 +103,7 @@ int grid::RotatingSphereInitializeGrid(FLOAT RotatingSphereCoreRadius,
     MetalNum = 0;
 
 
+  // get units
   float DensityUnits=1.0, LengthUnits=1.0, TemperatureUnits=1.0, TimeUnits=1.0,
     VelocityUnits=1.0;
   double MassUnits=1.0;
@@ -110,6 +115,8 @@ int grid::RotatingSphereInitializeGrid(FLOAT RotatingSphereCoreRadius,
 
 
   /* calculate density, temperature profiles */
+
+  // convert everything to CGS
   cent_dens = (double) RotatingSphereCentralDensity;
   cent_temp = (double) RotatingSphereCentralTemperature;
   core_radius = (double) RotatingSphereCoreRadius;
@@ -120,23 +127,25 @@ int grid::RotatingSphereInitializeGrid(FLOAT RotatingSphereCoreRadius,
   core_radius *= (double) LengthUnits;  // now in CGS
   maxrad = (double) LengthUnits;
 
+  // arrays we store n(r), T(r) in 
   ncells = 1024;
-
   rad = new double[ncells];
   nofr = new double[ncells];
   Tofr = new double[ncells];
 
+  // actually do the heavy lifting here
   get_dens_temp();
 
-  // convert 1D arrays from CGS into Enzo internal units.
+  // convert arrays from CGS into Enzo internal units.
   for(int i=0; i<ncells; i++){
     rad[i] /= LengthUnits;  // convert to enzo distance
     nofr[i] *= DensityUnits;  // convert to enzo-unit density (from CGS)
     Tofr[i] /= (TemperatureUnits*(Gamma-1.0)*DEFAULT_MU);  // convert from temp to internal energy
   }
 
-  /* set fields in the cylinder region */
+  r_ambient /= LengthUnits;  // radius of sphere that we modify in Enzo distance units
 
+  /* set fields in the sphere region */
   int index, jndex, i, j, k;
   float outside_rho, outside_TE, outside_GE;
 
@@ -158,6 +167,7 @@ int grid::RotatingSphereInitializeGrid(FLOAT RotatingSphereCoreRadius,
     }
 
   }  // if(HydroMethod==2)
+
 
   for (k = 0; k < GridDimension[2]; k++)
     for (j = 0; j < GridDimension[1]; j++)
@@ -181,42 +191,52 @@ int grid::RotatingSphereInitializeGrid(FLOAT RotatingSphereCoreRadius,
 
 	radius = sqrt(radius);  // ok, now it's just radius
 
+	for(int ii=0;ii<ncells-2;ii++){
+	  if(radius > rad[ii] && radius <= rad[ii+1] ){
+	    distindex=ii;
+	  }
+	}
+	if(radius >= rad[ncells-1])
+	  distindex=ncells-1;
 
-	BaryonField[DensNum][cellindex] = outside_rho * RotatingSphereCentralDensity;
+	if(radius <= r_ambient){
+	  BaryonField[DensNum][cellindex] = nofr[distindex];
+	} 
+	
 
-	if(TestProblemData.UseMetallicityField>0 && MetalNum != FALSE)
-	  BaryonField[MetalNum][cellindex] = BaryonField[DensNum][cellindex]*TestProblemData.MetallicityField_Fraction;
+	if(radius <= r_ambient){
+	  sintheta = (y-RotatingSphereCenterPosition[1])/radius;
+	  costheta = (x-RotatingSphereCenterPosition[0])/radius;
 
-	sintheta = (y-RotatingSphereCenterPosition[1])/radius;
-	costheta = (x-RotatingSphereCenterPosition[0])/radius;
+	  // x,y, and maybe z velocity.  
+	  BaryonField[Vel1Num][cellindex] = -1.0*sintheta*omega*radius;
 
-
-	// x,y, and maybe z velocity.  
-	BaryonField[Vel1Num][cellindex] = -1.0*sintheta*omega*radius;
-
-	BaryonField[Vel2Num][cellindex] = costheta*omega*radius;
-
-	BaryonField[Vel3Num][cellindex] = 0.0;
+	  BaryonField[Vel2Num][cellindex] = costheta*omega*radius;
+	  
+	  BaryonField[Vel3Num][cellindex] = 0.0;
+	}
 
 	if(HydroMethod == 2){
 
-	  // ZEUS
-	  BaryonField[TENum][cellindex] = outside_TE / RotatingSphereCentralDensity;
+	  BaryonField[TENum][cellindex] = Tofr[distindex];
 
 	} else {
 	    
 	  // PPM
-	  BaryonField[TENum][cellindex] = outside_TE / RotatingSphereCentralDensity
+	  BaryonField[TENum][cellindex] = Tofr[distindex]
 	    + 0.5 * BaryonField[Vel1Num][cellindex] * BaryonField[Vel1Num][cellindex]
 	    + 0.5 * BaryonField[Vel2Num][cellindex] * BaryonField[Vel2Num][cellindex]
 	    + 0.5 * BaryonField[Vel3Num][cellindex] * BaryonField[Vel3Num][cellindex];
 	    
 	  // gas energy (PPM dual energy formalims)
 	  if(DualEnergyFormalism)
-	    BaryonField[GENum][cellindex] = outside_GE / RotatingSphereCentralDensity;
+	    BaryonField[GENum][cellindex] = Tofr[distindex];
 	    
 	} // if(HydroMethod == 2)
 	  
+	// set metallicity
+	if(TestProblemData.UseMetallicityField>0 && MetalNum != FALSE)
+	  BaryonField[MetalNum][cellindex] = BaryonField[DensNum][cellindex]*TestProblemData.MetallicityField_Fraction;
 
 	/* set multispecies values --- EVERYWHERE, not just inside the sphere radius! */
 
@@ -284,11 +304,15 @@ int grid::RotatingSphereInitializeGrid(FLOAT RotatingSphereCoreRadius,
     fflush(stdout);
   }
 
+  delete [] rad;
+  delete [] nofr;
+  delete [] Tofr;
+
   return SUCCESS;
 
 }
 
-
+/* -------------------------- helper functions --------------------------- */
 static void get_dens_temp(void){
   int i;
   double r_min, r_max, logdr, thisrad, thislograd, thisdens;
@@ -323,21 +347,21 @@ static void get_dens_temp(void){
 
   fprintf(stderr,"(1)\n");
 
-  r_amb = -1.0;
+  r_ambient = -1.0;
 
   int amb_index = 1023;
   for(i=ncells-1; i=0; i--)
     if(nofr[i] <= exterior_density){ 
-      r_amb = rad[i];
+      r_ambient = rad[i];
       amb_index = i;
     }
   if(nofr[ncells-1] > exterior_density){
     amb_index=ncells-1;
-    r_amb = rad[amb_index];
+    r_ambient = rad[amb_index];
   }
   fprintf(stderr,"(2) %d %e\n",amb_index, exterior_density);
 
-  printf("r_amb, amb_index, nofr[amb_index], rad[amb_index] = %e %d %e %e\n", r_amb, amb_index, nofr[amb_index], rad[amb_index]);
+  printf("r_ambient, amb_index, nofr[amb_index], rad[amb_index] = %e %d %e %e\n", r_ambient, amb_index, nofr[amb_index], rad[amb_index]);
 
   fprintf(stderr,"(3)\n");
 
@@ -391,7 +415,7 @@ static double enclosed_mass(double r){
 
     encmass = 4.0/3.0*pi*cent_dens*POW(r, 3.0); 
 
-  } else if ( (r > core_radius) && (r <= r_amb) ){  // where rho goes as 1/r^2
+  } else if ( (r > core_radius) && (r <= r_ambient) ){  // where rho goes as 1/r^2
 
     encmass = 4.0/3.0*pi*cent_dens*POW(core_radius, 3.0)
       + 4.0*pi*cent_dens*core_radius*core_radius* (r - core_radius); 
@@ -399,8 +423,8 @@ static double enclosed_mass(double r){
   } else {  // outside of sphere in ambient medium
 
     encmass = 4.0/3.0*pi*cent_dens*POW(core_radius, 3.0)
-      + 4.0*pi*cent_dens*core_radius*core_radius* (r_amb - core_radius)
-      + 4.0*pi/3.0*exterior_density*( POW(r,3.0) - POW(r_amb,3.0) );
+      + 4.0*pi*cent_dens*core_radius*core_radius* (r_ambient - core_radius)
+      + 4.0*pi/3.0*exterior_density*( POW(r,3.0) - POW(r_ambient,3.0) );
 
   }
 
@@ -441,7 +465,7 @@ static double dens_at_r(double r){
 
   if(r <= core_radius){
     value = cent_dens;
-  } else if(r > core_radius && r <= r_amb){
+  } else if(r > core_radius && r <= r_ambient){
     value = cent_dens * POW( r/core_radius, -2.0);
   } else {
     value = exterior_density;
@@ -461,7 +485,7 @@ static double drhodr(double r){
 
   if(r <= core_radius){
     value = 0.0;
-  } else if(r > core_radius && r <= r_amb){
+  } else if(r > core_radius && r <= r_ambient){
     value = -2.0*cent_dens * POW( core_radius, 2.0) * POW( r, -3.0 );
   } else {
     value = 0.0;
