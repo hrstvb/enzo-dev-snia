@@ -29,6 +29,18 @@ int GetUnits(float *DensityUnits, float *LengthUnits,
 	     float *TemperatureUnits, float *TimeUnits,
 	     float *VelocityUnits, double *MassUnits, FLOAT Time);
 
+static void get_dens_temp(void);
+static double enclosed_mass(double r);
+static double dTdr(double r, double T);
+static double dens_at_r(double r);
+static double drhodr(double r);
+static double accel_at_r(double r);
+
+static double cent_dens, cent_temp, core_radius, exterior_density, maxrad, r_amb, *rad, *nofr, *Tofr;
+static int ncells;
+
+#define DEFAULT_MU 1.22   // assume everything's neutral!
+
 int grid::RotatingSphereInitializeGrid(FLOAT RotatingSphereCoreRadius,
 				       FLOAT RotatingSphereCenterPosition[MAX_DIMENSION],
 				       float RotatingSphereLambda,
@@ -97,9 +109,34 @@ int grid::RotatingSphereInitializeGrid(FLOAT RotatingSphereCoreRadius,
   }
 
 
+  /* calculate density, temperature profiles */
+  cent_dens = (double) RotatingSphereCentralDensity;
+  cent_temp = (double) RotatingSphereCentralTemperature;
+  core_radius = (double) RotatingSphereCoreRadius;
+  exterior_density = (double) BaryonField[DensNum][0];
+
+  cent_dens *= 1.22 * (double) DensityUnits;  // now in CGS
+  exterior_density *= 1.22 * (double) DensityUnits; // now in CGS
+  core_radius *= (double) LengthUnits;  // now in CGS
+  maxrad = (double) LengthUnits;
+
+  ncells = 1024;
+
+  rad = new double[ncells];
+  nofr = new double[ncells];
+  Tofr = new double[ncells];
+
+  get_dens_temp();
+
+  // convert 1D arrays from CGS into Enzo internal units.
+  for(int i=0; i<ncells; i++){
+    rad[i] /= LengthUnits;  // convert to enzo distance
+    nofr[i] *= DensityUnits;  // convert to enzo-unit density (from CGS)
+    Tofr[i] /= (TemperatureUnits*(Gamma-1.0)*DEFAULT_MU);  // convert from temp to internal energy
+  }
 
   /* set fields in the cylinder region */
- 
+
   int index, jndex, i, j, k;
   float outside_rho, outside_TE, outside_GE;
 
@@ -239,7 +276,6 @@ int grid::RotatingSphereInitializeGrid(FLOAT RotatingSphereCoreRadius,
 	} // if(TestProblemData.MultiSpecies)	
 
 
-
       } // for (i = 0; i < GridDimension[0]; i++)
 
   if(debug){
@@ -252,3 +288,184 @@ int grid::RotatingSphereInitializeGrid(FLOAT RotatingSphereCoreRadius,
 
 }
 
+
+static void get_dens_temp(void){
+  int i;
+  double r_min, r_max, logdr, thisrad, thislograd, thisdens;
+  r_max = maxrad;
+  r_min = 1.0e-10*r_max;
+
+  logdr = (log10(r_max) - log10(r_min))/double(ncells);
+
+  printf("r_min, r_max, logdr, cent_dens = %e %e %e %e\n",r_min, r_max, logdr, cent_dens);
+
+  for(int i=0; i<ncells; i++){
+
+    thislograd = log10(r_min) + double(i)*logdr;
+    thisrad = POW(10.0, thislograd);
+
+    rad[i] = thisrad;
+
+    if(thisrad <= core_radius){
+      thisdens = cent_dens;
+    } else {
+      thisdens = cent_dens * POW( thisrad/core_radius, -2.0);
+    }
+
+    if(thisdens < exterior_density)
+      thisdens = exterior_density;
+
+    nofr[i] = thisdens;
+
+    printf("i, thislograd, thisrad, thisdens, log(thisdens): %d %e %e %e %e\n", i, thislograd, rad[i], nofr[i], log10(nofr[i]));
+
+  } //   for(int i=0; i<ncells; i++)
+
+  fprintf(stderr,"(1)\n");
+
+  r_amb = -1.0;
+
+  int amb_index = 1023;
+  for(i=ncells-1; i=0; i--)
+    if(nofr[i] <= exterior_density){ 
+      r_amb = rad[i];
+      amb_index = i;
+    }
+  if(nofr[ncells-1] > exterior_density){
+    amb_index=ncells-1;
+    r_amb = rad[amb_index];
+  }
+  fprintf(stderr,"(2) %d %e\n",amb_index, exterior_density);
+
+  printf("r_amb, amb_index, nofr[amb_index], rad[amb_index] = %e %d %e %e\n", r_amb, amb_index, nofr[amb_index], rad[amb_index]);
+
+  fprintf(stderr,"(3)\n");
+
+  // now we do 4th order RK integration outward to calculate the temperature at any given radius
+  double k1, k2, k3, k4;
+  double this_T, last_T, thisdr;
+  
+  this_T = last_T = cent_temp;
+
+  for(i=1; i<ncells-2; i++){
+
+    thisdr = rad[i+1]-rad[i];
+
+    last_T = this_T;
+
+    // f(r,T) = dT/dr 
+    
+    // k1 = f(r, T)
+    k1 = dTdr(rad[i], last_T);
+
+    // k2 = f(r+0.5dr, T+0.5*k1*dr)
+    k2 = dTdr(rad[i]+0.5*thisdr, last_T+0.5*k1*thisdr);
+
+    // k3 = f(r+0.5dr, T+0.5*k2*dr)
+    k3 = dTdr(rad[i]+0.5*thisdr, last_T+0.5*k2*thisdr);
+
+    // k4 = f(r+dr, T+k3*dr)
+    k4 = dTdr(rad[i]+thisdr, last_T+k3*thisdr);
+
+    this_T = last_T + (1./6.)*thisdr*(k1 + 2.*k2 + 2.*k3 + k4);
+
+    Tofr[i] = this_T;
+
+    printf("i, r, n(r), T(r), Menc(r): %d %e   %e   %e   %e\n",i, rad[i],nofr[i],Tofr[i],(enclosed_mass(rad[i])/1.989e+33) );
+
+  }
+
+  Tofr[ncells-1] = Tofr[ncells-2];
+
+  return;
+}
+
+/* returns enclosed mass in grams */
+static double enclosed_mass(double r){
+  double encmass=0.0;
+  double pi = 3.14159;
+
+  encmass = -1.0;
+
+  if(r <= core_radius){  // inside core
+
+    encmass = 4.0/3.0*pi*cent_dens*POW(r, 3.0); 
+
+  } else if ( (r > core_radius) && (r <= r_amb) ){  // where rho goes as 1/r^2
+
+    encmass = 4.0/3.0*pi*cent_dens*POW(core_radius, 3.0)
+      + 4.0*pi*cent_dens*core_radius*core_radius* (r - core_radius); 
+
+  } else {  // outside of sphere in ambient medium
+
+    encmass = 4.0/3.0*pi*cent_dens*POW(core_radius, 3.0)
+      + 4.0*pi*cent_dens*core_radius*core_radius* (r_amb - core_radius)
+      + 4.0*pi/3.0*exterior_density*( POW(r,3.0) - POW(r_amb,3.0) );
+
+  }
+
+  if(encmass<0.0){
+    fprintf(stderr,"enclosed mass is < 0 %e\n",encmass);
+    exit(-123);
+  }
+
+  return encmass;
+}
+
+static double dTdr(double r, double T){
+
+  double value, bunch_of_constants;
+
+  // 3/2 * kb / (mu*m_p)
+  bunch_of_constants = 1.5 * 1.38e-16 / (1.22*1.67e-24);
+
+  value = -dens_at_r(r) * accel_at_r(r) - bunch_of_constants*drhodr(r)*T;
+  value /= (bunch_of_constants * dens_at_r(r) );
+
+  return value;
+}
+
+static double accel_at_r(double r){
+
+  double value;
+  
+  value = -6.67e-8*enclosed_mass(r)/(r*r);
+
+  return value;
+
+}
+
+
+static double dens_at_r(double r){
+  double value=-1.0; 
+
+  if(r <= core_radius){
+    value = cent_dens;
+  } else if(r > core_radius && r <= r_amb){
+    value = cent_dens * POW( r/core_radius, -2.0);
+  } else {
+    value = exterior_density;
+  }
+  
+  if(value < 0.0){
+    fprintf(stderr,"Grid::RotatingSphereInitialize: error in dens_at_r!\n");
+    exit(-123);
+  }
+
+  return value;
+}
+
+static double drhodr(double r){
+
+  double value; 
+
+  if(r <= core_radius){
+    value = 0.0;
+  } else if(r > core_radius && r <= r_amb){
+    value = -2.0*cent_dens * POW( core_radius, 2.0) * POW( r, -3.0 );
+  } else {
+    value = 0.0;
+  }
+  
+  return value;
+}
