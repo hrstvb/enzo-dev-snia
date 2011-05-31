@@ -199,6 +199,11 @@ int grid::RotatingSphereInitializeGrid(FLOAT RotatingSphereCoreRadius,
 	if(radius >= rad[ncells-1])
 	  distindex=ncells-1;
 
+	/*
+	if(debug)
+	  printf("i,j,k,distindex:  %d %d %d %d\n",i,j,k,distindex);
+	*/
+
 	if(radius <= r_ambient){
 	  BaryonField[DensNum][cellindex] = nofr[distindex];
 	} 
@@ -313,6 +318,10 @@ int grid::RotatingSphereInitializeGrid(FLOAT RotatingSphereCoreRadius,
 }
 
 /* -------------------------- helper functions --------------------------- */
+
+/* calculates density and temperature assuming hydrostatic equilibrium and spherical
+   symmetry.  Uses user-set central density, temperature, and core radius, and 
+   calculates it all from there. */
 static void get_dens_temp(void){
   int i;
   double r_min, r_max, logdr, thisrad, thislograd, thisdens;
@@ -321,8 +330,10 @@ static void get_dens_temp(void){
 
   logdr = (log10(r_max) - log10(r_min))/double(ncells);
 
-  printf("r_min, r_max, logdr, cent_dens = %e %e %e %e\n",r_min, r_max, logdr, cent_dens);
+  if(debug)
+    printf("r_min, r_max, logdr, cent_dens = %e %e %e %e\n",r_min, r_max, logdr, cent_dens);
 
+  // loop over cells and calculate what the density should be
   for(int i=0; i<ncells; i++){
 
     thislograd = log10(r_min) + double(i)*logdr;
@@ -330,27 +341,30 @@ static void get_dens_temp(void){
 
     rad[i] = thisrad;
 
+    // can't just use r_ambient here - it gets calculated using this!
     if(thisrad <= core_radius){
       thisdens = cent_dens;
     } else {
       thisdens = cent_dens * POW( thisrad/core_radius, -2.0);
     }
-
     if(thisdens < exterior_density)
       thisdens = exterior_density;
 
     nofr[i] = thisdens;
 
-    printf("i, thislograd, thisrad, thisdens, log(thisdens): %d %e %e %e %e\n", i, thislograd, rad[i], nofr[i], log10(nofr[i]));
+    if(debug)
+      printf("i, thislograd, thisrad, thisdens, log(thisdens): %d %e %e %e %e\n", 
+	     i, thislograd, rad[i], nofr[i], log10(nofr[i]) );
 
   } //   for(int i=0; i<ncells; i++)
 
-  fprintf(stderr,"(1)\n");
-
+  // figure out r_ambient, index of cell where you first hit
+  // ambient density.
   r_ambient = -1.0;
-
-  int amb_index = 1023;
-  for(i=ncells-1; i=0; i--)
+  int amb_index;
+  amb_index = ncells-1;  /* assume that we're at the outside 
+			    (in case the user does something silly) */
+  for(i=ncells-1; i=0; i--)  // loop backward
     if(nofr[i] <= exterior_density){ 
       r_ambient = rad[i];
       amb_index = i;
@@ -359,18 +373,19 @@ static void get_dens_temp(void){
     amb_index=ncells-1;
     r_ambient = rad[amb_index];
   }
-  fprintf(stderr,"(2) %d %e\n",amb_index, exterior_density);
 
-  printf("r_ambient, amb_index, nofr[amb_index], rad[amb_index] = %e %d %e %e\n", r_ambient, amb_index, nofr[amb_index], rad[amb_index]);
+  if(debug)
+    printf("r_ambient, amb_index, nofr[amb_index], rad[amb_index] = %e %d %e %e\n",
+	   r_ambient, amb_index, nofr[amb_index], rad[amb_index]);
 
-  fprintf(stderr,"(3)\n");
-
-  // now we do 4th order RK integration outward to calculate the temperature at any given radius
+  // now we do 4th order RK integration outward to calculate the temperature as a function of radius
   double k1, k2, k3, k4;
   double this_T, last_T, thisdr;
-  
+
+  // originally set things to user-defined central temperature
   this_T = last_T = cent_temp;
 
+  // now do the integration
   for(i=1; i<ncells-2; i++){
 
     thisdr = rad[i+1]-rad[i];
@@ -395,7 +410,9 @@ static void get_dens_temp(void){
 
     Tofr[i] = this_T;
 
-    printf("i, r, n(r), T(r), Menc(r): %d %e   %e   %e   %e\n",i, rad[i],nofr[i],Tofr[i],(enclosed_mass(rad[i])/1.989e+33) );
+    if(debug)
+      printf("i, r, n(r), T(r), Menc(r): %d %e   %e   %e   %e\n",
+	     i, rad[i],nofr[i],Tofr[i],(enclosed_mass(rad[i])/1.989e+33) );
 
   }
 
@@ -404,7 +421,9 @@ static void get_dens_temp(void){
   return;
 }
 
-/* returns enclosed mass in grams */
+/* returns enclosed mass in grams assuming a density profile with flat density
+ inside core_radius, 1/r^2 between that and r_ambient, and some ambient external
+ density outside of r_ambient. */
 static double enclosed_mass(double r){
   double encmass=0.0;
   double pi = 3.14159;
@@ -428,6 +447,7 @@ static double enclosed_mass(double r){
 
   }
 
+  // check that I'm not doing something completely stupid.
   if(encmass<0.0){
     fprintf(stderr,"enclosed mass is < 0 %e\n",encmass);
     exit(-123);
@@ -436,6 +456,8 @@ static double enclosed_mass(double r){
   return encmass;
 }
 
+// calculates dT/dr (used for hydrostatic equilibrium calculation in
+// get_dens_temp).
 static double dTdr(double r, double T){
 
   double value, bunch_of_constants;
@@ -449,6 +471,9 @@ static double dTdr(double r, double T){
   return value;
 }
 
+// calculates gravitational acceleration as a function
+// of radius, assuming spherical symmetry and density profile
+// described in dens_at_r()
 static double accel_at_r(double r){
 
   double value;
@@ -459,7 +484,10 @@ static double accel_at_r(double r){
 
 }
 
-
+/* calculates density profile discussed above: constant density
+   inside core_radius, 1/r^2 between core_radius and r_ambient,
+   and a constant value outside of r_ambient.  Note that this uses
+   r_ambient as calculated in get_dens_temp()!  */
 static double dens_at_r(double r){
   double value=-1.0; 
 
@@ -479,6 +507,7 @@ static double dens_at_r(double r){
   return value;
 }
 
+// analytic expression for drho/dr using density profile in dens_at_r
 static double drhodr(double r){
 
   double value; 
@@ -493,3 +522,5 @@ static double drhodr(double r){
   
   return value;
 }
+
+// fin.
