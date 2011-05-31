@@ -122,8 +122,8 @@ int grid::RotatingSphereInitializeGrid(FLOAT RotatingSphereCoreRadius,
   core_radius = (double) RotatingSphereCoreRadius;
   exterior_density = (double) BaryonField[DensNum][0];
 
-  cent_dens *= 1.22 * (double) DensityUnits;  // now in CGS
-  exterior_density *= 1.22 * (double) DensityUnits; // now in CGS
+  cent_dens *= (double) DensityUnits;  // now in CGS
+  exterior_density *= (double) DensityUnits; // now in CGS
   core_radius *= (double) LengthUnits;  // now in CGS
   maxrad = (double) LengthUnits;
 
@@ -139,7 +139,7 @@ int grid::RotatingSphereInitializeGrid(FLOAT RotatingSphereCoreRadius,
   // convert arrays from CGS into Enzo internal units.
   for(int i=0; i<ncells; i++){
     rad[i] /= LengthUnits;  // convert to enzo distance
-    nofr[i] *= DensityUnits;  // convert to enzo-unit density (from CGS)
+    nofr[i] /= DensityUnits;  // convert to enzo-unit density (from CGS)
     Tofr[i] /= (TemperatureUnits*(Gamma-1.0)*DEFAULT_MU);  // convert from temp to internal energy
   }
 
@@ -358,26 +358,36 @@ static void get_dens_temp(void){
 
   } //   for(int i=0; i<ncells; i++)
 
+  if(debug) fflush(stdout);
+
   // figure out r_ambient, index of cell where you first hit
   // ambient density.
   r_ambient = -1.0;
   int amb_index;
   amb_index = ncells-1;  /* assume that we're at the outside 
 			    (in case the user does something silly) */
-  for(i=ncells-1; i=0; i--)  // loop backward
+  r_ambient=rad[ncells-1];
+
+  fprintf(stderr,"(1)\n");
+  for(i=ncells-1; i>0; i--){  // loop backward
+    printf("*** %d %e  %e  %e ***\n",
+	   i, nofr[i], exterior_density, nofr[i]/exterior_density);
+
     if(nofr[i] <= exterior_density){ 
+      printf("*** BAZINGA! ***\n");
       r_ambient = rad[i];
       amb_index = i;
     }
-  if(nofr[ncells-1] > exterior_density){
-    amb_index=ncells-1;
-    r_ambient = rad[amb_index];
   }
+  fflush(stdout);
+  fprintf(stderr,"(2)\n");
+    
 
-  if(debug)
-    printf("r_ambient, amb_index, nofr[amb_index], rad[amb_index] = %e %d %e %e\n",
-	   r_ambient, amb_index, nofr[amb_index], rad[amb_index]);
-
+  if(debug){
+    printf("r_ambient, amb_index, nofr[amb_index], rad[amb_index] = %e %d %e %e  (exterior_density = %e)\n",
+	   r_ambient, amb_index, nofr[amb_index], rad[amb_index], exterior_density);
+    fflush(stdout);
+  }
   // now we do 4th order RK integration outward to calculate the temperature as a function of radius
   double k1, k2, k3, k4;
   double this_T, last_T, thisdr;
