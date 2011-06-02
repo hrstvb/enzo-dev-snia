@@ -1,6 +1,7 @@
 #include "fortran.def"
+#include "phys_const.def"
 c=======================================================================
-c////////////////////////  SUBROUTINE COOL2D  \\\\\\\\\\\\\\\\\\\\\\\\\\
+c////////////////////////  SUBROUTINE COOL1D  \\\\\\\\\\\\\\\\\\\\\\\\\\
 c
       subroutine cool1d(
      &                d, e, ge, u, v, w,
@@ -10,7 +11,7 @@ c
      &                temstart, temend, fh, utem,
      &                eta1, eta2, gamma, coola, gammaha,
      &                indixe, t1, t2, logtem, tdef, edot,
-     &                tgas, tgasold, p2d, cool
+     &                tgas, tgasold, p2d, cool, mu
      &                     )
 c
 c  COMPUTE RADIATIVE COOLING/HEATING RATE (DE/DT IN CODE UNITS)
@@ -37,7 +38,7 @@ c
       integer in, jn, kn, is, ie, j, k,
      &        idual, nratec, idim, imethod, iter, igammah
       real    temstart, temend, fh, utem, gammaha,
-     &        eta1, eta2, gamma, coola(nratec)
+     &        eta1, eta2, gamma, coola(nratec), mu
       real    d(in,jn,kn),   ge(in,jn,kn),     e(in,jn,kn),
      &        u(in,jn,kn),    v(in,jn,kn),     w(in,jn,kn)
 c
@@ -47,7 +48,7 @@ c
       parameter (pmin = tiny)
       double precision mh
 
-      parameter (mh = 1.67d-24)  ! DPC
+      parameter (mh = mass_h)  ! DPC
 
 c
 c  Locals
@@ -65,7 +66,6 @@ c
 c  Set the mean molecular mass
 c     (see also Grid_ComputeTemperatureField.C)
 c
-#define DEFAULT_MU 0.6
 c
 c\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\/////////////////////////////////
 c=======================================================================
@@ -83,7 +83,7 @@ c
 c        Zeus - e() is really gas energy
 c
          do i = is+1, ie+1
-            p2d(i) = (gamma - 1.0)*d(i,j,k)*e(i,j,k)
+            p2d(i) = (gamma - 1.d0)*d(i,j,k)*e(i,j,k)
          enddo
       else
          if (idual .eq. 1) then
@@ -91,17 +91,17 @@ c
 c           PPM with dual energy -- use gas energy
 c
             do i = is+1, ie+1
-               p2d(i) = (gamma - 1.0)*d(i,j,k)*ge(i,j,k)
+               p2d(i) = (gamma - 1.d0)*d(i,j,k)*ge(i,j,k)
             enddo
          else
 c
 c           PPM without dual energy -- use total energy
 c
             do i = is+1, ie+1
-               p2d(i) = e(i,j,k) - 0.5*u(i,j,k)**2
-               if (idim .gt. 1) p2d(i) = p2d(i) - 0.5*v(i,j,k)**2
-               if (idim .gt. 2) p2d(i) = p2d(i) - 0.5*w(i,j,k)**2
-               p2d(i) = max((gamma - 1.0)*d(i,j,k)*p2d(i), tiny)
+               p2d(i) = e(i,j,k) - 0.5d0*u(i,j,k)**2
+               if (idim .gt. 1) p2d(i) = p2d(i) - 0.5d0*v(i,j,k)**2
+               if (idim .gt. 2) p2d(i) = p2d(i) - 0.5d0*w(i,j,k)**2
+               p2d(i) = max((gamma - 1.d0)*d(i,j,k)*p2d(i), tiny)
             enddo
          endif
       endif
@@ -109,7 +109,7 @@ c
 c     Compute temperature
 c
       do i = is+1, ie+1
-         tgas(i) = max(p2d(i)*utem*DEFAULT_MU/d(i,j,k), temstart)
+         tgas(i) = max(p2d(i)*utem*mu/d(i,j,k), temstart)
       enddo
 c
 c     If this is the first time through, just set tgasold to tgas
@@ -126,7 +126,7 @@ c
 c
 c        Compute log temperature and truncate if above/below table max/min
 c
-         logtem(i) = log(0.5*(tgas(i)+tgasold(i)))
+         logtem(i) = log(0.5d0*(tgas(i)+tgasold(i)))
          logtem(i) = max(logtem(i), logtem0)
          logtem(i) = min(logtem(i), logtem9)
 c
@@ -163,7 +163,7 @@ c
       do i = is+1, ie+1
          edot(i) = edot(i) + (
 c
-     .                  0.0
+     .                  0.d0
 c
      .      )/dom
       enddo
