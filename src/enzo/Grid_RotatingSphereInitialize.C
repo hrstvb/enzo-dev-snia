@@ -29,7 +29,6 @@ int GetUnits(float *DensityUnits, float *LengthUnits,
 	     float *TemperatureUnits, float *TimeUnits,
 	     float *VelocityUnits, double *MassUnits, FLOAT Time);
 
-void my_exit(int status);
 
 // routines needed to get hydrostatic equilibrium set up
 static void get_dens_temp(void);
@@ -454,7 +453,7 @@ static double enclosed_mass(double r){
   // check that I'm not doing something completely stupid.
   if(encmass<0.0){
     fprintf(stderr,"enclosed mass is < 0 %e\n",encmass);
-    my_exit(EXIT_FAILURE);
+    ENZO_EXIT("enclosed mass is less than zero!");
   }
 
   return encmass;
@@ -504,8 +503,7 @@ static double dens_at_r(double r){
   }
   
   if(value < 0.0){
-    fprintf(stderr,"Grid::RotatingSphereInitialize: error in dens_at_r!\n");
-    my_exit(EXIT_FAILURE);
+    ENZO_EXIT("Grid::RotatingSphereInitialize: error in dens_at_r!");
   }
 
   return value;
