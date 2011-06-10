@@ -1763,10 +1763,12 @@ int zEulerSweep(int j, int NumberOfSubgrids, fluxes *SubgridFluxes[],
 				     float RotatingCylinderLambda,
 				     float RotatingCylinderOverdensity);
 
-  int RotatingSphereInitializeGrid(FLOAT RotatingSphereRadius,
-				     FLOAT RotatingSphereCenterPosition[MAX_DIMENSION],
-				     float RotatingSphereLambda,
-				     float RotatingSphereOverdensity);
+  int RotatingSphereInitializeGrid(FLOAT RotatingSphereCoreRadius,
+				   FLOAT RotatingSphereCenterPosition[MAX_DIMENSION],
+				   float RotatingSphereLambda,
+				   float RotatingSphereCentralDensity,
+				   float RotatingSphereCentralTemperature,
+				   float RotatingSphereExteriorDensity);
 
   /* Initialize a grid for the KH instability problem. */
 
