@@ -48,7 +48,8 @@ int grid::RotatingSphereInitializeGrid(FLOAT RotatingSphereCoreRadius,
 				       FLOAT RotatingSphereCenterPosition[MAX_DIMENSION],
 				       float RotatingSphereLambda,
 				       float RotatingSphereCentralDensity,
-				       float RotatingSphereCentralTemperature)
+				       float RotatingSphereCentralTemperature,
+				       float RotatingSphereExteriorDensity)
 {
  
   if (ProcessorNumber != MyProcessorNumber)
@@ -121,7 +122,7 @@ int grid::RotatingSphereInitializeGrid(FLOAT RotatingSphereCoreRadius,
   cent_dens = (double) RotatingSphereCentralDensity;
   cent_temp = (double) RotatingSphereCentralTemperature;
   core_radius = (double) RotatingSphereCoreRadius;
-  exterior_density = (double) BaryonField[DensNum][0];
+  exterior_density = (double) RotatingSphereExteriorDensity;
 
   cent_dens *= (double) DensityUnits;  // now in CGS
   exterior_density *= (double) DensityUnits; // now in CGS
@@ -150,7 +151,7 @@ int grid::RotatingSphereInitializeGrid(FLOAT RotatingSphereCoreRadius,
   int index, jndex, i, j, k;
   float outside_rho, outside_TE, outside_GE;
 
-  outside_rho =  BaryonField[DensNum][0];
+  outside_rho = RotatingSphereExteriorDensity;
 
   // updated to include correct gravitational constant and more accurate constant (corrections by J-H Choi, U. Kentucky)
   omega = RotatingSphereLambda * sqrt((GravitationalConstant / (4.0*M_PI)) * RotatingSphereCentralDensity * outside_rho) / 0.146;
@@ -453,7 +454,7 @@ static double enclosed_mass(double r){
   // check that I'm not doing something completely stupid.
   if(encmass<0.0){
     fprintf(stderr,"enclosed mass is < 0 %e\n",encmass);
-    ENZO_EXIT("enclosed mass is less than zero!");
+    ENZO_FAIL("enclosed mass is less than zero!");
   }
 
   return encmass;
@@ -503,7 +504,7 @@ static double dens_at_r(double r){
   }
   
   if(value < 0.0){
-    ENZO_EXIT("Grid::RotatingSphereInitialize: error in dens_at_r!");
+    ENZO_FAIL("Grid::RotatingSphereInitialize: error in dens_at_r!");
   }
 
   return value;

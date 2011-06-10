@@ -90,7 +90,7 @@ int RotatingSphereInitialize(FILE *fptr, FILE *Outfptr, HierarchyEntry &TopGrid,
   float RotatingSphereLambda = 0.05;
   float RotatingSphereCentralDensity = 100.0;
   float RotatingSphereCentralTemperature = 1000.0;
-  float RotatingSphereDensity = 1.0;
+  float RotatingSphereExteriorDensity = 1.0;
   float RotatingSphereTotalEnergy = 1.0;
   float Pi                      = 3.14159;
   int RotatingSphereRefineAtStart = FALSE;
@@ -166,7 +166,7 @@ int RotatingSphereInitialize(FILE *fptr, FILE *Outfptr, HierarchyEntry &TopGrid,
   /* ----------------------------------------------------------------------- */
 
 
-  if (TopGrid.GridData->InitializeUniformGrid(RotatingSphereDensity,
+  if (TopGrid.GridData->InitializeUniformGrid(RotatingSphereExteriorDensity,
 					      RotatingSphereTotalEnergy,
 					      RotatingSphereTotalEnergy,
 					      RotatingSphereVelocity,
@@ -178,7 +178,8 @@ int RotatingSphereInitialize(FILE *fptr, FILE *Outfptr, HierarchyEntry &TopGrid,
 						     RotatingSphereCenterPosition,
 						     RotatingSphereLambda,
 						     RotatingSphereCentralDensity,
-						     RotatingSphereCentralTemperature) == FAIL) {
+						     RotatingSphereCentralTemperature,
+						     RotatingSphereExteriorDensity) == FAIL) {
     ENZO_FAIL("Error in RotatingSphereInitializeGrid.");
   }
  
@@ -226,7 +227,8 @@ int RotatingSphereInitialize(FILE *fptr, FILE *Outfptr, HierarchyEntry &TopGrid,
 						     RotatingSphereCenterPosition,
 						     RotatingSphereLambda,
 						     RotatingSphereCentralDensity,
-						     RotatingSphereCentralTemperature) ;
+						     RotatingSphereCentralTemperature,
+						     RotatingSphereExteriorDensity) ;
 	Temp = Temp->NextGridThisLevel;
       }
     } // end: loop over levels
