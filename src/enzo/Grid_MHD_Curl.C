@@ -28,6 +28,7 @@
 //   another as of now.
 
 #include "performance.h"
+#include "ErrorExceptions.h"
 #include <math.h>
 #include <stdio.h>
 #include "macros_and_parameters.h"
@@ -47,16 +48,11 @@
 
 //
 // Method 0 is used for, say, generating a MagneticField from a Vector
-//   Potential (stored in the poorly named "ElectricField" for convinence.)
+//   Potential (stored in the poorly named but properly centered "ElectricField" for convinence.)
 // Method 1 currently isnt' used.  
-// Method 2 is what's actually done.  In both the higher order time
-//   integration AND the code UpdateMagneticField, which is the MHD
-//   replacement for FluxCorrection, the 'Current' magnetic field
-//   (stored in MagneticField[][]) is only a temporary variable, and
-//   worthless.  We shall cast it out and spit on its corpse.  All shall
-//   call us GOD!!!!
-
-
+// Method 2 is what's actually done. MagneticField = OldMagnetciField + Curl( ElectricField )
+//          This is done after ElectricField is updated from it's subgrids.
+//          This techinique is equivalent to flux correction, but requires less machinery.
 int grid::MHD_Curl(int * Start, int * End, int Method){
   
 
@@ -120,14 +116,12 @@ int grid::MHD_Curl(int * Start, int * End, int Method){
 	    
 	    break;
 	  case 2:
-	    //fprintf(stderr,"curl 2\n");
-	    MagneticField[dimX][Bdex] =  OldMagneticField[dimX][Bdex] -
+	    MagneticField[dimX][Bdex] = OldMagneticField[dimX][Bdex]  -
 	      ( (  (OK[dimX][0] == 1 ) ? dTdX[dimY]*(ElectricField[dimZ][E2] - ElectricField[dimZ][E1]) : 0)
 		-( (OK[dimX][1] == 1) ? dTdX[dimZ]*(ElectricField[dimY][E4]- ElectricField[dimY][E3]) : 0 ));
 	    break;
 	  default:
-	    fprintf(stderr," Method = %d isn't a valid argumetn to MHD_Curl.  Fix it.\n",Method);
-	    return FAIL;
+	    ENZO_VFAIL(" Method = %d isn't a valid argumetn to MHD_Curl.  Fix it.\n",Method)
 	    break;
 	  }//switch
 	}//i,j,k
