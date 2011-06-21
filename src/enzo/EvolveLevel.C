@@ -144,8 +144,6 @@ int SetBoundaryConditions(HierarchyEntry *Grids[], int NumberOfGrids,
                           ExternalBoundary *Exterior, LevelHierarchyEntry * Level);
 #endif
 
-
-
 #ifdef SAB
 #ifdef FAST_SIB
 int SetAccelerationBoundary(HierarchyEntry *Grids[], int NumberOfGrids,
@@ -347,8 +345,15 @@ int EvolveLevel(TopGridData *MetaData, LevelHierarchyEntry *LevelArray[],
       }
     }
   } else {
-    for (grid1 = 0; grid1 < NumberOfGrids; grid1++)
+    for (grid1 = 0; grid1 < NumberOfGrids; grid1++){
       Grids[grid1]->GridData->ClearBoundaryFluxes();
+#ifdef MHDCT
+      if(useMHDCT == TRUE && level > 0 ){
+            Grids[grid1]->GridData->ClearAvgElectricField();
+      }
+    }
+#endif //MHDCT
+
   }
  
   /* After we calculate the ghost zones, we can initialize streaming
@@ -561,13 +566,6 @@ int EvolveLevel(TopGridData *MetaData, LevelHierarchyEntry *LevelArray[],
       if (ComovingCoordinates)
 	Grids[grid1]->GridData->ComovingExpansionTerms();
     }  // end loop over grids
-#ifdef MHDCT
-  ExtraOutput(3,LevelArray,MetaData,level,Exterior
-#ifdef TRANSFER
-		      , ImplicitSolver
-#endif
-          );
-#endif //MHDCT
     /* Finalize (accretion, feedback, etc.) star particles */
     StarParticleFinalize(Grids, MetaData, NumberOfGrids, LevelArray,
 			 level, AllStars, TotalStarParticleCountPrevious);
@@ -575,6 +573,13 @@ int EvolveLevel(TopGridData *MetaData, LevelHierarchyEntry *LevelArray[],
     /* For each grid: a) interpolate boundaries from the parent grid.
                       b) copy any overlapping zones from siblings. */
  
+#ifdef MHDCT
+  ExtraOutput(3,LevelArray,MetaData,level,Exterior
+#ifdef TRANSFER
+		      , ImplicitSolver
+#endif
+          );
+#endif //MHDCT
 #ifdef FAST_SIB
     SetBoundaryConditions(Grids, NumberOfGrids, SiblingList,
 			  level, MetaData, Exterior, LevelArray[level]);
@@ -695,7 +700,31 @@ int EvolveLevel(TopGridData *MetaData, LevelHierarchyEntry *LevelArray[],
 #ifdef FLUX_FIX
     DeleteSUBlingList( NumberOfGrids, SUBlingList );
 #endif
-    
+   
+#ifdef MHDCT
+  ExtraOutput(4,LevelArray,MetaData,level,Exterior
+#ifdef TRANSFER
+		      , ImplicitSolver
+#endif
+          );
+#endif //MHDCT
+
+
+#ifdef MHDCT
+    if(useMHDCT == TRUE && MHD_ProjectE == TRUE){
+      for(grid1=0;grid1<NumberOfGrids; grid1++){
+        Grids[grid1]->GridData->MHD_UpdateMagneticField(level, LevelArray[level+1]);
+        }
+    }//MHD True
+#endif //MHDCT
+
+#ifdef MHDCT
+  ExtraOutput(5,LevelArray,MetaData,level,Exterior
+#ifdef TRANSFER
+		      , ImplicitSolver
+#endif
+          );
+#endif //MHDCT
   /* ------------------------------------------------------- */
   /* Add the saved fluxes (in the last subsubgrid entry) to the exterior
      fluxes for this subgrid .
