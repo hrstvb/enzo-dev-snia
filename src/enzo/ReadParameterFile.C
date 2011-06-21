@@ -915,6 +915,7 @@ int ReadParameterFile(FILE *fptr, TopGridData &MetaData, float *Initialdt)
 
 #ifdef MHDCT
     //MHDCT variables
+    ret += sscanf(line, "WriteBoundary          = %"ISYM, &WriteBoundary);
     ret += sscanf(line,"TracerParticlesAddToRestart = %"ISYM,&TracerParticlesAddToRestart);
     ret += sscanf(line,"RefineByJeansLengthUnits = %"ISYM,&RefineByJeansLengthUnits);
     ret += sscanf(line, "ProcessorTopology      = %"ISYM" %"ISYM" %"ISYM,

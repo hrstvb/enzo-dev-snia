@@ -728,6 +728,7 @@ int SetDefaultGlobalValues(TopGridData &MetaData)
   useMHD=0;
 #ifdef MHDCT
   //MHDCT variables
+  WriteBoundary             = FALSE;
   MHD_InterpolationMethod   = BalsaraDirect;
   CT_AthenaDissipation = 0.0;
   MHD_WriteElectric = TRUE;

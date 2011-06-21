@@ -110,6 +110,7 @@ int grid::Group_WriteGrid(FILE *fptr, char *base_name, int grid_id, HDF5_hid_t f
 {
  
   int i, j, k, dim, field, size, active_size, ActiveDim[MAX_DIMENSION];
+  int WriteStartIndex[MAX_DIMENSION], WriteEndIndex[MAX_DIMENSION];
   int file_status;
 
  
@@ -159,8 +160,27 @@ int grid::Group_WriteGrid(FILE *fptr, char *base_name, int grid_id, HDF5_hid_t f
     GridEndIndex[dim] = 0;
   }
  
+#ifdef MHDCT
+  if( WriteBoundary == -1 ) {
+    WriteBoundary = 1;
+  }
+  if( WriteBoundary == TRUE ){
+    for(i=0;i<3; i++){
+      WriteStartIndex[i] = 0;
+      WriteEndIndex[i] = GridDimension[i] - 1;
+    }
+  }else{
+    for(i=0;i<3; i++){
+      WriteStartIndex[i] = GridStartIndex[i];
+      WriteEndIndex[i] = GridEndIndex[i];
+    }
+  }    
+  for (dim = 0; dim < 3; dim++)
+    ActiveDim[dim] = WriteEndIndex[dim] - WriteStartIndex[dim] +1;
+#else //MHDCT
   for (dim = 0; dim < 3; dim++)
     ActiveDim[dim] = GridEndIndex[dim] - GridStartIndex[dim] +1;
+#endif //MHDCT
  
   /* ------------------------------------------------------------------- */
   /* 1) Save general grid class data */
@@ -357,6 +377,19 @@ int grid::Group_WriteGrid(FILE *fptr, char *base_name, int grid_id, HDF5_hid_t f
 
       /* copy active part of field into grid */
  
+#ifdef MHDCT
+      for (k = WriteStartIndex[2]; k <= WriteEndIndex[2]; k++)
+	for (j = WriteStartIndex[1]; j <= WriteEndIndex[1]; j++)
+	  for (i = WriteStartIndex[0]; i <= WriteEndIndex[0]; i++)
+	    temp[(i-WriteStartIndex[0])                           + 
+	         (j-WriteStartIndex[1])*ActiveDim[0]              + 
+	         (k-WriteStartIndex[2])*ActiveDim[0]*ActiveDim[1] ] =
+		       io_type(
+	      BaryonField[field][i + j*GridDimension[0] +
+		                     k*GridDimension[0]*GridDimension[1]]
+                              );
+#else
+        
       for (k = GridStartIndex[2]; k <= GridEndIndex[2]; k++)
 	for (j = GridStartIndex[1]; j <= GridEndIndex[1]; j++)
 	  for (i = GridStartIndex[0]; i <= GridEndIndex[0]; i++)
@@ -367,6 +400,7 @@ int grid::Group_WriteGrid(FILE *fptr, char *base_name, int grid_id, HDF5_hid_t f
 	      BaryonField[field][i + j*GridDimension[0] +
 		                     k*GridDimension[0]*GridDimension[1]]
                               );
+#endif
  
  
       file_dsp_id = H5Screate_simple((Eint32) GridRank, OutDims, NULL);
@@ -412,7 +446,7 @@ int grid::Group_WriteGrid(FILE *fptr, char *base_name, int grid_id, HDF5_hid_t f
       for(field=0;field<nBfields;field++){
 	WriteDataset(group_id,CenteredB[field],temp,
 		     GridDimension,GridRank,
-		     GridStartIndex,GridEndIndex,ActiveDim,
+		     WriteStartIndex,WriteEndIndex,ActiveDim,
 		     MHDcLabel[field], MHDUnits[0], file_type_id, float_type_id,log_fptr);
       }
 
@@ -421,7 +455,6 @@ int grid::Group_WriteGrid(FILE *fptr, char *base_name, int grid_id, HDF5_hid_t f
       int BiggieSize = (GridDimension[0]+1)*(GridDimension[1]+1)*(GridDimension[2]+1);
       int index1, index2;
       io_type *MHDtmp = new io_type[BiggieSize];
-      int WriteBoundary = FALSE; 
 
       for(field=0;field<nBfields;field++){
       if( WriteBoundary == TRUE){
@@ -499,7 +532,18 @@ int grid::Group_WriteGrid(FILE *fptr, char *base_name, int grid_id, HDF5_hid_t f
       }
  
       /* Copy active part of field into grid */
- 
+
+#ifdef MHDCT
+      for (k = WriteStartIndex[2]; k <= WriteEndIndex[2]; k++)
+	for (j = WriteStartIndex[1]; j <= WriteEndIndex[1]; j++)
+	  for (i = WriteStartIndex[0]; i <= WriteEndIndex[0]; i++)
+	    temp[(i-WriteStartIndex[0])                           + 
+	         (j-WriteStartIndex[1])*ActiveDim[0]              + 
+	         (k-WriteStartIndex[2])*ActiveDim[0]*ActiveDim[1] ] =
+		     io_type(
+		   temperature[(k*GridDimension[1] + j)*GridDimension[0] + i]
+			     );
+#else //MHDCT
       for (k = GridStartIndex[2]; k <= GridEndIndex[2]; k++)
 	for (j = GridStartIndex[1]; j <= GridEndIndex[1]; j++)
 	  for (i = GridStartIndex[0]; i <= GridEndIndex[0]; i++)
@@ -509,6 +553,7 @@ int grid::Group_WriteGrid(FILE *fptr, char *base_name, int grid_id, HDF5_hid_t f
 		     io_type(
 		   temperature[(k*GridDimension[1] + j)*GridDimension[0] + i]
 			     );
+#endif //MHDCT
  
  
       file_dsp_id = H5Screate_simple((Eint32) GridRank, OutDims, NULL);
