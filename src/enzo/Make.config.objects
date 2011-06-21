@@ -1058,4 +1058,5 @@ OBJS_MHDCT = MHDBlastInitialize.o \
     Grid_MHD_ProlongAllocate.o\
     Grid_ClearAvgElectricField.o\
     Grid_MHD_UpdateMagneticField.o\
+    Grid_MHD_ProjectFace.o\
     ExternalBoundary_SetMagneticBoundary.o 

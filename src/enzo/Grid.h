@@ -2695,6 +2695,9 @@ int zEulerSweep(int j, int NumberOfSubgrids, fluxes *SubgridFluxes[],
 
   int ClearAvgElectricField();
   int MHD_UpdateMagneticField(int level, LevelHierarchyEntry * Level);
+  int MHD_ProjectFace(grid &ParentGrid,
+		  boundary_type LeftFaceBoundaryCondition[],
+		      boundary_type RightFaceBoundaryCondition[]);
 
   //Test Problems
   int MHDBlastInitializeGrid(float Density0, float Density1,

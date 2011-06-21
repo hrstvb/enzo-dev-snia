@@ -70,6 +70,9 @@ int UpdateFromFinerGrids(int level, HierarchyEntry *Grids[], int NumberOfGrids,
  
   int grid1, subgrid, StartGrid, EndGrid;
   HierarchyEntry *NextGrid;
+#ifdef MHDCT
+  LevelHierarchyEntry *NextSubgrid;
+#endif //MHDCT
  
 #ifdef FLUX_FIX
   int SUBlingGrid;
@@ -264,6 +267,25 @@ int UpdateFromFinerGrids(int level, HierarchyEntry *Grids[], int NumberOfGrids,
 	NextGrid->GridData->ProjectSolutionToParentGrid(*Grids[grid1]->GridData);
 	NextGrid = NextGrid->NextGridThisLevel;
       } // ENDWHILE subgrids
+#ifdef MHDCT
+    if(useMHDCT ){
+      //dcc 10/15/05 make this SUBlingList[0]
+#ifdef  FLUX_FIX
+      NextSubgrid = SUBlingList[grid1];
+      //NextSubgrid=LevelArray[level+1];
+      NextSubgrid = NULL;
+      while( NextSubgrid != NULL ){
+	
+	if (NextSubgrid->GridData->MHD_ProjectFace
+	    (*Grids[grid1]->GridData, MetaData->LeftFaceBoundaryCondition,
+	     MetaData->RightFaceBoundaryCondition  ) == FAIL) {
+	  ENZO_FAIL("Error in grid->MHD_ProjectFace, Send Pass.\n");
+	}
+	NextSubgrid = NextSubgrid->NextGridThisLevel;
+      }
+    }
+#endif /*FluxFix */
+#endif //MHDCT
     } // ENDFOR grids
 
     /* -------------- SECOND PASS ----------------- */
@@ -282,6 +304,27 @@ int UpdateFromFinerGrids(int level, HierarchyEntry *Grids[], int NumberOfGrids,
 	NextGrid->GridData->ProjectSolutionToParentGrid(*Grids[grid1]->GridData);
 	NextGrid = NextGrid->NextGridThisLevel;
       } // ENDWHILE subgrids
+#ifdef MHDCT
+
+    if(MHD_Used){
+      //dcc 10/15/5 make this SUBlingList.
+#ifdef  FLUX_FIX
+      NextSubgrid = SUBlingList[grid1];
+      //NextSubgrid=LevelArray[level+1];
+      while( NextSubgrid != NULL ){
+	
+	if (NextSubgrid->GridData->MHD_ProjectFace
+	    (*Grids[grid1]->GridData, MetaData->LeftFaceBoundaryCondition,
+	     MetaData->RightFaceBoundaryCondition  ) == FAIL) {
+	  fprintf(stderr, "Error in grid->MHD_ProjectFace, Receive Pass.\n");
+	  return FAIL;
+	}
+	
+	NextSubgrid = NextSubgrid->NextGridThisLevel;
+      }
+    }//mhd_used
+#endif /*FluxFix */
+#endif //MHDCT
     } // ENDFOR grids
 
     /* -------------- THIRD PASS ----------------- */
