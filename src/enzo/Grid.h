@@ -2654,7 +2654,6 @@ int zEulerSweep(int j, int NumberOfSubgrids, fluxes *SubgridFluxes[],
   float *OldMagneticField[3];
   float *OldElectricField[3];
   float *OldCenteredB[3];
-  float *OldAccelerationField[3];
 
   //Magnetic dimensions: MagneticDims[field][axis]
   int MagneticDims[3][3], ElectricDims[3][3];
@@ -2693,6 +2692,9 @@ int zEulerSweep(int j, int NumberOfSubgrids, fluxes *SubgridFluxes[],
   int ComputeElectricField(float dT, float ** Fluxes);
   int MHD_Curl( int * Start, int * End, int Method);
   int CenterMagneticField(int * Start = NULL, int * End = NULL);
+
+  int ClearAvgElectricField();
+  int MHD_UpdateMagneticField(int level, LevelHierarchyEntry * Level);
 
   //Test Problems
   int MHDBlastInitializeGrid(float Density0, float Density1,
