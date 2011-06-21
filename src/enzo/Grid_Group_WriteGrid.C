@@ -448,7 +448,7 @@ int grid::Group_WriteGrid(FILE *fptr, char *base_name, int grid_id, HDF5_hid_t f
 		     MHDWriteStartIndex,MHDWriteEndIndex,MHDActive,
 		     MHDLabel[field],MHDUnits[0], file_type_id, float_type_id,log_fptr);
       }
-      if( MHD_WriteElectric ){
+      if( MHD_WriteElectric && ElectricField[0] != NULL ){
 	for(field=0;field<nBfields;field++){
 	  if( WriteBoundary == TRUE ){
 	    for( i=0;i<3;i++){
@@ -468,6 +468,15 @@ int grid::Group_WriteGrid(FILE *fptr, char *base_name, int grid_id, HDF5_hid_t f
 		       ElectricDims[field],GridRank,
 		       MHDWriteStartIndex,MHDWriteEndIndex,MHDActive,
 		       MHDeLabel[field],MHDeUnits[0], file_type_id, float_type_id,log_fptr);
+      if( AvgElectricField[field] != NULL ){
+          char name[30];
+          sprintf(name, "AvgElec%d",field);
+          WriteDataset(group_id,AvgElectricField[field],MHDtmp,
+                   ElectricDims[field],GridRank,
+                   MHDWriteStartIndex,MHDWriteEndIndex,MHDActive,
+                   name,MHDeUnits[0], file_type_id, float_type_id,log_fptr);
+
+      }
 
 	}
 	
