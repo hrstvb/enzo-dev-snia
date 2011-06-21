@@ -736,7 +736,7 @@ int SetDefaultGlobalValues(TopGridData &MetaData)
   MHDLi[2]                 = 5;
   MHDLi[3]                 = 1;
   MHDLi[4]                 = 0;
-  MHD_Equation = 1;
+  MHD_Equation = 1; //Only use 1.  2 causes divergence.
   tiny_pressure = tiny_number;
   MHD_CT_Method = 0;
   DEFAULT_GHOST_ZONES = 3;

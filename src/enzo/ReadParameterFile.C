@@ -1018,7 +1018,6 @@ int ReadParameterFile(FILE *fptr, TopGridData &MetaData, float *Initialdt)
     /* 7.22.10 - CBH: Added 5 following lines to avoid runtime warnings from 
     extra params previously added to code (but not read_params) by others.*/
     if (strstr(line, "Cloudy")              ) ret++;
-    if (strstr(line, "IsothermalSoundSpeed")) ret++;
     if (strstr(line, "dtPhoton")            ) ret++;
     if (strstr(line, "CurrentTimeIdentifier")) ret++;
     if (strstr(line, "MetaDataRestart")     ) ret++;

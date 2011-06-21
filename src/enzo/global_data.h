@@ -890,12 +890,13 @@ EXTERN float IsotropicConductionSpitzerFraction;  // f_Spitzer
 EXTERN float AnisotropicConductionSpitzerFraction;  // f_Spitzer
 EXTERN float ConductionCourantSafetyNumber;
 
+EXTERN int RefineByJeansLengthUnits;// determines method for computing jeans length. 0==std cosmology, 1==isothermal, 2==adiabatic ( code units )
+EXTERN float IsothermalSoundSpeed;
 #ifdef MHDCT
 EXTERN int ExtraOutputs[MAX_EXTRA_OUTPUTS];
 EXTERN mhd_ct_interpolation_type MHD_InterpolationMethod;
 //MHDCT variables
 EXTERN int TracerParticlesAddToRestart;// forces addition of tracer particles to already initialized simulations
-EXTERN int RefineByJeansLengthUnits;// determines method for computing jeans length. 0==std cosmology, 1==isothermal, 2==adiabatic ( code units )
 EXTERN int MHD_ProjectThisFace[3]; //Used for determining face projection/communication needs for 
                                    //face centered fields
 EXTERN int ProcessorTopology[3]; //user define processor topology.
@@ -908,7 +909,6 @@ EXTERN int MHD_DivB; //depricated in favor of MHD_CT_Method
 EXTERN int MHD_CT_Method;
 EXTERN int DEFAULT_GHOST_ZONES;
 EXTERN int MHD_Used;// Only used to detect old style parameter files
-EXTERN float IsothermalSoundSpeed;
 EXTERN int MHD_ProjectB;// Should always be FALSE for the evoloution. May be used in initialization.
 EXTERN int MHD_ProjectE;// Should always be TRUE for the evoloution
 EXTERN int useMHDCT;
