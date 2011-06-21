@@ -210,11 +210,6 @@ int grid::ProjectSolutionToParentGrid(grid &ParentGrid)
 
           }
 	  
-          //<dbg>
-          fprintf(stderr,"FUCK ParentStart %"ISYM" %"ISYM" %"ISYM" stop %"ISYM" %"ISYM" %"ISYM"\n",
-                  ParentStartIndex[0], ParentStartIndex[1], ParentStartIndex[2],
-                  ParentEndIndex[0], ParentEndIndex[1], ParentEndIndex[2]);
-          //</dbg
           for(k=ParentStartIndex[2];k<=ParentEndIndex[2]+((field==2)?0:1); k++)
             for(j=ParentStartIndex[1];j<=ParentEndIndex[1]+((field==1)?0:1);j++)
               for(i=ParentStartIndex[0];i<=ParentEndIndex[0]+((field==0)?0:1);i++){

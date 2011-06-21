@@ -670,16 +670,14 @@ int grid::InterpolateBoundaryFromParent(grid *ParentGrid)
 	      MagneticField[field][fieldindex+i] = MHDChildTemp[field][tempindex+i];
 	      
 	      if(fieldindex >= MagneticSize[field] || tempindex >= MHDChildTempSize[field] ) {
-		fprintf(stderr, "MOTHERFUCKER \n");
-		return FAIL;
+              ENZO_FAIL("InterpolateBoundaryFromParent Bounds Check.\n");
 	      }
 	    }
 	    for( i=MHDEndIndex[field][0]+1;i<MagneticDims[field][0]; i++){
 	      MagneticField[field][fieldindex+i] = MHDChildTemp[field][tempindex+i];
 
 	      if(fieldindex >= MagneticSize[field] || tempindex >= MHDChildTempSize[field] ) {
-		fprintf(stderr, "MOTHERFUCKER \n");
-		return FAIL;
+              ENZO_FAIL("InterpolateBoundaryFromParent Bounds Check.\n");
 	      }
 	      
 	    }
@@ -698,8 +696,7 @@ int grid::InterpolateBoundaryFromParent(grid *ParentGrid)
 	      MagneticField[field][fieldindex] = MHDChildTemp[field][tempindex];
 
 	      if(fieldindex >= MagneticSize[field] || tempindex >= MHDChildTempSize[field] ) {
-		fprintf(stderr, "MOTHERFUCKER \n");
-		return FAIL;
+              ENZO_FAIL("InterpolateBoundaryFromParent Bounds Check.\n");
 	      }
 	      
 	    }//left j face (i loop)
@@ -715,8 +712,8 @@ int grid::InterpolateBoundaryFromParent(grid *ParentGrid)
 	      MagneticField[field][fieldindex] = MHDChildTemp[field][tempindex];
 
 	      if(fieldindex >= MagneticSize[field] || tempindex >= MHDChildTempSize[field] ) {
-		fprintf(stderr, "MOTHERFUCKER \n");
-		return FAIL;
+              ENZO_FAIL("InterpolateBoundaryFromParent Bounds Check.\n");
+
 	      }
 	      
 	    }//rigth j face (i loop)
@@ -733,8 +730,8 @@ int grid::InterpolateBoundaryFromParent(grid *ParentGrid)
 	      MagneticField[field][fieldindex] = MHDChildTemp[field][tempindex];
 
 	      if(fieldindex >= MagneticSize[field] || tempindex >= MHDChildTempSize[field] ) {
-		fprintf(stderr, "MOTHERFUCKER \n");
-		return FAIL;
+              ENZO_FAIL("InterpolateBoundaryFromParent Bounds Check.\n");
+
 	      }
 	      
 	    }// left k face ( i loop)
@@ -751,8 +748,8 @@ int grid::InterpolateBoundaryFromParent(grid *ParentGrid)
 	      
 	      MagneticField[field][fieldindex] = MHDChildTemp[field][tempindex];
 	      if(fieldindex >= MagneticSize[field] || tempindex >= MHDChildTempSize[field] ) {
-		fprintf(stderr, "MOTHERFUCKER \n");
-		return FAIL;
+              ENZO_FAIL("InterpolateBoundaryFromParent Bounds Check.\n");
+
 	      }	      
 	    }// right k face ( i loop)
       }//field
