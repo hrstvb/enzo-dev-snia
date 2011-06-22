@@ -1026,7 +1026,7 @@ int grid::MHD2DTestInitializeGrid(int MHD2DProblemType,
 
   if (MHD2DProblemType == 15) { 
 
-    float pres, eintl, eintu, h, cs, dpdrho, dpde,ramp,rhot, bx ,by;
+    float pres, eintl, eintu, h, cs, dpdrho, dpde,ramp,rhot, bx ,by, bz;
 
     for (int j = 0; j < GridDimension[1]; j++) {
       for (int i = 0; i < GridDimension[0]; i++) {
@@ -1042,14 +1042,15 @@ int grid::MHD2DTestInitializeGrid(int MHD2DProblemType,
 	  rho/Gamma ; // for ideal equation of state set sounds speed = 1 
 	EOS(pres, rho, eintl, h, cs, dpdrho, dpde, 0, 1);
 	// impose mode perturbation
-	f = (cos(2.*M_PI*x) + 1.);
-
+	f = sqrt(2.)*(cos(2.*M_PI*x) );
+	float fy = sqrt(2.)*(cos(2.*M_PI*y) );
 	vx = 0.;
 	vy = 0.;
-	bx = Bxl * f ;
+	bx = 0. ;
 	by = Byl * f ;
+	bz = Bxl * fy ;
 
-	etotl = eintl + 0.5*(vx*vx + vy*vy) + 0.5*(bx*bx+by*by)/rho;
+	etotl = eintl + 0.5*(vx*vx + vy*vy) + 0.5*(bx*bx+by*by+bz*bz)/rho;
 
 	BaryonField[iden ][igrid] = rho;
 	BaryonField[ivx  ][igrid] = vx ;
@@ -1063,7 +1064,7 @@ int grid::MHD2DTestInitializeGrid(int MHD2DProblemType,
 	if (HydroMethod == MHD_RK) {
 	  BaryonField[iBx  ][igrid] = bx;
 	  BaryonField[iBy  ][igrid] = by;
-	  BaryonField[iBz  ][igrid] = 0.0;
+	  BaryonField[iBz  ][igrid] = bz;
 	  BaryonField[iPhi ][igrid] = 0.0;
 	}
       } // endfor i
