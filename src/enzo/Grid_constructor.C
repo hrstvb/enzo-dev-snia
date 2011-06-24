@@ -173,7 +173,6 @@ grid::grid()
     OldMagneticField[i] = NULL;
     OldElectricField[i] = NULL;
     OldCenteredB[i] = NULL;
-    OldAccelerationField[i] = NULL;
     MHDParentTemp[i] = NULL;
 
   }
