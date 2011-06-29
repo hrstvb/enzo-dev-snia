@@ -267,7 +267,9 @@ int UpdateFromFinerGrids(int level, HierarchyEntry *Grids[], int NumberOfGrids,
 	NextGrid->GridData->ProjectSolutionToParentGrid(*Grids[grid1]->GridData);
 	NextGrid = NextGrid->NextGridThisLevel;
       } // ENDWHILE subgrids
+      
 #ifdef MHDCT
+      /*
     if(useMHDCT ){
       //dcc 10/15/05 make this SUBlingList[0]
 #ifdef  FLUX_FIX
@@ -284,7 +286,8 @@ int UpdateFromFinerGrids(int level, HierarchyEntry *Grids[], int NumberOfGrids,
 	NextSubgrid = NextSubgrid->NextGridThisLevel;
       }
     }
-#endif /*FluxFix */
+#endif //Flux Fix
+*/
 #endif //MHDCT
     } // ENDFOR grids
 
@@ -305,7 +308,7 @@ int UpdateFromFinerGrids(int level, HierarchyEntry *Grids[], int NumberOfGrids,
 	NextGrid = NextGrid->NextGridThisLevel;
       } // ENDWHILE subgrids
 #ifdef MHDCT
-
+/*
     if(MHD_Used){
       //dcc 10/15/5 make this SUBlingList.
 #ifdef  FLUX_FIX
@@ -323,7 +326,8 @@ int UpdateFromFinerGrids(int level, HierarchyEntry *Grids[], int NumberOfGrids,
 	NextSubgrid = NextSubgrid->NextGridThisLevel;
       }
     }//mhd_used
-#endif /*FluxFix */
+#endif FluxFix
+*/
 #endif //MHDCT
     } // ENDFOR grids
 
