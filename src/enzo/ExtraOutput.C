@@ -51,12 +51,19 @@ int Group_WriteAllData(char *basename, int filenumber, HierarchyEntry *TopGrid,
 		       ImplicitProblemABC *ImplicitSolver,
 #endif
 		       FLOAT WriteTime = -1, int CheckpointDump = FALSE);
-static int output_number[] = {0,0,0,0,0,0,0,0,0,0};
+ int *output_number = NULL;
 int ExtraOutput(int output_flag, LevelHierarchyEntry *LevelArray[],TopGridData *MetaData, int level, ExternalBoundary *Exterior
 #ifdef TRANSFER
 			  , ImplicitProblemABC *ImplicitSolver
 #endif
         ){
+    int n_outputs=30;
+    if( output_number == NULL){
+        output_number = new int[n_outputs];
+        for( int nout=0;nout<n_outputs;nout++){
+            output_number[nout]=0;
+        }
+    }
     int WriteOut = FALSE;
     for( int i=0; i<MAX_EXTRA_OUTPUTS; i++){
         if( output_flag == ExtraOutputs[i]){
