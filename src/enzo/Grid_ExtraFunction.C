@@ -1,6 +1,15 @@
 //
 // ExtraFunction
 // Generic grid member function for debugging.
+// 
+// A stub function that accepts only a string as an argument.
+//
+// One possible use: checking for mass conservation errors in the code.  By filling
+// the body with something that loops over zones and totals mass, one can then look for leaks
+// by calling this code from various points.   
+//
+// All code in the body of the function should be considered temporary,
+// even if checked into the repo.
 //
 
 #include <stdio.h>
