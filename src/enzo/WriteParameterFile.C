@@ -915,7 +915,7 @@ int WriteParameterFile(FILE *fptr, TopGridData &MetaData)
 				       *POW(float(RefineBy), float(MustRefineParticlesRefineToLevel))),3);
 #ifdef MHDCT
   //MHDCT variables
-  fprintf(fptr, "WriteBoundary          = %d //1=already written, 2=start writing\n", WriteBoundary);
+  fprintf(fptr, "WriteBoundary          = %d #1=already written, 2=start writing\n", WriteBoundary);
   fprintf(fptr,"CT_AthenaDissipation          =%"GSYM"\n",CT_AthenaDissipation);
   fprintf(fptr,"MHD_WriteElectric             =%"ISYM"\n",MHD_WriteElectric);
   fprintf(fptr, "MHDLi                    = %d %d %d %d %d\n",MHDLi[0],MHDLi[1],
