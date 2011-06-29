@@ -377,9 +377,15 @@ int EvolveLevel(TopGridData *MetaData, LevelHierarchyEntry *LevelArray[],
   while ((CheckpointRestart == TRUE)
         || (dtThisLevelSoFar[level] < dtLevelAbove)) {
     if(CheckpointRestart == FALSE) {
+        fprintf(stderr,"MagField loopstart\n"); //<dbg> printf
  
     SetLevelTimeStep(Grids, NumberOfGrids, level, 
         &dtThisLevelSoFar[level], &dtThisLevel[level], dtLevelAbove);
+    //<dbg>
+    for (grid1 = 0; grid1 < NumberOfGrids; grid1++) {
+        Grids[grid1]->GridData->ExtraFunction("At Timestep Set");
+    }
+    //<dbg>
 
     /* Streaming movie output (write after all parent grids are
        updated) */
@@ -488,6 +494,8 @@ int EvolveLevel(TopGridData *MetaData, LevelHierarchyEntry *LevelArray[],
 
 #ifdef MHDCT
 
+      //<dbg>
+      Grids[grid1]->GridData->ExtraFunction("Pre SMHD");
       if( useMHDCT && HydroMethod == MHD_Li ){
 	Grids[grid1]->GridData->SolveMHDEquations(LevelCycleCount[level],
 		NumberOfSubgrids[grid1], SubgridFluxesEstimate[grid1], level ,grid1); 
@@ -587,6 +595,11 @@ int EvolveLevel(TopGridData *MetaData, LevelHierarchyEntry *LevelArray[],
     SetBoundaryConditions(Grids, NumberOfGrids, level, MetaData,
 			  Exterior, LevelArray[level]);
 #endif
+    //<dbg>
+      for(grid1=0;grid1<NumberOfGrids; grid1++){
+          Grids[grid1]->GridData->ExtraFunction("Post SBC1");
+      }
+      //</dbg>
 
     /* If cosmology, then compute grav. potential for output if needed. */
 
@@ -713,7 +726,11 @@ int EvolveLevel(TopGridData *MetaData, LevelHierarchyEntry *LevelArray[],
 #ifdef MHDCT
     if(useMHDCT == TRUE && MHD_ProjectE == TRUE){
       for(grid1=0;grid1<NumberOfGrids; grid1++){
+          //<dbg>
+          Grids[grid1]->GridData->ExtraFunction("Pre UMF");
         Grids[grid1]->GridData->MHD_UpdateMagneticField(level, LevelArray[level+1]);
+        //<dbg>
+          Grids[grid1]->GridData->ExtraFunction("Post UMF");
         }
     }//MHD True
 #endif //MHDCT
@@ -729,6 +746,15 @@ int EvolveLevel(TopGridData *MetaData, LevelHierarchyEntry *LevelArray[],
   /* Add the saved fluxes (in the last subsubgrid entry) to the exterior
      fluxes for this subgrid .
      (Note: this must be done after CorrectForRefinedFluxes). */
+#ifdef MHDCT
+#ifdef FAST_SIB
+    SetBoundaryConditions(Grids, NumberOfGrids, SiblingList,
+			  level, MetaData, Exterior, LevelArray[level]);
+#else
+    SetBoundaryConditions(Grids, NumberOfGrids, level, MetaData,
+			  Exterior, LevelArray[level]);
+#endif
+#endif //MHDCT
 
     FinalizeFluxes(Grids,SubgridFluxesEstimate,NumberOfGrids,NumberOfSubgrids);
 
@@ -737,10 +763,20 @@ int EvolveLevel(TopGridData *MetaData, LevelHierarchyEntry *LevelArray[],
  
     /* Rebuild the Grids on the next level down.
        Don't bother on the last cycle, as we'll rebuild this grid soon. */
+    //<dbg>
+    for (grid1 = 0; grid1 < NumberOfGrids; grid1++) {
+        Grids[grid1]->GridData->ExtraFunction("Pre RH");
+    }
+    //</dbg>
  
     if (dtThisLevelSoFar[level] < dtLevelAbove)
       RebuildHierarchy(MetaData, LevelArray, level);
 
+    //<dbg>
+    for (grid1 = 0; grid1 < NumberOfGrids; grid1++) {
+        Grids[grid1]->GridData->ExtraFunction("After RH");
+    }
+    //</dbg>
     /* Count up number of grids on this level. */
 
     int GridMemory, NumberOfCells, CellsTotal, Particles;
