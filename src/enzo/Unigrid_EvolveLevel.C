@@ -697,7 +697,7 @@ if (SetBoundaryConditions(Grids, NumberOfGrids, level, MetaData,
  
 
 #if defined(USE_LCAPERF) && defined(LCAPERF_LEVELS)
-    lcaperf.attribute ("level",&lcaperf_level,LCAPERF_INT);
+    lcaperf.attribute ("level",&lcaperf_level,LCAP_INT);
 #endif
 
     /* ------------------------------------------------------- */
@@ -797,7 +797,7 @@ if (SetBoundaryConditions(Grids, NumberOfGrids, level, MetaData,
   ReportMemoryUsage("Memory usage report: Evolve Level");
  
 #if defined(USE_LCAPERF) && defined(LCAPERF_LEVELS)
-  lcaperf.attribute ("level",0,LCAPERF_NULL);
+  lcaperf.attribute ("level",0,LCAP_INT);
 #endif
 
   /* Clean up. */

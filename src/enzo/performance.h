@@ -24,8 +24,6 @@ ERROR: need performance.h to be included before macros_and_parameters.h
 //
 // To use lcaperf, compile with -DUSE_LCAPERF and link with -llcaperf
 // To use PAPI with lcaperf, compile also with -DUSE_PAPI and link with -lpapi
-// To instrument HDF5 read/writes with lcaperf, compile with -DUSE_LCAPERF_HDF5
-// To instrument MPI send/recvs, link with -lpmpi
 //
 //----------------------------------------------------------------------
 //
@@ -39,18 +37,13 @@ ERROR: need performance.h to be included before macros_and_parameters.h
 //----------------------------------------------------------------------
 #ifdef USE_LCAPERF
 
-#   include "lcaperf.h" // THIS MUST COME BEFORE int IS REDEFINED
+#   include "lcaperf.hpp" // THIS MUST COME BEFORE int IS REDEFINED
 
-#   define LCAPERF_DUMP_FREQUENCY 1  /* How frequently to dump data to files. */
-
-#endif /* USE_LCAPERF */
-
-#ifdef USE_LCAPERF
-
-#  define LCAPERF_BEGIN(segment)    lcaperf.begin (segment)
-#  define LCAPERF_END(segment)      lcaperf.end (segment)
+#  define LCAPERF_BEGIN(segment)    lcaperf.begin ()
+#  define LCAPERF_END(segment)      lcaperf.end ()
 #  define LCAPERF_START(region)     lcaperf.start (region)
 #  define LCAPERF_STOP(region)      lcaperf.stop (region)
+#  define LCAPERF_PRINT             lcaperf.print()
 
 #else
 
@@ -58,6 +51,7 @@ ERROR: need performance.h to be included before macros_and_parameters.h
 #  define LCAPERF_END(segment)      /* This space intentionally left blank */ ;
 #  define LCAPERF_START(region)     /* This space intentionally left blank */ ;
 #  define LCAPERF_STOP(region)      /* This space intentionally left blank */ ;
+#  define LCAPERF_PRINT             /* This space intentionally left blank */ ;
 
 #endif
 

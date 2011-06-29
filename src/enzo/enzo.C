@@ -231,6 +231,7 @@ int RadiativeTransferInitialize(char *ParameterFile,
 
 #ifdef USE_LCAPERF
 void lcaperfInitialize (int max_level);
+void lcaperfFinalize ();
 #endif
 
 void my_exit(int status);
@@ -288,15 +289,6 @@ Eint32 MAIN_NAME(Eint32 argc, char *argv[])
 
   t_init0 = MPI_Wtime();
 #endif /* USE_MPI */
-
-#ifdef USE_LCAPERF
-
-    // Initialize lcaperf performance collecting
-
-  lcaperfInitialize(MaximumRefinementLevel);
-
-#endif
-
 
   // Task Mapping
 
@@ -727,6 +719,10 @@ Eint32 MAIN_NAME(Eint32 argc, char *argv[])
   InitializePythonInterface(argc, argv);
 #endif 
 
+#ifdef USE_LCAPERF
+  lcaperfInitialize(MaximumRefinementLevel);
+#endif
+
   // Call the main evolution routine
  
   if (debug) fprintf(stderr, "INITIALDT ::::::::::: %16.8e\n", Initialdt);
@@ -841,6 +837,9 @@ void my_exit(int status)
   // Exit gracefully if successful; abort on error
 #ifdef USE_PYTHON
   FinalizePythonInterface();
+#endif
+#ifdef USE_LCAPERF
+    lcaperfFinalize();
 #endif
 
   if (status == EXIT_SUCCESS) {

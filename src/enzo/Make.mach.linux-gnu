@@ -17,6 +17,35 @@ MACH_TEXT  = Generic Ubuntu 8.04
 MACH_VALID = 1
 MACH_FILE  = Make.mach.ubuntu-hardy
 
+#======================================================================
+# LCAPERF settings
+#======================================================================
+
+# Setup for LCAPERF
+
+LOCAL_LCAPERF_PATH = $(HOME)/lcaperf-2.0
+LOCAL_LCAPERF_DEF  = -DUSE_LCAPERF
+LOCAL_LCAPERF_INC  = -I$(LOCAL_LCAPERF_PATH)/include
+LOCAL_LCAPERF_LIB  = -L$(LOCAL_LCAPERF_PATH)/lib -llcaperf
+
+# Setup for PAPI (optional: comment out LOCAL_PAPI_* if not used)
+
+LOCAL_PAPI_PATH    = /usr/local
+LOCAL_PAPI_DEF     = -DUSE_PAPI
+LOCAL_PAPI_INC     = -I$(LOCAL_PAPI_PATH)/include
+LOCAL_PAPI_LIB     = -L$(LOCAL_PAPI_PATH)/lib -lpapi
+
+# LOCAL_PAPI_PATH    = 
+# LOCAL_PAPI_DEF     = 
+# LOCAL_PAPI_INC     = 
+# LOCAL_PAPI_LIB     = 
+
+# Set variables for Make.config.assemble
+
+MACH_DEFINES_LCAPERF  = $(LOCAL_LCAPERF_DEF) $(LOCAL_PAPI_DEF)
+MACH_INCLUDES_LCAPERF = $(LOCAL_LCAPERF_INC) $(LOCAL_PAPI_INC)
+MACH_LIBS_LCAPERF     = $(LOCAL_LCAPERF_LIB) $(LOCAL_PAPI_LIB)
+
 #-----------------------------------------------------------------------
 # Install paths (local variables)
 #-----------------------------------------------------------------------
@@ -88,13 +117,11 @@ MACH_OPT_AGGRESSIVE  = -O3 -g
 LOCAL_INCLUDES_MPI    = # MPI includes
 LOCAL_INCLUDES_HDF5   = -I$(LOCAL_HDF5_INSTALL)/include # HDF5 includes
 LOCAL_INCLUDES_HYPRE  = # hypre includes
-LOCAL_INCLUDES_PAPI   = # PAPI includes
 
 MACH_INCLUDES         = $(LOCAL_INCLUDES_HDF5)
 
 MACH_INCLUDES_MPI     = $(LOCAL_INCLUDES_MPI)
 MACH_INCLUDES_HYPRE   = $(LOCAL_INCLUDES_HYPRE)
-MACH_INCLUDES_PAPI    = $(LOCAL_INCLUDES_PAPI)
 
 #-----------------------------------------------------------------------
 # Libraries

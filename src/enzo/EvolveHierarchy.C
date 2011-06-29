@@ -164,8 +164,12 @@ int EvolveHierarchy(HierarchyEntry &TopGrid, TopGridData &MetaData,
   LevelHierarchyEntry *Temp;
   double LastCPUTime;
 
-  LCAPERF_BEGIN("EL");
   LCAPERF_START("EvolveHierarchy");
+
+#ifdef USE_LCAPERF
+    Eint32 lcaperf_cycle = MetaData.CycleNumber;
+    lcaperf.attribute ("cycle",&lcaperf_cycle, LCAP_INT);
+#endif
 
 #ifdef USE_MPI
   tentry = MPI_Wtime();
@@ -308,26 +312,10 @@ int EvolveHierarchy(HierarchyEntry &TopGrid, TopGridData &MetaData,
 
   StarParticleCountOnly(LevelArray);
  
-#ifdef USE_LCAPERF
-  Eint32 lcaperf_iter;
-#endif
-
-  LCAPERF_STOP("EvolveHierarchy");
-  LCAPERF_END("EH");
-
   /* ====== MAIN LOOP ===== */
 
   bool FirstLoop = true;
   while (!Stop) {
-
-#ifdef USE_LCAPERF
-    lcaperf_iter = MetaData.CycleNumber;
-    static bool isFirstCall = true;
-    if ((lcaperf_iter % LCAPERF_DUMP_FREQUENCY)==0 || isFirstCall) lcaperf.begin("EL");
-    isFirstCall = false;
-    lcaperf.attribute ("timestep",&lcaperf_iter, LCAPERF_INT);
-    lcaperf.start("EL");
-#endif
 
 #ifdef USE_MPI
     tloop0 = MPI_Wtime();
@@ -336,6 +324,7 @@ int EvolveHierarchy(HierarchyEntry &TopGrid, TopGridData &MetaData,
 #ifdef MEM_TRACE
     fprintf(memtracePtr, "==== CYCLE %"ISYM" ====\n", MetaData.CycleNumber);
 #endif    
+
     PrintMemoryUsage("Top");
 
     /* Load balance the root grids if this isn't the initial call */
@@ -532,6 +521,11 @@ int EvolveHierarchy(HierarchyEntry &TopGrid, TopGridData &MetaData,
  
     MetaData.Time += dt;
     MetaData.CycleNumber++;
+#ifdef USE_LCAPERF
+    lcaperf_cycle = MetaData.CycleNumber;
+    lcaperf.attribute ("cycle",&lcaperf_cycle, LCAP_INT);
+#endif
+    
     MetaData.LastCycleCPUTime = ReturnWallTime() - LastCPUTime;
     MetaData.CPUTime += MetaData.LastCycleCPUTime;
     LastCPUTime = ReturnWallTime();
@@ -622,8 +616,7 @@ int EvolveHierarchy(HierarchyEntry &TopGrid, TopGridData &MetaData,
 #endif /* REDUCE_FRAGMENTATION */
 
 #ifdef USE_LCAPERF
-    lcaperf.stop("EL");
-    if (((lcaperf_iter+1) % LCAPERF_DUMP_FREQUENCY)==0) lcaperf.end("EL");
+    //    lcaperf.stop("EL");
 #endif
 
     PrintMemoryUsage("Bot");
@@ -682,11 +675,6 @@ int EvolveHierarchy(HierarchyEntry &TopGrid, TopGridData &MetaData,
  
   } // ===== end of main loop ====
  
-#ifdef USE_LCAPERF
-  if (((lcaperf_iter+1) % LCAPERF_DUMP_FREQUENCY)!=0) lcaperf.end("EL");
-  lcaperf.attribute ("timestep",0, LCAPERF_NULL);
-#endif
-
   MetaData.CPUTime = ReturnWallTime() - MetaData.StartCPUTime;
  
   /* Done, so report on current time, etc. */
@@ -744,6 +732,12 @@ int EvolveHierarchy(HierarchyEntry &TopGrid, TopGridData &MetaData,
 	   MyProcessorNumber, CommunicationTime);
  
   /* done */
+
+#ifdef USE_LCAPERF
+    lcaperf.attribute ("cycle",0, LCAP_INT);
+#endif
+
+  LCAPERF_STOP("EvolveHierarchy");
 
 #ifdef USE_MPI
   texit = MPI_Wtime();
