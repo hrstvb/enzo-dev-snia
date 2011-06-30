@@ -36,6 +36,8 @@ void lcaperfInitialize (int max_level)
 
   // Initialize lcaperf
 
+  lcaperf.initialize ("out.lcaperf");
+
   // Define lcaperf attributes
 
   lcaperf.new_attribute ("cycle", LCAP_INT);
@@ -76,6 +78,7 @@ void lcaperfFinalize ()
 {
   lcaperf.print();
   lcaperf.end();
+  lcaperf.finalize();
 }
 
 #endif /* USE_LCAPERF */
