@@ -164,8 +164,6 @@ int EvolveHierarchy(HierarchyEntry &TopGrid, TopGridData &MetaData,
   LevelHierarchyEntry *Temp;
   double LastCPUTime;
 
-  LCAPERF_START("EvolveHierarchy");
-
 #ifdef USE_LCAPERF
     Eint32 lcaperf_cycle = MetaData.CycleNumber;
     lcaperf.attribute ("cycle",&lcaperf_cycle, LCAP_INT);
@@ -316,6 +314,8 @@ int EvolveHierarchy(HierarchyEntry &TopGrid, TopGridData &MetaData,
 
   bool FirstLoop = true;
   while (!Stop) {
+
+    LCAPERF_START("EvolveHierarchy");
 
 #ifdef USE_MPI
     tloop0 = MPI_Wtime();
@@ -507,7 +507,8 @@ int EvolveHierarchy(HierarchyEntry &TopGrid, TopGridData &MetaData,
         return FAIL;
       }
     }
-
+    
+    lcaperf.attribute ("level",0,LCAP_INT);
 
 
 #ifdef USE_MPI 
@@ -521,10 +522,6 @@ int EvolveHierarchy(HierarchyEntry &TopGrid, TopGridData &MetaData,
  
     MetaData.Time += dt;
     MetaData.CycleNumber++;
-#ifdef USE_LCAPERF
-    lcaperf_cycle = MetaData.CycleNumber;
-    lcaperf.attribute ("cycle",&lcaperf_cycle, LCAP_INT);
-#endif
     
     MetaData.LastCycleCPUTime = ReturnWallTime() - LastCPUTime;
     MetaData.CPUTime += MetaData.LastCycleCPUTime;
@@ -671,6 +668,15 @@ int EvolveHierarchy(HierarchyEntry &TopGrid, TopGridData &MetaData,
     }
 #endif
 
+    LCAPERF_STOP("EvolveHierarchy");
+
+    lcaperf.print();
+
+#ifdef USE_LCAPERF
+    lcaperf_cycle = MetaData.CycleNumber;
+    lcaperf.attribute ("cycle",&lcaperf_cycle, LCAP_INT);
+#endif
+
     FirstLoop = false;
  
   } // ===== end of main loop ====
@@ -736,8 +742,6 @@ int EvolveHierarchy(HierarchyEntry &TopGrid, TopGridData &MetaData,
 #ifdef USE_LCAPERF
     lcaperf.attribute ("cycle",0, LCAP_INT);
 #endif
-
-  LCAPERF_STOP("EvolveHierarchy");
 
 #ifdef USE_MPI
   texit = MPI_Wtime();
