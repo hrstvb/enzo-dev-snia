@@ -165,8 +165,9 @@ int EvolveHierarchy(HierarchyEntry &TopGrid, TopGridData &MetaData,
   double LastCPUTime;
 
 #ifdef USE_LCAPERF
-    Eint32 lcaperf_cycle = MetaData.CycleNumber;
-    lcaperf.attribute ("cycle",&lcaperf_cycle, LCAP_INT);
+  lcaperf.header();
+  Eint32 lcaperf_cycle = MetaData.CycleNumber;
+  lcaperf.attribute ("cycle",&lcaperf_cycle, LCAP_INT);
 #endif
 
 #ifdef USE_MPI
@@ -508,7 +509,9 @@ int EvolveHierarchy(HierarchyEntry &TopGrid, TopGridData &MetaData,
       }
     }
     
+#ifdef USE_LCAPERF
     lcaperf.attribute ("level",0,LCAP_INT);
+#endif
 
 
 #ifdef USE_MPI 
@@ -670,9 +673,8 @@ int EvolveHierarchy(HierarchyEntry &TopGrid, TopGridData &MetaData,
 
     LCAPERF_STOP("EvolveHierarchy");
 
-    lcaperf.print();
-
 #ifdef USE_LCAPERF
+    lcaperf.print();
     lcaperf_cycle = MetaData.CycleNumber;
     lcaperf.attribute ("cycle",&lcaperf_cycle, LCAP_INT);
 #endif
@@ -736,7 +738,7 @@ int EvolveHierarchy(HierarchyEntry &TopGrid, TopGridData &MetaData,
 
     printf("Communication: processor %"ISYM" CommunicationTime = %"FSYM"\n",
 	   MyProcessorNumber, CommunicationTime);
- 
+
   /* done */
 
 #ifdef USE_LCAPERF

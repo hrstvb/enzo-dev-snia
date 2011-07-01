@@ -51,6 +51,12 @@ void lcaperfInitialize (int max_level)
   lcaperf.new_counter ("count-particles",  user_counter_type_absolute);
   lcaperf.new_counter ("time-sim",         user_counter_type_absolute);
 
+  // Select which regions to print()
+
+  lcaperf.new_region ("EvolveHierarchy");
+  lcaperf.new_region ("EvolveLevel");
+  lcaperf.new_region ("grid_SolveHydroEquations");
+
   for (int level=0; level <= max_level; level++) {
 
     char lcaperf_counter_name[30];
@@ -76,7 +82,6 @@ void lcaperfInitialize (int max_level)
 
 void lcaperfFinalize ()
 {
-  lcaperf.print();
   lcaperf.end();
   lcaperf.finalize();
 }
