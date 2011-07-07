@@ -45,6 +45,15 @@ ERROR: need performance.h to be included before macros_and_parameters.h
 #  define LCAPERF_STOP(region)      lcaperf.stop (region)
 #  define LCAPERF_PRINT             lcaperf.print()
 
+class LcaPerfEnzo : public LcaPerf
+{
+ public:
+  virtual void header ();
+  virtual void print ();
+};
+
+extern LcaPerfEnzo lcaperf;
+
 #else
 
 #  define LCAPERF_BEGIN(segment)    /* This space intentionally left blank */ ;
