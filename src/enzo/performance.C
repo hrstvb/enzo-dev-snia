@@ -70,16 +70,28 @@ const char * region_list[] = {
 
 // LIST OF LCAPERF METRICS TO OUTPUT
 
-const char * metric_list[] = { 
+const struct {
+  const char * name;    // Name of derived metric for output file 
+  const char * group;   // Name of counter group of source counter
+  const char * metric;  // Name of source counter
+  const char * format;  // format field for output file
+  double scaling;
+}  metric_list[] = { 
   // "counter group", "metric"
-  "basic", "time",
-  "mpi",   "mpi-time",
-  "mpi",   "mpi-sync-time",
-  "mpi",   "mpi-send-bytes",
-  "mpi",   "mpi-recv-bytes",
-  // NULL STRINGS SIGNALS ARRAY END: REQUIRED
-  "","" 
+  "time-avg",            "basic", "time",              "%lf", 1e-6,
+  "mpi-time-avg",        "mpi",   "mpi-time",          "%lf", 1e-6,
+  "mpi-time-sync-avg",   "mpi",   "mpi-sync-time",     "%lf", 1e-6,
+  "mpi-send-mbytes-avg", "mpi",   "mpi-send-bytes",    "%lf", 1e-6,
+  "mpi-recv-mbytes-avg", "mpi",   "mpi-recv-bytes",    "%lf", 1e-6,
+  "amr-zones-avg",       "user",  "count-zones",       "%lf", 1.0,
+  "amr-grids-avg",       "user",  "count-grids",       "%lf", 1.0,
+  "amr-ghosts-avg",      "user",  "count-ghosts",      "%lf", 1.0,
+  "amr-particles-avg",   "user",  "count-particles",   "%lf", 1.0,
+  // NULL VALUES SIGNAL ARRAY END: REQUIRED
+  "","","", "", 0.0
 };
+
+FILE *** fp_metric;
 
 void lcaperfInitialize (int max_level)
 {
@@ -88,6 +100,7 @@ void lcaperfInitialize (int max_level)
 
   lcaperf.initialize ("out.lcaperf");
 
+  mkdir ("lcaperf",0777);
   // Define lcaperf attributes
 
   lcaperf.new_attribute ("cycle", LCAP_INT);
@@ -95,11 +108,10 @@ void lcaperfInitialize (int max_level)
 
   // Define lcaperf counters
 
-  lcaperf.new_counter ("count-zones",      user_counter_type_absolute);
-  lcaperf.new_counter ("count-ghosts",     user_counter_type_absolute);
-  lcaperf.new_counter ("count-grids",      user_counter_type_absolute);
-  lcaperf.new_counter ("count-particles",  user_counter_type_absolute);
-  lcaperf.new_counter ("time-sim",         user_counter_type_absolute);
+  lcaperf.new_counter ("count-zones",      counter_type_absolute);
+  lcaperf.new_counter ("count-ghosts",     counter_type_absolute);
+  lcaperf.new_counter ("count-grids",      counter_type_absolute);
+  lcaperf.new_counter ("count-particles",  counter_type_absolute);
 
   // Select which regions to print()
 
@@ -111,19 +123,47 @@ void lcaperfInitialize (int max_level)
 
     char lcaperf_counter_name[30];
 
-    sprintf (lcaperf_counter_name,"count-zones-local-%"ISYM,level);
-    lcaperf.new_counter(lcaperf_counter_name,user_counter_type_absolute);
+    sprintf (lcaperf_counter_name,"count-zones-%"ISYM,level);
+    lcaperf.new_counter(lcaperf_counter_name,counter_type_absolute);
 
-    sprintf (lcaperf_counter_name,"count-ghosts-local-%"ISYM,level);
-    lcaperf.new_counter(lcaperf_counter_name,user_counter_type_absolute);
+    sprintf (lcaperf_counter_name,"count-ghosts-%"ISYM,level);
+    lcaperf.new_counter(lcaperf_counter_name,counter_type_absolute);
 
-    sprintf (lcaperf_counter_name,"count-grids-local-%"ISYM,level);
-    lcaperf.new_counter(lcaperf_counter_name,user_counter_type_absolute);
+    sprintf (lcaperf_counter_name,"count-grids-%"ISYM,level);
+    lcaperf.new_counter(lcaperf_counter_name,counter_type_absolute);
 
-    sprintf (lcaperf_counter_name,"count-particles-local-%"ISYM,level);
-    lcaperf.new_counter(lcaperf_counter_name,user_counter_type_absolute);
+    sprintf (lcaperf_counter_name,"count-particles-%"ISYM,level);
+    lcaperf.new_counter(lcaperf_counter_name,counter_type_absolute);
 
   }
+
+  // Count regions and metrics to allocate storage for file pointers
+
+  int num_regions = 0;
+  for (size_t i_region = 0; strlen(region_list[i_region]) > 0; ++i_region) 
+    ++num_regions;
+
+  fp_metric = new FILE ** [num_regions];
+
+  int num_metrics = 0;
+  for (int i_metric = 0; strlen(metric_list[i_metric].group) > 0; ++i_metric) 
+    ++num_metrics;
+  
+  for (int i_region=0; i_region<num_regions; i_region++) {
+    fp_metric[i_region] = new FILE * [num_metrics];
+  }
+
+  chdir ("lcaperf");
+
+  // Open all performance metric files
+  for (size_t i_region = 0; strlen(region_list[i_region]) > 0; ++i_region) {
+    for (int i_metric = 0; strlen(metric_list[i_metric].group) > 0; ++i_metric) {
+      char filename[80];
+      sprintf (filename,"%s.%s",region_list[i_region],metric_list[i_metric].name);
+      fp_metric[i_region][i_metric] = fopen (filename,"w");
+    }
+  }
+  chdir ("..");
 
   lcaperf.begin();
 }
@@ -132,6 +172,16 @@ void lcaperfInitialize (int max_level)
 
 void lcaperfFinalize ()
 {
+  // count regions for next loop
+  int num_regions = 0;
+  for (size_t i_region = 0; strlen(region_list[i_region]) > 0; ++i_region) 
+    ++num_regions;
+
+  for (int i_region=0; i_region<num_regions; i_region++) {
+    delete [] fp_metric[i_region];
+  }
+  delete [] fp_metric;
+
   lcaperf.end();
   lcaperf.finalize();
 }
@@ -222,10 +272,12 @@ void LcaPerfEnzo::print ()
     
     // LOOP OVER METRICS
 
-    for (int i_metric = 0; strlen(metric_list[i_metric]) > 0; /* EMPTY */ ) {
+    for (int i_metric = 0; strlen(metric_list[i_metric].group) > 0; ++i_metric ) {
 
-      const char * group  = metric_list[i_metric++];
-      const char * metric = metric_list[i_metric++];
+      const char * group   = metric_list[i_metric].group;
+      const char * metric  = metric_list[i_metric].metric;
+      const char * format    = metric_list[i_metric].format;
+      const double scaling = metric_list[i_metric].scaling;
 
       // Loop over keys in the Counters object to sum counters over levels
 
@@ -266,14 +318,23 @@ void LcaPerfEnzo::print ()
 
 	empty = false;
 
-	time_avg = 1e-6*counter_array_reduce[i_avg]/np;
-	time_max = 1e-6*counter_array_reduce[i_max];
+	time_avg = scaling*counter_array_reduce[i_avg]/np;
+	time_max = scaling*counter_array_reduce[i_max];
 	time_eff = time_avg / time_max;
       }
 
-      sprintf (field, "%06.4f %5.6f     ",time_avg,time_eff);
-
+      // Append value to line buffer
+      sprintf (field, format, time_avg);
       line = line + field;
+
+      // Append efficiency to line buffer
+      sprintf (field, " %5.6f     ",time_eff);
+      line = line + field;
+
+      // Print to file
+      fprintf (fp_metric[i_region][i_metric],format,time_avg);
+      fprintf (fp_metric[i_region][i_metric],"\n");
+      fflush(fp_metric[i_region][i_metric]);
 
     }
 
