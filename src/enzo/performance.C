@@ -79,10 +79,14 @@ const struct {
 }  metric_list[] = { 
   // "counter group", "metric"
   "time-avg",            "basic", "time",              "%lf", 1e-6,
+#ifdef USE_MPI
   "mpi-time-avg",        "mpi",   "mpi-time",          "%lf", 1e-6,
   "mpi-time-sync-avg",   "mpi",   "mpi-sync-time",     "%lf", 1e-6,
   "mpi-send-mbytes-avg", "mpi",   "mpi-send-bytes",    "%lf", 1e-6,
   "mpi-recv-mbytes-avg", "mpi",   "mpi-recv-bytes",    "%lf", 1e-6,
+#endif
+  "mem-mbytes-avg",      "mem",   "mem-bytes-curr",    "%lf", 1e-6,
+  "mem-mbytes-high-avg", "mem",   "mem-bytes-high",    "%lf", 1e-6,
   "amr-zones-avg",       "user",  "count-zones",       "%lf", 1.0,
   "amr-grids-avg",       "user",  "count-grids",       "%lf", 1.0,
   "amr-ghosts-avg",      "user",  "count-ghosts",      "%lf", 1.0,
@@ -91,7 +95,7 @@ const struct {
   "","","", "", 0.0
 };
 
-FILE *** fp_metric;
+FILE *** fp_metric = 0;
 
 void lcaperfInitialize (int max_level)
 {
@@ -100,7 +104,6 @@ void lcaperfInitialize (int max_level)
 
   lcaperf.initialize ("out.lcaperf");
 
-  mkdir ("lcaperf",0777);
   // Define lcaperf attributes
 
   lcaperf.new_attribute ("cycle", LCAP_INT);
@@ -143,27 +146,40 @@ void lcaperfInitialize (int max_level)
   for (size_t i_region = 0; strlen(region_list[i_region]) > 0; ++i_region) 
     ++num_regions;
 
-  fp_metric = new FILE ** [num_regions];
+  // Create lcaperf directory and open fp_metric[][] files
 
-  int num_metrics = 0;
-  for (int i_metric = 0; strlen(metric_list[i_metric].group) > 0; ++i_metric) 
-    ++num_metrics;
+  Eint32 ip = 0;
+#ifdef USE_MPI
+  MPI_Comm_rank(MPI_COMM_WORLD,&ip);
+#endif
+
+  if (ip == 0) {
+
+    fp_metric = new FILE ** [num_regions];
+
+    int num_metrics = 0;
+    for (int i_metric = 0; strlen(metric_list[i_metric].group) > 0; ++i_metric) 
+      ++num_metrics;
   
-  for (int i_region=0; i_region<num_regions; i_region++) {
-    fp_metric[i_region] = new FILE * [num_metrics];
-  }
-
-  chdir ("lcaperf");
-
-  // Open all performance metric files
-  for (size_t i_region = 0; strlen(region_list[i_region]) > 0; ++i_region) {
-    for (int i_metric = 0; strlen(metric_list[i_metric].group) > 0; ++i_metric) {
-      char filename[80];
-      sprintf (filename,"%s.%s",region_list[i_region],metric_list[i_metric].name);
-      fp_metric[i_region][i_metric] = fopen (filename,"w");
+    for (int i_region=0; i_region<num_regions; i_region++) {
+      fp_metric[i_region] = new FILE * [num_metrics];
     }
+
+    mkdir ("lcaperf",0777);
+    chdir ("lcaperf");
+
+    // Open all performance metric files
+    for (size_t i_region = 0; strlen(region_list[i_region]) > 0; ++i_region) {
+      for (int i_metric = 0; strlen(metric_list[i_metric].group) > 0; ++i_metric) {
+	char filename[80];
+	sprintf (filename,"%s.%s",region_list[i_region],metric_list[i_metric].name);
+	fp_metric[i_region][i_metric] = fopen (filename,"w");
+      }
+    }
+    chdir ("..");
+  } else {
+    fp_metric = 0;
   }
-  chdir ("..");
 
   lcaperf.begin();
 }
@@ -172,15 +188,18 @@ void lcaperfInitialize (int max_level)
 
 void lcaperfFinalize ()
 {
-  // count regions for next loop
-  int num_regions = 0;
-  for (size_t i_region = 0; strlen(region_list[i_region]) > 0; ++i_region) 
-    ++num_regions;
+  if (fp_metric) {
+    // count regions for next loop
+    int num_regions = 0;
+    for (size_t i_region = 0; strlen(region_list[i_region]) > 0; ++i_region) 
+      ++num_regions;
 
-  for (int i_region=0; i_region<num_regions; i_region++) {
-    delete [] fp_metric[i_region];
+    for (int i_region=0; i_region<num_regions; i_region++) {
+      delete [] fp_metric[i_region];
+    }
+    delete [] fp_metric;
+    fp_metric = 0;
   }
-  delete [] fp_metric;
 
   lcaperf.end();
   lcaperf.finalize();
@@ -197,26 +216,6 @@ LcaPerfEnzo lcaperf;
 void LcaPerfEnzo::header ()
 //----------------------------------------------------------------------
 {
-  const bool l_mpi  = counters_.find("mpi")  != counters_.end();
-  const bool l_papi = counters_.find("papi") != counters_.end();
-  const bool l_mem  = counters_.find("mem")  != counters_.end();
-  const bool l_disk = counters_.find("disk") != counters_.end();
-
-  if (fp_) {
-    fprintf (fp_,"lcaperf: ");
-    fprintf             (fp_,"    time(s)    " "   ");
-    if (l_mpi) {
-      fprintf (fp_,"   MPI time(s)    " "  ");
-      fprintf (fp_," MPI time sync(s) " "  ");
-      fprintf (fp_,"MPI send bytes(MB)" "  ");
-      fprintf (fp_,"MPI recv bytes(MB)" "  ");
-    }
-    if (l_papi) fprintf (fp_,"  flops(GF)    " "   ");
-    if (l_mem)  fprintf (fp_,"  memory(GB)   " "   ");
-    if (l_disk) fprintf (fp_,"   disk(GB)    " "   ");
-    fprintf (fp_,"cycle ");
-    fprintf (fp_,"region\n");
-  }
 }
 
 //----------------------------------------------------------------------
@@ -243,18 +242,12 @@ void LcaPerfEnzo::print ()
 
   long long counter_array_reduce[2];
 
-  // Line to print
-  std::string line;
-  char field[80];
-
   // LOOP OVER REGIONS
 
   for (size_t i_region = 0; i_region < regions_.size(); ++i_region) {
 
     bool empty = true;
     
-    if (fp_) line = "lcaperf: ";
-
     std::string region = regions_[i_region];
 
     //    NOTE: EvolveLevel must be handled differently since it is recursive
@@ -323,28 +316,13 @@ void LcaPerfEnzo::print ()
 	time_eff = time_avg / time_max;
       }
 
-      // Append value to line buffer
-      sprintf (field, format, time_avg);
-      line = line + field;
-
-      // Append efficiency to line buffer
-      sprintf (field, " %5.6f     ",time_eff);
-      line = line + field;
-
       // Print to file
-      fprintf (fp_metric[i_region][i_metric],format,time_avg);
-      fprintf (fp_metric[i_region][i_metric],"\n");
-      fflush(fp_metric[i_region][i_metric]);
+      if (fp_metric) {
+	fprintf (fp_metric[i_region][i_metric],format,time_avg);
+	fprintf (fp_metric[i_region][i_metric],"\n");
+	fflush(fp_metric[i_region][i_metric]);
+      }
 
-    }
-
-    // Print the line
-
-    if (fp_ && ! empty) {
-      fprintf (fp_ , "%s %s   %s\n",
-	       line.c_str(),
-	       cycle_string.c_str(),
-	       region.c_str());
     }
 
   }

@@ -238,7 +238,6 @@ int OutputLevelInformation(FILE *fptr, TopGridData &MetaData,
 #ifdef USE_LCAPERF
 
   // Assign to lcaperf counters "count-[zones|ghosts|grids]"
-  printf ("%lld %lld %lld %lld\n",count_zones,count_grids, count_ghosts,count_particles);
   lcaperf.assign("count-zones",     count_zones);
   lcaperf.assign("count-ghosts",    count_ghosts);
   lcaperf.assign("count-grids",     count_grids);
