@@ -85,8 +85,8 @@ const struct {
   "mpi-send-mbytes-avg", "mpi",   "mpi-send-bytes",    "%lf", 1e-6,
   "mpi-recv-mbytes-avg", "mpi",   "mpi-recv-bytes",    "%lf", 1e-6,
 #endif
-  "mem-mbytes-avg",      "mem",   "mem-bytes-curr",    "%lf", 1e-6,
-  "mem-mbytes-high-avg", "mem",   "mem-bytes-high",    "%lf", 1e-6,
+  "mem-curr-mbytes-avg", "mem",   "mem-curr-bytes",    "%lf", 1e-6,
+  "mem-high-mbytes-avg", "mem",   "mem-high-bytes",    "%lf", 1e-6,
   "amr-zones-avg",       "user",  "count-zones",       "%lf", 1.0,
   "amr-grids-avg",       "user",  "count-grids",       "%lf", 1.0,
   "amr-ghosts-avg",      "user",  "count-ghosts",      "%lf", 1.0,
@@ -190,11 +190,13 @@ void lcaperfFinalize ()
 {
   if (fp_metric) {
     // count regions for next loop
-    int num_regions = 0;
-    for (size_t i_region = 0; strlen(region_list[i_region]) > 0; ++i_region) 
-      ++num_regions;
+    for (size_t i_region = 0; strlen(region_list[i_region]) > 0; ++i_region) {
+      for (int i_metric = 0; strlen(metric_list[i_metric].group) > 0; ++i_metric) {
+	if (fp_metric[i_region][i_metric]) {
+	  fclose (fp_metric[i_region][i_metric]);
+	}
+      }
 
-    for (int i_region=0; i_region<num_regions; i_region++) {
       delete [] fp_metric[i_region];
     }
     delete [] fp_metric;
@@ -238,7 +240,7 @@ void LcaPerfEnzo::print ()
   // along processors (avg and max)
 
   const int i_avg = 0, i_max = 1;
-  double time_avg, time_max, time_eff;
+  double value_avg, value_max, value_eff;
 
   long long counter_array_reduce[2];
 
@@ -272,67 +274,69 @@ void LcaPerfEnzo::print ()
       const char * format    = metric_list[i_metric].format;
       const double scaling = metric_list[i_metric].scaling;
 
-      // Loop over keys in the Counters object to sum counters over levels
+      if (counters_.find(group) != counters_.end()) {
 
-      counter_array_reduce[i_avg] = 0;
-      counter_array_reduce[i_max] = 0;
+	// Loop over keys in the Counters object to sum counters over levels
 
-      ItCounterKeys itKeys (counters_[group]);
-      int i_time = counters_[group]->index(metric);
+	counter_array_reduce[i_avg] = 0;
+	counter_array_reduce[i_max] = 0;
 
-      while (const char * key = ++itKeys) {
+	ItCounterKeys itKeys (counters_[group]);
+	int i_time = counters_[group]->index(metric);
 
-	// Select matching keys
+	while (const char * key = ++itKeys) {
 
-	bool keys_match = attributes_.keys_match(key,region_key);
+	  // Select matching keys
 
-	// Sum over levels
-	if (keys_match) {
-	  long long * counter_array = itKeys.value();
-	  counter_array_reduce[i_avg] += counter_array[i_time];
-	  counter_array_reduce[i_max] += counter_array[i_time];
+	  bool keys_match = attributes_.keys_match(key,region_key);
+
+	  // Sum over levels
+	  if (keys_match) {
+	    long long * counter_array = itKeys.value();
+	    counter_array_reduce[i_avg] += counter_array[i_time];
+	    counter_array_reduce[i_max] += counter_array[i_time];
+	  }
 	}
-      }
 
-      // Compute average and maximum over all processors
+	// Compute average and maximum over all processors
 
 #ifdef USE_MPI
-      MPI_Allreduce (MPI_IN_PLACE,&counter_array_reduce[i_avg],1,MPI_LONG_LONG,
-		     MPI_SUM,MPI_COMM_WORLD);
-      MPI_Allreduce (MPI_IN_PLACE,&counter_array_reduce[i_max],1,MPI_LONG_LONG,
-		     MPI_MAX,MPI_COMM_WORLD);
+	MPI_Allreduce (MPI_IN_PLACE,&counter_array_reduce[i_avg],1,
+		       MPI_LONG_LONG,  MPI_SUM,  MPI_COMM_WORLD);
+	MPI_Allreduce (MPI_IN_PLACE,&counter_array_reduce[i_max],1,
+		       MPI_LONG_LONG,  MPI_MAX,  MPI_COMM_WORLD);
 #endif
 
-      // 
-      time_avg = 0.0;
-      time_eff = 1.0;
+	value_avg = 0.0;
+	value_eff = 1.0;
 
-      if (counter_array_reduce[i_max] != 0) {
+	if (counter_array_reduce[i_max] != 0) {
 
-	empty = false;
+	  empty = false;
 
-	time_avg = scaling*counter_array_reduce[i_avg]/np;
-	time_max = scaling*counter_array_reduce[i_max];
-	time_eff = time_avg / time_max;
+	  value_avg = scaling*counter_array_reduce[i_avg]/np;
+	  value_max = scaling*counter_array_reduce[i_max];
+	  value_eff = value_avg / value_max;
+	}
+
+	// Print to file
+	if (fp_metric) {
+	  fprintf (fp_metric[i_region][i_metric],format,value_avg);
+	  fprintf (fp_metric[i_region][i_metric],"\n");
+	  fflush(fp_metric[i_region][i_metric]);
+	}
       }
-
-      // Print to file
-      if (fp_metric) {
-	fprintf (fp_metric[i_region][i_metric],format,time_avg);
-	fprintf (fp_metric[i_region][i_metric],"\n");
-	fflush(fp_metric[i_region][i_metric]);
-      }
-
     }
-
   }
 
-  if (fp_) fprintf (fp_,"\n");
+  // Clear counters when done
+  for (int i_metric = 0; strlen(metric_list[i_metric].group) > 0; ++i_metric) {
+    const char * group   = metric_list[i_metric].group;
+    if (counters_.find(group) != counters_.end()) {
+      counters_[group]->clear();
+    }
+  }
 
-  if (counters_.find("basic") != counters_.end()) counters_["basic"]->clear();
-  if (counters_.find("mpi") != counters_.end())   counters_["mpi"]->clear();
-
-  fflush(fp_);
 }
 
 #endif /* USE_LCAPERF */
