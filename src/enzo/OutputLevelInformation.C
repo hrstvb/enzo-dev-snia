@@ -190,48 +190,48 @@ int OutputLevelInformation(FILE *fptr, TopGridData &MetaData,
       CellsActive[level]);
     }
 
-#ifdef USE_LCAPERF
+// #ifdef USE_LCAPERF
 
-    // Assign to lcaperf counters "count-[zones|ghosts|grids]-<level>"
+//     // Assign to lcaperf counters "count-[zones|ghosts|grids]-<level>"
 
-    if (level <= MaximumRefinementLevel) {
+//     if (level <= MaximumRefinementLevel) {
 
-      char counter_name[30];
-      long long value;
+//       char counter_name[30];
+//       long long value;
 
-      // lcaperf count-zones-<level>
+//       // lcaperf count-zones-<level>
 
-      sprintf (counter_name,"count-zones-%"ISYM,level);
-      value = LocalCellsActive[level];
-      lcaperf.assign(counter_name, value);
-      count_zones += value;
+//       sprintf (counter_name,"count-zones-%"ISYM,level);
+//       value = LocalCellsActive[level];
+//       lcaperf.assign(counter_name, value);
+//       count_zones += value;
 
-      // lcaperf count-ghosts-<level>
+//       // lcaperf count-ghosts-<level>
 
-      sprintf (counter_name,"count-ghosts-%"ISYM,level);
-      value = LocalCellsTotal[level]-LocalCellsActive[level];
-      lcaperf.assign(counter_name, value);
-      count_ghosts += value;
+//       sprintf (counter_name,"count-ghosts-%"ISYM,level);
+//       value = LocalCellsTotal[level]-LocalCellsActive[level];
+//       lcaperf.assign(counter_name, value);
+//       count_ghosts += value;
 
-      // lcaperf count-grids-<level>
+//       // lcaperf count-grids-<level>
 
-      sprintf (counter_name,"count-grids-%"ISYM,level);
-      value = LocalGrids[level];
-      lcaperf.assign(counter_name, value);
-      count_grids += value;
+//       sprintf (counter_name,"count-grids-%"ISYM,level);
+//       value = LocalGrids[level];
+//       lcaperf.assign(counter_name, value);
+//       count_grids += value;
 
-      // lcaperf count-particles-<level>
+//       // lcaperf count-particles-<level>
 
-      sprintf (counter_name,"count-particles-%"ISYM,level);
-      value = LocalParticles[level];
-      lcaperf.assign(counter_name, value);
-      count_particles += value;
+//       sprintf (counter_name,"count-particles-%"ISYM,level);
+//       value = LocalParticles[level];
+//       lcaperf.assign(counter_name, value);
+//       count_particles += value;
 
-    }
+//     }
 
-    // Accumulate lcaperf counter values for "count-*"
+//     // Accumulate lcaperf counter values for "count-*"
 
-#endif
+// #endif
 
   }
 

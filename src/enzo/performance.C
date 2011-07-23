@@ -1,6 +1,6 @@
 /*****************************************************************************
  *                                                                           *
- * Copyright 2011 James Bordner
+ * Copyright 2011 James Bordner                                              *
  * Copyright 2011 Laboratory for Computational Astrophysics                  *
  * Copyright 2011 Board of Trustees of the University of Illinois            *
  * Copyright 2011 Regents of the University of California                    *
@@ -16,137 +16,178 @@
 
 #ifdef USE_LCAPERF
 
-// LIST OF LCAPERF REGIONS TO OUTPUT
-const char * region_list[] = {
-  "EvolveHierarchy",
-  "EvolveLevel",
-  "ComovingExpansionTerms",
-  "ComputePotentialFieldLevelZero",
-  "ComputeRandomForcingNormalization",
-  "CopyOverlappingMassField",
-  "CreateFluxes",
-  "DepositParticleMassField",
-  "EvolvePhotons",
-  "GetProjectedBoundaryFluxes",
-  "grid_AddRandomForcing",
-  "grid_ComputeAccelerationFieldExternal",
-  "grid_CopyBaryonFieldToOldBaryonField",
-  "grid_MultiSpeciesHandler",
-  "grid_ParticleSplitter",
-  "grid_SolveForPotential",
-  "grid_SolveHydroEquations",
-  "grid_StarParticleHandler",
-  "InlineHaloFinder",
-  "PrepareDensityField",
-  "PrepareGravitatingMassField1",
-  "PrepareGravitatingMassField2a",
-  "PrepareGravitatingMassField2b",
-  "ProjectSolutionToParentGrid",
-  "RadiationFieldUpdate",
-  "RebuildHierarchy",
-  "SetBC_Parent",
-  "SetBC_Siblings",
-  "SetBoundaryConditions",
-  "SetLevelTimeStep",
-  "SolveForPotential",
-  "star_FindFeedbackSphere",
-  "star_FindFeedbackSphere2",
-  "star_FindFeedbackSphere_Sum",
-  "star_FindFeedbackSphere_Zero",
-  "StarParticleAccretion",
-  "StarParticleAddFeedback",
-  "StarParticleDeath",
-  "StarParticleFinalize",
-  "StarParticleInitialize",
-  "StarParticleSubtractAccretedMass",
-  "star_SphereContained",
-  "star_UpdatePositionVelocity",
-  "UpdateFromFinerGrids",
-  "UpdateParticlePositions",
-  "UpdateStarParticleCount",
-  // NULL STRING SIGNALS ARRAY END: REQUIRED
-  ""
-};
 
-// LIST OF LCAPERF METRICS TO OUTPUT
+// list of regions and corresponding metric group
+
+enum op_type {
+  op_avg, // Average counter values over all processors
+  op_sum, // Average counter values over all processors
+  op_max, // Maximum counter value over all processors
+  op_eff  // Efficiency (avg / max) of counter values over all procs
+};
+  
+#define NUM_REGIONS 46
+const struct {
+  int          group;   // index of metric group;
+  const char * name;    // name of region
+} region_list[NUM_REGIONS] = 
+  {
+    1, "EvolveLevel",
+    2, "EvolveHierarchy",
+    2, "ComovingExpansionTerms",
+    2, "ComputePotentialFieldLevelZero",
+    2, "ComputeRandomForcingNormalization",
+    2, "CopyOverlappingMassField",
+    2, "CreateFluxes",
+    2, "DepositParticleMassField",
+    2, "EvolvePhotons",
+    2, "GetProjectedBoundaryFluxes",
+    2, "grid_AddRandomForcing",
+    2, "grid_ComputeAccelerationFieldExternal",
+    2, "grid_CopyBaryonFieldToOldBaryonField",
+    2, "grid_MultiSpeciesHandler",
+    2, "grid_ParticleSplitter",
+    2, "grid_SolveForPotential",
+    2, "grid_SolveHydroEquations",
+    2, "grid_StarParticleHandler",
+    2, "InlineHaloFinder",
+    2, "PrepareDensityField",
+    2, "PrepareGravitatingMassField1",
+    2, "PrepareGravitatingMassField2a",
+    2, "PrepareGravitatingMassField2b",
+    2, "ProjectSolutionToParentGrid",
+    2, "RadiationFieldUpdate",
+    2, "RebuildHierarchy",
+    2, "SetBC_Parent",
+    2, "SetBC_Siblings",
+    2, "SetBoundaryConditions",
+    2, "SetLevelTimeStep",
+    2, "SolveForPotential",
+    2, "star_FindFeedbackSphere",
+    2, "star_FindFeedbackSphere2",
+    2, "star_FindFeedbackSphere_Sum",
+    2, "star_FindFeedbackSphere_Zero",
+    2, "StarParticleAccretion",
+    2, "StarParticleAddFeedback",
+    2, "StarParticleDeath",
+    2, "StarParticleFinalize",
+    2, "StarParticleInitialize",
+    2, "StarParticleSubtractAccretedMass",
+    2, "star_SphereContained",
+    2, "star_UpdatePositionVelocity",
+    2, "UpdateFromFinerGrids",
+    2, "UpdateParticlePositions",
+    2, "UpdateStarParticleCount",
+  };
+
+#define NUM_GROUPS   3 // maximum number of metric groups
+#define NUM_METRICS 15 // maximum number of metrics per group
 
 const struct {
-  const char * name;    // Name of derived metric for output file 
-  const char * group;   // Name of counter group of source counter
-  const char * metric;  // Name of source counter
-  const char * format;  // format field for output file
-  double scaling;
-}  metric_list[] = { 
-  // "counter group", "metric"
-  "time-avg",            "basic", "time",              "%lf", 1e-6,
-#ifdef USE_MPI
-  "mpi-time-avg",        "mpi",   "mpi-time",          "%lf", 1e-6,
-  "mpi-time-sync-avg",   "mpi",   "mpi-sync-time",     "%lf", 1e-6,
-  "mpi-send-mbytes-avg", "mpi",   "mpi-send-bytes",    "%lf", 1e-6,
-  "mpi-recv-mbytes-avg", "mpi",   "mpi-recv-bytes",    "%lf", 1e-6,
-#endif
-  "mem-curr-mbytes-avg", "mem",   "mem-curr-bytes",    "%lf", 1e-6,
-  "mem-high-mbytes-avg", "mem",   "mem-high-bytes",    "%lf", 1e-6,
-  "amr-zones-avg",       "user",  "count-zones",       "%lf", 1.0,
-  "amr-grids-avg",       "user",  "count-grids",       "%lf", 1.0,
-  "amr-ghosts-avg",      "user",  "count-ghosts",      "%lf", 1.0,
-  "amr-particles-avg",   "user",  "count-particles",   "%lf", 1.0,
-  // NULL VALUES SIGNAL ARRAY END: REQUIRED
-  "","","", "", 0.0
+  const char * name;    // name of derived metric for output file 
+  const char * group;   // name of counter group of source counter
+  const char * counter; // name of source counter
+  const double scaling; // scaling factor
+  const op_type op;
+  
+}  metric_list[NUM_GROUPS][NUM_METRICS] = { 
+  // group 0
+  {
+    "amr-zones-avg",       "user",  "count-zones",     1.0,  op_avg,
+    "amr-grids-avg",       "user",  "count-grids",     1.0,  op_avg,
+    "amr-ghosts-avg",      "user",  "count-ghosts",    1.0,  op_avg,
+    "amr-particles-avg",   "user",  "count-particles", 1.0,  op_avg,
+    "time-avg",            "basic", "time",            1e-6, op_avg,
+    "gflops-avg",          "papi",  "papi-fp-ops",     1e-9, op_avg,
+    "gflops-eff",          "papi",  "papi-fp-ops",     1.0,  op_eff,
+    "mpi-time-avg",        "mpi",   "mpi-time",        1e-6, op_avg,
+    "mpi-time-sync-avg",   "mpi",   "mpi-sync-time",   1e-6, op_avg,
+    "mpi-send-mbytes-avg", "mpi",   "mpi-send-bytes",  1e-6, op_avg,
+    "mpi-recv-mbytes-avg", "mpi",   "mpi-recv-bytes",  1e-6, op_avg,
+    "mpi-send-mbytes-eff", "mpi",   "mpi-send-bytes",  1.0,  op_eff,
+    "mpi-recv-mbytes-eff", "mpi",   "mpi-recv-bytes",  1.0,  op_eff,
+    "mem-curr-mbytes-avg", "mem",   "mem-curr-bytes",  1e-6, op_avg,
+    "mem-high-mbytes-avg", "mem",   "mem-high-bytes",  1e-6, op_avg
+  },
+  // group 1
+  {
+    "amr-zones-avg",       "user",  "count-zones",     1.0,  op_avg,
+    "amr-grids-avg",       "user",  "count-grids",     1.0,  op_avg,
+    "amr-ghosts-avg",      "user",  "count-ghosts",    1.0,  op_avg,
+    "amr-particles-avg",   "user",  "count-particles", 1.0,  op_avg,
+    "time-avg",            "basic", "time",            1e-6, op_avg,
+    "gflops-avg",          "papi",  "papi-fp-ops",     1e-9, op_avg,
+    "gflops-eff",          "papi",  "papi-fp-ops",     1.0,  op_eff,
+    "mpi-time-avg",        "mpi",   "mpi-time",        1e-6, op_avg,
+    "mpi-time-sync-avg",   "mpi",   "mpi-sync-time",   1e-6, op_avg,
+    "mpi-send-mbytes-avg", "mpi",   "mpi-send-bytes",  1e-6, op_avg,
+    "mpi-recv-mbytes-avg", "mpi",   "mpi-recv-bytes",  1e-6, op_avg,
+    "mpi-send-mbytes-eff", "mpi",   "mpi-send-bytes",  1.0,  op_eff,
+    "mpi-recv-mbytes-eff", "mpi",   "mpi-recv-bytes",  1.0,  op_eff,
+    "mem-curr-mbytes-avg", "mem",   "mem-curr-bytes",  1e-6, op_avg,
+    "mem-high-mbytes-avg", "mem",   "mem-high-bytes",  1e-6, op_avg
+  },
+  // group 2
+  {
+    "time-avg",            "basic", "time",            1e-6, op_avg,
+    "gflops-avg",          "papi",  "papi-fp-ops",     1e-9, op_avg,
+    "gflops-eff",          "papi",  "papi-fp-ops",     1.0,  op_eff,
+    "mpi-send-mbytes-avg", "mpi",   "mpi-send-bytes",  1e-6, op_avg,
+    "mpi-recv-mbytes-avg", "mpi",   "mpi-recv-bytes",  1e-6, op_avg,
+    "mpi-send-mbytes-eff", "mpi",   "mpi-send-bytes",  1.0,  op_eff,
+    "mpi-recv-mbytes-eff", "mpi",   "mpi-recv-bytes",  1.0,  op_eff,
+    "mpi-time-avg",        "mpi",   "mpi-time",        1e-6, op_avg,
+    "mpi-time-sync-avg",   "mpi",   "mpi-sync-time",   1e-6, op_avg
+  }
 };
 
-FILE *** fp_metric = 0;
+FILE * fp_metric[NUM_REGIONS][NUM_METRICS] = {{0}};
 
 void lcaperfInitialize (int max_level)
 {
 
-  // Initialize lcaperf
+  // initialize lcaperf
 
   lcaperf.initialize ("out.lcaperf");
 
-  // Define lcaperf attributes
+  // define lcaperf attributes
 
   lcaperf.new_attribute ("cycle", LCAP_INT);
   lcaperf.new_attribute ("level", LCAP_INT);
 
-  // Define lcaperf counters
+  // define lcaperf regions
+
+  for (size_t i_region = 0; i_region<NUM_REGIONS; i_region++) {
+    const char * region = region_list[i_region].name;
+    if (region) lcaperf.new_region(region);
+  }
+
+  // define lcaperf counters
 
   lcaperf.new_counter ("count-zones",      counter_type_absolute);
   lcaperf.new_counter ("count-ghosts",     counter_type_absolute);
   lcaperf.new_counter ("count-grids",      counter_type_absolute);
   lcaperf.new_counter ("count-particles",  counter_type_absolute);
 
-  // Select which regions to print()
+  // for (size_t level=0; level <= max_level; level++) {
 
-  for (int i=0; strlen(region_list[i])>0; i++) {
-    lcaperf.new_region (region_list[i]);
-  }
+  //   char lcaperf_counter_name[30];
 
-  for (int level=0; level <= max_level; level++) {
+  //   sprintf (lcaperf_counter_name,"count-zones-%"ISYM,level);
+  //   lcaperf.new_counter(lcaperf_counter_name,counter_type_absolute);
 
-    char lcaperf_counter_name[30];
+  //   sprintf (lcaperf_counter_name,"count-ghosts-%"ISYM,level);
+  //   lcaperf.new_counter(lcaperf_counter_name,counter_type_absolute);
 
-    sprintf (lcaperf_counter_name,"count-zones-%"ISYM,level);
-    lcaperf.new_counter(lcaperf_counter_name,counter_type_absolute);
+  //   sprintf (lcaperf_counter_name,"count-grids-%"ISYM,level);
+  //   lcaperf.new_counter(lcaperf_counter_name,counter_type_absolute);
 
-    sprintf (lcaperf_counter_name,"count-ghosts-%"ISYM,level);
-    lcaperf.new_counter(lcaperf_counter_name,counter_type_absolute);
+  //   sprintf (lcaperf_counter_name,"count-particles-%"ISYM,level);
+  //   lcaperf.new_counter(lcaperf_counter_name,counter_type_absolute);
 
-    sprintf (lcaperf_counter_name,"count-grids-%"ISYM,level);
-    lcaperf.new_counter(lcaperf_counter_name,counter_type_absolute);
+  // }
 
-    sprintf (lcaperf_counter_name,"count-particles-%"ISYM,level);
-    lcaperf.new_counter(lcaperf_counter_name,counter_type_absolute);
-
-  }
-
-  // Count regions and metrics to allocate storage for file pointers
-
-  int num_regions = 0;
-  for (size_t i_region = 0; strlen(region_list[i_region]) > 0; ++i_region) 
-    ++num_regions;
-
-  // Create lcaperf directory and open fp_metric[][] files
+  // create lcaperf directory and open fp_metric[][] files
 
   Eint32 ip = 0;
 #ifdef USE_MPI
@@ -155,30 +196,27 @@ void lcaperfInitialize (int max_level)
 
   if (ip == 0) {
 
-    fp_metric = new FILE ** [num_regions];
-
-    int num_metrics = 0;
-    for (int i_metric = 0; strlen(metric_list[i_metric].group) > 0; ++i_metric) 
-      ++num_metrics;
-  
-    for (int i_region=0; i_region<num_regions; i_region++) {
-      fp_metric[i_region] = new FILE * [num_metrics];
-    }
-
     mkdir ("lcaperf",0777);
     chdir ("lcaperf");
 
-    // Open all performance metric files
-    for (size_t i_region = 0; strlen(region_list[i_region]) > 0; ++i_region) {
-      for (int i_metric = 0; strlen(metric_list[i_metric].group) > 0; ++i_metric) {
-	char filename[80];
-	sprintf (filename,"%s.%s",region_list[i_region],metric_list[i_metric].name);
-	fp_metric[i_region][i_metric] = fopen (filename,"w");
+    // open all performance metric files
+    for (size_t i_region = 0; i_region < NUM_REGIONS; ++i_region) {
+
+      int i_group         = region_list[i_region].group;
+      const char * region = region_list[i_region].name;
+
+      if (region) {
+	for (size_t i_metric = 0; i_metric < NUM_METRICS; ++i_metric) {
+	  const char * metric = metric_list[i_group][i_metric].name;
+	  if (metric) {
+	    char filename[80];
+	    sprintf (filename,"%s.%s",region,metric);
+	    fp_metric[i_region][i_metric] = fopen (filename,"w");
+	  }
+	}
       }
     }
     chdir ("..");
-  } else {
-    fp_metric = 0;
   }
 
   lcaperf.begin();
@@ -188,21 +226,26 @@ void lcaperfInitialize (int max_level)
 
 void lcaperfFinalize ()
 {
-  if (fp_metric) {
-    // count regions for next loop
-    for (size_t i_region = 0; strlen(region_list[i_region]) > 0; ++i_region) {
-      for (int i_metric = 0; strlen(metric_list[i_metric].group) > 0; ++i_metric) {
-	if (fp_metric[i_region][i_metric]) {
-	  fclose (fp_metric[i_region][i_metric]);
+  Eint32 ip = 0;
+#ifdef USE_MPI
+  MPI_Comm_rank(MPI_COMM_WORLD,&ip);
+#endif
+
+  if (ip == 0) {
+    //  count regions for next loop
+    for (size_t i_region = 0; i_region < NUM_REGIONS; ++i_region) {
+      int i_group = region_list[i_region].group;
+      const char * region = region_list[i_region].name;
+      if (region) {
+	for (size_t i_metric = 0; i_metric < NUM_METRICS; ++i_metric) {
+	  const char * metric = metric_list[i_group][i_metric].name;
+	  if (metric) {
+	    fclose (fp_metric[i_region][i_metric]);
+	  }
 	}
       }
-
-      delete [] fp_metric[i_region];
     }
-    delete [] fp_metric;
-    fp_metric = 0;
   }
-
   lcaperf.end();
   lcaperf.finalize();
 }
@@ -233,56 +276,59 @@ void LcaPerfEnzo::print ()
   MPI_Comm_size(MPI_COMM_WORLD,&np);
 #endif
 
-  int         cycle_index  = attributes_.index("cycle");
+  size_t         cycle_index  = attributes_.index("cycle");
   std::string cycle_string = attributes_.value(cycle_index);
 
-  // Allocate arrays for summing counters across levels and reducing
-  // along processors (avg and max)
+  // Allocate arrays for summing counters across levels if needed
+  // and reducing along processors (based on metric_list[][].op)
 
-  const int i_avg = 0, i_max = 1;
-  double value_avg, value_max, value_eff;
-
-  long long counter_array_reduce[2];
+  double value_reduce;
+  long long counter_reduce_sum, counter_reduce_max;
 
   // LOOP OVER REGIONS
 
-  for (size_t i_region = 0; i_region < regions_.size(); ++i_region) {
+  for (size_t i_region = 0; i_region < NUM_REGIONS; ++i_region) {
 
     bool empty = true;
     
-    std::string region = regions_[i_region];
+    const char * region = region_list[i_region].name;
+    int         i_group = region_list[i_region].group;
+
+    if (!region) continue;
 
     //    NOTE: EvolveLevel must be handled differently since it is recursive
 
-    bool is_recursive = (region == "EvolveLevel");
+    bool is_recursive = (strcmp(region,"EvolveLevel")==0);
 
     //    Only use level 0 for recursive functions since times are inclusive
     std::string level_string = (is_recursive) ? "0" : "*";
 
     // Create the region key to check counter keys against
-    // [WARNING: dependency on number of attributes and attribute ordering]
+    // [WARNING: DEPENDENCY ON NUMBER OF ATTRIBUTES AND ATTRIBUTE ORDERING]
 
-    std::string region_key = region + ":" + cycle_string + ":" + level_string;
+    std::string region_key = 
+      std::string(region) + ":" + cycle_string + ":" + level_string;
 
-    
-    // LOOP OVER METRICS
+    // Loop over metrics
 
-    for (int i_metric = 0; strlen(metric_list[i_metric].group) > 0; ++i_metric ) {
+    for (size_t i_metric = 0; i_metric < NUM_METRICS; ++i_metric ) {
 
-      const char * group   = metric_list[i_metric].group;
-      const char * metric  = metric_list[i_metric].metric;
-      const char * format    = metric_list[i_metric].format;
-      const double scaling = metric_list[i_metric].scaling;
+      const char * group   = metric_list[i_group][i_metric].group;
+      const char * counter = metric_list[i_group][i_metric].counter;
+      const double scaling = metric_list[i_group][i_metric].scaling;
+      const op_type  op    = metric_list[i_group][i_metric].op;
 
-      if (counters_.find(group) != counters_.end()) {
+      if (! group) continue;
+
+      if (group && counters_.find(group) != counters_.end()) {
 
 	// Loop over keys in the Counters object to sum counters over levels
 
-	counter_array_reduce[i_avg] = 0;
-	counter_array_reduce[i_max] = 0;
+	counter_reduce_sum = 0;
+	counter_reduce_max = 0;
 
 	ItCounterKeys itKeys (counters_[group]);
-	int i_time = counters_[group]->index(metric);
+	size_t i_time = counters_[group]->index(counter);
 
 	while (const char * key = ++itKeys) {
 
@@ -292,50 +338,80 @@ void LcaPerfEnzo::print ()
 
 	  // Sum over levels
 	  if (keys_match) {
-	    long long * counter_array = itKeys.value();
-	    counter_array_reduce[i_avg] += counter_array[i_time];
-	    counter_array_reduce[i_max] += counter_array[i_time];
+	    long long * counters = itKeys.value();
+	    counter_reduce_sum += counters[i_time];
+	    counter_reduce_max += counters[i_time];
 	  }
 	}
 
 	// Compute average and maximum over all processors
 
 #ifdef USE_MPI
-	MPI_Allreduce (MPI_IN_PLACE,&counter_array_reduce[i_avg],1,
-		       MPI_LONG_LONG,  MPI_SUM,  MPI_COMM_WORLD);
-	MPI_Allreduce (MPI_IN_PLACE,&counter_array_reduce[i_max],1,
-		       MPI_LONG_LONG,  MPI_MAX,  MPI_COMM_WORLD);
+	switch (op) {
+	case op_avg:
+	case op_sum:
+	  MPI_Allreduce (MPI_IN_PLACE,&counter_reduce_sum,1,
+			 MPI_LONG_LONG,  MPI_SUM,  MPI_COMM_WORLD);
+	  break;
+	case op_max:
+	  MPI_Allreduce (MPI_IN_PLACE,&counter_reduce_max,1,
+			 MPI_LONG_LONG,  MPI_MAX,  MPI_COMM_WORLD);
+	case op_eff:
+	  MPI_Allreduce (MPI_IN_PLACE,&counter_reduce_sum,1,
+			 MPI_LONG_LONG,  MPI_SUM,  MPI_COMM_WORLD);
+	  MPI_Allreduce (MPI_IN_PLACE,&counter_reduce_max,1,
+			 MPI_LONG_LONG,  MPI_MAX,  MPI_COMM_WORLD);
+	  break;
+	default:
+	  // NOP
+	  break;
+	}
 #endif
 
-	value_avg = 0.0;
-	value_eff = 1.0;
+	// Set default reduction value
 
-	if (counter_array_reduce[i_max] != 0) {
+	value_reduce = (op==op_eff) ? (1.0) : (0.0);
+
+	if (counter_reduce_sum != 0 || counter_reduce_max != 0) {
 
 	  empty = false;
 
-	  value_avg = scaling*counter_array_reduce[i_avg]/np;
-	  value_max = scaling*counter_array_reduce[i_max];
-	  value_eff = value_avg / value_max;
+	  switch (op) {
+	  case op_avg:
+	    value_reduce = counter_reduce_sum/np;
+	    break;
+	  case op_sum:
+	    value_reduce = counter_reduce_sum;
+	    break;
+	  case op_max:
+	    value_reduce = counter_reduce_max;
+	    break;
+	  case op_eff:
+	    value_reduce = (1.0*counter_reduce_sum/ np) / counter_reduce_max ;
+	    break;
+	  }
+	  // Scale the value
+	  value_reduce *= scaling;
 	}
 
 	// Print to file
-	if (fp_metric) {
-	  fprintf (fp_metric[i_region][i_metric],format,value_avg);
-	  fprintf (fp_metric[i_region][i_metric],"\n");
-	  fflush(fp_metric[i_region][i_metric]);
+	FILE * fp = fp_metric[i_region][i_metric];
+	if (fp) {
+	  fprintf (fp,"%lf",value_reduce);
+	  fprintf (fp,"\n");
+	  fflush(fp);
 	}
       }
     }
   }
 
-  // Clear counters when done
-  for (int i_metric = 0; strlen(metric_list[i_metric].group) > 0; ++i_metric) {
-    const char * group   = metric_list[i_metric].group;
-    if (counters_.find(group) != counters_.end()) {
-      counters_[group]->clear();
-    }
-  }
+  // // Clear counters when done
+  // for (size_t i_group=0; i_group<NUM_GROUPS; i_group++) {
+  //   for (size_t i_metric = 0; i_metric<NUM_METRICS; ++i_metric) {
+  //     const char * group = metric_list[i_group][i_metric].group;
+  //     if (group && counters_[group]) counters_[group]->clear();
+  //   }
+  // }
 
 }
 
