@@ -26,62 +26,62 @@ enum op_type {
   op_eff  // Efficiency (avg / max) of counter values over all procs
 };
   
-#define NUM_REGIONS 46
+#define NUM_REGIONS 50
 const struct {
   int          group;   // index of metric group;
   const char * name;    // name of region
 } region_list[NUM_REGIONS] = 
   {
-    1, "EvolveLevel",
-    2, "EvolveHierarchy",
-    2, "ComovingExpansionTerms",
-    2, "ComputePotentialFieldLevelZero",
-    2, "ComputeRandomForcingNormalization",
-    2, "CopyOverlappingMassField",
-    2, "CreateFluxes",
-    2, "DepositParticleMassField",
-    2, "EvolvePhotons",
-    2, "GetProjectedBoundaryFluxes",
-    2, "grid_AddRandomForcing",
-    2, "grid_ComputeAccelerationFieldExternal",
-    2, "grid_CopyBaryonFieldToOldBaryonField",
-    2, "grid_MultiSpeciesHandler",
-    2, "grid_ParticleSplitter",
-    2, "grid_SolveForPotential",
-    2, "grid_SolveHydroEquations",
-    2, "grid_StarParticleHandler",
-    2, "InlineHaloFinder",
-    2, "PrepareDensityField",
-    2, "PrepareGravitatingMassField1",
-    2, "PrepareGravitatingMassField2a",
-    2, "PrepareGravitatingMassField2b",
-    2, "ProjectSolutionToParentGrid",
-    2, "RadiationFieldUpdate",
-    2, "RebuildHierarchy",
-    2, "SetBC_Parent",
-    2, "SetBC_Siblings",
-    2, "SetBoundaryConditions",
-    2, "SetLevelTimeStep",
-    2, "SolveForPotential",
-    2, "star_FindFeedbackSphere",
-    2, "star_FindFeedbackSphere2",
-    2, "star_FindFeedbackSphere_Sum",
-    2, "star_FindFeedbackSphere_Zero",
-    2, "StarParticleAccretion",
-    2, "StarParticleAddFeedback",
-    2, "StarParticleDeath",
-    2, "StarParticleFinalize",
-    2, "StarParticleInitialize",
-    2, "StarParticleSubtractAccretedMass",
-    2, "star_SphereContained",
-    2, "star_UpdatePositionVelocity",
-    2, "UpdateFromFinerGrids",
-    2, "UpdateParticlePositions",
-    2, "UpdateStarParticleCount",
+    {0, "EvolveLevel"},
+    {0, "EvolveHierarchy"},
+    {1, "ComovingExpansionTerms"},
+    {1, "ComputePotentialFieldLevelZero"},
+    {1, "ComputeRandomForcingNormalization"},
+    {1, "CopyOverlappingMassField"},
+    {1, "CreateFluxes"},
+    {1, "DepositParticleMassField"},
+    {1, "EvolvePhotons"},
+    {1, "GetProjectedBoundaryFluxes"},
+    {1, "grid_AddRandomForcing"},
+    {1, "grid_ComputeAccelerationFieldExternal"},
+    {1, "grid_CopyBaryonFieldToOldBaryonField"},
+    {1, "grid_MultiSpeciesHandler"},
+    {1, "grid_ParticleSplitter"},
+    {1, "grid_SolveForPotential"},
+    {1, "grid_SolveHydroEquations"},
+    {1, "grid_StarParticleHandler"},
+    {1, "InlineHaloFinder"},
+    {1, "PrepareDensityField"},
+    {1, "PrepareGravitatingMassField1"},
+    {1, "PrepareGravitatingMassField2a"},
+    {1, "PrepareGravitatingMassField2b"},
+    {1, "ProjectSolutionToParentGrid"},
+    {1, "RadiationFieldUpdate"},
+    {1, "RebuildHierarchy"},
+    {1, "SetBC_Parent"},
+    {1, "SetBC_Siblings"},
+    {1, "SetBoundaryConditions"},
+    {1, "SetLevelTimeStep"},
+    {1, "SolveForPotential"},
+    {1, "star_FindFeedbackSphere"},
+    {1, "star_FindFeedbackSphere2"},
+    {1, "star_FindFeedbackSphere_Sum"},
+    {1, "star_FindFeedbackSphere_Zero"},
+    {1, "StarParticleAccretion"},
+    {1, "StarParticleAddFeedback"},
+    {1, "StarParticleDeath"},
+    {1, "StarParticleFinalize"},
+    {1, "StarParticleInitialize"},
+    {1, "StarParticleSubtractAccretedMass"},
+    {1, "star_SphereContained"},
+    {1, "star_UpdatePositionVelocity"},
+    {1, "UpdateFromFinerGrids"},
+    {1, "UpdateParticlePositions"},
+    {1, "UpdateStarParticleCount"}
   };
 
-#define NUM_GROUPS   3 // maximum number of metric groups
-#define NUM_METRICS 15 // maximum number of metrics per group
+#define NUM_GROUPS   2 // maximum number of metric groups
+#define NUM_METRICS 20 // maximum number of metrics per group
 
 const struct {
   const char * name;    // name of derived metric for output file 
@@ -91,53 +91,37 @@ const struct {
   const op_type op;
   
 }  metric_list[NUM_GROUPS][NUM_METRICS] = { 
-  // group 0
+  // group 0  (AMR, time, flops, mpi, memory)
   {
-    "amr-zones-avg",       "user",  "count-zones",     1.0,  op_avg,
-    "amr-grids-avg",       "user",  "count-grids",     1.0,  op_avg,
-    "amr-ghosts-avg",      "user",  "count-ghosts",    1.0,  op_avg,
-    "amr-particles-avg",   "user",  "count-particles", 1.0,  op_avg,
-    "time-avg",            "basic", "time",            1e-6, op_avg,
-    "gflops-avg",          "papi",  "papi-fp-ops",     1e-9, op_avg,
-    "gflops-eff",          "papi",  "papi-fp-ops",     1.0,  op_eff,
-    "mpi-time-avg",        "mpi",   "mpi-time",        1e-6, op_avg,
-    "mpi-time-sync-avg",   "mpi",   "mpi-sync-time",   1e-6, op_avg,
-    "mpi-send-mbytes-avg", "mpi",   "mpi-send-bytes",  1e-6, op_avg,
-    "mpi-recv-mbytes-avg", "mpi",   "mpi-recv-bytes",  1e-6, op_avg,
-    "mpi-send-mbytes-eff", "mpi",   "mpi-send-bytes",  1.0,  op_eff,
-    "mpi-recv-mbytes-eff", "mpi",   "mpi-recv-bytes",  1.0,  op_eff,
-    "mem-curr-mbytes-avg", "mem",   "mem-curr-bytes",  1e-6, op_avg,
-    "mem-high-mbytes-avg", "mem",   "mem-high-bytes",  1e-6, op_avg
+    {"amr-zones-avg",       "user",  "count-zones",     1.0,  op_avg},
+    {"amr-grids-avg",       "user",  "count-grids",     1.0,  op_avg},
+    {"amr-ghosts-avg",      "user",  "count-ghosts",    1.0,  op_avg},
+    {"amr-particles-avg",   "user",  "count-particles", 1.0,  op_avg},
+    {"time-avg",            "basic", "time",            1e-6, op_avg},
+    {"gflops-avg",          "papi",  "papi-fp-ops",     1e-9, op_avg},
+    {"gflops-eff",          "papi",  "papi-fp-ops",     1.0,  op_eff},
+    {"mpi-time-avg",        "mpi",   "mpi-time",        1e-6, op_avg},
+    {"mpi-time-sync-avg",   "mpi",   "mpi-sync-time",   1e-6, op_avg},
+    {"mpi-send-mbytes-avg", "mpi",   "mpi-send-bytes",  1e-6, op_avg},
+    {"mpi-recv-mbytes-avg", "mpi",   "mpi-recv-bytes",  1e-6, op_avg},
+    {"mpi-send-mbytes-eff", "mpi",   "mpi-send-bytes",  1.0,  op_eff},
+    {"mpi-recv-mbytes-eff", "mpi",   "mpi-recv-bytes",  1.0,  op_eff},
+    {"mem-curr-mbytes-avg", "mem",   "mem-curr-bytes",  1e-6, op_avg},
+    {"mem-high-mbytes-avg", "mem",   "mem-high-bytes",  1e-6, op_avg},
+    {"mem-curr-mbytes-eff", "mem",   "mem-curr-bytes",  1.0,  op_eff},
+    {"mem-high-mbytes-eff", "mem",   "mem-high-bytes",  1.0,  op_eff}
   },
-  // group 1
+  // group 1 (time, flops, mpi)
   {
-    "amr-zones-avg",       "user",  "count-zones",     1.0,  op_avg,
-    "amr-grids-avg",       "user",  "count-grids",     1.0,  op_avg,
-    "amr-ghosts-avg",      "user",  "count-ghosts",    1.0,  op_avg,
-    "amr-particles-avg",   "user",  "count-particles", 1.0,  op_avg,
-    "time-avg",            "basic", "time",            1e-6, op_avg,
-    "gflops-avg",          "papi",  "papi-fp-ops",     1e-9, op_avg,
-    "gflops-eff",          "papi",  "papi-fp-ops",     1.0,  op_eff,
-    "mpi-time-avg",        "mpi",   "mpi-time",        1e-6, op_avg,
-    "mpi-time-sync-avg",   "mpi",   "mpi-sync-time",   1e-6, op_avg,
-    "mpi-send-mbytes-avg", "mpi",   "mpi-send-bytes",  1e-6, op_avg,
-    "mpi-recv-mbytes-avg", "mpi",   "mpi-recv-bytes",  1e-6, op_avg,
-    "mpi-send-mbytes-eff", "mpi",   "mpi-send-bytes",  1.0,  op_eff,
-    "mpi-recv-mbytes-eff", "mpi",   "mpi-recv-bytes",  1.0,  op_eff,
-    "mem-curr-mbytes-avg", "mem",   "mem-curr-bytes",  1e-6, op_avg,
-    "mem-high-mbytes-avg", "mem",   "mem-high-bytes",  1e-6, op_avg
-  },
-  // group 2
-  {
-    "time-avg",            "basic", "time",            1e-6, op_avg,
-    "gflops-avg",          "papi",  "papi-fp-ops",     1e-9, op_avg,
-    "gflops-eff",          "papi",  "papi-fp-ops",     1.0,  op_eff,
-    "mpi-send-mbytes-avg", "mpi",   "mpi-send-bytes",  1e-6, op_avg,
-    "mpi-recv-mbytes-avg", "mpi",   "mpi-recv-bytes",  1e-6, op_avg,
-    "mpi-send-mbytes-eff", "mpi",   "mpi-send-bytes",  1.0,  op_eff,
-    "mpi-recv-mbytes-eff", "mpi",   "mpi-recv-bytes",  1.0,  op_eff,
-    "mpi-time-avg",        "mpi",   "mpi-time",        1e-6, op_avg,
-    "mpi-time-sync-avg",   "mpi",   "mpi-sync-time",   1e-6, op_avg
+    {"time-avg",            "basic", "time",            1e-6, op_avg},
+    {"gflops-avg",          "papi",  "papi-fp-ops",     1e-9, op_avg},
+    {"gflops-eff",          "papi",  "papi-fp-ops",     1.0,  op_eff},
+    {"mpi-send-mbytes-avg", "mpi",   "mpi-send-bytes",  1e-6, op_avg},
+    {"mpi-recv-mbytes-avg", "mpi",   "mpi-recv-bytes",  1e-6, op_avg},
+    {"mpi-send-mbytes-eff", "mpi",   "mpi-send-bytes",  1.0,  op_eff},
+    {"mpi-recv-mbytes-eff", "mpi",   "mpi-recv-bytes",  1.0,  op_eff},
+    {"mpi-time-avg",        "mpi",   "mpi-time",        1e-6, op_avg},
+    {"mpi-time-sync-avg",   "mpi",   "mpi-sync-time",   1e-6, op_avg}
   }
 };
 
