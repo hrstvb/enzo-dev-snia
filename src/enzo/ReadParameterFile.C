@@ -263,6 +263,13 @@ int ReadParameterFile(TopGridData &MetaData, float *Initialdt)
   if (NumberOfTimeActions > MAX_TIME_ACTIONS-1) {
     ENZO_VFAIL("You've exceeded the maximum number of TimeActions (%d > %d)!\n",NumberOfTimeActions,MAX_TIME_ACTIONS)
       }
+
+  for (i = 0; i < MAX_TIME_ACTIONS; i++) {
+    TimeActionType[i] = INT_UNDEFINED;
+    TimeActionRedshift[i] = FLOAT_UNDEFINED;
+    TimeActionTime[i] = FLOAT_UNDEFINED;
+    TimeActionParameter[i] = FLOAT_UNDEFINED;
+  }
   
   char TimeActionNames[MAX_LINE_LENGTH][MAX_TIME_ACTIONS];
   Param.GetArray(TimeActionNames, "SimulationControl.Timeaction.Actions");
@@ -506,11 +513,20 @@ int ReadParameterFile(TopGridData &MetaData, float *Initialdt)
   Param.GetScalar(MustRefineParticlesMinimumMass, "SimulationControl.AMR.MustRefineParticlesMinimumMass");
   Param.GetScalar(ParticleTypeInFile, "OutputControl.ParticleTypeInFile"); 
 
+
   int NumberOfStaticRefineRegions = Param.Size("SimulationControl.AMR.StaticRefineRegion.Regions");
   if (NumberOfStaticRefineRegions > MAX_STATIC_REGIONS-1) {
     ENZO_VFAIL("You've exceeded the maximum number of StaticRefineRegions (%d > %d)!\n", NumberOfStaticRefineRegions, MAX_STATIC_REGIONS)
       }
-  
+
+  for (i = 0; i < MAX_STATIC_REGIONS; i++) {
+    StaticRefineRegionLevel[i] = INT_UNDEFINED;
+    for(int j=0; j<MAX_DIMENSION-1;j ++) {
+      StaticRefineRegionLeftEdge[i][j] = FLOAT_UNDEFINED;
+      StaticRefineRegionRightEdge[i][j] = FLOAT_UNDEFINED;
+    }
+  }
+
   char StaticRefineRegionNames[MAX_LINE_LENGTH][MAX_STATIC_REGIONS];//NumberOfStaticRefineRegions];
   Param.GetArray(StaticRefineRegionNames, "SimulationControl.AMR.StaticRefineRegion.Regions");
   
