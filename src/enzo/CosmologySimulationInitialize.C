@@ -16,7 +16,6 @@
 ************************************************************************/
  
 // This routine intializes a new simulation based on the parameter file.
-//
  
 #include "ParameterControl/ParameterControl.h"
 extern Configuration Param;
@@ -55,7 +54,7 @@ const char config_cosmology_simulation_defaults[] =
 "        InitialTemperature   = -99999.0;\n"
 "\n" 
 "        DensityName           = \"\";\n"
-"        VelocitiesNames       = \"\";\n"
+"        VelocitiesName        = \"\";\n"
 "        TotalEnergyName       = \"\";\n"
 "        GasEnergyName         = \"\";\n"
 "        ParticlePositionName  = \"\";\n"
@@ -262,7 +261,8 @@ int CosmologySimulationInitialize(FILE *Outfptr, HierarchyEntry &TopGrid, TopGri
   if (!SelfGravity)
     fprintf(stderr, "CosmologySimulation: gravity is off!?!\n");
  
-  // Read input from file
+
+  // Read parameters
  
   Param.GetScalar(CosmologySimulationOmegaBaryonNow, "Problem.CosmologySimulation.OmegaBaryonNow");
   Param.GetScalar(CosmologySimulationOmegaCDMNow, "Problem.CosmologySimulation.OmegaCDMNow");
