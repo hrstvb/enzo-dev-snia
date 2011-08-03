@@ -38,15 +38,17 @@ int grid::Shine(RadiationSourceEntry *RadiationSource)
 
   RadiationSourceEntry *RS = RadiationSource;
   FLOAT min_beam_zvec, dot_prod, vec[3];
-  int BasePackages, NumberOfNewPhotonPackages;
+  int BasePackages, NumberOfNewPhotonPackages, PackagesPerThread;
   int i, j, dim;
   int count=0;
   int min_level = RadiativeTransferInitialHEALPixLevel;
+  int NumberOfThreads = NumberOfCores / NumberOfProcessors;
 
   /* base number of rays to star with: for min_level=2 this is 192
      photon packages per source */
 
   BasePackages = 12*(int)pow(4,min_level);
+  PackagesPerThread = nint(ceil(float(BasePackages) / NumberOfThreads));
 
   /* If using a beamed source, calculate the minimum z-component of
      the ray normal (always beamed in the polar coordinate). */
@@ -89,7 +91,7 @@ int grid::Shine(RadiationSourceEntry *RadiationSource)
   
   if (DEBUG) fprintf(stdout, "grid::Shine: Loop over sources and packages \n");
 
-  int ebin, this_type, type_count;
+  int ebin, this_type, type_count, base_ipix, mod_ipix, ipix;
   FLOAT FuzzyLength;
   FLOAT ShakeSource[3];
   double RampPercent = 1;
@@ -180,12 +182,18 @@ int grid::Shine(RadiationSourceEntry *RadiationSource)
 	FieldsToInterpolate[H2INum] = TRUE;
 	break;
       } // ENDSWITCH ebin
-      
-    // DEBUG fudge
+
     for (j=0; j<BasePackages; j++) {
 
+      // Distribute pixel numbers by number of threads for better
+      // OpenMP load balancing
+      // e.g. 0, 4, 8, 1, 5, 9, 2, 6, 10, 3, 7, 11
+      base_ipix = (j % PackagesPerThread) * NumberOfThreads;
+      mod_ipix = j / PackagesPerThread;
+      ipix = base_ipix + mod_ipix;
+
       if (RS->Type == Beamed) {
-	if (pix2vec_nest((long) (1 << min_level), (long) j, vec) == FAIL)
+	if (pix2vec_nest((long) (1 << min_level), (long) ipix, vec) == FAIL)
 	  ENZO_FAIL("Error in pix2vec_nested: beamed source");
 	// Dot product of the source orientation (already normalized
 	// to 1) and ray normal must be greater than cos(beaming angle)
@@ -224,8 +232,8 @@ int grid::Shine(RadiationSourceEntry *RadiationSource)
 	NewPack->EmissionTime = PhotonTime;
 	NewPack->CurrentTime  = PhotonTime;
 	NewPack->ColumnDensity = 0;
-	NewPack->Radius = 0.;
-	NewPack->ipix = j;
+	NewPack->Radius = 0.0;
+	NewPack->ipix = ipix;
 	NewPack->level = min_level;
 	NewPack->Energy = RS->Energy[ebin];
 	FLOAT dir_vec[3];
