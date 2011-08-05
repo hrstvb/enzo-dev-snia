@@ -88,6 +88,8 @@ int grid::TransportPhotonPackages(int level, ListOfPhotonsToMove **PhotonsToMove
     IdentifyRadiationPressureFields(RPresNum1, RPresNum2, RPresNum3);
 
   int RaySegNum = FindField(RaySegments, FieldType, NumberOfBaryonFields);
+  int ColDensNum = FindField(ColumnDensity, FieldType, NumberOfBaryonFields);
+  int XFluxNum = FindField(XRayFlux, FieldType, NumberOfBaryonFields);
 
   /* Get units. */
 
@@ -176,7 +178,8 @@ int grid::TransportPhotonPackages(int level, ListOfPhotonsToMove **PhotonsToMove
 			DensNum, DeNum, HINum, HeINum, HeIINum, H2INum,
 			kphHINum, gammaNum, kphHeINum, 
 			kphHeIINum, kdissH2INum, RPresNum1,
-			RPresNum2, RPresNum3, RaySegNum,
+			RPresNum2, RPresNum3, RaySegNum, 
+			ColDensNum, XFluxNum,
 			DeleteMe, PauseMe, DeltaLevel, LightCrossingTime,
 			DensityUnits, TemperatureUnits, VelocityUnits, 
 			LengthUnits, TimeUnits, LightSpeed);
