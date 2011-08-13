@@ -23,7 +23,7 @@ enum op_type {
   op_avg, // Average counter values over all processors
   op_sum, // Average counter values over all processors
   op_max, // Maximum counter value over all processors
-  op_eff  // Efficiency (avg / max) of counter values over all procs
+  op_eff // Efficiency (avg / max) of counter values over all procs
 };
   
 #define NUM_REGIONS 50
@@ -81,7 +81,7 @@ const struct {
   };
 
 #define NUM_GROUPS   2 // maximum number of metric groups
-#define NUM_METRICS 20 // maximum number of metrics per group
+#define NUM_METRICS 21 // maximum number of metrics per group
 
 const struct {
   const char * name;    // name of derived metric for output file 
@@ -89,33 +89,36 @@ const struct {
   const char * counter; // name of source counter
   const double scaling; // scaling factor
   const op_type op;
-  
 }  metric_list[NUM_GROUPS][NUM_METRICS] = { 
-  // group 0  (AMR, time, flops, mpi, memory)
+  // group 0  (full: time, papi, mpi, amr, memory)
   {
-    {"amr-zones-avg",       "user",  "count-zones",     1.0,  op_avg},
-    {"amr-grids-avg",       "user",  "count-grids",     1.0,  op_avg},
-    {"amr-ghosts-avg",      "user",  "count-ghosts",    1.0,  op_avg},
-    {"amr-particles-avg",   "user",  "count-particles", 1.0,  op_avg},
     {"time-avg",            "basic", "time",            1e-6, op_avg},
-    {"gflops-avg",          "papi",  "papi-fp-ops",     1e-9, op_avg},
-    {"gflops-eff",          "papi",  "papi-fp-ops",     1.0,  op_eff},
+    {"papi-gflops-avg",     "papi",  "papi-fp-ops",     1e-9, op_avg},
+    {"papi-gflops-eff",     "papi",  "papi-fp-ops",     1.0,  op_eff},
     {"mpi-time-avg",        "mpi",   "mpi-time",        1e-6, op_avg},
     {"mpi-time-sync-avg",   "mpi",   "mpi-sync-time",   1e-6, op_avg},
     {"mpi-send-mbytes-avg", "mpi",   "mpi-send-bytes",  1e-6, op_avg},
     {"mpi-recv-mbytes-avg", "mpi",   "mpi-recv-bytes",  1e-6, op_avg},
     {"mpi-send-mbytes-eff", "mpi",   "mpi-send-bytes",  1.0,  op_eff},
     {"mpi-recv-mbytes-eff", "mpi",   "mpi-recv-bytes",  1.0,  op_eff},
+    {"amr-zones-avg",       "user",  "count-zones",     1.0,  op_avg},
+    {"amr-grids-avg",       "user",  "count-grids",     1.0,  op_avg},
+    {"amr-ghosts-avg",      "user",  "count-ghosts",    1.0,  op_avg},
+    {"amr-particles-avg",   "user",  "count-particles", 1.0,  op_avg},
+    {"amr-zones-eff",       "user",  "count-zones",     1.0,  op_eff},
+    {"amr-grids-eff",       "user",  "count-grids",     1.0,  op_eff},
+    {"amr-ghosts-eff",      "user",  "count-ghosts",    1.0,  op_eff},
+    {"amr-particles-eff",   "user",  "count-particles", 1.0,  op_eff},
     {"mem-curr-mbytes-avg", "mem",   "mem-curr-bytes",  1e-6, op_avg},
     {"mem-high-mbytes-avg", "mem",   "mem-high-bytes",  1e-6, op_avg},
     {"mem-curr-mbytes-eff", "mem",   "mem-curr-bytes",  1.0,  op_eff},
     {"mem-high-mbytes-eff", "mem",   "mem-high-bytes",  1.0,  op_eff}
   },
-  // group 1 (time, flops, mpi)
+  // group 1 (partial: time, papi, mpi)
   {
     {"time-avg",            "basic", "time",            1e-6, op_avg},
-    {"gflops-avg",          "papi",  "papi-fp-ops",     1e-9, op_avg},
-    {"gflops-eff",          "papi",  "papi-fp-ops",     1.0,  op_eff},
+    {"papi-gflops-avg",     "papi",  "papi-fp-ops",     1e-9, op_avg},
+    {"papi-gflops-eff",     "papi",  "papi-fp-ops",     1.0,  op_eff},
     {"mpi-send-mbytes-avg", "mpi",   "mpi-send-bytes",  1e-6, op_avg},
     {"mpi-recv-mbytes-avg", "mpi",   "mpi-recv-bytes",  1e-6, op_avg},
     {"mpi-send-mbytes-eff", "mpi",   "mpi-send-bytes",  1.0,  op_eff},
