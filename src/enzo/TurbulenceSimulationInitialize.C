@@ -421,10 +421,14 @@ int TurbulenceSimulationInitialize(FILE *fptr, FILE *Outfptr,
   delete dummy;
 #ifdef MHDCT 
   //set up field labels
-  if( useMHD == TRUE ){
+  if( useMHDCT == TRUE ){
     MHDLabel[0] = "MagneticField_F_1";
     MHDLabel[1] = "MagneticField_F_2";
     MHDLabel[2] = "MagneticField_F_3";
+    
+    MHDcLabel[0] = "MagneticField_C_1";
+    MHDcLabel[1] = "MagneticField_C_2";
+    MHDcLabel[2] = "MagneticField_C_3";
 
     MHDeLabel[0] = "ElectricField_1";
     MHDeLabel[1] = "ElectricField_2";

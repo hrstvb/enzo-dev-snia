@@ -26,6 +26,7 @@
 #include "fortran.def"
 static float LastB[] = {0.0,0.0,0.0};
 int grid::ExtraFunction(char * message){
+  return SUCCESS;
     if( MyProcessorNumber != ProcessorNumber ){
         return SUCCESS;
     }
