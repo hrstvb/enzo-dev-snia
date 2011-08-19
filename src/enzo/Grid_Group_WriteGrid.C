@@ -116,7 +116,7 @@ int grid::Group_WriteGrid(FILE *fptr, char *base_name, int grid_id, HDF5_hid_t f
  
   io_type *temp, *temp_VelAnyl;
  
-  FILE *log_fptr;
+  FILE *log_fptr=NULL;
   FILE *procmap_fptr;
  
   hid_t       group_id, dset_id;
@@ -141,6 +141,7 @@ int grid::Group_WriteGrid(FILE *fptr, char *base_name, int grid_id, HDF5_hid_t f
 			     "Particle_z-velocity"};
   char *GriddedSPLabel[] = {"Star_Particle_Density", "Forming_Stellar_Mass_Density",
 			    "SFR_Density", "Average_creation_time"};
+#define IO_LOG
 #ifdef IO_LOG
   int         io_log = 1;
 #else
