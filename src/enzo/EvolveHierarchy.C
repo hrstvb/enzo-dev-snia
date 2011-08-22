@@ -594,9 +594,23 @@ int EvolveHierarchy(HierarchyEntry &TopGrid, TopGridData &MetaData,
 #endif
 
     PrintMemoryUsage("Pre loop rebuild");
+#ifdef MHDCT
+  ExtraOutput(21,LevelArray,&MetaData,0,Exterior
+#ifdef TRANSFER
+		      , ImplicitSolver
+#endif
+          );
+#endif //MHDCT
  
     if (ProblemType != 25 && Restart == FALSE)
       RebuildHierarchy(&MetaData, LevelArray, 0);
+#ifdef MHDCT
+  ExtraOutput(22,LevelArray,&MetaData,0,Exterior
+#ifdef TRANSFER
+		      , ImplicitSolver
+#endif
+          );
+#endif //MHDCT
 
     PrintMemoryUsage("Post loop rebuild");
 
