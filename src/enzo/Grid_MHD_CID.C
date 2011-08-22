@@ -413,12 +413,8 @@ int grid::MHD_CID(LevelHierarchyEntry * OldFineLevel, TopGridData *MetaData, int
 		  int TempDim[], int Refinement[])
 {
 
-  if( MHD_Used != TRUE )
+  if( useMHDCT != TRUE )
     return SUCCESS;
-
-  if( OldFineLevel == NULL ){
-      ENZO_FAIL("OldFineLevel == NULL in grid::MHD_CID.  ExtractSection and useMHDCT not presently compatable.\n");
-  }
 
   grid * OldFineGrid;
   LevelHierarchyEntry *OldFineLevelIterator = OldFineLevel;
