@@ -1048,6 +1048,7 @@ OBJS_MHDCT = MHDBlastInitialize.o \
 	Grid_ComputeElectricField.o \
 	Grid_MHD_Curl.o \
 	Grid_CenterMagneticField.o\
+  mhdct_fine_derivatives.o\
 	mhd_hlld_isothermal.o \
 	mhd_dt.o\
 	Grid_MHDOrszagTangInitGrid.o \
