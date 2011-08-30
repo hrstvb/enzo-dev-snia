@@ -142,7 +142,6 @@ c     this is just what it sounds like:  it's a dummy variable that holds shit t
 c     I debug, before I rip this routine appart.
       integer methodkludge
 
-      write(*,*) "HORRAY IT'S A BOY"
       tol = 1e-9
       dxi = 1.0/dx
       dyi = 1.0/dy
@@ -151,7 +150,6 @@ c     I debug, before I rip this routine appart.
       do i=1, 3
          offset1(i) = 1
 
-      goto 666
 c     Offset2 is the number of child cells between the first child cell and a parent cell edge.
 c     Since an odd number of ghost zones may be used, the physical location of the edge of the 
 c     ghost zones of the subgrid may not line up with a parent grid edge.
