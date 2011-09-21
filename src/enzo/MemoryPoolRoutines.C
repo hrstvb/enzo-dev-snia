@@ -94,6 +94,7 @@ namespace MPool
     ObjectCount++;
     SetMemoryChunkValues(Chunk, BestMemBlockSize);
 
+    //    fprintf(stdout, "%i : allocated %i \n", MyProcessorNumber, BestMemBlockSize);
     // Return the chunk pointer
     return ((void*) Chunk->Data);
 

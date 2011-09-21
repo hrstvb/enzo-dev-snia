@@ -57,19 +57,27 @@ int grid::CleanUpMovedParticles()
   else {
  
     /* Allocate space for the new set of particles. */
- 
     Mass = new float[NumberOfParticlesRemaining];
     Number = new PINT[NumberOfParticlesRemaining];
     Type = new int[NumberOfParticlesRemaining];
     for (dim = 0; dim < GridRank; dim++) {
+#ifdef MEMORY_POOL
+       Position[dim] = static_cast<FLOAT*>(ParticleMemoryPool->GetMemory(sizeof(FLOAT)*NumberOfParticlesRemaining));
+       Velocity[dim] = static_cast<float*>(ParticleMemoryPool->GetMemory(sizeof(float)*NumberOfParticlesRemaining));
+#else
       Position[dim] = new FLOAT[NumberOfParticlesRemaining];
       Velocity[dim] = new float[NumberOfParticlesRemaining];
+#endif
     }
     for (i = 0; i < NumberOfParticleAttributes; i++)
+#ifdef MEMORY_POOL
+      Attribute[i] = static_cast<float*>(ParticleMemoryPool->GetMemory(sizeof(float)*NumberOfParticlesRemaining));
+#else
       Attribute[i] = new float[NumberOfParticlesRemaining];
- 
+#endif 
     /* Copy unmoved particles to their new home. */
- 
+
+
     j = 0;
     for (i = 0; i < NumberOfParticles; i++)
  
@@ -90,9 +98,9 @@ int grid::CleanUpMovedParticles()
       }
  
     /* Delete FromGrid's particles (now copied). */
- 
+
     this->DeleteParticles();
- 
+
     /* Copy new pointers into their correct position. */
  
     this->SetParticlePointers(Mass, Number, Type, Position, Velocity,

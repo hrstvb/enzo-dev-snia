@@ -57,6 +57,7 @@ int ComputeDednerWaveSpeeds(TopGridData *MetaData, LevelHierarchyEntry *LevelArr
   }
 
   //      lmax = 0; // <- Pengs version had lmax = 6
+  lmax = MaximumRefinementLevel;
   FLOAT dx0, dy0, dz0, h_min;
   
   dx0 = (DomainRightEdge[0] - DomainLeftEdge[0]) / MetaData->TopGridDims[0];

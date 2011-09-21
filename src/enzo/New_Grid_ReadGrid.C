@@ -381,8 +381,7 @@ int grid::Group_ReadGrid(FILE *fptr, int GridID, HDF5_hid_t file_id,
  
     TempIntArray[0] = NumberOfParticles;
  
-    FLOAT *temp = new FLOAT[NumberOfParticles];
- 
+
     /* Read ParticlePosition (use temporary buffer). */
  
     for (int dim = 0; dim < GridRank; dim++) {
@@ -454,8 +453,7 @@ int grid::Group_ReadGrid(FILE *fptr, int GridID, HDF5_hid_t file_id,
     }
     } // ENDELSE add particle attributes
  
-    delete [] temp;
- 
+  
 
   } // end: if (NumberOfParticles > 0) && ReadData && (MyProcessorNumber == ProcessorNumber)
  

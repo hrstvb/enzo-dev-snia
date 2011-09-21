@@ -73,11 +73,20 @@ int grid::AddParticlesFromList(ParticleEntry *List, const int &Size,
   Type = new int[NumberOfParticles];
   Mass = new float[NumberOfParticles];
   for (int dim = 0; dim < GridRank; dim++) {
-    Position[dim] = new FLOAT[NumberOfParticles];
-    Velocity[dim] = new float[NumberOfParticles];
-  }
-  for (int i = 0; i < NumberOfParticleAttributes; i++)
-    Attribute[i] = new float[NumberOfParticles];
+#ifdef MEMORY_POOL
+       Position[dim] = static_cast<FLOAT*>(ParticleMemoryPool->GetMemory(sizeof(FLOAT)*NumberOfParticles));
+       Velocity[dim] = static_cast<float*>(ParticleMemoryPool->GetMemory(sizeof(float)*NumberOfParticles));
+#else
+      Position[dim] = new FLOAT[NumberOfParticles];
+      Velocity[dim] = new float[NumberOfParticles];
+#endif
+    }
+    for (int i = 0; i < NumberOfParticleAttributes; i++)
+#ifdef MEMORY_POOL
+      Attribute[i] = static_cast<float*>(ParticleMemoryPool->GetMemory(sizeof(float)*NumberOfParticles));
+#else
+      Attribute[i] = new float[NumberOfParticles];
+#endif 
 
   /* copy old particles to their new home. */
 

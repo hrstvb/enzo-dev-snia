@@ -216,11 +216,20 @@ int grid::TransferSubgridParticles(grid* Subgrids[], int NumberOfSubgrids,
     Number = new PINT[TotalNumberOfParticles];
     Type = new int[TotalNumberOfParticles];
     for (dim = 0; dim < GridRank; dim++) {
+#ifdef MEMORY_POOL
+       Position[dim] = static_cast<FLOAT*>(ParticleMemoryPool->GetMemory(sizeof(FLOAT)*TotalNumberOfParticles));
+       Velocity[dim] = static_cast<float*>(ParticleMemoryPool->GetMemory(sizeof(float)*TotalNumberOfParticles));
+#else
       Position[dim] = new FLOAT[TotalNumberOfParticles];
       Velocity[dim] = new float[TotalNumberOfParticles];
+#endif
     }
     for (i = 0; i < NumberOfParticleAttributes; i++)
+#ifdef MEMORY_POOL
+      Attribute[i] = static_cast<float*>(ParticleMemoryPool->GetMemory(sizeof(float)*TotalNumberOfParticles));
+#else
       Attribute[i] = new float[TotalNumberOfParticles];
+#endif 
 
     if (Velocity[GridRank-1] == NULL && TotalNumberOfParticles != 0) {
       fprintf(stderr, "malloc error (out of memory?)\n");

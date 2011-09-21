@@ -109,12 +109,21 @@ int grid::CollectParticles(int GridNum, int* &NumberToMove,
       Mass = new float[TotalNumberOfParticles];
       Number = new PINT[TotalNumberOfParticles];
       Type = new int[TotalNumberOfParticles];
-      for (dim = 0; dim < GridRank; dim++) {
-	Position[dim] = new FLOAT[TotalNumberOfParticles];
-	Velocity[dim] = new float[TotalNumberOfParticles];
-      }
-      for (i = 0; i < NumberOfParticleAttributes; i++)
-	Attribute[i] = new float[TotalNumberOfParticles];
+    for (dim = 0; dim < GridRank; dim++) {
+#ifdef MEMORY_POOL
+       Position[dim] = static_cast<FLOAT*>(ParticleMemoryPool->GetMemory(sizeof(FLOAT)*TotalNumberOfParticles));
+       Velocity[dim] = static_cast<float*>(ParticleMemoryPool->GetMemory(sizeof(float)*TotalNumberOfParticles));
+#else
+      Position[dim] = new FLOAT[TotalNumberOfParticles];
+      Velocity[dim] = new float[TotalNumberOfParticles];
+#endif
+    }
+    for (i = 0; i < NumberOfParticleAttributes; i++)
+#ifdef MEMORY_POOL
+      Attribute[i] = static_cast<float*>(ParticleMemoryPool->GetMemory(sizeof(float)*TotalNumberOfParticles));
+#else
+      Attribute[i] = new float[TotalNumberOfParticles];
+#endif 
 
       if (Velocity[GridRank-1] == NULL && TotalNumberOfParticles != 0) {
 	ENZO_FAIL("malloc error (out of memory?)\n");
