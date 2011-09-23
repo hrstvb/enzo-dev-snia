@@ -58,6 +58,7 @@ extern int CommunicationDirection;
 int FindField(int f, int farray[], int n);
 void *AllocateNewBaryonField(int size); 
 void FreeBaryonFieldMemory(float *BF);
+void FreeParticleMemory(void *BF);
 
 struct LevelHierarchyEntry;
 
@@ -199,6 +200,13 @@ class grid
 /* Grid deconstructor (free up memory usage) */
 
    ~grid();
+
+
+   // Memory pool overloads new and delete operators
+#ifdef MEMORY_POOL
+  void* operator new(size_t nobjects);
+  void operator delete(void* object);
+#endif
 
 /* Read grid data from a file (returns: success/failure) */
 
@@ -1114,7 +1122,7 @@ public:
 /* Gravity: Delete GravitatingMassField. */
 
    void DeleteGravitatingMassField() {
-     delete [] GravitatingMassField; 
+     FreeBaryonFieldMemory(GravitatingMassField); 
      GravitatingMassField = NULL;
    };
 
@@ -1123,7 +1131,7 @@ public:
    void DeleteAccelerationField() {
      if (!((SelfGravity || UniformGravity || PointSourceGravity || ExternalGravity))) return;
      for (int dim = 0; dim < GridRank; dim++) {
-       delete [] AccelerationField[dim];
+       FreeBaryonFieldMemory(AccelerationField[dim]);
        AccelerationField[dim] = NULL;
      }
    };
@@ -1341,7 +1349,7 @@ public:
 /* Particles & Gravity: Delete GravitatingMassField. */
 
    void DeleteGravitatingMassFieldParticles() {
-     delete [] GravitatingMassFieldParticles; 
+     FreeBaryonFieldMemory(GravitatingMassFieldParticles); 
      GravitatingMassFieldParticles = NULL;
      GravitatingMassFieldParticlesCellSize = FLOAT_UNDEFINED;
    };
@@ -1369,18 +1377,16 @@ public:
      }
      for (int i = 0; i < NumberOfParticleAttributes; i++) 
        if (ParticleAttribute[i] != NULL) delete [] ParticleAttribute[i];
-   
 #else
-     if (ParticleMass != NULL) ParticleMemoryPool->FreeMemory(ParticleMass);
-     if (ParticleNumber != NULL) ParticleMemoryPool->FreeMemory(ParticleNumber);
-     if (ParticleType != NULL) ParticleMemoryPool->FreeMemory(ParticleType);
+     FreeParticleMemory(ParticleMass);
+     FreeParticleMemory(ParticleNumber);
+     FreeParticleMemory(ParticleType);
      for (int dim = 0; dim < GridRank; dim++) {
-       if (ParticlePosition[dim] != NULL) ParticleMemoryPool->FreeMemory(ParticlePosition[dim]);
-       if (ParticleVelocity[dim] != NULL) ParticleMemoryPool->FreeMemory(ParticleVelocity[dim]);
+       FreeParticleMemory(ParticlePosition[dim]);
+       FreeParticleMemory(ParticleVelocity[dim]);
      }
      for (int i = 0; i < NumberOfParticleAttributes; i++) 
-       if (ParticleAttribute[i] != NULL) ParticleMemoryPool->FreeMemory(ParticleAttribute[i]);
-     
+       FreeParticleMemory(ParticleAttribute[i]);
 #endif
      ParticleMass = NULL;
      ParticleNumber = NULL;
@@ -2458,7 +2464,7 @@ int zEulerSweep(int j, int NumberOfSubgrids, fluxes *SubgridFluxes[],
     int i;
     for (i = 0; i < NumberOfBaryonFields; i++)
       if (InterpolatedField[i] != NULL) {
-	delete [] InterpolatedField[i];
+	FreeBaryonFieldMemory(InterpolatedField[i]);
 	InterpolatedField[i] = NULL;
       }
   }

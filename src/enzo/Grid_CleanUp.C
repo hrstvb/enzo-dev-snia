@@ -44,8 +44,8 @@ void grid::CleanUp()
     OldBaryonField[i] = NULL;
   }
  
-  delete [] GravitatingMassField;
-  delete [] GravitatingMassFieldParticles;
+  FreeBaryonFieldMemory(GravitatingMassField);
+  FreeBaryonFieldMemory(GravitatingMassFieldParticles);
  
   GravitatingMassField          = NULL;
   GravitatingMassFieldParticles = NULL;
@@ -53,7 +53,7 @@ void grid::CleanUp()
 #ifdef SAB
   for (i = 0; i < MAX_DIMENSION; i++)
     if (OldAccelerationField[i] != NULL) {
-      delete [] OldAccelerationField[i];
+      FreeBaryonFieldMemory(OldAccelerationField[i]);
       OldAccelerationField[i] = NULL;
     }
 #endif

@@ -172,7 +172,7 @@ int grid::InterpolateParticlesToGrid(FOFData *D)
     if (MyProcessorNumber < min_slab || MyProcessorNumber > max_slab) {
       if (MyProcessorNumber == ProcessorNumber)
 	for (field = 0; field < NumberOfFields; field++) {
-	  InterpolatedField[field] = new float[size];
+	  InterpolatedField[field] = static_cast<float*>(AllocateNewBaryonField(size));
 	  for (i = 0; i < size; i++)
 	    InterpolatedField[field][i] = 0.0;
 	}
@@ -212,7 +212,7 @@ int grid::InterpolateParticlesToGrid(FOFData *D)
 
     // Allocate and zero memory
     for (field = 0; field < NumberOfFields; field++) {
-      InterpolatedField[field] = new float[size];
+      InterpolatedField[field] = static_cast<float*>(AllocateNewBaryonField(size));
       for (i = 0; i < size; i++)
 	InterpolatedField[field][i] = 0.0;
     }
@@ -302,7 +302,7 @@ int grid::InterpolateParticlesToGrid(FOFData *D)
 	CommunicationBufferedSend(InterpolatedField[field], size, DataType,
 				  ProcessorNumber, Tag, MPI_COMM_WORLD,
 				  size * sizeof(float));
-	delete [] InterpolatedField[field];
+	FreeBaryonFieldMemory(InterpolatedField[field]);
 	InterpolatedField[field] = NULL;
       } // ENDFOR field
       

@@ -249,7 +249,7 @@ int grid::CommunicationReceiveRegion(grid *FromGrid, int FromProcessor,
     if (SendField == INTERPOLATED_FIELDS)
       for (field = 0; field < NumberOfFields; field++) {
 	if (InterpolatedField[field] == NULL) {
-	  InterpolatedField[field] = new float[ActiveSize];
+	  InterpolatedField[field] = static_cast<float*>(AllocateNewBaryonField(ActiveSize));
 	  for (i = 0; i < ActiveSize; i++)
 	    InterpolatedField[field][i] = 0;
 	}

@@ -83,7 +83,7 @@ int grid::ConvertToCellCenteredRadiation()
   if (BaryonField[NumberOfBaryonFields] != NULL) {
 
     FreeBaryonFieldMemory(BaryonField[NumberOfBaryonFields]);
-    delete [] InterpolatedField[NumberOfBaryonFields];
+    FreeBaryonFieldMemory(InterpolatedField[NumberOfBaryonFields]);
     BaryonField[NumberOfBaryonFields] = NULL;
     InterpolatedField[NumberOfBaryonFields] = NULL;
   }

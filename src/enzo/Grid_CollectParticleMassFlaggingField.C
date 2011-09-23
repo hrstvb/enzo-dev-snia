@@ -71,8 +71,7 @@ int grid::CollectParticleMassFlaggingField(void)
   /* Delete MassFlaggingField if this isn't the main processor */
 
   if (MyProcessorNumber != ProcessorNumber) {
-
-    delete [] ParticleMassFlaggingField;
+    FreeBaryonFieldMemory(ParticleMassFlaggingField);
     ParticleMassFlaggingField = NULL;
   }
  

@@ -9,7 +9,7 @@
 /  PURPOSE:
 /
 ************************************************************************/
- 
+
 //
 //  Grid destructor
 //
@@ -51,10 +51,10 @@ grid::~grid()
   for (i = 0; i < MAX_DIMENSION; i++) {
     delete [] CellLeftEdge[i];
     delete [] CellWidth[i];
-    delete [] ParticlePosition[i];
-    delete [] ParticleVelocity[i];
+    FreeParticleMemory(ParticlePosition[i]);
+    FreeParticleMemory(ParticleVelocity[i]);
     delete [] ParticleAcceleration[i];
-    delete [] AccelerationField[i];
+    FreeBaryonFieldMemory(AccelerationField[i]);
     delete [] RandomForcingField[i];
   }
  
@@ -63,14 +63,14 @@ grid::~grid()
   for (i = 0; i < MAX_NUMBER_OF_BARYON_FIELDS; i++) {
     FreeBaryonFieldMemory(BaryonField[i]);
     FreeBaryonFieldMemory(OldBaryonField[i]);
-    delete [] InterpolatedField[i];
+    FreeBaryonFieldMemory(InterpolatedField[i]);
   }
    delete [] YT_TemperatureField;
 
 #ifdef SAB
   for (i = 0; i < MAX_DIMENSION; i++) {
     if(OldAccelerationField[i] != NULL ){
-      delete [] OldAccelerationField[i];
+      FreeBaryonFieldMemory(OldAccelerationField[i]);
       OldAccelerationField[i] = NULL;
     }
   }
@@ -79,18 +79,18 @@ grid::~grid()
   DeleteFluxes(BoundaryFluxes);
   delete BoundaryFluxes;
  
-  delete [] ParticleMass;
-  delete [] ParticleNumber;
-  delete [] ParticleType;
-  delete [] PotentialField;
-  delete [] GravitatingMassField;
-  delete [] GravitatingMassFieldParticles;
+  FreeParticleMemory(ParticleMass);
+  FreeParticleMemory(ParticleNumber);
+  FreeParticleMemory(ParticleType);
+  FreeBaryonFieldMemory(PotentialField);
+  FreeBaryonFieldMemory(GravitatingMassField);
+  FreeBaryonFieldMemory(GravitatingMassFieldParticles);
   delete [] FlaggingField;
-  delete [] MassFlaggingField;
-  delete [] ParticleMassFlaggingField;
+  FreeBaryonFieldMemory(MassFlaggingField);
+  FreeBaryonFieldMemory(ParticleMassFlaggingField);
  
   for (i = 0; i < MAX_NUMBER_OF_PARTICLE_ATTRIBUTES; i++)
-    delete [] ParticleAttribute[i];
+    FreeParticleMemory(ParticleAttribute[i]);
 
   delete [] divB;
   for (int i=0; i<3; i++) {

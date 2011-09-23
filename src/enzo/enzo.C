@@ -314,21 +314,25 @@ Eint32 MAIN_NAME(Eint32 argc, char *argv[])
 
 #ifdef TRANSFER
 #ifdef MEMORY_POOL
-  ParticleMemoryPool = new MPool::MemoryPool(1, sizeof(FLOAT)*100000,
-					     sizeof(FLOAT)*1,
+  const int GridObjectMemorySize = MEMORY_POOL_SIZE;
+  int GridObjectSize = sizeof(grid);
+  GridObjectMemoryPool = new MPool::MemoryPool(1, GridObjectMemorySize*GridObjectSize,
+					   GridObjectSize,
+					   GridObjectMemorySize*GridObjectSize/4);
+
+  ParticleMemoryPool = new MPool::MemoryPool(2, sizeof(FLOAT)*100000,
+					     sizeof(FLOAT)*8,
 					     sizeof(FLOAT)*100000);
 
-  BaryonFieldMemoryPool = new MPool::MemoryPool(2, sizeof(FLOAT)*1000000,
+  BaryonFieldMemoryPool = new MPool::MemoryPool(3, sizeof(FLOAT)*1000000,
 						sizeof(FLOAT)*64,
 						sizeof(FLOAT)*1000000);
 
   const int PhotonMemorySize = MEMORY_POOL_SIZE;
   int PhotonSize = sizeof(PhotonPackageEntry);
-  PhotonMemoryPool = new MPool::MemoryPool(3, PhotonMemorySize*PhotonSize,
+  PhotonMemoryPool = new MPool::MemoryPool(4, PhotonMemorySize*PhotonSize,
 					   PhotonSize,
 					   PhotonMemorySize*PhotonSize/4);
-  
-
 #endif
 #endif
 
@@ -854,9 +858,10 @@ Eint32 MAIN_NAME(Eint32 argc, char *argv[])
 #endif
 
 #ifdef MEMORY_POOL
-    delete PhotonMemoryPool;
+    delete GridObjectMemoryPool;
     delete ParticleMemoryPool;
     delete BaryonFieldMemoryPool;
+    delete PhotonMemoryPool;
 #endif
  
   my_exit(EXIT_SUCCESS);

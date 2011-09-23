@@ -174,7 +174,7 @@ int grid::CopyParentToGravitatingFieldBoundary(grid *ParentGrid)
   /* Clean up parent. */
  
   if (MyProcessorNumber != ParentGrid->ProcessorNumber) {
-    delete [] ParentGrid->GravitatingMassField;
+    FreeBaryonFieldMemory(ParentGrid->GravitatingMassField);
     ParentGrid->GravitatingMassField = NULL;
   }
  

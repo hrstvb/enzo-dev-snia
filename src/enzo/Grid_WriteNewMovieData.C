@@ -367,7 +367,7 @@ int grid::WriteNewMovieData(FLOAT RegionLeftEdge[], FLOAT RegionRightEdge[],
       }
    
       if (MovieVertexCentered) {
-	delete [] InterpolatedField[field_num];
+	FreeBaryonFieldMemory(InterpolatedField[field_num]);
 	InterpolatedField[field_num] = NULL;
       }
 

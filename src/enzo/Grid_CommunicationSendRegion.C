@@ -264,8 +264,8 @@ int grid::CommunicationSendRegion(grid *ToGrid, int ToProcessor,int SendField,
 	}
  
     if (SendField == GRAVITATING_MASS_FIELD_PARTICLES) {
-      delete [] ToGrid->GravitatingMassFieldParticles;
-      ToGrid->GravitatingMassFieldParticles = new float[RegionSize];
+      FreeBaryonFieldMemory(ToGrid->GravitatingMassFieldParticles);
+      ToGrid->GravitatingMassField = static_cast<float*>(AllocateNewBaryonField(RegionSize));
       FORTRAN_NAME(copy3d)(buffer, ToGrid->GravitatingMassFieldParticles,
 			   RegionDim, RegionDim+1, RegionDim+2,
 			   RegionDim, RegionDim+1, RegionDim+2,
@@ -274,8 +274,8 @@ int grid::CommunicationSendRegion(grid *ToGrid, int ToProcessor,int SendField,
     }
  
     if (SendField == GRAVITATING_MASS_FIELD) {
-      delete [] ToGrid->GravitatingMassField;
-      ToGrid->GravitatingMassField = new float[RegionSize];
+      FreeBaryonFieldMemory(ToGrid->GravitatingMassField);
+      ToGrid->GravitatingMassField = static_cast<float*>(AllocateNewBaryonField(RegionSize));
       FORTRAN_NAME(copy3d)(buffer, ToGrid->GravitatingMassField,
     			   RegionDim, RegionDim+1, RegionDim+2,
     			   RegionDim, RegionDim+1, RegionDim+2,
@@ -284,8 +284,8 @@ int grid::CommunicationSendRegion(grid *ToGrid, int ToProcessor,int SendField,
     }
  
     if (SendField == POTENTIAL_FIELD) {
-      delete [] ToGrid->PotentialField;
-      ToGrid->PotentialField = new float[RegionSize];
+      FreeBaryonFieldMemory(ToGrid->PotentialField);
+      ToGrid->PotentialField = static_cast<float*>(AllocateNewBaryonField(RegionSize));
       FORTRAN_NAME(copy3d)(buffer, ToGrid->PotentialField,
 			   RegionDim, RegionDim+1, RegionDim+2,
 			   RegionDim, RegionDim+1, RegionDim+2,
@@ -295,8 +295,8 @@ int grid::CommunicationSendRegion(grid *ToGrid, int ToProcessor,int SendField,
  
     if (SendField == ACCELERATION_FIELDS)
       for (dim = 0; dim < GridRank; dim++) {
-	delete [] ToGrid->AccelerationField[dim];
-	ToGrid->AccelerationField[dim] = new float[RegionSize];
+	FreeBaryonFieldMemory(ToGrid->AccelerationField[dim]);
+	ToGrid->AccelerationField[dim] = static_cast<float*>(AllocateNewBaryonField(RegionSize));
 	FORTRAN_NAME(copy3d)(&buffer[index], ToGrid->AccelerationField[dim],
 			     RegionDim, RegionDim+1, RegionDim+2,
 			     RegionDim, RegionDim+1, RegionDim+2,

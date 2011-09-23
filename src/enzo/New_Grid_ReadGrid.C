@@ -665,14 +665,14 @@ int grid::ReadExtraFields(hid_t group_id)
     float *temp = new float[size];
     for (dim = 0; dim < GridRank; dim++) {
       if(this->AccelerationField[dim] != NULL) {
-        delete this->AccelerationField[dim];
+        FreeBaryonFieldMemory(this->AccelerationField[dim]);
       }
       snprintf(acc_name, 254, "AccelerationField%"ISYM, dim);
       this->read_dataset(GridRank, FullOutDims, acc_name,
           acc_node, HDF5_REAL, (VOIDP) AccelerationField[dim],
           FALSE, NULL, NULL);
     }
-    delete temp;
+    delete [] temp;
     H5Gclose(acc_node);
   }
   H5E_BEGIN_TRY{
@@ -687,9 +687,9 @@ int grid::ReadExtraFields(hid_t group_id)
         GMFOutDims[GridRank-dim-1] = GravitatingMassFieldDimension[dim];
     }
       if(this->GravitatingMassField != NULL)
-        delete this->GravitatingMassField;
+        FreeBaryonFieldMemory(this->GravitatingMassField);
       //fprintf(stderr, "ALLOCATING %"ISYM" for GMF\n", size);
-      this->GravitatingMassField = new float[size];
+      this->GravitatingMassField = static_cast<float*>(AllocateNewBaryonField(size));
       this->read_dataset(GridRank, GMFOutDims, "GravitatingMassField",
           group_id, HDF5_REAL, (VOIDP) this->GravitatingMassField, FALSE);
   }
@@ -705,9 +705,9 @@ int grid::ReadExtraFields(hid_t group_id)
         GMFOutDims[GridRank-dim-1] = GravitatingMassFieldDimension[dim];
     }
       if(this->PotentialField != NULL)
-        delete this->PotentialField;
+        FreeBaryonFieldMemory(this->PotentialField);
       //fprintf(stderr, "ALLOCATING %"ISYM" for PF\n", size);
-      this->PotentialField = new float[size];
+      this->PotentialField = static_cast<float*>(AllocateNewBaryonField(size));
       this->read_dataset(GridRank, GMFOutDims, "PotentialField",
           group_id, HDF5_REAL, (VOIDP) this->PotentialField, FALSE);
   }

@@ -51,7 +51,7 @@ int grid::ClearGravitatingMassField()
   //    fprintf(stderr, "ClearGravitatingMassField: Warning! Field not NULL.\n");
  
   if (GravitatingMassField == NULL)
-    GravitatingMassField = new float[size];
+    GravitatingMassField = static_cast<float*>(AllocateNewBaryonField(size));
   if (GravitatingMassField == NULL) {
     ENZO_FAIL("malloc error (out of memory?)\n");
 

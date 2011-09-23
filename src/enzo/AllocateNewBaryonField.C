@@ -35,3 +35,14 @@ void FreeBaryonFieldMemory(float *BF)
 #endif
   return;
 }
+
+void FreeParticleMemory(void *PF)
+{
+#ifndef MEMORY_POOL
+  delete [] PF;
+#else
+  return ParticleMemoryPool->FreeMemory(PF);
+#endif
+  return;
+}
+

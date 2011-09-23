@@ -163,7 +163,7 @@ int grid::SetParticleMassFlaggingField(int StartProc, int EndProc, int level,
       CommunicationBufferedSend(ParticleMassFlaggingField, size, DataType,
 				ProcessorNumber, MPI_SENDPMFLAG_TAG, 
 				MPI_COMM_WORLD, size*sizeof(float));
-      delete [] ParticleMassFlaggingField;
+      FreeBaryonFieldMemory(ParticleMassFlaggingField);
       ParticleMassFlaggingField = NULL;
     }
 #endif /* USE_MPI */

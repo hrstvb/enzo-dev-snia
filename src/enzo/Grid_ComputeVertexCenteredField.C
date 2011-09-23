@@ -52,7 +52,7 @@ int grid::ComputeVertexCenteredField(int Num)
   for (dim = 0; dim < GridRank; dim++)
     size *= GridEndIndex[dim]-GridStartIndex[dim]+2 ;
 
-  InterpolatedField[Num] = new float[size];
+  InterpolatedField[Num] = static_cast<float*>(AllocateNewBaryonField(size));
 
   int ci = 0;
   int vi[8], v;

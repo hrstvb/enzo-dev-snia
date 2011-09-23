@@ -160,6 +160,14 @@ namespace MPool
     
   }
 
+  void MemoryPool::PrintMemoryConsumption()
+  {
+    fprintf(stdout, "Pool %i: Total:%0.3f Mb, Free:%0.3f Mb\n",
+	    PoolNumber, TotalMemoryPoolSize/1048576.0,
+	    FreeMemoryPoolSize/1048576.0);
+    return;
+  }
+
   /**********************************************************************/
 
   size_t MemoryPool::CalculateNeededChunks(const size_t &MemorySize)

@@ -77,10 +77,10 @@ int grid::ComputeAccelerationField(int DifferenceType, int level)
     /* Allocate acceleration field. */
  
     if (AccelerationField[dim] != NULL) {
-      delete [] AccelerationField[dim];
+      FreeBaryonFieldMemory(AccelerationField[dim]);
     }
  
-    AccelerationField[dim] = new float[size];
+    AccelerationField[dim] = static_cast<float*>(AllocateNewBaryonField(size));
  
   }
  

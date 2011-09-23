@@ -688,7 +688,17 @@ int EvolveHierarchy(HierarchyEntry &TopGrid, TopGridData &MetaData,
         Stop = TRUE;
       }
     }
-#endif
+#ifdef MEMORY_POOL
+    fprintf(stdout, "GridObjects : ");
+    GridObjectMemoryPool->PrintMemoryConsumption();
+    fprintf(stdout, "Particles   : ");
+    ParticleMemoryPool->PrintMemoryConsumption();
+    fprintf(stdout, "Baryons     : ");
+    BaryonFieldMemoryPool->PrintMemoryConsumption();
+    fprintf(stdout, "Photons     : ");
+    PhotonMemoryPool->PrintMemoryConsumption();
+#endif // MEMORY_POOL
+#endif //MEM_TRACE
 
     FirstLoop = false;
  

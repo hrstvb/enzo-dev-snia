@@ -33,6 +33,8 @@ int grid::SetSubgridMarkerFromSibling(grid *Sibling,
 
   if (MyProcessorNumber != ProcessorNumber)
     return SUCCESS;
+  if (! RadiativeTransfer)
+    return SUCCESS;
 
   /* declarations */
     
@@ -74,7 +76,7 @@ int grid::SetSubgridMarkerFromSibling(grid *Sibling,
     /* Compute left and right positions in problem space.  note:
        include buffer zones of this grid but not the other grid. */
  
-    Left[dim]  = max(GridLeft[dim], Sibling->GridLeftEdge[dim]);
+    Left[dim]  = max(GridLeft[dim],  Sibling->GridLeftEdge[dim]);
     Right[dim] = min(GridRight[dim], Sibling->GridRightEdge[dim]);
 
     /* Convert this to index positions in this grid */

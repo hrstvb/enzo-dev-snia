@@ -78,8 +78,8 @@ int grid::PreparePotentialField(grid *ParentGrid)
   if (MyProcessorNumber == ProcessorNumber &&
       CommunicationDirection != COMMUNICATION_POST_RECEIVE) {
     if (PotentialField != NULL)
-      delete [] PotentialField;
-    PotentialField = new float[size];
+      FreeBaryonFieldMemory(PotentialField);
+    PotentialField = static_cast<float*>(AllocateNewBaryonField(size));
   }
  
   /* Declarations. */
@@ -205,8 +205,7 @@ int grid::PreparePotentialField(grid *ParentGrid)
   /* Clean up parent. */
  
   if (MyProcessorNumber != ParentGrid->ProcessorNumber) {
-
-    delete [] ParentGrid->PotentialField;
+    FreeBaryonFieldMemory(ParentGrid->PotentialField);
     ParentGrid->PotentialField = NULL;
   }
  

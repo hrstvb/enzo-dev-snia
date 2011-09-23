@@ -90,11 +90,11 @@ int grid::FlagCellsToBeRefinedByMass(int level, int method)
   /* remove MassFlaggingField. */
  
   if (ThisFlaggingMethod == 2) {
-    delete [] MassFlaggingField;
+    FreeBaryonFieldMemory(MassFlaggingField);
     MassFlaggingField = NULL;
   } else if (ThisFlaggingMethod == 4) {
 
-    delete [] ParticleMassFlaggingField;
+    FreeBaryonFieldMemory(ParticleMassFlaggingField);
     ParticleMassFlaggingField = NULL;
   }
  

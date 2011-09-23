@@ -513,7 +513,7 @@ int grid::Group_WriteGrid(FILE *fptr, char *base_name, int grid_id, HDF5_hid_t f
       this->write_dataset(GridRank, OutDims, SmoothedDMLabel[field],
                     group_id, file_type_id, (VOIDP) InterpolatedField[field], FALSE);
 
-      delete [] InterpolatedField[field];
+      FreeBaryonFieldMemory(InterpolatedField[field]);
       InterpolatedField[field] = NULL;
 
     } // ENDFOR field

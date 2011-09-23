@@ -804,6 +804,7 @@ EXTERN SuperSourceEntry *OldSourceClusteringTree;
 EXTERN MPool::MemoryPool *PhotonMemoryPool;
 EXTERN MPool::MemoryPool *ParticleMemoryPool;
 EXTERN MPool::MemoryPool *BaryonFieldMemoryPool;
+EXTERN MPool::MemoryPool *GridObjectMemoryPool;
 #endif
 
 /* [0]: Emitted photons

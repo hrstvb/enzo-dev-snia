@@ -141,6 +141,10 @@ namespace MPool
     // Checks if the pointer is in the memory pool
     bool IsValidPointer(void* Pointer);
 
+    // output some basic statistic of the pool to stdout
+    void PrintMemoryConsumption();
+
+
   };
 }
 

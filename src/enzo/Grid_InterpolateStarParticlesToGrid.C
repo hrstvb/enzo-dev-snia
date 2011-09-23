@@ -92,7 +92,7 @@ int grid::InterpolateStarParticlesToGrid(int NumberOfSPFields)
   if (MyProcessorNumber == ProcessorNumber)
     for (field = NumberOfInterpolatedFieldsForDM; 
 	 field < NumberOfInterpolatedFieldsForDM+NumberOfSPFields; field++) {
-      InterpolatedField[field] = new float[size];  
+      InterpolatedField[field] = static_cast<float*>(AllocateNewBaryonField(size));
       if (field == CreationTimeNum) 
 	for (i = 0; i < size; i++)
 	  InterpolatedField[field][i] = 0.0;

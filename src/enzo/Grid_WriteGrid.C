@@ -809,7 +809,7 @@ int grid::WriteGrid(FILE *fptr, char *base_name, int grid_id)
       if (io_log) fprintf(log_fptr, "H5Dclose: %"ISYM"\n", h5_status);
       if( h5_status == h5_error ){my_exit(EXIT_FAILURE);}
  
-      delete [] InterpolatedField[field];
+      FreeBaryonFieldMemory(InterpolatedField[field]);
       InterpolatedField[field] = NULL;
 
     } // ENDFOR field
