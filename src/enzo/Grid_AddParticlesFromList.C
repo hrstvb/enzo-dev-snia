@@ -69,25 +69,32 @@ int grid::AddParticlesFromList(ParticleEntry *List, const int &Size,
   float *Mass;
   float *Attribute[MAX_NUMBER_OF_PARTICLE_ATTRIBUTES];
 
+#ifndef MEMORY_POOL
+  // classic: use system malloc to get memory
+  Mass = new float[NumberOfParticles];
   Number = new PINT[NumberOfParticles];
   Type = new int[NumberOfParticles];
-  Mass = new float[NumberOfParticles];
   for (int dim = 0; dim < GridRank; dim++) {
-#ifdef MEMORY_POOL
-       Position[dim] = static_cast<FLOAT*>(ParticleMemoryPool->GetMemory(sizeof(FLOAT)*NumberOfParticles));
-       Velocity[dim] = static_cast<float*>(ParticleMemoryPool->GetMemory(sizeof(float)*NumberOfParticles));
-#else
-      Position[dim] = new FLOAT[NumberOfParticles];
-      Velocity[dim] = new float[NumberOfParticles];
+    Position[dim] = new FLOAT[NumberOfParticles];
+    Velocity[dim] = new float[NumberOfParticles];
+  }
+  for (int i = 0; i < NumberOfParticleAttributes; i++)
+    Attribute[i] = new float[NumberOfParticles];
+#else  
+  // use Particle Memory Pool to allocate memory
+  Mass = static_cast<float*>(ParticleMemoryPool->GetMemory(sizeof(float)*NumberOfParticles));
+  Number = static_cast<PINT*>(ParticleMemoryPool->GetMemory(sizeof(PINT)*NumberOfParticles));
+  Type = static_cast<int*>(ParticleMemoryPool->GetMemory(sizeof(int)*NumberOfParticles));
+  for (int dim = 0; dim < GridRank; dim++) {
+    Position[dim] = static_cast<FLOAT*>(ParticleMemoryPool->GetMemory(sizeof(FLOAT)*NumberOfParticles));
+    Velocity[dim] = static_cast<float*>(ParticleMemoryPool->GetMemory(sizeof(float)*NumberOfParticles));
+  }
+  for (int i = 0; i < NumberOfParticleAttributes; i++)
+    Attribute[i] = static_cast<float*>(ParticleMemoryPool->GetMemory(sizeof(float)*NumberOfParticles));
 #endif
-    }
-    for (int i = 0; i < NumberOfParticleAttributes; i++)
-#ifdef MEMORY_POOL
-      Attribute[i] = static_cast<float*>(ParticleMemoryPool->GetMemory(sizeof(float)*NumberOfParticles));
-#else
-      Attribute[i] = new float[NumberOfParticles];
-#endif 
-
+  
+  
+  
   /* copy old particles to their new home. */
 
   for (int i = 0; i < NumberOfParticles - Count; i++) {

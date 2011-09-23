@@ -23,8 +23,6 @@
  
 /* function prototypes */
  
- 
- 
 int grid::ZeroSolutionUnderSubgrid(grid *Subgrid, int FieldsToZero,
 				   float Value, int AllProcessors,
 				   int IncludeGhostZones)
@@ -54,7 +52,7 @@ int grid::ZeroSolutionUnderSubgrid(grid *Subgrid, int FieldsToZero,
       size *= GridDimension[dim];
  
  
-    delete [] BaryonField[NumberOfBaryonFields];
+    FreeBaryonFieldMemory(BaryonField[NumberOfBaryonFields]);
  
     if ( (Unigrid == 1) && ((ProblemType == 30) || (ProblemType == 60) || (ProblemType >= 400)) ) //AK
     {
@@ -73,7 +71,7 @@ int grid::ZeroSolutionUnderSubgrid(grid *Subgrid, int FieldsToZero,
 //       printf("ZeroSUS - Zero field size: %"ISYM"\n", (int) (size*sizeof(float)));
 //    }
  
-    BaryonField[NumberOfBaryonFields] = new float[size];
+    BaryonField[NumberOfBaryonFields] = static_cast<float*>(AllocateNewBaryonField(size));
     for (i = 0; i < size; i++)
       BaryonField[NumberOfBaryonFields][i] = 0.0;
     return SUCCESS;

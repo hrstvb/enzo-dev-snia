@@ -57,24 +57,32 @@ int grid::CleanUpMovedParticles()
   else {
  
     /* Allocate space for the new set of particles. */
+
+#ifndef MEMORY_POOL
+    // classic: use system malloc to get memory
     Mass = new float[NumberOfParticlesRemaining];
     Number = new PINT[NumberOfParticlesRemaining];
     Type = new int[NumberOfParticlesRemaining];
-    for (dim = 0; dim < GridRank; dim++) {
-#ifdef MEMORY_POOL
-       Position[dim] = static_cast<FLOAT*>(ParticleMemoryPool->GetMemory(sizeof(FLOAT)*NumberOfParticlesRemaining));
-       Velocity[dim] = static_cast<float*>(ParticleMemoryPool->GetMemory(sizeof(float)*NumberOfParticlesRemaining));
-#else
+    for (int dim = 0; dim < GridRank; dim++) {
       Position[dim] = new FLOAT[NumberOfParticlesRemaining];
       Velocity[dim] = new float[NumberOfParticlesRemaining];
-#endif
     }
-    for (i = 0; i < NumberOfParticleAttributes; i++)
-#ifdef MEMORY_POOL
-      Attribute[i] = static_cast<float*>(ParticleMemoryPool->GetMemory(sizeof(float)*NumberOfParticlesRemaining));
-#else
+    for (int i = 0; i < NumberOfParticleAttributes; i++)
       Attribute[i] = new float[NumberOfParticlesRemaining];
-#endif 
+#else  
+    // use Particle Memory Pool to allocate memory
+    Mass = static_cast<float*>(ParticleMemoryPool->GetMemory(sizeof(float)*NumberOfParticlesRemaining));
+    Number = static_cast<PINT*>(ParticleMemoryPool->GetMemory(sizeof(PINT)*NumberOfParticlesRemaining));
+    Type = static_cast<int*>(ParticleMemoryPool->GetMemory(sizeof(int)*NumberOfParticlesRemaining));
+    for (int dim = 0; dim < GridRank; dim++) {
+      Position[dim] = static_cast<FLOAT*>(ParticleMemoryPool->GetMemory(sizeof(FLOAT)*NumberOfParticlesRemaining));
+      Velocity[dim] = static_cast<float*>(ParticleMemoryPool->GetMemory(sizeof(float)*NumberOfParticlesRemaining));
+    }
+    for (int i = 0; i < NumberOfParticleAttributes; i++)
+      Attribute[i] = static_cast<float*>(ParticleMemoryPool->GetMemory(sizeof(float)*NumberOfParticlesRemaining));
+#endif
+    
+
     /* Copy unmoved particles to their new home. */
 
 

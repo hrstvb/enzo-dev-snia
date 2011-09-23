@@ -62,8 +62,9 @@ extern "C" void FORTRAN_NAME(combine3d)(
 	       int *dstart1, int *dstart2, int *dstart3,
 	       int *ivel_flag, int *irefine);
  
+
 /* InterpolateBoundaryFromParent function */
- 
+
 int grid::InterpolateFieldValues(grid *ParentGrid)
 {
  
@@ -396,8 +397,8 @@ int grid::InterpolateFieldValues(grid *ParentGrid)
  
       /* Copy needed portion of temp field to current grid. */
  
-      if (BaryonField[field] == NULL)
-	BaryonField[field] = new float[GridSize];
+      if (BaryonField[field] == NULL && GridSize > 0)
+	BaryonField[field] = static_cast<float*>(AllocateNewBaryonField(GridSize));
       if (BaryonField[field] == NULL) {
 	ENZO_FAIL("malloc error (out of memory?)\n");
       }

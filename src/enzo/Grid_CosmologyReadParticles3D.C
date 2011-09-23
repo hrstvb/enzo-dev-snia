@@ -150,11 +150,7 @@ int grid::CosmologyReadParticles3D(
 		 NULL, &tempbuffer, 0, 1) == FAIL)
       ENZO_VFAIL("Error reading particle velocity field %"ISYM".\n", dim)
 
-#ifdef MEMORY_POOL
-	temp_vel[dim]=static_cast<float*>(ParticleMemoryPool->GetMemory(sizeof(float)*size));
-#else
     temp_vel[dim] = new float[size];
-#endif
 
     for (i = 0; i < size; i++)
       temp_vel[dim][i] = (float) tempbuffer[i];

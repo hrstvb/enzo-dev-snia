@@ -78,6 +78,7 @@ int CommunicationBroadcastValue(int *Value, int BroadcastProcessor);
 int Enzo_Dims_create(int nnodes, int ndims, int *dims); 
 
 
+
 int grid::NestedCosmologySimulationInitializeGrid(
                           int   InitialGridNumber,
                           float CosmologySimulationOmegaBaryonNow,
@@ -449,7 +450,7 @@ int grid::NestedCosmologySimulationInitializeGrid(
  
       if (ReadData == TRUE)
 	for (int field = 0; field < NumberOfBaryonFields; field++)
-	  BaryonField[field] = new float[size];
+	  BaryonField[field] = static_cast<float*>(AllocateNewBaryonField(size));
  
       // Read the density field
  
@@ -1336,6 +1337,8 @@ int grid::NestedCosmologySimulationInitializeGrid(
 
 	// Allocate space for the particles
  
+	printf("Allocating %"ISYM" (NumberOfParticles)\n",NumberOfParticles);
+
 	this->AllocateNewParticles(NumberOfParticles);
  
 	// Read particle positions

@@ -61,8 +61,8 @@ grid::~grid()
   delete ParticleAcceleration[MAX_DIMENSION];
  
   for (i = 0; i < MAX_NUMBER_OF_BARYON_FIELDS; i++) {
-    delete [] BaryonField[i];
-    delete [] OldBaryonField[i];
+    FreeBaryonFieldMemory(BaryonField[i]);
+    FreeBaryonFieldMemory(OldBaryonField[i]);
     delete [] InterpolatedField[i];
   }
    delete [] YT_TemperatureField;
@@ -92,7 +92,7 @@ grid::~grid()
   for (i = 0; i < MAX_NUMBER_OF_PARTICLE_ATTRIBUTES; i++)
     delete [] ParticleAttribute[i];
 
-  delete divB;
+  delete [] divB;
   for (int i=0; i<3; i++) {
     delete gradPhi[i];
   }

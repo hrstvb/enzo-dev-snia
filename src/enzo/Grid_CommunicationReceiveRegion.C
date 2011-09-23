@@ -44,7 +44,7 @@ extern "C" void FORTRAN_NAME(copy3d)(float *source, float *dest,
 int CommunicationBufferedSend(void *buffer, int size, MPI_Datatype Type, int Target,
 			      int Tag, MPI_Comm CommWorld, int BufferSize);
 #endif /* USE_MPI */
- 
+
  
 int grid::CommunicationReceiveRegion(grid *FromGrid, int FromProcessor,
 				     int SendField, int NewOrOld,
@@ -216,7 +216,7 @@ int grid::CommunicationReceiveRegion(grid *FromGrid, int FromProcessor,
       for (field = 0; field < NumberOfBaryonFields; field++)
 	if (field == SendField || SendField == ALL_FIELDS) {
 	  if (BaryonField[field] == NULL) {
-	    BaryonField[field] = new float[GridSize];
+	    BaryonField[field] = static_cast<float*>(AllocateNewBaryonField(GridSize));
 	    for (i = 0; i < GridSize; i++)
 	      BaryonField[field][i] = 0;
           }
@@ -233,9 +233,9 @@ int grid::CommunicationReceiveRegion(grid *FromGrid, int FromProcessor,
       for (field = 0; field < NumberOfBaryonFields; field++)
 	if (field == SendField || SendField == ALL_FIELDS) {
 	  if (OldBaryonField[field] == NULL) {
-	    OldBaryonField[field] = new float[GridSize];
+	    OldBaryonField[field] = static_cast<float*>(AllocateNewBaryonField(GridSize));
 	    for (i = 0; i < GridSize; i++)
-	      BaryonField[field][i] = 0;
+	      OldBaryonField[field][i] = 0;
           }
 	  FORTRAN_NAME(copy3d)(&buffer[index], OldBaryonField[field],
 			       RegionDim, RegionDim+1, RegionDim+2,

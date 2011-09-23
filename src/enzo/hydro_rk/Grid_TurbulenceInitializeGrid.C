@@ -163,7 +163,7 @@ int grid::TurbulenceInitializeGrid(float CloudDensity, float CloudSoundSpeed, FL
 
   for (field = 0; field < NumberOfBaryonFields; field++) {
     if (BaryonField[field] == NULL) {
-      BaryonField[field] = new float[size];
+      BaryonField[field] = static_cast<float*>(AllocateNewBaryonField(size));
       for (n = 0; n < size; n++) {
 	BaryonField[field][n] = 0.0;
       }

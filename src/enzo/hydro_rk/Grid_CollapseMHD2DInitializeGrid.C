@@ -84,7 +84,7 @@ int grid::CollapseMHD2DInitializeGrid(FLOAT r_sphere,
 
   for (field = 0; field < NumberOfBaryonFields; field++) {
     if (BaryonField[field] == NULL) {
-      BaryonField[field] = new float[size];
+      BaryonField[field] = static_cast<float*>(AllocateNewBaryonField(size));
     }
   }
 

@@ -103,7 +103,7 @@ int grid::FlagCellsToBeRefinedByCoolingTime()
  
   /* clean up */
  
-  delete cooling_time;
+  delete [] cooling_time;
  
   /* Count number of flagged Cells. */
  

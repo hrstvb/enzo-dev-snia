@@ -26,6 +26,8 @@
 int GetUnits(float *DensityUnits, float *LengthUnits,
 	     float *TemperatureUnits, float *TimeUnits,
 	     float *VelocityUnits, FLOAT Time);
+
+
 int grid::MHD3DTestInitializeGrid(int MHD3DProblemType,
 				  float rhol, float rhou,
 				  float vxl,  float vxu,
@@ -128,7 +130,7 @@ int grid::MHD3DTestInitializeGrid(int MHD3DProblemType,
   int field;
   for (field = 0; field < NumberOfBaryonFields; field++) {
     if (BaryonField[field] == NULL) {
-      BaryonField[field] = new float[size];
+      BaryonField[field] = static_cast<float*>(AllocateNewBaryonField(size));
     }
   }
 

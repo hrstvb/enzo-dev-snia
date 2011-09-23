@@ -130,9 +130,9 @@ int ParticleSplitter(LevelHierarchyEntry *LevelArray[], int ThisLevel,
 		     TopGridData *MetaData); 
 int MagneticFieldResetter(LevelHierarchyEntry *LevelArray[], int ThisLevel,
 			  TopGridData *MetaData); 
-void PrintMemoryUsage(char *str);
 int SetEvolveRefineRegion(FLOAT time);
 
+void PrintMemoryUsage(char *str);
 #ifdef MEM_TRACE
 Eint64 mused(void);
 #endif
@@ -482,6 +482,9 @@ int EvolveHierarchy(HierarchyEntry &TopGrid, TopGridData &MetaData,
     }
 */
 #endif
+
+    PrintMemoryUsage("Pre EvolveLevel rebuild");
+
  
     if (HydroMethod == PPM_DirectEuler || HydroMethod == Zeus_Hydro || 
 	HydroMethod == PPM_LagrangeRemap || HydroMethod == HydroMethodUndefined ||
@@ -526,6 +529,7 @@ int EvolveHierarchy(HierarchyEntry &TopGrid, TopGridData &MetaData,
       }
     }
 
+    PrintMemoryUsage("Post EvolveLevel rebuild");
 
 
 #ifdef USE_MPI 

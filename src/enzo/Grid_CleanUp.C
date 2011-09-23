@@ -24,7 +24,6 @@
  
 /* function prototypes */
  
- 
 void grid::CleanUp()
 {
  
@@ -41,7 +40,7 @@ void grid::CleanUp()
   ParticleAcceleration[MAX_DIMENSION] = NULL;
  
   for (i = 0; i < MAX_NUMBER_OF_BARYON_FIELDS; i++) {
-    delete [] OldBaryonField[i];
+    FreeBaryonFieldMemory(OldBaryonField[i]);
     OldBaryonField[i] = NULL;
   }
  

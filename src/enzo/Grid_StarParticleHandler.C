@@ -1315,7 +1315,7 @@ int grid::StarParticleHandler(HierarchyEntry* SubgridPointer, int level,
   delete [] TotalMetals;
   delete [] temperature;
   delete [] dmfield;
-  delete [] BaryonField[NumberOfBaryonFields];   // refinement flag field
+  FreeBaryonFieldMemory(BaryonField[NumberOfBaryonFields]);  // refinement flag field
   BaryonField[NumberOfBaryonFields] = NULL;
  
   //if (debug) printf("StarParticle: end\n");

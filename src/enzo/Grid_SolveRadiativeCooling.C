@@ -368,7 +368,7 @@ int grid::SolveRadiativeCooling()
       
     }
     
-    delete totalenergy;
+    delete [] totalenergy;
   }
 
   delete [] TotalMetals;

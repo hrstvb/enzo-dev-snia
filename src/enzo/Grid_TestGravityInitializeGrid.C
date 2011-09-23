@@ -24,7 +24,6 @@
 #include "ExternalBoundary.h"
 #include "Grid.h"
  
- 
 int grid::TestGravityInitializeGrid(float CentralDensity,
 				    int NumberOfNewParticles,
 				    int UseBaryons)
@@ -156,7 +155,8 @@ int grid::TestGravityInitializeGrid(float CentralDensity,
  
     for (field = 0; field < NumberOfBaryonFields; field++)
       if (BaryonField[field] == NULL)
-	BaryonField[field] = new float[size];
+	BaryonField[field] = static_cast<float*>(AllocateNewBaryonField(size));
+
  
     /* set density, total energy */
  

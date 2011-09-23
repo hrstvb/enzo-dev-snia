@@ -30,7 +30,6 @@ int GetUnits(float *DensityUnits, float *LengthUnits,
 	     float *TemperatureUnits, float *TimeUnits,
 	     float *VelocityUnits, double *MassUnits, FLOAT Time);
 int CosmologyComputeExpansionFactor(FLOAT time, FLOAT *a, FLOAT *dadt);
- 
 
 int grid::CosmoIonizationInitializeGrid(int NumChemicals,
 					float VxConstant, 
@@ -106,7 +105,7 @@ int grid::CosmoIonizationInitializeGrid(int NumChemicals,
 
     for (int field=0; field<NumberOfBaryonFields; field++)
       if (BaryonField[field] == NULL)
-	BaryonField[field] = new float[size];
+	BaryonField[field] = static_cast<float*>(AllocateNewBaryonField(size));
  
     // set field data
     int i;

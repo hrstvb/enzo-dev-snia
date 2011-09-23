@@ -39,7 +39,7 @@ int grid::DeleteEmissivity(void)
 
     FieldNum = FindField(field, FieldType, NumberOfBaryonFields);
     if (MyProcessorNumber == ProcessorNumber) {
-      delete [] BaryonField[FieldNum];
+      FreeBaryonFieldMemory(BaryonField[FieldNum]);
       BaryonField[FieldNum] = NULL;
     }
 

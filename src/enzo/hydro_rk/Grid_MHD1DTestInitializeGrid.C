@@ -22,6 +22,7 @@
 #include "Grid.h"
 #include "CosmologyParameters.h"
 
+
 int grid::MHD1DTestInitializeGrid(float rhol, float rhor,
 				  float vxl,  float vxr,
 				  float vyl,  float vyr,
@@ -65,7 +66,7 @@ int grid::MHD1DTestInitializeGrid(float rhol, float rhor,
   int field;
   for (field = 0; field < NumberOfBaryonFields; field++) {
     if (BaryonField[field] == NULL) {
-      BaryonField[field] = new float[size];
+      BaryonField[field] = static_cast<float*>(AllocateNewBaryonField(size));
     }
   }
 

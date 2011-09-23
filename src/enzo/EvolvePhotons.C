@@ -650,7 +650,8 @@ int EvolvePhotons(TopGridData *MetaData, LevelHierarchyEntry *LevelArray[],
       for (Temp = LevelArray[lvl]; Temp; Temp = Temp->NextGridThisLevel)
 	Temp->GridData->DeletePhotonPackages(TRUE);
     delete PhotonMemoryPool;
-    PhotonMemoryPool = new MPool::MemoryPool(PhotonMemorySize*PhotonSize,
+    PhotonMemoryPool = new MPool::MemoryPool(3,
+					     PhotonMemorySize*PhotonSize,
 					     PhotonSize,
 					     PhotonMemorySize*PhotonSize/4);
     for (lvl = 0; lvl < MAX_DEPTH_OF_HIERARCHY; lvl++)

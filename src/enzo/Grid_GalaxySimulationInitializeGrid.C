@@ -52,6 +52,7 @@ float gasvel(FLOAT radius, float DiskDensity, FLOAT ExpansionFactor,
 float gauss_mass(FLOAT r, FLOAT z, FLOAT xpos, FLOAT ypos, FLOAT zpos, FLOAT inv [3][3], float DiskDensity, FLOAT ScaleHeightR, FLOAT ScaleHeightz, FLOAT cellwidth);
 void rot_to_disk(FLOAT xpos, FLOAT ypos, FLOAT zpos, FLOAT &xrot, FLOAT &yrot, FLOAT &zrot, FLOAT inv [3][3]);
 
+
 static float DensityUnits, LengthUnits, TemperatureUnits = 1, TimeUnits, VelocityUnits;
 
 int grid::GalaxySimulationInitializeGrid(FLOAT DiskRadius,
@@ -159,7 +160,8 @@ int grid::GalaxySimulationInitializeGrid(FLOAT DiskRadius,
 
  for (field = 0; field < NumberOfBaryonFields; field++)
    if (BaryonField[field] == NULL)
-     BaryonField[field] = new float[size];
+     BaryonField[field] = static_cast<float*>(AllocateNewBaryonField(size));
+
 
  /* Loop over the mesh. */
 

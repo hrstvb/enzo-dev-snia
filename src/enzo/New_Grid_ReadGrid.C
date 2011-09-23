@@ -42,12 +42,11 @@ void my_exit(int status);
 // HDF5 function prototypes
  
 
- 
-// function prototypes
+ // function prototypes
  
 int ReadListOfFloats(FILE *fptr, int N, FLOAT floats[]);
 int ReadListOfInts(FILE *fptr, int N, int nums[]);
- 
+
 static int GridReadDataGridCounter = 0;
  
  
@@ -268,7 +267,7 @@ int grid::Group_ReadGrid(FILE *fptr, int GridID, HDF5_hid_t file_id,
     /* loop over fields, reading each one */
 
     for (field = 0; field < NumberOfBaryonFields; field++) {
-      BaryonField[field] = new float[size];
+      BaryonField[field] = static_cast<float*>(AllocateNewBaryonField(size));
       for (i = 0; i < size; i++)
         BaryonField[field][i] = 0;
 
@@ -281,7 +280,7 @@ int grid::Group_ReadGrid(FILE *fptr, int GridID, HDF5_hid_t file_id,
             group_id, HDF5_REAL, BaryonField[field],
             FALSE, NULL, NULL);
 
-        OldBaryonField[field] = new float[size];
+	OldBaryonField[field] = static_cast<float*>(AllocateNewBaryonField(size));
         for (i = 0; i < size; i++)
           OldBaryonField[field][i] = 0;
 

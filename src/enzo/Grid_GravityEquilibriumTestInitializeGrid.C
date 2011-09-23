@@ -24,7 +24,7 @@
 #include "Grid.h"
  
 /* function prototypes */
- 
+
 int grid::GravityEquilibriumTestInitializeGrid(
 				   float ScaleHeight)
 {
@@ -63,7 +63,8 @@ int grid::GravityEquilibriumTestInitializeGrid(
   /* Allocate space for the fields. */
  
   for (field = 0; field < NumberOfBaryonFields; field++)
-    BaryonField[field] = new float[size];
+    BaryonField[field] = static_cast<float*>(AllocateNewBaryonField(size));
+
  
   /* set density, total energy and velocity in problem dimension */
  

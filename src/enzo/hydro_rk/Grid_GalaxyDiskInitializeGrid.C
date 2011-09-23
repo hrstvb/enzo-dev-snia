@@ -284,7 +284,7 @@ int grid::GalaxyDiskInitializeGrid(int NumberOfHalos,
     if (SetupLoopCount == 0 && UseGas) {
       for (field = 0; field < NumberOfBaryonFields; field++) {
 	if (BaryonField[field] == NULL) {
-	  BaryonField[field] = new float[size];
+	  BaryonField[field] = static_cast<float*>(AllocateNewBaryonField(size));
 	}
       }
     }

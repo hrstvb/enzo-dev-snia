@@ -31,6 +31,8 @@
 
 #include "ProblemType.h"
 
+void *AllocateNewBaryonField(int size); 
+
 EnzoProblemMap& get_problem_types()
 {
     static EnzoProblemMap problem_type_map;
@@ -257,7 +259,7 @@ int EnzoProblemType::InitializeUniformGrid(
  
   for (field = 0; field < tg->NumberOfBaryonFields; field++)
     if (tg->BaryonField[field] == NULL)
-      tg->BaryonField[field] = new float[size];
+      tg->BaryonField[field] = static_cast<float*>(AllocateNewBaryonField(size));
  
   /* set density, total energy */
  

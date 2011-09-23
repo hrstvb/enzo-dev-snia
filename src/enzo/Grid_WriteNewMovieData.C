@@ -285,7 +285,7 @@ int grid::WriteNewMovieData(FLOAT RegionLeftEdge[], FLOAT RegionRightEdge[],
       return FAIL;
     }
 
-    BaryonField[TemperatureField] = new float[allsize];
+    BaryonField[TemperatureField] = static_cast<float*>(AllocateNewBaryonField(allsize));
     for (i = 0; i < allsize; i++)
       BaryonField[TemperatureField][i] = temperature[i];
 
@@ -611,7 +611,7 @@ int grid::WriteNewMovieData(FLOAT RegionLeftEdge[], FLOAT RegionRightEdge[],
   if (NeedTemperature == TRUE) {
     delete [] temperature;
     if (BaryonField[TemperatureField] != NULL) {
-      delete [] BaryonField[TemperatureField];
+      FreeBaryonFieldMemory(BaryonField[TemperatureField]);
       BaryonField[TemperatureField] = NULL;
     }
   }

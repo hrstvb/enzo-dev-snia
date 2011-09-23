@@ -80,7 +80,7 @@ int FastFourierTransformSGIMATH(float *buffer, int Rank, int DimensionReal[],
 	CTOC_SCALE(1d)(Dimension[0], 1.0/float(Dimension[0]),
 		       CMPLX_CAST buffer, 1);
     }
-    delete Work;
+    delete [] Work;
   } // end of 1D FFT
  
   /* 2D transform. */
@@ -108,7 +108,7 @@ int FastFourierTransformSGIMATH(float *buffer, int Rank, int DimensionReal[],
 		       1.0/float(Dimension[0]*Dimension[1]), CMPLX_CAST buffer,
 		       DimensionReal[0]);
     }
-    delete Work;
+    delete [] Work;
   } // end of 2D FFT
  
   /* 3D transform. */

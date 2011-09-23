@@ -31,11 +31,14 @@ namespace MPool
   /* CONSTRUCTOR AND DESTRUCTOR */
   /******************************/
 
-  MemoryPool::MemoryPool(const size_t &sInitialMemoryPoolSize,
+  MemoryPool::MemoryPool(int sPoolNumber,
+			 const size_t &sInitialMemoryPoolSize,
 			 const size_t &sMemoryChunkSize,
 			 const size_t &sMinimalMemorySizeToAllocate,
-			 bool bSetMemoryData)
+			 bool bSetMemoryData
+			 )
   {
+    PoolNumber = sPoolNumber;
     FirstChunk = NULL;
     LastChunk = NULL;
     CursorChunk = NULL;
@@ -104,6 +107,11 @@ namespace MPool
   
   void MemoryPool::FreeMemory(void* sMemoryBlock)
   {
+    if (sMemoryBlock == NULL) 
+      //      fprintf(stderr, "MemoryPool::FreeMemory was called with NULL pointer.\n");
+      return;                      // nothing to delete
+    
+
     MemoryChunk* Chunk = FindChunkHoldingPointer(sMemoryBlock);
     if (Chunk != NULL)
       FreeChunks(Chunk);
@@ -139,9 +147,10 @@ namespace MPool
     MemoryChunkCount += NeededChunks;
 
 #ifdef MEM_TRACE
-    printf("P%d: AllocateMemory: %0.3f MB, (+%0.3f MB)\n",
-	   MyProcessorNumber, TotalMemoryPoolSize/1048576.0,
+    printf("Pool %i P%d: AllocateMemory: %0.3f MB, (+%0.3f MB)\n",
+	   PoolNumber, MyProcessorNumber, TotalMemoryPoolSize/1048576.0,
 	   BestMemBlockSize/1048576.0);
+    fflush(stdout);
 #endif
 
     if (SetMemoryData)

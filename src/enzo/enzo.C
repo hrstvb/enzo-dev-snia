@@ -314,15 +314,20 @@ Eint32 MAIN_NAME(Eint32 argc, char *argv[])
 
 #ifdef TRANSFER
 #ifdef MEMORY_POOL
+  ParticleMemoryPool = new MPool::MemoryPool(1, sizeof(FLOAT)*100000,
+					     sizeof(FLOAT)*1,
+					     sizeof(FLOAT)*100000);
+
+  BaryonFieldMemoryPool = new MPool::MemoryPool(2, sizeof(FLOAT)*1000000,
+						sizeof(FLOAT)*64,
+						sizeof(FLOAT)*1000000);
+
   const int PhotonMemorySize = MEMORY_POOL_SIZE;
   int PhotonSize = sizeof(PhotonPackageEntry);
-  PhotonMemoryPool = new MPool::MemoryPool(PhotonMemorySize*PhotonSize,
+  PhotonMemoryPool = new MPool::MemoryPool(3, PhotonMemorySize*PhotonSize,
 					   PhotonSize,
 					   PhotonMemorySize*PhotonSize/4);
   
-  ParticleMemoryPool = new MPool::MemoryPool(sizeof(FLOAT)*10000000,
-					     sizeof(FLOAT)*4,
-					     sizeof(FLOAT)*1000000);
 
 #endif
 #endif
@@ -846,6 +851,12 @@ Eint32 MAIN_NAME(Eint32 argc, char *argv[])
  
 #ifdef FLOW_TRACE
     fclose(flow_trace_fptr);
+#endif
+
+#ifdef MEMORY_POOL
+    delete PhotonMemoryPool;
+    delete ParticleMemoryPool;
+    delete BaryonFieldMemoryPool;
 #endif
  
   my_exit(EXIT_SUCCESS);

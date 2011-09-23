@@ -306,7 +306,7 @@ int grid::DepositBaryons(grid *TargetGrid, FLOAT DepositTime)
   } // end: if (ProcessorNumber != TargetGrid->ProcessorNumber)
 
   if (MyProcessorNumber == ProcessorNumber) {
-    delete [] BaryonField[NumberOfBaryonFields];
+    FreeBaryonFieldMemory(BaryonField[NumberOfBaryonFields]);
     BaryonField[NumberOfBaryonFields] = NULL;
   }
  

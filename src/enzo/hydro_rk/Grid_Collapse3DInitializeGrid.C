@@ -113,7 +113,7 @@ int grid::Collapse3DInitializeGrid(int n_sphere,
 
   for (field = 0; field < NumberOfBaryonFields; field++) {
     if (BaryonField[field] == NULL) {
-      BaryonField[field] = new float[size];
+      BaryonField[field] = static_cast<float*>(AllocateNewBaryonField(size));
     }
   }
 

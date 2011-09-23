@@ -144,7 +144,8 @@ int grid::RadiationComputeDensities(int level)
   /* Clean up */
  
   delete [] temperature;
-  delete [] BaryonField[NumberOfBaryonFields];
+  FreeBaryonFieldMemory(BaryonField[NumberOfBaryonFields]);
+
   BaryonField[NumberOfBaryonFields] = NULL;
  
   return SUCCESS;

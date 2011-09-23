@@ -56,7 +56,7 @@ int grid::DoubleMachInitializeGrid(float d0, float e0, float u0, float v0,
     size *= GridDimension[dim];
  
   for (field = 0; field < NumberOfBaryonFields; field++)
-    BaryonField[field] = new float[size];
+      BaryonField[field] = static_cast<float*>(AllocateNewBaryonField(size));
  
   /* set fields */
  

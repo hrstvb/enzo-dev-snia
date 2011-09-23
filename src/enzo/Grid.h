@@ -56,6 +56,9 @@ struct HierarchyEntry;
 
 extern int CommunicationDirection;
 int FindField(int f, int farray[], int n);
+void *AllocateNewBaryonField(int size); 
+void FreeBaryonFieldMemory(float *BF);
+
 struct LevelHierarchyEntry;
 
 class grid
@@ -976,7 +979,7 @@ public:
 
    void CreateDensitySquaredField() {
      int size = GridDimension[0]*GridDimension[1]*GridDimension[2];
-     BaryonField[NumberOfBaryonFields] = new float[size];
+     BaryonField[NumberOfBaryonFields] = static_cast<float*>(AllocateNewBaryonField(size));
      for (int i = 0; i < size; i++)
        BaryonField[NumberOfBaryonFields][i] = 
 	 BaryonField[0][i]*BaryonField[0][i];
@@ -1356,54 +1359,69 @@ public:
 /* Particles: delete particle fields and set null. */
 
    void DeleteParticles() {
+#ifndef MEMORY_POOL 
      if (ParticleMass != NULL) delete [] ParticleMass;
      if (ParticleNumber != NULL) delete [] ParticleNumber;
      if (ParticleType != NULL) delete [] ParticleType;
+     for (int dim = 0; dim < GridRank; dim++) {
+       if (ParticlePosition[dim] != NULL) delete [] ParticlePosition[dim];
+       if (ParticleVelocity[dim] != NULL) delete [] ParticleVelocity[dim];
+     }
+     for (int i = 0; i < NumberOfParticleAttributes; i++) 
+       if (ParticleAttribute[i] != NULL) delete [] ParticleAttribute[i];
+   
+#else
+     if (ParticleMass != NULL) ParticleMemoryPool->FreeMemory(ParticleMass);
+     if (ParticleNumber != NULL) ParticleMemoryPool->FreeMemory(ParticleNumber);
+     if (ParticleType != NULL) ParticleMemoryPool->FreeMemory(ParticleType);
+     for (int dim = 0; dim < GridRank; dim++) {
+       if (ParticlePosition[dim] != NULL) ParticleMemoryPool->FreeMemory(ParticlePosition[dim]);
+       if (ParticleVelocity[dim] != NULL) ParticleMemoryPool->FreeMemory(ParticleVelocity[dim]);
+     }
+     for (int i = 0; i < NumberOfParticleAttributes; i++) 
+       if (ParticleAttribute[i] != NULL) ParticleMemoryPool->FreeMemory(ParticleAttribute[i]);
+     
+#endif
      ParticleMass = NULL;
      ParticleNumber = NULL;
      ParticleType = NULL;
      for (int dim = 0; dim < GridRank; dim++) {
-#ifdef MEMORY_POOL 
-       if (ParticlePosition[dim] != NULL) ParticleMemoryPool->FreeMemory(ParticlePosition[dim]);
-       if (ParticleVelocity[dim] != NULL) ParticleMemoryPool->FreeMemory(ParticleVelocity[dim]);
-#else
-       if (ParticlePosition[dim] != NULL) delete [] ParticlePosition[dim];
-       if (ParticleVelocity[dim] != NULL) delete [] ParticleVelocity[dim];
-#endif
        ParticlePosition[dim] = NULL;
        ParticleVelocity[dim] = NULL;
      }
-     for (int i = 0; i < NumberOfParticleAttributes; i++) {
-#ifdef MEMORY_POOL 
-       if (ParticleAttribute[i] != NULL) ParticleMemoryPool->FreeMemory(ParticleAttribute[i]);
-#else
-       if (ParticleAttribute[i] != NULL) delete [] ParticleAttribute[i];
-#endif
+     for (int i = 0; i < NumberOfParticleAttributes; i++) 
        ParticleAttribute[i] = NULL;
-     }   
    };
 
 /* Particles: allocate new particle fields. */
 
    void AllocateNewParticles(int NumberOfNewParticles) {
+     // Allocate memory for particles
+#ifndef MEMORY_POOL
+     // classic: use system malloc to get memory
      ParticleMass = new float[NumberOfNewParticles];
      ParticleNumber = new PINT[NumberOfNewParticles];
      ParticleType = new int[NumberOfNewParticles];
-     for (int dim = 0; dim < GridRank; dim++) {
-#ifdef MEMORY_POOL
-       ParticlePosition[dim] = static_cast<FLOAT*>(ParticleMemoryPool->GetMemory(sizeof(FLOAT)*NumberOfNewParticles));
-       ParticleVelocity[dim] = static_cast<float*>(ParticleMemoryPool->GetMemory(sizeof(float)*NumberOfNewParticles));
-#else
-       ParticlePosition[dim] = new FLOAT[NumberOfNewParticles];
-       ParticleVelocity[dim] = new float[NumberOfNewParticles];
+      for (int dim = 0; dim < GridRank; dim++) {
+	ParticlePosition[dim] = new FLOAT[NumberOfNewParticles];
+	ParticleVelocity[dim] = new float[NumberOfNewParticles];
+      }
+      for (int i = 0; i < NumberOfParticleAttributes; i++)
+	ParticleAttribute[i] = new float[NumberOfNewParticles];
+#else  
+      // use Particle Memory Pool to allocate memory
+      ParticleMass = static_cast<float*>(ParticleMemoryPool->GetMemory(sizeof(float)*NumberOfNewParticles));
+      ParticleNumber = static_cast<PINT*>(ParticleMemoryPool->GetMemory(sizeof(PINT)*NumberOfNewParticles));
+      ParticleType = static_cast<int*>(ParticleMemoryPool->GetMemory(sizeof(int)*NumberOfNewParticles));
+      for (int dim = 0; dim < GridRank; dim++) {
+	ParticlePosition[dim] = static_cast<FLOAT*>(ParticleMemoryPool->GetMemory(sizeof(FLOAT)*NumberOfNewParticles));
+	ParticleVelocity[dim] = static_cast<float*>(ParticleMemoryPool->GetMemory(sizeof(float)*NumberOfNewParticles));
+      }
+      for (int i = 0; i < NumberOfParticleAttributes; i++)
+	ParticleAttribute[i] = static_cast<float*>(ParticleMemoryPool->GetMemory(sizeof(float)*NumberOfNewParticles));
 #endif
-     }
-     for (int i = 0; i < NumberOfParticleAttributes; i++)
-#ifdef MEMORY_POOL
-       ParticleAttribute[i] = static_cast<float*>(ParticleMemoryPool->GetMemory(sizeof(float)*NumberOfNewParticles));
-#else
-       ParticleAttribute[i] = new float[NumberOfNewParticles];
-#endif
+
+
    };
 
 /* Particles: Copy pointers passed into into grid. */

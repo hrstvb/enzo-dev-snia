@@ -194,7 +194,7 @@ int grid::OutputAsParticleData(FLOAT RegionLeftEdge[], FLOAT RegionRightEdge[],
  
     /* Clean up. */
  
-    delete temperature;
+    delete [] temperature;
  
   }
  

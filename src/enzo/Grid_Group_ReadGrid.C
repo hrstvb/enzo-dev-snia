@@ -46,7 +46,7 @@ int ReadListOfFloats(FILE *fptr, int N, FLOAT floats[]);
 int ReadListOfInts(FILE *fptr, int N, int nums[]);
  
 static int GridReadDataGridCounter = 0;
- 
+
  
 #ifndef NEW_GRID_IO
 int grid::Group_ReadGrid(FILE *fptr, int GridID, HDF5_hid_t file_id, 
@@ -364,7 +364,7 @@ int grid::Group_ReadGrid(FILE *fptr, int GridID, HDF5_hid_t file_id,
  
       /* copy active region into whole grid */
  
-      BaryonField[field] = new float[size];
+      BaryonField[field] = static_cast<float*>(AllocateNewBaryonField(size));
  
       for (i = 0; i < size; i++)
 	BaryonField[field][i] = 0;

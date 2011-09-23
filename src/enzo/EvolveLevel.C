@@ -235,6 +235,7 @@ void my_exit(int status);
  
 int CallPython(LevelHierarchyEntry *LevelArray[], TopGridData *MetaData,
                int level, int from_topgrid);
+void PrintMemoryUsage(char *str);
 int MovieCycleCount[MAX_DEPTH_OF_HIERARCHY];
 double LevelWallTime[MAX_DEPTH_OF_HIERARCHY];
 double LevelZoneCycleCount[MAX_DEPTH_OF_HIERARCHY];
@@ -249,6 +250,8 @@ static int StaticLevelZero = 0;
 #endif
 
 extern int RK2SecondStepBaryonDeposit;
+
+
 
 int EvolveLevel(TopGridData *MetaData, LevelHierarchyEntry *LevelArray[],
 		int level, float dtLevelAbove, ExternalBoundary *Exterior
@@ -411,7 +414,9 @@ int EvolveLevel(TopGridData *MetaData, LevelHierarchyEntry *LevelArray[],
 
     /* ------------------------------------------------------- */
     /* Evolve all grids by timestep dtThisLevel. */
- 
+
+    PrintMemoryUsage("EL: Before loop");
+
     for (grid1 = 0; grid1 < NumberOfGrids; grid1++) {
  
       CallProblemSpecificRoutines(MetaData, Grids[grid1], grid1, &norm, 
@@ -534,7 +539,9 @@ int EvolveLevel(TopGridData *MetaData, LevelHierarchyEntry *LevelArray[],
 	Grids[grid1]->GridData->ComovingExpansionTerms();
  
     }  // end loop over grids
- 
+
+    PrintMemoryUsage("EL: after loop"); 
+
     /* Finalize (accretion, feedback, etc.) star particles */
 
     StarParticleFinalize(Grids, MetaData, NumberOfGrids, LevelArray,
@@ -683,9 +690,10 @@ int EvolveLevel(TopGridData *MetaData, LevelHierarchyEntry *LevelArray[],
     /* Rebuild the Grids on the next level down.
        Don't bother on the last cycle, as we'll rebuild this grid soon. */
  
+    PrintMemoryUsage("EL: Pre RebuildHierarchy"); 
     if (dtThisLevelSoFar[level] < dtLevelAbove)
       RebuildHierarchy(MetaData, LevelArray, level);
-
+    PrintMemoryUsage("EL: Post RebuildHierarchy"); 
     /* Count up number of grids on this level. */
 
     int GridMemory, NumberOfCells, CellsTotal, Particles;

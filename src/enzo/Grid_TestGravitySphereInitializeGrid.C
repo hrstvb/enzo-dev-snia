@@ -24,7 +24,6 @@
 #include "ExternalBoundary.h"
 #include "Grid.h"
  
- 
 int grid::TestGravitySphereInitializeGrid(float SphereInteriorDensity,
 					  float SphereExteriorDensity,
 					  float SphereRadius,
@@ -140,7 +139,7 @@ int grid::TestGravitySphereInitializeGrid(float SphereInteriorDensity,
  
     for (field = 0; field < NumberOfBaryonFields; field++)
       if (BaryonField[field] == NULL)
-	BaryonField[field] = new float[size];
+	BaryonField[field] = static_cast<float*>(AllocateNewBaryonField(size));
  
     /* Set densities. */
  

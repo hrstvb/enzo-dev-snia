@@ -33,7 +33,6 @@ int GetUnits(float *DensityUnits, float *LengthUnits,
 	     float *VelocityUnits, double *MassUnits, FLOAT Time);
 
 
-
 int grid::RadHydroConstTestInitializeGrid(int NumChemicals,
 					  float DensityConstant, 
 					  float VxConstant, 
@@ -119,7 +118,8 @@ int grid::RadHydroConstTestInitializeGrid(int NumChemicals,
 
     for (int field=0; field<NumberOfBaryonFields; field++)
       if (BaryonField[field] == NULL)
-	BaryonField[field] = new float[size];
+	BaryonField[field] = static_cast<float*>(AllocateNewBaryonField(size));
+
     
     // set fluid density, total energy, [internal energy,] velocities, 
     // radiation energy, electron density, chemical species

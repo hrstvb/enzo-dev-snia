@@ -26,7 +26,7 @@
 #include "TestGravitySphereGlobalData.h"
  
 float TestGravitySphereComputeRadialForce(float r, int GridRank);
- 
+
 int grid::TestGravitySphereCheckResults(FILE *fptr)
 {
  
@@ -99,9 +99,9 @@ int grid::TestGravitySphereCheckResults(FILE *fptr)
     for (dim = 0; dim < GridRank; dim++)
       size *= GridDimension[dim];
  
-    BaryonField[NumberOfBaryonFields++] = new float[size];
-    BaryonField[NumberOfBaryonFields++] = new float[size];
-    BaryonField[NumberOfBaryonFields++] = new float[size];
+    BaryonField[NumberOfBaryonFields++] = static_cast<float*>(AllocateNewBaryonField(size));
+    BaryonField[NumberOfBaryonFields++] = static_cast<float*>(AllocateNewBaryonField(size));
+    BaryonField[NumberOfBaryonFields++] = static_cast<float*>(AllocateNewBaryonField(size));
  
     DataLabel[NumberOfBaryonFields-3] = TGSTangName;
     DataLabel[NumberOfBaryonFields-2] = TGSRadialName;

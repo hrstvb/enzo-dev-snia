@@ -57,7 +57,7 @@ void my_exit(int status);
 int ReadFile(char *name, int Rank, int Dim[], int StartIndex[],
                   int EndIndex[], int BufferOffset[], float *buffer,
                   inits_type **tempbuffer, int Part, int Npart);
- 
+
 int grid::TurbulenceSimulationInitializeGrid(
                           float TurbulenceSimulationInitialDensity,
 			  float TurbulenceSimulationInitialDensityPerturbationAmplitude,
@@ -206,7 +206,7 @@ int grid::TurbulenceSimulationInitializeGrid(
       if (io_log) fprintf(log_fptr, "  Field dim %"ISYM" size %"ISYM"\n", dim, GridDimension[dim]);
     printf("Allocating %"ISYM" baryon fields of size %"ISYM"\n", NumberOfBaryonFields, size);
     for (int field = 0; field < NumberOfBaryonFields; field++)
-      BaryonField[field] = new float[size];
+     BaryonField[field] = static_cast<float*>(AllocateNewBaryonField(size));
   }
  
   /* If set, allocate space for RandomForcing fields. */

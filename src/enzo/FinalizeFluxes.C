@@ -46,7 +46,7 @@ int FinalizeFluxes(HierarchyEntry *Grids[],fluxes **SubgridFluxesEstimate[],
       
       for (subgrid = 0; subgrid < NumberOfSubgrids[grid1]; subgrid++) {
 	DeleteFluxes(SubgridFluxesEstimate[grid1][subgrid]);
-	delete       SubgridFluxesEstimate[grid1][subgrid];
+	delete [] SubgridFluxesEstimate[grid1][subgrid];
       }
       delete [] SubgridFluxesEstimate[grid1];
       

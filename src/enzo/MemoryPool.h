@@ -72,6 +72,9 @@ namespace MPool
     // grows by AllocateMemory()
     bool RecalcChunkMemorySize(MemoryChunk* Chunks, size_t ChunkCount);
 
+    // Pool identifier
+    int PoolNumber; 
+
     // Pointer to the first and last chunk
     MemoryChunk* FirstChunk;
     MemoryChunk* LastChunk;
@@ -119,7 +122,7 @@ namespace MPool
                       value, which is useful for debugging.  Bad for runtimes.
      */
 
-    MemoryPool(const size_t &sInitialMemoryPoolSize = 
+    MemoryPool(int PoolNumber, const size_t &sInitialMemoryPoolSize = 
 	       DEFAULT_MEMORY_POOL_SIZE,
 	       const size_t &sMemoryChunkSize = DEFAULT_MEMORY_CHUNK_SIZE,
 	       const size_t &sMinimalMemorySizeToAllocate =

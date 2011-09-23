@@ -30,7 +30,7 @@ void grid::DeleteBaryonFields()
   int i;
  
   for (i = 0; i < MAX_NUMBER_OF_BARYON_FIELDS; i++) {
-    delete [] BaryonField[i];
+    FreeBaryonFieldMemory(BaryonField[i]);
     BaryonField[i]    = NULL;
   }
  

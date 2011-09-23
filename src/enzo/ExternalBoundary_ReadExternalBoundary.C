@@ -418,7 +418,7 @@ int ExternalBoundary::ReadExternalBoundary(FILE *fptr, int ReadText, int ReadDat
         delete [] bv_buffer;
 #endif
  
-	delete buffer;
+	delete [] buffer;
         delete nfile;
         delete dname1;
         delete dname2;
@@ -605,7 +605,7 @@ int ExternalBoundary::ReadExternalBoundaryHDF4(FILE *fptr)
 	    }
 	  }  // end of loop over fields
 
-	delete buffer;
+	delete [] buffer;
 	
       }   // end of loop over dims
 

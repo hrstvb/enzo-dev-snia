@@ -42,8 +42,8 @@ void grid::DeleteAllButParticles()
   ParticleAcceleration[MAX_DIMENSION] = NULL;
  
   for (i = 0; i < MAX_NUMBER_OF_BARYON_FIELDS; i++) {
-    delete [] BaryonField[i];
-    delete [] OldBaryonField[i];
+    FreeBaryonFieldMemory(BaryonField[i]);
+    FreeBaryonFieldMemory(OldBaryonField[i]);
     BaryonField[i]    = NULL;
     OldBaryonField[i] = NULL;
   }

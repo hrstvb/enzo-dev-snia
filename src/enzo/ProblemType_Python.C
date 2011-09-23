@@ -18,6 +18,7 @@
 
 void ExportParameterFile(TopGridData *MetaData, FLOAT CurrentTime);
 int InitializePythonInterface(int argc, char **argv);
+void FreeBaryonFieldMemory(float *BF);
 
 namespace{
     EnzoProblemType_creator_concrete<ProblemType_Python>
@@ -35,7 +36,8 @@ void ProblemType_Python::SetField(PythonGrid *grid,
         int FieldIndex, float *data, int FieldType) {
 
     if (grid->BaryonField[FieldIndex] != NULL) {
-        delete grid->BaryonField[FieldIndex];
+      FreeBaryonFieldMemory(grid->BaryonField[FieldIndex]);
+
     } else {
         /* We may not want to do this once we move to more types
            of field generation */

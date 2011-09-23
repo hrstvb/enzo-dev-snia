@@ -60,24 +60,31 @@ int grid::MoveAllParticles(int NumberOfGrids, grid* FromGrid[])
   float *Velocity[MAX_DIMENSION], *Mass,
         *Attribute[MAX_NUMBER_OF_PARTICLE_ATTRIBUTES];
  
-  Mass = new float[TotalNumberOfParticles];
-  Number = new PINT[TotalNumberOfParticles];
-  Type = new int[TotalNumberOfParticles];
-  for (int dim = 0; dim < GridRank; dim++) {
-#ifdef MEMORY_POOL
-       Position[dim] = static_cast<FLOAT*>(ParticleMemoryPool->GetMemory(sizeof(FLOAT)*TotalNumberOfParticles));
-       Velocity[dim] = static_cast<float*>(ParticleMemoryPool->GetMemory(sizeof(float)*TotalNumberOfParticles));
-#else
-      Position[dim] = new FLOAT[TotalNumberOfParticles];
-      Velocity[dim] = new float[TotalNumberOfParticles];
+  // Allocate memory for particles
+#ifndef MEMORY_POOL
+      // classic: use system malloc to get memory
+      Mass = new float[TotalNumberOfParticles];
+      Number = new PINT[TotalNumberOfParticles];
+      Type = new int[TotalNumberOfParticles];
+      for (int dim = 0; dim < GridRank; dim++) {
+	Position[dim] = new FLOAT[TotalNumberOfParticles];
+	Velocity[dim] = new float[TotalNumberOfParticles];
+      }
+      for (int i = 0; i < NumberOfParticleAttributes; i++)
+	Attribute[i] = new float[TotalNumberOfParticles];
+#else  
+      // use Particle Memory Pool to allocate memory
+      Mass = static_cast<float*>(ParticleMemoryPool->GetMemory(sizeof(float)*TotalNumberOfParticles));
+      Number = static_cast<PINT*>(ParticleMemoryPool->GetMemory(sizeof(PINT)*TotalNumberOfParticles));
+      Type = static_cast<int*>(ParticleMemoryPool->GetMemory(sizeof(int)*TotalNumberOfParticles));
+      for (int dim = 0; dim < GridRank; dim++) {
+	Position[dim] = static_cast<FLOAT*>(ParticleMemoryPool->GetMemory(sizeof(FLOAT)*TotalNumberOfParticles));
+	Velocity[dim] = static_cast<float*>(ParticleMemoryPool->GetMemory(sizeof(float)*TotalNumberOfParticles));
+      }
+      for (int i = 0; i < NumberOfParticleAttributes; i++)
+	Attribute[i] = static_cast<float*>(ParticleMemoryPool->GetMemory(sizeof(float)*TotalNumberOfParticles));
 #endif
-    }
-    for (i = 0; i < NumberOfParticleAttributes; i++)
-#ifdef MEMORY_POOL
-      Attribute[i] = static_cast<float*>(ParticleMemoryPool->GetMemory(sizeof(float)*TotalNumberOfParticles));
-#else
-      Attribute[i] = new float[TotalNumberOfParticles];
-#endif 
+
   
   if (Velocity[GridRank-1] == NULL) {
     ENZO_FAIL("malloc error (out of memory?)\n");
@@ -201,25 +208,32 @@ int grid::MoveAllParticlesOld(int NumberOfGrids, grid* FromGrid[])
         *Attribute[MAX_NUMBER_OF_PARTICLE_ATTRIBUTES];
 
   if (MyProcessorNumber == ProcessorNumber) {
-     Mass = new float[TotalNumberOfParticles];
-     Number = new PINT[TotalNumberOfParticles]; 
-     Type = new int[TotalNumberOfParticles];
-  for (int dim = 0; dim < GridRank; dim++) {
-#ifdef MEMORY_POOL
-       Position[dim] = static_cast<FLOAT*>(ParticleMemoryPool->GetMemory(sizeof(FLOAT)*TotalNumberOfParticles));
-       Velocity[dim] = static_cast<float*>(ParticleMemoryPool->GetMemory(sizeof(float)*TotalNumberOfParticles));
-#else
-      Position[dim] = new FLOAT[TotalNumberOfParticles];
-      Velocity[dim] = new float[TotalNumberOfParticles];
+    // Allocate memory for particles
+#ifndef MEMORY_POOL
+      // classic: use system malloc to get memory
+      Mass = new float[TotalNumberOfParticles];
+      Number = new PINT[TotalNumberOfParticles];
+      Type = new int[TotalNumberOfParticles];
+      for (int dim = 0; dim < GridRank; dim++) {
+	Position[dim] = new FLOAT[TotalNumberOfParticles];
+	Velocity[dim] = new float[TotalNumberOfParticles];
+      }
+      for (int i = 0; i < NumberOfParticleAttributes; i++)
+	Attribute[i] = new float[TotalNumberOfParticles];
+#else  
+      // use Particle Memory Pool to allocate memory
+      Mass = static_cast<float*>(ParticleMemoryPool->GetMemory(sizeof(float)*TotalNumberOfParticles));
+      Number = static_cast<PINT*>(ParticleMemoryPool->GetMemory(sizeof(PINT)*TotalNumberOfParticles));
+      Type = static_cast<int*>(ParticleMemoryPool->GetMemory(sizeof(int)*TotalNumberOfParticles));
+      for (int dim = 0; dim < GridRank; dim++) {
+	Position[dim] = static_cast<FLOAT*>(ParticleMemoryPool->GetMemory(sizeof(FLOAT)*TotalNumberOfParticles));
+	Velocity[dim] = static_cast<float*>(ParticleMemoryPool->GetMemory(sizeof(float)*TotalNumberOfParticles));
+      }
+      for (int i = 0; i < NumberOfParticleAttributes; i++)
+	Attribute[i] = static_cast<float*>(ParticleMemoryPool->GetMemory(sizeof(float)*TotalNumberOfParticles));
 #endif
-    }
-    for (i = 0; i < NumberOfParticleAttributes; i++)
-#ifdef MEMORY_POOL
-      Attribute[i] = static_cast<float*>(ParticleMemoryPool->GetMemory(sizeof(float)*TotalNumberOfParticles));
-#else
-      Attribute[i] = new float[TotalNumberOfParticles];
-#endif 
-  
+
+ 
      if (Velocity[GridRank-1] == NULL) {
        fprintf(stderr, "malloc error (out of memory?)\n");
        return FAIL;

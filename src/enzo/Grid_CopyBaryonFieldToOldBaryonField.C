@@ -65,7 +65,7 @@ int grid::CopyBaryonFieldToOldBaryonField()
     /* Create OldBaryonField if necessary. */
  
     if ((OldBaryonField[field] == NULL))
-      OldBaryonField[field] = new float[size];
+      OldBaryonField[field] = static_cast<float*>(AllocateNewBaryonField(size));      
  
     /* Copy. */
  

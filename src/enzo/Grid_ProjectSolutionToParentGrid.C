@@ -46,7 +46,6 @@ extern "C" void FORTRAN_NAME(div3d)(float *source, float *dest,
                                     int *rstart1, int *rstart2, int *rstart3,
                                     int *rend1, int *rend2, int *rend3);
  
- 
 int grid::ProjectSolutionToParentGrid(grid &ParentGrid)
 {
   /* Return if this doesn't involve us. */
@@ -146,8 +145,8 @@ int grid::ProjectSolutionToParentGrid(grid &ParentGrid)
       ParentSize *= ParentDim[dim];
     }
     for (field = 0; field < NumberOfBaryonFields; field++) {
-      delete ParentGrid.BaryonField[field];
-      ParentGrid.BaryonField[field] = new float[ParentSize];
+      FreeBaryonFieldMemory(ParentGrid.BaryonField[field]);
+      ParentGrid.BaryonField[field] = static_cast<float*>(AllocateNewBaryonField(ParentSize));
     }
   }
  
@@ -321,7 +320,7 @@ int grid::ProjectSolutionToParentGrid(grid &ParentGrid)
   if (ParentGrid.ProcessorNumber != MyProcessorNumber)
 
     for (field = 0; field < NumberOfBaryonFields; field++) {
-      delete ParentGrid.BaryonField[field];
+      FreeBaryonFieldMemory(ParentGrid.BaryonField[field]);
       ParentGrid.BaryonField[field] = NULL;
     }
  

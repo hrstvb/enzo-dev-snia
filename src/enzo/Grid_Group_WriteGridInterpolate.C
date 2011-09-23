@@ -40,7 +40,6 @@ int CosmologyComputeExpansionFactor(FLOAT time, FLOAT *a, FLOAT *dadt);
 /* This macro converts a float and writes it to the local buffer, which,
    when full is written to the file pointed to by fptr. */
  
- 
 int grid::Group_WriteGridInterpolate(FLOAT WriteTime, FILE *fptr, char *base_name, int grid_id, HDF5_hid_t file_id)
 {
  
@@ -68,7 +67,7 @@ int grid::Group_WriteGridInterpolate(FLOAT WriteTime, FILE *fptr, char *base_nam
   if (coef2 != 1 && MyProcessorNumber == ProcessorNumber)
     for (field = 0; field < NumberOfBaryonFields; field++) {
       SavedBaryonField[field] = BaryonField[field];
-      BaryonField[field] = new float[size];
+      BaryonField[field] = static_cast<float*>(AllocateNewBaryonField(size));
       for (i = 0; i < size; i++)
 	BaryonField[field][i] = coef1*OldBaryonField[field][i] +
 	                        coef2*SavedBaryonField[field][i];
@@ -99,7 +98,7 @@ int grid::Group_WriteGridInterpolate(FLOAT WriteTime, FILE *fptr, char *base_nam
   if (coef2 != 1 && MyProcessorNumber == ProcessorNumber)
 
     for (field = 0; field < NumberOfBaryonFields; field++) {
-      delete [] BaryonField[field];
+      FreeBaryonFieldMemory(BaryonField[field]);
       BaryonField[field] = SavedBaryonField[field];
     }
  

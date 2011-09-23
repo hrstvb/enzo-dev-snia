@@ -25,16 +25,12 @@
 #include "ExternalBoundary.h"
 #include "Grid.h"
 
-
 #define DEFAULT_MU 0.6   // mean molecular mass for temperature field
-
 
 // function prototypes
 int GetUnits(float *DensityUnits, float *LengthUnits, 
 	     float *TemperatureUnits, float *TimeUnits, 
 	     float *VelocityUnits, double *MassUnits, FLOAT Time);
-
-
 
 int grid::RadHydroPulseTestInitializeGrid(float DensityConstant, 
 					  float EgConstant, 
@@ -100,7 +96,8 @@ int grid::RadHydroPulseTestInitializeGrid(float DensityConstant,
 
     for (int field=0; field<NumberOfBaryonFields; field++)
       if (BaryonField[field] == NULL)
-	BaryonField[field] = new float[size];
+	BaryonField[field] = static_cast<float*>(AllocateNewBaryonField(size));
+
  
     // set fluid density, total energy, [internal energy,] velocities, 
     // radiation energy, electron density, chemical species

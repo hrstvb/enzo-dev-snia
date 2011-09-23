@@ -32,7 +32,6 @@ int GetUnits(float *DensityUnits, float *LengthUnits,
 	     float *TemperatureUnits, float *TimeUnits,
 	     float *VelocityUnits, FLOAT Time);
  
- 
 int grid::ZeldovichPancakeInitializeGrid(int  ZeldovichPancakeDirection,
 				      float ZeldovichPancakeCentralOffset,
 				      float ZeldovichPancakeOmegaBaryonNow,
@@ -104,7 +103,8 @@ int grid::ZeldovichPancakeInitializeGrid(int  ZeldovichPancakeDirection,
   /* Allocate space for the fields. */
  
   for (field = 0; field < NumberOfBaryonFields; field++)
-    BaryonField[field] = new float[size];
+    BaryonField[field] = static_cast<float*>(AllocateNewBaryonField(size));
+
  
   /* Find the stride between zones along the pancake direction. */
  

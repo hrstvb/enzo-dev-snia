@@ -78,7 +78,6 @@ int CommunicationBroadcastValue(int *Value, int BroadcastProcessor);
 
 int Enzo_Dims_create(int nnodes, int ndims, int *dims); 
  
- 
 int grid::CosmologySimulationInitializeGrid(
 			  int   InitialGridNumber,
 			  float CosmologySimulationOmegaBaryonNow,
@@ -337,7 +336,8 @@ int grid::CosmologySimulationInitializeGrid(
  
   if (ReadData == TRUE)
     for (int field = 0; field < NumberOfBaryonFields; field++)
-      BaryonField[field] = new float[size];
+	BaryonField[field] = static_cast<float*>(AllocateNewBaryonField(size));
+
  
  
   // Read the density field

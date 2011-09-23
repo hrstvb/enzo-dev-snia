@@ -43,7 +43,7 @@ int grid::DeleteObsoleteFields(int *ObsoleteFields,
 	/* Delete field */
 
 	if (MyProcessorNumber == ProcessorNumber)
-	  delete [] BaryonField[i];
+	  FreeBaryonFieldMemory(BaryonField[i]);
 
 	/* Shift FieldType and BaryonField back */
 

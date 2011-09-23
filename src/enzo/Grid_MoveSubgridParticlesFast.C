@@ -186,7 +186,7 @@ int grid::MoveSubgridParticlesFast(int NumberOfSubgrids, grid* ToGrids[],
  
     this->CleanUpMovedParticles();
  
-    delete [] BaryonField[NumberOfBaryonFields];
+    FreeBaryonFieldMemory(BaryonField[NumberOfBaryonFields]);
     BaryonField[NumberOfBaryonFields] = NULL;
  
   } // end: if (MyProcessorNumber)

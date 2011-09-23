@@ -21,7 +21,7 @@
 #include "GridList.h"
 #include "ExternalBoundary.h"
 #include "Grid.h"
- 
+
 int grid::PressurelessCollapseInitializeGrid(int PressurelessCollapseDirection,
 				      float PressurelessCollapseInitialDensity,
 				        int PressurelessCollapseNumberOfCells)
@@ -62,7 +62,8 @@ int grid::PressurelessCollapseInitializeGrid(int PressurelessCollapseDirection,
     size *= GridDimension[dim];
  
   for (field = 0; field < NumberOfBaryonFields; field++)
-    BaryonField[field] = new float[size];
+    BaryonField[field] = static_cast<float*>(AllocateNewBaryonField(size));
+
  
   /* set fields */
  
