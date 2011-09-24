@@ -1341,7 +1341,7 @@ public:
    void DeleteParticleAcceleration() {
      if (!((SelfGravity || UniformGravity || PointSourceGravity))) return;
      for (int dim = 0; dim < GridRank+ComputePotential; dim++) {
-       delete [] ParticleAcceleration[dim];
+       FreeParticleMemory(ParticleAcceleration[dim]);
        ParticleAcceleration[dim] = NULL;
      }
    };

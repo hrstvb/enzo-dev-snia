@@ -33,7 +33,7 @@ void grid::DeleteAllFields()
   this->DeleteParticles();
  
   for (i = 0; i < MAX_DIMENSION; i++) {
-    delete [] ParticleAcceleration[i];
+    FreeParticleMemory(ParticleAcceleration[i]);
     FreeBaryonFieldMemory(AccelerationField[i]);
  
     ParticleAcceleration[i]      = NULL;

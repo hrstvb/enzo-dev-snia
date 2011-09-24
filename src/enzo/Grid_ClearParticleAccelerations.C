@@ -41,9 +41,11 @@ int grid::ClearParticleAccelerations()
 	fprintf(stderr, "ClearParticleAccelerations: Field not NULL.\n");
  
       /* Allocate accleration field. */
- 
+ #ifndef MEMORY_POOL
       ParticleAcceleration[dim] = new float[NumberOfParticles];
- 
+ #else
+      ParticleAcceleration[dim] = static_cast<float*>(ParticleMemoryPool->GetMemory(sizeof(float)*NumberOfParticles));
+#endif
       /* Clear it. */
  
       for (i = 0; i < NumberOfParticles; i++)

@@ -53,7 +53,7 @@ grid::~grid()
     delete [] CellWidth[i];
     FreeParticleMemory(ParticlePosition[i]);
     FreeParticleMemory(ParticleVelocity[i]);
-    delete [] ParticleAcceleration[i];
+    FreeParticleMemory(ParticleAcceleration[i]);
     FreeBaryonFieldMemory(AccelerationField[i]);
     delete [] RandomForcingField[i];
   }

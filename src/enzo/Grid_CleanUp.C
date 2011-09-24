@@ -30,7 +30,7 @@ void grid::CleanUp()
   int i;
  
   for (i = 0; i < MAX_DIMENSION; i++) {
-    delete [] ParticleAcceleration[i];
+    FreeParticleMemory(ParticleAcceleration[i]);
 //    delete [] AccelerationField[i];
  
     ParticleAcceleration[i]      = NULL;
