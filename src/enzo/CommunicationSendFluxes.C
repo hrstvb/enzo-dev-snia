@@ -97,7 +97,7 @@ int CommunicationSendFluxes(fluxes *Fluxes, int ToProc, int NumberOfFields,
  
 #endif /* USE_MPI */
  
-//  delete [] buffer;
+  //  delete [] buffer;
  
   return SUCCESS;
 }

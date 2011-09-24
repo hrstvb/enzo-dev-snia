@@ -258,29 +258,20 @@ Eint32 MAIN_NAME(Eint32 argc, char *argv[])
 
   //#define DEBUG_MPI
 #ifdef DEBUG_MPI
-  if (MyProcessorNumber == ROOT_PROCESSOR) {
     int impi = 0;
     char hostname[256];
     gethostname(hostname, sizeof(hostname));
-    printf("PID %d on %s ready for debugger attach\n", getpid(), hostname);
+    if (MyProcessorNumber == ROOT_PROCESSOR) 
+      printf("PID %d on %s ready for debugger attach\n", getpid(), hostname);
+    printf("xterm -e gdb --pid %d  &   ", getpid());
     fflush(stdout);
-    while (impi == 0)
-      sleep(5);
-  }
+    sleep(7);
 #endif
   
 
   int int_argc;
   int_argc = argc;
  
- //  if (MyProcessorNumber == ROOT_PROCESSOR &&
-//       ENZO_SVN_REVISION != 0) {
-//     printf("=========================\n");
-//     printf("Enzo SVN Branch   %s\n",ENZO_SVN_BRANCH);
-//     printf("Enzo SVN Revision %s\n",ENZO_SVN_REVISION);
-//     printf("=========================\n");
-//     fflush(stdout);
-//   }
   // Performance Monitoring
 
 #ifdef USE_MPI
@@ -320,7 +311,7 @@ Eint32 MAIN_NAME(Eint32 argc, char *argv[])
 					   GridObjectSize,
 					   GridObjectMemorySize*GridObjectSize/4);
 
-  ParticleMemoryPool = new MPool::MemoryPool(2, sizeof(FLOAT)*100000,
+  ParticleMemoryPool = new MPool::MemoryPool(2, sizeof(FLOAT)*1000000,
 					     sizeof(FLOAT)*8,
 					     sizeof(FLOAT)*100000);
 

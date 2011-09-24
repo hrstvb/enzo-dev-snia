@@ -82,6 +82,7 @@ int grid::CommunicationSendRegion(grid *ToGrid, int ToProcessor,int SendField,
   if (CommunicationDirection == COMMUNICATION_RECEIVE)
     buffer = CommunicationReceiveBuffer[CommunicationReceiveIndex];
   else	   
+    //  buffer = static_cast<float*>(AllocateNewBaryonField(TransferSize));
     buffer = new float[TransferSize];
  
   // If this is the from processor, pack fields
@@ -265,7 +266,7 @@ int grid::CommunicationSendRegion(grid *ToGrid, int ToProcessor,int SendField,
  
     if (SendField == GRAVITATING_MASS_FIELD_PARTICLES) {
       FreeBaryonFieldMemory(ToGrid->GravitatingMassFieldParticles);
-      ToGrid->GravitatingMassField = static_cast<float*>(AllocateNewBaryonField(RegionSize));
+      ToGrid->GravitatingMassFieldParticles = static_cast<float*>(AllocateNewBaryonField(RegionSize));
       FORTRAN_NAME(copy3d)(buffer, ToGrid->GravitatingMassFieldParticles,
 			   RegionDim, RegionDim+1, RegionDim+2,
 			   RegionDim, RegionDim+1, RegionDim+2,
@@ -310,6 +311,7 @@ int grid::CommunicationSendRegion(grid *ToGrid, int ToProcessor,int SendField,
        post-receive mode then it will be deleted when we get to
        receive-mode). */
 
+    //    FreeBaryonFieldMemory(buffer);
     delete [] buffer;
 			  
   } // ENDIF unpack

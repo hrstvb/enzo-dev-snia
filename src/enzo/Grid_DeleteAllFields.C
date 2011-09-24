@@ -59,7 +59,7 @@ void grid::DeleteAllFields()
  
   FreeBaryonFieldMemory(PotentialField);
   FreeBaryonFieldMemory(GravitatingMassField);
-  delete [] GravitatingMassFieldParticles;
+  FreeBaryonFieldMemory(GravitatingMassFieldParticles);
  
   PotentialField                = NULL;
   GravitatingMassField          = NULL;

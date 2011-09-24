@@ -25,6 +25,8 @@
 #include "typedefs.h"
 #include "global_data.h" 
 void my_exit(int status);
+//void FreeBaryonFieldMemory(float *BF);
+
 /* Records the number of times we've been called. */
  
 static int CallCount = 0;
@@ -69,6 +71,7 @@ int CommunicationBufferPurge(void) {
 	//fprintf(stderr,"CCO p%"ISYM": mem- thread %"ISYM" finished\n",MyProcessorNumber, i);
 	
 	delete [] RequestBuffer[i];
+	//	FreeBaryonFieldMemory((float*)RequestBuffer[i]);
 	RequestBuffer[i] = NULL;
         BuffersPurged++;
         //fprintf(stderr, "CBP buffer %"ISYM" released\n", i);
