@@ -695,8 +695,10 @@ int EvolveHierarchy(HierarchyEntry &TopGrid, TopGridData &MetaData,
     ParticleMemoryPool->PrintMemoryConsumption();
     fprintf(stdout, "Baryons     : ");
     BaryonFieldMemoryPool->PrintMemoryConsumption();
+#ifdef TRANSFER
     fprintf(stdout, "Photons     : ");
     PhotonMemoryPool->PrintMemoryConsumption();
+#endif
 #endif // MEMORY_POOL
 #endif //MEM_TRACE
 

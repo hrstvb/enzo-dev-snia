@@ -303,7 +303,6 @@ Eint32 MAIN_NAME(Eint32 argc, char *argv[])
      Increase the memory pool by 1/4th of the initial size as more
      memory is needed. */
 
-#ifdef TRANSFER
 #ifdef MEMORY_POOL
   const int GridObjectMemorySize = MEMORY_POOL_SIZE;
   int GridObjectSize = sizeof(grid);
@@ -319,6 +318,7 @@ Eint32 MAIN_NAME(Eint32 argc, char *argv[])
 						sizeof(FLOAT)*64,
 						sizeof(FLOAT)*1000000);
 
+#ifdef TRANSFER
   const int PhotonMemorySize = MEMORY_POOL_SIZE;
   int PhotonSize = sizeof(PhotonPackageEntry);
   PhotonMemoryPool = new MPool::MemoryPool(4, PhotonMemorySize*PhotonSize,
@@ -852,7 +852,9 @@ Eint32 MAIN_NAME(Eint32 argc, char *argv[])
     delete GridObjectMemoryPool;
     delete ParticleMemoryPool;
     delete BaryonFieldMemoryPool;
+#ifdef TRANSFER
     delete PhotonMemoryPool;
+#endif
 #endif
  
   my_exit(EXIT_SUCCESS);

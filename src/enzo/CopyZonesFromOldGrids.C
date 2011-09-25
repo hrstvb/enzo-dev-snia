@@ -150,6 +150,7 @@ int CopyZonesFromOldGrids(LevelHierarchyEntry *OldGrids,
     for (Temp = FirstGrid, gridcount = 0; 
 	 Temp && gridcount < EndGrid; 
 	 Temp = Temp->NextGridThisLevel, gridcount++) {
+      Temp->GridData->DeleteAllFields();
       delete Temp->GridData;
       Temp->GridData = NULL;
       totalcount++;

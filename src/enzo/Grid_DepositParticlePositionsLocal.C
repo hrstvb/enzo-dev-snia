@@ -59,6 +59,7 @@ int grid::DepositParticlePositionsLocal(FLOAT DepositTime, int DepositField)
  
   if (MassFactor != 1.0) {
     ParticleMassTemp = new float[NumberOfParticles];
+
     for (i = 0; i < NumberOfParticles; i++)
       ParticleMassTemp[i] = ParticleMass[i]*MassFactor;
     ParticleMassPointer = ParticleMassTemp;

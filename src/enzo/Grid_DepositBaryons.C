@@ -167,8 +167,9 @@ int grid::DepositBaryons(grid *TargetGrid, FLOAT DepositTime)
     dens_field = CommunicationReceiveBuffer[CommunicationReceiveIndex];
   else
 #endif /* USE_MPI */
-    dens_field = new float[size];
- 
+    //   dens_field = new float[size];
+    dens_field = static_cast<float*>(AllocateNewBaryonField(size));
+
   if (ProcessorNumber == MyProcessorNumber) {
  
     /* Compute the dt to advance from current time to DepositTime. */
@@ -331,8 +332,8 @@ int grid::DepositBaryons(grid *TargetGrid, FLOAT DepositTime)
  
   /* Clean up */
  
-  delete [] dens_field;
- 
+  //  delete [] dens_field;
+  FreeBaryonFieldMemory(dens_field);
   return SUCCESS;
  
 }

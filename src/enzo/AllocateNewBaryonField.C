@@ -31,7 +31,8 @@ void FreeBaryonFieldMemory(float *BF)
 #ifndef MEMORY_POOL
   delete [] BF;
 #else
-  return BaryonFieldMemoryPool->FreeMemory(BF);
+  if (BF != NULL)
+    BaryonFieldMemoryPool->FreeMemory(BF);
 #endif
   return;
 }

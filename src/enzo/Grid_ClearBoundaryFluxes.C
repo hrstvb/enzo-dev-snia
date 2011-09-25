@@ -56,8 +56,8 @@ void grid::ClearBoundaryFluxes()
  
     for (field = 0; field < NumberOfBaryonFields; field++) {
       if (BoundaryFluxes->LeftFluxes[field][dim] == NULL) {
-	BoundaryFluxes->LeftFluxes[field][dim] = new float[size];
-	BoundaryFluxes->RightFluxes[field][dim] = new float[size];
+	BoundaryFluxes->LeftFluxes[field][dim] = static_cast<float*>(AllocateNewBaryonField(size));
+	BoundaryFluxes->RightFluxes[field][dim] = static_cast<float*>(AllocateNewBaryonField(size));
       }
       for (i = 0; i < size; i++) {
 	BoundaryFluxes->LeftFluxes[field][dim][i] = 0.0;

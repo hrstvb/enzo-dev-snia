@@ -779,6 +779,12 @@ EXTERN PyObject *my_processor;
 #endif
 /* Multi-species rate equation flag and associated data. */
 
+#ifdef MEMORY_POOL
+EXTERN MPool::MemoryPool *ParticleMemoryPool;
+EXTERN MPool::MemoryPool *BaryonFieldMemoryPool;
+EXTERN MPool::MemoryPool *GridObjectMemoryPool;
+#endif
+
 EXTERN int MetalCooling;
 EXTERN char *MetalCoolingTable;
 EXTERN int CIECooling;
@@ -802,9 +808,6 @@ EXTERN SuperSourceEntry *SourceClusteringTree;
 EXTERN SuperSourceEntry *OldSourceClusteringTree;
 #ifdef MEMORY_POOL
 EXTERN MPool::MemoryPool *PhotonMemoryPool;
-EXTERN MPool::MemoryPool *ParticleMemoryPool;
-EXTERN MPool::MemoryPool *BaryonFieldMemoryPool;
-EXTERN MPool::MemoryPool *GridObjectMemoryPool;
 #endif
 
 /* [0]: Emitted photons

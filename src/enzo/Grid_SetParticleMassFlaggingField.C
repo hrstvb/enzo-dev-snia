@@ -163,7 +163,7 @@ int grid::SetParticleMassFlaggingField(int StartProc, int EndProc, int level,
       CommunicationBufferedSend(ParticleMassFlaggingField, size, DataType,
 				ProcessorNumber, MPI_SENDPMFLAG_TAG, 
 				MPI_COMM_WORLD, size*sizeof(float));
-      FreeBaryonFieldMemory(ParticleMassFlaggingField);
+      FreeBaryonFieldMemory((float*)ParticleMassFlaggingField);
       ParticleMassFlaggingField = NULL;
     }
 #endif /* USE_MPI */
@@ -180,7 +180,8 @@ int grid::SetParticleMassFlaggingField(int StartProc, int EndProc, int level,
     buffer = CommunicationReceiveBuffer[CommunicationReceiveIndex];
     for (i = 0; i < size; i++)
       ParticleMassFlaggingField[i] += buffer[i];
-    delete [] buffer;
+    FreeBaryonFieldMemory((float*)buffer);
+    //    delete [] buffer;
 
   } // ENDIF receive
 
@@ -196,7 +197,9 @@ int grid::SetParticleMassFlaggingField(int StartProc, int EndProc, int level,
 //	     MyProcessorNumber, ProcessorNumber, size, Source);
 
       if (Source >= StartProc && Source < EndProc) {
-	buffer = new float[size];
+	// buffer = new float[size];
+	buffer= static_cast<float*>(AllocateNewBaryonField(size));
+
 	MPI_Irecv(buffer, Count, DataType, Source, MPI_SENDPMFLAG_TAG, MPI_COMM_WORLD, 
 		  CommunicationReceiveMPI_Request+CommunicationReceiveIndex);
 
@@ -239,7 +242,6 @@ void InitializeParticleMassFlaggingFieldCommunication(void)
   for (i = 0; i < MAX_REQUEST_HANDLES; i++) {
     FlagRequestHandle[i] = NULL;
     if (FlagBuffer[i] != NULL)
-
       delete [] FlagBuffer[i];
     FlagBuffer[i] = NULL;
   }

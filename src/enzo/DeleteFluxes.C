@@ -15,16 +15,20 @@
 #include "ErrorExceptions.h"
 #include "macros_and_parameters.h"
 #include "Fluxes.h"
- 
+
+void FreeBaryonFieldMemory(float *BF);
+
 void DeleteFluxes(fluxes *Fluxes)
 {
   if (Fluxes != NULL)
     for (int field = 0; field < MAX_NUMBER_OF_BARYON_FIELDS; field++)
       for (int dim = 0; dim < MAX_DIMENSION; dim++) {
 	if (Fluxes->LeftFluxes[field][dim] != NULL)
-	  delete [] Fluxes->LeftFluxes[field][dim];
+	  //	  delete [] Fluxes->LeftFluxes[field][dim];
+	  FreeBaryonFieldMemory(Fluxes->LeftFluxes[field][dim]);
 	if (Fluxes->RightFluxes[field][dim] != NULL)
-	  delete [] Fluxes->RightFluxes[field][dim];
+	  //	  delete [] Fluxes->RightFluxes[field][dim];
+	  FreeBaryonFieldMemory(Fluxes->RightFluxes[field][dim]);
 	Fluxes->LeftFluxes[field][dim]  = NULL;
 	Fluxes->RightFluxes[field][dim] = NULL;
       }

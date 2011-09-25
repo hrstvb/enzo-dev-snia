@@ -328,9 +328,9 @@ int grid::SolveHydroEquations(int CycleNumber, int NumberOfSubgrids,
         for (field = 0; field < NumberOfBaryonFields; field++) {
 	  //
 	  if (SubgridFluxes[i]->LeftFluxes[field][dim] == NULL)
-	    SubgridFluxes[i]->LeftFluxes[field][dim]  = new float[size];
+	    SubgridFluxes[i]->LeftFluxes[field][dim]  = static_cast<float*>(AllocateNewBaryonField(size));
 	  if (SubgridFluxes[i]->RightFluxes[field][dim] == NULL)
-	    SubgridFluxes[i]->RightFluxes[field][dim] = new float[size];
+	    SubgridFluxes[i]->RightFluxes[field][dim] = static_cast<float*>(AllocateNewBaryonField(size));
 	  for (n = 0; n < size; n++) {
 	    SubgridFluxes[i]->LeftFluxes[field][dim][n] = 0;
 	    SubgridFluxes[i]->RightFluxes[field][dim][n] = 0;

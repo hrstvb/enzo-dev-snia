@@ -792,6 +792,7 @@ int Group_WriteAllData(char *basename, int filenumber,
   if (TempTopGrid != TopGrid) {
     if (TempTopGrid->NextGridNextLevel != NULL)
       DeleteGridHierarchy(TempTopGrid->NextGridNextLevel);
+    TempTopGrid->GridData->DeleteAllFields();
     delete TempTopGrid->GridData;
     delete TempTopGrid;
   }

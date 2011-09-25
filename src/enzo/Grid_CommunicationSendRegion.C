@@ -82,8 +82,8 @@ int grid::CommunicationSendRegion(grid *ToGrid, int ToProcessor,int SendField,
   if (CommunicationDirection == COMMUNICATION_RECEIVE)
     buffer = CommunicationReceiveBuffer[CommunicationReceiveIndex];
   else	   
-    //  buffer = static_cast<float*>(AllocateNewBaryonField(TransferSize));
-    buffer = new float[TransferSize];
+    buffer = static_cast<float*>(AllocateNewBaryonField(TransferSize));
+    //    buffer = new float[TransferSize];
  
   // If this is the from processor, pack fields
  
@@ -311,8 +311,8 @@ int grid::CommunicationSendRegion(grid *ToGrid, int ToProcessor,int SendField,
        post-receive mode then it will be deleted when we get to
        receive-mode). */
 
-    //    FreeBaryonFieldMemory(buffer);
-    delete [] buffer;
+    FreeBaryonFieldMemory(buffer);
+    //delete [] buffer;
 			  
   } // ENDIF unpack
  
