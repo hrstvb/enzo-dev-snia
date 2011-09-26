@@ -70,7 +70,7 @@ public:
 		argbuf = new char[1024];
 	}
 	
-	void Initialize( std::string interpreter_name, std::string input_file, char defaults_string[] )
+	void Initialize( std::string interpreter_name, std::string input_file, const char defaults_string[] )
 	{
 		if( the_interpreter != NULL ) delete the_interpreter;
 		if( the_defaults_interpreter != NULL ) delete the_defaults_interpreter;
@@ -82,12 +82,44 @@ public:
 		the_defaults_interpreter = icd->create( std::string(defaults_string), true);
 	}
 
+	void Update( const char input_string[] )
+	{
+		//needs to be implemented
+	}
+
+	void Dump( std::string fname )
+	{
+		// dump current configuration to a file
+		if( ! the_interpreter->dump( fname ) )
+		{
+			fprintf(stderr, "Could not write parameters to file \'%s\'.\n", fname.c_str() );
+			throw std::runtime_error("Error writing parameters to file.");
+		}
+	}
+
 	~Configuration()
 	{
 		delete the_interpreter;
 		delete the_defaults_interpreter;
 		delete[] argbuf;
 	}
+
+	void Remove( const char* key, ... ) const
+	{
+		va_list argptr;
+		va_start(argptr, key);
+		va_end(argptr);
+		vsprintf(argbuf,key,argptr);
+		
+		int status = 0;
+		status = the_interpreter->remove(std::string(argbuf));
+		
+		if( status != 1 ) {
+			fprintf(stderr, "Could not remove <%s> from parameter file.\n",argbuf);
+			throw std::runtime_error("Could not remove a parameter.");
+		}	
+	}
+	
 
 	template< typename T >
 	void GetScalar( T& val, const char* key, ... ) const
@@ -113,6 +145,23 @@ public:
 		}
 
 		convert<std::string,T>(strval,val);
+	}
+	
+	template< typename T >
+	void SetScalar( const T& val, const char* key, ... )
+	{
+		va_list argptr;
+		va_start(argptr, key);
+		va_end(argptr);
+		vsprintf(argbuf,key,argptr);		
+		
+		std::string strval;
+		int status = 0;
+		status = the_interpreter->set(std::string(argbuf),val);
+		if( status != 1 ) {
+			fprintf(stderr, "Could not set <%s> in parameter file.\n",argbuf);
+			throw std::runtime_error("Could not assign parameter!");	
+		}
 	}
 	
 	
@@ -143,6 +192,22 @@ public:
 		    convert<std::string,T>(s[i],*val);
 		    ++val;
 		  }
+	}
+	
+	template< typename T >
+	void SetArray( T* val, size_t nelem, const char* key, ... ) const
+	{
+		va_list argptr;
+		va_start(argptr, key);
+		va_end(argptr);
+		vsprintf(argbuf,key,argptr);
+		
+		int status = 0;
+		status = the_interpreter->set_list( std::string(argbuf), nelem, val);
+		if( status != 1 ) {
+			fprintf(stderr, "Could not set <%s> in parameter file.\n",argbuf);
+			throw std::runtime_error("Could not assign parameter!");	
+		}
 	}
 		
 	size_t Size( const char* key, ... ) const
