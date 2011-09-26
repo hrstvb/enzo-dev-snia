@@ -5,6 +5,9 @@
 #include <vector>
 #include <map>
 
+#define MAX_PARAMETERS 1024
+#define MAX_PARAM_LENGTH 1024
+
 // interpreter abstract base class
 class interpreter
 {
@@ -23,7 +26,9 @@ public:
 	virtual bool dump( std::string fname ) = 0;
 	
 	virtual bool remove( std::string key ) = 0;
-	
+
+	virtual bool update( std::string input_string, bool from_file=false ) = 0;
+
 	virtual bool set( std::string key, int value ) = 0;
 	virtual bool set( std::string key, long long value ) = 0;
 	virtual bool set( std::string key, double value ) = 0;
@@ -42,7 +47,7 @@ public:
 // abstract factory pattern
 struct interpreter_creator
 {
-  virtual interpreter* create( std::string fname, bool from_string=false ) const = 0;
+  virtual interpreter* create( std::string fname, std::string defaults ) const = 0;
 	virtual ~interpreter_creator() { }
 };
 
@@ -56,9 +61,9 @@ struct interpreter_creator_concrete : public interpreter_creator
 		get_interpreter()[ interpreter_name ] = this;
 	}
 	
-	interpreter * create( std::string fname, bool from_string=false ) const
+	interpreter * create( std::string fname, std::string defaults ) const
 	{
-	  return new Derived( fname, from_string );
+	  return new Derived( fname, defaults );
 	}
 	
 };

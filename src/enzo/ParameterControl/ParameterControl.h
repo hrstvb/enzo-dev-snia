@@ -51,10 +51,9 @@ inline void convert<std::string,std::string>( const std::string & ival, std::str
 
 class Configuration
 {
-        interpreter_creator *ic, *icd;
+        interpreter_creator *ic;
         interpreter* the_interpreter;
-        interpreter* the_defaults_interpreter;
-	
+
 	char *argbuf;
 	
 public:
@@ -64,27 +63,26 @@ public:
 		ic = NULL;
 		the_interpreter = NULL;
 
-		icd = NULL;
-		the_defaults_interpreter = NULL;
-		
 		argbuf = new char[1024];
 	}
 	
 	void Initialize( std::string interpreter_name, std::string input_file, const char defaults_string[] )
 	{
 		if( the_interpreter != NULL ) delete the_interpreter;
-		if( the_defaults_interpreter != NULL ) delete the_defaults_interpreter;
 		
 		ic = get_interpreter()[interpreter_name];
-		the_interpreter = ic->create( input_file );
-
-		icd = get_interpreter()["enzo2_libconfig"];
-		the_defaults_interpreter = icd->create( std::string(defaults_string), true);
+		the_interpreter = ic->create( input_file, std::string(defaults_string) );
 	}
 
 	void Update( const char input_string[] )
 	{
-		//needs to be implemented
+	  // update the current configuration
+	  if( ! the_interpreter->update( std::string(input_string) ) )
+	    {
+	      fprintf(stderr, "Could not update parameter.\n");
+	      throw std::runtime_error("Error updating parameters.");
+	    }
+	  
 	}
 
 	void Dump( std::string fname )
@@ -100,10 +98,13 @@ public:
 	~Configuration()
 	{
 		delete the_interpreter;
-		delete the_defaults_interpreter;
 		delete[] argbuf;
 	}
 
+	// eventually...
+	//int PutScalar(...)
+	//int PutArray(...)
+	
 	void Remove( const char* key, ... ) const
 	{
 		va_list argptr;
@@ -134,14 +135,8 @@ public:
 		status = the_interpreter->query(std::string(argbuf),strval);
 		if( status != 1 ) {
 		  
-		  fprintf(stderr, "Did not find <%s> in parameter file, trying defaults.\n",argbuf);
-
-		  status = the_defaults_interpreter->query(std::string(argbuf),strval);
-		  if( status != 1 ) {
-		    fprintf(stderr, "Did not find <%s> in defaults either.\n",argbuf);
-		    throw std::runtime_error("parameter not found!");
-		  }
-
+		  fprintf(stderr, "Could not find parameter <%s>.\n",argbuf);
+		  throw std::runtime_error("parameter not found!");
 		}
 
 		convert<std::string,T>(strval,val);
@@ -178,15 +173,9 @@ public:
 		status = the_interpreter->query_list(std::string(argbuf),s);
 		if( status != 1 ) {
 		  
-		  fprintf(stderr, "Did not find <%s> in parameter file, trying defaults.\n",argbuf);
-		  
-		  status = the_defaults_interpreter->query_list(std::string(argbuf),s);
-		  if( status != 1 ) {
-		    fprintf(stderr, "Did not find <%s> in defaults either.\n",argbuf);
-		    throw std::runtime_error("parameter not found!");
-		  }
+		  fprintf(stderr, "Could not find parameter <%s>.\n",argbuf);
 		}
-		  
+		
 		for( size_t i=0; i<s.size(); ++i )
 		  {
 		    convert<std::string,T>(s[i],*val);

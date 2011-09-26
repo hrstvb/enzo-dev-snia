@@ -14,14 +14,8 @@ void Configuration::GetScalar<char*>( char*& str, const char* key, ... ) const
 	int status = 0;
 	status = the_interpreter->query(std::string(argbuf),strval);	
 	if( status != 1 ) {
-	  
-	  fprintf(stderr, "Did not find <%s> in parameter file, trying defaults.\n",argbuf);
-	  
-	  status = the_defaults_interpreter->query(std::string(argbuf),strval);
-	  if( status != 1 ) {
-	    fprintf(stderr, "Did not find <%s> in defaults either.\n",argbuf);
-	    throw std::runtime_error("parameter not found!");
-	  }
+	  fprintf(stderr, "Could not find parameter <%s>.\n",argbuf);
+	  throw std::runtime_error("parameter not found!");
 	  
 	}
 	
@@ -43,14 +37,8 @@ void Configuration::GetArray<char*>( char** val, const char* key, ... ) const
 	the_interpreter->query_list(std::string(argbuf),s);
 	if( status != 1 ) {
 	  
-	  fprintf(stderr, "Did not find <%s> in parameter file, trying defaults.\n",argbuf);
-	  
-	  status = the_defaults_interpreter->query_list(std::string(argbuf),s);
-	  if( status != 1 ) {
-	    fprintf(stderr, "Did not find <%s> in defaults either.\n",argbuf);
-	    throw std::runtime_error("parameter not found!");
-	  }
-	  
+	  fprintf(stderr, "Could not find parameter <%s>.\n",argbuf);
+	  throw std::runtime_error("parameter not found!");
 	}
 	
 
