@@ -310,13 +310,13 @@ Eint32 MAIN_NAME(Eint32 argc, char *argv[])
 					   GridObjectSize,
 					   GridObjectMemorySize*GridObjectSize/4);
 
-  ParticleMemoryPool = new MPool::MemoryPool(2, sizeof(FLOAT)*100000,
+  ParticleMemoryPool = new MPool::MemoryPool(2, sizeof(FLOAT)*1000000,
 					     sizeof(FLOAT)*8,
-					     sizeof(FLOAT)*100000);
+					     sizeof(FLOAT)*1000000);
 
-  BaryonFieldMemoryPool = new MPool::MemoryPool(3, sizeof(FLOAT)*100000,
-						sizeof(FLOAT)*64,
-						sizeof(FLOAT)*100000);
+  BaryonFieldMemoryPool = new MPool::MemoryPool(3, sizeof(float)*1000000,
+						sizeof(float)*64,
+						sizeof(float)*1000000);
 
 #ifdef TRANSFER
   const int PhotonMemorySize = MEMORY_POOL_SIZE;

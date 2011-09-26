@@ -230,13 +230,14 @@ int grid::InterpolateFieldValues(grid *ParentGrid)
       return SUCCESS;
  
     /* Allocate temporary space. */
- 
-    TemporaryField        = new float[TempSize];
-    TemporaryDensityField = new float[TempSize];
-    Work                  = new float[WorkSize];
+
+    TemporaryField        = static_cast<float *>(AllocateNewBaryonField(TempSize));
+    TemporaryDensityField = static_cast<float *>(AllocateNewBaryonField(TempSize));
+    Work                  = static_cast<float *>(AllocateNewBaryonField(WorkSize));
     for (field = 0; field < NumberOfBaryonFields; field++)
-      ParentTemp[field]     = new float[ParentTempSize];
- 
+      ParentTemp[field]     = static_cast<float *>(AllocateNewBaryonField(ParentTempSize));
+
+
     /* Copy just the required section from the parent fields to the temp
        space. */
  
@@ -410,11 +411,12 @@ int grid::InterpolateFieldValues(grid *ParentGrid)
  
     } // end loop over fields
  
-    delete [] Work;
-    delete [] TemporaryField;
-    delete [] TemporaryDensityField;
+    FreeBaryonFieldMemory(Work);
+    FreeBaryonFieldMemory(TemporaryField);
+    FreeBaryonFieldMemory(TemporaryDensityField);
     for (field = 0; field < NumberOfBaryonFields; field++)
-      delete [] ParentTemp[field];
+      FreeBaryonFieldMemory(ParentTemp[field]);
+
  
     /* If using the dual energy formalism, then modify the total energy field
        to maintain consistency between the total and internal energy fields.

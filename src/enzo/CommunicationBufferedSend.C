@@ -90,9 +90,9 @@ int CommunicationBufferPurge(void) {
 
   LastActiveIndex = NewLastActiveIndex;
 
-  // if (BuffersPurged != 0)
-  // fprintf(stderr, "CBP %"ISYM": %"ISYM" buffers purged, %"ISYM" buffers remain active\n",
-  //                  MyProcessorNumber, BuffersPurged, BuffersActive);
+  //  if (BuffersPurged != 0)
+  //    fprintf(stderr, "CBP %"ISYM": %"ISYM" buffers purged, %"ISYM" buffers remain active\n",
+  //	    MyProcessorNumber, BuffersPurged, BuffersActive);
 
   return SUCCESS;
 }
@@ -173,7 +173,7 @@ int CommunicationBufferedSend(void *buffer, int size, MPI_Datatype Type, int Tar
  
   if (BufferSize != BUFFER_IN_PLACE) {
     //    buffer_send = new char[BufferSize];
-    buffer_send = static_cast<char*>(AllocateNewBaryonField(BufferSize));
+    buffer_send = static_cast<void *>(AllocateNewBaryonField(BufferSize));
     memcpy(buffer_send, buffer, BufferSize);
   }
   else

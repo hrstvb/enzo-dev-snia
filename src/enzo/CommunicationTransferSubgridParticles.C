@@ -168,7 +168,8 @@ int CommunicationTransferSubgridParticles(LevelHierarchyEntry *LevelArray[],
     TotalNumber += NumberToMove[j];
     NumberToMove[j] = 0;  // Zero-out to use in the next step
   }
-  SendList = new particle_data[TotalNumber];
+  SendList = static_cast<particle_data*>(ParticleMemoryPool->GetMemory(sizeof(particle_data)*TotalNumber));
+  //  SendList = new particle_data[TotalNumber];
 
   for (grid1 = 0; grid1 < NumberOfGrids; grid1++) {
 
@@ -262,11 +263,16 @@ int CommunicationTransferSubgridParticles(LevelHierarchyEntry *LevelArray[],
   /* Cleanup. */
 
   if (SendList != SharedList)
-    delete [] SendList;
-  delete [] SharedList;
+    FreeParticleMemory(SendList);
+  FreeParticleMemory(SharedList);
+
+  SendList = NULL;
+  SharedList = NULL;
   if (StarSendList != StarSharedList)
-    delete [] StarSendList;
-  delete [] StarSharedList;
+    FreeParticleMemory(StarSendList);
+  FreeParticleMemory(StarSharedList);
+  StarSendList = NULL;
+  StarSharedList = NULL;
 
   delete [] Grids;
   delete [] GridPointers;

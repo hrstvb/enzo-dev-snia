@@ -193,7 +193,8 @@ int CommunicationCollectParticles(LevelHierarchyEntry *LevelArray[],
       TotalNumber += NumberToMove[j];
       NumberToMove[j] = 0;  // Zero-out to use in the next step
     }
-    SendList = new particle_data[TotalNumber];
+    SendList =  static_cast<particle_data*>(ParticleMemoryPool->GetMemory(sizeof(particle_data)*TotalNumber));
+    //new particle_data[TotalNumber];
 
     for (j = 0; j < NumberOfGrids; j++)
       if (GridHierarchyPointer[j]->NextGridNextLevel != NULL) {
@@ -328,11 +329,11 @@ int CommunicationCollectParticles(LevelHierarchyEntry *LevelArray[],
     /* Cleanup. */
 
     if (SendList != SharedList)
-      delete [] SharedList;
-    delete [] SendList;
+      FreeParticleMemory(SharedList);
+    FreeParticleMemory(SendList);
     if (StarSendList != StarSharedList)
-      delete [] StarSendList;
-    delete [] StarSharedList;
+      FreeParticleMemory(StarSendList);
+    FreeParticleMemory(StarSharedList);
     delete [] SubgridPointers;
 
     SendList = NULL;
@@ -422,8 +423,10 @@ int CommunicationCollectParticles(LevelHierarchyEntry *LevelArray[],
 
     /* Count the number of particles needed to move */
 
-    SendList = new particle_data[TotalNumberToMove];
-    StarSendList = new star_data[TotalStarsToMove];
+    SendList = static_cast<particle_data*>(ParticleMemoryPool->GetMemory(sizeof(particle_data)*TotalNumberToMove));
+//new particle_data[TotalNumberToMove];
+    StarSendList = static_cast<star_data*>(ParticleMemoryPool->GetMemory(sizeof(star_data)*TotalStarsToMove));
+//new star_data[TotalStarsToMove];
 
     for (i = 0; i < NumberOfProcessors; i++) {
       NumberToMove[i] = 0;
@@ -520,12 +523,14 @@ int CommunicationCollectParticles(LevelHierarchyEntry *LevelArray[],
     /* Cleanup. */
 
     if (SendList != SharedList)
-      delete [] SendList;
-    delete [] SharedList;
+      FreeParticleMemory(SendList);
+    FreeParticleMemory(SharedList);
+    //      delete [] SendList;
+    //    delete [] SharedList;
 
     if (StarSendList != StarSharedList)
-      delete [] StarSendList;
-    delete [] StarSharedList;
+      FreeParticleMemory(StarSendList);
+    FreeParticleMemory(StarSharedList);
 
     } // ENDFOR grid batches
 

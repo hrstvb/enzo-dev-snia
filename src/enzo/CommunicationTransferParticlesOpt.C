@@ -262,8 +262,8 @@ int CommunicationTransferParticles(grid *GridPointer[], int NumberOfGrids,
   /* Cleanup. */
 
   if (SendList != SharedList)
-    delete [] SendList;
-  delete [] SharedList;
+    FreeParticleMemory(SendList);
+  FreeParticleMemory(SharedList);
   delete [] NumberToMove;
   delete [] GridMap;
   for (dim = 0; dim < Rank; dim++)

@@ -59,20 +59,20 @@ int grid::zEulerSweep(int j, int NumberOfSubgrids, fluxes *SubgridFluxes[],
     *colslice, *pslice;
 
   int size = GridDimension[2] * GridDimension[0];
-  dslice = new float[size];  
-  eslice = new float[size];  
-  uslice = new float[size];  
-  vslice = new float[size];  
-  wslice = new float[size];  
-  pslice = new float[size];  
+  dslice = static_cast<float*>(AllocateNewBaryonField(size));  
+  eslice = static_cast<float*>(AllocateNewBaryonField(size));  
+  uslice = static_cast<float*>(AllocateNewBaryonField(size));  
+  vslice = static_cast<float*>(AllocateNewBaryonField(size));  
+  wslice = static_cast<float*>(AllocateNewBaryonField(size));  
+  pslice = static_cast<float*>(AllocateNewBaryonField(size));  
   if (GravityOn) {
-    grslice = new float[size];  
+    grslice = static_cast<float*>(AllocateNewBaryonField(size));  
   }
   if (DualEnergyFormalism) {
-    geslice = new float[size];  
+    geslice = static_cast<float*>(AllocateNewBaryonField(size));  
   }
   if (NumberOfColours > 0) {
-    colslice = new float[NumberOfColours * size];  
+    colslice = static_cast<float*>(AllocateNewBaryonField(NumberOfColours * size));  
   }
 
   int i, k, n, ncolour, index2, index3;
@@ -135,32 +135,32 @@ int grid::zEulerSweep(int j, int NumberOfSubgrids, fluxes *SubgridFluxes[],
     *vrs, *gels, *gers, *wls, *wrs, *diffcoef, *df, *ef, *uf, *vf, *wf, *gef,
     *ges, *colf, *colls, *colrs;
 
-  dls = new float[size];	
-  drs = new float[size];	
-  flatten = new float[size];	
-  pbar = new float[size];	
-  pls = new float[size];	
-  prs = new float[size];	
-  ubar = new float[size];	
-  uls = new float[size];	
-  urs = new float[size];	
-  vls = new float[size];	
-  vrs = new float[size];	
-  gels = new float[size];	
-  gers = new float[size];	
-  wls = new float[size];	
-  wrs = new float[size];	
-  diffcoef = new float[size];	
-  df = new float[size];		
-  ef = new float[size];		
-  uf = new float[size];		
-  vf = new float[size];		
-  wf = new float[size];		
-  gef = new float[size];	
-  ges = new float[size];
-  colf = new float[NumberOfColours*size];  
-  colls = new float[NumberOfColours*size];  
-  colrs = new float[NumberOfColours*size];  
+  dls = static_cast<float*>(AllocateNewBaryonField(size));	
+  drs = static_cast<float*>(AllocateNewBaryonField(size));	
+  flatten = static_cast<float*>(AllocateNewBaryonField(size));	
+  pbar = static_cast<float*>(AllocateNewBaryonField(size));	
+  pls = static_cast<float*>(AllocateNewBaryonField(size));	
+  prs = static_cast<float*>(AllocateNewBaryonField(size));	
+  ubar = static_cast<float*>(AllocateNewBaryonField(size));	
+  uls = static_cast<float*>(AllocateNewBaryonField(size));	
+  urs = static_cast<float*>(AllocateNewBaryonField(size));	
+  vls = static_cast<float*>(AllocateNewBaryonField(size));	
+  vrs = static_cast<float*>(AllocateNewBaryonField(size));	
+  gels = static_cast<float*>(AllocateNewBaryonField(size));	
+  gers = static_cast<float*>(AllocateNewBaryonField(size));	
+  wls = static_cast<float*>(AllocateNewBaryonField(size));	
+  wrs = static_cast<float*>(AllocateNewBaryonField(size));	
+  diffcoef = static_cast<float*>(AllocateNewBaryonField(size));	
+  df = static_cast<float*>(AllocateNewBaryonField(size));		
+  ef = static_cast<float*>(AllocateNewBaryonField(size));		
+  uf = static_cast<float*>(AllocateNewBaryonField(size));		
+  vf = static_cast<float*>(AllocateNewBaryonField(size));		
+  wf = static_cast<float*>(AllocateNewBaryonField(size));		
+  gef = static_cast<float*>(AllocateNewBaryonField(size));	
+  ges = static_cast<float*>(AllocateNewBaryonField(size));
+  colf = static_cast<float*>(AllocateNewBaryonField(NumberOfColours*size));  
+  colls = static_cast<float*>(AllocateNewBaryonField(NumberOfColours*size));  
+  colrs = static_cast<float*>(AllocateNewBaryonField(NumberOfColours*size));  
 
   /* Convert start and end indexes into 1-based for FORTRAN */
 

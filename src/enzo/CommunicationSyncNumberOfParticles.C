@@ -38,7 +38,8 @@ int CommunicationSyncNumberOfParticles(HierarchyEntry *GridHierarchyPointer[],
   int i, idx;
   //int *AllNumberOfParticles = new int[NumberOfGrids];
   //int *AllNumberOfStars = new int[NumberOfGrids];
-  int *buffer = new int[2*NumberOfGrids];
+  int *buffer = static_cast<int*>(ParticleMemoryPool->GetMemory(sizeof(int)*2*NumberOfGrids));
+  //new int[2*NumberOfGrids];
 
   for (i = 0, idx = 0; i < NumberOfGrids; i++, idx += 2)
     if (GridHierarchyPointer[i]->GridData->ReturnProcessorNumber() == MyProcessorNumber) {
@@ -61,7 +62,7 @@ int CommunicationSyncNumberOfParticles(HierarchyEntry *GridHierarchyPointer[],
     GridHierarchyPointer[i]->GridData->SetNumberOfStars(buffer[idx+1]);
   }
 
-  delete [] buffer;
+  FreeParticleMemory(buffer);
   //delete [] AllNumberOfParticles;
   //delete [] AllNumberOfStars;
 

@@ -139,9 +139,15 @@ int grid::CommunicationTransferParticles(grid* Grids[], int NumberOfGrids,
       // Increase the size of the list to include the particles from
       // this grid
 
+#ifndef MEMORY_POOL
       particle_data *NewList = new particle_data[TotalToMove];
+#else
+      particle_data *NewList = static_cast<particle_data*>
+	(ParticleMemoryPool->GetMemory((sizeof(particle_data)*TotalToMove)));
+#endif
       memcpy(NewList, List, PreviousTotalToMove * sizeof(particle_data));
-      delete [] List;
+      FreeParticleMemory(List);
+	 //      delete [] List;
       List = NewList;
       //      particle_data *TempList = List;
       //      List = new particle_data[TotalToMove];

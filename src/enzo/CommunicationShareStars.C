@@ -127,8 +127,8 @@ int CommunicationShareStars(int *NumberToMove, star_data* &SendList,
       MPI_RecvListCount[i] = RecvListCount[i];
     }
 
-    SharedList = new star_data[NumberOfReceives];
- 
+    //    SharedList = new star_data[NumberOfReceives];
+    SharedList = static_cast<star_data*>(ParticleMemoryPool->GetMemory(sizeof(star_data)*NumberOfReceives));
     /******************************
           Share the stars
     ******************************/
