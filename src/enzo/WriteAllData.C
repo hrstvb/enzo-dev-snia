@@ -58,7 +58,7 @@ int WriteMemoryMap(FILE *fptr, HierarchyEntry *TopGrid,
 int WriteConfigure(FILE *optr);
 int WriteTaskMap(FILE *fptr, HierarchyEntry *TopGrid,
 		 char *gridbasename, int &GridID, FLOAT WriteTime);
-int WriteParameterFile(FILE *fptr, TopGridData &MetaData);
+int WriteParameterFile(FILE *fptr, char filename[], TopGridData &MetaData, char header_string[]);
 int WriteStarParticleData(FILE *fptr, TopGridData &MetaData);
 int WriteRadiationData(FILE *fptr);
  
@@ -82,7 +82,9 @@ char RadiationSuffix[] = ".radiation";
 char TaskMapSuffix[]   = ".taskmap";
 char MemoryMapSuffix[] = ".memorymap";
 char ConfigureSuffix[] = ".configure";
- 
+
+extern char ParameterSuffix[];
+
 extern char LastFileNameWritten[MAX_LINE_LENGTH];
  
  
@@ -108,6 +110,7 @@ int WriteAllData(char *basename, int filenumber,
   char taskmapname[MAX_LINE_LENGTH];
   char memorymapname[MAX_LINE_LENGTH];
   char configurename[MAX_LINE_LENGTH];
+  char parametername[MAX_LINE_LENGTH];
  
   int unixresult;
   int status;
@@ -442,11 +445,20 @@ int WriteAllData(char *basename, int filenumber,
     if ((fptr = fopen(name, "w")) == NULL) {
       ENZO_VFAIL("Error opening output file %s\n", name)
     }
-    if (WriteTime >= 0)
-      fprintf(fptr, "# WARNING! Interpolated output: level = %"ISYM"\n",
-	      MetaData.OutputFirstTimeAtLevel-1);
-    if (WriteParameterFile(fptr, MetaData) == FAIL) {
-      ENZO_FAIL("Error in WriteParameterFile\n");
+    char *header_string = NULL;
+
+    if (WriteTime >= 0) {
+      header_string = new char[MAX_LINE_LENGTH];
+      sprintf(header_string, "# WARNING! Interpolated output: level = %"ISYM"\n", MetaData.OutputFirstTimeAtLevel-1);
+      fprintf(fptr, header_string);
+    }
+
+
+    strcpy(parametername, name);
+    strcat(parametername, ParameterSuffix);
+    
+    if (WriteParameterFile(fptr, parametername, MetaData, header_string) == FAIL) {
+      ENZO_FAIL("Error in WriteParameterFile");
     }
     fclose(fptr);
   
@@ -485,7 +497,7 @@ int WriteAllData(char *basename, int filenumber,
 
   strcpy(configurename, name);
   strcat(configurename, ConfigureSuffix);
- 
+
   /* Combine the top level grids into a single grid for output
      (TempTopGrid is the top of an entirely new hierarchy). */
  

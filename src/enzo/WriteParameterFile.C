@@ -15,7 +15,10 @@
  
 // This routine writes the parameter file in the argument and sets parameters
 //   based on it.
- 
+
+#include "ParameterControl/ParameterControl.h"
+extern Configuration Param;
+
 #include <stdio.h>
 #include <string.h>
 #include <time.h>
@@ -29,26 +32,26 @@
 #include "ExternalBoundary.h"
 #include "Grid.h"
 #include "TopGridData.h"
+#include "CosmologyParameters.h"
 
- 
 /* function prototypes */
  
 void WriteListOfFloats(FILE *fptr, int N, FLOAT floats[]);
 void WriteListOfFloats(FILE *fptr, int N, float floats[]);
 void WriteListOfInts(FILE *fptr, int N, int nums[]);
 int  CosmologyWriteParameters(FILE *fptr, FLOAT StopTime, FLOAT CurrentTime);
+int  CosmologyComputeExpansionFactor(FLOAT time, FLOAT *a, FLOAT *dadt);
 int  WriteUnits(FILE *fptr);
 int  GetUnits(float *DensityUnits, float *LengthUnits,
-	      float *TemperatureUnits, float *TimeUnits,
-	      float *VelocityUnits, double *MAssUnits, FLOAT Time);
+              float *TemperatureUnits, float *TimeUnits,
+              float *VelocityUnits, double *MAssUnits, FLOAT Time);
 void get_uuid(char *buffer);
 #ifdef TRANSFER
 int RadiativeTransferWriteParameters(FILE *fptr);
 int WritePhotonSources(FILE *fptr, FLOAT CurrentTime);
 #endif /* TRANSFER */
- 
-int WriteParameterFile(FILE *fptr, TopGridData &MetaData)
-{
+
+int WriteParameterFile(FILE *fptr, char filename[], TopGridData &MetaData, char header_string[]) {
  
   MustRefineParticlesMinimumMass *= POW(1/(float(MetaData.TopGridDims[0])
 				       *POW(float(RefineBy), float(MustRefineParticlesRefineToLevel))),3);
@@ -74,7 +77,7 @@ int WriteParameterFile(FILE *fptr, TopGridData &MetaData)
     /* Change input physical parameters into real units */
     MustRefineParticlesMinimumMass *= massu;
     StarMakerOverDensityThreshold *= rhou;
-    //  StarEnergyFeedbackRate = StarEnergyFeedbackRate/pow(LengthUnits,2)*pow(TimeUnits,3);
+    //  StarEnergyFeedbackRate = StarEnergyFeedbackRate/pow(LengthUnits,2)*pow(TimeUnits,3); 
     
     if (SinkMergeDistance > 1.0)
       SinkMergeDistance *= lenu;
@@ -84,7 +87,7 @@ int WriteParameterFile(FILE *fptr, TopGridData &MetaData)
     MaximumAlvenSpeed *= velu;
     EOSSoundSpeed *=  velu;
 
-    /*
+    
     for (int i = 0; i < MAX_FLAGGING_METHODS; i++) {
       if (MinimumMassForRefinement[i] != FLOAT_UNDEFINED) {
 	printf("i = %i, MinMass = %g, massu = %g\n",i,MinimumMassForRefinement[i],massu);
@@ -92,7 +95,6 @@ int WriteParameterFile(FILE *fptr, TopGridData &MetaData)
 	printf("i = %i, MinMass = %g\n",i,MinimumMassForRefinement[i]);
       }
     }
-    */
 
     /* Check ReadParameterFile for the reason why this is commented out. 
        - Ji-hoon Kim in Apr.2010 */
@@ -105,11 +107,71 @@ int WriteParameterFile(FILE *fptr, TopGridData &MetaData)
     }
     */
 
+  } // if(UsePhysicalUnit)
+
+
+  // We need to update here a bunch of the parameters, since the
+  // corresponding values of MetaData have changed. Lame. In the
+  // future the Param object should completely replace the MetaData
+  // structure and all other global variables...
+  
+  FLOAT CurrentRedshift, a = 1, dadt;
+  if (ComovingCoordinates)
+    CosmologyComputeExpansionFactor(MetaData.Time, &a, &dadt);
+  CurrentRedshift = (1 + InitialRedshift)/a - 1;
+
+
+  // Internal
+  Param.SetScalar(MetaData.CycleNumber, "Internal.InitialCycleNumber");
+  Param.SetScalar(MetaData.SubcycleNumber, "Internal.SubcycleNumber");  
+  Param.SetScalar(MetaData.Time, "Internal.InitialTime");
+  Param.SetScalar(0.0, "Internal.Initialdt");
+  Param.SetScalar(MetaData.CPUTime, "Internal.InitialCPUTime");
+  Param.SetScalar(MetaData.NumberOfParticles, "Internal.NumberOfParticles");
+  Param.SetScalar(CurrentRedshift, "Internal.CosmologyCurrentRedshift");
+
+  // Internal.OutputLabeling
+  Param.SetScalar(MetaData.MovieTimestepCounter, "Internal.OutputLabeling.MovieTimestepCounter");
+  Param.SetScalar(MetaData.TimeLastDataDump, "Internal.OutputLabeling.TimeLastDataDump");
+  Param.SetScalar(MetaData.DataDumpNumber, "Internal.OutputLabeling.DataDumpNumber");
+
+  // Internal.Provenance
+  time_t ID;
+  ID = time(NULL);
+  Param.SetScalar(int(ID), "Internal.Provenance.CurrentTimeIdentifier");
+
+  char dset_uuid[MAX_LINE_LENGTH];
+  get_uuid(dset_uuid);
+  Param.SetScalar(dset_uuid, "Internal.Provenance.DatasetUUID");
+
+
+  // SimulationControl.AMR
+  Param.SetArray(MinimumMassForRefinement, MAX_FLAGGING_METHODS, "SimulationControl.AMR.MinimumMassForRefinement");
+
+
+  // OutputControl.RedshiftDump
+
+  // Find the number of redshift outputs (total, including the ones
+  // already written).
+  int NumberOfRedshiftOutputs = 0;
+  int i=0;
+  while(CosmologyOutputRedshift[i] == -1) i++;
+
+  if(i < MAX_NUMBER_OF_OUTPUT_REDSHIFTS) {
+    while(CosmologyOutputRedshift[i] != -1) i++;
+    NumberOfRedshiftOutputs = i;
   }
+
+  Param.SetArray(CosmologyOutputRedshift, NumberOfRedshiftOutputs, "OutputControl.RedshiftDump.OutputRedshifts");
+
+
+
 
 
   /* write data to Parameter output file */
- 
+  Param.Dump(filename, header_string);
+
+
   /* write MetaData parameters */
  
   fprintf(fptr, "InitialCycleNumber  = %"ISYM"\n", MetaData.CycleNumber);
@@ -345,10 +407,10 @@ int WriteParameterFile(FILE *fptr, TopGridData &MetaData)
       fprintf(fptr, "DataUnits[%"ISYM"]              = %s\n", dim, DataUnits[dim]);
     if (DataLabel[dim]) {
       if ((strstr(DataLabel[dim], "Density") != NULL) ||
-	  (strstr(DataLabel[dim], "Colour") != NULL))
-	fprintf(fptr, "#DataCGSConversionFactor[%"ISYM"] = %"GSYM"\n", dim, DensityUnits);
+    	  (strstr(DataLabel[dim], "Colour") != NULL))
+    	fprintf(fptr, "#DataCGSConversionFactor[%"ISYM"] = %"GSYM"\n", dim, DensityUnits);
       if (strstr(DataLabel[dim], "velocity") != NULL)
-	fprintf(fptr, "#DataCGSConversionFactor[%"ISYM"] = %"GSYM"\n", dim, VelocityUnits);
+    	fprintf(fptr, "#DataCGSConversionFactor[%"ISYM"] = %"GSYM"\n", dim, VelocityUnits);
     }
   }
   fprintf(fptr, "#TimeUnits                 = %"GSYM"\n", TimeUnits);
@@ -587,13 +649,13 @@ int WriteParameterFile(FILE *fptr, TopGridData &MetaData)
 
   fprintf(fptr, "MinimumMassForRefinement ="
 	  " %.9"GSYM" %.9"GSYM" %.9"GSYM" %.9"GSYM" %.9"GSYM" %.9"GSYM" %.9"GSYM"\n",
-	  MinimumMassForRefinement[0]*massu,
-	  MinimumMassForRefinement[1]*massu,
-	  MinimumMassForRefinement[2]*massu,
-	  MinimumMassForRefinement[3]*massu,
-	  MinimumMassForRefinement[4]*massu,
-	  MinimumMassForRefinement[5]*massu,
-	  MinimumMassForRefinement[6]*massu);
+	  MinimumMassForRefinement[0],
+	  MinimumMassForRefinement[1],
+	  MinimumMassForRefinement[2],
+	  MinimumMassForRefinement[3],
+	  MinimumMassForRefinement[4],
+	  MinimumMassForRefinement[5],
+	  MinimumMassForRefinement[6]);
 
   fprintf(fptr, "MinimumMassForRefinementLevelExponent ="
 	  " %"FSYM" %"FSYM" %"FSYM" %"FSYM" %"FSYM" %"FSYM" %"FSYM"\n",
@@ -892,14 +954,13 @@ int WriteParameterFile(FILE *fptr, TopGridData &MetaData)
     MaximumAlvenSpeed /= velu;
     EOSSoundSpeed /=  velu;
     MustRefineParticlesMinimumMass /= massu;
-    /*
+    
     for (int i = 0; i < MAX_FLAGGING_METHODS; i++) {
       if (MinimumMassForRefinement[i] != FLOAT_UNDEFINED) {
 	MinimumMassForRefinement[i] /= massu;
       }
     }
-    */
-
+    
     /*
     if (!ComovingCoordinates && UsePhysicalUnit) {
       for (int i = 0; i < MAX_FLAGGING_METHODS; i++) {
@@ -909,14 +970,14 @@ int WriteParameterFile(FILE *fptr, TopGridData &MetaData)
     }
     */
 
-  }
+  } // if(UsePhysicalUnit)
 
   MustRefineParticlesMinimumMass /= POW(1/(float(MetaData.TopGridDims[0])
 				       *POW(float(RefineBy), float(MustRefineParticlesRefineToLevel))),3);
 
+
+
   /* Output current time */
-  time_t ID;
-  ID = time(NULL);
   fprintf(fptr, "CurrentTimeIdentifier = %"ISYM"\n", int(ID));
 
   /* If the simulation was given a name, write that. */
@@ -927,8 +988,6 @@ int WriteParameterFile(FILE *fptr, TopGridData &MetaData)
   /* Write unique simulation identifier. */
   fprintf(fptr, "MetaDataSimulationUUID          = %s\n", MetaData.SimulationUUID);
   /* Give this dataset a unique identifier. */
-  char dset_uuid[MAX_LINE_LENGTH];
-  get_uuid(dset_uuid);
   fprintf(fptr, "MetaDataDatasetUUID             = %s\n", dset_uuid);
   /* If the restart data had a UUID, write that. */
   if(MetaData.RestartDatasetUUID != NULL){

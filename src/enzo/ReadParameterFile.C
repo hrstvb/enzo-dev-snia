@@ -764,6 +764,7 @@ int ReadParameterFile(TopGridData &MetaData, float *Initialdt)
   Param.GetScalar(ShearingVelocityDirection, "Physics.ShearingVelocityDirection");
   Param.GetScalar(ShearingBoundaryDirection, "Physics.ShearingBoundaryDirection");
   Param.GetScalar(ShearingBoxProblemType, "Physics.ShearingBoxProblemType");
+  Param.GetScalar(useMHD, "Physics.UseMHD");
   
   /* Embedded Python */
   Param.GetScalar(PythonTopGridSkip, "Analysis.Python.PythonTopGridSkip");
@@ -795,6 +796,7 @@ int ReadParameterFile(TopGridData &MetaData, float *Initialdt)
   /* Sink particles (for present day star formation) & winds */
   Param.GetScalar(SinkMergeDistance, "Physics.OtherParticles.SinkParticle.MergeDistance");
   Param.GetScalar(SinkMergeMass, "Physics.OtherParticles.SinkParticle.MergeMass");
+  Param.GetScalar(TotalSinkMass, "Physics.OtherParticles.SinkParticle.TotalMass");
   Param.GetScalar(StellarWindFeedback, "Physics.OtherParticles.StellarWindFeedback");
   Param.GetScalar(StellarWindTurnOnMass, "Physics.OtherParticles.StellarWindTurnOnMass");
   Param.GetScalar(MSStellarWindTurnOnMass, "Physics.OtherParticles.MSStellarWindTurnOnMass");
@@ -1380,6 +1382,7 @@ int ReadParameterFile(TopGridData &MetaData, float *Initialdt)
     my_exit(EXIT_SUCCESS);
 #endif
   }
+
   if (debug) printf("Initialdt in ReadParameterFile = %e\n", *Initialdt);
   
   CheckShearingBoundaryConsistency(MetaData);

@@ -48,8 +48,9 @@ int InitializeMovieFile(TopGridData &MetaData, HierarchyEntry &TopGrid);
 int WriteHierarchyStuff(FILE *fptr, HierarchyEntry *Grid,
                         char* base_name, int &GridID, FLOAT WriteTime);
 int ReadParameterFile(TopGridData &MetaData, float *Initialdt);
-int WriteParameterFile(FILE *fptr, TopGridData &MetaData);
+int WriteParameterFile(FILE *Outfptr, char filename[], TopGridData &MetaData, char header_string[]);
 void ConvertTotalEnergyToGasEnergy(HierarchyEntry *Grid);
+int SetDefaultGlobalValues(TopGridData &MetaData);
 int CommunicationPartitionGrid(HierarchyEntry *Grid, int gridnum);
 int CommunicationBroadcastValue(PINT *Value, int BroadcastProcessor);
  
@@ -214,7 +215,8 @@ int GetUnits(float *DensityUnits, float *LengthUnits,
 // Character strings
  
 char outfilename[] = "amr.out";
- 
+
+extern char ParameterSuffix[];
  
  
  
@@ -227,6 +229,8 @@ int InitializeNew(char *filename, HierarchyEntry &TopGrid,
  
   // Declarations
  
+  char parametername[MAX_LINE_LENGTH];
+
   FILE *fptr, *BCfptr, *Outfptr;
   float Dummy[MAX_DIMENSION];
   int dim, i;
@@ -237,9 +241,12 @@ int InitializeNew(char *filename, HierarchyEntry &TopGrid,
  
   // Open parameter file
 
+  strcpy(parametername, filename);
+  strcat(parametername, ParameterSuffix);
+ 
   // defaults_string is set in auto_defaults_string.h (created at
   // compile time from defaults.cfg and #include'd from enzo.C)
-  Param.Initialize("enzo2_libconfig", filename, defaults_string);
+  Param.Initialize("enzo2_libconfig", parametername, defaults_string);
  
   // Clear OutputLog
 
@@ -256,6 +263,10 @@ int InitializeNew(char *filename, HierarchyEntry &TopGrid,
       ENZO_VFAIL("Error opening parameter output file %s\n", outfilename)
     }
   
+  // set default global values
+  
+  SetDefaultGlobalValues(MetaData);
+
   // Read the MetaData/global values from the Parameter file
  
   if (ReadParameterFile(MetaData, Initialdt) == FAIL) {
@@ -801,10 +812,15 @@ int InitializeNew(char *filename, HierarchyEntry &TopGrid,
   
   // Write the MetaData/global values to the Parameter file
   
-  if (MyProcessorNumber == ROOT_PROCESSOR)
-    if (WriteParameterFile(Outfptr, MetaData) == FAIL) {
+  if (MyProcessorNumber == ROOT_PROCESSOR) {
+
+    strcpy(parametername, outfilename);
+    strcat(parametername, ParameterSuffix);
+
+    if (WriteParameterFile(Outfptr, parametername, MetaData, NULL) == FAIL) {
       ENZO_FAIL("Error in WriteParameterFile.");
     }
+  }
   
   if (debug)
     printf("InitializeNew: Initial grid hierarchy set\n");

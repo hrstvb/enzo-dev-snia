@@ -18,7 +18,7 @@
 #include "ParameterControl/ParameterControl.h"
 /* Param is a global variable, but it cannot go in global_data.h,
    since there the type 'Configuration' is not known, and including
-   ParameterControl.h from within in fails. */
+   ParameterControl.h from within it fails. */
 Configuration Param;
 
 #include "preincludes.h"
@@ -99,7 +99,7 @@ int ProjectToPlane(TopGridData &MetaData, LevelHierarchyEntry *LevelArray[],
 		   FLOAT ProjectEndCoordinates[], int ProjectLevel,
 		   int ProjectionDimension, char *ProjectionFileName,
 		   int ProjectionSmooth, ExternalBoundary *Exterior);
-int ProjectToPlane2(char *ParameterFile, HierarchyEntry &TopGrid,
+int ProjectToPlane2(char *SimulationBasename, HierarchyEntry &TopGrid,
 		    TopGridData &MetaData, LevelHierarchyEntry *LevelArray[],
 		    int ProjectStartTemp[], int ProjectEndTemp[], 
 		    FLOAT ProjectStartCoordinate[],
@@ -122,7 +122,7 @@ int InterpretCommandLine(int argc, char *argv[], char *myname,
 			 int &OutputAsParticleDataFlag,
 			 int &project, int &ProjectionDimension,
 			 int &ProjectionSmooth, int &velanyl,
-			 char *ParameterFile[],
+			 char *SimulationBasename[],
 			 int RegionStart[], int RegionEnd[],
 			 FLOAT RegionStartCoordinates[],
 			 FLOAT RegionEndCoordinates[],
@@ -131,6 +131,7 @@ int InterpretCommandLine(int argc, char *argv[], char *myname,
 			 int &SmoothedDarkMatterOnly,
 			 int MyProcessorNumber);
 void AddLevel(LevelHierarchyEntry *Array[], HierarchyEntry *Grid, int level);
+int SetDefaultGlobalValues(TopGridData &MetaData);
 
 int WriteAllData(char *basename, int filenumber, HierarchyEntry *TopGrid,
                  TopGridData &MetaData, ExternalBoundary *Exterior,
@@ -188,7 +189,7 @@ int CommunicationCombineGrids(HierarchyEntry *OldHierarchy,
 			      HierarchyEntry **NewHierarchyPointer,
 			      FLOAT WriteTime);
 void DeleteGridHierarchy(HierarchyEntry *GridEntry);
-int OutputPotentialFieldOnly(char *ParameterFile,
+int OutputPotentialFieldOnly(char *SimulationBasename,
 			     LevelHierarchyEntry *LevelArray[], 
 			     HierarchyEntry *TopGrid,
 			     TopGridData &MetaData,
@@ -197,7 +198,7 @@ int OutputPotentialFieldOnly(char *ParameterFile,
 		         ImplicitProblemABC *ImplicitSolver,
 #endif
 			     int OutputDM);
-int OutputSmoothedDarkMatterOnly(char *ParameterFile,
+int OutputSmoothedDarkMatterOnly(char *SimulationBasename,
 				 LevelHierarchyEntry *LevelArray[], 
 				 HierarchyEntry *TopGrid,
 				 TopGridData &MetaData,
@@ -231,8 +232,10 @@ void lcaperfInitialize (int max_level);
 void my_exit(int status);
 void PrintMemoryUsage(char *str);
 
+// Move this (and other suffixes defined in WriteAllData.C) to
+// global_data.h ?
+char ParameterSuffix[] = ".cfg";
 
- 
 //  ENZO Main Program
 
 #ifdef SHARED_LIBRARY
@@ -359,7 +362,7 @@ Eint32 MAIN_NAME(Eint32 argc, char *argv[])
   debug                        = FALSE;
   extract                      = FALSE;
   flow_trace_on                = FALSE;
-  char *ParameterFile          = NULL;
+  char *SimulationBasename          = NULL;
   char *myname                 = argv[0];
 
   int RegionStart[MAX_DIMENSION],
@@ -442,7 +445,7 @@ Eint32 MAIN_NAME(Eint32 argc, char *argv[])
   if (InterpretCommandLine(int_argc, argv, myname, restart, debug, extract,
 			   InformationOutput, OutputAsParticleDataFlag,
 			   project, ProjectionDimension, ProjectionSmooth,  velanyl,
-			   &ParameterFile,
+			   &SimulationBasename,
 			   RegionStart, RegionEnd,
 			   RegionStartCoordinates, RegionEndCoordinates,
 			   RegionLevel, HaloFinderOnly,
@@ -455,29 +458,35 @@ Eint32 MAIN_NAME(Eint32 argc, char *argv[])
     }
   }
 
+  char ParameterFilename[MAX_LINE_LENGTH];
+  strcpy(ParameterFilename, SimulationBasename);
+  strcat(ParameterFilename, ParameterSuffix);
+
  
   // If we need to read the parameter file as a restart file, do it now
  
   if (restart || OutputAsParticleDataFlag || extract || InformationOutput || project  ||  velanyl) {
- 
-    if (debug) printf("Reading parameter file %s\n", ParameterFile);
+
+    SetDefaultGlobalValues(MetaData);
+
+    if (debug) printf("Reading parameter file %s\n", ParameterFilename);
 
 
   // First expect to read in packed-HDF5
 
 #ifdef USE_HDF5_GROUPS
     bool ReadParticlesOnly = (HaloFinderOnly == TRUE);
-    if (Group_ReadAllData(ParameterFile, &TopGrid, MetaData, &Exterior, &Initialdt,
+    if (Group_ReadAllData(SimulationBasename, &TopGrid, MetaData, &Exterior, &Initialdt,
 			  ReadParticlesOnly) == FAIL) {
       if (MyProcessorNumber == ROOT_PROCESSOR) {
-	fprintf(stderr, "Error in Group_ReadAllData %s\n", ParameterFile);
+	fprintf(stderr, "Error in Group_ReadAllData %s\n", SimulationBasename);
 	fprintf(stderr, "Probably not in a packed-HDF5 format. Trying other read routines.\n");
       }
 #endif
       // If not packed-HDF5, then try usual HDF5 or HDF4
-      if (ReadAllData(ParameterFile, &TopGrid, MetaData, &Exterior, &Initialdt) == FAIL) {
+      if (ReadAllData(SimulationBasename, &TopGrid, MetaData, &Exterior, &Initialdt) == FAIL) {
 	if (MyProcessorNumber == ROOT_PROCESSOR)
-	  fprintf(stderr, "Error in ReadAllData %s.\n", ParameterFile);
+	  fprintf(stderr, "Error in ReadAllData %s.\n", SimulationBasename);
 	my_exit(EXIT_FAILURE);
       }
 #ifdef USE_HDF5_GROUPS
@@ -496,7 +505,7 @@ Eint32 MAIN_NAME(Eint32 argc, char *argv[])
     }
  
     if (MyProcessorNumber == ROOT_PROCESSOR) {
-      fprintf(stderr, "Successfully read ParameterFile %s.\n", ParameterFile);
+      fprintf(stderr, "Successfully read parameter file %s.\n", ParameterFilename);
     }
  
     AddLevel(LevelArray, &TopGrid, 0);    // recursively add levels
@@ -558,7 +567,7 @@ Eint32 MAIN_NAME(Eint32 argc, char *argv[])
       sprintf(proj_name, "project_%4.4d_%c.h5", MetaData.CycleNumber, 120+dim);
       if (MyProcessorNumber == ROOT_PROCESSOR)
 	printf("ProjectToPlane: dimension %d.  Output %s\n", dim, proj_name);
-      if (ProjectToPlane2(ParameterFile, TopGrid, MetaData, LevelArray, 
+      if (ProjectToPlane2(SimulationBasename, TopGrid, MetaData, LevelArray, 
 			  RegionStart, RegionEnd,
 			  RegionStartCoordinates, RegionEndCoordinates,
 			  RegionLevel, dim, proj_name, ProjectionSmooth, 
@@ -580,7 +589,7 @@ Eint32 MAIN_NAME(Eint32 argc, char *argv[])
   }
 
   if (WritePotentialOnly) {
-    OutputPotentialFieldOnly(ParameterFile, LevelArray, &TopGrid,
+    OutputPotentialFieldOnly(SimulationBasename, LevelArray, &TopGrid,
 			     MetaData, Exterior, 
 #ifdef TRANSFER
 		         ImplicitSolver,
@@ -590,7 +599,7 @@ Eint32 MAIN_NAME(Eint32 argc, char *argv[])
   }
 
   if (SmoothedDarkMatterOnly) {
-    OutputSmoothedDarkMatterOnly(ParameterFile, LevelArray, &TopGrid, 
+    OutputSmoothedDarkMatterOnly(SimulationBasename, LevelArray, &TopGrid, 
 				 MetaData, Exterior
 #ifdef TRANSFER
 		       , ImplicitSolver
@@ -668,14 +677,14 @@ Eint32 MAIN_NAME(Eint32 argc, char *argv[])
  
   if (!restart) {
 
-    if (InitializeNew(ParameterFile, TopGrid, MetaData, Exterior, &Initialdt) == FAIL) {
+    if (InitializeNew(SimulationBasename, TopGrid, MetaData, Exterior, &Initialdt) == FAIL) {
       if (MyProcessorNumber == ROOT_PROCESSOR)
-	fprintf(stderr, "Error in Parameter File %s.\n", ParameterFile);
+	fprintf(stderr, "Error in Parameter File %s.\n", SimulationBasename);
       my_exit(EXIT_FAILURE);
     }
     else {
       if (MyProcessorNumber == ROOT_PROCESSOR)
-	fprintf(stderr, "Successfully read in parameter file %s.\n", ParameterFile);
+	fprintf(stderr, "Successfully read in parameter file %s.\n", SimulationBasename);
       //      Exterior.Prepare(TopGrid.GridData);
       AddLevel(LevelArray, &TopGrid, 0);    // recursively add levels
     }

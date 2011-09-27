@@ -21,6 +21,9 @@
  
 // This function writes out the data hierarchy (TopGrid), the External
 //   Boundary (Exterior), the TopGridData, and the global_data.
+#include "ParameterControl/ParameterControl.h"
+extern Configuration Param;
+
 #include "preincludes.h"
  
 #ifdef USE_MPI
@@ -72,7 +75,7 @@ int WriteMemoryMap(FILE *fptr, HierarchyEntry *TopGrid,
 int WriteConfigure(FILE *optr);
 int WriteTaskMap(FILE *fptr, HierarchyEntry *TopGrid,
 		 char *gridbasename, int &GridID, FLOAT WriteTime);
-int WriteParameterFile(FILE *fptr, TopGridData &MetaData);
+int WriteParameterFile(FILE *fptr, char filename[], TopGridData &MetaData, char header_string[]);
 int WriteStarParticleData(FILE *fptr, TopGridData &MetaData);
 int WriteRadiationData(FILE *fptr);
  
@@ -106,6 +109,7 @@ extern char RadiationSuffix[];
 extern char TaskMapSuffix[];
 extern char MemoryMapSuffix[];
 extern char ConfigureSuffix[];
+extern char ParameterSuffix[];
 
 char CPUSuffix[]       = ".cpu";
 char BHierarchySuffix[] = ".harrays";
@@ -136,8 +140,9 @@ int Group_WriteAllData(char *basename, int filenumber,
   char taskmapname[MAX_LINE_LENGTH];
   char memorymapname[MAX_LINE_LENGTH];
   char configurename[MAX_LINE_LENGTH];
-  char groupfilename[MAX_LINE_LENGTH];
- 
+  char parametername[MAX_LINE_LENGTH];
+  char groupfilename[MAX_LINE_LENGTH]; 
+
   int unixresult;
   int status;
   int local, global;
@@ -563,6 +568,8 @@ int Group_WriteAllData(char *basename, int filenumber,
   strcpy(MetaData.BoundaryConditionName, name);
   strcat(MetaData.BoundaryConditionName, BCSuffix);
 
+  Param.SetScalar(MetaData.BoundaryConditionName, "Internal.BoundaryConditionName");
+
   /* We set our global variable CheckpointRestart to TRUE here, so that it gets
      output in the parameter file. */
 
@@ -579,6 +586,8 @@ int Group_WriteAllData(char *basename, int filenumber,
     strcpy(MetaData.RadHydroParameterFname, name);
     strcat(MetaData.RadHydroParameterFname, RTSuffix);
     
+    Param.SetScalar(MetaData.RadHydroParameterFname,"Physics.RadiationField.RadHydroParamfile");
+
     // Open RT module parameter file
     if ((fptr = fopen(MetaData.RadHydroParameterFname, "w")) == NULL) {
       fprintf(stderr, "Error opening RT module parameter file: %s\n",
@@ -598,19 +607,34 @@ int Group_WriteAllData(char *basename, int filenumber,
   // Output TopGrid data
  
   if (MyProcessorNumber == ROOT_PROCESSOR) {
-    if ((fptr = fopen(name, "w")) == NULL) 
+    if ((fptr = fopen(name, "w")) == NULL) {
       ENZO_VFAIL("Error opening output file %s\n", name)
+    }
+    char *header_string = NULL;
+
     if (CheckpointDump == TRUE) {
-      fprintf(fptr, "# WARNING! This is a checkpoint dump! Lots of data!\n");
+      header_string = new char[MAX_LINE_LENGTH];
+      sprintf(header_string, "# WARNING! This is a checkpoint dump! Lots of data!\n");
+      fprintf(fptr, header_string);
     }
     else if (WriteTime >= 0) {
-      fprintf(fptr, "# WARNING! Interpolated output: level = %"ISYM"\n",
-	      MetaData.OutputFirstTimeAtLevel-1);
+      header_string = new char[MAX_LINE_LENGTH];
+      sprintf(header_string, "# WARNING! Interpolated output: level = %"ISYM"\n", MetaData.OutputFirstTimeAtLevel-1);
+      fprintf(fptr, header_string);
     }
-    if (WriteParameterFile(fptr, MetaData) == FAIL)
+    
+    strcpy(parametername, name);
+    strcat(parametername, ParameterSuffix);
+
+    if (WriteParameterFile(fptr, parametername, MetaData, header_string) == FAIL)
       ENZO_FAIL("Error in WriteParameterFile");
     fclose(fptr);
-  
+
+    if(header_string) {
+      delete [] header_string;
+      header_string = NULL;
+    }
+
   }
 
  

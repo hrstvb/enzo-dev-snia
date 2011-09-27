@@ -58,7 +58,7 @@ extern char HierarchySuffix[];
 extern char hdfsuffix[];
 extern char TaskMapSuffix[];
 extern char MemoryMapSuffix[]; 
-
+extern char ParameterSuffix[];
 
 int ReadAllData(char *name, HierarchyEntry *TopGrid, TopGridData &MetaData,
 		ExternalBoundary *Exterior, float *Initialdt)
@@ -68,6 +68,8 @@ int ReadAllData(char *name, HierarchyEntry *TopGrid, TopGridData &MetaData,
   /* declarations */
  
   char pid[MAX_TASK_TAG_SIZE];
+
+  char parametername[MAX_LINE_LENGTH];
   char hierarchyname[MAX_LINE_LENGTH], radiationname[MAX_LINE_LENGTH];
   // Code shrapnel. See comments below. --Rick
   // char taskmapname[MAX_LINE_LENGTH];
@@ -89,9 +91,12 @@ int ReadAllData(char *name, HierarchyEntry *TopGrid, TopGridData &MetaData,
  
   /* Read TopGrid data. */
  
+  strcpy(parametername, name);
+  strcat(parametername, ParameterSuffix);
+
   // defaults_string is set in auto_defaults_string.h (created at
   // compile time from defaults.cfg and #include'd from enzo.C)
-  Param.Initialize("enzo2_libconfig", name, defaults_string);
+  Param.Initialize("enzo2_libconfig", parametername, defaults_string);
 
   if (ReadParameterFile(MetaData, Initialdt) == FAIL) {
         ENZO_FAIL("Error in ReadParameterFile.");
