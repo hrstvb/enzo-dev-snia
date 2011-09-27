@@ -265,9 +265,9 @@ int CommunicationTransferSubgridParticles(LevelHierarchyEntry *LevelArray[],
   if (SendList != SharedList)
     FreeParticleMemory(SendList);
   FreeParticleMemory(SharedList);
-
   SendList = NULL;
   SharedList = NULL;
+
   if (StarSendList != StarSharedList)
     FreeParticleMemory(StarSendList);
   FreeParticleMemory(StarSharedList);

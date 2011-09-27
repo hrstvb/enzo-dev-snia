@@ -70,8 +70,8 @@ int CommunicationBufferPurge(void) {
 	/* If the request is done, deallocate associated buffer. */
 	//fprintf(stderr,"CCO p%"ISYM": mem- thread %"ISYM" finished\n",MyProcessorNumber, i);
 	
-	//delete [] RequestBuffer[i];
-	FreeBaryonFieldMemory((float*)RequestBuffer[i]);
+	delete [] RequestBuffer[i];
+	//	FreeBaryonFieldMemory((float*)RequestBuffer[i]);
 	RequestBuffer[i] = NULL;
         BuffersPurged++;
         //fprintf(stderr, "CBP buffer %"ISYM" released\n", i);
@@ -158,8 +158,8 @@ int CommunicationBufferedSend(void *buffer, int size, MPI_Datatype Type, int Tar
  
 	  /* If the request is done, deallocate associated buffer. */
  
-	  //	  delete [] RequestBuffer[i];
-	  FreeBaryonFieldMemory((float*)RequestBuffer[i]);
+	  delete [] RequestBuffer[i];
+	  //	  FreeBaryonFieldMemory((float*)RequestBuffer[i]);
 	  RequestBuffer[i] = NULL;
  
 	} else
@@ -172,8 +172,7 @@ int CommunicationBufferedSend(void *buffer, int size, MPI_Datatype Type, int Tar
   /* If necessary, allocate buffer. */
  
   if (BufferSize != BUFFER_IN_PLACE) {
-    //    buffer_send = new char[BufferSize];
-    buffer_send = static_cast<void *>(AllocateNewBaryonField(BufferSize));
+    buffer_send = new char[BufferSize];
     memcpy(buffer_send, buffer, BufferSize);
   }
   else
@@ -206,6 +205,7 @@ int CommunicationBufferedSend(void *buffer, int size, MPI_Datatype Type, int Tar
  
   RequestBuffer[index] = (char *) buffer_send;
   LastActiveIndex = max(LastActiveIndex, index);
+  //  delete [] buffer_send;
   //  FreeBaryonFieldMemory((float*)buffer_send);
   return SUCCESS;
 }

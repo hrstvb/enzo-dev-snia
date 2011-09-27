@@ -77,8 +77,8 @@ int CommunicationShareGrids(HierarchyEntry *GridHierarchyPointer[],
   int Counter = 0;
   PackedGrid *SendList = NULL;
   if (GridsToSend > 0) {
-    SendList = static_cast<PackedGrid*>(AllocateNewBaryonField(sizeof(PackedGrid)*GridsToSend));
-    //    SendList = new PackedGrid[GridsToSend];
+    //    SendList = static_cast<PackedGrid*>(AllocateNewBaryonField(sizeof(PackedGrid)*GridsToSend));
+    SendList = new PackedGrid[GridsToSend];
     for (i = 0; i < NumberOfGrids; i++) {
       Temp = GridHierarchyPointer[i]->NextGridNextLevel;
       while (Temp != NULL) {
@@ -144,8 +144,8 @@ int CommunicationShareGrids(HierarchyEntry *GridHierarchyPointer[],
     NumberOfSharedGrids += SharedListCount[i];
     MPI_SharedListCount[i] = SharedListCount[i];
   }
-  //  SharedList = new PackedGrid[NumberOfSharedGrids];
-  SharedList = static_cast<PackedGrid*>(AllocateNewBaryonField(sizeof(PackedGrid)*NumberOfSharedGrids));
+  SharedList = new PackedGrid[NumberOfSharedGrids];
+  //  SharedList = static_cast<PackedGrid*>(AllocateNewBaryonField(sizeof(PackedGrid)*NumberOfSharedGrids));
 
   /* Perform sharing operation. */
 
@@ -244,8 +244,9 @@ int CommunicationShareGrids(HierarchyEntry *GridHierarchyPointer[],
  
   /* CleanUp. */
  
-  FreeBaryonFieldMemory((float*)SendList);
-  FreeBaryonFieldMemory((float*)SharedList);
+  delete [] SendList;
+  //  FreeBaryonFieldMemory((float*)SendList);
+  //  FreeBaryonFieldMemory((float*)SharedList);
  
   return SUCCESS;
 }
