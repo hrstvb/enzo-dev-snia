@@ -89,18 +89,19 @@ int TestGravitySphereInitialize(FILE *Outfptr, HierarchyEntry &TopGrid, TopGridD
   FLOAT TestGravitySphereCenter[MAX_DIMENSION];
 
  
-  // This is how it should look eventually.
-  //Param.UpdateDefaults(config_test_gravity_sphere_defaults);
+  // Update the parameter config to include the local defaults. Note
+  // that this does not overwrite values previously specified.
+  Param.Update(config_test_gravity_sphere_defaults);
 
   // We need to update the Center parameter in the defaults settings,
   // since it depends on runtime parameters (DomainLeftEdge,
-  // DomainRightEdge). Super kludgy...
+  // DomainRightEdge).
 
   FLOAT DefaultCenter[MAX_DIMENSION];
   for (dim = 0; dim < MAX_DIMENSION; dim++)
     DefaultCenter[dim] = 0.5*(DomainLeftEdge[dim] +
 			      DomainRightEdge[dim]);
-  //  Param.UpdateDefaults("Problem.TestGravitySphere.Center",DefaultCenter);  
+  Param.SetArray(DefaultCenter, MAX_DIMENSION, "Problem.TestGravitySphere.Center");
 
   /* read parameters */
  

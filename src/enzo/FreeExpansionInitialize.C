@@ -104,9 +104,9 @@ int FreeExpansionInitialize(FILE *Outfptr, HierarchyEntry &TopGrid,
   /* Use 3.5 zones on the finest level to resolve the initial explosion at t=0. */
   float dr = 3.5*dx*max(POW(RefineBy,-MaximumRefinementLevel), 0.25);
   
-
-  // This is how it should look eventually.
-  //Param.UpdateDefaults(config_free_expansion_defaults);
+  // Update the parameter config to include the local defaults. Note
+  // that this does not overwrite values previously specified.
+  Param.Update(config_free_expansion_defaults);
 
   /* read parameters */
 

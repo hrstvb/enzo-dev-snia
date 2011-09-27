@@ -64,8 +64,9 @@ int PoissonSolverTestInitialize(FILE *Outfptr, HierarchyEntry &TopGrid, TopGridD
   int RefineAtStart;
 
 
-  // This is how it should look eventually.
-  //Param.UpdateDefaults(config_poisson_solver_test_defaults);
+  // Update the parameter config to include the local defaults. Note
+  // that this does not overwrite values previously specified.
+  Param.Update(config_poisson_solver_test_defaults);
 
   /* read parameters */
 

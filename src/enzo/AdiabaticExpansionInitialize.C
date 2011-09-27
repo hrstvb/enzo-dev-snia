@@ -91,8 +91,9 @@ int AdiabaticExpansionInitialize(FILE *Outfptr, HierarchyEntry &TopGrid)
   float AdiabaticExpansionInitialVelocity;
   float InitialVels[MAX_DIMENSION];
 
-  // This is how it should look eventually.
-  //Param.UpdateDefaults(config_adiabatic_expansion_defaults);
+  // Update the parameter config to include the local defaults. Note
+  // that this does not overwrite values previously specified.
+  Param.Update(config_adiabatic_expansion_defaults);
  
   /* read input from file */
  

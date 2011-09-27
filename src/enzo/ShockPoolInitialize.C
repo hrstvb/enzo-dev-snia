@@ -98,9 +98,10 @@ int ShockPoolInitialize(FILE *Outfptr, HierarchyEntry &TopGrid, TopGridData &Met
   float ZeroBField[3] = {0.0, 0.0, 0.0} ;
 
  
-  // This is how it should look eventually.
-  //Param.UpdateDefaults(config_shock_pool_defaults);
-
+  // Update the parameter config to include the local defaults. Note
+  // that this does not overwrite values previously specified.
+  Param.Update(config_shock_pool_defaults);
+  
   /* read parameters */
  
   Param.GetScalar(ShockPoolAngle, "Problem.ShockPool.Angle");

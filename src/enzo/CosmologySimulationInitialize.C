@@ -210,8 +210,9 @@ int CosmologySimulationInitialize(FILE *Outfptr, HierarchyEntry &TopGrid, TopGri
     *ParticleVelocityNames[MAX_DIMENSION], 
     *ParticleDisplacementNames[MAX_DIMENSION];
  
-  // This is how it should look eventually.
-  //Param.UpdateDefaults(config_cosmology_simulation_defaults);
+  // Update the parameter config to include the local defaults. Note
+  // that this does not overwrite values previously specified.
+  Param.Update(config_cosmology_simulation_defaults);
 
   // Set all char arrays to NULL
   CosmologySimulationDensityName          = NULL;

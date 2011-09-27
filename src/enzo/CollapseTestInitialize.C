@@ -135,19 +135,19 @@ int CollapseTestInitialize(FILE *Outfptr, HierarchyEntry &TopGrid, TopGridData &
     CollapseTestSphereCoreRadius[MAX_SPHERES],
     CollapseTestSpherePosition[MAX_SPHERES][MAX_DIMENSION];
 
-
-  // This is how it should look eventually.
-  //Param.UpdateDefaults(config_collapse_test_defaults);
+  // Update the parameter config to include the local defaults. Note
+  // that this does not overwrite values previously specified.
+  Param.Update(config_collapse_test_defaults);
 
   // We need to update the Sphere1.Position parameter in the defaults
   // settings, since it depends on runtime parameters (DomainLeftEdge,
-  // DomainRightEdge). Super kludgy...
+  // DomainRightEdge).
 
   FLOAT DefaultSphere1Position[MAX_DIMENSION];
   for (dim = 0; dim < MAX_DIMENSION; dim++)
       DefaultSphere1Position[dim] = 0.5*(DomainLeftEdge[dim] +
 					 DomainRightEdge[dim]);
-  //  Param.UpdateDefaults("Problem.CollapseTest.Sphere1.Position",DefaultSphere1Position);
+  Param.SetArray(DefaultSphere1Position, MAX_DIMENSION, "Problem.CollapseTest.Sphere1.Position");
 
 
   /* read input from file */

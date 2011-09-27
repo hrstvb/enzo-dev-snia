@@ -63,20 +63,21 @@ int ReadPhotonSources(FLOAT CurrentTime)
   float *PhotonTestSourceSED[MAX_SOURCES];
   float *PhotonTestSourceEnergy[MAX_SOURCES];
 
-  // This is how it should look eventually.
-  //Param.UpdateDefaults(config_radiative_transfer_photon_sources_defaults);
+  // Update the parameter config to include the local defaults. Note
+  // that this does not overwrite values previously specified.
+  Param.Update(config_radiative_transfer_photon_sources_defaults);
 
   // We need to update the Source1.CreationTime and Position
   // parameters in the defaults settings, since they depends on
   // runtime parameters (CreationTime, DomainLeftEdge,
-  // DomainRightEdge). Super kludgy...
+  // DomainRightEdge).
 
-  // Param.UpdateDefaults("Problem.RadiativeTransfer.Source1.CreationTime", CurrentTime);
+  Param.SetScalar(CurrentTime, "Problem.RadiativeTransfer.Source1.CreationTime");
   FLOAT DefaultSourcePosition[MAX_DIMENSION];
   for (dim = 0; dim < MAX_DIMENSION; dim++)
     DefaultSourcePosition[dim] = 0.5*(DomainLeftEdge[dim] +
 				      DomainRightEdge[dim]);
-  //  Param.UpdateDefaults("Problem.RadiativeTransfer.Source1.Position",DefaultSource1Position);
+  Param.SetArray(DefaultSource1Position, MAX_DIMENSION, "Problem.RadiativeTransfer.Source1.Position");
 
 
   float DensityUnits, LengthUnits, TemperatureUnits, TimeUnits, 

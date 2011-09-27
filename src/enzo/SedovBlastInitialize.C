@@ -117,8 +117,9 @@ int SedovBlastInitialize(FILE *Outfptr, HierarchyEntry &TopGrid, TopGridData &Me
   float dr = 3.5*dx*max(POW(RefineBy,-MaximumRefinementLevel), 0.25);
 
 
-  // This is how it should look eventually.
-  //Param.UpdateDefaults(config_sedov_blast_defaults);
+  // Update the parameter config to include the local defaults. Note
+  // that this does not overwrite values previously specified.
+  Param.Update(config_sedov_blast_defaults);
 
   /* read parameters */
 

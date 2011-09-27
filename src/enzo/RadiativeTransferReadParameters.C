@@ -80,8 +80,9 @@ int RadiativeTransferReadParameters()
   SourceClusteringTree = NULL;
   OldSourceClusteringTree = NULL;
 
-  // This is how it should look eventually.
-  //Param.UpdateDefaults(config_radiative_transfer_defaults);
+  // Update the parameter config to include the local defaults. Note
+  // that this does not overwrite values previously specified.
+  Param.Update(config_radiative_transfer_defaults);
 
   /* read parameters */
     
