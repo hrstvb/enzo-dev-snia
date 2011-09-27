@@ -143,8 +143,8 @@ int NonUnigridCommunicationTranspose(region *FromRegion, int NumberOfFromRegions
     /* Allocate buffer and copy data into buffer. */
  
     ReceiveBuffer = NULL;
-    //    SendBuffer = new float[SendSize];
-    SendBuffer = static_cast<float*>(AllocateNewBaryonField(SendSize));
+    SendBuffer = new float[SendSize];
+    //    SendBuffer = static_cast<float*>(AllocateNewBaryonField(SendSize));
  
     index = 0;
  
@@ -185,8 +185,8 @@ int NonUnigridCommunicationTranspose(region *FromRegion, int NumberOfFromRegions
  
     if (n > 0) {
  
-      //      ReceiveBuffer = new float[ReceiveSize];
-      ReceiveBuffer = static_cast<float*>(AllocateNewBaryonField(ReceiveSize));
+      ReceiveBuffer = new float[ReceiveSize];
+      //      ReceiveBuffer = static_cast<float*>(AllocateNewBaryonField(ReceiveSize));
 #ifdef USE_MPI
  
       MPI_Request RequestHandle;
@@ -284,10 +284,10 @@ int NonUnigridCommunicationTranspose(region *FromRegion, int NumberOfFromRegions
  
 //    fprintf(stderr, "CT(%"ISYM"): end jump %"ISYM"\n", MyProcessorNumber, n);
  
-//    delete [] SendBuffer;
-//    delete [] ReceiveBuffer;
-    FreeBaryonFieldMemory(SendBuffer);
-    FreeBaryonFieldMemory(ReceiveBuffer);
+    delete [] SendBuffer;
+    delete [] ReceiveBuffer;
+//    FreeBaryonFieldMemory(SendBuffer);
+//    FreeBaryonFieldMemory(ReceiveBuffer);
 
   } // end: loop over processors jumps
  
@@ -915,8 +915,8 @@ int NonBlockingCommunicationTranspose(region *FromRegion, int NumberOfFromRegion
     /* Allocate buffer and copy data into buffer. */
  
     ReceiveBuffer[ni] = NULL;
-    //    SendBuffer[ni] = new float[SendSize];
-    SendBuffer[ni] = static_cast<float*>(AllocateNewBaryonField(SendSize));
+    SendBuffer[ni] = new float[SendSize];
+    //    SendBuffer[ni] = static_cast<float*>(AllocateNewBaryonField(SendSize));
     index = 0;
  
 #ifdef DEBUG_NONBLOCKCT
@@ -963,8 +963,8 @@ int NonBlockingCommunicationTranspose(region *FromRegion, int NumberOfFromRegion
  
     if (n > 0) {
  
-      //      ReceiveBuffer[ni] = new float[ReceiveSize];
-      ReceiveBuffer[ni] = static_cast<float*>(AllocateNewBaryonField(ReceiveSize));
+      ReceiveBuffer[ni] = new float[ReceiveSize];
+      //      ReceiveBuffer[ni] = static_cast<float*>(AllocateNewBaryonField(ReceiveSize));
 
       int ToProc = (MyProcessorNumber + n) % NumberOfProcessors;
       int FromProc = (MyProcessorNumber - n + NumberOfProcessors) %
