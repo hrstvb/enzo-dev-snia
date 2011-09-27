@@ -77,7 +77,7 @@ int ReadPhotonSources(FLOAT CurrentTime)
   for (dim = 0; dim < MAX_DIMENSION; dim++)
     DefaultSourcePosition[dim] = 0.5*(DomainLeftEdge[dim] +
 				      DomainRightEdge[dim]);
-  Param.SetArray(DefaultSource1Position, MAX_DIMENSION, "Problem.RadiativeTransfer.Source1.Position");
+  Param.SetArray(DefaultSourcePosition, MAX_DIMENSION, "Problem.RadiativeTransfer.Source1.Position");
 
 
   float DensityUnits, LengthUnits, TemperatureUnits, TimeUnits, 
