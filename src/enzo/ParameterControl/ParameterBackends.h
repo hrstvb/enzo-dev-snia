@@ -23,23 +23,23 @@ public:
 	
 	virtual size_t size( std::string key ) = 0;
 	
-	virtual bool dump( std::string fname ) = 0;
+	virtual bool dump( char fname[], char header_string[]=NULL ) = 0;
 	
 	virtual bool remove( std::string key ) = 0;
 
-	virtual bool update( std::string input_string, bool from_file=false ) = 0;
+	virtual bool update( std::string input_string, bool from_file=false, bool overwrite=false ) = 0;
 
 	virtual bool set( std::string key, int value ) = 0;
 	virtual bool set( std::string key, long long value ) = 0;
 	virtual bool set( std::string key, double value ) = 0;
 	virtual bool set( std::string key, bool value ) = 0;
-	virtual bool set( std::string key, std::string value ) = 0;
+	virtual bool set( std::string key, char value[] ) = 0;
 	
 	virtual bool set_list( std::string key, size_t n, const int* value ) = 0;
 	virtual bool set_list( std::string key, size_t n, const long long* value ) = 0;
 	virtual bool set_list( std::string key, size_t n, const double* value ) = 0;
 	virtual bool set_list( std::string key, size_t n, const bool* value ) = 0;
-	virtual bool set_list( std::string key, size_t n, const std::string* value ) = 0;
+	virtual bool set_list( std::string key, size_t n, char* value[] ) = 0;
 	
 
 };

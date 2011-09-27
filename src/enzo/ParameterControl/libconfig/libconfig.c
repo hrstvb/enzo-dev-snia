@@ -20,6 +20,13 @@
    ----------------------------------------------------------------------------
 */
 
+/* ----------------------------------------------------------------------------
+
+   Modified to not to append an 'L' for int64's on output.
+
+   ----------------------------------------------------------------------------
+*/
+
 #ifdef HAVE_CONFIG_H
 #include "ac_config.h"
 #endif
@@ -204,12 +211,16 @@ static void __config_write_value(const config_value_t *value, int type,
       switch(format)
       {
         case CONFIG_FORMAT_HEX:
-          fprintf(stream, "0x" INT64_HEX_FMT "L", value->llval);
+	  // do not append 'L'.
+	  // fprintf(stream, "0x" INT64_HEX_FMT "L", value->llval);
+          fprintf(stream, "0x" INT64_HEX_FMT, value->llval);
           break;
 
         case CONFIG_FORMAT_DEFAULT:
         default:
-          fprintf(stream, INT64_FMT "L", value->llval);
+	  // do not append 'L'.
+          // fprintf(stream, INT64_FMT "L", value->llval);
+          fprintf(stream, INT64_FMT, value->llval);
           break;
       }
       break;

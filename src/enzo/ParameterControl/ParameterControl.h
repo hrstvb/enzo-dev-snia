@@ -85,12 +85,12 @@ public:
 	  
 	}
 
-	void Dump( std::string fname )
+	void Dump( char fname[], char header_string[]=NULL )
 	{
 		// dump current configuration to a file
-		if( ! the_interpreter->dump( fname ) )
+	  if( ! the_interpreter->dump( fname, header_string ) )
 		{
-			fprintf(stderr, "Could not write parameters to file \'%s\'.\n", fname.c_str() );
+			fprintf(stderr, "Could not write parameters to file \'%s\'.\n", fname );
 			throw std::runtime_error("Error writing parameters to file.");
 		}
 	}

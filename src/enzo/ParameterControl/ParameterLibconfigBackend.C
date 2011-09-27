@@ -1,4 +1,4 @@
-/* libconfig style parameter file wrapper */
+// libconfig style parameter file wrapper
 
 #include <iostream>
 #include <string>
@@ -14,6 +14,11 @@
 
 #include "libconfig/libconfig.h"
 //using namespace libconfig;
+
+// set this for verbose comments to stdout.
+int verbose_paramconfig = 0;
+
+const char* var_types[9] = { "NONE", "GROUP", "INT", "INT64", "FLOAT", "STRING", "BOOL", "ARRAY", "LIST" };
 
 class enzo_libconfig_backend : public interpreter
 {
@@ -41,6 +46,41 @@ protected:
     return results.size();
   }
   
+  // Checks that the types between two setting match.
+  int check_types(config_setting_t *s_old, config_setting_t *s_new, char *path) {
+    short old_type = s_old->type;
+    short new_type = s_new->type;
+    
+    // A type mismatch throws an error, unless it's one of these two
+    // cases:
+    //
+    // (a) old_type == float, new_type == int64
+    // (b) old_type == bool, new_type == int64
+    
+    if(old_type != new_type) {
+
+      if( (old_type == CONFIG_TYPE_FLOAT) && 
+	  (new_type == CONFIG_TYPE_INT64) ) {
+
+	s_new->type = old_type;
+	(s_new->value).fval = (double) (s_new->value).llval;
+      } else if( (old_type == CONFIG_TYPE_BOOL) &&
+		 (new_type == CONFIG_TYPE_INT64) ) {
+
+	s_new->type = old_type;
+      } else {
+	std::string error_message;
+	
+	error_message = "Type mismatch for parameter \"" + std::string(path) + "\": old type = " + std::string(var_types[old_type]) + ", new type = " + std::string(var_types[new_type]) + ".";
+	
+	throw std::runtime_error(error_message);
+      }
+    }
+
+    return 1;
+  }
+
+
   // returns the setting pointer to the element, creating all groups along the way
   config_setting_t *create_branch_if_necessary( std::string key, int setting_type ) {
     std::vector<std::string> split_key;
@@ -63,7 +103,7 @@ protected:
     return next;
   }
   
-  int update_parameters(config_setting_t *setting, char *path) {
+  int update_parameters(config_setting_t *setting, char *path, bool overwrite=false) {
     char this_path[MAX_PARAM_LENGTH+1];
     this_path[0] = 0;
     
@@ -86,21 +126,22 @@ protected:
       }
     }
     
-    int type = setting->type;
-    config_value_t value = setting->value;
-    config_list_t *list = value.list;
+    short *type = &(setting->type);
+    config_value_t *value = &(setting->value);
+    config_list_t *list = value->list;
       
 
   // ***** If this setting is a group, then recurse further down. *****
 
-    if(type == CONFIG_TYPE_GROUP) {
-      //    printf("%s is a group.\n",this_path);      
+    if((*type) == CONFIG_TYPE_GROUP) {
+      if(verbose_paramconfig)
+	printf("update_parameters: %s is a group.\n",this_path);      
       
       if(list) {
 	int len = list->length;	
 	config_setting_t **s;
 	for(s = list->elements; len--; s++)
-	  update_parameters(*s, this_path);  // recursion
+	  update_parameters(*s, this_path, overwrite);  // recursion
       }
       
       return 1;
@@ -109,74 +150,123 @@ protected:
 
   // ***** If we get here then we're a leaf, i.e. a parameter. ********
 
-    config_setting_t *old_setting;
+    // Force integers to be 64bit.
+    if( (*type) == CONFIG_TYPE_INT ) {
+      (*type) = CONFIG_TYPE_INT64;
+      value->llval = (long long) (value->ival);
+    }
 
+    // Check to see if this parameter already exists.
+    config_setting_t *old_setting = config_lookup(&cfg_, this_path);
 
-    /* Check to see if this parameter already exists. (optional) */
-    old_setting = config_lookup(&cfg_, this_path);
+    if( (old_setting) && (! overwrite) ) {
+      if(verbose_paramconfig)
+	printf("Parameter \"%s\" already exists -- skipping it.\n",this_path);
+      return 1;
+    }
 
     if(old_setting) {
-      printf("Parameter \"%s\" already exists -- updating value.\n",this_path);
+      if(verbose_paramconfig)
+	printf("Parameter \"%s\" already exists -- updating value.\n",this_path);
+      check_types(old_setting, setting, this_path);
     } else {
-      printf("Adding new parameter \"%s\".\n",this_path);    
+      if(verbose_paramconfig)
+	printf("Adding new parameter \"%s\".\n",this_path);    
     }
-    
-
+        
     // Create a std::string version of the full path name.
     std::string setting_name = std::string( this_path );
 
 
     // Update the setting, or create it if necessary.
-    switch( type ) {
+    switch( (*type) ) {
     case CONFIG_TYPE_INT:
-      old_setting = create_branch_if_necessary( setting_name, CONFIG_TYPE_INT );
-      config_setting_set_int( old_setting, value.ival );
+      // should never get here, since we force 64bit ints above...
+      throw std::runtime_error("32bit int detected! This should not have happened...");
+      break;
+    case CONFIG_TYPE_INT64:
+      old_setting = create_branch_if_necessary( setting_name, CONFIG_TYPE_INT64 );
+      config_setting_set_int64( old_setting, value->llval );
       break;
     case CONFIG_TYPE_FLOAT:
       old_setting = create_branch_if_necessary( setting_name, CONFIG_TYPE_FLOAT );
-      config_setting_set_float( old_setting, value.fval );
+      config_setting_set_float( old_setting, value->fval );
       break;
     case CONFIG_TYPE_STRING:
       old_setting = create_branch_if_necessary( setting_name, CONFIG_TYPE_STRING );
-      config_setting_set_string( old_setting, value.sval );
+      config_setting_set_string( old_setting, value->sval );
       break;
     case CONFIG_TYPE_BOOL:
       old_setting = create_branch_if_necessary( setting_name, CONFIG_TYPE_BOOL );
-      config_setting_set_bool( old_setting, value.ival );
+      config_setting_set_bool( old_setting, (int) value->llval );
       break;
     case CONFIG_TYPE_ARRAY:
       old_setting = create_branch_if_necessary( setting_name, CONFIG_TYPE_ARRAY );
       
       // Remove all existing array elements from the old setting.
-      while( config_setting_remove_elem(old_setting, 0) );
+      //
+      // No. We cannot do that, since we need to preserve the full set
+      // of default values for arrays like MinimumOverDensityForRefinement.
+
+      // while( config_setting_remove_elem(old_setting, 0) );
+
       
-      // If there is more than one element...
+      // If there is more than zero elements...
       if(list) {
-	config_setting_t *element;
+	int Nelem = list->length;		
+
 	config_setting_t **s;
-	int len = list->length;
-	
-	for(s = list->elements; len--; s++) {
-	  
-	  switch( (*s)->type ) {
+	s = list->elements;
+
+	short *this_type;	
+	config_value_t *this_value;
+	for(int i = 0; i < Nelem; i++, s++) {
+
+	  this_value = &((*s)->value);
+
+	  // Force integers to be 64bit. (This needs to happen inside
+	  // this loop in order to typecast the value to 'long long'.)
+	  this_type = &((*s)->type);
+	  if( (*this_type) == CONFIG_TYPE_INT) {
+	    (*this_type) = CONFIG_TYPE_INT64;
+	    this_value->llval = (long long) this_value->ival;
+	  }
+
+	  config_setting_t *element;
+	  element = config_setting_get_elem(old_setting, i);
+
+	  if(element)
+	    check_types(element, (*s), this_path);
+
+	  switch( (*this_type) ) {
 	  case CONFIG_TYPE_INT:
-	    element = config_setting_add(old_setting, NULL, CONFIG_TYPE_INT);
-	    config_setting_set_int( element, ((*s)->value).ival );
+	    // should never get here, since we force 64bit ints above...
+	    throw std::runtime_error("32bit int detected! This should not have happened...");
+	    break;
+	  case CONFIG_TYPE_INT64:
+	    if(!element)
+	      element = config_setting_add(old_setting, NULL, CONFIG_TYPE_INT64);
+	    config_setting_set_int64( element, this_value->llval );
 	    break;
 	  case CONFIG_TYPE_FLOAT:
-	    element = config_setting_add(old_setting, NULL, CONFIG_TYPE_FLOAT );
-	    config_setting_set_float( element, ((*s)->value).fval );
+	    if(!element)
+	      element = config_setting_add(old_setting, NULL, CONFIG_TYPE_FLOAT );
+	    config_setting_set_float( element, this_value->fval );
 	    break;
 	  case CONFIG_TYPE_STRING:
-	    element = config_setting_add(old_setting, NULL, CONFIG_TYPE_STRING );
-	    config_setting_set_string( element, ((*s)->value).sval );
+	    if(!element)
+	      element = config_setting_add(old_setting, NULL, CONFIG_TYPE_STRING );
+	    config_setting_set_string( element, this_value->sval );
 	    break;
 	  case CONFIG_TYPE_BOOL:
-	    element = config_setting_add(old_setting, NULL, CONFIG_TYPE_BOOL );
-	    config_setting_set_bool( element, ((*s)->value).ival );
+	    if(!element)
+	      element = config_setting_add(old_setting, NULL, CONFIG_TYPE_BOOL );
+	    config_setting_set_bool( element, (int) this_value->llval );
 	    break;
 	  default:
-	    fprintf(stderr,"unknown type: %d\n", (*s)->type);
+	    std::string error_message;
+	    error_message = "Unknown type for parameter \"" + std::string(this_path) + "\": " + std::string(var_types[(*this_type)]) + ".";
+	    throw std::runtime_error(error_message);
 	  }
 
 	} // loop over all (new) array elements.
@@ -184,7 +274,9 @@ protected:
       
       break;
     default:
-      fprintf(stderr,"unknown type: %d\n", type);
+      std::string error_message;
+      error_message = "Unknown type for parameter \"" + std::string(this_path) + "\": " + std::string(var_types[(*type)]) + ".";
+      throw std::runtime_error(error_message);
     }
     
     
@@ -195,17 +287,27 @@ protected:
 public:
   
   explicit enzo_libconfig_backend( std::string fname, std::string defaults )
-    : interpreter(fname), fname_(fname)
-  {
+    : interpreter(fname), fname_(fname) {
+    if(verbose_paramconfig)
+      printf("Initializing parameter config (libconfig backend).\n");
+
     config_init(&cfg_);
     
     // We first "update" the newly created config object with the
-    // defaults string. This is done first, so the user specified
-    // parameters can overwrite these defaults.
+    // defaults string. This is done first in order to set some arrays
+    // (like CellFlaggingMethod, etc.) which require more elements
+    // than the user typically specifies.
     update(defaults);
     
-    // Now we update with the user-specified parameters.
-    update(fname_, true);    
+    // useful for debugging:
+    //    dump("dump_before.cfg");
+
+    // Now we update (from_file=true, overwrite=true) with the
+    // user-specified parameters.
+    update(fname_, true, true);    
+
+    // useful for debugging:
+    //    dump("dump.cfg");
   }
   
   
@@ -217,11 +319,15 @@ public:
   
   // This updates the existing config object with new values from
   // <input_string>, which must be in libconfig format.
+  //
+  // Unless overwrite=true, this will simply skip parameters that have
+  // already been defined. This is so UpdateDefaults() doesn't wipe
+  // out the user's parameter choices.
   // 
   // When from_file==true, then <input_string> is treated as a
   // filename, from which to read the new values.
   //
-  bool update( std::string input_string, bool from_file=false )
+  bool update( std::string input_string, bool from_file=false, bool overwrite=false )
   {	
     
     // First we initialize a new (temporary) config
@@ -231,10 +337,18 @@ public:
     
     // Now we read in the new parameters into the temporary config.
     if( from_file ) {
+
+      if(verbose_paramconfig)
+	printf("Updating parameters from file <%s>.\n", input_string.c_str());
+
       if(! config_read_file(&tmp_cfg_, input_string.c_str())) {
 	fprintf(stderr, "%s:%d - %s\n", config_error_file(&tmp_cfg_), config_error_line(&tmp_cfg_), config_error_text(&tmp_cfg_));
 	throw std::runtime_error("parse error");
       }
+    } else {
+
+      if(verbose_paramconfig)
+	printf("Updating parameters from string:\n\"%s\n\".\n", input_string.c_str());
 
       if(! config_read_string(&tmp_cfg_, input_string.c_str())) {
 	fprintf(stderr, "string:%d - %s\n", config_error_line(&tmp_cfg_), config_error_text(&tmp_cfg_));
@@ -244,7 +358,7 @@ public:
     
     // Next we update the parameters in the original config object
     // with the new ones from the temporary one.
-    update_parameters(tmp_cfg_.root, NULL);
+    update_parameters(tmp_cfg_.root, NULL, overwrite);
         
     // Destroy temporary config object.
     config_destroy(&tmp_cfg_);
@@ -252,11 +366,39 @@ public:
     return true;
   }	
   
-  bool dump( std::string fname )  
+  bool dump( char fname[], char header_string[]=NULL )
   {
-    if(! config_write_file( &cfg_, fname.c_str() ) )
+    if(! config_write_file( &cfg_, fname ) )
       return false;
     
+    // prepend a header string, if specified.
+    if(header_string) {
+      FILE *fp;
+
+      // find number of characters
+      char c;
+      int Nchar = 0;
+      fp = fopen(fname, "rt");      
+      while((c = fgetc(fp)) != EOF) Nchar++;
+      fclose(fp);
+
+      // read the entire file into a buffer
+      char *buffer = new char[Nchar];
+      fp = fopen(fname, "rt");      
+      for(int i=0;i<Nchar;i++)
+	buffer[i] = fgetc(fp);
+      fclose(fp);
+      
+      // write out the header and then the buffer
+      fp = fopen(fname, "wt");      
+      fprintf(fp,"%s\n",header_string);
+      for(int i=0;i<Nchar;i++)
+	fputc(buffer[i],fp);
+      fclose(fp);
+      
+      delete [] buffer;
+    }
+
     return true;
   }
   
@@ -274,8 +416,14 @@ public:
   
   bool set( std::string key, int value )
   {
-    config_setting_t *setting = create_branch_if_necessary( key, CONFIG_TYPE_INT );
-    return config_setting_set_int( setting, value )==CONFIG_TRUE;
+
+    // We force 64bit integers!
+    long long lvalue = (long long) value;
+    config_setting_t *setting = create_branch_if_necessary( key, CONFIG_TYPE_INT64 );
+    return config_setting_set_int64( setting, lvalue )==CONFIG_TRUE;
+    
+    // config_setting_t *setting = create_branch_if_necessary( key, CONFIG_TYPE_INT );
+    // return config_setting_set_int( setting, value )==CONFIG_TRUE;
   }
   
   bool set( std::string key, long long value )
@@ -296,10 +444,11 @@ public:
     return config_setting_set_float( setting, value )==CONFIG_TRUE;
   }
   
-  bool set( std::string key, std::string value )
+  bool set( std::string key, char value[] )
   {
+
     config_setting_t *setting = create_branch_if_necessary( key, CONFIG_TYPE_STRING );
-    return config_setting_set_string( setting, value.c_str() )==CONFIG_TRUE;
+    return config_setting_set_string( setting, value )==CONFIG_TRUE;
   }
   
   bool set_list( std::string key, size_t n, const int* values )
@@ -307,11 +456,19 @@ public:
     bool ret = true;
     
     config_setting_t *array = create_branch_if_necessary( key, CONFIG_TYPE_ARRAY );
-    config_setting_t *setting = NULL;
+    config_setting_t *element = NULL;
     
     for( size_t i=0l; i<n; ++i ) {
-      setting = config_setting_add(array, NULL, CONFIG_TYPE_INT);
-      ret &= config_setting_set_int(setting, values[i])==CONFIG_TRUE;
+      element = config_setting_get_elem(array, i);
+
+      // We force 64bit integers!
+      long long lvalue = (long long) values[i];
+      if(!element)
+	element = config_setting_add(array, NULL, CONFIG_TYPE_INT64);
+      ret &= config_setting_set_int64(element, lvalue)==CONFIG_TRUE;
+
+      // element = config_setting_add(array, NULL, CONFIG_TYPE_INT);
+      // ret &= config_setting_set_int(element, values[i])==CONFIG_TRUE;
     }
     
     return ret;
@@ -322,11 +479,14 @@ public:
     bool ret = true;
     
     config_setting_t *array = create_branch_if_necessary( key, CONFIG_TYPE_ARRAY );
-    config_setting_t *setting = NULL;
+    config_setting_t *element = NULL;
     
     for( size_t i=0l; i<n; ++i ) {
-      setting = config_setting_add(array, NULL, CONFIG_TYPE_INT64);
-      ret &= config_setting_set_int64(setting, values[i])==CONFIG_TRUE;
+      element = config_setting_get_elem(array, i);
+
+      if(!element)
+	element = config_setting_add(array, NULL, CONFIG_TYPE_INT64);
+      ret &= config_setting_set_int64(element, values[i])==CONFIG_TRUE;
     }
     
     return ret;
@@ -337,11 +497,14 @@ public:
     bool ret = true;
     
     config_setting_t *array = create_branch_if_necessary( key, CONFIG_TYPE_ARRAY );
-    config_setting_t *setting = NULL;
+    config_setting_t *element = NULL;
     
     for( size_t i=0l; i<n; ++i ) {
-      setting = config_setting_add(array, NULL, CONFIG_TYPE_BOOL);
-      ret &= config_setting_set_int64(setting, (int)values[i])==CONFIG_TRUE;
+      element = config_setting_get_elem(array, i);
+
+      if(!element)
+	element = config_setting_add(array, NULL, CONFIG_TYPE_BOOL);
+      ret &= config_setting_set_int64(element, (int)values[i])==CONFIG_TRUE;
     }
     
     return ret;
@@ -352,26 +515,32 @@ public:
     bool ret = true;
     
     config_setting_t *array = create_branch_if_necessary( key, CONFIG_TYPE_ARRAY );
-    config_setting_t *setting = NULL;
+    config_setting_t *element = NULL;
     
     for( size_t i=0l; i<n; ++i ) {
-      setting = config_setting_add(array, NULL, CONFIG_TYPE_FLOAT);
-      ret &= config_setting_set_float(setting, values[i])==CONFIG_TRUE;
+      element = config_setting_get_elem(array, i);
+
+      if(!element)
+	element = config_setting_add(array, NULL, CONFIG_TYPE_FLOAT);
+      ret &= config_setting_set_float(element, values[i])==CONFIG_TRUE;
     }
     
     return ret;
   }
   
-  bool set_list( std::string key, size_t n, const std::string* values )
+  bool set_list( std::string key, size_t n, char* values[] )
   {
     bool ret = true;
     
     config_setting_t *array = create_branch_if_necessary( key, CONFIG_TYPE_ARRAY );
-    config_setting_t *setting = NULL;
+    config_setting_t *element = NULL;
     
     for( size_t i=0l; i<n; ++i ) {
-      setting = config_setting_add(array, NULL, CONFIG_TYPE_STRING);
-      ret &= config_setting_set_string(setting, values[i].c_str())==CONFIG_TRUE;
+      element = config_setting_get_elem(array, i);
+
+      if(!element)
+	element = config_setting_add(array, NULL, CONFIG_TYPE_STRING);
+      ret &= config_setting_set_string(element, values[i])==CONFIG_TRUE;
     }
     
     return ret;
@@ -379,23 +548,33 @@ public:
   
   int query( std::string key, std::string &ret )
   {
-    std::cerr << "accessing scalar " << key << std::endl;
+    if(verbose_paramconfig)
+      printf("accessing scalar parameter \"%s\".\n", key.c_str());
     
     int intval; double doubleval; char* stringval;
+    long long longval;
     std::stringstream returnval;
     
     config_setting_t *setting = config_lookup(&cfg_, key.c_str() );
     
     if( setting == NULL ) {	
-      //		  fprintf(stderr, "No '%s' setting in configuration file.\n",key.c_str());
+      fprintf(stderr, "No '%s' setting in configuration file.\n",key.c_str());
       //		  throw std::runtime_error("element not found");
       return 0;
     }
     
     switch( config_setting_type(setting) ) {
     case CONFIG_TYPE_INT: 
-      intval = config_setting_get_int(setting); 
-      returnval << intval; 
+      // should never get here, since we force 64bit ints...
+      throw std::runtime_error("32bit int detected! This should not have happened...");
+
+      // intval = config_setting_get_int(setting); 
+      // returnval << intval; 
+      // ret =  returnval.str();
+      break;
+    case CONFIG_TYPE_INT64: 
+      longval = config_setting_get_int64(setting); 
+      returnval << longval; 
       ret =  returnval.str();
       break;
     case CONFIG_TYPE_FLOAT: 
@@ -422,8 +601,8 @@ public:
   
   int query_list( std::string key, std::vector< std::string >& ret )
   {
-    
-    std::cerr << "accessing array " << key << std::endl;
+    if(verbose_paramconfig)
+      printf("accessing array parameter \"%s\".\n", key.c_str());
     config_setting_t *setting;
     setting = config_lookup(&cfg_, key.c_str());
     
@@ -431,12 +610,21 @@ public:
       int count = config_setting_length(setting);
       for( int i=0; i<count; ++i ) {
 	int intval; double doubleval; char* stringval;
+	long long longval;
 	std::stringstream returnval;
 	
 	switch( config_setting_type( config_setting_get_elem(setting,i) ) ) {
 	case CONFIG_TYPE_INT: 
-	  intval = config_setting_get_int_elem(setting,i); 
-	  returnval << intval; 
+	  // should never get here, since we force 64bit ints...
+	  throw std::runtime_error("32bit int detected! This should not have happened...");
+
+	  // intval = config_setting_get_int_elem(setting,i); 
+	  // returnval << intval; 
+	  // ret.push_back(returnval.str());
+	  break;
+	case CONFIG_TYPE_INT64: 
+	  longval = config_setting_get_int64_elem(setting,i); 
+	  returnval << longval; 
 	  ret.push_back(returnval.str());
 	  break;
 	case CONFIG_TYPE_FLOAT: 
@@ -459,7 +647,7 @@ public:
 	}
       }
     } else {	
-      //		  fprintf(stderr, "No '%s' setting in configuration file.\n",key.c_str());
+      fprintf(stderr, "No '%s' setting in configuration file.\n",key.c_str());
       //		  throw std::runtime_error("element not found");
       return 0;
     }
@@ -478,8 +666,10 @@ public:
       //		  throw std::runtime_error("element not found");
       return 0;
     }
+        
     
-    std::cerr << "length of " << key << " = " << len;
+    if(verbose_paramconfig)
+      printf("Parameter \"%s\" has %d elements.\n", key.c_str(), len);
     return len;
   }
 };
