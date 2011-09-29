@@ -2006,19 +2006,17 @@ int zEulerSweep(int j, int NumberOfSubgrids, fluxes *SubgridFluxes[],
 
 
   /* Initialization for isolated galaxy sims */
-  int GalaxySimulationInitializeGrid(
-				     FLOAT DiskRadius,
-				     float GalaxyMass,
-				     float GasMass,
-				     FLOAT DiskPosition[MAX_DIMENSION], 
+  int GalaxySimulationInitializeGrid(FLOAT DiskRadius,
+				     FLOAT ExternalGravityRadius,
+				     float ExternalGravityOrientation[MAX_DIMENSION],
+				     float ExternalGravityConstant,
+				     FLOAT DiskPosition[MAX_DIMENSION],
 				     FLOAT ScaleHeightz,
-				     FLOAT ScaleHeightR, 
-				     float DMConcentration,
 				     float DiskTemperature,
 				     float InitialTemperature,
 				     float AngularMomentum[MAX_DIMENSION],
-				     float UniformVelocity[MAX_DIMENSION], 
-				     int UseMetallicityField, 
+				     float UniformVelocity[MAX_DIMENSION],
+				     int UseMetallicityField,
 				     float GalaxySimulationInflowTime,
 				     float GalaxySimulationInflowDensity,
 				     int level);

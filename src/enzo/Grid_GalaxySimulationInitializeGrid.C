@@ -33,7 +33,6 @@
 #define mh (1.67e-24)           //Mass of Hydrogen [g]
 #define kboltz (1.381e-16)      //Boltzmann's Constant [ergK-1]
 
-
 int GetUnits(float *DensityUnits, float *LengthUnits,
             float *TemperatureUnits, float *TimeUnits,
             float *VelocityUnits, double *MassUnits, FLOAT Time);
@@ -46,21 +45,17 @@ int CosmologyComputeExpansionFactor(FLOAT time, FLOAT *a, FLOAT *dadt);
 
 /* Internal routines */
 
-float gasvel(FLOAT radius, float DiskDensity, FLOAT ExpansionFactor, 
-	     float GalaxyMass, FLOAT ScaleHeightR, FLOAT ScaleHeightz, 
-	     float DMConcentration, FLOAT Time);
-float gauss_mass(FLOAT r, FLOAT z, FLOAT xpos, FLOAT ypos, FLOAT zpos, FLOAT inv [3][3], float DiskDensity, FLOAT ScaleHeightR, FLOAT ScaleHeightz, FLOAT cellwidth);
+float gauss_mass(FLOAT rCell, FLOAT z, FLOAT xpos, FLOAT ypos, FLOAT zpos, FLOAT inv [3][3], float CircularVelocity, float SoundSpeed, FLOAT rCore, FLOAT ScaleHeightz0, FLOAT cellwidth);
 void rot_to_disk(FLOAT xpos, FLOAT ypos, FLOAT zpos, FLOAT &xrot, FLOAT &yrot, FLOAT &zrot, FLOAT inv [3][3]);
 
 static float DensityUnits, LengthUnits, TemperatureUnits = 1, TimeUnits, VelocityUnits;
 
 int grid::GalaxySimulationInitializeGrid(FLOAT DiskRadius,
-					 float GalaxyMass,
-					 float GasMass,
+					 FLOAT ExternalGravityRadius,
+					 float ExternalGravityOrientation[MAX_DIMENSION],
+					 float ExternalGravityConstant,
 					 FLOAT DiskPosition[MAX_DIMENSION], 
 					 FLOAT ScaleHeightz,
-					 FLOAT ScaleHeightR, 
-					 float DMConcentration,
 					 float DiskTemperature,
 					 float InitialTemperature,
 					 float AngularMomentum[MAX_DIMENSION],
@@ -72,11 +67,11 @@ int grid::GalaxySimulationInitializeGrid(FLOAT DiskRadius,
 {
  /* declarations */
 
-  int dim, i, j, k, m, field, disk, size, MetalNum, MetalIaNum, vel;
+ int dim, i, j, k, m, field, disk, size, MetalNum, vel;
  int DeNum, HINum, HIINum, HeINum, HeIINum, HeIIINum, HMNum, H2INum, H2IINum,
    DINum, DIINum, HDINum, B1Num, B2Num, B3Num, PhiNum;
- float DiskDensity, DiskVelocityMag;
-
+ float DiskDensity, CircularVelocity, DiskVelocityMag, SoundSpeed;
+ FLOAT rCore;
   
   /* create fields */
 
@@ -122,13 +117,12 @@ int grid::GalaxySimulationInitializeGrid(FLOAT DiskRadius,
 
   if (UseMetallicityField)
     FieldType[MetalNum = NumberOfBaryonFields++] = Metallicity; /* fake it with metals */
-  if (StarMakerTypeIaSNe)
-    FieldType[MetalIaNum = NumberOfBaryonFields++] = MetalSNIaDensity;
 
  /* Return if this doesn't concern us. */
 
  if (ProcessorNumber != MyProcessorNumber) 
    return SUCCESS;
+
 
  /* Set various units. */
 
@@ -262,17 +256,22 @@ int grid::GalaxySimulationInitializeGrid(FLOAT DiskRadius,
 		}
 
 	    /* If we're above the disk, then exit. */
-	    DiskDensity = (GasMass*SolarMass/(8.0*pi*ScaleHeightz*Mpc*POW(ScaleHeightR*Mpc,2.0)))/DensityUnits;   //Code units (rho_0)
+	    // DiskDensity = (GasMass*SolarMass/(8.0*pi*ScaleHeightz*Mpc*POW(ScaleHeightR*Mpc,2.0)))/DensityUnits;   //Code units (rho_0)
 
-	    DiskVelocityMag = gasvel(drad, DiskDensity, ExpansionFactor, GalaxyMass, ScaleHeightR, ScaleHeightz, DMConcentration, Time);
+	    // 200 km s^-1 in TT09
+	    CircularVelocity = ExternalGravityConstant*VelocityUnits; // [cgs]
+	    // 0.5 kpc in TT09
+	    rCore = ExternalGravityRadius*LengthUnits; // [cgs]
+	    // 6 km s^-1 in TT09  
+	    SoundSpeed = 6e5; // [cgs]
 
+	    DiskVelocityMag = CircularVelocity*drad*LengthUnits/sqrt(pow(rCore,2) + pow((drad*LengthUnits),2))/VelocityUnits;
 
 	    if (dim == 0)
 	      {
 		CellMass = gauss_mass(drad*LengthUnits,zheight*LengthUnits, xpos*LengthUnits, ypos*LengthUnits, zpos*LengthUnits, inv, 
-				      DiskDensity*DensityUnits,ScaleHeightR*Mpc, ScaleHeightz*Mpc, CellWidth[0][0]*LengthUnits);
-
-
+				      CircularVelocity, SoundSpeed, rCore, ScaleHeightz*Mpc, CellWidth[0][0]*LengthUnits);
+		
 		dens1 = CellMass/POW(CellWidth[0][0]*LengthUnits,3)/DensityUnits;
 	      }
 
@@ -316,9 +315,6 @@ int grid::GalaxySimulationInitializeGrid(FLOAT DiskRadius,
 	if (UseMetallicityField)
 	  for (i = 0; i < size; i++)
 	    BaryonField[MetalNum][i] = 1.0e-10;
-	if (StarMakerTypeIaSNe)
-	  for (i = 0; i < size; i++)
-	    BaryonField[MetalIaNum][i] = 1.0e-10;
 
 	/* Set Velocities. */
 
@@ -348,123 +344,62 @@ int grid::GalaxySimulationInitializeGrid(FLOAT DiskRadius,
 
 }
 
-
-float gasvel(FLOAT radius, float DiskDensity, FLOAT ExpansionFactor, float GalaxyMass, FLOAT ScaleHeightR, FLOAT ScaleHeightz, float DMConcentration, FLOAT Time)
-{
-
- double OMEGA=OmegaLambdaNow+OmegaMatterNow;                 //Flat Universe
-
- double r = radius*LengthUnits/100;    // Radius [m]
-
- double M_200 = GalaxyMass*SolarMass/1000.0;      // Virial Mass [kg]
-
- double H = sqrt(HubbleConstantNow*100*HubbleConstantNow*100*(OmegaLambdaNow+OmegaMatterNow*POW(ExpansionFactor,-3)-(OMEGA-1.)*POW(ExpansionFactor,-2)));                                
-
- double r_200 = (1.63e-2*POW(GalaxyMass,1.0/3.0)*POW((OmegaLambdaNow+OmegaMatterNow*POW(ExpansionFactor, -3)-(OMEGA-1.0)*POW(ExpansionFactor,-2)),-1.0/3.0)*ExpansionFactor*POW(H,-2.0/3.0)*POW(100,2.0/3.0))*Mpc/1.0e5;
- //virial radius [m]: M_200/M_Solar = GalaxyMass
-
- double M_gas, M_DM, M_Tot, Acc, V_Circ;
- double f_C = log(1.0+DMConcentration)-DMConcentration/(1.0+DMConcentration);
- double r_s = r_200/DMConcentration;  //[m]
-
- // Mass of gas disk and DM at given radius
-
-     M_gas=8.0*M_PI*ScaleHeightz*Mpc/100*ScaleHeightR*Mpc/100*ScaleHeightR*Mpc/100*DiskDensity*DensityUnits*1000*PEXP(-r/(ScaleHeightR*Mpc/100))*(PEXP(r/(ScaleHeightR*Mpc/100))-r/(ScaleHeightR*Mpc/100)-1.0);
-
-     M_DM=(M_200/f_C)*(log(1.0+r/r_s)-(r/r_s)/(1.0+r/r_s));
-
-     if (SelfGravity==1){
-	M_Tot=M_DM+M_gas;
-     }
-     else{
-	M_Tot=M_DM;
-     }
-
-  float DensityUnits=1, LengthUnits=1, VelocityUnits=1, TimeUnits=1,
-    TemperatureUnits=1;
-  double MassUnits=1;
-
-  if (GetUnits(&DensityUnits, &LengthUnits, &TemperatureUnits,
-	       &TimeUnits, &VelocityUnits, &MassUnits, Time) == FAIL) {
-    ENZO_FAIL("Error in GetUnits.");
-  }
-
-  double MassUnitsDouble=1.0;
-
-  if(ComovingCoordinates)
-    MassUnitsDouble = double(DensityUnits)*POW(double(LengthUnits), 3.0);
-
-  // Set the point source gravity parameters.  This is the DM mass (in g)
-  //   within rs.  The core radius to rs in cm.
-  //
-  // BWO 10 July 2009: Both of these values are now converted to code units, because 
-  // otherwise the values go over 32-bit precision.  This is used in
-  // Grid::ComputeAccelerationFieldExternal, and converted back to CGS where needed.
-  //
-
-  PointSourceGravityConstant = (M_200/f_C)*(log(1.0+1.0)-1.0/(1.0+1.0))*1000.0 / MassUnitsDouble;
-  PointSourceGravityCoreRadius = r_s*100.0 / LengthUnits;
-
-  /*
-  fprintf(stderr,"Grid::GalaxySimulationInitializeGrid:  %d  %e  %e\n",MyProcessorNumber,MassUnitsDouble, LengthUnits);
-  fprintf(stderr,"  PointSourceGravityConstant = %e  %d\n",PointSourceGravityConstant,MyProcessorNumber);
-  fprintf(stderr,"  PointSourceGravityCoreRadius = %e  %d\n",PointSourceGravityCoreRadius,MyProcessorNumber);
-  */
-
- // Force per unit mass on disk (i.e. acceleration) [ms-2]
-
-     Acc=((GravConst/1000.0)*M_Tot)/(r*r);
-
- // Magnitude of Circular Velocity of disk 
-
-     V_Circ = sqrt(r*Acc)*100;       //cms-1
-
-     /*      printf("r = %g  M_Tot = %g  Acc = %g  M_DM = %g  M_gas = %g  f_C = %g\n",
-	     r, M_Tot, Acc, M_DM, M_gas, f_C);
-     printf("r_s = %g  DMConcentration = %g  r_200 = %g  r/r_s = %g\n",
-	     r_s, DMConcentration, r_200, r/r_s);
-     printf("EF = %g  H = %g  OMEGA = %g\n", ExpansionFactor, H, OMEGA);
-     printf("radius = %g  v_circ = %g\n", radius, V_Circ);  */
-
-     return (V_Circ/VelocityUnits);  //code units
-}
-
-
 // Computes the total mass in a given cell by integrating the density profile using 5-point Gaussian quadrature
-float gauss_mass(FLOAT r, FLOAT z, FLOAT xpos, FLOAT ypos, FLOAT zpos, FLOAT inv [3][3], float DiskDensity, FLOAT ScaleHeightR, FLOAT ScaleHeightz, FLOAT cellwidth)
+float gauss_mass(FLOAT rCell, FLOAT z, FLOAT xpos, FLOAT ypos, FLOAT zpos, FLOAT inv [3][3], float CircularVelocity, float SoundSpeed, FLOAT rCore, FLOAT ScaleHeightz0, FLOAT cellwidth)
 {
   
   FLOAT EvaluationPoints [5] = {-0.90617985,-0.53846931,0.0,0.53846931,0.90617985};
-  FLOAT Weights [5] = {0.23692689,0.47862867,0.56888889,0.47862867,0.23692689};
-  FLOAT xResult [5];
-  FLOAT yResult [5];
-  float Mass = 0;
-  FLOAT xrot,yrot,zrot;
+  float Weights [5] = {0.23692689,0.47862867,0.56888889,0.47862867,0.23692689};
+  float xResult [5],yResult [5];
+  float Mass, ToomreQ, rho0, kappa;
+  FLOAT xrot,yrot,zrot,rd, ScaleHeightz;
+  FLOAT xEval,yEval,zEval;
   int i,j,k;
+
+  const FLOAT Rsun = 0.0085*Mpc;
+  // Converting from full width half magnitude to scale height
+  const FLOAT h0 = ScaleHeightz0;
+  const FLOAT R0 = 0.0095*Mpc;
+
+  Mass = ToomreQ = rho0 = kappa = 0;
+  xrot = yrot = zrot = xEval = yEval = zEval = rd = 0;
+
+  if (rCell < 0.002*Mpc || rCell > 0.010*Mpc)
+    ToomreQ = 20.0;
+  else
+    ToomreQ = 1.0;
+
+  
 
   for (i=0;i<5;i++)
     {
       xResult[i] = 0.0;
+      xEval = xpos + EvaluationPoints[i]*cellwidth/2.0;
       for (j=0;j<5;j++)
 	{
 	  yResult[j] = 0.0;
+	  yEval = ypos + EvaluationPoints[j]*cellwidth/2.0;
 	  for (k=0;k<5;k++)
 	    {
-	      rot_to_disk(xpos+EvaluationPoints[i]*cellwidth/2.0,ypos+EvaluationPoints[j]*cellwidth/2.0,zpos+EvaluationPoints[k]*cellwidth/2.0,xrot,yrot,zrot,inv);
-	      yResult[j] += cellwidth/2.0*Weights[k]*PEXP(-sqrt(POW(xrot,2)+POW(yrot,2))/ScaleHeightR)/POW(cosh(zrot/(2.0*ScaleHeightz)),2);
-	    }
-	  xResult[i] += cellwidth/2.0*Weights[j]*yResult[j];
-	}
-      Mass += cellwidth/2.0*Weights[i]*xResult[i];
-    }  
-  Mass *= DiskDensity;
-  return Mass;
-}
+	      zEval = zpos + EvaluationPoints[k]*cellwidth/2.0;
 
-//Finds coordinates in rotated coordinate system
-void rot_to_disk(FLOAT xpos, FLOAT ypos, FLOAT zpos, FLOAT &xrot, FLOAT &yrot, FLOAT &zrot, FLOAT inv [3][3])
-{
-  xrot = xpos*inv[0][0] + ypos*inv[0][1] + zpos*inv[0][2];
-  yrot = xpos*inv[1][0] + ypos*inv[1][1] + zpos*inv[1][2];
-  zrot = xpos*inv[2][0] + ypos*inv[2][1] + zpos*inv[2][2];
+	      xrot = xpos*inv[0][0] + ypos*inv[0][1] + zpos*inv[0][2];
+	      yrot = xpos*inv[1][0] + ypos*inv[1][1] + zpos*inv[1][2];
+	      zrot = xpos*inv[2][0] + ypos*inv[2][1] + zpos*inv[2][2];
+
+	      rd = sqrt(POW(xrot,2.0)+POW(yrot,2.0));
+
+	      // Fitting formula for MW disk flaring from Kalberla & Kerp (2009), ARAA, Section 3.1.4
+	      ScaleHeightz = h0*exp((rd - Rsun)/R0);
+
+	      kappa = sqrt(2.)*CircularVelocity*sqrt(POW(float(rd),2.0)+2.0*POW(float(rCore),2.0))/(POW(float(rd),2.0)+POW(float(rCore),2.0));
+	      rho0 = kappa*SoundSpeed/(2.0*pi*GravConst*ToomreQ*float(ScaleHeightz));
+
+	      yResult[j] += float(cellwidth)/2.0*Weights[k]*rho0/POW(cosh(float(zrot/ScaleHeightz)),2);
+	    }
+	  xResult[i] += float(cellwidth)/2.0*Weights[j]*yResult[j];
+	}
+      Mass += float(cellwidth)/2.0*Weights[i]*xResult[i];
+    }
+  return Mass;
 }
