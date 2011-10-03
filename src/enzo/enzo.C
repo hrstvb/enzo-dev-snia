@@ -265,7 +265,7 @@ Eint32 MAIN_NAME(Eint32 argc, char *argv[])
       printf("PID %d on %s ready for debugger attach\n", getpid(), hostname);
     printf("xterm -e gdb --pid %d  &   ", getpid());
     fflush(stdout);
-    sleep(7);
+    sleep(.1);
 #endif
   
 
@@ -303,7 +303,7 @@ Eint32 MAIN_NAME(Eint32 argc, char *argv[])
      Increase the memory pool by 1/4th of the initial size as more
      memory is needed. */
 
-#ifdef TRANSFER
+
 #ifdef MEMORY_POOL
   const int GridObjectMemorySize = MEMORY_POOL_SIZE;
   int GridObjectSize = sizeof(grid);
@@ -311,14 +311,15 @@ Eint32 MAIN_NAME(Eint32 argc, char *argv[])
 					   GridObjectSize,
 					   GridObjectMemorySize*GridObjectSize/4);
 
-  ParticleMemoryPool = new MPool::MemoryPool(2, sizeof(FLOAT)*1000000,
+  ParticleMemoryPool = new MPool::MemoryPool(2, sizeof(FLOAT)*100000,
 					     sizeof(FLOAT)*8,
-					     sizeof(FLOAT)*100000);
+					     sizeof(FLOAT)*200000);
 
-  BaryonFieldMemoryPool = new MPool::MemoryPool(3, sizeof(FLOAT)*1000000,
-						sizeof(FLOAT)*64,
-						sizeof(FLOAT)*1000000);
+  BaryonFieldMemoryPool = new MPool::MemoryPool(3, sizeof(float)*100000,
+						sizeof(float)*64,
+						sizeof(float)*200000);
 
+#ifdef TRANSFER
   const int PhotonMemorySize = MEMORY_POOL_SIZE;
   int PhotonSize = sizeof(PhotonPackageEntry);
   PhotonMemoryPool = new MPool::MemoryPool(4, PhotonMemorySize*PhotonSize,
@@ -852,8 +853,12 @@ Eint32 MAIN_NAME(Eint32 argc, char *argv[])
     delete GridObjectMemoryPool;
     delete ParticleMemoryPool;
     delete BaryonFieldMemoryPool;
+#ifdef TRANSFER
     delete PhotonMemoryPool;
 #endif
+#endif
+    PrintMemoryUsage("Just before calling exit:");
+
  
   my_exit(EXIT_SUCCESS);
  

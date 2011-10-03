@@ -111,7 +111,7 @@ int grid::RHIonizationTestInitializeGrid(int NumChemicals,
   if (NewData == TRUE) {
     for (int field=0; field<NumberOfBaryonFields; field++)
       if (BaryonField[field] == NULL)
-	BaryonField[field] = static_cast<float*>(AllocateNewBaryonField(size));
+	BaryonField[field] = AllocateNewBaryonField(size);
    
     // set fluid density, total energy, [internal energy,] velocities, 
     // radiation energy, electron density, chemical species

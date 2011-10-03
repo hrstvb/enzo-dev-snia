@@ -49,8 +49,8 @@ grid::~grid()
 #endif /* UNUSED */
  
   for (i = 0; i < MAX_DIMENSION; i++) {
-    delete [] CellLeftEdge[i];
-    delete [] CellWidth[i];
+    //    delete [] CellLeftEdge[i];
+    //    delete [] CellWidth[i];
     FreeParticleMemory(ParticlePosition[i]);
     FreeParticleMemory(ParticleVelocity[i]);
     FreeParticleMemory(ParticleAcceleration[i]);

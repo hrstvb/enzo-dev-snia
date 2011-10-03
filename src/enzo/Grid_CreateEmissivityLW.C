@@ -61,7 +61,7 @@ int grid::CreateEmissivityLW(Star *AllStars, FLOAT TimeFLD, float dtFLD)
 
     CellVolume *= POW(LengthUnits, 3.0);
     
-    BaryonField[EtaNum] = static_cast<float*>(AllocateNewBaryonField(size));
+    BaryonField[EtaNum] = AllocateNewBaryonField(size);
     for (i = 0; i < size; i++)
       BaryonField[EtaNum][i] = 0.0;
 

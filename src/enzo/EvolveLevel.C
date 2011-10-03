@@ -690,10 +690,10 @@ int EvolveLevel(TopGridData *MetaData, LevelHierarchyEntry *LevelArray[],
     /* Rebuild the Grids on the next level down.
        Don't bother on the last cycle, as we'll rebuild this grid soon. */
  
-    PrintMemoryUsage("EL: Pre RebuildHierarchy"); 
+
     if (dtThisLevelSoFar[level] < dtLevelAbove)
       RebuildHierarchy(MetaData, LevelArray, level);
-    PrintMemoryUsage("EL: Post RebuildHierarchy"); 
+
     /* Count up number of grids on this level. */
 
     int GridMemory, NumberOfCells, CellsTotal, Particles;

@@ -79,7 +79,7 @@ int grid::PreparePotentialField(grid *ParentGrid)
       CommunicationDirection != COMMUNICATION_POST_RECEIVE) {
     if (PotentialField != NULL)
       FreeBaryonFieldMemory(PotentialField);
-    PotentialField = static_cast<float*>(AllocateNewBaryonField(size));
+    PotentialField = AllocateNewBaryonField(size);
   }
  
   /* Declarations. */

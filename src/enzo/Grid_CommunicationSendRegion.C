@@ -82,8 +82,8 @@ int grid::CommunicationSendRegion(grid *ToGrid, int ToProcessor,int SendField,
   if (CommunicationDirection == COMMUNICATION_RECEIVE)
     buffer = CommunicationReceiveBuffer[CommunicationReceiveIndex];
   else	   
-    //  buffer = static_cast<float*>(AllocateNewBaryonField(TransferSize));
-    buffer = new float[TransferSize];
+    buffer = AllocateNewBaryonField(TransferSize);
+    //    buffer = new float[TransferSize];
  
   // If this is the from processor, pack fields
  
@@ -212,7 +212,6 @@ int grid::CommunicationSendRegion(grid *ToGrid, int ToProcessor,int SendField,
 
     } // ENDIF ToProcessor
 
- 
 #ifdef MPI_INSTRUMENTATION
     endtime = MPI_Wtime();
     timer[5] += endtime-starttime;
@@ -234,76 +233,76 @@ int grid::CommunicationSendRegion(grid *ToGrid, int ToProcessor,int SendField,
 
 //    if (ToProcessor != ProcessorNumber)
 //      fprintf(stderr, "Received %d floats at %d from %d\n", TransferSize, 
-//	      MyProcessorNumber, ProcessorNumber);
+//            MyProcessorNumber, ProcessorNumber);
 
     index = 0;
  
     if (NewOrOld == NEW_AND_OLD || NewOrOld == NEW_ONLY)
       for (field = 0; field < max(NumberOfBaryonFields, SendField+1); field++)
-	if (field == SendField || SendField == ALL_FIELDS) {
+        if (field == SendField || SendField == ALL_FIELDS) {
 	  FreeBaryonFieldMemory(ToGrid->BaryonField[field]);
-	  ToGrid->BaryonField[field] = static_cast<float*>(AllocateNewBaryonField(RegionSize));
-	  FORTRAN_NAME(copy3d)(&buffer[index], ToGrid->BaryonField[field],
-			       RegionDim, RegionDim+1, RegionDim+2,
-			       RegionDim, RegionDim+1, RegionDim+2,
-			       Zero, Zero+1, Zero+2,
-			       Zero, Zero+1, Zero+2);
-	  index += RegionSize;
-	}
+          ToGrid->BaryonField[field] = AllocateNewBaryonField(RegionSize);
+          FORTRAN_NAME(copy3d)(&buffer[index], ToGrid->BaryonField[field],
+                               RegionDim, RegionDim+1, RegionDim+2,
+                               RegionDim, RegionDim+1, RegionDim+2,
+                               Zero, Zero+1, Zero+2,
+                               Zero, Zero+1, Zero+2);
+          index += RegionSize;
+        }
  
     if (NewOrOld == NEW_AND_OLD || NewOrOld == OLD_ONLY)
       for (field = 0; field < max(NumberOfBaryonFields, SendField+1); field++)
-	if (field == SendField || SendField == ALL_FIELDS) {
-	  FreeBaryonFieldMemory(ToGrid->OldBaryonField[field]);
-	  ToGrid->OldBaryonField[field] = static_cast<float*>(AllocateNewBaryonField(RegionSize));
-	  FORTRAN_NAME(copy3d)(&buffer[index], ToGrid->OldBaryonField[field],
-			       RegionDim, RegionDim+1, RegionDim+2,
-			       RegionDim, RegionDim+1, RegionDim+2,
-			       Zero, Zero+1, Zero+2,
-			       Zero, Zero+1, Zero+2);
-	  index += RegionSize;
-	}
+        if (field == SendField || SendField == ALL_FIELDS) {
+          FreeBaryonFieldMemory(ToGrid->OldBaryonField[field]);
+          ToGrid->OldBaryonField[field] = AllocateNewBaryonField(RegionSize);
+          FORTRAN_NAME(copy3d)(&buffer[index], ToGrid->OldBaryonField[field],
+                               RegionDim, RegionDim+1, RegionDim+2,
+                               RegionDim, RegionDim+1, RegionDim+2,
+                               Zero, Zero+1, Zero+2,
+                               Zero, Zero+1, Zero+2);
+          index += RegionSize;
+        }
  
     if (SendField == GRAVITATING_MASS_FIELD_PARTICLES) {
       FreeBaryonFieldMemory(ToGrid->GravitatingMassFieldParticles);
-      ToGrid->GravitatingMassFieldParticles = static_cast<float*>(AllocateNewBaryonField(RegionSize));
+      ToGrid->GravitatingMassFieldParticles = AllocateNewBaryonField(RegionSize);
       FORTRAN_NAME(copy3d)(buffer, ToGrid->GravitatingMassFieldParticles,
-			   RegionDim, RegionDim+1, RegionDim+2,
-			   RegionDim, RegionDim+1, RegionDim+2,
-			   Zero, Zero+1, Zero+2,
-			   Zero, Zero+1, Zero+2);
+                           RegionDim, RegionDim+1, RegionDim+2,
+                           RegionDim, RegionDim+1, RegionDim+2,
+                           Zero, Zero+1, Zero+2,
+                           Zero, Zero+1, Zero+2);
     }
  
     if (SendField == GRAVITATING_MASS_FIELD) {
       FreeBaryonFieldMemory(ToGrid->GravitatingMassField);
-      ToGrid->GravitatingMassField = static_cast<float*>(AllocateNewBaryonField(RegionSize));
+      ToGrid->GravitatingMassField = AllocateNewBaryonField(RegionSize);
       FORTRAN_NAME(copy3d)(buffer, ToGrid->GravitatingMassField,
-    			   RegionDim, RegionDim+1, RegionDim+2,
-    			   RegionDim, RegionDim+1, RegionDim+2,
-    			   Zero, Zero+1, Zero+2,
-    			   Zero, Zero+1, Zero+2);
+                           RegionDim, RegionDim+1, RegionDim+2,
+                           RegionDim, RegionDim+1, RegionDim+2,
+                           Zero, Zero+1, Zero+2,
+                           Zero, Zero+1, Zero+2);
     }
  
     if (SendField == POTENTIAL_FIELD) {
       FreeBaryonFieldMemory(ToGrid->PotentialField);
-      ToGrid->PotentialField = static_cast<float*>(AllocateNewBaryonField(RegionSize));
+      ToGrid->PotentialField = AllocateNewBaryonField(RegionSize);
       FORTRAN_NAME(copy3d)(buffer, ToGrid->PotentialField,
-			   RegionDim, RegionDim+1, RegionDim+2,
-			   RegionDim, RegionDim+1, RegionDim+2,
-			   Zero, Zero+1, Zero+2,
-			   Zero, Zero+1, Zero+2);
+                           RegionDim, RegionDim+1, RegionDim+2,
+                           RegionDim, RegionDim+1, RegionDim+2,
+                           Zero, Zero+1, Zero+2,
+                           Zero, Zero+1, Zero+2);
     }
  
     if (SendField == ACCELERATION_FIELDS)
       for (dim = 0; dim < GridRank; dim++) {
-	FreeBaryonFieldMemory(ToGrid->AccelerationField[dim]);
-	ToGrid->AccelerationField[dim] = static_cast<float*>(AllocateNewBaryonField(RegionSize));
-	FORTRAN_NAME(copy3d)(&buffer[index], ToGrid->AccelerationField[dim],
-			     RegionDim, RegionDim+1, RegionDim+2,
-			     RegionDim, RegionDim+1, RegionDim+2,
-			     Zero, Zero+1, Zero+2,
-			     Zero, Zero+1, Zero+2);
-	index += RegionSize;
+        FreeBaryonFieldMemory(ToGrid->AccelerationField[dim]);
+        ToGrid->AccelerationField[dim] = AllocateNewBaryonField(RegionSize);
+        FORTRAN_NAME(copy3d)(&buffer[index], ToGrid->AccelerationField[dim],
+                             RegionDim, RegionDim+1, RegionDim+2,
+                             RegionDim, RegionDim+1, RegionDim+2,
+                             Zero, Zero+1, Zero+2,
+                             Zero, Zero+1, Zero+2);
+        index += RegionSize;
       }
 
     /* Only delete the buffer if we're in receive mode (in send mode
@@ -311,12 +310,12 @@ int grid::CommunicationSendRegion(grid *ToGrid, int ToProcessor,int SendField,
        post-receive mode then it will be deleted when we get to
        receive-mode). */
 
-    //    FreeBaryonFieldMemory(buffer);
-    delete [] buffer;
-			  
+    FreeBaryonFieldMemory(buffer);
+                          
   } // ENDIF unpack
  
 #endif /* USE_MPI */ 
 
   return SUCCESS;
 }
+ 

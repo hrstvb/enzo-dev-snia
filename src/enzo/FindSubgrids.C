@@ -143,7 +143,7 @@ int FindSubgrids(HierarchyEntry *Grid, int level, int &TotalFlaggedCells,
       ThisGrid->ParentGrid        = Grid;
  
       /* create new grid */
- 
+
       ThisGrid->GridData = new grid;
  
       /* set some the new grid's properties (rank, field types, etc.)

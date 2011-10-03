@@ -146,7 +146,7 @@ int grid::ProjectSolutionToParentGrid(grid &ParentGrid)
     }
     for (field = 0; field < NumberOfBaryonFields; field++) {
       FreeBaryonFieldMemory(ParentGrid.BaryonField[field]);
-      ParentGrid.BaryonField[field] = static_cast<float*>(AllocateNewBaryonField(ParentSize));
+      ParentGrid.BaryonField[field] = AllocateNewBaryonField(ParentSize);
     }
   }
  

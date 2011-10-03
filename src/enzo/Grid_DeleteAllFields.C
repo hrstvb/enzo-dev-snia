@@ -24,14 +24,15 @@
  
 /* function prototypes */
 void FreeBaryonFieldMemory(float *BF);
-
+void DeleteFluxes(fluxes *F);
 void grid::DeleteAllFields()
 {
  
   int i;
  
   this->DeleteParticles();
- 
+  DeleteFluxes(BoundaryFluxes);
+
   for (i = 0; i < MAX_DIMENSION; i++) {
     FreeParticleMemory(ParticleAcceleration[i]);
     FreeBaryonFieldMemory(AccelerationField[i]);

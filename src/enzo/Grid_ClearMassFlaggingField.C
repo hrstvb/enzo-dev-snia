@@ -43,7 +43,7 @@ void grid::ClearMassFlaggingField()
   for (int dim = 0; dim < GridRank; dim++)
     size *= GridDimension[dim];
  
-  MassFlaggingField = static_cast<float*>(AllocateNewBaryonField(size));
+  MassFlaggingField = AllocateNewBaryonField(size);
  
   /* Clear it */
  

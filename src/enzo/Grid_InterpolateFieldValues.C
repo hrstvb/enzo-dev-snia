@@ -398,7 +398,7 @@ int grid::InterpolateFieldValues(grid *ParentGrid)
       /* Copy needed portion of temp field to current grid. */
  
       if (BaryonField[field] == NULL && GridSize > 0)
-	BaryonField[field] = static_cast<float*>(AllocateNewBaryonField(GridSize));
+	BaryonField[field] = AllocateNewBaryonField(GridSize);
       if (BaryonField[field] == NULL) {
 	ENZO_FAIL("malloc error (out of memory?)\n");
       }

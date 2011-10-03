@@ -65,7 +65,7 @@ int grid::FinishFFT(region *InitialRegion, int Field, int DomainDim[])
     float *FieldPointer;
     if (Field == POTENTIAL_FIELD) {
       if (PotentialField == NULL)
-	PotentialField = static_cast<float*>(AllocateNewBaryonField(size));
+	PotentialField = AllocateNewBaryonField(size);
       FieldPointer = PotentialField;
     } else {
       ENZO_VFAIL("Field %"ISYM" not recognized.\n", Field)

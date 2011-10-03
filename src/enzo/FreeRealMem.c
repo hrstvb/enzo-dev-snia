@@ -115,7 +115,7 @@ Eint64 FreeRealMem( char *node )
   return(freemem);
 }
 
-#else
+#else // USE_LL
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -177,12 +177,13 @@ Eint64 FreeRealMem( char *node )
 
 #endif
 
-#else
+//#else // If TASKMAP    // uncomment this line when working with the taskmap. // removed this after compiler conflicts when using garbage colection at the same time
 
-#include <stdlib.h>
+//#include <stdlib.h>
 #include <stdio.h>
 
 #include "macros_and_parameters.h"
+#include "typedefs.h"
 
 Eint64 FreeRealMem( char *node )
 {
@@ -196,4 +197,7 @@ Eint64 FreeRealMem( char *node )
   return(freemem);
 }
 
-#endif
+#endif // end TASKMAP
+
+
+

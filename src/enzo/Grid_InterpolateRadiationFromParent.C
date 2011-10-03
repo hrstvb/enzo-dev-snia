@@ -255,7 +255,7 @@ int grid::InterpolateRadiationFromParent(grid *ParentGrid, int Field)
   /* Copy needed portion of temp field to current grid. */
  
   if (BaryonField[Field] == NULL)
-    BaryonField[Field] = static_cast<float*>(AllocateNewBaryonField(GridSize));
+    BaryonField[Field] = AllocateNewBaryonField(GridSize);
   if (BaryonField[Field] == NULL)
     ENZO_FAIL("malloc error (out of memory?)");
 

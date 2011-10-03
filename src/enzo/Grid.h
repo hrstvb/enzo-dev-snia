@@ -21,6 +21,10 @@
 #include "Star.h"
 #include "FOF_allvars.h"
 #include "MemoryPool.h"
+#if 1  // garbage collection
+//#include "/Users/tabel/Downloads/gc-7.2alpha6/include/leak_detector.h"
+#include "gc_cpp.h"
+#endif
 
 #ifdef FLUX_FIX
 #include "TopGridData.h"
@@ -56,7 +60,7 @@ struct HierarchyEntry;
 
 extern int CommunicationDirection;
 int FindField(int f, int farray[], int n);
-void *AllocateNewBaryonField(int size); 
+float *AllocateNewBaryonField(int size); 
 void FreeBaryonFieldMemory(float *BF);
 void FreeParticleMemory(void *BF);
 
@@ -894,6 +898,9 @@ public:
 /* Allocates space for grids (dims and NumberOfBaryonFields must be set). */
 
    void AllocateGrids();
+
+/* Defragment Baryon Memory Pool */
+   void DefragmentBaryonMemoryPool();
 
 /* set the grid derived quantites (CellLeftEdge, CellWidth & BoundaryFluxes) */
 

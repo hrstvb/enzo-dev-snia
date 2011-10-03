@@ -81,6 +81,7 @@ double ReturnWallTime(void);
 void fpcol(Eflt64 *x, int n, int m, FILE *log_fptr);
 bool _first = true;
 static double RHperf[16];
+void PrintMemoryUsage(char *str);
 
 #define NO_RH_PERF
 
@@ -282,7 +283,7 @@ int RebuildHierarchy(TopGridData *MetaData,
     CommunicationTransferSubgridParticles(LevelArray, MetaData, level);
 
 
-
+    PrintMemoryUsage("RH befor  grid rebuild."); 
   /* --------------------------------------------------------------------- */
   /* For dynamic hierarchies, rebuild the grid structure. */
  
@@ -390,7 +391,17 @@ int RebuildHierarchy(TopGridData *MetaData,
 	 processor) for the next step. */
 
       HierarchyEntry *Temp2;
-      HierarchyEntry *SubgridHierarchyPointer[MAX_NUMBER_OF_SUBGRIDS];
+      // count number of subgrids
+      subgrids = 0;
+      for (j = 0; j < grids; j++) {
+	Temp2 = GridHierarchyPointer[j]->NextGridNextLevel;
+	while (Temp2 != NULL) {
+	  subgrids += 1;
+	  Temp2 = Temp2->NextGridThisLevel;
+	}
+      }
+      // fill out list to subgrids.
+      HierarchyEntry *SubgridHierarchyPointer[subgrids];
       subgrids = 0;
       for (j = 0; j < grids; j++) {
 	Temp2 = GridHierarchyPointer[j]->NextGridNextLevel;

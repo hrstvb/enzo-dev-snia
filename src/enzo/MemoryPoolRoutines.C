@@ -19,6 +19,7 @@
 #include "typedefs.h"
 #include "global_data.h"
 #include "MemoryPool.h"
+//#include "gc.h"
 
 namespace MPool
 {
@@ -61,8 +62,8 @@ namespace MPool
 
     /* Chunks are allocated with the "Data" memory, so it's
        deallocated with it, too. */
-    //DeallocateAllChunks();
-    //assert(ObjectCount == 0);  // Check if everything was deallocated
+    //    DeallocateAllChunks();
+    //    assert(ObjectCount == 0);  // Check if everything was deallocated
   }
 
   /**************************************************/
@@ -162,11 +163,30 @@ namespace MPool
 
   void MemoryPool::PrintMemoryConsumption()
   {
-    fprintf(stdout, "Pool %i: Total:%0.3f Mb, Free:%0.3f Mb\n",
-	    PoolNumber, TotalMemoryPoolSize/1048576.0,
+    fprintf(stdout, "Pool %i: Total:%0.3f Mb, Used:%0.3f Mb, Free:%0.3f Mb\n",
+	    PoolNumber, 
+	    TotalMemoryPoolSize/1048576.0,
+	    UsedMemoryPoolSize/1048576.0,
 	    FreeMemoryPoolSize/1048576.0);
     return;
-  }
+  };
+
+    // Return private variables:
+  size_t MemoryPool::ReturnTotalMemoryPoolSize() 
+  {
+    return TotalMemoryPoolSize; 
+  };
+
+  size_t MemoryPool::ReturnUsedMemoryPoolSize()  
+  {
+    return UsedMemoryPoolSize;  
+  };
+
+  size_t MemoryPool::ReturnFreeMemoryPoolSize()  
+  {
+    fprintf(stdout, "Free: %0.3f\n", FreeMemoryPoolSize/1048576.0);
+    return FreeMemoryPoolSize;  
+  };
 
   /**********************************************************************/
 

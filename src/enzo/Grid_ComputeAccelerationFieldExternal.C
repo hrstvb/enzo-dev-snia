@@ -64,7 +64,7 @@ int grid::ComputeAccelerationFieldExternal()
  
   if (AccelerationField[0] == NULL)
     for (dim = 0; dim < GridRank; dim++) {
-      AccelerationField[dim] = static_cast<float*>(AllocateNewBaryonField(size));
+      AccelerationField[dim] = AllocateNewBaryonField(size);
       for (i = 0; i < size; i++)
 	AccelerationField[dim][i] = 0;
     }

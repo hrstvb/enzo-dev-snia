@@ -14,6 +14,12 @@
 #endif
 #endif
 
+#if 0  // garbage collection
+//#include "/Users/tabel/Downloads/gc-7.2alpha6/include/leak_detector.h"
+#include "gc_cpp.h"
+#endif
+
+
 #ifdef ECUDA
 #ifdef LARGE_INTS
 // CUDA hates LARGE_INTS, and who can blame it?

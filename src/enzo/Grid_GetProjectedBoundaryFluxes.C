@@ -116,8 +116,8 @@ int grid::GetProjectedBoundaryFluxes(grid *ParentGrid, fluxes &ProjectedFluxes)
  
 	/* Allocate and clear Fluxes */
  
-	ProjectedFluxes.LeftFluxes[field][dim] = new float[size];
-	ProjectedFluxes.RightFluxes[field][dim] = new float[size];
+	ProjectedFluxes.LeftFluxes[field][dim] = AllocateNewBaryonField(size);
+	ProjectedFluxes.RightFluxes[field][dim] = AllocateNewBaryonField(size);
 	for (i = 0; i < size; i++) {
 	  ProjectedFluxes.LeftFluxes[field][dim][i] = 0.0;
 	  ProjectedFluxes.RightFluxes[field][dim][i] = 0.0;

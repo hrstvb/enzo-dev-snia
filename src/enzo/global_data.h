@@ -784,6 +784,14 @@ EXTERN char *MetalCoolingTable;
 EXTERN int CIECooling;
 EXTERN int H2OpticalDepthApproximation;
 
+#ifdef MEMORY_POOL
+EXTERN MPool::MemoryPool *ParticleMemoryPool;
+EXTERN MPool::MemoryPool *BaryonFieldMemoryPool;
+EXTERN MPool::MemoryPool *GridObjectMemoryPool;
+#ifdef TRANSFER
+EXTERN MPool::MemoryPool *PhotonMemoryPool;
+#endif
+#endif
 //   1 - Adaptive ray tracing transfer
 //   0 - none
 EXTERN int RadiativeTransfer;
@@ -800,12 +808,6 @@ EXTERN float dtPhoton;
 EXTERN RadiationSourceEntry *GlobalRadiationSources;
 EXTERN SuperSourceEntry *SourceClusteringTree;
 EXTERN SuperSourceEntry *OldSourceClusteringTree;
-#ifdef MEMORY_POOL
-EXTERN MPool::MemoryPool *PhotonMemoryPool;
-EXTERN MPool::MemoryPool *ParticleMemoryPool;
-EXTERN MPool::MemoryPool *BaryonFieldMemoryPool;
-EXTERN MPool::MemoryPool *GridObjectMemoryPool;
-#endif
 
 /* [0]: Emitted photons
    [1]: escaped past 0.5 RadiativeTransferPhotonEscapeRadius

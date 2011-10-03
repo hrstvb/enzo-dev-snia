@@ -60,7 +60,7 @@ int CommunicationSendFluxes(fluxes *Fluxes, int ToProc, int NumberOfFields,
   }
  
   TotalSize *= NumberOfFields;
-  float *buffer = new float[TotalSize];
+  float *buffer = AllocateNewBaryonField(TotalSize);
  
   /* Pack buffer. */
  

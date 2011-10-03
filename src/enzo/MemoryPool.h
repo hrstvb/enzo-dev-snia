@@ -142,8 +142,12 @@ namespace MPool
     bool IsValidPointer(void* Pointer);
 
     // output some basic statistic of the pool to stdout
-    void PrintMemoryConsumption();
+    void PrintMemoryConsumption () ;
 
+    // Return private variables:
+    size_t ReturnTotalMemoryPoolSize () ; 
+    size_t ReturnUsedMemoryPoolSize () ;
+    size_t ReturnFreeMemoryPoolSize () ;
 
   };
 }

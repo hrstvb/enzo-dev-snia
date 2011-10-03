@@ -35,10 +35,13 @@ void grid::PrepareGridDerivedQuantities()
   for (dim = 0; dim < GridRank; dim++) {
  
     /* create cell position descriptors */
- 
+#ifndef MEMORY_POOL 
     CellLeftEdge[dim] = new FLOAT[GridDimension[dim]];
     CellWidth[dim]    = new FLOAT[GridDimension[dim]];
- 
+#else 
+    CellLeftEdge[dim]  = static_cast<FLOAT*>(ParticleMemoryPool->GetMemory(sizeof(FLOAT)*GridDimension[dim]));
+    CellWidth[dim]     = static_cast<FLOAT*>(ParticleMemoryPool->GetMemory(sizeof(FLOAT)*GridDimension[dim]));
+#endif 
     /* assuming uniform grid, compute the cell width and the left edge
        including the ghostzones (for this dimension) */
  

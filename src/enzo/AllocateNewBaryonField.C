@@ -17,21 +17,25 @@
 #include "macros_and_parameters.h"
 #include "typedefs.h"
 #include "global_data.h"
-void *AllocateNewBaryonField(int size)
+float *AllocateNewBaryonField(int size)
 {
 #ifndef MEMORY_POOL
   return new float[size];
 #else
-  return BaryonFieldMemoryPool->GetMemory(sizeof(float)*size);
+  return static_cast<float*>(BaryonFieldMemoryPool->GetMemory(sizeof(float)*size));
 #endif
 }
 
 void FreeBaryonFieldMemory(float *BF)
 {
 #ifndef MEMORY_POOL
-  delete [] BF;
+  if (BF != NULL)
+    delete [] BF;
+  BF = NULL;
 #else
-  return BaryonFieldMemoryPool->FreeMemory(BF);
+  if (BF != NULL)
+    BaryonFieldMemoryPool->FreeMemory(BF);
+  BF = NULL;
 #endif
   return;
 }
@@ -39,9 +43,13 @@ void FreeBaryonFieldMemory(float *BF)
 void FreeParticleMemory(void *PF)
 {
 #ifndef MEMORY_POOL
-  delete [] PF;
+  if (PF != NULL)
+    delete [] PF;
+  PF = NULL;
 #else
-  return ParticleMemoryPool->FreeMemory(PF);
+  if (PF != NULL)
+    ParticleMemoryPool->FreeMemory(PF);
+  PF = NULL;
 #endif
   return;
 }

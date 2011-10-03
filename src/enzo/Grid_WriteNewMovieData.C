@@ -285,7 +285,7 @@ int grid::WriteNewMovieData(FLOAT RegionLeftEdge[], FLOAT RegionRightEdge[],
       return FAIL;
     }
 
-    BaryonField[TemperatureField] = static_cast<float*>(AllocateNewBaryonField(allsize));
+    BaryonField[TemperatureField] = AllocateNewBaryonField(allsize);
     for (i = 0; i < allsize; i++)
       BaryonField[TemperatureField][i] = temperature[i];
 

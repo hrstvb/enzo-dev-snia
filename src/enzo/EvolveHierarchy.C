@@ -34,7 +34,12 @@
 #ifdef USE_MPI
 #include <mpi.h>
 #endif
- 
+#ifdef USE_JEMALLOC
+#define JEMALLOC_MANGLE
+#include <jemalloc/jemalloc.h>
+#undef JEMALLOC_MANGLE
+#endif
+
 #include <stdio.h>
  
 #include "performance.h"
@@ -55,7 +60,8 @@
 #ifdef TRANSFER
 #include "ImplicitProblemABC.h"
 #endif
- 
+
+
 // function prototypes
  
 int RebuildHierarchy(TopGridData *MetaData,
@@ -140,6 +146,7 @@ Eint64 mused(void);
 int CallPython(LevelHierarchyEntry *LevelArray[], TopGridData *MetaData,
                int level, int from_topgrid);
 #endif
+int DefragmentMemoryPools(LevelHierarchyEntry *LevelArray[]);
 
  
  
@@ -338,6 +345,18 @@ int EvolveHierarchy(HierarchyEntry &TopGrid, TopGridData &MetaData,
 #endif    
     PrintMemoryUsage("Top");
 
+#ifdef USE_JEMALLOC
+    // jemalloc 
+    unsigned nbins = 0;
+    size_t len;
+    mallctl("arenas.purge", &nbins, &len, NULL, NULL);
+#endif
+
+#define NO_GARBAGE_COLLECTION   // libgc garbage collection
+#ifdef GARBAGE_COLLECTION
+    //    CHECK_LEAKS();
+    GC_gcollect();
+#endif
     /* Load balance the root grids if this isn't the initial call */
 
     if ((CheckpointRestart == FALSE) && (!FirstLoop))
@@ -529,7 +548,9 @@ int EvolveHierarchy(HierarchyEntry &TopGrid, TopGridData &MetaData,
       }
     }
 
-    PrintMemoryUsage("Post EvolveLevel rebuild");
+    PrintMemoryUsage("Post EvolveLevel");
+
+    DefragmentMemoryPools(LevelArray);
 
 
 #ifdef USE_MPI 
@@ -586,7 +607,8 @@ int EvolveHierarchy(HierarchyEntry &TopGrid, TopGridData &MetaData,
 #endif
 
     PrintMemoryUsage("Pre loop rebuild");
- 
+
+    /* Rebuild Hierarchy on Root grid level */ 
     if (ProblemType != 25 && Restart == FALSE)
       RebuildHierarchy(&MetaData, LevelArray, 0);
 
@@ -624,6 +646,7 @@ int EvolveHierarchy(HierarchyEntry &TopGrid, TopGridData &MetaData,
       FOF(&MetaData, LevelArray, TRUE);
 
     /* Try to cut down on memory fragmentation. */
+
  
 #ifdef REDUCE_FRAGMENTATION
  
@@ -677,6 +700,7 @@ int EvolveHierarchy(HierarchyEntry &TopGrid, TopGridData &MetaData,
       fclose(evlog);
     }
 
+
 #ifdef MEM_TRACE
     Eint64 MemInUse;
     if (MetaData.WroteData) {
@@ -695,8 +719,10 @@ int EvolveHierarchy(HierarchyEntry &TopGrid, TopGridData &MetaData,
     ParticleMemoryPool->PrintMemoryConsumption();
     fprintf(stdout, "Baryons     : ");
     BaryonFieldMemoryPool->PrintMemoryConsumption();
+#ifdef TRANSFER
     fprintf(stdout, "Photons     : ");
     PhotonMemoryPool->PrintMemoryConsumption();
+#endif // TRANSFER
 #endif // MEMORY_POOL
 #endif //MEM_TRACE
 

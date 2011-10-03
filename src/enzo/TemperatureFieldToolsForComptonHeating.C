@@ -25,7 +25,7 @@
 #include "GridList.h"
 #include "Grid.h"
 
-void *AllocateNewBaryonField(int size); 
+float *AllocateNewBaryonField(int size); 
 void FreeBaryonFieldMemory(float *BF);
 
 int grid::InitializeTemperatureFieldForComptonHeating() 
@@ -49,7 +49,7 @@ int grid::InitializeTemperatureFieldForComptonHeating()
 
   TemperatureField = this->GetTemperatureFieldNumberForComptonHeating();
   
-  BaryonField[TemperatureField] = static_cast<float*>(AllocateNewBaryonField(size));
+  BaryonField[TemperatureField] = AllocateNewBaryonField(size);
 
   for (int i = 0; i < size; i++)
     BaryonField[TemperatureField][i] = temperature[i];

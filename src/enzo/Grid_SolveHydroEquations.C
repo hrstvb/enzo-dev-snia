@@ -280,11 +280,11 @@ int grid::SolveHydroEquations(int CycleNumber, int NumberOfSubgrids,
       if (this->ComputeGammaField(GammaField) == FAIL) {
 	ENZO_FAIL("Error in grid->ComputeGammaField.");
       }
-    } else {
-      GammaField = new float;
-      GammaField[0] = Gamma;
-
-    }
+    } else if (HydroMethod == Zeus_Hydro)
+      {
+	GammaField = new float;
+	GammaField[0] = Gamma;
+      }
     
     /* Set lowest level flag (used on Zeus hydro). */
 
@@ -328,9 +328,9 @@ int grid::SolveHydroEquations(int CycleNumber, int NumberOfSubgrids,
         for (field = 0; field < NumberOfBaryonFields; field++) {
 	  //
 	  if (SubgridFluxes[i]->LeftFluxes[field][dim] == NULL)
-	    SubgridFluxes[i]->LeftFluxes[field][dim]  = new float[size];
+	    SubgridFluxes[i]->LeftFluxes[field][dim]  =  AllocateNewBaryonField(size);
 	  if (SubgridFluxes[i]->RightFluxes[field][dim] == NULL)
-	    SubgridFluxes[i]->RightFluxes[field][dim] = new float[size];
+	    SubgridFluxes[i]->RightFluxes[field][dim] =  AllocateNewBaryonField(size);
 	  for (n = 0; n < size; n++) {
 	    SubgridFluxes[i]->LeftFluxes[field][dim][n] = 0;
 	    SubgridFluxes[i]->RightFluxes[field][dim][n] = 0;

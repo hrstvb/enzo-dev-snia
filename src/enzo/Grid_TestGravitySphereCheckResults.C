@@ -99,9 +99,9 @@ int grid::TestGravitySphereCheckResults(FILE *fptr)
     for (dim = 0; dim < GridRank; dim++)
       size *= GridDimension[dim];
  
-    BaryonField[NumberOfBaryonFields++] = static_cast<float*>(AllocateNewBaryonField(size));
-    BaryonField[NumberOfBaryonFields++] = static_cast<float*>(AllocateNewBaryonField(size));
-    BaryonField[NumberOfBaryonFields++] = static_cast<float*>(AllocateNewBaryonField(size));
+    BaryonField[NumberOfBaryonFields++] = AllocateNewBaryonField(size);
+    BaryonField[NumberOfBaryonFields++] = AllocateNewBaryonField(size);
+    BaryonField[NumberOfBaryonFields++] = AllocateNewBaryonField(size);
  
     DataLabel[NumberOfBaryonFields-3] = TGSTangName;
     DataLabel[NumberOfBaryonFields-2] = TGSRadialName;

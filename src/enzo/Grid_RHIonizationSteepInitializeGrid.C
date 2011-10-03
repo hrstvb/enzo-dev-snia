@@ -109,7 +109,7 @@ int grid::RHIonizationSteepInitializeGrid(int NumChemicals,
 
     for (int field=0; field<NumberOfBaryonFields; field++)
       if (BaryonField[field] == NULL)
-	BaryonField[field] = static_cast<float*>(AllocateNewBaryonField(size));
+	BaryonField[field] = AllocateNewBaryonField(size);
 
     
     // set fluid density, total energy, [internal energy,] velocities, 

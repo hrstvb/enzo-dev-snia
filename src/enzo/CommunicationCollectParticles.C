@@ -193,7 +193,12 @@ int CommunicationCollectParticles(LevelHierarchyEntry *LevelArray[],
       TotalNumber += NumberToMove[j];
       NumberToMove[j] = 0;  // Zero-out to use in the next step
     }
+#ifndef MEMORY_POOL
     SendList = new particle_data[TotalNumber];
+#else
+    SendList = 
+      static_cast<particle_data*>(ParticleMemoryPool->GetMemory(sizeof(particle_data)*TotalNumber));
+#endif
 
     for (j = 0; j < NumberOfGrids; j++)
       if (GridHierarchyPointer[j]->NextGridNextLevel != NULL) {
@@ -328,11 +333,11 @@ int CommunicationCollectParticles(LevelHierarchyEntry *LevelArray[],
     /* Cleanup. */
 
     if (SendList != SharedList)
-      delete [] SharedList;
-    delete [] SendList;
+      FreeParticleMemory(SharedList);
+    FreeParticleMemory(SendList);
     if (StarSendList != StarSharedList)
-      delete [] StarSendList;
-    delete [] StarSharedList;
+      FreeParticleMemory(StarSendList);
+    FreeParticleMemory(StarSharedList);
     delete [] SubgridPointers;
 
     SendList = NULL;

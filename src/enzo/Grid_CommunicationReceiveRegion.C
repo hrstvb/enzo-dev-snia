@@ -90,7 +90,7 @@ int grid::CommunicationReceiveRegion(grid *FromGrid, int FromProcessor,
   if (CommunicationDirection == COMMUNICATION_RECEIVE)
     buffer = CommunicationReceiveBuffer[CommunicationReceiveIndex];
   else
-    //  buffer = static_cast<float*>(AllocateNewBaryonField(TransferSize));
+    //  buffer = AllocateNewBaryonField(TransferSize);
   buffer = new float[TransferSize];
  
   /* If this is the from processor, pack fields */
@@ -217,7 +217,7 @@ int grid::CommunicationReceiveRegion(grid *FromGrid, int FromProcessor,
       for (field = 0; field < NumberOfBaryonFields; field++)
 	if (field == SendField || SendField == ALL_FIELDS) {
 	  if (BaryonField[field] == NULL) {
-	    BaryonField[field] = static_cast<float*>(AllocateNewBaryonField(GridSize));
+	    BaryonField[field] = AllocateNewBaryonField(GridSize);
 	    for (i = 0; i < GridSize; i++)
 	      BaryonField[field][i] = 0;
           }
@@ -234,7 +234,7 @@ int grid::CommunicationReceiveRegion(grid *FromGrid, int FromProcessor,
       for (field = 0; field < NumberOfBaryonFields; field++)
 	if (field == SendField || SendField == ALL_FIELDS) {
 	  if (OldBaryonField[field] == NULL) {
-	    OldBaryonField[field] = static_cast<float*>(AllocateNewBaryonField(GridSize));
+	    OldBaryonField[field] = AllocateNewBaryonField(GridSize);
 	    for (i = 0; i < GridSize; i++)
 	      OldBaryonField[field][i] = 0;
           }
@@ -250,7 +250,7 @@ int grid::CommunicationReceiveRegion(grid *FromGrid, int FromProcessor,
     if (SendField == INTERPOLATED_FIELDS)
       for (field = 0; field < NumberOfFields; field++) {
 	if (InterpolatedField[field] == NULL) {
-	  InterpolatedField[field] = static_cast<float*>(AllocateNewBaryonField(ActiveSize));
+	  InterpolatedField[field] = AllocateNewBaryonField(ActiveSize);
 	  for (i = 0; i < ActiveSize; i++)
 	    InterpolatedField[field][i] = 0;
 	}

@@ -98,7 +98,9 @@ void operator delete(void *pointer)
 void* operator new(size_t NumberOfBytes) throw (std::bad_alloc) {
   if (NumberOfBytes == 0) return NULL;
   //void *pointer = jemalloc(NumberOfBytes + sizeof(float));
-  void *pointer = jemalloc(NumberOfBytes);
+  //  void *pointer = jemalloc(NumberOfBytes);
+  //  void *pointer = malloc(NumberOfBytes);
+  void *pointer = malloc(NumberOfBytes);
   if (pointer == NULL)
     ENZO_VFAIL("Error allocation %d bytes", NumberOfBytes);
   return pointer;
@@ -109,7 +111,9 @@ void* operator new(size_t NumberOfBytes) throw (std::bad_alloc) {
 void* operator new[](size_t NumberOfBytes) throw (std::bad_alloc) {
   if (NumberOfBytes == 0) return NULL;
   //void *pointer = jemalloc(NumberOfBytes + sizeof(float));
-  void *pointer = jemalloc(NumberOfBytes);
+  //  void *pointer = jemalloc(NumberOfBytes);
+  //  void *pointer = malloc(NumberOfBytes);
+  void *pointer = malloc(NumberOfBytes);
   if (pointer == NULL)
     ENZO_VFAIL("Error allocation %d bytes", NumberOfBytes);
   return pointer;
@@ -120,14 +124,16 @@ void* operator new[](size_t NumberOfBytes) throw (std::bad_alloc) {
 void operator delete(void *pointer) throw() {
   if (pointer == NULL) return;
   //jefree( ((float*) pointer) - 1);
-  jefree(pointer);
+  //  jefree(pointer);
+  free(pointer);
   return;
 }
 
 void operator delete[](void *pointer) throw() {
   if (pointer == NULL) return;
   //jefree( ((float*) pointer) - 1);
-  jefree(pointer);
+  //jefree(pointer);
+  free(pointer);
   return;
 }
 
