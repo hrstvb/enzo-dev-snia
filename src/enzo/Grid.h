@@ -902,6 +902,9 @@ public:
 /* Defragment Baryon Memory Pool */
    void DefragmentBaryonMemoryPool();
 
+/* Defragment Particle Memory Pool */
+   void DefragmentParticleMemoryPool();
+
 /* set the grid derived quantites (CellLeftEdge, CellWidth & BoundaryFluxes) */
 
    void PrepareGridDerivedQuantities();
@@ -1385,15 +1388,15 @@ public:
      for (int i = 0; i < NumberOfParticleAttributes; i++) 
        if (ParticleAttribute[i] != NULL) delete [] ParticleAttribute[i];
 #else
-     FreeParticleMemory(ParticleMass);
-     FreeParticleMemory(ParticleNumber);
-     FreeParticleMemory(ParticleType);
+     FreeParticleMemory((void*) ParticleMass);
+     FreeParticleMemory((void*)ParticleNumber);
+     FreeParticleMemory((void*)ParticleType);
      for (int dim = 0; dim < GridRank; dim++) {
-       FreeParticleMemory(ParticlePosition[dim]);
-       FreeParticleMemory(ParticleVelocity[dim]);
+       FreeParticleMemory((void*)ParticlePosition[dim]);
+       FreeParticleMemory((void*)ParticleVelocity[dim]);
      }
      for (int i = 0; i < NumberOfParticleAttributes; i++) 
-       FreeParticleMemory(ParticleAttribute[i]);
+       FreeParticleMemory((void*)ParticleAttribute[i]);
 #endif
      ParticleMass = NULL;
      ParticleNumber = NULL;

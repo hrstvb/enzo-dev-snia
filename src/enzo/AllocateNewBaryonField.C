@@ -11,7 +11,6 @@
 /
 ************************************************************************/
 
-
 #include <stdio.h>
 #include <stdlib.h>
 #include "macros_and_parameters.h"
@@ -39,6 +38,35 @@ void FreeBaryonFieldMemory(float *BF)
 #endif
   return;
 }
+
+int *AllocateNewFlaggingField(int size)
+{
+#ifndef MEMORY_POOL
+  return new int[size];
+#else
+  //  fprintf(stderr,"Allocate new flagging field.");
+  //  fflush(stderr);
+  return static_cast<int*>(FlaggingFieldMemoryPool->GetMemory(sizeof(int)*size));
+#endif
+}
+
+void FreeFlaggingFieldMemory(int *FF)
+{
+#ifndef MEMORY_POOL
+  if (FF != NULL)
+    delete [] FF;
+  FF = NULL;
+#else
+  if (FF != NULL)
+    FlaggingFieldMemoryPool->FreeMemory(FF);
+  //  fprintf(stderr, "Free flagging field.");
+  //  fflush(stderr);
+
+  FF = NULL;
+#endif
+  return;
+}
+
 
 void FreeParticleMemory(void *PF)
 {

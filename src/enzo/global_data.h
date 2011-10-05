@@ -785,9 +785,12 @@ EXTERN int CIECooling;
 EXTERN int H2OpticalDepthApproximation;
 
 #ifdef MEMORY_POOL
+EXTERN MPool::MemoryPool *GridObjectMemoryPool;
+EXTERN MPool::MemoryPool *ProtoSubgridMemoryPool;
+EXTERN MPool::MemoryPool *HierarchyEntryMemoryPool;
+EXTERN MPool::MemoryPool *FlaggingFieldMemoryPool;
 EXTERN MPool::MemoryPool *ParticleMemoryPool;
 EXTERN MPool::MemoryPool *BaryonFieldMemoryPool;
-EXTERN MPool::MemoryPool *GridObjectMemoryPool;
 #ifdef TRANSFER
 EXTERN MPool::MemoryPool *PhotonMemoryPool;
 #endif

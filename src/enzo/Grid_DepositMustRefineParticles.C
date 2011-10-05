@@ -33,7 +33,9 @@ extern "C" void PFORTRAN_NAME(cic_flag)(FLOAT *posx, FLOAT *posy,
                         int *dim1, int *dim2, int *dim3, FLOAT *cellsize,
 		       	int *imatch1, int *imatch2, float *minmassmust, int *buffersize);
  
- 
+int *AllocateNewFlaggingField(int size);
+void FreeFlaggingFieldMemory(int *FF);
+
 int grid::DepositMustRefineParticles(int pmethod, int level)
 {
   /* declarations */
@@ -74,7 +76,9 @@ int grid::DepositMustRefineParticles(int pmethod, int level)
   /* Temporarily set the flagging field, then we will increase the
      particle mass flagging field above the refinement criteron. */
 
-  FlaggingField = new int[size];
+  //  FlaggingField = new int[size];
+  FlaggingField = AllocateNewFlaggingField(size);
+
   for (i = 0; i < size; i++)
     FlaggingField[i] = 0;
 
@@ -114,8 +118,10 @@ int grid::DepositMustRefineParticles(int pmethod, int level)
 
   /* Clean up */
 
-  delete [] FlaggingField;
-  FlaggingField = NULL;
+  FreeFlaggingFieldMemory(FlaggingField);
+
+  //delete [] FlaggingField;
+  //  FlaggingField = NULL;
 
   return NumberOfFlaggedCells;
  

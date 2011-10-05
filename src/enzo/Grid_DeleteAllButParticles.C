@@ -38,7 +38,7 @@ void grid::DeleteAllButParticles()
     ParticleAcceleration[i]      = NULL;
     AccelerationField[i]         = NULL;
   }
-  delete [] ParticleAcceleration[MAX_DIMENSION];
+  FreeParticleMemory(ParticleAcceleration[MAX_DIMENSION]);
   ParticleAcceleration[MAX_DIMENSION] = NULL;
  
   for (i = 0; i < MAX_NUMBER_OF_BARYON_FIELDS; i++) {
@@ -58,7 +58,7 @@ void grid::DeleteAllButParticles()
  
   FreeBaryonFieldMemory(PotentialField);
   FreeBaryonFieldMemory(GravitatingMassField);
-  delete [] GravitatingMassFieldParticles;
+  FreeBaryonFieldMemory(GravitatingMassFieldParticles);
  
   PotentialField                = NULL;
   GravitatingMassField          = NULL;

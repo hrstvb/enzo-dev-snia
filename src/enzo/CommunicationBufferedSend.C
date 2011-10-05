@@ -42,7 +42,8 @@ static int CallCount = 0;
 static MPI_Request  RequestHandle[MAX_NUMBER_OF_MPI_BUFFERS];
 static char        *RequestBuffer[MAX_NUMBER_OF_MPI_BUFFERS];
 static int          LastActiveIndex = -1;
- 
+
+void FreeBaryonFieldMemory(float *BF);
  
 /* function prototypes */
 
@@ -70,8 +71,8 @@ int CommunicationBufferPurge(void) {
 
 	//fprintf(stderr,"CCO p%"ISYM": mem- thread %"ISYM" finished\n",MyProcessorNumber, i);
 	
-	delete [] RequestBuffer[i];
-	//	FreeBaryonFieldMemory((float*)RequestBuffer[i]);
+	//	delete [] RequestBuffer[i];
+		FreeBaryonFieldMemory((float*)RequestBuffer[i]);
 	RequestBuffer[i] = NULL;
         BuffersPurged++;
         //fprintf(stderr, "CBP buffer %"ISYM" released\n", i);

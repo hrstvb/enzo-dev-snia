@@ -35,8 +35,8 @@ void grid::CleanUp()
     ParticleAcceleration[dim]      = NULL;
     AccelerationField[dim]         = NULL;
   }
-  //  FreeParticleMemory(ParticleAcceleration[MAX_DIMENSION]);
-  //  ParticleAcceleration[MAX_DIMENSION] = NULL;
+  FreeParticleMemory(ParticleAcceleration[MAX_DIMENSION]);
+  ParticleAcceleration[MAX_DIMENSION] = NULL;
  
   for (int i = 0; i < MAX_NUMBER_OF_BARYON_FIELDS; i++) {
     FreeBaryonFieldMemory(OldBaryonField[i]);

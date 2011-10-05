@@ -83,7 +83,7 @@ int grid::CommunicationSendParticles(grid *ToGrid, int ToProcessor,
     buffer = new particle_data[TransferSize];
 #else
   buffer = 
-    static_cast<particle_data*>(ParticleMemoryPool->GetMemory(sizeof(particle_data)*TotalNumber));
+    static_cast<particle_data*>(ParticleMemoryPool->GetMemory(sizeof(particle_data)*TransferSize));
 #endif
  
   /* If this is the from processor, pack fields. */
@@ -188,7 +188,7 @@ int grid::CommunicationSendParticles(grid *ToGrid, int ToProcessor,
       	FreeParticleMemory(TempVel[dim]);
       }
       for (j = 0; j < NumberOfParticleAttributes; j++)
-      	FreeParticleMemory(TempAttribute[j];)
+      	FreeParticleMemory(TempAttribute[j]);
 
       ToStart = ToGrid->NumberOfParticles;
     }

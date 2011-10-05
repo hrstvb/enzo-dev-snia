@@ -91,7 +91,7 @@ int DefragmentMemoryPools(LevelHierarchyEntry *LevelArray[])
 
   //  return SUCCESS;
 
-#if 1
+#if 0
   MPool::MemoryPool *OldBaryonPool;
   OldBaryonPool = BaryonFieldMemoryPool;
   BaryonFieldMemoryPool = new MPool::MemoryPool(3, nbsize,
@@ -106,10 +106,11 @@ int DefragmentMemoryPools(LevelHierarchyEntry *LevelArray[])
     NumberOfGrids = GenerateGridArray(LevelArray, level, &Grids);
     for (grid1 = 0; grid1 < NumberOfGrids; grid1++) {
       Grids[grid1]->GridData->DefragmentBaryonMemoryPool();
+      Grids[grid1]->GridData->DefragmentParticleMemoryPool();
     }  // loop for grid1
   }  // loop for level
 
-  delete OldBaryonPool; // this will clean up all the old memory pool
+  //  delete OldBaryonPool; // this will clean up all the old memory pool
 
 #ifdef MPI
 // make sure defragmentation is finished for everyone before proceeding

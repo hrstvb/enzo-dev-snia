@@ -26,6 +26,8 @@ extern "C" void FORTRAN_NAME(copy3dint)(int *source, int *dest,
                                    int *sstart1, int *sstart2, int *sstart3,
                                    int *dstart1, int *dstart2, int *dststart3);
  
+int *AllocateNewFlaggingField(int size);
+
 int ProtoSubgrid::CopyToNewSubgrid(int GridDim, int GridStart, int GridEnd,
 				   ProtoSubgrid *NewSubgrid)
 {
@@ -58,9 +60,13 @@ int ProtoSubgrid::CopyToNewSubgrid(int GridDim, int GridStart, int GridEnd,
  
   /* Allocate new FlaggingField. */
  
-  NewSubgrid->GridFlaggingField = new int[NewSubgrid->GridDimension[0]*
-					  NewSubgrid->GridDimension[1]*
-					  NewSubgrid->GridDimension[2]];
+  NewSubgrid->GridFlaggingField = AllocateNewFlaggingField(NewSubgrid->GridDimension[0]*
+							   NewSubgrid->GridDimension[1]*
+							   NewSubgrid->GridDimension[2]);
+
+ // NewSubgrid->GridFlaggingField = new int[NewSubgrid->GridDimension[0]*
+ // 					  NewSubgrid->GridDimension[1]*
+ // 					  NewSubgrid->GridDimension[2]];
  
   /* Now copy the Portion of the FlaggingField. */
  

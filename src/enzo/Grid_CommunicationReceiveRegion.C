@@ -90,8 +90,8 @@ int grid::CommunicationReceiveRegion(grid *FromGrid, int FromProcessor,
   if (CommunicationDirection == COMMUNICATION_RECEIVE)
     buffer = CommunicationReceiveBuffer[CommunicationReceiveIndex];
   else
-    //  buffer = AllocateNewBaryonField(TransferSize);
-  buffer = new float[TransferSize];
+    buffer = AllocateNewBaryonField(TransferSize);
+  //  buffer = new float[TransferSize];
  
   /* If this is the from processor, pack fields */
  

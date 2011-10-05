@@ -34,32 +34,35 @@ void grid::DefragmentBaryonMemoryPool()
  
 
   FLOAT AllCellWidth, GridLeftIncludingBoundary;
-  int size=1;
+  int size=1, gsize=1;
   
   for (int dim=0; dim<GridRank; dim++) 
-    size *= GridDimension[dim];
+    {
+      size *= GridDimension[dim];
+      gsize *= GravitatingMassFieldDimension[dim];
+    }
 
-  for (int field = 0; field <  MAX_NUMBER_OF_BARYON_FIELDS; field++) 
+  for (int field = 0; field <NumberOfBaryonFields; field++) 
     {
       if (BaryonField[field] != NULL)
 	{
 	  float *temp = AllocateNewBaryonField(size);  // new space 
 	  for (int index=0; index < size; index++)
 	    temp[index] = BaryonField[field][index];   // copy correct values
-	  //    FreeBaryonFieldMemory(BaryonField[field]);
+	  FreeBaryonFieldMemory(BaryonField[field]);
 	  BaryonField[field] = temp;                   // point BaryonField to correct position
 	} //  note we did not free the old space. We do that in DefragmentMemoryPools.C
     }
  
 //  OldBaryonFields 
-  for (int field = 0; field <  MAX_NUMBER_OF_BARYON_FIELDS; field++) 
+  for (int field = 0; field < NumberOfBaryonFields; field++) 
     {
       if (OldBaryonField[field] != NULL) 
 	{
 	  float *temp = AllocateNewBaryonField(size);  // new space 
 	  for (int index=0; index < size; index++)
 	    temp[index] = OldBaryonField[field][index];   // copy correct values
-	  //    FreeBaryonFieldMemory(OldBaryonField[field]);
+	  FreeBaryonFieldMemory(OldBaryonField[field]);
 	  OldBaryonField[field] = temp;    
 	}
     }
@@ -75,33 +78,33 @@ void grid::DefragmentBaryonMemoryPool()
 
   if (GravitatingMassField != NULL) 
     {
-    float *temp = AllocateNewBaryonField(size);  // new space 
-    for (int index=0; index < size; index++)
+    float *temp = AllocateNewBaryonField(gsize);  // new space 
+    for (int index=0; index < gsize; index++)
       temp[index] = GravitatingMassField[index];   // copy correct values
-    //    FreeBaryonFieldMemory(GravitatingMassField);
+    FreeBaryonFieldMemory(GravitatingMassField);
     GravitatingMassField = temp;                   // point BaryonField to correct position
     }
 
   if (GravitatingMassFieldParticles != NULL) 
     {
-    float *temp = AllocateNewBaryonField(size);  // new space 
-    for (int index=0; index < size; index++)
+    float *temp = AllocateNewBaryonField(gsize);  // new space 
+    for (int index=0; index < gsize; index++)
       temp[index] = GravitatingMassFieldParticles[index];   // copy correct values
-    //    FreeBaryonFieldMemory(GravitatingMassFieldParticles);
+    FreeBaryonFieldMemory(GravitatingMassFieldParticles);
     GravitatingMassFieldParticles = temp;                   
     }
 
   if (PotentialField != NULL) 
     {
-    float *temp = AllocateNewBaryonField(size);  // new space 
-    for (int index=0; index < size; index++)
+    float *temp = AllocateNewBaryonField(gsize);  // new space 
+    for (int index=0; index < gsize; index++)
       temp[index] = PotentialField[index];   // copy correct values
-    //    FreeBaryonFieldMemory(PotentialField);
+    FreeBaryonFieldMemory(PotentialField);
     PotentialField = temp;
     }
 
 
-//         FreeBaryonFieldMemory(AccelerationField[dim]);
+  //  FreeBaryonFieldMemory(AccelerationField[dim]);
 // #ifdef SAB
 //     FreeBaryonFieldMemory(OldAccelerationField[dim]) = NULL;
 // #endif
@@ -116,11 +119,14 @@ void grid::DefragmentBaryonMemoryPool()
 	for (int field = 0; field < NumberOfBaryonFields; field++) {
 	  float *templ = AllocateNewBaryonField(bfsize);
 	  float *tempr = AllocateNewBaryonField(bfsize);
-	  for (int index=0; index< bfsize; index++) {
-	    templ[index] = BoundaryFluxes->LeftFluxes[field][dim][index];
-	    tempr[index] = BoundaryFluxes->RightFluxes[field][dim][index];
-	  }
-	  BoundaryFluxes->LeftFluxes[field][dim]  = templ;
+	  for (int index=0; index< bfsize; index++) 
+	    {
+	      templ[index] = BoundaryFluxes->LeftFluxes[field][dim][index];
+	      tempr[index] = BoundaryFluxes->RightFluxes[field][dim][index];
+	    };
+	  FreeBaryonFieldMemory(BoundaryFluxes->LeftFluxes[field][dim]);
+	  FreeBaryonFieldMemory(BoundaryFluxes->RightFluxes[field][dim]);
+    	  BoundaryFluxes->LeftFluxes[field][dim]  = templ;
 	  BoundaryFluxes->RightFluxes[field][dim] = tempr;
 	}
       } // end: loop over dims

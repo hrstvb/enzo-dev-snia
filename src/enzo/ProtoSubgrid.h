@@ -38,6 +38,13 @@ class ProtoSubgrid
   ProtoSubgrid();
   ~ProtoSubgrid();
 
+   // Memory pool overloads new and delete operators
+#ifdef MEMORY_POOL
+  void* operator new(size_t nobjects);
+  void operator delete(void* object);
+#endif
+
+
   int AcceptableSubgrid();
   int ReturnNthLongestDimension(int n);
   int ComputeSignature(int dim);

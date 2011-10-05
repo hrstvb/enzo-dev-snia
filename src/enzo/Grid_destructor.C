@@ -32,6 +32,7 @@ void DeleteStarList(Star * &Node);
 #ifdef TRANSFER
 PhotonPackageEntry*  DeletePhotonPackage(PhotonPackageEntry *PP);
 #endif /* TRANSFER */
+void FreeFlaggingFieldMemory(int *FF);
  
 grid::~grid()
 {
@@ -49,8 +50,8 @@ grid::~grid()
 #endif /* UNUSED */
  
   for (i = 0; i < MAX_DIMENSION; i++) {
-    //    delete [] CellLeftEdge[i];
-    //    delete [] CellWidth[i];
+    FreeParticleMemory(CellLeftEdge[i]);
+    FreeParticleMemory(CellWidth[i]);
     FreeParticleMemory(ParticlePosition[i]);
     FreeParticleMemory(ParticleVelocity[i]);
     FreeParticleMemory(ParticleAcceleration[i]);
@@ -85,7 +86,7 @@ grid::~grid()
   FreeBaryonFieldMemory(PotentialField);
   FreeBaryonFieldMemory(GravitatingMassField);
   FreeBaryonFieldMemory(GravitatingMassFieldParticles);
-  delete [] FlaggingField;
+  FreeFlaggingFieldMemory(FlaggingField);
   FreeBaryonFieldMemory(MassFlaggingField);
   FreeBaryonFieldMemory(ParticleMassFlaggingField);
  

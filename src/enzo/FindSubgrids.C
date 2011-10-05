@@ -24,13 +24,14 @@
 #include "Hierarchy.h"
 #include "LevelHierarchy.h"
  
+  static ProtoSubgrid *SubgridList[MAX_NUMBER_OF_SUBGRIDS];
+
 /* function prototypes */
  
 int IdentifyNewSubgridsBySignature(ProtoSubgrid *SubgridList[],
 				   int &NumberOfSubgrids);
  
-static ProtoSubgrid *SubgridList[MAX_NUMBER_OF_SUBGRIDS];
- 
+
  
 int FindSubgrids(HierarchyEntry *Grid, int level, int &TotalFlaggedCells,
 		 int &FlaggedGrids)
@@ -42,8 +43,10 @@ int FindSubgrids(HierarchyEntry *Grid, int level, int &TotalFlaggedCells,
   float AxialRatio, GridVolume;
 #endif /* MPI_INSTRUMENTATION */
   int NumberOfFlaggedCells = INT_UNDEFINED, i;
+
+
   grid *CurrentGrid = Grid->GridData;
- 
+
   /* Clear pointer to lower grids. */
  
   Grid->NextGridNextLevel = NULL;

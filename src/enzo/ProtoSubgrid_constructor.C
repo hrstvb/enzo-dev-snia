@@ -20,6 +20,8 @@
 #include "ExternalBoundary.h"
 #include "Grid.h"
  
+void FreeFlaggingFieldMemory(int *FF);
+
  
 ProtoSubgrid::ProtoSubgrid()
 {
@@ -35,12 +37,27 @@ ProtoSubgrid::ProtoSubgrid()
   NumberFlagged = INT_UNDEFINED;
 }
  
+#ifdef MEMORY_POOL
+void* ProtoSubgrid::operator new(size_t object_size)
+{
+  return ProtoSubgridMemoryPool->GetMemory(object_size);
+}
+
+void ProtoSubgrid::operator delete(void* object)
+{
+  ProtoSubgridMemoryPool->FreeMemory(object);
+  return;
+}
+#endif
  
  
 ProtoSubgrid::~ProtoSubgrid()
 {
   for (int dim = 0; dim < MAX_DIMENSION; dim++)
-    delete [] Signature[dim];
+    FreeFlaggingFieldMemory(Signature[dim]);
+  //    delete [] Signature[dim];
  
-  delete [] GridFlaggingField;
+  FreeFlaggingFieldMemory(GridFlaggingField);
+    // delete [] GridFlaggingField;
 }
+

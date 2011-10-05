@@ -25,7 +25,8 @@
 extern "C" void FORTRAN_NAME(project)(int *rank, int *i1, int *i2, int *i3,
 				      int *iline, int *pdim, int *field,
 				      int *line);
- 
+int *AllocateNewFlaggingField(int size);
+
 int ProtoSubgrid::ComputeSignature(int dim)
 {
  
@@ -42,7 +43,8 @@ int ProtoSubgrid::ComputeSignature(int dim)
  
   /* Allocate space. */
  
-  Signature[dim] = new int[GridDimension[dim]];
+  //  Signature[dim] = new int[GridDimension[dim]];
+  Signature[dim] =  AllocateNewFlaggingField(GridDimension[dim]);
   for(int i = 0; i < GridDimension[dim]; i++) Signature[dim][i] = 0;
  
   /* Perform projection (and clear line)

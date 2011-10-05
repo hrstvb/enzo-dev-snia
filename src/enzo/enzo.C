@@ -265,7 +265,7 @@ Eint32 MAIN_NAME(Eint32 argc, char *argv[])
       printf("PID %d on %s ready for debugger attach\n", getpid(), hostname);
     printf("xterm -e gdb --pid %d  &   ", getpid());
     fflush(stdout);
-    sleep(.1);
+    sleep(0.1);
 #endif
   
 
@@ -310,14 +310,29 @@ Eint32 MAIN_NAME(Eint32 argc, char *argv[])
   GridObjectMemoryPool = new MPool::MemoryPool(1, GridObjectMemorySize*GridObjectSize,
 					   GridObjectSize,
 					   GridObjectMemorySize*GridObjectSize/4);
+  const int ProtoSubgridMemorySize = MEMORY_POOL_SIZE;
+  int ProtoSubgridSize = sizeof(ProtoSubgrid);
+  ProtoSubgridMemoryPool = new MPool::MemoryPool(2, ProtoSubgridMemorySize*ProtoSubgridSize,
+					   ProtoSubgridSize,
+					   ProtoSubgridMemorySize*ProtoSubgridSize);
 
-  ParticleMemoryPool = new MPool::MemoryPool(2, sizeof(FLOAT)*100000,
-					     sizeof(FLOAT)*8,
-					     sizeof(FLOAT)*200000);
+  const int HierarchyEntryMemorySize = MEMORY_POOL_SIZE;
+  int HierarchyEntrySize = sizeof(HierarchyEntry);
+  HierarchyEntryMemoryPool = new MPool::MemoryPool(3, HierarchyEntryMemorySize*HierarchyEntrySize,
+					   HierarchyEntrySize,
+					   HierarchyEntryMemorySize*HierarchyEntrySize);
 
-  BaryonFieldMemoryPool = new MPool::MemoryPool(3, sizeof(float)*100000,
+  FlaggingFieldMemoryPool = new MPool::MemoryPool(4, sizeof(int)*1000000,
+						  sizeof(int)*32,
+						  sizeof(int)*200000);
+
+  ParticleMemoryPool = new MPool::MemoryPool(5, sizeof(FLOAT)*4000000,
+					     sizeof(FLOAT)*64,
+					     sizeof(FLOAT)*2000000);
+
+  BaryonFieldMemoryPool = new MPool::MemoryPool(6, sizeof(float)*6000000,
 						sizeof(float)*64,
-						sizeof(float)*200000);
+						sizeof(float)*4000000);
 
 #ifdef TRANSFER
   const int PhotonMemorySize = MEMORY_POOL_SIZE;
@@ -851,6 +866,9 @@ Eint32 MAIN_NAME(Eint32 argc, char *argv[])
 
 #ifdef MEMORY_POOL
     delete GridObjectMemoryPool;
+    delete ProtoSubgridMemoryPool;
+    delete HierarchyEntryMemoryPool;
+    delete FlaggingFieldMemoryPool;
     delete ParticleMemoryPool;
     delete BaryonFieldMemoryPool;
 #ifdef TRANSFER
