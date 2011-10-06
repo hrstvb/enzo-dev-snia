@@ -46,7 +46,7 @@ int ReadPhotonSources(FILE *fptr, FLOAT CurrentTime)
     PhotonTestSourceType[source] = Isotropic;
     PhotonTestSourceLuminosity[source] = 0.;
     PhotonTestSourceLifeTime[source] = 0.;
-    PhotonTestSourceCreationTime[source] = CurrentTime;
+    PhotonTestSourceCreationTime[source] = 0.99999*CurrentTime;
     PhotonTestSourceRampTime[source] = 0.;
     PhotonTestSourceEnergyBins[source] = 1;
     PhotonTestSourceSED[source] = NULL;

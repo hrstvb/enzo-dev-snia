@@ -56,7 +56,7 @@ bool FirstTimeCalled = true;
 int CommunicationPartitionGrid(HierarchyEntry *Grid, int gridnum)
 {
  
-  if (NumberOfProcessors*NumberOfRootGridTilesPerDimensionPerProcessor == 1)
+  if (NumberOfCores*NumberOfRootGridTilesPerDimensionPerProcessor == 1)
     return SUCCESS;
  
   // Declarations
@@ -86,27 +86,15 @@ int CommunicationPartitionGrid(HierarchyEntry *Grid, int gridnum)
   for (dim = 0; dim < Rank; dim++)
     Dims[dim] -= 2*DEFAULT_GHOST_ZONES;
  
-  float Edge = POW(float(Dims[0]*Dims[1]*Dims[2])/float(NumberOfProcessors),
+  float Edge = POW(float(Dims[0]*Dims[1]*Dims[2])/float(NumberOfCores),
 		   1/float(Rank));
  
  
   /* If using MPI, use their routine to calculate layout. */
  
-#ifdef USE_MPI
- 
   int LayoutTemp[] = {0,0,0};
 
-/*
-  MPI_Arg Nnodes = NumberOfProcessors;
-  MPI_Arg Ndims = Rank;
-  MPI_Arg LayoutDims[] = {0, 0, 0};
- 
-  if (MPI_Dims_create(Nnodes, Ndims, LayoutDims) != MPI_SUCCESS) {
-    ENZO_FAIL("Error in MPI_Dims_create.");
-  }
-*/
-
-  int Nnodes = NumberOfProcessors;
+  int Nnodes = NumberOfCores;
   int Ndims = Rank;
   int LayoutDims[] = {0, 0, 0};
 
@@ -122,32 +110,9 @@ int CommunicationPartitionGrid(HierarchyEntry *Grid, int gridnum)
   for (dim = 0; dim < Rank; dim++)
     Layout[dim] = LayoutTemp[Rank-1-dim] * NumberOfRootGridTilesPerDimensionPerProcessor;
  
-  /* Force some distributions if the default is brain-dead. */
-
-/*
-  if (Rank == 3 && NumberOfProcessors == 8)
-    for (dim = 0; dim < Rank; dim++)
-      Layout[dim] = 2;
-
-  if (Rank == 3 && NumberOfProcessors == 64)
-    for (dim = 0; dim < Rank; dim++)
-      Layout[dim] = 4;
-
-  if (Rank == 3 && NumberOfProcessors == 125)
-    for (dim = 0; dim < Rank; dim++)
-      Layout[dim] = 5;
- 
-  if (Rank == 3 && NumberOfProcessors == 216)
-    for (dim = 0; dim < Rank; dim++)
-      Layout[dim] = 6;
-*/
-
   if (MyProcessorNumber == ROOT_PROCESSOR) {
     fprintf(stderr, "ENZO_layout %"ISYM" x %"ISYM" x %"ISYM"\n", Layout[0], Layout[1], Layout[2]);
   }
-
-#endif /* USE_MPI */
- 
  
   /* Generate arrays of grid dimensions and start positions. */
  

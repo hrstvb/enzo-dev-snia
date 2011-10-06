@@ -1587,6 +1587,17 @@ int ReadParameterFile(FILE *fptr, TopGridData &MetaData, float *Initialdt)
 
   if (debug) printf("Initialdt in ReadParameterFile = %e\n", *Initialdt);
 
+#ifdef _OPENMP
+  if (ConservativeReconstruction == TRUE)
+    ENZO_FAIL("ConservativeReconstruction not supported yet with openmp-yes.\n");
+  if (PositiveReconstruction == TRUE)
+    ENZO_FAIL("PositiveReconstruction not supported yet with openmp-yes.\n");
+#endif
+
+  /* Turn off reseting LB if we're running serially */
+
+  if (NumberOfProcessors == 1 && ResetLoadBalancing)
+    ResetLoadBalancing = FALSE;
 
   CheckShearingBoundaryConsistency(MetaData);
   return SUCCESS;
