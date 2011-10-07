@@ -101,6 +101,11 @@ c
      &     eratio(ijkn), dadx(ijkn),  dddx(ijkn)
       real min_color
       parameter(min_color=1d-05*tiny)
+
+c make all local variables static
+      save
+
+
 c
 c\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\/////////////////////////////////
 c=======================================================================

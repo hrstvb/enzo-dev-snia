@@ -55,6 +55,8 @@ c
       real    coefm(MAX_REFINE), coefp(MAX_REFINE), coef0(MAX_REFINE),
      &        del1left, del2left, del1right, del2right, factor,
      &        fraction(ijkn), sum
+c make all local variables static
+      save
 c
 c\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\///////////////////////////////////
 c=======================================================================

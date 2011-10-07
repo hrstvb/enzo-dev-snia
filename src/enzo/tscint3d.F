@@ -71,6 +71,8 @@ c
      &       del1right, del2right, dV, factor, sum,
      &       w01, w02, w03, wm1, wm2, wm3, wp1, wp2, wp3
       real   temp(ijkn), fraction(ijkn)
+c make all local variables static
+      save
 c
 c\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\///////////////////////////////////
 c=======================================================================

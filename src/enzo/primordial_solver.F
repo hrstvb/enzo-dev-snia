@@ -277,6 +277,11 @@ c
       parameter(iHI=1,iHII=2,iHeI=3,iHeII=4,iHeIII=5,
      &          iH2I=6,ige=7,iDI=8,iDII=9,iHDI=10,
      &          ide=11,iHM=12,iH2II=13 ) ! eq species
+
+c make all local variables static
+      save
+
+
       totaliter = 0
 c      iciecool = 0(
 c      ih2optical = 0

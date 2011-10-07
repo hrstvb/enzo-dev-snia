@@ -82,12 +82,8 @@ c
       real    fails(ijkn)
       integer itok, jjj
 
-      save     cl,    cr, dpdul, dpdur,
-     &         ps,    ubl,   ubr,
-     &         qa      ,     zl,    zr
-      save mask, jfail
-      save    old_ps, delta_ps
-      save    fails
+c make all local variables static
+      save
 
 !     To reduce this to the old fixed iteration count method
 !     simply set tolerance = 1.0e-50

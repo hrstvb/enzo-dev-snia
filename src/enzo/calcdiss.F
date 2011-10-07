@@ -147,12 +147,6 @@ c
      &            sigma1 = 0.5d0 , sigma2 = 1.d0, one    = 1.d0   ,
      &               two = 2.d0)
 
-      save    cj2s, di, difftemp, flattemp,
-     &        kappa, kappa_tilde, omega,
-     &        qa, qb, qc, s, sigma,
-     &        sigma_tilde, vdiff1, vdiff2, wdiff1,
-     &        wdiff2, wflag, Z, ZE
-
 c
 c Notice, for 1D calculations nu2 = 0 and nu3 = 0.3333, see CW84, p. 200.
 c
