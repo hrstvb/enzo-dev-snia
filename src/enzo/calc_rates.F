@@ -1121,7 +1121,7 @@ c
       endif
 #endif /* UNUSED */
 
-#define OUTPUT_COOLING_RATE_DATA
+c#define OUTPUT_COOLING_RATE_DATA
 #ifdef OUTPUT_COOLING_RATE_DATA
 c
 c     Write out cooling rate data
