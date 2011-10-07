@@ -140,23 +140,23 @@ void AMRsolve_Grid::write(std::string field, FILE* fp, bool brief) throw()
 {
   if (fp == 0) fp = stdout;
 
-  //  if (field=="header") {
-  fprintf(fp,"Grid\n"
-	  "   id             %d\n"
-	  "   parent id      %d\n"
-	  "   processor      %d\n"
-	  "   lower position "SCALAR_PRINTF SCALAR_PRINTF SCALAR_PRINTF"\n"
-	  "   upper position "SCALAR_PRINTF SCALAR_PRINTF SCALAR_PRINTF"\n"
-	  "   lower index    %d %d %d\n"
-	  "   zones          %d %d %d\n"
-	  "   level          %d\n",
-	  id_,id_parent_,ip_,
-	  xl_[0],xl_[1],xl_[2],
-	  xu_[0],xu_[1],xu_[2],
-	  il_[0],il_[1],il_[2],
-          n_ [0],n_ [1],n_ [2],
-	  level_);
-  //  }
+  if (field=="header") {
+    fprintf(fp,"Grid\n"
+	    "   id             %d\n"
+	    "   parent id      %d\n"
+	    "   processor      %d\n"
+	    "   lower position "SCALAR_PRINTF SCALAR_PRINTF SCALAR_PRINTF"\n"
+	    "   upper position "SCALAR_PRINTF SCALAR_PRINTF SCALAR_PRINTF"\n"
+	    "   lower index    %d %d %d\n"
+	    "   zones          %d %d %d\n"
+	    "   level          %d\n",
+	    id_,id_parent_,ip_,
+	    xl_[0],xl_[1],xl_[2],
+	    xu_[0],xu_[1],xu_[2],
+	    il_[0],il_[1],il_[2],
+	    n_ [0],n_ [1],n_ [2],
+	    level_);
+  }
   if (field=="u" && u_ && ! brief) {
     for (int i0=0; i0<n_[0]; i0++) {
       for (int i1=0; i1<n_[1]; i1++) {
