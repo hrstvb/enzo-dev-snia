@@ -97,6 +97,18 @@ c
       real sl(ijkn), sr(ijkn), sm(ijkn)
       real dubl, dubr
 
+      save cs, char1, char2, csl, csr,
+     $     cw, cp, diffd, diffuu, diffuv,
+     $     diffuw, diffue, diffuge, 
+     $     bp, bm, el, er, pcent
+      save dfl, dfr, ufl, ufr, 
+     $     vfl, vfr, wfl, wfr,
+     $     efl, efr, gefl, gefr,
+     $     gesl, gesr,
+     $     colfl, colfr
+      save sl, sr, sm
+
+
       gamma1 = gamma - 1.d0
       gamma1i = 1.d0 / gamma1
 c

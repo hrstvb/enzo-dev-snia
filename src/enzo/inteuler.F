@@ -10,29 +10,7 @@ c
      &            dt, gamma, ipresfree,
      &            dls, drs, pls, prs, gels, gers,
      &            uls, urs, vls, vrs, wls, wrs,
-     &            ncolor, colslice, colls, colrs,
-c helper variables
-     &     c1, c2, c3, c4, c5, c6,c7, c8
-     &     ,dd,dl,dr,d6      ! 12
-     &     ,dp,pl,pr,p6
-     &     ,du,ul,ur,u6
-     &     ,dv,vl,vr,v6
-     &     ,dw,wl,wr,w6      ! 28
-     &     ,dge,gel,ger,ge6
-     &     ,dla,dra,pla,pra,ula,ura ! 38
-     &     ,vla,vra,wla,wra
-     &     ,plm,prm,ulm,urm
-     &     ,dl0,dr0,pl0,pr0
-     &     ,plp,prp,ulp,urp,ul0,ur0 ! 56
-     &     ,vl0,vr0,wl0,wr0
-     &     , cs,d2d,dxb, dx2i
-     &     , cm, c0, cp,char1,char2
-     &     ,betalp,betalm,betal0,cla
-     &     ,betarp,betarm,betar0,cra
-     &     ,gela,gera,gel0,ger0     !81
-     &     ,dxdt2,steepen,tmp1,tmp2,tmp3,tmp4 ! 87
-     &     ,colla,colra,coll0,colr0,dcol,coll,colr,col6
-     &     ,lem,rem)
+     &            ncolor, colslice, colls, colrs)
 c
 c  COMPUTES LEFT AND RIGHT EULERIAN INTERFACE VALUES FOR RIEMANN SOLVER
 c
@@ -114,8 +92,8 @@ c
 c  local declarations
 c
       integer i, j, n, m, ic
-      real steepen(ijkn),tmp1(ijkn),tmp2(ijkn),tmp3(ijkn),tmp4(ijkn)
       real qa,qb,qc,qd,qe,s1,s2,f1
+      real steepen(ijkn),tmp1(ijkn),tmp2(ijkn),tmp3(ijkn),tmp4(ijkn)
       real  c1(ijkn), c2(ijkn), c3(ijkn), c4(ijkn), c5(ijkn), c6(ijkn)
      &    ,c7(ijkn), c8(ijkn)
      &    ,dd(ijkn),dl(ijkn),dr(ijkn),d6(ijkn)
@@ -139,7 +117,35 @@ c
      &    ,coll0(ijkn,MAX_COLOR),colr0(ijkn,MAX_COLOR)
      &    ,dcol(ijkn,MAX_COLOR),coll(ijkn,MAX_COLOR)
      &    ,colr(ijkn,MAX_COLOR),col6(ijkn,MAX_COLOR)
-      real lem(idim,5,5),rem(idim,5,5), dxdt2(ijkn)
+      real lem(ijkn,5,5),rem(ijkn,5,5), dxdt2(ijkn)
+
+      save steepen,tmp1,tmp2,tmp3,tmp4
+      save  c1, c2, c3, c4, c5, c6
+     &    ,c7, c8
+     &    ,dd,dl,dr,d6
+     &    ,dp,pl,pr,p6
+     &    ,du,ul,ur,u6
+     &    ,dv,vl,vr,v6
+     &    ,dw,wl,wr,w6
+     &    ,dge,gel,ger,ge6
+     &    ,dla,dra,pla,pra,ula,ura
+     &    ,vla,vra,wla,wra
+     &    ,plm,prm,ulm,urm
+     &    ,dl0,dr0,pl0,pr0
+     &    ,plp,prp,ulp,urp,ul0,ur0
+     &    ,vl0,vr0,wl0,wr0
+     &    , cs,d2d,dxb, dx2i
+     &    , cm, c0, cp,char1,char2
+     &    ,betalp,betalm,betal0,cla
+     &    ,betarp,betarm,betar0,cra
+     &    ,gela,gera,gel0,ger0
+     &    ,colla,colra
+     &    ,coll0,colr0
+     &    ,dcol,coll
+     &    ,colr,col6
+      save lem,rem, dxdt2
+
+
 c
 c  parameters
 c
