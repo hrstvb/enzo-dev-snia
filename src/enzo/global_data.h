@@ -117,6 +117,7 @@ EXTERN int FastSiblingLocatorEntireDomain;
 			 11 = FlagCellsToBeRefinedByResistiveLength
                          12 = FlagCellsToBeRefinedByMustRefineRegion
 			 13 = FlagCellsToBeRefinedByMetallicity
+			 19 = FlagCellsToBeRefinedByRadiationGradient
  */
 
 EXTERN int CellFlaggingMethod[MAX_FLAGGING_METHODS];

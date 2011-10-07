@@ -414,6 +414,7 @@ OBJS_CONFIG_LIB = \
 	Grid_FlagCellsToBeRefinedByMetallicity.o \
 	Grid_FlagCellsToBeRefinedByMustRefineParticles.o \
 	Grid_FlagCellsToBeRefinedByMustRefineRegion.o \
+	Grid_FlagCellsToBeRefinedByRadiationGradient.o \
 	Grid_FlagCellsToBeRefinedByResistiveLength.o \
 	Grid_FlagCellsToBeRefinedByShear.o \
 	Grid_FlagCellsToBeRefinedByShocks.o \

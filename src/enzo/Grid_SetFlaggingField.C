@@ -221,6 +221,20 @@ int grid::SetFlaggingField(int &NumberOfFlaggedCells, int level)
     break;
  
  
+    /* ==== METHOD 19: BY GRADIENT OF THE RADIATION FIELD ==== */
+  case 19:
+
+#ifdef TRANSFER
+    if (RadiativeTransferFLD) {
+      NumberOfFlaggedCells = this->FlagCellsToBeRefinedByRadiationGradient();
+      if (NumberOfFlaggedCells < 0) {
+	ENZO_FAIL("Error in grid->FlagCellsToBeRefinedByRadSlope.");
+      }
+    }
+#endif /* TRANSFER */
+    break;
+
+ 
     /* ==== METHOD 100: UNDO REFINEMENT IN SOME REGIONS ==== */
  
     /* Must be done last ... */
