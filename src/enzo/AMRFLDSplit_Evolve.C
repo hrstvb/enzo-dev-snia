@@ -540,7 +540,8 @@ int AMRFLDSplit::RadStep(LevelHierarchyEntry *LevelArray[], int level,
 
   // enforce a solution floor on radiation
   float epsilon=1.0;      // radiation floor
-  while (epsilon*0.25 > 0.0)  epsilon*=0.5;
+//  while (epsilon*0.25 > 0.0)  epsilon*=0.5;
+  epsilon = 1.0e-8;
   for (int thislevel=level; thislevel<MAX_DEPTH_OF_HIERARCHY; thislevel++)
     for (LevelHierarchyEntry* Temp=LevelArray[thislevel]; Temp; 
 	 Temp=Temp->NextGridThisLevel)

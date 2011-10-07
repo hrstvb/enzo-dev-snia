@@ -34,11 +34,19 @@ float AMRFLDSplit::ComputeTimeStep(Eflt64 Echange)
   float dt_est = huge_number;    // max time step (normalized units)
   if (dtfac != huge_number) {
 
+    float Vol = 1.0;
+    for (int i=0; i<rank; i++)
+      Vol *= (DomainRightEdge[i]-DomainLeftEdge[i]);
+
     // compute time step estimate (physical units)
     if (Echange <= 0.0) {
       dt_est = huge_number;
     } else {
-      dt_est = dt*dtfac/Echange;
+      if (dtnorm > 0) {
+	dt_est = dt*dtfac/Echange*pow(Vol,1.0/dtnorm);
+      } else {
+	dt_est = dt*dtfac/Echange*Vol;
+      }
     }
     dt_est = min(dt_est, huge_number);
 
