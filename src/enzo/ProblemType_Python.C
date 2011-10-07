@@ -37,7 +37,7 @@ void ProblemType_Python::SetField(PythonGrid *grid,
 
     if (grid->BaryonField[FieldIndex] != NULL) {
       FreeBaryonFieldMemory(grid->BaryonField[FieldIndex]);
-
+      grid->BaryonField[FieldIndex] = NULL;
     } else {
         /* We may not want to do this once we move to more types
            of field generation */

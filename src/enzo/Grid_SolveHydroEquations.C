@@ -53,6 +53,7 @@ extern "C" void FORTRAN_NAME(ppm_lr)(
                           int *ncolour, float *colourpt, int *coloff,
                             int colindex[], int *ifloat_size);
 #endif /* PPM_LR */
+void PrintMemoryUsage(char *str);
 
 int grid::SolveHydroEquations(int CycleNumber, int NumberOfSubgrids, 
 			      fluxes *SubgridFluxes[], int level)
@@ -387,7 +388,8 @@ int grid::SolveHydroEquations(int CycleNumber, int NumberOfSubgrids,
 
     float *CellWidthTemp[MAX_DIMENSION];
     for (dim = 0; dim < MAX_DIMENSION; dim++) {
-      CellWidthTemp[dim] = new float[GridDimension[dim]];
+      //      CellWidthTemp[dim] = new float[GridDimension[dim]];
+      CellWidthTemp[dim] = AllocateNewBaryonField(GridDimension[dim]);
       for (i = 0; i < GridDimension[dim]; i++)
 	if (dim < GridRank)
 	  CellWidthTemp[dim][i] = float(a*CellWidth[dim][i]);
@@ -409,12 +411,12 @@ int grid::SolveHydroEquations(int CycleNumber, int NumberOfSubgrids,
        Notice that it is hard-wired for three dimensions, but it does
        the right thing for < 3 dimensions. */
     /* note: Start/EndIndex are zero based */
-        
+    PrintMemoryUsage("SH: PPM");         
     if (HydroMethod == PPM_DirectEuler)
       this->SolvePPM_DE(CycleNumber, NumberOfSubgrids, SubgridFluxes, 
 			CellWidthTemp, GridGlobalStart, GravityOn, 
 			NumberOfColours, colnum);
-
+    PrintMemoryUsage("SH: after PPM");         
     /* PPM LR has been withdrawn. */
 
     if (HydroMethod == PPM_LagrangeRemap) {
@@ -459,7 +461,8 @@ int grid::SolveHydroEquations(int CycleNumber, int NumberOfSubgrids,
 
 
     for (dim = 0; dim < MAX_DIMENSION; dim++)
-      delete [] CellWidthTemp[dim];
+      FreeBaryonFieldMemory(CellWidthTemp[dim]);
+      //      delete [] CellWidthTemp[dim];
 
   /* If we're supposed to be outputting on Density, we need to update
      the current maximum value of that Density. */

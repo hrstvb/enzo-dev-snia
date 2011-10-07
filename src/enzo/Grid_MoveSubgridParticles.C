@@ -77,7 +77,7 @@ int start;
   /* If there are no particles to move, clean up and exit. */
  
   if (TotalNumberOfParticles == 0) {
-    delete MoveParticle;
+    delete [] MoveParticle;
     return SUCCESS;
   }
  
@@ -207,7 +207,7 @@ int start;
  
   /* Clean up. */
  
-  delete MoveParticle;
+  delete [] MoveParticle;
  
   return SUCCESS;
 }

@@ -32,6 +32,8 @@ int GetUnits(float *DensityUnits, float *LengthUnits,
 	     float *TemperatureUnits, float *TimeUnits,
 	     float *VelocityUnits, FLOAT Time);
  
+float *AllocateNewBaryonField(int size);
+void FreeBaryonFieldMemory(float *BF);
  
 int grid::FlagCellsToBeRefinedByJeansLength()
 {
@@ -56,7 +58,7 @@ int grid::FlagCellsToBeRefinedByJeansLength()
  
   float *temperature = NULL;
   if (ProblemType != 60 && ProblemType != 61 && (EOSType == 0)) { //AK
-    temperature = new float[size];
+    temperature = AllocateNewBaryonField(size);
     if (this->ComputeTemperatureField(temperature) == FAIL) {
       fprintf(stderr, "Error in grid->ComputeTemperature.\n");
       return -1;
@@ -140,7 +142,8 @@ int grid::FlagCellsToBeRefinedByJeansLength()
   /* clean up */
  
   if (ProblemType != 60 && ProblemType != 61) //AK
-    delete temperature;
+    FreeBaryonFieldMemory(temperature);
+    //    delete [] temperature;
  
   /* Count number of flagged Cells. */
  

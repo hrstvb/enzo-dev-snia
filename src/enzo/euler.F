@@ -10,7 +10,8 @@ c
      &            idim, jdim, i1, i2, j1, j2, dt, 
      &            gamma, idiff, gravity, idual, eta1, eta2,
      &            df, ef, uf, vf, wf, gef, ges,
-     &            ncolor, colslice, colf
+     &            ncolor, colslice, colf,
+     &            dnu, dnuinv, uold, pcent, eratio, dadx, dddx
      &                 )
 c
 c  SOLVES THE EULERIAN CONSERVATION LAWS USING FLUXES FROM THE RIEMANN SOLVER

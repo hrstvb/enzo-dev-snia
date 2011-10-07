@@ -31,5 +31,5 @@ void grid::DeleteFlaggingField()
   else
     FreeFlaggingFieldMemory(FlaggingField);
   //    delete [] FlaggingField;
-  //  FlaggingField = NULL;
+  FlaggingField = NULL;
 }

@@ -20,7 +20,8 @@
 #ifdef USE_MPI
 #include "mpi.h"
 #endif /* USE_MPI */
- 
+
+#include <sys/malloc.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -55,7 +56,9 @@
 int InitializePythonInterface(int argc, char **argv);
 int FinalizePythonInterface();
 #endif
-
+#ifdef USE_JEMALLOC
+#include "jemalloc/jemalloc.h"
+#endif
 // Function prototypes
  
 int InitializeNew(  char *filename, HierarchyEntry &TopGrid, TopGridData &tgd,
@@ -251,6 +254,17 @@ Eint32 MAIN_NAME(Eint32 argc, char *argv[])
 
 
   int i;
+#ifdef USE_JEMALLOC
+unsigned narena=0;
+size_t len=0;
+len = sizeof(narena);
+mallctl("arenas.purge", &narena, &len, NULL, 0);
+#endif
+
+#if 0
+ int dummy = mallopt(M_TRIM_THRESHOLD, 1024*1024); // 1 Mbyte chunks are released back
+ int dummy = mallopt(M_MMAP_THRESHOLD, 1024); // >1 kbyte chunks are allocated using mmap
+#endif
 
   // Initialize Communications
 
@@ -261,11 +275,11 @@ Eint32 MAIN_NAME(Eint32 argc, char *argv[])
     int impi = 0;
     char hostname[256];
     gethostname(hostname, sizeof(hostname));
-    if (MyProcessorNumber == ROOT_PROCESSOR) 
-      printf("PID %d on %s ready for debugger attach\n", getpid(), hostname);
+    //    if (MyProcessorNumber == ROOT_PROCESSOR) 
+    //   printf("PID %d on %s ready for debugger attach\n", getpid(), hostname);
     printf("xterm -e gdb --pid %d  &   ", getpid());
     fflush(stdout);
-    sleep(0.1);
+    sleep(8.1);
 #endif
   
 
@@ -309,30 +323,30 @@ Eint32 MAIN_NAME(Eint32 argc, char *argv[])
   int GridObjectSize = sizeof(grid);
   GridObjectMemoryPool = new MPool::MemoryPool(1, GridObjectMemorySize*GridObjectSize,
 					   GridObjectSize,
-					   GridObjectMemorySize*GridObjectSize/4);
+					   GridObjectMemorySize*GridObjectSize/4, true);
   const int ProtoSubgridMemorySize = MEMORY_POOL_SIZE;
   int ProtoSubgridSize = sizeof(ProtoSubgrid);
   ProtoSubgridMemoryPool = new MPool::MemoryPool(2, ProtoSubgridMemorySize*ProtoSubgridSize,
 					   ProtoSubgridSize,
-					   ProtoSubgridMemorySize*ProtoSubgridSize);
+					   ProtoSubgridMemorySize*ProtoSubgridSize, true);
 
-  const int HierarchyEntryMemorySize = MEMORY_POOL_SIZE;
+  const int HierarchyEntryMemorySize =1000;
   int HierarchyEntrySize = sizeof(HierarchyEntry);
   HierarchyEntryMemoryPool = new MPool::MemoryPool(3, HierarchyEntryMemorySize*HierarchyEntrySize,
 					   HierarchyEntrySize,
-					   HierarchyEntryMemorySize*HierarchyEntrySize);
+					   HierarchyEntryMemorySize*HierarchyEntrySize, true);
 
-  FlaggingFieldMemoryPool = new MPool::MemoryPool(4, sizeof(int)*1000000,
+  FlaggingFieldMemoryPool = new MPool::MemoryPool(4, sizeof(int)*1000000/NumberOfProcessors,
 						  sizeof(int)*32,
-						  sizeof(int)*200000);
+						  sizeof(int)*200000, true);
 
-  ParticleMemoryPool = new MPool::MemoryPool(5, sizeof(FLOAT)*4000000,
+  ParticleMemoryPool = new MPool::MemoryPool(5, sizeof(FLOAT)*4000000/NumberOfProcessors,
 					     sizeof(FLOAT)*64,
-					     sizeof(FLOAT)*2000000);
+					     sizeof(FLOAT)*2000000, true);
 
-  BaryonFieldMemoryPool = new MPool::MemoryPool(6, sizeof(float)*6000000,
+  BaryonFieldMemoryPool = new MPool::MemoryPool(6, sizeof(float)*24000000/NumberOfProcessors,
 						sizeof(float)*64,
-						sizeof(float)*4000000);
+						sizeof(float)*6000000, true);
 
 #ifdef TRANSFER
   const int PhotonMemorySize = MEMORY_POOL_SIZE;

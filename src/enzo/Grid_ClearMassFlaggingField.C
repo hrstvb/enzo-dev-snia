@@ -35,6 +35,7 @@ void grid::ClearMassFlaggingField()
   if (MassFlaggingField != NULL) {
     fprintf(stderr, "ClearMassFlaggingField: Warning, field not deleted.\n");
     FreeBaryonFieldMemory(MassFlaggingField);
+    MassFlaggingField = NULL;
   }
  
   /* compute size and allocate */

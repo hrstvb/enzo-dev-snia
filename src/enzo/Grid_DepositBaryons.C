@@ -167,7 +167,8 @@ int grid::DepositBaryons(grid *TargetGrid, FLOAT DepositTime)
     dens_field = CommunicationReceiveBuffer[CommunicationReceiveIndex];
   else
 #endif /* USE_MPI */
-    dens_field = new float[size];
+    //    dens_field = new float[size];
+    dens_field = AllocateNewBaryonField(size);
  
   if (ProcessorNumber == MyProcessorNumber) {
  
@@ -191,7 +192,8 @@ int grid::DepositBaryons(grid *TargetGrid, FLOAT DepositTime)
  
     /* Allocate a density and velocity mesh for this grid. */
  
-    float *vel_field = new float[size*4];
+    //    float *vel_field = new float[size*4];
+    float *vel_field = AllocateNewBaryonField(size*4);
  
     /* Generate the density field advanced by dt using smoothed
        velocity field. */
@@ -212,7 +214,8 @@ int grid::DepositBaryons(grid *TargetGrid, FLOAT DepositTime)
 	current_size *= GridDimension[dim];
 
       if (OldBaryonField[DensNum] != NULL) {
-	av_dens = new float[current_size];
+	//	av_dens = new float[current_size];
+	av_dens =  AllocateNewBaryonField(current_size);
 	for (int i=0; i<current_size; i++) 
 	  av_dens[i] = (BaryonField[DensNum][i] + OldBaryonField[DensNum][i]) / 2.;
       } else 	
@@ -236,10 +239,12 @@ int grid::DepositBaryons(grid *TargetGrid, FLOAT DepositTime)
 			       RegionDim, RegionDim+1, RegionDim+2,
 			       Refinement, Refinement+1, Refinement+2);
  
-    delete [] vel_field;
+    //    delete [] vel_field;
+    FreeBaryonFieldMemory(vel_field);
     if ( RK2SecondStepBaryonDeposit ) 
       if (OldBaryonField[DensNum] != NULL) 
-	delete [] av_dens;
+	FreeBaryonFieldMemory(av_dens);
+	//	delete [] av_dens;
     
  
   } // end: if (ProcessorNumber == MyProcessorNumber)
@@ -331,7 +336,8 @@ int grid::DepositBaryons(grid *TargetGrid, FLOAT DepositTime)
  
   /* Clean up */
  
-  delete [] dens_field;
+  FreeBaryonFieldMemory(dens_field);
+  //  delete [] dens_field;
  
   return SUCCESS;
  

@@ -75,7 +75,7 @@ int grid::SolveForPotential(int level, FLOAT PotentialTime)
   }
   tol_dim = max(sqrt(float(size))*1e-6, tol_dim);
  
-  float *rhs = new float[size];
+  float *rhs = AllocateNewBaryonField(size);
  
   float Constant = GravitationalConstant * InverseVolumeElement *
                    POW(GravitatingMassFieldCellSize, 2) / a;
@@ -141,7 +141,7 @@ int grid::SolveForPotential(int level, FLOAT PotentialTime)
  
   /* Clean up. */
  
-  delete [] rhs;
+  FreeBaryonFieldMemory(rhs);
 
 #define NO_POTENTIALDEBUGOUTPUT
 #ifdef POTENTIALDEBUGOUTPUT

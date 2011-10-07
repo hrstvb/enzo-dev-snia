@@ -261,7 +261,7 @@ int PutSinkRestartInitialize(FILE *fptr, FILE *Outfptr,
  
   /* Clean up. */
  
-  delete dummy;
+  delete [] dummy;
  
   return SUCCESS;
 }

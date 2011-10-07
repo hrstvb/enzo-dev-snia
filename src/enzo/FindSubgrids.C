@@ -24,13 +24,15 @@
 #include "Hierarchy.h"
 #include "LevelHierarchy.h"
  
-  static ProtoSubgrid *SubgridList[MAX_NUMBER_OF_SUBGRIDS];
 
 /* function prototypes */
  
 int IdentifyNewSubgridsBySignature(ProtoSubgrid *SubgridList[],
 				   int &NumberOfSubgrids);
  
+static ProtoSubgrid *SubgridList[MAX_NUMBER_OF_SUBGRIDS];
+
+void PrintMemoryUsage(char *str);
 
  
 int FindSubgrids(HierarchyEntry *Grid, int level, int &TotalFlaggedCells,
@@ -101,34 +103,35 @@ int FindSubgrids(HierarchyEntry *Grid, int level, int &TotalFlaggedCells,
   if (NumberOfFlaggedCells != 0) {
  
     /* Create the base ProtoSubgrid which contains the whole grid. */
- 
     int NumberOfSubgrids = 1;
     SubgridList[0] = new ProtoSubgrid;
     
     SubgridList[0]->SetLevel(level+1);
  
     /* Copy the flagged zones into the ProtoSubgrid. */
- 
+
     if (SubgridList[0]->CopyFlaggedZonesFromGrid(CurrentGrid) == FAIL) {
       ENZO_FAIL("Error in ProtoSubgrid->CopyFlaggedZonesFromGrid.");
     }
- 
+
     /* Recursively break up this ProtoSubgrid and add new ones based on the
        flagged cells. */
- 
+
     if (IdentifyNewSubgridsBySignature(SubgridList, NumberOfSubgrids) == FAIL){
       ENZO_FAIL("Error in IdentifyNewSubgridsBySignature.");
     }
- 
+
     /* For each subgrid, create a new grid based on the current grid (i.e.
        same parameters, etc.) */
  
+    PrintMemoryUsage("FS: before findsubgridsbysignature");   
+
     HierarchyEntry *PreviousGrid = Grid, *ThisGrid;
 
     if ( NumberOfSubgrids > MAX_NUMBER_OF_SUBGRIDS ) {
       ENZO_VFAIL("PE %"ISYM" NumberOfSubgrids > MAX_NUMBER_OF_SUBGRIDS\n", MyProcessorNumber)
     }
- 
+
     for (i = 0; i < NumberOfSubgrids; i++) {
  
       /* create hierarchy entry */
@@ -185,7 +188,7 @@ int FindSubgrids(HierarchyEntry *Grid, int level, int &TotalFlaggedCells,
       delete SubgridList[i];
  
     } // next subgrid
- 
+    PrintMemoryUsage("FS: after findsubgridsbysignature");  
   }
  
   /* De-allocate the flagging field. */

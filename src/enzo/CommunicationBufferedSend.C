@@ -71,8 +71,14 @@ int CommunicationBufferPurge(void) {
 
 	//fprintf(stderr,"CCO p%"ISYM": mem- thread %"ISYM" finished\n",MyProcessorNumber, i);
 	
-	//	delete [] RequestBuffer[i];
-		FreeBaryonFieldMemory((float*)RequestBuffer[i]);
+
+
+#ifdef MEMORY_POOL
+	if (BaryonFieldMemoryPool->IsValidPointer(RequestBuffer[i]))
+	  FreeBaryonFieldMemory((float*) RequestBuffer[i]);
+#else
+	delete [] RequestBuffer[i];
+#endif
 	RequestBuffer[i] = NULL;
         BuffersPurged++;
         //fprintf(stderr, "CBP buffer %"ISYM" released\n", i);
@@ -158,8 +164,14 @@ int CommunicationBufferedSend(void *buffer, int size, MPI_Datatype Type, int Tar
 	if (RequestDone) {
  
 	  /* If the request is done, deallocate associated buffer. */
- 
-	  delete [] RequestBuffer[i];
+
+#ifdef MEMORY_POOL
+	if (BaryonFieldMemoryPool->IsValidPointer(RequestBuffer[i]))
+	  FreeBaryonFieldMemory((float*) RequestBuffer[i]);
+#else
+	delete [] RequestBuffer[i];
+#endif
+
 	  RequestBuffer[i] = NULL;
  
 	} else

@@ -740,7 +740,7 @@ int OutputAsParticleData(TopGridData &MetaData,
         if (io_log) fprintf(log_fptr, "H5Sclose: %"ISYM"\n", h5_status);
         if( h5_status == h5_error ){my_exit(EXIT_FAILURE);}
  
-      delete buffer;
+      delete [] buffer;
  
     } // end: if (TotalNumberOfParticles[i] > 0)
  

@@ -138,7 +138,7 @@ int FastFourierTransformSGIMATH(float *buffer, int Rank, int DimensionReal[],
 		       1.0/float(Dimension[0]*Dimension[1]*Dimension[2]),
 		       CMPLX_CAST buffer, DimensionReal[0], DimensionReal[1]);
     }
-    delete Work;
+    delete [] Work;
   } // end of 3D FFT
  
   return SUCCESS;

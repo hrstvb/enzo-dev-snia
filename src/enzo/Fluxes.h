@@ -28,6 +28,18 @@
 
 struct fluxes
 {
+#ifdef MEMORY_POOL
+void* operator new(size_t object_size)
+{
+  return HierarchyEntryMemoryPool->GetMemory(object_size);
+}
+void operator delete(void* object)
+{
+  HierarchyEntryMemoryPool->FreeMemory(object);
+  return;
+}
+#endif
+
   long_int LeftFluxStartGlobalIndex[MAX_DIMENSION][MAX_DIMENSION];
   long_int LeftFluxEndGlobalIndex[MAX_DIMENSION][MAX_DIMENSION];
   long_int RightFluxStartGlobalIndex[MAX_DIMENSION][MAX_DIMENSION];

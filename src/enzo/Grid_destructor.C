@@ -59,7 +59,7 @@ grid::~grid()
     delete [] RandomForcingField[i];
   }
  
-  delete ParticleAcceleration[MAX_DIMENSION];
+  FreeParticleMemory(ParticleAcceleration[MAX_DIMENSION]);
  
   for (i = 0; i < MAX_NUMBER_OF_BARYON_FIELDS; i++) {
     FreeBaryonFieldMemory(BaryonField[i]);

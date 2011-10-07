@@ -311,7 +311,8 @@ int grid::CommunicationSendRegion(grid *ToGrid, int ToProcessor,int SendField,
        receive-mode). */
 
     FreeBaryonFieldMemory(buffer);
-                          
+    buffer = NULL;
+
   } // ENDIF unpack
  
 #endif /* USE_MPI */ 

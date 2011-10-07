@@ -6,6 +6,7 @@ c///////////////////////  SUBROUTINE TWOSHOCK  \\\\\\\\\\\\\\\\\\\\\\\\\
      &           dls, drs, pls, prs, uls, urs, 
      &           idim, jdim, i1, i2, j1, j2, dt, gamma, pmin, ipresfree,
      &           pbar, ubar, gravity, grslice, idual, eta1
+     &     , cl, cr, dpdul, dpdur, ps, ubl, ubr, zl, zr
      &                   )
 
 c  RIEMANN SOLVER USING TWO-SHOCK APPROXIMATION

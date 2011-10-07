@@ -40,7 +40,10 @@ extern "C" void FORTRAN_NAME(mg_relax)(float *solution, float *rhs, int *ndim,
 #define PRE_SMOOTH 2
 #define POST_SMOOTH 3
 #define NUM_CYCLES 1
- 
+
+float *AllocateNewBaryonField(int size); 
+void FreeBaryonFieldMemory(float *BF); 
+
 int MultigridSolver(float *TopRHS, float *TopSolution, int Rank, int TopDims[],
 		    float &norm, float &mean, int start_depth,
 		    float tolerance, int max_iter)
@@ -101,7 +104,8 @@ int MultigridSolver(float *TopRHS, float *TopSolution, int Rank, int TopDims[],
   /* Initial smoothing of density field, if requested. */
  
   for (depth = 0; depth < start_depth; depth++) {
-    RHS[depth+1]      = new float[Size[depth+1]];
+    //    RHS[depth+1]      = new float[Size[depth+1]];
+    RHS[depth+1]      = AllocateNewBaryonField(Size[depth+1]);
     FORTRAN_NAME(mg_prolong2)(RHS[depth], RHS[depth+1], &Rank,
     		     &Dims[0][depth  ], &Dims[1][depth  ], &Dims[2][depth  ],
     		     &Dims[0][depth+1], &Dims[1][depth+1], &Dims[2][depth+1]);
@@ -134,9 +138,15 @@ int MultigridSolver(float *TopRHS, float *TopSolution, int Rank, int TopDims[],
       /* Allocate memory. */
  
       if (cycle == 0 && iter == 0) {
+	/*
 	defect[depth]     = new float[Size[depth]];
 	RHS[depth+1]      = new float[Size[depth+1]];
 	Solution[depth+1] = new float[Size[depth+1]];
+	*/
+	defect[depth]     = AllocateNewBaryonField(Size[depth]);
+	RHS[depth+1]      = AllocateNewBaryonField(Size[depth+1]);
+	Solution[depth+1] = AllocateNewBaryonField(Size[depth+1]);
+
       }
  
       /* Pre-smoothing. */
@@ -245,9 +255,15 @@ int MultigridSolver(float *TopRHS, float *TopSolution, int Rank, int TopDims[],
   /* Free allocated memory. */
  
   for (depth = 1; depth <= bottom; depth++) {
+    /*
     delete [] Solution[depth];
     delete [] RHS[depth];
     delete [] defect[depth-1];
+    */
+    FreeBaryonFieldMemory(Solution[depth]);
+    FreeBaryonFieldMemory(RHS[depth]);
+    FreeBaryonFieldMemory(defect[depth-1]);
+
   }
  
   return SUCCESS;

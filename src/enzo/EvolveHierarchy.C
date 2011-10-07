@@ -712,35 +712,6 @@ int EvolveHierarchy(HierarchyEntry &TopGrid, TopGridData &MetaData,
         Stop = TRUE;
       }
     }
-#ifdef MEMORY_POOL
-    fprintf(stdout, "GridObjects : ");
-    GridObjectMemoryPool->PrintMemoryConsumption();
-    fprintf(stdout, "ProtoSubgrid Objects : ");
-    ProtoSubgridMemoryPool->PrintMemoryConsumption();
-    fprintf(stdout, "Hierarchy Objects : ");
-    ProtoSubgridMemoryPool->PrintMemoryConsumption();
-    fprintf(stdout, "Flagging Fields  : ");
-    FlaggingFieldMemoryPool->PrintMemoryConsumption();
-    fprintf(stdout, "Particles   : ");
-    ParticleMemoryPool->PrintMemoryConsumption();
-    fprintf(stdout, "Baryons     : ");
-    BaryonFieldMemoryPool->PrintMemoryConsumption();
-    size_t TotInPools = 0;
-    TotInPools += GridObjectMemoryPool->ReturnTotalMemoryPoolSize();
-    TotInPools += ProtoSubgridMemoryPool->ReturnTotalMemoryPoolSize();
-    TotInPools += HierarchyEntryMemoryPool->ReturnTotalMemoryPoolSize();
-    TotInPools += FlaggingFieldMemoryPool->ReturnTotalMemoryPoolSize();
-    TotInPools += ParticleMemoryPool->ReturnTotalMemoryPoolSize();
-    TotInPools += BaryonFieldMemoryPool->ReturnTotalMemoryPoolSize();
-    
-#ifdef TRANSFER
-    fprintf(stdout, "Photons     : ");
-    PhotonMemoryPool->PrintMemoryConsumption();
-    TotInPools += PhotonMemoryPool->ReturnTotalMemoryPoolSize();
-#endif // TRANSFER
-    fprintf(stdout, "Total Memory in Pools:    %U \n", (TotInPools));///1048576.0);
-   
-#endif // MEMORY_POOL
 #endif //MEM_TRACE
 
     FirstLoop = false;

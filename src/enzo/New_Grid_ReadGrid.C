@@ -662,17 +662,21 @@ int grid::ReadExtraFields(hid_t group_id)
     char acc_name[255];
     size = 1;
     for (dim = 0; dim < GridRank; dim++) size *= GridDimension[dim];
-    float *temp = new float[size];
+    //    float *temp = new float[size];
+    float *temp = AllocateNewBaryonField(size);
     for (dim = 0; dim < GridRank; dim++) {
       if(this->AccelerationField[dim] != NULL) {
         FreeBaryonFieldMemory(this->AccelerationField[dim]);
+	this->AccelerationField[dim] = NULL;
       }
+      this->AccelerationField[dim] = AllocateNewBaryonField(size);
       snprintf(acc_name, 254, "AccelerationField%"ISYM, dim);
       this->read_dataset(GridRank, FullOutDims, acc_name,
           acc_node, HDF5_REAL, (VOIDP) AccelerationField[dim],
           FALSE, NULL, NULL);
     }
-    delete [] temp;
+    FreeBaryonFieldMemory(temp);
+    temp = NULL;
     H5Gclose(acc_node);
   }
   H5E_BEGIN_TRY{

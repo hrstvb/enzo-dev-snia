@@ -57,14 +57,16 @@ int grid::CollectParticleMassFlaggingField(void)
   MPI_Datatype DataType = (sizeof(float) == 4) ? MPI_FLOAT : MPI_DOUBLE;
   MPI_Arg Count = size;
 
-  float *buffer = new float[size];
+  //  float *buffer = new float[size];
+  float *buffer = AllocateNewBaryonField(size);
   for (i = 0; i < size; i++)
     buffer[i] = ParticleMassFlaggingField[i];
 
   MPI_Reduce(buffer, ParticleMassFlaggingField, Count, DataType, MPI_SUM, 
 	     ProcessorNumber, MPI_COMM_WORLD);
 
-  delete [] buffer;
+  FreeBaryonFieldMemory(buffer);
+  //  delete [] buffer;
 
 #endif /* USE_MPI */  
 

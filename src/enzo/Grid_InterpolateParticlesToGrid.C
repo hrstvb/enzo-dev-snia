@@ -47,6 +47,7 @@ int CommunicationBufferedSend(void *buffer, int size, MPI_Datatype Type, int Tar
 			      int Tag, MPI_Comm CommWorld, int BufferSize);
 #endif /* USE_MPI */
 
+
 int grid::InterpolateParticlesToGrid(FOFData *D)
 {
 

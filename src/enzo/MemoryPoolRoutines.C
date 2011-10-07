@@ -72,6 +72,9 @@ namespace MPool
 
   void* MemoryPool::GetMemory(const size_t &MemorySize)
   {
+    if (MemorySize <= 0) // nothing to do here
+      return NULL;
+
     size_t BestMemBlockSize = CalculateBestMemoryBlockSize(MemorySize);
     size_t AllocationBlockSize;
     MemoryChunk* Chunk = NULL;
@@ -120,7 +123,7 @@ namespace MPool
       assert(false && "Error: requested pointer not in memory pool");
     //    assert(ObjectCount > 0 && 
     //	   "Error: requested to delete more memory than allocated.");
-    if (ObjectCount <= 1)
+    if (ObjectCount < 1)
       fprintf(stdout, "MemoryPoolRoutines: FreeMemory: found ObjectCount <= 0 !!! ??? \nPool : %i Current FreeMemory %0.3f Mb\n",
 	      PoolNumber, ((float)FreeMemoryPoolSize)/1024./1024.);
     ObjectCount--;

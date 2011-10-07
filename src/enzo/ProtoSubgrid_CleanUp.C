@@ -27,16 +27,16 @@ int ProtoSubgrid::CleanUp()
 {
  
   FreeFlaggingFieldMemory(GridFlaggingField);
+  GridFlaggingField = NULL;
   // delete [] GridFlaggingField;
-  //  GridFlaggingField = NULL;
  
   /* Delete signatures unless dim=1 in which case Signature[0] = GFF */
  
   int dim;
   for (dim = 0; dim < MAX_DIMENSION; dim++) {
     FreeFlaggingFieldMemory(Signature[dim]);
-    //   delete [] Signature[dim];
     Signature[dim] = NULL;
+    //   delete [] Signature[dim];
   }
  
   /* Set the dimension according to the refinement and ghost zones. */

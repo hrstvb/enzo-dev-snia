@@ -302,7 +302,7 @@ int grid::CommunicationSendParticles(grid *ToGrid, int ToProcessor,
        receive-mode). */
 
     FreeParticleMemory(buffer);
-    			
+    buffer = NULL;
   } // end: if (MyProcessorNumber...)
 
  

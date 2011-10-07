@@ -38,6 +38,7 @@ void grid::ClearFlaggingField()
   if (FlaggingField != NULL) {
     fprintf(stderr, "ClearFlaggingField: Warning, field already present.\n");
     FreeFlaggingFieldMemory(FlaggingField);
+    FlaggingField = NULL;
     //    delete [] FlaggingField;
   }
  

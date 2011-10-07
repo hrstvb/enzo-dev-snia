@@ -54,10 +54,15 @@ void ProtoSubgrid::operator delete(void* object)
 ProtoSubgrid::~ProtoSubgrid()
 {
   for (int dim = 0; dim < MAX_DIMENSION; dim++)
-    FreeFlaggingFieldMemory(Signature[dim]);
+    {
+      FreeFlaggingFieldMemory(Signature[dim]);
+      Signature[dim] = NULL;
+    }
   //    delete [] Signature[dim];
- 
+  {
   FreeFlaggingFieldMemory(GridFlaggingField);
+  GridFlaggingField = NULL;
+  }
     // delete [] GridFlaggingField;
 }
 

@@ -30,6 +30,7 @@ void grid::ClearParticleMassFlaggingField()
   if (ParticleMassFlaggingField != NULL) {
     fprintf(stderr, "ClearParticleMassFlaggingField: Warning, field not deleted.\n");
     FreeBaryonFieldMemory(ParticleMassFlaggingField);
+    ParticleMassFlaggingField = NULL;
   }
  
   /* compute size and allocate */

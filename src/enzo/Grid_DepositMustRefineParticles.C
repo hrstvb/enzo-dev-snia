@@ -121,7 +121,7 @@ int grid::DepositMustRefineParticles(int pmethod, int level)
   FreeFlaggingFieldMemory(FlaggingField);
 
   //delete [] FlaggingField;
-  //  FlaggingField = NULL;
+  FlaggingField = NULL;
 
   return NumberOfFlaggedCells;
  

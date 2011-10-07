@@ -27,8 +27,9 @@
 #include "GridList.h"
 #include "ExternalBoundary.h"
 #include "Grid.h"
+#include "fortran.def"
 #include "euler_sweep.h"
-//#include "fortran.def"
+
 
 int grid::zEulerSweep(int j, int NumberOfSubgrids, fluxes *SubgridFluxes[], 
 		      Elong_int GridGlobalStart[], float *CellWidthTemp[], 
@@ -59,20 +60,20 @@ int grid::zEulerSweep(int j, int NumberOfSubgrids, fluxes *SubgridFluxes[],
     *colslice, *pslice;
 
   int size = GridDimension[2] * GridDimension[0];
-  dslice = new float[size];  
-  eslice = new float[size];  
-  uslice = new float[size];  
-  vslice = new float[size];  
-  wslice = new float[size];  
-  pslice = new float[size];  
+  dslice = AllocateNewBaryonField(size);  
+  eslice = AllocateNewBaryonField(size);  
+  uslice = AllocateNewBaryonField(size);  
+  vslice = AllocateNewBaryonField(size);  
+  wslice = AllocateNewBaryonField(size);  
+  pslice = AllocateNewBaryonField(size);  
   if (GravityOn) {
-    grslice = new float[size];  
+    grslice = AllocateNewBaryonField(size);  
   }
   if (DualEnergyFormalism) {
-    geslice = new float[size];  
+    geslice = AllocateNewBaryonField(size);  
   }
   if (NumberOfColours > 0) {
-    colslice = new float[NumberOfColours * size];  
+    colslice = AllocateNewBaryonField(NumberOfColours * size);  
   }
 
   int i, k, n, ncolour, index2, index3;
@@ -135,32 +136,32 @@ int grid::zEulerSweep(int j, int NumberOfSubgrids, fluxes *SubgridFluxes[],
     *vrs, *gels, *gers, *wls, *wrs, *diffcoef, *df, *ef, *uf, *vf, *wf, *gef,
     *ges, *colf, *colls, *colrs;
 
-  dls = new float[size];	
-  drs = new float[size];	
-  flatten = new float[size];	
-  pbar = new float[size];	
-  pls = new float[size];	
-  prs = new float[size];	
-  ubar = new float[size];	
-  uls = new float[size];	
-  urs = new float[size];	
-  vls = new float[size];	
-  vrs = new float[size];	
-  gels = new float[size];	
-  gers = new float[size];	
-  wls = new float[size];	
-  wrs = new float[size];	
-  diffcoef = new float[size];	
-  df = new float[size];		
-  ef = new float[size];		
-  uf = new float[size];		
-  vf = new float[size];		
-  wf = new float[size];		
-  gef = new float[size];	
-  ges = new float[size];
-  colf = new float[NumberOfColours*size];  
-  colls = new float[NumberOfColours*size];  
-  colrs = new float[NumberOfColours*size];  
+  dls = AllocateNewBaryonField(size);	
+  drs = AllocateNewBaryonField(size);	
+  flatten = AllocateNewBaryonField(size);	
+  pbar = AllocateNewBaryonField(size);	
+  pls = AllocateNewBaryonField(size);	
+  prs = AllocateNewBaryonField(size);	
+  ubar = AllocateNewBaryonField(size);	
+  uls = AllocateNewBaryonField(size);	
+  urs = AllocateNewBaryonField(size);	
+  vls = AllocateNewBaryonField(size);	
+  vrs = AllocateNewBaryonField(size);	
+  gels = AllocateNewBaryonField(size);	
+  gers = AllocateNewBaryonField(size);	
+  wls = AllocateNewBaryonField(size);	
+  wrs = AllocateNewBaryonField(size);	
+  diffcoef = AllocateNewBaryonField(size);	
+  df = AllocateNewBaryonField(size);		
+  ef = AllocateNewBaryonField(size);		
+  uf = AllocateNewBaryonField(size);		
+  vf = AllocateNewBaryonField(size);		
+  wf = AllocateNewBaryonField(size);		
+  gef = AllocateNewBaryonField(size);	
+  ges = AllocateNewBaryonField(size);
+  colf = AllocateNewBaryonField(NumberOfColours*size);  
+  colls = AllocateNewBaryonField(NumberOfColours*size);  
+  colrs = AllocateNewBaryonField(NumberOfColours*size);  
 
   /* Convert start and end indexes into 1-based for FORTRAN */
 
@@ -213,7 +214,16 @@ int grid::zEulerSweep(int j, int NumberOfSubgrids, fluxes *SubgridFluxes[],
 			   &ConservativeReconstruction, &PositiveReconstruction,
 			   &dtFixed, &Gamma, &PressureFree, 
 			   dls, drs, pls, prs, gels, gers, uls, urs, vls, vrs,
-			   wls, wrs, &NumberOfColours, colslice, colls, colrs);
+			   wls, wrs, &NumberOfColours, colslice, colls, colrs,
+			   h1, h2, h3,  h4, h5, h6, h7, h8,  h9, h10, h11, h12, h13,  h14, 
+			   h15, h16, h17, h18,  h19, h20, h21, h22, h23,  h24, h25, h26, h27, h28,  h29, 
+			   h30, h31, h32, h33,  h34, h35, h36, h37, h38,  h39, h40, h41, h42, h43,  h44, 
+			   h45, h46, h47, h48,  h49, h50, h51, h52, h53,  h54, h55, h56, h57, h58,  h59, 
+			   h60, h61, h62, h63,  h64,h65, h66, h67, h68,  h69, 
+			   h70, h71, h72, h73,  h74, h75, h76, h77, h78,  h79, 
+			   h80, h81, h82, h83,  h84,h85, h86, h87,
+			   h100, h101, h102, h103, h104,h105, h106, h107, h108,
+			   h200, h201);
 
   /* Compute (Lagrangian part of the) Riemann problem at each zone boundary */
 
@@ -224,7 +234,8 @@ int grid::zEulerSweep(int j, int NumberOfSubgrids, fluxes *SubgridFluxes[],
 			   &is, &ie_p1, &js, &je,
 			   &dtFixed, &Gamma, &MinimumPressure, &PressureFree,
 			   pbar, ubar, &GravityOn, grslice,
-			   &DualEnergyFormalism, &DualEnergyFormalismEta1);
+			   &DualEnergyFormalism, &DualEnergyFormalismEta1,
+			   h1, h2, h3, h4, h5, h6, h7, h8, h9);
     
     FORTRAN_NAME(flux_twoshock)(dslice, eslice, geslice, uslice, vslice, wslice,
 				CellWidthTemp[2], diffcoef, 
@@ -278,7 +289,8 @@ int grid::zEulerSweep(int j, int NumberOfSubgrids, fluxes *SubgridFluxes[],
 		      &PPMDiffusionParameter, &GravityOn, &DualEnergyFormalism, 
 		      &DualEnergyFormalismEta1, &DualEnergyFormalismEta2,
 		      df, ef, uf, vf, wf, gef, ges,
-		      &NumberOfColours, colslice, colf);
+		      &NumberOfColours, colslice, colf,
+		      h1, h2, h3, h4, h5, h6, h7);
 
   /* If necessary, recompute the pressure to correctly set ge and e */
 
@@ -403,45 +415,45 @@ int grid::zEulerSweep(int j, int NumberOfSubgrids, fluxes *SubgridFluxes[],
 
   /* Delete all temporary slices */
 
-  delete [] dslice;
-  delete [] eslice;
-  delete [] uslice;
-  delete [] vslice;
-  delete [] wslice;
-  delete [] pslice;
+  FreeBaryonFieldMemory(dslice);
+  FreeBaryonFieldMemory(eslice);
+  FreeBaryonFieldMemory(uslice);
+  FreeBaryonFieldMemory(vslice);
+  FreeBaryonFieldMemory(wslice);
+  FreeBaryonFieldMemory(pslice);
   if (GravityOn)
-    delete [] grslice;
+    FreeBaryonFieldMemory(grslice);
   if (DualEnergyFormalism)
-    delete [] geslice;
+    FreeBaryonFieldMemory(geslice);
   if (NumberOfColours > 0)
-    delete [] colslice;
+    FreeBaryonFieldMemory(colslice);
 
-  delete [] dls;
-  delete [] drs;
-  delete [] flatten;
-  delete [] pbar;
-  delete [] pls;
-  delete [] prs;
-  delete [] ubar;
-  delete [] uls;
-  delete [] urs;
-  delete [] vls;
-  delete [] vrs;
-  delete [] gels;
-  delete [] gers;
-  delete [] wls;
-  delete [] wrs;
-  delete [] diffcoef;
-  delete [] df;
-  delete [] ef;
-  delete [] uf;
-  delete [] vf;
-  delete [] wf;
-  delete [] gef;
-  delete [] ges;
-  delete [] colf;
-  delete [] colls;
-  delete [] colrs;
+  FreeBaryonFieldMemory(dls);
+  FreeBaryonFieldMemory(drs);
+  FreeBaryonFieldMemory(flatten);
+  FreeBaryonFieldMemory(pbar);
+  FreeBaryonFieldMemory(pls);
+  FreeBaryonFieldMemory(prs);
+  FreeBaryonFieldMemory(ubar);
+  FreeBaryonFieldMemory(uls);
+  FreeBaryonFieldMemory(urs);
+  FreeBaryonFieldMemory(vls);
+  FreeBaryonFieldMemory(vrs);
+  FreeBaryonFieldMemory(gels);
+  FreeBaryonFieldMemory(gers);
+  FreeBaryonFieldMemory(wls);
+  FreeBaryonFieldMemory(wrs);
+  FreeBaryonFieldMemory(diffcoef);
+  FreeBaryonFieldMemory(df);
+  FreeBaryonFieldMemory(ef);
+  FreeBaryonFieldMemory(uf);
+  FreeBaryonFieldMemory(vf);
+  FreeBaryonFieldMemory(wf);
+  FreeBaryonFieldMemory(gef);
+  FreeBaryonFieldMemory(ges);
+  FreeBaryonFieldMemory(colf);
+  FreeBaryonFieldMemory(colls);
+  FreeBaryonFieldMemory(colrs);
 
   return SUCCESS;
 

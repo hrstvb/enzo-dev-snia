@@ -28,13 +28,9 @@ float *AllocateNewBaryonField(int size)
 void FreeBaryonFieldMemory(float *BF)
 {
 #ifndef MEMORY_POOL
-  if (BF != NULL)
     delete [] BF;
-  BF = NULL;
 #else
-  if (BF != NULL)
     BaryonFieldMemoryPool->FreeMemory(BF);
-  BF = NULL;
 #endif
   return;
 }
@@ -53,16 +49,11 @@ int *AllocateNewFlaggingField(int size)
 void FreeFlaggingFieldMemory(int *FF)
 {
 #ifndef MEMORY_POOL
-  if (FF != NULL)
-    delete [] FF;
-  FF = NULL;
+  delete [] FF;
 #else
-  if (FF != NULL)
-    FlaggingFieldMemoryPool->FreeMemory(FF);
+  FlaggingFieldMemoryPool->FreeMemory(FF);
   //  fprintf(stderr, "Free flagging field.");
   //  fflush(stderr);
-
-  FF = NULL;
 #endif
   return;
 }
@@ -71,13 +62,9 @@ void FreeFlaggingFieldMemory(int *FF)
 void FreeParticleMemory(void *PF)
 {
 #ifndef MEMORY_POOL
-  if (PF != NULL)
     delete [] PF;
-  PF = NULL;
 #else
-  if (PF != NULL)
     ParticleMemoryPool->FreeMemory(PF);
-  PF = NULL;
 #endif
   return;
 }

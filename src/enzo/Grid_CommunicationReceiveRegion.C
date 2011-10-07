@@ -266,7 +266,15 @@ int grid::CommunicationReceiveRegion(grid *FromGrid, int FromProcessor,
  
     /* Clean up */
  
+#ifdef MEMORY_POOL
+	if (BaryonFieldMemoryPool->IsValidPointer(buffer))
+	  FreeBaryonFieldMemory((float*) buffer);
+	else
+	  delete [] buffer;
+
+#else
     delete [] buffer;
+#endif
 
   } // ENDIF unpack
  

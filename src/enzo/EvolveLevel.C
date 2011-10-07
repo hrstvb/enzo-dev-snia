@@ -428,10 +428,13 @@ int EvolveLevel(TopGridData *MetaData, LevelHierarchyEntry *LevelArray[],
 	if (level <= MaximumGravityRefinementLevel) {
  
 	  /* Compute the potential. */
+    PrintMemoryUsage("EL: before solveforpotential"); 
  
 	  if (level > 0)
 	    Grids[grid1]->GridData->SolveForPotential(level);
+    PrintMemoryUsage("EL: after solveforpotential"); 
 	  Grids[grid1]->GridData->ComputeAccelerations(level);
+    PrintMemoryUsage("EL: after compute accel"); 
 	  Grids[grid1]->GridData->CopyPotentialToBaryonField();
 	}
 	  /* otherwise, interpolate potential from coarser grid, which is
@@ -463,6 +466,7 @@ int EvolveLevel(TopGridData *MetaData, LevelHierarchyEntry *LevelArray[],
     //Ensure the consistency of the AccelerationField
     SetAccelerationBoundary(Grids, NumberOfGrids,SiblingList,level, MetaData,
 			    Exterior, LevelArray[level], LevelCycleCount[level]);
+
     
     for (grid1 = 0; grid1 < NumberOfGrids; grid1++) {
 #endif //SAB.
@@ -473,8 +477,12 @@ int EvolveLevel(TopGridData *MetaData, LevelHierarchyEntry *LevelArray[],
 
       /* Call hydro solver and save fluxes around subgrids. */
 
+    PrintMemoryUsage("EL: before hydro"); 
+
       Grids[grid1]->GridData->SolveHydroEquations(LevelCycleCount[level],
 	    NumberOfSubgrids[grid1], SubgridFluxesEstimate[grid1], level);
+
+    PrintMemoryUsage("EL: after hydro"); 
 
       /* Solve the cooling and species rate equations. */
  
@@ -532,13 +540,48 @@ int EvolveLevel(TopGridData *MetaData, LevelHierarchyEntry *LevelArray[],
       /* Update current problem time of this subgrid. */
  
       Grids[grid1]->GridData->SetTimeNextTimestep();
- 
+
       /* If using comoving co-ordinates, do the expansion terms now. */
  
       if (ComovingCoordinates)
 	Grids[grid1]->GridData->ComovingExpansionTerms();
  
     }  // end loop over grids
+
+#ifdef MEM_TRACE
+#ifdef MEMORY_POOL
+    if (MyProcessorNumber == ROOT_PROCESSOR)
+      {
+	fprintf(stdout, "Level:    %i \n", level);
+	fprintf(stdout, "Grid Objects   : ");
+	GridObjectMemoryPool->PrintMemoryConsumption();
+	fprintf(stdout, "ProtoSubgrids  : ");
+	ProtoSubgridMemoryPool->PrintMemoryConsumption();
+	fprintf(stdout, "Hierarchy  Obj : ");
+	HierarchyEntryMemoryPool->PrintMemoryConsumption();
+	fprintf(stdout, "Flagging Fields: ");
+	FlaggingFieldMemoryPool->PrintMemoryConsumption();
+	fprintf(stdout, "Particles      : ");
+	ParticleMemoryPool->PrintMemoryConsumption();
+	fprintf(stdout, "Baryons        : ");
+	BaryonFieldMemoryPool->PrintMemoryConsumption();
+	size_t TotInPools = 0;
+	TotInPools += GridObjectMemoryPool->ReturnTotalMemoryPoolSize();
+	TotInPools += ProtoSubgridMemoryPool->ReturnTotalMemoryPoolSize();
+	TotInPools += HierarchyEntryMemoryPool->ReturnTotalMemoryPoolSize();
+	TotInPools += FlaggingFieldMemoryPool->ReturnTotalMemoryPoolSize();
+	TotInPools += ParticleMemoryPool->ReturnTotalMemoryPoolSize();
+	TotInPools += BaryonFieldMemoryPool->ReturnTotalMemoryPoolSize();
+	
+#ifdef TRANSFER
+	fprintf(stdout, "Photons        : ");
+	PhotonMemoryPool->PrintMemoryConsumption();
+	TotInPools += PhotonMemoryPool->ReturnTotalMemoryPoolSize();
+#endif // TRANSFER
+	fprintf(stdout, "Total Memory in Pools:    %U \n", (TotInPools));///1048576.0);
+      }
+#endif // MEMORY_POOL
+#endif //MEM_TRACE
 
     PrintMemoryUsage("EL: after loop"); 
 

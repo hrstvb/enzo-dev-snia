@@ -10,8 +10,29 @@ c
      &            dt, gamma, ipresfree,
      &            dls, drs, pls, prs, gels, gers,
      &            uls, urs, vls, vrs, wls, wrs,
-     &            ncolor, colslice, colls, colrs
-     &                    )
+     &            ncolor, colslice, colls, colrs,
+c helper variables
+     &     c1, c2, c3, c4, c5, c6,c7, c8
+     &     ,dd,dl,dr,d6      ! 12
+     &     ,dp,pl,pr,p6
+     &     ,du,ul,ur,u6
+     &     ,dv,vl,vr,v6
+     &     ,dw,wl,wr,w6      ! 28
+     &     ,dge,gel,ger,ge6
+     &     ,dla,dra,pla,pra,ula,ura ! 38
+     &     ,vla,vra,wla,wra
+     &     ,plm,prm,ulm,urm
+     &     ,dl0,dr0,pl0,pr0
+     &     ,plp,prp,ulp,urp,ul0,ur0 ! 56
+     &     ,vl0,vr0,wl0,wr0
+     &     , cs,d2d,dxb, dx2i
+     &     , cm, c0, cp,char1,char2
+     &     ,betalp,betalm,betal0,cla
+     &     ,betarp,betarm,betar0,cra
+     &     ,gela,gera,gel0,ger0     !81
+     &     ,dxdt2,steepen,tmp1,tmp2,tmp3,tmp4 ! 87
+     &     ,colla,colra,coll0,colr0,dcol,coll,colr,col6
+     &     ,lem,rem)
 c
 c  COMPUTES LEFT AND RIGHT EULERIAN INTERFACE VALUES FOR RIEMANN SOLVER
 c

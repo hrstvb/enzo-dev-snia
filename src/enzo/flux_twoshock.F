@@ -65,6 +65,13 @@ c
      $     cb(ijkn), eb(ijkn), geb(ijkn), colb(ijkn,MAX_COLOR),
      $     upb(ijkn), dub(ijkn), duub(ijkn), duvb(ijkn), duwb(ijkn),
      $     dueb(ijkn), dugeb(ijkn), pcent(ijkn)
+      save sn, u0, p0, d0, c0, z0,
+     $     dbar, cbar, l0, lbar, 
+     $     ub, vb, wb, db, pb, 
+     $     cb, eb, geb, colb,
+     $     upb, dub, duub, duvb, duwb,
+     $     dueb, dugeb, pcent
+
       parameter (one=1.d0)
 c
 c-----------------------------------------------------------------------

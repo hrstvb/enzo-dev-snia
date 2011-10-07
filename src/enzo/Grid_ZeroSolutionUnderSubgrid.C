@@ -53,7 +53,8 @@ int grid::ZeroSolutionUnderSubgrid(grid *Subgrid, int FieldsToZero,
  
  
     FreeBaryonFieldMemory(BaryonField[NumberOfBaryonFields]);
- 
+    BaryonField[NumberOfBaryonFields] = NULL;
+
     if ( (Unigrid == 1) && ((ProblemType == 30) || (ProblemType == 60) || (ProblemType >= 400)) ) //AK
     {
        printf("ZeroSUS - ZERO_UNDER_SUBGRID_FIELD && Subgrid == NULL\n");

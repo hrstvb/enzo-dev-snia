@@ -214,7 +214,7 @@ int CreateSourceClusteringTree(int nShine, SuperSourceData *SourceList,
       for (i = 0; i < nleft; i++)
 	SourceList[i] = temp[i];
       SourceClusteringTree = SourceClusteringTree->ParentSource;
-      delete temp;
+      delete [] temp;
     }
 
     // Right leaf
@@ -226,7 +226,7 @@ int CreateSourceClusteringTree(int nShine, SuperSourceData *SourceList,
       for (i = 0; i < nright; i++)
 	SourceList[nleft+i] = temp[i];
       SourceClusteringTree = SourceClusteringTree->ParentSource;
-      delete temp;
+      delete [] temp;
     }
   } // ENDIF nShine > 1
 

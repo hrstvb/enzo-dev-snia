@@ -49,7 +49,8 @@ extern "C" void PFORTRAN_NAME(calc_dt)(
                              float *vgz, float *gamma, int *ipfree, float *aye,
                   float *d, float *p, float *u, float *v, float *w,
 			     float *dt, float *dtviscous);
- 
+float *AllocateNewBaryonField(int size);
+void FreeBaryonFieldMemory(float *BF);
  
 float grid::ComputeTimeStep()
 {
@@ -110,7 +111,8 @@ float grid::ComputeTimeStep()
  
     /* Compute the pressure. */
  
-    float *pressure_field = new float[size];
+    //    float *pressure_field = new float[size];
+    float *pressure_field = AllocateNewBaryonField(size);
     this->ComputePressure(Time, pressure_field);
  
 #ifdef UNUSED
@@ -137,7 +139,8 @@ float grid::ComputeTimeStep()
  
     /* Clean up */
  
-    delete [] pressure_field;
+    FreeBaryonFieldMemory(pressure_field);
+    //    delete [] pressure_field;
  
     /* Multiply resulting dt by CourantSafetyNumber (for extra safety!). */
  

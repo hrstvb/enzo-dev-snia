@@ -269,7 +269,7 @@ int star_maker9(int *nx, int *ny, int *nz, int *size, float *d, float *te, float
     return FAIL;
   }
 
-  delete sink_index;
+  delete [] sink_index;
 
   *np = ii;
   return SUCCESS;

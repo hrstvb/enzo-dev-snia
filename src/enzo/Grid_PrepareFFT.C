@@ -116,6 +116,7 @@ int grid::PrepareFFT(region *InitialRegion, int Field, int DomainDim[])
       //      GravitatingMassField = NULL;
     }
     if (Field == POTENTIAL_FIELD) {
+      //      FreeBaryonField(PotentialField);
       delete FieldPointer;
       PotentialField = NULL;
     }
