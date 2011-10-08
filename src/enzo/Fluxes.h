@@ -28,7 +28,7 @@
 
 struct fluxes
 {
-#ifdef MEMORY_POOL
+#ifdef HIERARCHY_MEMORY_POOL
 void* operator new(size_t object_size)
 {
   return HierarchyEntryMemoryPool->GetMemory(object_size);

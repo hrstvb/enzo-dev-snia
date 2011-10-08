@@ -296,7 +296,7 @@ int RebuildHierarchy(TopGridData *MetaData,
  
     /* 1) Create a new TempLevelArray in which to keep the old grids. */
  
-static LevelHierarchyEntry* TempLevelArray[MAX_DEPTH_OF_HIERARCHY];
+    LevelHierarchyEntry* TempLevelArray[MAX_DEPTH_OF_HIERARCHY];
     for (i = level+1; i < MAX_DEPTH_OF_HIERARCHY; i++) {
       TempLevelArray[i] = LevelArray[i];
       LevelArray[i]     = NULL;
@@ -393,18 +393,10 @@ static LevelHierarchyEntry* TempLevelArray[MAX_DEPTH_OF_HIERARCHY];
 	 processor) for the next step. */
 
       HierarchyEntry *Temp2;
-      // count number of subgrids
-      subgrids = 0;
-      for (j = 0; j < grids; j++) {
-	Temp2 = GridHierarchyPointer[j]->NextGridNextLevel;
-	while (Temp2 != NULL) {
-	  subgrids += 1;
-	  Temp2 = Temp2->NextGridThisLevel;
-	}
-      }
+
       // fill out list to subgrids.
-      HierarchyEntry *SubgridHierarchyPointer[subgrids];
-      subgrids = 0;
+      static HierarchyEntry *SubgridHierarchyPointer[MAX_NUMBER_OF_SUBGRIDS];
+      int subgrids = 0;
       for (j = 0; j < grids; j++) {
 	Temp2 = GridHierarchyPointer[j]->NextGridNextLevel;
 	while (Temp2 != NULL) {

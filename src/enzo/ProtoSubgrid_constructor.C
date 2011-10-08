@@ -36,21 +36,7 @@ ProtoSubgrid::ProtoSubgrid()
  
   NumberFlagged = INT_UNDEFINED;
 }
- 
-#ifdef MEMORY_POOL
-void* ProtoSubgrid::operator new(size_t object_size)
-{
-  return ProtoSubgridMemoryPool->GetMemory(object_size);
-}
 
-void ProtoSubgrid::operator delete(void* object)
-{
-  ProtoSubgridMemoryPool->FreeMemory(object);
-  return;
-}
-#endif
- 
- 
 ProtoSubgrid::~ProtoSubgrid()
 {
   for (int dim = 0; dim < MAX_DIMENSION; dim++)

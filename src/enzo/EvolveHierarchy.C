@@ -717,25 +717,32 @@ int EvolveHierarchy(HierarchyEntry &TopGrid, TopGridData &MetaData,
     FirstLoop = false;
  
 #ifdef MEM_TRACE
+	size_t TotInPools = 0;
 #ifdef MEMORY_POOL
     if (MyProcessorNumber == ROOT_PROCESSOR)
       {
+#ifdef GRID_MEMORY_POOL
 	fprintf(stdout, "Grid Objects   : ");
 	GridObjectMemoryPool->PrintMemoryConsumption();
+	TotInPools += GridObjectMemoryPool->ReturnTotalMemoryPoolSize();
+#endif
+#ifdef PROTOSUBGRID_MEMORY_POOL
 	fprintf(stdout, "ProtoSubgrids  : ");
 	ProtoSubgridMemoryPool->PrintMemoryConsumption();
+	TotInPools += ProtoSubgridMemoryPool->ReturnTotalMemoryPoolSize();
+#endif
+#ifdef HIERARCHY_MEMORY_POOL
 	fprintf(stdout, "Hierarchy  Obj : ");
 	HierarchyEntryMemoryPool->PrintMemoryConsumption();
+	TotInPools += HierarchyEntryMemoryPool->ReturnTotalMemoryPoolSize();
+#endif
 	fprintf(stdout, "Flagging Fields: ");
 	FlaggingFieldMemoryPool->PrintMemoryConsumption();
 	fprintf(stdout, "Particles      : ");
 	ParticleMemoryPool->PrintMemoryConsumption();
 	fprintf(stdout, "Baryons        : ");
 	BaryonFieldMemoryPool->PrintMemoryConsumption();
-	size_t TotInPools = 0;
-	TotInPools += GridObjectMemoryPool->ReturnTotalMemoryPoolSize();
-	TotInPools += ProtoSubgridMemoryPool->ReturnTotalMemoryPoolSize();
-	TotInPools += HierarchyEntryMemoryPool->ReturnTotalMemoryPoolSize();
+
 	TotInPools += FlaggingFieldMemoryPool->ReturnTotalMemoryPoolSize();
 	TotInPools += ParticleMemoryPool->ReturnTotalMemoryPoolSize();
 	TotInPools += BaryonFieldMemoryPool->ReturnTotalMemoryPoolSize();

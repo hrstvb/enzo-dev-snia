@@ -181,9 +181,6 @@ int CommunicationInitialize(Eint32 *argc, char **argv[]);
 int CommunicationFinalize();
 
 int CommunicationPartitionGrid(HierarchyEntry *Grid, int gridnum);
-int CommunicationCombineGrids(HierarchyEntry *OldHierarchy,
-			      HierarchyEntry **NewHierarchyPointer,
-			      FLOAT WriteTime);
 void DeleteGridHierarchy(HierarchyEntry *GridEntry);
 int OutputPotentialFieldOnly(char *ParameterFile,
 			     LevelHierarchyEntry *LevelArray[], 
@@ -319,23 +316,27 @@ mallctl("arenas.purge", &narena, &len, NULL, 0);
 
 
 #ifdef MEMORY_POOL
+#ifdef GRID_MEMORY_POOL
   const int GridObjectMemorySize = MEMORY_POOL_SIZE;
   int GridObjectSize = sizeof(grid);
   GridObjectMemoryPool = new MPool::MemoryPool(1, GridObjectMemorySize*GridObjectSize,
 					   GridObjectSize,
 					   GridObjectMemorySize*GridObjectSize/4, true);
+#endif
+#ifdef PROTOSUBGRID_MEMORY_POOL
   const int ProtoSubgridMemorySize = 1024*128;
   int ProtoSubgridSize = sizeof(ProtoSubgrid);
   ProtoSubgridMemoryPool = new MPool::MemoryPool(2, ProtoSubgridMemorySize*ProtoSubgridSize,
 					   ProtoSubgridSize,
 					   ProtoSubgridMemorySize*ProtoSubgridSize, true);
-
+#endif
+#ifdef HIERARCHY_MEMORY_POOL
   const int HierarchyEntryMemorySize =1024*128;
   int HierarchyEntrySize = sizeof(HierarchyEntry);
   HierarchyEntryMemoryPool = new MPool::MemoryPool(3, HierarchyEntryMemorySize*HierarchyEntrySize,
 					   HierarchyEntrySize,
 					   HierarchyEntryMemorySize*HierarchyEntrySize, true);
-
+#endif
   FlaggingFieldMemoryPool = new MPool::MemoryPool(4, sizeof(int)*1000000/NumberOfProcessors,
 						  sizeof(int)*32,
 						  sizeof(int)*200000, true);

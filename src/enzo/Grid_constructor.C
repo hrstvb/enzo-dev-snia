@@ -170,15 +170,3 @@ grid::grid()
 }
 
 
-#ifdef MEMORY_POOL
-void* grid::operator new(size_t object_size)
-{
-  return GridObjectMemoryPool->GetMemory(object_size);
-}
-
-void grid::operator delete(void* object)
-{
-  GridObjectMemoryPool->FreeMemory(object);
-  return;
-}
-#endif

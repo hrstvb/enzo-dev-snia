@@ -15,10 +15,11 @@
 
 struct HierarchyEntry
 {
-#ifdef MEMORY_POOL
+#ifdef HIERARCHY_MEMORY_POOL
 void* operator new(size_t object_size)
 {
-  return HierarchyEntryMemoryPool->GetMemory(object_size);
+  HierarchyEntry *H = HierarchyEntryMemoryPool->GetMemory(object_size);
+  return H;
 }
 void operator delete(void* object)
 {

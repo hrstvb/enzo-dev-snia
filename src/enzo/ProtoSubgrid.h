@@ -39,11 +39,21 @@ class ProtoSubgrid
   ~ProtoSubgrid();
 
    // Memory pool overloads new and delete operators
-#ifdef MEMORY_POOL
-  void* operator new(size_t nobjects);
-  void operator delete(void* object);
-#endif
+ 
+#ifdef PROTOSUBGRID_MEMORY_POOL
+void* ProtoSubgrid::operator new(size_t object_size)
+{
+  return ProtoSubgridMemoryPool->GetMemory(object_size);
+}
 
+void ProtoSubgrid::operator delete(void* object)
+{
+  ProtoSubgridMemoryPool->FreeMemory(object);
+  return;
+}
+#endif
+ 
+ 
 
   int AcceptableSubgrid();
   int ReturnNthLongestDimension(int n);

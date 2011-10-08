@@ -207,9 +207,17 @@ class grid
 
 
    // Memory pool overloads new and delete operators
-#ifdef MEMORY_POOL
-  void* operator new(size_t nobjects);
-  void operator delete(void* object);
+#ifdef GRID_MEMORY_POOL
+void* operator new(size_t object_size)
+{
+  return GridObjectMemoryPool->GetMemory(object_size);
+}
+
+void operator delete(void* object)
+{
+  GridObjectMemoryPool->FreeMemory(object);
+  return;
+}
 #endif
 
 /* Read grid data from a file (returns: success/failure) */
