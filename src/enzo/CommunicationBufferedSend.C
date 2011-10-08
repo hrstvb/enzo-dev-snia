@@ -25,7 +25,7 @@
 #include "typedefs.h"
 #include "global_data.h" 
 void my_exit(int status);
-//void FreeBaryonFieldMemory(float *BF);
+
 
 /* Records the number of times we've been called. */
  
@@ -43,9 +43,11 @@ static MPI_Request  RequestHandle[MAX_NUMBER_OF_MPI_BUFFERS];
 static char        *RequestBuffer[MAX_NUMBER_OF_MPI_BUFFERS];
 static int          LastActiveIndex = -1;
 
-void FreeBaryonFieldMemory(float *BF);
- 
 /* function prototypes */
+void FreeBaryonFieldMemory(float *BF);
+void FreeParticleMemory(void *PF);
+ 
+
 
 int CommunicationBufferPurge(void) { 
 
@@ -74,8 +76,12 @@ int CommunicationBufferPurge(void) {
 
 
 #ifdef MEMORY_POOL
-	if (BaryonFieldMemoryPool->IsValidPointer(RequestBuffer[i]))
-	  FreeBaryonFieldMemory((float*) RequestBuffer[i]);
+	  if (BaryonFieldMemoryPool->IsValidPointer(RequestBuffer[i]))
+	    FreeBaryonFieldMemory((float*) RequestBuffer[i]);
+	  else if (ParticleMemoryPool->IsValidPointer(RequestBuffer[i]))
+	    FreeParticleMemory((void*) RequestBuffer[i]);
+	  else
+	    delete [] RequestBuffer[i];
 #else
 	delete [] RequestBuffer[i];
 #endif
@@ -160,20 +166,24 @@ int CommunicationBufferedSend(void *buffer, int size, MPI_Datatype Type, int Tar
     for (i = 0; i < LastActiveIndex+1; i++) {
       if (RequestBuffer[i] != NULL) {
 	stat = MPI_Test(RequestHandle+i, &RequestDone, &Status);
-          if( stat != MPI_SUCCESS ){my_exit(EXIT_FAILURE);}
+	if( stat != MPI_SUCCESS ){my_exit(EXIT_FAILURE);}
 	if (RequestDone) {
- 
+	  
 	  /* If the request is done, deallocate associated buffer. */
-
+	  
 #ifdef MEMORY_POOL
-	if (BaryonFieldMemoryPool->IsValidPointer(RequestBuffer[i]))
-	  FreeBaryonFieldMemory((float*) RequestBuffer[i]);
+	  if (BaryonFieldMemoryPool->IsValidPointer(RequestBuffer[i]))
+	    FreeBaryonFieldMemory((float*) RequestBuffer[i]);
+	  else if (ParticleMemoryPool->IsValidPointer(RequestBuffer[i]))
+	    FreeParticleMemory((float*) RequestBuffer[i]);
+	  else
+	    delete [] RequestBuffer[i];
 #else
-	delete [] RequestBuffer[i];
+	  delete [] RequestBuffer[i];
 #endif
-
+	  
 	  RequestBuffer[i] = NULL;
- 
+	  
 	} else
 	  NewLastActiveIndex = max(i, NewLastActiveIndex);
       }

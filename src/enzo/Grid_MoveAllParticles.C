@@ -50,7 +50,7 @@ int grid::MoveAllParticles(int NumberOfGrids, grid* FromGrid[])
   TotalNumberOfParticles += NumberOfSubgridParticles;
  
   /* Debugging info. */
-  PrintMemoryUsage("Grid MAParticles: I "); 
+  //  PrintMemoryUsage("Grid MAParticles: I "); 
 
   if (debug1) printf("MoveAllParticles: %"ISYM" (before: ThisGrid = %"ISYM").\n",
 		     TotalNumberOfParticles, NumberOfParticles);
@@ -119,7 +119,7 @@ static  float RefinementFactors[MAX_DIMENSION];
   /* Delete this grid's particles (now copied). */
  
   this->DeleteParticles();
-  PrintMemoryUsage("Grid MAParticles: Ia "); 
+  //  PrintMemoryUsage("Grid MAParticles: Ia "); 
  
   /* Copy new pointers into their correct position. */
  
@@ -161,7 +161,7 @@ static  float RefinementFactors[MAX_DIMENSION];
     FromGrid[grid]->NumberOfParticles = 0;
     FromGrid[grid]->DeleteParticles();
   }
-  PrintMemoryUsage("Grid MAParticles: II "); 
+  //  PrintMemoryUsage("Grid MAParticles: II "); 
  
   return SUCCESS;
 }

@@ -411,12 +411,12 @@ int grid::SolveHydroEquations(int CycleNumber, int NumberOfSubgrids,
        Notice that it is hard-wired for three dimensions, but it does
        the right thing for < 3 dimensions. */
     /* note: Start/EndIndex are zero based */
-    PrintMemoryUsage("SH: PPM");         
+    //    PrintMemoryUsage("SH: PPM");         
     if (HydroMethod == PPM_DirectEuler)
       this->SolvePPM_DE(CycleNumber, NumberOfSubgrids, SubgridFluxes, 
 			CellWidthTemp, GridGlobalStart, GravityOn, 
 			NumberOfColours, colnum);
-    PrintMemoryUsage("SH: after PPM");         
+    //    PrintMemoryUsage("SH: after PPM");         
     /* PPM LR has been withdrawn. */
 
     if (HydroMethod == PPM_LagrangeRemap) {

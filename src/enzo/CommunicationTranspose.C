@@ -141,7 +141,8 @@ int NonUnigridCommunicationTranspose(region *FromRegion, int NumberOfFromRegions
     /* Allocate buffer and copy data into buffer. */
  
     ReceiveBuffer = NULL;
-    SendBuffer = new float[SendSize];
+    //    SendBuffer = new float[SendSize];
+    SendBuffer = AllocateNewBaryonField(SendSize);
  
     index = 0;
  
@@ -182,7 +183,8 @@ int NonUnigridCommunicationTranspose(region *FromRegion, int NumberOfFromRegions
  
     if (n > 0) {
  
-      ReceiveBuffer = new float[ReceiveSize];
+      //      ReceiveBuffer = new float[ReceiveSize];
+      ReceiveBuffer = AllocateNewBaryonField(ReceiveSize);
  
 #ifdef USE_MPI
  
@@ -281,8 +283,10 @@ int NonUnigridCommunicationTranspose(region *FromRegion, int NumberOfFromRegions
  
 //    fprintf(stderr, "CT(%"ISYM"): end jump %"ISYM"\n", MyProcessorNumber, n);
  
-    delete [] SendBuffer;
-    delete [] ReceiveBuffer;
+    FreeBaryonFieldMemory(SendBuffer);
+    FreeBaryonFieldMemory(ReceiveBuffer);
+    //    delete [] SendBuffer;
+    //    delete [] ReceiveBuffer;
  
   } // end: loop over processors jumps
  

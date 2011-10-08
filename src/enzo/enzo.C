@@ -324,13 +324,13 @@ mallctl("arenas.purge", &narena, &len, NULL, 0);
   GridObjectMemoryPool = new MPool::MemoryPool(1, GridObjectMemorySize*GridObjectSize,
 					   GridObjectSize,
 					   GridObjectMemorySize*GridObjectSize/4, true);
-  const int ProtoSubgridMemorySize = MEMORY_POOL_SIZE;
+  const int ProtoSubgridMemorySize = 1024*128;
   int ProtoSubgridSize = sizeof(ProtoSubgrid);
   ProtoSubgridMemoryPool = new MPool::MemoryPool(2, ProtoSubgridMemorySize*ProtoSubgridSize,
 					   ProtoSubgridSize,
 					   ProtoSubgridMemorySize*ProtoSubgridSize, true);
 
-  const int HierarchyEntryMemorySize =1000;
+  const int HierarchyEntryMemorySize =1024*128;
   int HierarchyEntrySize = sizeof(HierarchyEntry);
   HierarchyEntryMemoryPool = new MPool::MemoryPool(3, HierarchyEntryMemorySize*HierarchyEntrySize,
 					   HierarchyEntrySize,

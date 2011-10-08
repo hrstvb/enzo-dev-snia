@@ -124,8 +124,6 @@ int FindSubgrids(HierarchyEntry *Grid, int level, int &TotalFlaggedCells,
     /* For each subgrid, create a new grid based on the current grid (i.e.
        same parameters, etc.) */
  
-    PrintMemoryUsage("FS: before findsubgridsbysignature");   
-
     HierarchyEntry *PreviousGrid = Grid, *ThisGrid;
 
     if ( NumberOfSubgrids > MAX_NUMBER_OF_SUBGRIDS ) {
@@ -188,7 +186,6 @@ int FindSubgrids(HierarchyEntry *Grid, int level, int &TotalFlaggedCells,
       delete SubgridList[i];
  
     } // next subgrid
-    PrintMemoryUsage("FS: after findsubgridsbysignature");  
   }
  
   /* De-allocate the flagging field. */

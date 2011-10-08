@@ -87,7 +87,7 @@ int CreateSmoothedDarkMatterFields(TopGridData &MetaData, HierarchyEntry *TopGri
 void InitializeHierarchyArrayStorage(int grid_count);
 void WriteHierarchyArrayStorage(const char* name);
 void FinalizeHierarchyArrayStorage();
-
+void PrintMemoryUsage(char* string);
 #ifndef FAST_SIB
 int SetBoundaryConditions(HierarchyEntry *Grids[], int NumberOfGrids,
                           int level, TopGridData *MetaData,
@@ -171,6 +171,7 @@ int Group_WriteAllData(char *basename, int filenumber,
 
   FLOAT SavedTime = MetaData.Time;
   MetaData.Time = ((WriteTime < 0) || (CheckpointDump == TRUE)) ? MetaData.Time : WriteTime;
+  PrintMemoryUsage("Enter Group_WriteAllData");
 
   // Global or local filesystem?
  
@@ -612,6 +613,7 @@ int Group_WriteAllData(char *basename, int filenumber,
     fclose(fptr);
   
   }
+  PrintMemoryUsage("After WriteParameterFile");
 
  
   // Output Boundary condition info
@@ -627,7 +629,8 @@ int Group_WriteAllData(char *basename, int filenumber,
     fclose(fptr);
  
   }
- 
+   PrintMemoryUsage("After write boundary");
+
   // Create hierarchy name and grid base name
  
   strcpy(hierarchyname, name);
@@ -700,6 +703,8 @@ int Group_WriteAllData(char *basename, int filenumber,
   if (Group_WriteDataHierarchy(fptr, MetaData, TempTopGrid,
             gridbasename, GridID, WriteTime, file_id, CheckpointDump) == FAIL)
     ENZO_FAIL("Error in Group_WriteDataHierarchy");
+
+   PrintMemoryUsage("After write hierarchy");
 
     hid_t metadata_group = H5Gcreate(file_id, "Metadata", 0);
     if(metadata_group == h5_error)ENZO_FAIL("Error writing metadata!");

@@ -389,8 +389,6 @@ static LevelHierarchyEntry* TempLevelArray[MAX_DEPTH_OF_HIERARCHY];
       tt1 = ReturnWallTime();
       RHperf[4] += tt1-tt0;
 
-  PrintMemoryUsage("Rebuild pos after findsubgrids");
-
       /* Create a temporary array of the new subgrids (which are on this 
 	 processor) for the next step. */
 
@@ -448,9 +446,6 @@ static LevelHierarchyEntry* TempLevelArray[MAX_DEPTH_OF_HIERARCHY];
 				    SUBGRIDS_LOCAL);
       tt1 = ReturnWallTime();
       RHperf[7] += tt1-tt0;
-
-  PrintMemoryUsage("Rebuild pos after collectparticles");
-
 
 
       /* 3d) Create an array of the new subgrids. */
@@ -524,8 +519,6 @@ static LevelHierarchyEntry* TempLevelArray[MAX_DEPTH_OF_HIERARCHY];
       tt1 = ReturnWallTime();
       RHperf[12] += tt1-tt0;
  
-  PrintMemoryUsage("Rebuild pos after copy");
-
       /* Clean up chaining mesh. */
  
       FastSiblingLocatorFinalize(&ChainingMesh);
@@ -565,8 +558,6 @@ static LevelHierarchyEntry* TempLevelArray[MAX_DEPTH_OF_HIERARCHY];
 					  SIBLINGS_ONLY);
       tt1 = ReturnWallTime();
       RHperf[14] += tt1-tt0;
-
-  PrintMemoryUsage("Rebuild pos after collect");
 
       /* 3h) Clean up the LevelHierarchy entries for the old subgrids.
 	     Also, we can check to see if any old subgrids were missed. */
@@ -674,8 +665,6 @@ static LevelHierarchyEntry* TempLevelArray[MAX_DEPTH_OF_HIERARCHY];
   for (i = level; i < MAX_DEPTH_OF_HIERARCHY-1; i++)
     for (Temp = LevelArray[i], j = 0; Temp; Temp = Temp->NextGridThisLevel, j++)
       Temp->GridData->SetGridID(j);
-
-  PrintMemoryUsage("Rebuild pos after setgridid");
 
   /* update all SubgridMarkers */
 
