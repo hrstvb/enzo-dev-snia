@@ -289,9 +289,9 @@ int grid::MHD3D(float **Prim, float **dU, float dt,
 
   
 
-  for (int field = 0; field < NEQ_MHD+NSpecies+NColor; field++) {
+  for (int field = 0; field < NEQ_MHD+NSpecies+NColor; field++) 
     FreeBaryonFieldMemory(Flux3D[field]);
-  }
+  
 
   return SUCCESS;
 

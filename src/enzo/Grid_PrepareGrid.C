@@ -89,12 +89,12 @@ void grid::PrepareGrid(int Rank, int GridDim[],
   if (HydroMethod == MHD_RK) {
 
     if (divB == NULL) {
-      divB = new float[activesize];
+      divB = AllocateNewBaryonField(activesize);
     }
 
     for (int dim = 0; dim < 3; dim++) {
       if (gradPhi[dim] == NULL) {
-	gradPhi[dim] = new float[activesize];
+	gradPhi[dim] = AllocateNewBaryonField(activesize);
       }
     }
 

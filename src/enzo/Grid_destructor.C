@@ -93,9 +93,9 @@ grid::~grid()
   for (i = 0; i < MAX_NUMBER_OF_PARTICLE_ATTRIBUTES; i++)
     FreeParticleMemory(ParticleAttribute[i]);
 
-  delete [] divB;
+  FreeBaryonFieldMemory(divB);
   for (int i=0; i<3; i++) {
-    delete gradPhi[i];
+    FreeBaryonFieldMemory(gradPhi[i]);
   }
 
 

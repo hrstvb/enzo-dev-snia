@@ -405,7 +405,7 @@ int grid::ReadGrid(FILE *fptr, int GridID,
       activesize *= (GridDimension[dim]-2*DEFAULT_GHOST_ZONES);
     
     if (divB == NULL) 
-      divB = new float[activesize];
+      divB = AllocateNewBaryonField(activesize);
 
     /* if we restart from a different solvers output without a PhiField create here and set to zero */
     int PhiNum; 
@@ -436,7 +436,7 @@ int grid::ReadGrid(FILE *fptr, int GridID,
 
     for (int dim = 0; dim < 3; dim++)
       if (gradPhi[dim] == NULL)
-	gradPhi[dim] = new float[activesize];
+	gradPhi[dim] = AllocateNewBaryonField(activesize);
 
     for (int dim = GridRank; dim < 3; dim++)
       for (int n = 0; n < activesize; n++)

@@ -253,7 +253,7 @@ int grid::Group_ReadGrid(FILE *fptr, int GridID, HDF5_hid_t file_id,
  
     /* allocate temporary space */
  
-    float *temp = new float[active_size];
+    float *temp = AllocateNewBaryonField(active_size);
  
     if(ReadEverything == TRUE) {
       old_fields = H5Gopen(group_id, "OldFields");
@@ -302,7 +302,7 @@ int grid::Group_ReadGrid(FILE *fptr, int GridID, HDF5_hid_t file_id,
 	activesize *= (GridDimension[dim]-2*DEFAULT_GHOST_ZONES);
       
       if (divB == NULL) 
-	divB = new float[activesize];
+	divB = AllocateNewBaryonField(activesize);
       
       /* if we restart from a different solvers output without a Phi Field create here and set to zero */
       int PhiNum; 
@@ -337,7 +337,7 @@ int grid::Group_ReadGrid(FILE *fptr, int GridID, HDF5_hid_t file_id,
 
       for (int dim = 0; dim < 3; dim++)
 	if (gradPhi[dim] == NULL)
-	  gradPhi[dim] = new float[activesize];
+	  gradPhi[dim] = AllocateNewBaryonField(activesize);
       
       for (int dim = GridRank; dim < 3; dim++)
 	for (int n = 0; n < activesize; n++)
@@ -346,7 +346,7 @@ int grid::Group_ReadGrid(FILE *fptr, int GridID, HDF5_hid_t file_id,
     } /* if HydroMethod == MHD */
 
 
-    delete [] temp;
+    FreeBaryonFieldMemory(temp);
  
   }  // end:   if (NumberOfBaryonFields > 0 && ReadData &&
   //      (MyProcessorNumber == ProcessorNumber)) {
