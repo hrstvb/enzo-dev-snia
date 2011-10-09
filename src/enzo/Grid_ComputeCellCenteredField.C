@@ -59,7 +59,7 @@ int grid::ComputeCellCenteredField(int Num)
 #ifdef TRANSFER
   if (SubgridMarker != NULL && 
       InterpolatedField[NumberOfBaryonFields] == NULL) {
-    BaryonField[NumberOfBaryonFields] = static_cast<float*>(AllocateNewBaryonField(size));
+    BaryonField[NumberOfBaryonFields] = AllocateNewBaryonField(size);
     for (i = 0; i < size; i++)
       BaryonField[NumberOfBaryonFields][i] = 0.0f;
     for (k = GridStartIndex[2]; k <= GridEndIndex[2]; k++)

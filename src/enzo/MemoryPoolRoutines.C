@@ -19,6 +19,7 @@
 #include "typedefs.h"
 #include "global_data.h"
 #include "MemoryPool.h"
+//#include "gc.h"
 
 namespace MPool
 {
@@ -61,8 +62,8 @@ namespace MPool
 
     /* Chunks are allocated with the "Data" memory, so it's
        deallocated with it, too. */
-    //DeallocateAllChunks();
-    //assert(ObjectCount == 0);  // Check if everything was deallocated
+    //    DeallocateAllChunks();
+    //    assert(ObjectCount == 0);  // Check if everything was deallocated
   }
 
   /**************************************************/
@@ -71,6 +72,9 @@ namespace MPool
 
   void* MemoryPool::GetMemory(const size_t &MemorySize)
   {
+    if (MemorySize <= 0) // nothing to do here
+      return NULL;
+
     size_t BestMemBlockSize = CalculateBestMemoryBlockSize(MemorySize);
     size_t AllocationBlockSize;
     MemoryChunk* Chunk = NULL;
@@ -117,8 +121,11 @@ namespace MPool
       FreeChunks(Chunk);
     else
       assert(false && "Error: requested pointer not in memory pool");
-    assert(ObjectCount > 0 && 
-	   "Error: requested to delete more memory than allocated.");
+    //    assert(ObjectCount > 0 && 
+    //	   "Error: requested to delete more memory than allocated.");
+    if (ObjectCount < 1)
+      fprintf(stdout, "MemoryPoolRoutines: FreeMemory: found ObjectCount <= 0 !!! ??? \nPool : %i Current FreeMemory %0.3f Mb\n",
+	      PoolNumber, ((float)FreeMemoryPoolSize)/1024./1024.);
     ObjectCount--;
   }
 
@@ -162,11 +169,31 @@ namespace MPool
 
   void MemoryPool::PrintMemoryConsumption()
   {
-    fprintf(stdout, "Pool %i: Total:%0.3f Mb, Free:%0.3f Mb\n",
-	    PoolNumber, TotalMemoryPoolSize/1048576.0,
-	    FreeMemoryPoolSize/1048576.0);
+    fprintf(stdout, "Pool %i: Total:%0.3f Mb, Used:%0.3f Mb, Free:%0.3f Mb with %i objects.\n",
+	    PoolNumber, 
+	    TotalMemoryPoolSize/1048576.0,
+	    UsedMemoryPoolSize/1048576.0,
+	    FreeMemoryPoolSize/1048576.0,
+	    ObjectCount);
     return;
-  }
+  };
+
+    // Return private variables:
+  size_t MemoryPool::ReturnTotalMemoryPoolSize() 
+  {
+    return TotalMemoryPoolSize; 
+  };
+
+  size_t MemoryPool::ReturnUsedMemoryPoolSize()  
+  {
+    return UsedMemoryPoolSize;  
+  };
+
+  size_t MemoryPool::ReturnFreeMemoryPoolSize()  
+  {
+    fprintf(stdout, "Free: %0.3f\n", FreeMemoryPoolSize/1048576.0);
+    return FreeMemoryPoolSize;  
+  };
 
   /**********************************************************************/
 
@@ -214,7 +241,7 @@ namespace MPool
   (const size_t &MemorySize)
   {
 
-    size_t i, j, NeededChunks, ChunksToSkip = 0;
+    size_t i, j, NeededChunks = 0, ChunksToSkip = 0;
     bool EverythingFree = true;
     MemoryChunk* Chunk = CursorChunk;
     MemoryChunk* ThisChunk;
@@ -357,7 +384,7 @@ namespace MPool
     /* Memory blocks and chunks were allocated together, so we can do
        some pointer arithemtic to find the chunk. */
     
-    size_t ThisDataSize, nChunks, ChunkNumber;
+    size_t ThisDataSize, nChunks = 0, ChunkNumber;
     TByte *mFirstBlock, *mLastBlock, *mem;
     MemoryChunk *FirstChunkInAlloc, *LastChunkInAlloc;
     mem = (TByte*) sMemoryBlock;

@@ -450,7 +450,7 @@ int grid::NestedCosmologySimulationInitializeGrid(
  
       if (ReadData == TRUE)
 	for (int field = 0; field < NumberOfBaryonFields; field++)
-	  BaryonField[field] = static_cast<float*>(AllocateNewBaryonField(size));
+	  BaryonField[field] = AllocateNewBaryonField(size);
  
       // Read the density field
  

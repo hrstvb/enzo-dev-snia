@@ -24,13 +24,16 @@
 #include "Hierarchy.h"
 #include "LevelHierarchy.h"
  
+
 /* function prototypes */
  
 int IdentifyNewSubgridsBySignature(ProtoSubgrid *SubgridList[],
 				   int &NumberOfSubgrids);
  
 static ProtoSubgrid *SubgridList[MAX_NUMBER_OF_SUBGRIDS];
- 
+
+void PrintMemoryUsage(char *str);
+
  
 int FindSubgrids(HierarchyEntry *Grid, int level, int &TotalFlaggedCells,
 		 int &FlaggedGrids)
@@ -42,8 +45,10 @@ int FindSubgrids(HierarchyEntry *Grid, int level, int &TotalFlaggedCells,
   float AxialRatio, GridVolume;
 #endif /* MPI_INSTRUMENTATION */
   int NumberOfFlaggedCells = INT_UNDEFINED, i;
+
+
   grid *CurrentGrid = Grid->GridData;
- 
+
   /* Clear pointer to lower grids. */
  
   Grid->NextGridNextLevel = NULL;
@@ -98,25 +103,24 @@ int FindSubgrids(HierarchyEntry *Grid, int level, int &TotalFlaggedCells,
   if (NumberOfFlaggedCells != 0) {
  
     /* Create the base ProtoSubgrid which contains the whole grid. */
- 
     int NumberOfSubgrids = 1;
     SubgridList[0] = new ProtoSubgrid;
     
     SubgridList[0]->SetLevel(level+1);
  
     /* Copy the flagged zones into the ProtoSubgrid. */
- 
+
     if (SubgridList[0]->CopyFlaggedZonesFromGrid(CurrentGrid) == FAIL) {
       ENZO_FAIL("Error in ProtoSubgrid->CopyFlaggedZonesFromGrid.");
     }
- 
+
     /* Recursively break up this ProtoSubgrid and add new ones based on the
        flagged cells. */
- 
+
     if (IdentifyNewSubgridsBySignature(SubgridList, NumberOfSubgrids) == FAIL){
       ENZO_FAIL("Error in IdentifyNewSubgridsBySignature.");
     }
- 
+
     /* For each subgrid, create a new grid based on the current grid (i.e.
        same parameters, etc.) */
  
@@ -125,7 +129,7 @@ int FindSubgrids(HierarchyEntry *Grid, int level, int &TotalFlaggedCells,
     if ( NumberOfSubgrids > MAX_NUMBER_OF_SUBGRIDS ) {
       ENZO_VFAIL("PE %"ISYM" NumberOfSubgrids > MAX_NUMBER_OF_SUBGRIDS\n", MyProcessorNumber)
     }
- 
+
     for (i = 0; i < NumberOfSubgrids; i++) {
  
       /* create hierarchy entry */
@@ -143,7 +147,7 @@ int FindSubgrids(HierarchyEntry *Grid, int level, int &TotalFlaggedCells,
       ThisGrid->ParentGrid        = Grid;
  
       /* create new grid */
- 
+
       ThisGrid->GridData = new grid;
  
       /* set some the new grid's properties (rank, field types, etc.)
@@ -182,7 +186,6 @@ int FindSubgrids(HierarchyEntry *Grid, int level, int &TotalFlaggedCells,
       delete SubgridList[i];
  
     } // next subgrid
- 
   }
  
   /* De-allocate the flagging field. */

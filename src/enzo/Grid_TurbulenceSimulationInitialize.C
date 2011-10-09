@@ -206,7 +206,7 @@ int grid::TurbulenceSimulationInitializeGrid(
       if (io_log) fprintf(log_fptr, "  Field dim %"ISYM" size %"ISYM"\n", dim, GridDimension[dim]);
     printf("Allocating %"ISYM" baryon fields of size %"ISYM"\n", NumberOfBaryonFields, size);
     for (int field = 0; field < NumberOfBaryonFields; field++)
-     BaryonField[field] = static_cast<float*>(AllocateNewBaryonField(size));
+     BaryonField[field] = AllocateNewBaryonField(size);
   }
  
   /* If set, allocate space for RandomForcing fields. */

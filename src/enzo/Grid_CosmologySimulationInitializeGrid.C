@@ -336,7 +336,7 @@ int grid::CosmologySimulationInitializeGrid(
  
   if (ReadData == TRUE)
     for (int field = 0; field < NumberOfBaryonFields; field++)
-	BaryonField[field] = static_cast<float*>(AllocateNewBaryonField(size));
+	BaryonField[field] = AllocateNewBaryonField(size);
 
  
  

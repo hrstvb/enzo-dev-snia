@@ -21,19 +21,22 @@
 #include "Grid.h"
  
 void WriteListOfInts(FILE *fptr, int N, int nums[]);
- 
+void FreeFlaggingFieldMemory(int *FF);
+
 int ProtoSubgrid::CleanUp()
 {
  
-  delete [] GridFlaggingField;
+  FreeFlaggingFieldMemory(GridFlaggingField);
   GridFlaggingField = NULL;
+  // delete [] GridFlaggingField;
  
   /* Delete signatures unless dim=1 in which case Signature[0] = GFF */
  
   int dim;
   for (dim = 0; dim < MAX_DIMENSION; dim++) {
-    delete [] Signature[dim];
+    FreeFlaggingFieldMemory(Signature[dim]);
     Signature[dim] = NULL;
+    //   delete [] Signature[dim];
   }
  
   /* Set the dimension according to the refinement and ghost zones. */

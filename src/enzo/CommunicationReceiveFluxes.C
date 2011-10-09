@@ -62,7 +62,7 @@ int CommunicationReceiveFluxes(fluxes *Fluxes, int FromProc,
   if (CommunicationDirection == COMMUNICATION_RECEIVE)
     buffer = CommunicationReceiveBuffer[CommunicationReceiveIndex];
   else
-    buffer = static_cast<float*>(AllocateNewBaryonField(TotalSize));
+    buffer = AllocateNewBaryonField(TotalSize);
   //    buffer = new float[TotalSize];
 
  
@@ -123,8 +123,9 @@ int CommunicationReceiveFluxes(fluxes *Fluxes, int FromProc,
       for (i = 0; i < Sizes[dim1]; i++)
 	Fluxes->RightFluxes[field][dim1][i] = buffer[index++];
     }
-  FreeBaryonFieldMemory(buffer);
+ 
   //  delete [] buffer;
+  FreeBaryonFieldMemory(buffer);
  
   return SUCCESS;
 }

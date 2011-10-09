@@ -26,6 +26,7 @@
 #include "GridList.h"
 #include "ExternalBoundary.h"
 #include "Grid.h"
+void PrintMemoryUsage(char *str);
 
 int grid::MoveAllParticles(int NumberOfGrids, grid* FromGrid[])
 {
@@ -38,8 +39,7 @@ int grid::MoveAllParticles(int NumberOfGrids, grid* FromGrid[])
 
   int NumberOfSubgridParticles = 0;
   int TotalNumberOfParticles = NumberOfParticles;
-  int i, j, grid, dim, *Type;
-  PINT *Number;
+  int i, j, grid, dim;
  
   for (grid = 0; grid < NumberOfGrids; grid++)
     if (MyProcessorNumber == FromGrid[grid]->ProcessorNumber)
@@ -50,41 +50,41 @@ int grid::MoveAllParticles(int NumberOfGrids, grid* FromGrid[])
   TotalNumberOfParticles += NumberOfSubgridParticles;
  
   /* Debugging info. */
+  //  PrintMemoryUsage("Grid MAParticles: I "); 
 
   if (debug1) printf("MoveAllParticles: %"ISYM" (before: ThisGrid = %"ISYM").\n",
 		     TotalNumberOfParticles, NumberOfParticles);
  
   /* Allocate space for the particles. */
- 
+  
   FLOAT *Position[MAX_DIMENSION];
-  float *Velocity[MAX_DIMENSION], *Mass,
-        *Attribute[MAX_NUMBER_OF_PARTICLE_ATTRIBUTES];
- 
+  float *Velocity[MAX_DIMENSION],
+    *Attribute[MAX_NUMBER_OF_PARTICLE_ATTRIBUTES];
+  
   // Allocate memory for particles
 #ifndef MEMORY_POOL
-      // classic: use system malloc to get memory
-      Mass = new float[TotalNumberOfParticles];
-      Number = new PINT[TotalNumberOfParticles];
-      Type = new int[TotalNumberOfParticles];
-      for (int dim = 0; dim < GridRank; dim++) {
-	Position[dim] = new FLOAT[TotalNumberOfParticles];
-	Velocity[dim] = new float[TotalNumberOfParticles];
-      }
-      for (int i = 0; i < NumberOfParticleAttributes; i++)
-	Attribute[i] = new float[TotalNumberOfParticles];
+  // classic: use system malloc to get memory
+  float *Mass = new float[TotalNumberOfParticles];
+  Number = new PINT[TotalNumberOfParticles];
+  Type = new int[TotalNumberOfParticles];
+  for (int dim = 0; dim < GridRank; dim++) {
+    Position[dim] = new FLOAT[TotalNumberOfParticles];
+    Velocity[dim] = new float[TotalNumberOfParticles];
+  }
+  for (int i = 0; i < NumberOfParticleAttributes; i++)
+    Attribute[i] = new float[TotalNumberOfParticles];
 #else  
-      // use Particle Memory Pool to allocate memory
-      Mass = static_cast<float*>(ParticleMemoryPool->GetMemory(sizeof(float)*TotalNumberOfParticles));
-      Number = static_cast<PINT*>(ParticleMemoryPool->GetMemory(sizeof(PINT)*TotalNumberOfParticles));
-      Type = static_cast<int*>(ParticleMemoryPool->GetMemory(sizeof(int)*TotalNumberOfParticles));
-      for (int dim = 0; dim < GridRank; dim++) {
-	Position[dim] = static_cast<FLOAT*>(ParticleMemoryPool->GetMemory(sizeof(FLOAT)*TotalNumberOfParticles));
-	Velocity[dim] = static_cast<float*>(ParticleMemoryPool->GetMemory(sizeof(float)*TotalNumberOfParticles));
-      }
-      for (int i = 0; i < NumberOfParticleAttributes; i++)
-	Attribute[i] = static_cast<float*>(ParticleMemoryPool->GetMemory(sizeof(float)*TotalNumberOfParticles));
+  // use Particle Memory Pool to allocate memory
+  float *Mass = static_cast<float*>(ParticleMemoryPool->GetMemory(sizeof(float)*TotalNumberOfParticles));
+  PINT *Number = static_cast<PINT*>(ParticleMemoryPool->GetMemory(sizeof(PINT)*TotalNumberOfParticles));
+  int *Type = static_cast<int*>(ParticleMemoryPool->GetMemory(sizeof(int)*TotalNumberOfParticles));
+  for (int dim = 0; dim < GridRank; dim++) {
+    Position[dim] = static_cast<FLOAT*>(ParticleMemoryPool->GetMemory(sizeof(FLOAT)*TotalNumberOfParticles));
+    Velocity[dim] = static_cast<float*>(ParticleMemoryPool->GetMemory(sizeof(float)*TotalNumberOfParticles));
+  }
+  for (int i = 0; i < NumberOfParticleAttributes; i++)
+    Attribute[i] = static_cast<float*>(ParticleMemoryPool->GetMemory(sizeof(float)*TotalNumberOfParticles));
 #endif
-
   
   if (Velocity[GridRank-1] == NULL) {
     ENZO_FAIL("malloc error (out of memory?)\n");
@@ -93,7 +93,7 @@ int grid::MoveAllParticles(int NumberOfGrids, grid* FromGrid[])
   /* Compute the decrease in mass for particles moving to this grid
      (We assume here all grids are from the same level). */
  
-  float RefinementFactors[MAX_DIMENSION];
+static  float RefinementFactors[MAX_DIMENSION];
   this->ComputeRefinementFactorsFloat(FromGrid[0], RefinementFactors);
   float MassDecrease = 1.0;
   for (dim = 0; dim < GridRank; dim++)
@@ -119,6 +119,7 @@ int grid::MoveAllParticles(int NumberOfGrids, grid* FromGrid[])
   /* Delete this grid's particles (now copied). */
  
   this->DeleteParticles();
+  //  PrintMemoryUsage("Grid MAParticles: Ia "); 
  
   /* Copy new pointers into their correct position. */
  
@@ -160,6 +161,7 @@ int grid::MoveAllParticles(int NumberOfGrids, grid* FromGrid[])
     FromGrid[grid]->NumberOfParticles = 0;
     FromGrid[grid]->DeleteParticles();
   }
+  //  PrintMemoryUsage("Grid MAParticles: II "); 
  
   return SUCCESS;
 }
@@ -243,7 +245,7 @@ int grid::MoveAllParticlesOld(int NumberOfGrids, grid* FromGrid[])
   /* Compute the decrease in mass for particles moving to this grid
      (We assume here all grids are from the same level). */
 
-  float RefinementFactors[MAX_DIMENSION];
+static float RefinementFactors[MAX_DIMENSION];
   this->ComputeRefinementFactorsFloat(FromGrid[0], RefinementFactors);
   float MassDecrease = 1.0;
   for (dim = 0; dim < GridRank; dim++)

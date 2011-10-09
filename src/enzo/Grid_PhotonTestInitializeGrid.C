@@ -263,7 +263,7 @@ int grid::PhotonTestInitializeGrid(int NumberOfSpheres,
     {
       for (field = 0; field < NumberOfBaryonFields; field++)
 	if (BaryonField[field] == NULL)
-	  BaryonField[field] = static_cast<float*>(AllocateNewBaryonField(size));
+	  BaryonField[field] = AllocateNewBaryonField(size);
     }
 
   /* Initialize radiation fields */

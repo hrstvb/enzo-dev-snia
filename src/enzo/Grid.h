@@ -21,6 +21,10 @@
 #include "Star.h"
 #include "FOF_allvars.h"
 #include "MemoryPool.h"
+#if 1  // garbage collection
+//#include "/Users/tabel/Downloads/gc-7.2alpha6/include/leak_detector.h"
+#include "gc_cpp.h"
+#endif
 
 #ifdef FLUX_FIX
 #include "TopGridData.h"
@@ -56,7 +60,7 @@ struct HierarchyEntry;
 
 extern int CommunicationDirection;
 int FindField(int f, int farray[], int n);
-void *AllocateNewBaryonField(int size); 
+float *AllocateNewBaryonField(int size); 
 void FreeBaryonFieldMemory(float *BF);
 void FreeParticleMemory(void *BF);
 
@@ -203,9 +207,17 @@ class grid
 
 
    // Memory pool overloads new and delete operators
-#ifdef MEMORY_POOL
-  void* operator new(size_t nobjects);
-  void operator delete(void* object);
+#ifdef GRID_MEMORY_POOL
+void* operator new(size_t object_size)
+{
+  return GridObjectMemoryPool->GetMemory(object_size);
+}
+
+void operator delete(void* object)
+{
+  GridObjectMemoryPool->FreeMemory(object);
+  return;
+}
 #endif
 
 /* Read grid data from a file (returns: success/failure) */
@@ -895,6 +907,12 @@ public:
 
    void AllocateGrids();
 
+/* Defragment Baryon Memory Pool */
+   void DefragmentBaryonMemoryPool();
+
+/* Defragment Particle Memory Pool */
+   void DefragmentParticleMemoryPool();
+
 /* set the grid derived quantites (CellLeftEdge, CellWidth & BoundaryFluxes) */
 
    void PrepareGridDerivedQuantities();
@@ -1378,15 +1396,15 @@ public:
      for (int i = 0; i < NumberOfParticleAttributes; i++) 
        if (ParticleAttribute[i] != NULL) delete [] ParticleAttribute[i];
 #else
-     FreeParticleMemory(ParticleMass);
-     FreeParticleMemory(ParticleNumber);
-     FreeParticleMemory(ParticleType);
+     FreeParticleMemory((void*) ParticleMass);
+     FreeParticleMemory((void*)ParticleNumber);
+     FreeParticleMemory((void*)ParticleType);
      for (int dim = 0; dim < GridRank; dim++) {
-       FreeParticleMemory(ParticlePosition[dim]);
-       FreeParticleMemory(ParticleVelocity[dim]);
+       FreeParticleMemory((void*)ParticlePosition[dim]);
+       FreeParticleMemory((void*)ParticleVelocity[dim]);
      }
      for (int i = 0; i < NumberOfParticleAttributes; i++) 
-       FreeParticleMemory(ParticleAttribute[i]);
+       FreeParticleMemory((void*)ParticleAttribute[i]);
 #endif
      ParticleMass = NULL;
      ParticleNumber = NULL;

@@ -58,8 +58,7 @@ int grid::DepositParticlePositionsLocal(FLOAT DepositTime, int DepositField)
   /* If required, Change the mass of particles in this grid. */
  
   if (MassFactor != 1.0) {
-    ParticleMassTemp = new float[NumberOfParticles];
-
+    ParticleMassTemp =  AllocateNewBaryonField(NumberOfParticles);
     for (i = 0; i < NumberOfParticles; i++)
       ParticleMassTemp[i] = ParticleMass[i]*MassFactor;
     ParticleMassPointer = ParticleMassTemp;
@@ -97,7 +96,8 @@ int grid::DepositParticlePositionsLocal(FLOAT DepositTime, int DepositField)
  
   if (MassFactor != 1.0)
 
-    delete [] ParticleMassTemp;
+    FreeBaryonFieldMemory(ParticleMassTemp);
+    //    delete [] ParticleMassTemp;
  
   /* Return particles to positions at Time. */
  

@@ -79,8 +79,12 @@ int grid::CommunicationSendParticles(grid *ToGrid, int ToProcessor,
   if (CommunicationDirection == COMMUNICATION_RECEIVE)
     buffer = (particle_data*) CommunicationReceiveBuffer[CommunicationReceiveIndex];
   else
-    buffer = static_cast<particle_data*>(ParticleMemoryPool->GetMemory(sizeof(particle_data)*TransferSize));
-    //    buffer = new particle_data[TransferSize];
+#ifndef MEMORY_POOL
+    buffer = new particle_data[TransferSize];
+#else
+  buffer = 
+    static_cast<particle_data*>(ParticleMemoryPool->GetMemory(sizeof(particle_data)*TransferSize));
+#endif
  
   /* If this is the from processor, pack fields. */
  
@@ -165,21 +169,27 @@ int grid::CommunicationSendParticles(grid *ToGrid, int ToProcessor,
 	for (i = 0; i < ToGrid->NumberOfParticles; i++)
 	  ToGrid->ParticleAttribute[j][i] = TempAttribute[j][i];
 	
-      /*      delete [] TempNumber;
-	      delete [] TempMass;
-	      delete [] TempType; */
+      // delete [] TempNumber;
+      // delete [] TempMass;
+      // delete [] TempType;
+
+      // for (dim = 0; dim < GridRank; dim++) {
+      // 	delete [] TempPos[dim];
+      // 	delete [] TempVel[dim];
+      // }
+      // for (j = 0; j < NumberOfParticleAttributes; j++)
+      // 	delete [] TempAttribute[j];
       FreeParticleMemory(TempNumber);
       FreeParticleMemory(TempMass);
       FreeParticleMemory(TempType);
+
       for (dim = 0; dim < GridRank; dim++) {
-	FreeParticleMemory(TempPos[dim]);	
-	FreeParticleMemory(TempVel[dim]);
-	//	delete [] TempPos[dim];
-	//	delete [] TempVel[dim];
+      	FreeParticleMemory(TempPos[dim]);
+      	FreeParticleMemory(TempVel[dim]);
       }
       for (j = 0; j < NumberOfParticleAttributes; j++)
-	FreeParticleMemory(TempAttribute[dim]);
-      //	delete [] TempAttribute[j];
+      	FreeParticleMemory(TempAttribute[j]);
+
       ToStart = ToGrid->NumberOfParticles;
     }
  
@@ -292,8 +302,7 @@ int grid::CommunicationSendParticles(grid *ToGrid, int ToProcessor,
        receive-mode). */
 
     FreeParticleMemory(buffer);
-    //    delete [] buffer;
-    			
+    buffer = NULL;
   } // end: if (MyProcessorNumber...)
 
  

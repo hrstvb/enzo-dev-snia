@@ -67,8 +67,7 @@ int grid::CommunicationSendStars(grid *ToGrid, int ToProcessor)
     buffer = (StarBuffer*) CommunicationReceiveBuffer[CommunicationReceiveIndex];
   else
 #endif
-    buffer = static_cast<StarBuffer*>(ParticleMemoryPool->GetMemory(sizeof(StarBuffer)*TransferSize));
-  //    buffer = new StarBuffer[TransferSize];
+    buffer = new StarBuffer[TransferSize];
 
   /* If this is the from processor, pack fields and delete stars. */
 
@@ -153,8 +152,7 @@ int grid::CommunicationSendStars(grid *ToGrid, int ToProcessor)
     InsertStarAfter(ToGrid->Stars, RecvStars);
     for (cstar = ToGrid->Stars; cstar; cstar = cstar->NextStar)
       cstar->CurrentGrid = ToGrid;
-    FreeParticleMemory(buffer);
-    //    delete [] buffer;
+    delete [] buffer;
 			  
   } // end: if (MyProcessorNumber...)
 

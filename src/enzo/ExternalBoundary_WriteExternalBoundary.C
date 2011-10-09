@@ -53,7 +53,7 @@ int ExternalBoundary::WriteExternalBoundary(FILE *fptr, char *hdfname)
 {
  
   int dim, field, i, j, index, ret, size;
-  int BoundaryValuePresent[MAX_DIMENSION*2], Temp[MAX_DIMENSION];
+  static int BoundaryValuePresent[MAX_DIMENSION*2], Temp[MAX_DIMENSION];
   int file_status;
   float32 *buffer;
  
@@ -75,14 +75,14 @@ int ExternalBoundary::WriteExternalBoundary(FILE *fptr, char *hdfname)
   herr_t      h5_status;
   herr_t      h5_error = -1;
  
-  hsize_t     OutDims[MAX_DIMENSION];
+  static hsize_t     OutDims[MAX_DIMENSION];
   hsize_t     mem_size, file_size;
   hsize_t     n_attr;
  
-  int         Dims[MAX_DIMENSION];
+  static int         Dims[MAX_DIMENSION];
  
-  const char *dname_type = "BoundaryDimensionType";
-  const char *dname_value = "BoundaryDimensionValue";
+  static const char *dname_type = "BoundaryDimensionType";
+  static const char *dname_value = "BoundaryDimensionValue";
 
   int SimpleConstantBoundaryType = periodic;
 
@@ -215,9 +215,9 @@ int ExternalBoundary::WriteExternalBoundary(FILE *fptr, char *hdfname)
         }
         if (io_log) fprintf(log_fptr, "    Size %"ISYM"\n", size);
  
-        char *nfile = new char[2];
-        char *dname1 = new char[MAX_NAME_LENGTH];
-        char *dname2 = new char[MAX_NAME_LENGTH];
+	char *nfile = new char[2];
+	char *dname1 = new char[MAX_NAME_LENGTH];
+	char *dname2 = new char[MAX_NAME_LENGTH];
  
         nfile[0] = '\0';
         dname1[0] = '\0';

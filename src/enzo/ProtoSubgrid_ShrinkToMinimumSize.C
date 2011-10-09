@@ -26,6 +26,8 @@ extern "C" void FORTRAN_NAME(copy3dint)(int *source, int *dest,
                                    int *sstart1, int *sstart2, int *sstart3,
                                    int *dstart1, int *dstart2, int *dststart3);
  
+int *AllocateNewFlaggingField(int size);
+void FreeFlaggingFieldMemory(int *FF);
  
 int ProtoSubgrid::ShrinkToMinimumSize()
 {
@@ -87,8 +89,8 @@ int ProtoSubgrid::ShrinkToMinimumSize()
 	     NewGridDim[0], NewGridDim[1], NewGridDim[2]); */
  
     /* Create new buffer and copy selected region of the GridFlaggingField. */
- 
-    int *TempBuffer = new int[size];
+    int *TempBuffer =  AllocateNewFlaggingField(size);
+    //    int *TempBuffer = new int[size];
  
     FORTRAN_NAME(copy3dint)(GridFlaggingField, TempBuffer,
 			 GridDimension, GridDimension+1, GridDimension+2,
@@ -98,7 +100,8 @@ int ProtoSubgrid::ShrinkToMinimumSize()
  
     /* Delete old field and put new field in it's place. */
  
-    delete [] GridFlaggingField;
+    FreeFlaggingFieldMemory(GridFlaggingField);
+    //    delete [] GridFlaggingField;
     GridFlaggingField = TempBuffer;
  
     /* Copy valid parts of the Signatures. */

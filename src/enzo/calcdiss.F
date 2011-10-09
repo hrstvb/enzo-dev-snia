@@ -146,6 +146,7 @@ c
      &               nu3 = 0.2333, omega1 = 0.75, omega2 = 10.d0  ,
      &            sigma1 = 0.5d0 , sigma2 = 1.d0, one    = 1.d0   ,
      &               two = 2.d0)
+
 c
 c Notice, for 1D calculations nu2 = 0 and nu3 = 0.3333, see CW84, p. 200.
 c

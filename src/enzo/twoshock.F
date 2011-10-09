@@ -6,7 +6,7 @@ c///////////////////////  SUBROUTINE TWOSHOCK  \\\\\\\\\\\\\\\\\\\\\\\\\
      &           dls, drs, pls, prs, uls, urs, 
      &           idim, jdim, i1, i2, j1, j2, dt, gamma, pmin, ipresfree,
      &           pbar, ubar, gravity, grslice, idual, eta1
-     &                   )
+     &     )
 
 c  RIEMANN SOLVER USING TWO-SHOCK APPROXIMATION
 c
@@ -77,11 +77,13 @@ c
       real     cl(ijkn),    cr(ijkn), dpdul(ijkn), dpdur(ijkn),
      &         ps(ijkn),    ubl(ijkn),   ubr(ijkn),
      &         qa      ,     zl(ijkn),    zr(ijkn)
-
-      integer itok, jjj
       integer mask(ijkn), jfail(ijkn)
       real    old_ps(ijkn), delta_ps(ijkn)
       real    fails(ijkn)
+      integer itok, jjj
+
+c make all local variables static
+      save
 
 !     To reduce this to the old fixed iteration count method
 !     simply set tolerance = 1.0e-50

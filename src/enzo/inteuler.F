@@ -10,8 +10,7 @@ c
      &            dt, gamma, ipresfree,
      &            dls, drs, pls, prs, gels, gers,
      &            uls, urs, vls, vrs, wls, wrs,
-     &            ncolor, colslice, colls, colrs
-     &                    )
+     &            ncolor, colslice, colls, colrs)
 c
 c  COMPUTES LEFT AND RIGHT EULERIAN INTERFACE VALUES FOR RIEMANN SOLVER
 c
@@ -93,8 +92,8 @@ c
 c  local declarations
 c
       integer i, j, n, m, ic
-      real steepen(ijkn),tmp1(ijkn),tmp2(ijkn),tmp3(ijkn),tmp4(ijkn)
       real qa,qb,qc,qd,qe,s1,s2,f1
+      real steepen(ijkn),tmp1(ijkn),tmp2(ijkn),tmp3(ijkn),tmp4(ijkn)
       real  c1(ijkn), c2(ijkn), c3(ijkn), c4(ijkn), c5(ijkn), c6(ijkn)
      &    ,c7(ijkn), c8(ijkn)
      &    ,dd(ijkn),dl(ijkn),dr(ijkn),d6(ijkn)
@@ -119,6 +118,10 @@ c
      &    ,dcol(ijkn,MAX_COLOR),coll(ijkn,MAX_COLOR)
      &    ,colr(ijkn,MAX_COLOR),col6(ijkn,MAX_COLOR)
       real lem(idim,5,5),rem(idim,5,5), dxdt2(ijkn)
+
+c make all local variables static
+      save
+
 c
 c  parameters
 c

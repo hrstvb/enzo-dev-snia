@@ -20,7 +20,8 @@
 #ifdef USE_MPI
 #include "mpi.h"
 #endif /* USE_MPI */
- 
+
+#include <sys/malloc.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -55,7 +56,9 @@
 int InitializePythonInterface(int argc, char **argv);
 int FinalizePythonInterface();
 #endif
-
+#ifdef USE_JEMALLOC
+#include "jemalloc/jemalloc.h"
+#endif
 // Function prototypes
  
 int InitializeNew(  char *filename, HierarchyEntry &TopGrid, TopGridData &tgd,
@@ -178,9 +181,6 @@ int CommunicationInitialize(Eint32 *argc, char **argv[]);
 int CommunicationFinalize();
 
 int CommunicationPartitionGrid(HierarchyEntry *Grid, int gridnum);
-int CommunicationCombineGrids(HierarchyEntry *OldHierarchy,
-			      HierarchyEntry **NewHierarchyPointer,
-			      FLOAT WriteTime);
 void DeleteGridHierarchy(HierarchyEntry *GridEntry);
 int OutputPotentialFieldOnly(char *ParameterFile,
 			     LevelHierarchyEntry *LevelArray[], 
@@ -251,6 +251,17 @@ Eint32 MAIN_NAME(Eint32 argc, char *argv[])
 
 
   int i;
+#ifdef USE_JEMALLOC
+unsigned narena=0;
+size_t len=0;
+len = sizeof(narena);
+mallctl("arenas.purge", &narena, &len, NULL, 0);
+#endif
+
+#if 0
+ int dummy = mallopt(M_TRIM_THRESHOLD, 1024*1024); // 1 Mbyte chunks are released back
+ int dummy = mallopt(M_MMAP_THRESHOLD, 1024); // >1 kbyte chunks are allocated using mmap
+#endif
 
   // Initialize Communications
 
@@ -261,11 +272,11 @@ Eint32 MAIN_NAME(Eint32 argc, char *argv[])
     int impi = 0;
     char hostname[256];
     gethostname(hostname, sizeof(hostname));
-    if (MyProcessorNumber == ROOT_PROCESSOR) 
-      printf("PID %d on %s ready for debugger attach\n", getpid(), hostname);
+    //    if (MyProcessorNumber == ROOT_PROCESSOR) 
+    //   printf("PID %d on %s ready for debugger attach\n", getpid(), hostname);
     printf("xterm -e gdb --pid %d  &   ", getpid());
     fflush(stdout);
-    sleep(7);
+    sleep(8.1);
 #endif
   
 
@@ -303,20 +314,40 @@ Eint32 MAIN_NAME(Eint32 argc, char *argv[])
      Increase the memory pool by 1/4th of the initial size as more
      memory is needed. */
 
+
 #ifdef MEMORY_POOL
+#ifdef GRID_MEMORY_POOL
   const int GridObjectMemorySize = MEMORY_POOL_SIZE;
   int GridObjectSize = sizeof(grid);
   GridObjectMemoryPool = new MPool::MemoryPool(1, GridObjectMemorySize*GridObjectSize,
 					   GridObjectSize,
-					   GridObjectMemorySize*GridObjectSize/4);
+					   GridObjectMemorySize*GridObjectSize/4, true);
+#endif
+#ifdef PROTOSUBGRID_MEMORY_POOL
+  const int ProtoSubgridMemorySize = 1024*128;
+  int ProtoSubgridSize = sizeof(ProtoSubgrid);
+  ProtoSubgridMemoryPool = new MPool::MemoryPool(2, ProtoSubgridMemorySize*ProtoSubgridSize,
+					   ProtoSubgridSize,
+					   ProtoSubgridMemorySize*ProtoSubgridSize, true);
+#endif
+#ifdef HIERARCHY_MEMORY_POOL
+  const int HierarchyEntryMemorySize =1024*128;
+  int HierarchyEntrySize = sizeof(HierarchyEntry);
+  HierarchyEntryMemoryPool = new MPool::MemoryPool(3, HierarchyEntryMemorySize*HierarchyEntrySize,
+					   HierarchyEntrySize,
+					   HierarchyEntryMemorySize*HierarchyEntrySize, true);
+#endif
+  FlaggingFieldMemoryPool = new MPool::MemoryPool(4, sizeof(int)*1024*1024/NumberOfProcessors,
+						  sizeof(int)*32,
+						  sizeof(int)*200000, true);
 
-  ParticleMemoryPool = new MPool::MemoryPool(2, sizeof(FLOAT)*1000000,
-					     sizeof(FLOAT)*8,
-					     sizeof(FLOAT)*1000000);
+  ParticleMemoryPool = new MPool::MemoryPool(5, sizeof(FLOAT)*4000000/NumberOfProcessors,
+					     sizeof(FLOAT)*64,
+					     sizeof(FLOAT)*2000000, true);
 
-  BaryonFieldMemoryPool = new MPool::MemoryPool(3, sizeof(float)*1000000,
+  BaryonFieldMemoryPool = new MPool::MemoryPool(6, sizeof(float)*24000000/NumberOfProcessors,
 						sizeof(float)*64,
-						sizeof(float)*1000000);
+						sizeof(float)*6000000, true);
 
 #ifdef TRANSFER
   const int PhotonMemorySize = MEMORY_POOL_SIZE;
@@ -850,12 +881,17 @@ Eint32 MAIN_NAME(Eint32 argc, char *argv[])
 
 #ifdef MEMORY_POOL
     delete GridObjectMemoryPool;
+    delete ProtoSubgridMemoryPool;
+    delete HierarchyEntryMemoryPool;
+    delete FlaggingFieldMemoryPool;
     delete ParticleMemoryPool;
     delete BaryonFieldMemoryPool;
 #ifdef TRANSFER
     delete PhotonMemoryPool;
 #endif
 #endif
+    PrintMemoryUsage("Just before calling exit:");
+
  
   my_exit(EXIT_SUCCESS);
  

@@ -29,6 +29,8 @@
 #include "ExternalBoundary.h"
 #include "Grid.h"
 //#include "fortran.def"
+//#include "euler_sweep.h"
+
 
 int grid::SolvePPM_DE(int CycleNumber, int NumberOfSubgrids, 
 		      fluxes *SubgridFluxes[], float *CellWidthTemp[], 
@@ -49,9 +51,9 @@ int grid::SolvePPM_DE(int CycleNumber, int NumberOfSubgrids,
   for (int dim = 0; dim < GridRank; dim++)
     size *= GridDimension[dim];
   
-  float *Pressure = new float[size];
+  //  float *Pressure = new float[size];
+  float *Pressure = AllocateNewBaryonField(size);
   this->ComputePressure(Time, Pressure);
-
 
   int i,j,k,n;
   for (n = ixyz; n < ixyz+GridRank; n++) {
@@ -67,6 +69,7 @@ int grid::SolvePPM_DE(int CycleNumber, int NumberOfSubgrids,
       } // ENDFOR k
     } // ENDIF x-direction
 
+
     // Update in y-direction
     if ((n % GridRank == 1) && nyz > 1) {
       for (i = 0; i < GridDimension[0]; i++) {
@@ -77,6 +80,7 @@ int grid::SolvePPM_DE(int CycleNumber, int NumberOfSubgrids,
 	}
       } // ENDFOR i
     } // ENDIF y-direction
+
 
     // Update in z-direction
     if ((n % GridRank == 2) && nzz > 1) {
@@ -90,14 +94,17 @@ int grid::SolvePPM_DE(int CycleNumber, int NumberOfSubgrids,
       } // ENDFOR j
     } // ENDIF z-direction
 
+
   } // ENDFOR n
+
 
   // make energies consistent for polytropic equations of state
   if (EOSType > 0) 
     this->ComputePressure(Time, Pressure);
 
 
-  delete [] Pressure;
+  FreeBaryonFieldMemory(Pressure);
+  // delete [] Pressure;
 
   return SUCCESS;
 

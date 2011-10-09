@@ -34,7 +34,12 @@
 #ifdef USE_MPI
 #include <mpi.h>
 #endif
- 
+#ifdef USE_JEMALLOC
+#define JEMALLOC_MANGLE
+#include <jemalloc/jemalloc.h>
+#undef JEMALLOC_MANGLE
+#endif
+
 #include <stdio.h>
  
 #include "performance.h"
@@ -55,7 +60,8 @@
 #ifdef TRANSFER
 #include "ImplicitProblemABC.h"
 #endif
- 
+
+
 // function prototypes
  
 int RebuildHierarchy(TopGridData *MetaData,
@@ -140,6 +146,7 @@ Eint64 mused(void);
 int CallPython(LevelHierarchyEntry *LevelArray[], TopGridData *MetaData,
                int level, int from_topgrid);
 #endif
+int DefragmentMemoryPools(LevelHierarchyEntry *LevelArray[]);
 
  
  
@@ -338,6 +345,18 @@ int EvolveHierarchy(HierarchyEntry &TopGrid, TopGridData &MetaData,
 #endif    
     PrintMemoryUsage("Top");
 
+#ifdef USE_JEMALLOC
+    // jemalloc 
+    unsigned nbins = 0;
+    size_t len;
+    mallctl("arenas.purge", &nbins, &len, NULL, NULL);
+#endif
+
+#define NO_GARBAGE_COLLECTION   // libgc garbage collection
+#ifdef GARBAGE_COLLECTION
+    //    CHECK_LEAKS();
+    GC_gcollect();
+#endif
     /* Load balance the root grids if this isn't the initial call */
 
     if ((CheckpointRestart == FALSE) && (!FirstLoop))
@@ -529,7 +548,9 @@ int EvolveHierarchy(HierarchyEntry &TopGrid, TopGridData &MetaData,
       }
     }
 
-    PrintMemoryUsage("Post EvolveLevel rebuild");
+    PrintMemoryUsage("Post EvolveLevel");
+
+    //    DefragmentMemoryPools(LevelArray);
 
 
 #ifdef USE_MPI 
@@ -586,7 +607,8 @@ int EvolveHierarchy(HierarchyEntry &TopGrid, TopGridData &MetaData,
 #endif
 
     PrintMemoryUsage("Pre loop rebuild");
- 
+
+    /* Rebuild Hierarchy on Root grid level */ 
     if (ProblemType != 25 && Restart == FALSE)
       RebuildHierarchy(&MetaData, LevelArray, 0);
 
@@ -624,6 +646,7 @@ int EvolveHierarchy(HierarchyEntry &TopGrid, TopGridData &MetaData,
       FOF(&MetaData, LevelArray, TRUE);
 
     /* Try to cut down on memory fragmentation. */
+
  
 #ifdef REDUCE_FRAGMENTATION
  
@@ -677,6 +700,7 @@ int EvolveHierarchy(HierarchyEntry &TopGrid, TopGridData &MetaData,
       fclose(evlog);
     }
 
+
 #ifdef MEM_TRACE
     Eint64 MemInUse;
     if (MetaData.WroteData) {
@@ -688,22 +712,53 @@ int EvolveHierarchy(HierarchyEntry &TopGrid, TopGridData &MetaData,
         Stop = TRUE;
       }
     }
-#ifdef MEMORY_POOL
-    fprintf(stdout, "GridObjects : ");
-    GridObjectMemoryPool->PrintMemoryConsumption();
-    fprintf(stdout, "Particles   : ");
-    ParticleMemoryPool->PrintMemoryConsumption();
-    fprintf(stdout, "Baryons     : ");
-    BaryonFieldMemoryPool->PrintMemoryConsumption();
-#ifdef TRANSFER
-    fprintf(stdout, "Photons     : ");
-    PhotonMemoryPool->PrintMemoryConsumption();
-#endif
-#endif // MEMORY_POOL
 #endif //MEM_TRACE
 
     FirstLoop = false;
  
+#ifdef MEM_TRACE
+	size_t TotInPools = 0;
+#ifdef MEMORY_POOL
+    if (MyProcessorNumber == ROOT_PROCESSOR)
+      {
+#ifdef GRID_MEMORY_POOL
+	fprintf(stdout, "Grid Objects   : ");
+	GridObjectMemoryPool->PrintMemoryConsumption();
+	TotInPools += GridObjectMemoryPool->ReturnTotalMemoryPoolSize();
+#endif
+#ifdef PROTOSUBGRID_MEMORY_POOL
+	fprintf(stdout, "ProtoSubgrids  : ");
+	ProtoSubgridMemoryPool->PrintMemoryConsumption();
+	TotInPools += ProtoSubgridMemoryPool->ReturnTotalMemoryPoolSize();
+#endif
+#ifdef HIERARCHY_MEMORY_POOL
+	fprintf(stdout, "Hierarchy  Obj : ");
+	HierarchyEntryMemoryPool->PrintMemoryConsumption();
+	TotInPools += HierarchyEntryMemoryPool->ReturnTotalMemoryPoolSize();
+#endif
+	fprintf(stdout, "Flagging Fields: ");
+	FlaggingFieldMemoryPool->PrintMemoryConsumption();
+	fprintf(stdout, "Particles      : ");
+	ParticleMemoryPool->PrintMemoryConsumption();
+	fprintf(stdout, "Baryons        : ");
+	BaryonFieldMemoryPool->PrintMemoryConsumption();
+
+	TotInPools += FlaggingFieldMemoryPool->ReturnTotalMemoryPoolSize();
+	TotInPools += ParticleMemoryPool->ReturnTotalMemoryPoolSize();
+	TotInPools += BaryonFieldMemoryPool->ReturnTotalMemoryPoolSize();
+	
+#ifdef TRANSFER
+	fprintf(stdout, "Photons        : ");
+	PhotonMemoryPool->PrintMemoryConsumption();
+	TotInPools += PhotonMemoryPool->ReturnTotalMemoryPoolSize();
+#endif // TRANSFER
+	fprintf(stdout, "Total Memory in Pools:    %U \n", (TotInPools));///1048576.0);
+      }
+#endif // MEMORY_POOL
+#endif //MEM_TRACE
+
+
+
   } // ===== end of main loop ====
  
 #ifdef USE_LCAPERF

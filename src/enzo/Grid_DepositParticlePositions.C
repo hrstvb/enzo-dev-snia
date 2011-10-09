@@ -196,8 +196,7 @@ int grid::DepositParticlePositions(grid *TargetGrid, FLOAT DepositTime,
       DepositFieldPointer = 
 	CommunicationReceiveBuffer[CommunicationReceiveIndex];
     else {
-      //      DepositFieldPointer = new float[size];
-      DepositFieldPointer = static_cast<float*>(AllocateNewBaryonField(size));
+      DepositFieldPointer = new float[size];
       if (MyProcessorNumber == ProcessorNumber)
 	for (i = 0; i < size; i++)
 	  DepositFieldPointer[i] = 0;
@@ -407,8 +406,7 @@ int grid::DepositParticlePositions(grid *TargetGrid, FLOAT DepositTime,
 	                                      DepositFieldPointer[index1++];
 	}
 
-      //      delete [] DepositFieldPointer;
-      FreeBaryonFieldMemory(DepositFieldPointer);
+      delete [] DepositFieldPointer;
 
     } // end: if (MyProcessorNumber == TargetGrid->ProcessorNumber)
 

@@ -62,7 +62,6 @@ extern "C" void FORTRAN_NAME(combine3d)(
 	       int *dstart1, int *dstart2, int *dstart3,
 	       int *ivel_flag, int *irefine);
  
-
 /* InterpolateBoundaryFromParent function */
 
 int grid::InterpolateFieldValues(grid *ParentGrid)
@@ -230,14 +229,13 @@ int grid::InterpolateFieldValues(grid *ParentGrid)
       return SUCCESS;
  
     /* Allocate temporary space. */
-
-    TemporaryField        = static_cast<float *>(AllocateNewBaryonField(TempSize));
-    TemporaryDensityField = static_cast<float *>(AllocateNewBaryonField(TempSize));
-    Work                  = static_cast<float *>(AllocateNewBaryonField(WorkSize));
+ 
+    TemporaryField        = AllocateNewBaryonField(TempSize);
+    TemporaryDensityField = AllocateNewBaryonField(TempSize);
+    Work                  = AllocateNewBaryonField(WorkSize);
     for (field = 0; field < NumberOfBaryonFields; field++)
-      ParentTemp[field]     = static_cast<float *>(AllocateNewBaryonField(ParentTempSize));
-
-
+      ParentTemp[field]     = AllocateNewBaryonField(ParentTempSize);
+ 
     /* Copy just the required section from the parent fields to the temp
        space. */
  
@@ -399,7 +397,7 @@ int grid::InterpolateFieldValues(grid *ParentGrid)
       /* Copy needed portion of temp field to current grid. */
  
       if (BaryonField[field] == NULL && GridSize > 0)
-	BaryonField[field] = static_cast<float*>(AllocateNewBaryonField(GridSize));
+	BaryonField[field] = AllocateNewBaryonField(GridSize);
       if (BaryonField[field] == NULL) {
 	ENZO_FAIL("malloc error (out of memory?)\n");
       }
@@ -416,8 +414,7 @@ int grid::InterpolateFieldValues(grid *ParentGrid)
     FreeBaryonFieldMemory(TemporaryDensityField);
     for (field = 0; field < NumberOfBaryonFields; field++)
       FreeBaryonFieldMemory(ParentTemp[field]);
-
- 
+    
     /* If using the dual energy formalism, then modify the total energy field
        to maintain consistency between the total and internal energy fields.
        This is necessary because the interpolation introduces small

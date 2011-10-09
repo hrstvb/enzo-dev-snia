@@ -49,7 +49,7 @@ int grid::PrepareGreensFunction()
     size *= GravitatingMassFieldDimension[dim];
 
   if (PotentialField == NULL)
-    PotentialField = static_cast<float*>(AllocateNewBaryonField(size));
+    PotentialField = AllocateNewBaryonField(size);
  
   /* Set the constant to be used. */
  

@@ -37,7 +37,7 @@ int CosmologyComputeExpansionFactor(FLOAT time, FLOAT *a, FLOAT *dadt);
 /* This macro converts a float and writes it to the local buffer, which,
    when full is written to the file pointed to by fptr. */
  
-void *AllocateNewBaryonField(int size); 
+float *AllocateNewBaryonField(int size); 
 void FreeBaryonFieldMemory(float *BF);
 
 int grid::WriteGridInterpolate(FLOAT WriteTime, FILE *fptr, char *base_name,

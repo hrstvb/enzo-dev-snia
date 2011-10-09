@@ -23,14 +23,16 @@
 #include "Grid.h"
  
 /* function prototypes */
-
+void FreeBaryonFieldMemory(float *BF);
+void DeleteFluxes(fluxes *F);
 void grid::DeleteAllFields()
 {
  
   int i;
  
   this->DeleteParticles();
- 
+  DeleteFluxes(BoundaryFluxes);
+
   for (i = 0; i < MAX_DIMENSION; i++) {
     FreeParticleMemory(ParticleAcceleration[i]);
     FreeBaryonFieldMemory(AccelerationField[i]);
@@ -40,7 +42,7 @@ void grid::DeleteAllFields()
   }
   FreeParticleMemory(ParticleAcceleration[MAX_DIMENSION]);
   ParticleAcceleration[MAX_DIMENSION] = NULL;
-
+ 
   for (i = 0; i < MAX_NUMBER_OF_BARYON_FIELDS; i++) {
     FreeBaryonFieldMemory(BaryonField[i]);
     FreeBaryonFieldMemory(OldBaryonField[i]);

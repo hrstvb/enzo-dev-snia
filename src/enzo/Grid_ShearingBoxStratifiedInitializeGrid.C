@@ -87,7 +87,7 @@ int grid::ShearingBoxStratifiedInitializeGrid(float ThermalMagneticRatio, float 
 
   for (int field = 0; field < NumberOfBaryonFields; field++) {
     if (BaryonField[field] == NULL) {
-     BaryonField[field] = static_cast<float*>(AllocateNewBaryonField(size));
+     BaryonField[field] = AllocateNewBaryonField(size);
     }
   }
 

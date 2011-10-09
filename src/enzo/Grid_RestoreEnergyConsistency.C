@@ -74,24 +74,24 @@ int grid::RestoreEnergyConsistency(int Region)
  
     for (i = 0; i < size; i++)
       BaryonField[TENum][i] = BaryonField[GENum][i] +
-	         0.5*(BaryonField[Vel1Num][i])*(BaryonField[Vel1Num][i]);
+	         0.5f*(BaryonField[Vel1Num][i])*(BaryonField[Vel1Num][i]);
  
     if (GridRank > 1)
       for (i = 0; i < size; i++)
 	BaryonField[TENum][i] +=
-	         0.5*(BaryonField[Vel2Num][i])*(BaryonField[Vel2Num][i]);
+	         0.5f*(BaryonField[Vel2Num][i])*(BaryonField[Vel2Num][i]);
  
     if (GridRank > 2)
       for (i = 0; i < size; i++)
 	BaryonField[TENum][i] +=
-	         0.5*(BaryonField[Vel3Num][i])*(BaryonField[Vel3Num][i]);
+	         0.5f*(BaryonField[Vel3Num][i])*(BaryonField[Vel3Num][i]);
 
     if (HydroMethod == MHD_RK) {
       float B2 = 0;
       for (i = 0; i < size; i++) {
 	B2 = pow(BaryonField[B1Num][i],2) + pow(BaryonField[B2Num][i],2) +
 	  pow(BaryonField[B3Num][i],2);
-	BaryonField[TENum][i] += 0.5 * B2 / BaryonField[DensNum][i];
+	BaryonField[TENum][i] += 0.5f * B2 / BaryonField[DensNum][i];
       }
     }
  
@@ -113,22 +113,22 @@ int grid::RestoreEnergyConsistency(int Region)
 	    /* Perform correction:  E = e + 1/2*v^2. */
  
 	    BaryonField[TENum][n] = BaryonField[GENum][n] +
-	         0.5*(BaryonField[Vel1Num][n])*(BaryonField[Vel1Num][n]);
+	         0.5f*(BaryonField[Vel1Num][n])*(BaryonField[Vel1Num][n]);
  
 	    if (GridRank > 1)
 	      BaryonField[TENum][n] +=
-	         0.5*(BaryonField[Vel2Num][n])*(BaryonField[Vel2Num][n]);
+	         0.5f*(BaryonField[Vel2Num][n])*(BaryonField[Vel2Num][n]);
  
 	    if (GridRank > 2)
 	      BaryonField[TENum][n] +=
-	         0.5*(BaryonField[Vel3Num][n])*(BaryonField[Vel3Num][n]);
+	         0.5f*(BaryonField[Vel3Num][n])*(BaryonField[Vel3Num][n]);
  
 	    if (HydroMethod == MHD_RK) {
 
 	      float B2; 
 	      B2 = pow(BaryonField[B1Num][n],2) + pow(BaryonField[B2Num][n],2) +
 		pow(BaryonField[B3Num][n],2);
-	      BaryonField[TENum][n] += 0.5 * B2 / BaryonField[DensNum][n];
+	      BaryonField[TENum][n] += 0.5f * B2 / BaryonField[DensNum][n];
 	    }
 
 

@@ -38,7 +38,7 @@ int CommunicationSyncNumberOfParticles(HierarchyEntry *GridHierarchyPointer[],
   int i, idx;
   //int *AllNumberOfParticles = new int[NumberOfGrids];
   //int *AllNumberOfStars = new int[NumberOfGrids];
-  int *buffer =  new int[2*NumberOfGrids];
+  int *buffer = new int[2*NumberOfGrids];
 
   for (i = 0, idx = 0; i < NumberOfGrids; i++, idx += 2)
     if (GridHierarchyPointer[i]->GridData->ReturnProcessorNumber() == MyProcessorNumber) {

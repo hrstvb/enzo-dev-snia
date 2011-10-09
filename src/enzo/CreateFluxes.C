@@ -79,7 +79,6 @@ int CreateFluxes(HierarchyEntry *Grids[],fluxes **SubgridFluxesEstimate[],
       // Only allocate fluxes for local grids: saves a *lot* of storage
       
       if (MyProcessorNumber ==
-
           Grids[grid1]->GridData->ReturnProcessorNumber()) {
 	
 	NextGrid = Grids[grid1]->NextGridNextLevel;

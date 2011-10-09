@@ -134,7 +134,7 @@ int grid::InterpolateAccelerations(grid *FromGrid)
  
   for (dim = 0; dim < GridRank; dim++) {
     FreeBaryonFieldMemory(AccelerationField[dim]);
-    AccelerationField[dim] = static_cast<float*>(AllocateNewBaryonField(size));
+    AccelerationField[dim] = AllocateNewBaryonField(size);
   }
  
   /* --------------------------------------------------- */

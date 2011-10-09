@@ -38,7 +38,7 @@ void grid::AllocateGrids()
   /* Allocate room and clear it. */
  
   for (int field = 0; field < NumberOfBaryonFields; field++) {
-    BaryonField[field] = static_cast<float*>(AllocateNewBaryonField(size));
+    BaryonField[field] = AllocateNewBaryonField(size);
     for (int i = 0; i < size; i++)
       BaryonField[field][i] = 0.0;
   }

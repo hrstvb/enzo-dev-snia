@@ -79,6 +79,8 @@ c
       integer i, j
       real    qa, qb, qc, nu, di(ijkn), upb(ijkn), erat(ijkn),
      &        dadx(ijkn), dddx(ijkn), pcent(ijkn)
+c make all local variables static
+      save
 c
 c\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\/////////////////////////////////
 c=======================================================================

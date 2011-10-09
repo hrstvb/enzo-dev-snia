@@ -53,6 +53,10 @@ c  locals
 c
       integer i, j, k, i1, j1, k1, i2, j2, k2
       real work1(ijkn), work2(ijkn), work3(ijkn), work4(ijkn)
+
+c make all local variables static
+      save
+
 c     
 c\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\///////////////////////////////
 c=======================================================================

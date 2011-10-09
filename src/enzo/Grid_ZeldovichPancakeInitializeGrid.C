@@ -103,7 +103,7 @@ int grid::ZeldovichPancakeInitializeGrid(int  ZeldovichPancakeDirection,
   /* Allocate space for the fields. */
  
   for (field = 0; field < NumberOfBaryonFields; field++)
-    BaryonField[field] = static_cast<float*>(AllocateNewBaryonField(size));
+    BaryonField[field] = AllocateNewBaryonField(size);
 
  
   /* Find the stride between zones along the pancake direction. */

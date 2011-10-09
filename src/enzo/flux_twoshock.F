@@ -65,6 +65,9 @@ c
      $     cb(ijkn), eb(ijkn), geb(ijkn), colb(ijkn,MAX_COLOR),
      $     upb(ijkn), dub(ijkn), duub(ijkn), duvb(ijkn), duwb(ijkn),
      $     dueb(ijkn), dugeb(ijkn), pcent(ijkn)
+
+c make all local variables static
+      save
       parameter (one=1.d0)
 c
 c-----------------------------------------------------------------------

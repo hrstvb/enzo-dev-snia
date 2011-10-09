@@ -72,17 +72,21 @@ int grid::ComputeAccelerationField(int DifferenceType, int level)
  
   /* Loop over dimensions and difference acceleration. */
  
-  for (dim = 0; dim < GridRank; dim++) {
- 
-    /* Allocate acceleration field. */
- 
-    if (AccelerationField[dim] != NULL) {
-      FreeBaryonFieldMemory(AccelerationField[dim]);
+  for (dim = 0; dim < GridRank; dim++) 
+    {
+      
+      /* Allocate acceleration field. */
+      
+      //    if (AccelerationField[dim] != NULL) {
+      //      FreeBaryonFieldMemory(AccelerationField[dim]);
+      //    }
+      //      FreeBaryonFieldMemory(AccelerationField[dim]);
+      if (AccelerationField[dim] == NULL) 
+	AccelerationField[dim] = AllocateNewBaryonField(size);
+      for (int i=0; i<size; i++)
+	AccelerationField[dim][i] = 0.;
     }
- 
-    AccelerationField[dim] = static_cast<float*>(AllocateNewBaryonField(size));
- 
-  }
+  
  
   /* Difference potential. */
  

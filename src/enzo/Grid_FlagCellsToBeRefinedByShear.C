@@ -123,7 +123,7 @@ int grid::FlagCellsToBeRefinedByShear()
  
   /* clean up */
  
-  delete DelVelocity;
+  delete [] DelVelocity;
  
   /* Count number of flagged Cells. */
  

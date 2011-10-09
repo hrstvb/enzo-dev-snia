@@ -42,9 +42,7 @@ int grid::MoveSubgridParticlesFast(int NumberOfSubgrids, grid* ToGrids[],
  
   /* Initialize. */
  
-  //  int *ParticlesToMove = new int[NumberOfSubgrids];
-  int *ParticlesToMove = static_cast<int*>(ParticleMemoryPool->GetMemory(sizeof(int)*NumberOfSubgrids));
-
+  int *ParticlesToMove = new int[NumberOfSubgrids];
   for (i = 0; i < NumberOfSubgrids; i++)
     ParticlesToMove[i] = 0;
  
@@ -210,8 +208,7 @@ int grid::MoveSubgridParticlesFast(int NumberOfSubgrids, grid* ToGrids[],
 	  ToGrids[subgrid]->DeleteAllFields();
       }
  
-  //  delete [] ParticlesToMove;
-  FreeParticleMemory(ParticlesToMove);
+  delete [] ParticlesToMove;
  
   return SUCCESS;
 }

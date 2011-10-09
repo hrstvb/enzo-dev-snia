@@ -55,7 +55,7 @@ int grid::NohInitializeGrid(float d0, float p0, float u0)
     size *= GridDimension[dim];
 
   for (field = 0; field < NumberOfBaryonFields; field++)
-    BaryonField[field] = static_cast<float*>(AllocateNewBaryonField(size));
+    BaryonField[field] = AllocateNewBaryonField(size);
 
 
   /* set fields */

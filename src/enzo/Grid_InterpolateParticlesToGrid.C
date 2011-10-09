@@ -47,6 +47,7 @@ int CommunicationBufferedSend(void *buffer, int size, MPI_Datatype Type, int Tar
 			      int Tag, MPI_Comm CommWorld, int BufferSize);
 #endif /* USE_MPI */
 
+
 int grid::InterpolateParticlesToGrid(FOFData *D)
 {
 
@@ -125,8 +126,7 @@ int grid::InterpolateParticlesToGrid(FOFData *D)
 	Source = proc;
 	for (field = 0; field < NumberOfFields; field++) {
 
-	  //	  buffer = new float[size];
-	  buffer = static_cast<float*>(AllocateNewBaryonField(size));
+	  buffer = new float[size];
 	  Tag = MPI_SENDPARTFIELD_TAG+field;
 	  MPI_Irecv(buffer, Count, DataType, Source, Tag, MPI_COMM_WORLD,
 		    CommunicationReceiveMPI_Request+CommunicationReceiveIndex);
@@ -173,7 +173,7 @@ int grid::InterpolateParticlesToGrid(FOFData *D)
     if (MyProcessorNumber < min_slab || MyProcessorNumber > max_slab) {
       if (MyProcessorNumber == ProcessorNumber)
 	for (field = 0; field < NumberOfFields; field++) {
-	  InterpolatedField[field] = static_cast<float*>(AllocateNewBaryonField(size));
+	  InterpolatedField[field] = AllocateNewBaryonField(size);
 	  for (i = 0; i < size; i++)
 	    InterpolatedField[field][i] = 0.0;
 	}
@@ -213,7 +213,7 @@ int grid::InterpolateParticlesToGrid(FOFData *D)
 
     // Allocate and zero memory
     for (field = 0; field < NumberOfFields; field++) {
-      InterpolatedField[field] = static_cast<float*>(AllocateNewBaryonField(size));
+      InterpolatedField[field] = AllocateNewBaryonField(size);
       for (i = 0; i < size; i++)
 	InterpolatedField[field][i] = 0.0;
     }
@@ -322,8 +322,7 @@ int grid::InterpolateParticlesToGrid(FOFData *D)
     field = CommunicationReceiveArgumentInt[0][CommunicationReceiveIndex];
     for (i = 0; i < size; i++)
       InterpolatedField[field][i] += buffer[i];
-    //    delete [] buffer;
-    FreeBaryonFieldMemory(buffer);
+    delete [] buffer;
 
   } // ENDIF receive
 #endif /* USE_MPI */

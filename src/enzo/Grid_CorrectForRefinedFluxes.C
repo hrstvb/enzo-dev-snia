@@ -427,6 +427,7 @@ int grid::CorrectForRefinedFluxes(fluxes *InitialFluxes,
 	//	delete [] RefinedFluxes->RightFluxes[field][dim];
 	FreeBaryonFieldMemory(RefinedFluxes->LeftFluxes[field][dim]);
 	FreeBaryonFieldMemory(RefinedFluxes->RightFluxes[field][dim]);
+
 	RefinedFluxes->LeftFluxes[field][dim] = NULL;
 	RefinedFluxes->RightFluxes[field][dim] = NULL;
       }

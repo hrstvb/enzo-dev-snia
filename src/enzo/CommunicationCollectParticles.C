@@ -193,8 +193,12 @@ int CommunicationCollectParticles(LevelHierarchyEntry *LevelArray[],
       TotalNumber += NumberToMove[j];
       NumberToMove[j] = 0;  // Zero-out to use in the next step
     }
-    SendList =  static_cast<particle_data*>(ParticleMemoryPool->GetMemory(sizeof(particle_data)*TotalNumber));
-    //new particle_data[TotalNumber];
+#ifndef MEMORY_POOL
+    SendList = new particle_data[TotalNumber];
+#else
+    SendList = 
+      static_cast<particle_data*>(ParticleMemoryPool->GetMemory(sizeof(particle_data)*TotalNumber));
+#endif
 
     for (j = 0; j < NumberOfGrids; j++)
       if (GridHierarchyPointer[j]->NextGridNextLevel != NULL) {
@@ -423,10 +427,8 @@ int CommunicationCollectParticles(LevelHierarchyEntry *LevelArray[],
 
     /* Count the number of particles needed to move */
 
-    SendList = static_cast<particle_data*>(ParticleMemoryPool->GetMemory(sizeof(particle_data)*TotalNumberToMove));
-//new particle_data[TotalNumberToMove];
-    StarSendList = static_cast<star_data*>(ParticleMemoryPool->GetMemory(sizeof(star_data)*TotalStarsToMove));
-//new star_data[TotalStarsToMove];
+    SendList = new particle_data[TotalNumberToMove];
+    StarSendList = new star_data[TotalStarsToMove];
 
     for (i = 0; i < NumberOfProcessors; i++) {
       NumberToMove[i] = 0;
@@ -523,14 +525,12 @@ int CommunicationCollectParticles(LevelHierarchyEntry *LevelArray[],
     /* Cleanup. */
 
     if (SendList != SharedList)
-      FreeParticleMemory(SendList);
-    FreeParticleMemory(SharedList);
-    //      delete [] SendList;
-    //    delete [] SharedList;
+      delete [] SendList;
+    delete [] SharedList;
 
     if (StarSendList != StarSharedList)
-      FreeParticleMemory(StarSendList);
-    FreeParticleMemory(StarSharedList);
+      delete [] StarSendList;
+    delete [] StarSharedList;
 
     } // ENDFOR grid batches
 

@@ -27,8 +27,9 @@
 #include "GridList.h"
 #include "ExternalBoundary.h"
 #include "Grid.h"
+#include "fortran.def"
 #include "euler_sweep.h"
-//#include "fortran.def"
+
 
 int grid::zEulerSweep(int j, int NumberOfSubgrids, fluxes *SubgridFluxes[], 
 		      Elong_int GridGlobalStart[], float *CellWidthTemp[], 
@@ -59,20 +60,20 @@ int grid::zEulerSweep(int j, int NumberOfSubgrids, fluxes *SubgridFluxes[],
     *colslice, *pslice;
 
   int size = GridDimension[2] * GridDimension[0];
-  dslice = static_cast<float*>(AllocateNewBaryonField(size));  
-  eslice = static_cast<float*>(AllocateNewBaryonField(size));  
-  uslice = static_cast<float*>(AllocateNewBaryonField(size));  
-  vslice = static_cast<float*>(AllocateNewBaryonField(size));  
-  wslice = static_cast<float*>(AllocateNewBaryonField(size));  
-  pslice = static_cast<float*>(AllocateNewBaryonField(size));  
+  dslice = AllocateNewBaryonField(size);  
+  eslice = AllocateNewBaryonField(size);  
+  uslice = AllocateNewBaryonField(size);  
+  vslice = AllocateNewBaryonField(size);  
+  wslice = AllocateNewBaryonField(size);  
+  pslice = AllocateNewBaryonField(size);  
   if (GravityOn) {
-    grslice = static_cast<float*>(AllocateNewBaryonField(size));  
+    grslice = AllocateNewBaryonField(size);  
   }
   if (DualEnergyFormalism) {
-    geslice = static_cast<float*>(AllocateNewBaryonField(size));  
+    geslice = AllocateNewBaryonField(size);  
   }
   if (NumberOfColours > 0) {
-    colslice = static_cast<float*>(AllocateNewBaryonField(NumberOfColours * size));  
+    colslice = AllocateNewBaryonField(NumberOfColours * size);  
   }
 
   int i, k, n, ncolour, index2, index3;
@@ -135,32 +136,32 @@ int grid::zEulerSweep(int j, int NumberOfSubgrids, fluxes *SubgridFluxes[],
     *vrs, *gels, *gers, *wls, *wrs, *diffcoef, *df, *ef, *uf, *vf, *wf, *gef,
     *ges, *colf, *colls, *colrs;
 
-  dls = static_cast<float*>(AllocateNewBaryonField(size));	
-  drs = static_cast<float*>(AllocateNewBaryonField(size));	
-  flatten = static_cast<float*>(AllocateNewBaryonField(size));	
-  pbar = static_cast<float*>(AllocateNewBaryonField(size));	
-  pls = static_cast<float*>(AllocateNewBaryonField(size));	
-  prs = static_cast<float*>(AllocateNewBaryonField(size));	
-  ubar = static_cast<float*>(AllocateNewBaryonField(size));	
-  uls = static_cast<float*>(AllocateNewBaryonField(size));	
-  urs = static_cast<float*>(AllocateNewBaryonField(size));	
-  vls = static_cast<float*>(AllocateNewBaryonField(size));	
-  vrs = static_cast<float*>(AllocateNewBaryonField(size));	
-  gels = static_cast<float*>(AllocateNewBaryonField(size));	
-  gers = static_cast<float*>(AllocateNewBaryonField(size));	
-  wls = static_cast<float*>(AllocateNewBaryonField(size));	
-  wrs = static_cast<float*>(AllocateNewBaryonField(size));	
-  diffcoef = static_cast<float*>(AllocateNewBaryonField(size));	
-  df = static_cast<float*>(AllocateNewBaryonField(size));		
-  ef = static_cast<float*>(AllocateNewBaryonField(size));		
-  uf = static_cast<float*>(AllocateNewBaryonField(size));		
-  vf = static_cast<float*>(AllocateNewBaryonField(size));		
-  wf = static_cast<float*>(AllocateNewBaryonField(size));		
-  gef = static_cast<float*>(AllocateNewBaryonField(size));	
-  ges = static_cast<float*>(AllocateNewBaryonField(size));
-  colf = static_cast<float*>(AllocateNewBaryonField(NumberOfColours*size));  
-  colls = static_cast<float*>(AllocateNewBaryonField(NumberOfColours*size));  
-  colrs = static_cast<float*>(AllocateNewBaryonField(NumberOfColours*size));  
+  dls = AllocateNewBaryonField(size);	
+  drs = AllocateNewBaryonField(size);	
+  flatten = AllocateNewBaryonField(size);	
+  pbar = AllocateNewBaryonField(size);	
+  pls = AllocateNewBaryonField(size);	
+  prs = AllocateNewBaryonField(size);	
+  ubar = AllocateNewBaryonField(size);	
+  uls = AllocateNewBaryonField(size);	
+  urs = AllocateNewBaryonField(size);	
+  vls = AllocateNewBaryonField(size);	
+  vrs = AllocateNewBaryonField(size);	
+  gels = AllocateNewBaryonField(size);	
+  gers = AllocateNewBaryonField(size);	
+  wls = AllocateNewBaryonField(size);	
+  wrs = AllocateNewBaryonField(size);	
+  diffcoef = AllocateNewBaryonField(size);	
+  df = AllocateNewBaryonField(size);		
+  ef = AllocateNewBaryonField(size);		
+  uf = AllocateNewBaryonField(size);		
+  vf = AllocateNewBaryonField(size);		
+  wf = AllocateNewBaryonField(size);		
+  gef = AllocateNewBaryonField(size);	
+  ges = AllocateNewBaryonField(size);
+  colf = AllocateNewBaryonField(NumberOfColours*size);  
+  colls = AllocateNewBaryonField(NumberOfColours*size);  
+  colrs = AllocateNewBaryonField(NumberOfColours*size);  
 
   /* Convert start and end indexes into 1-based for FORTRAN */
 
@@ -403,45 +404,45 @@ int grid::zEulerSweep(int j, int NumberOfSubgrids, fluxes *SubgridFluxes[],
 
   /* Delete all temporary slices */
 
-  delete [] dslice;
-  delete [] eslice;
-  delete [] uslice;
-  delete [] vslice;
-  delete [] wslice;
-  delete [] pslice;
+  FreeBaryonFieldMemory(dslice);
+  FreeBaryonFieldMemory(eslice);
+  FreeBaryonFieldMemory(uslice);
+  FreeBaryonFieldMemory(vslice);
+  FreeBaryonFieldMemory(wslice);
+  FreeBaryonFieldMemory(pslice);
   if (GravityOn)
-    delete [] grslice;
+    FreeBaryonFieldMemory(grslice);
   if (DualEnergyFormalism)
-    delete [] geslice;
+    FreeBaryonFieldMemory(geslice);
   if (NumberOfColours > 0)
-    delete [] colslice;
+    FreeBaryonFieldMemory(colslice);
 
-  delete [] dls;
-  delete [] drs;
-  delete [] flatten;
-  delete [] pbar;
-  delete [] pls;
-  delete [] prs;
-  delete [] ubar;
-  delete [] uls;
-  delete [] urs;
-  delete [] vls;
-  delete [] vrs;
-  delete [] gels;
-  delete [] gers;
-  delete [] wls;
-  delete [] wrs;
-  delete [] diffcoef;
-  delete [] df;
-  delete [] ef;
-  delete [] uf;
-  delete [] vf;
-  delete [] wf;
-  delete [] gef;
-  delete [] ges;
-  delete [] colf;
-  delete [] colls;
-  delete [] colrs;
+  FreeBaryonFieldMemory(dls);
+  FreeBaryonFieldMemory(drs);
+  FreeBaryonFieldMemory(flatten);
+  FreeBaryonFieldMemory(pbar);
+  FreeBaryonFieldMemory(pls);
+  FreeBaryonFieldMemory(prs);
+  FreeBaryonFieldMemory(ubar);
+  FreeBaryonFieldMemory(uls);
+  FreeBaryonFieldMemory(urs);
+  FreeBaryonFieldMemory(vls);
+  FreeBaryonFieldMemory(vrs);
+  FreeBaryonFieldMemory(gels);
+  FreeBaryonFieldMemory(gers);
+  FreeBaryonFieldMemory(wls);
+  FreeBaryonFieldMemory(wrs);
+  FreeBaryonFieldMemory(diffcoef);
+  FreeBaryonFieldMemory(df);
+  FreeBaryonFieldMemory(ef);
+  FreeBaryonFieldMemory(uf);
+  FreeBaryonFieldMemory(vf);
+  FreeBaryonFieldMemory(wf);
+  FreeBaryonFieldMemory(gef);
+  FreeBaryonFieldMemory(ges);
+  FreeBaryonFieldMemory(colf);
+  FreeBaryonFieldMemory(colls);
+  FreeBaryonFieldMemory(colrs);
 
   return SUCCESS;
 

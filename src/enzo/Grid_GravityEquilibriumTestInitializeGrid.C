@@ -63,7 +63,7 @@ int grid::GravityEquilibriumTestInitializeGrid(
   /* Allocate space for the fields. */
  
   for (field = 0; field < NumberOfBaryonFields; field++)
-    BaryonField[field] = static_cast<float*>(AllocateNewBaryonField(size));
+    BaryonField[field] = AllocateNewBaryonField(size);
 
  
   /* set density, total energy and velocity in problem dimension */

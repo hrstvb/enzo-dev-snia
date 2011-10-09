@@ -67,7 +67,7 @@ int grid::Group_WriteGridInterpolate(FLOAT WriteTime, FILE *fptr, char *base_nam
   if (coef2 != 1 && MyProcessorNumber == ProcessorNumber)
     for (field = 0; field < NumberOfBaryonFields; field++) {
       SavedBaryonField[field] = BaryonField[field];
-      BaryonField[field] = static_cast<float*>(AllocateNewBaryonField(size));
+      BaryonField[field] = AllocateNewBaryonField(size);
       for (i = 0; i < size; i++)
 	BaryonField[field][i] = coef1*OldBaryonField[field][i] +
 	                        coef2*SavedBaryonField[field][i];

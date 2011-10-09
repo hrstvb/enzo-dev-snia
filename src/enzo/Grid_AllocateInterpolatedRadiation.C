@@ -62,9 +62,9 @@ int grid::AllocateInterpolatedRadiation()
 	break;
       } // ENDSWITCH field
       if (InterpolatedField[rkph] == NULL && rkph != FieldUndefined)
-	InterpolatedField[rkph] = static_cast<float*>(AllocateNewBaryonField(vcsize));
+	InterpolatedField[rkph] = AllocateNewBaryonField(vcsize);
       if (InterpolatedField[rgamma] == NULL && rgamma != FieldUndefined)
-	InterpolatedField[rgamma] = static_cast<float*>(AllocateNewBaryonField(vcsize));
+	InterpolatedField[rgamma] = AllocateNewBaryonField(vcsize);
       for (i = 0; i < vcsize; i++)
 	InterpolatedField[rkph][i] = 0.0f;
       if (rgamma != FieldUndefined)

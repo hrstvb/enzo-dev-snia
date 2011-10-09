@@ -96,6 +96,8 @@ c
      $     colfl(ijkn,MAX_COLOR), colfr(ijkn,MAX_COLOR)
       real sl(ijkn), sr(ijkn), sm(ijkn)
       real dubl, dubr
+c make all local variables static
+      save 
 
       gamma1 = gamma - 1.d0
       gamma1i = 1.d0 / gamma1

@@ -270,7 +270,7 @@ int grid::CollapseTestInitializeGrid(int NumberOfSpheres,
     if (SetupLoopCount == 0)
       for (field = 0; field < NumberOfBaryonFields; field++)
 	if (BaryonField[field] == NULL)
-	  BaryonField[field] = static_cast<float*>(AllocateNewBaryonField(size));
+	  BaryonField[field] = AllocateNewBaryonField(size);
 
 
     /* Loop over the mesh. */

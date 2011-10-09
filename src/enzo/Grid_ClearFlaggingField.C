@@ -22,6 +22,9 @@
 #include "ExternalBoundary.h"
 #include "Grid.h"
  
+int *AllocateNewFlaggingField(int size);
+void FreeFlaggingFieldMemory(int *FF);
+
 void grid::ClearFlaggingField()
 {
  
@@ -34,7 +37,9 @@ void grid::ClearFlaggingField()
  
   if (FlaggingField != NULL) {
     fprintf(stderr, "ClearFlaggingField: Warning, field already present.\n");
-    delete [] FlaggingField;
+    FreeFlaggingFieldMemory(FlaggingField);
+    FlaggingField = NULL;
+    //    delete [] FlaggingField;
   }
  
   /* compute size and allocate */
@@ -43,8 +48,9 @@ void grid::ClearFlaggingField()
   for (int dim = 0; dim < GridRank; dim++)
     size *= GridDimension[dim];
  
-  FlaggingField = new int[size];
- 
+  //  FlaggingField = new int[size];
+  FlaggingField = AllocateNewFlaggingField(size);
+
   /* Clear it */
  
   for (int i = 0; i < size; i++)

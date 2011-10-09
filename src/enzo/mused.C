@@ -108,9 +108,9 @@ void PrintMemoryUsage(char *str)
   MeanMem /= NumberOfProcessors;
   fprintf(memtracePtr, "%s  %16lld\n", str, MemInUse);
   if (debug) 
-    printf("MEM %s :: mean/min/max = %lld/%lld/%lld\n", 
-	   str, MeanMem, MinMem, MaxMem);
-  fflush(memtracePtr);
+    printf("MEM mean/min/max = %lld/%lld/%lld :: %s \n", 
+	   MeanMem, MinMem, MaxMem, str);
 #endif
+  fflush(memtracePtr);
   return;
 }

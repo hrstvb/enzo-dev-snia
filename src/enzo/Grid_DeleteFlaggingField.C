@@ -21,12 +21,15 @@
 #include "GridList.h"
 #include "ExternalBoundary.h"
 #include "Grid.h"
- 
+
+void FreeFlaggingFieldMemory(int *FF);
+
 void grid::DeleteFlaggingField()
 {
   if (FlaggingField == NULL)
     fprintf(stderr, "DeleteFlaggingField: Warning, field not present.\n");
   else
-    delete [] FlaggingField;
+    FreeFlaggingFieldMemory(FlaggingField);
+  //    delete [] FlaggingField;
   FlaggingField = NULL;
 }

@@ -25,8 +25,7 @@
 #include "typedefs.h"
 #include "global_data.h" 
 void my_exit(int status);
-void FreeBaryonFieldMemory(float *BF);
-void *AllocateNewBaryonField(int size);
+
 
 /* Records the number of times we've been called. */
  
@@ -43,9 +42,12 @@ static int CallCount = 0;
 static MPI_Request  RequestHandle[MAX_NUMBER_OF_MPI_BUFFERS];
 static char        *RequestBuffer[MAX_NUMBER_OF_MPI_BUFFERS];
 static int          LastActiveIndex = -1;
- 
- 
+
 /* function prototypes */
+void FreeBaryonFieldMemory(float *BF);
+void FreeParticleMemory(void *PF);
+ 
+
 
 int CommunicationBufferPurge(void) { 
 
@@ -68,10 +70,21 @@ int CommunicationBufferPurge(void) {
       if (RequestDone) {
 	
 	/* If the request is done, deallocate associated buffer. */
+
 	//fprintf(stderr,"CCO p%"ISYM": mem- thread %"ISYM" finished\n",MyProcessorNumber, i);
 	
+
+
+#ifdef MEMORY_POOL
+	  if (BaryonFieldMemoryPool->IsValidPointer(RequestBuffer[i]))
+	    FreeBaryonFieldMemory((float*) RequestBuffer[i]);
+	  else if (ParticleMemoryPool->IsValidPointer(RequestBuffer[i]))
+	    FreeParticleMemory((void*) RequestBuffer[i]);
+	  else
+	    delete [] RequestBuffer[i];
+#else
 	delete [] RequestBuffer[i];
-	//	FreeBaryonFieldMemory((float*)RequestBuffer[i]);
+#endif
 	RequestBuffer[i] = NULL;
         BuffersPurged++;
         //fprintf(stderr, "CBP buffer %"ISYM" released\n", i);
@@ -90,9 +103,9 @@ int CommunicationBufferPurge(void) {
 
   LastActiveIndex = NewLastActiveIndex;
 
-  //  if (BuffersPurged != 0)
-  //    fprintf(stderr, "CBP %"ISYM": %"ISYM" buffers purged, %"ISYM" buffers remain active\n",
-  //	    MyProcessorNumber, BuffersPurged, BuffersActive);
+  // if (BuffersPurged != 0)
+  // fprintf(stderr, "CBP %"ISYM": %"ISYM" buffers purged, %"ISYM" buffers remain active\n",
+  //                  MyProcessorNumber, BuffersPurged, BuffersActive);
 
   return SUCCESS;
 }
@@ -153,15 +166,24 @@ int CommunicationBufferedSend(void *buffer, int size, MPI_Datatype Type, int Tar
     for (i = 0; i < LastActiveIndex+1; i++) {
       if (RequestBuffer[i] != NULL) {
 	stat = MPI_Test(RequestHandle+i, &RequestDone, &Status);
-          if( stat != MPI_SUCCESS ){my_exit(EXIT_FAILURE);}
+	if( stat != MPI_SUCCESS ){my_exit(EXIT_FAILURE);}
 	if (RequestDone) {
- 
+	  
 	  /* If the request is done, deallocate associated buffer. */
- 
+	  
+#ifdef MEMORY_POOL
+	  if (BaryonFieldMemoryPool->IsValidPointer(RequestBuffer[i]))
+	    FreeBaryonFieldMemory((float*) RequestBuffer[i]);
+	  else if (ParticleMemoryPool->IsValidPointer(RequestBuffer[i]))
+	    FreeParticleMemory((float*) RequestBuffer[i]);
+	  else
+	    delete [] RequestBuffer[i];
+#else
 	  delete [] RequestBuffer[i];
-	  //	  FreeBaryonFieldMemory((float*)RequestBuffer[i]);
+#endif
+	  
 	  RequestBuffer[i] = NULL;
- 
+	  
 	} else
 	  NewLastActiveIndex = max(i, NewLastActiveIndex);
       }
@@ -205,8 +227,7 @@ int CommunicationBufferedSend(void *buffer, int size, MPI_Datatype Type, int Tar
  
   RequestBuffer[index] = (char *) buffer_send;
   LastActiveIndex = max(LastActiveIndex, index);
-  //  delete [] buffer_send;
-  //  FreeBaryonFieldMemory((float*)buffer_send);
+ 
   return SUCCESS;
 }
  

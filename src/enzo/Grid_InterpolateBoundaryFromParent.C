@@ -62,6 +62,7 @@ extern "C" void FORTRAN_NAME(combine3d)(
 	       int *dstart1, int *dstart2, int *dstart3,
 	       int *ivel_flag, int *irefine);
  
+
 /* InterpolateBoundaryFromParent function */
  
 int grid::InterpolateBoundaryFromParent(grid *ParentGrid)
@@ -264,13 +265,12 @@ int grid::InterpolateBoundaryFromParent(grid *ParentGrid)
  
     /* Allocate temporary space. */
  
-   
-    TemporaryField        = static_cast<float *>(AllocateNewBaryonField(TempSize));
-    TemporaryDensityField = static_cast<float *>(AllocateNewBaryonField(TempSize));
-    Work                  = static_cast<float *>(AllocateNewBaryonField(WorkSize));
+    TemporaryField        = AllocateNewBaryonField(TempSize);
+    TemporaryDensityField = AllocateNewBaryonField(TempSize);
+    Work                  = AllocateNewBaryonField(WorkSize);
     for (field = 0; field < NumberOfBaryonFields; field++)
-      ParentTemp[field]     = static_cast<float *>(AllocateNewBaryonField(ParentTempSize));
-
+      ParentTemp[field]     = AllocateNewBaryonField(ParentTempSize);
+ 
     /* Copy just the required section from the parent fields to the temp
        space, doing the linear interpolation in time as we do it. */
  
@@ -478,13 +478,11 @@ int grid::InterpolateBoundaryFromParent(grid *ParentGrid)
 
     } // end loop over fields
   
-
     FreeBaryonFieldMemory(Work);
     FreeBaryonFieldMemory(TemporaryField);
     FreeBaryonFieldMemory(TemporaryDensityField);
     for (field = 0; field < NumberOfBaryonFields; field++)
       FreeBaryonFieldMemory(ParentTemp[field]);
-    
  
     /* If using the dual energy formalism, then modify the total energy field
        to maintain consistency between the total and internal energy fields.

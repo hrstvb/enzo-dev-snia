@@ -779,17 +779,22 @@ EXTERN PyObject *my_processor;
 #endif
 /* Multi-species rate equation flag and associated data. */
 
-#ifdef MEMORY_POOL
-EXTERN MPool::MemoryPool *ParticleMemoryPool;
-EXTERN MPool::MemoryPool *BaryonFieldMemoryPool;
-EXTERN MPool::MemoryPool *GridObjectMemoryPool;
-#endif
-
 EXTERN int MetalCooling;
 EXTERN char *MetalCoolingTable;
 EXTERN int CIECooling;
 EXTERN int H2OpticalDepthApproximation;
 
+#ifdef MEMORY_POOL
+EXTERN MPool::MemoryPool *GridObjectMemoryPool;
+EXTERN MPool::MemoryPool *ProtoSubgridMemoryPool;
+EXTERN MPool::MemoryPool *HierarchyEntryMemoryPool;
+EXTERN MPool::MemoryPool *FlaggingFieldMemoryPool;
+EXTERN MPool::MemoryPool *ParticleMemoryPool;
+EXTERN MPool::MemoryPool *BaryonFieldMemoryPool;
+#ifdef TRANSFER
+EXTERN MPool::MemoryPool *PhotonMemoryPool;
+#endif
+#endif
 //   1 - Adaptive ray tracing transfer
 //   0 - none
 EXTERN int RadiativeTransfer;
@@ -806,9 +811,6 @@ EXTERN float dtPhoton;
 EXTERN RadiationSourceEntry *GlobalRadiationSources;
 EXTERN SuperSourceEntry *SourceClusteringTree;
 EXTERN SuperSourceEntry *OldSourceClusteringTree;
-#ifdef MEMORY_POOL
-EXTERN MPool::MemoryPool *PhotonMemoryPool;
-#endif
 
 /* [0]: Emitted photons
    [1]: escaped past 0.5 RadiativeTransferPhotonEscapeRadius

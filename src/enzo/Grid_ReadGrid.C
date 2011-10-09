@@ -377,7 +377,7 @@ int grid::ReadGrid(FILE *fptr, int GridID,
  
 	/* copy active region into whole grid */
  
-	BaryonField[field] = static_cast<float*>(AllocateNewBaryonField(size));
+	BaryonField[field] = AllocateNewBaryonField(size);
 
  
 	for (i = 0; i < size; i++)

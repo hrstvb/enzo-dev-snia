@@ -25,7 +25,8 @@ extern "C" void FORTRAN_NAME(copy3dint)(int *source, int *dest,
                                    int *ddim1, int *ddim2, int *ddim3,
                                    int *sstart1, int *sstart2, int *sstart3,
                                    int *dstart1, int *dstart2, int *dststart3);
- 
+
+int *AllocateNewFlaggingField(int size);
  
 int ProtoSubgrid::CopyFlaggedZonesFromGrid(grid *Grid)
 {
@@ -57,7 +58,8 @@ int ProtoSubgrid::CopyFlaggedZonesFromGrid(grid *Grid)
  
   /* Allocate and copy GridFlaggingField. */
  
-  GridFlaggingField = new int[size];
+  GridFlaggingField = AllocateNewFlaggingField(size);
+    //  GridFlaggingField = new int[size];
  
   FORTRAN_NAME(copy3dint)(Grid->FlaggingField, GridFlaggingField,
 			   Grid->GridDimension, Grid->GridDimension+1,

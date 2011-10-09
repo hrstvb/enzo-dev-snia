@@ -26,7 +26,10 @@
 #include "GridList.h"
 #include "ExternalBoundary.h"
 #include "Grid.h"
- 
+
+int *AllocateNewFlaggingField(int size);
+void FreeFlaggingFieldMemory(int *FF);
+
 int grid::FlagBufferZones()
 {
   /* Return if this grid is not on this processor. */
@@ -58,7 +61,8 @@ int grid::FlagBufferZones()
  
   /* allocate a temporary Flagging field buffer */
  
-  int *TempBuffer = new int[size];
+   int *TempBuffer = AllocateNewFlaggingField(size);
+   //  int *TempBuffer = new int[size];
   for (i = 0; i < size; i++)
     TempBuffer[i] = 0;
  
@@ -173,8 +177,9 @@ int grid::FlagBufferZones()
     }
  
   /* clean up */
- 
-  delete [] TempBuffer;
+
+  FreeFlaggingFieldMemory(TempBuffer);
+  //  delete [] TempBuffer;
  
   /* If debuging, count up the number of flagged cells & report. */
  

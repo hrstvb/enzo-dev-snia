@@ -28,6 +28,7 @@
 #include <stdio.h>
 #include "performance.h"
 #include "ErrorExceptions.h"
+#include "performance.h"
 #include "macros_and_parameters.h"
 #include "typedefs.h"
 #include "global_data.h"

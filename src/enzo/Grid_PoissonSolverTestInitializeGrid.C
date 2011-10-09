@@ -59,7 +59,7 @@ int grid::PoissonSolverTestInitializeGrid(int TestType, float GeometryControl)
 
   for (field = 0; field < NumberOfBaryonFields; field++) {
     if (BaryonField[field] == NULL) {
-      BaryonField[field] = static_cast<float*>(AllocateNewBaryonField(size));
+      BaryonField[field] = AllocateNewBaryonField(size);
 
     }
   }

@@ -391,7 +391,7 @@ int grid::WriteGridX(FILE *fptr, char *base_name, int grid_id)
         if (io_log) fprintf(log_fptr, "H5Fclose: %"ISYM"\n", h5_status);
         if( h5_status == h5_error ){my_exit(EXIT_FAILURE);}
  
-      delete temperature;
+      delete [] temperature;
  
     } // end: if (ComovingCoordinates)
  
@@ -489,7 +489,7 @@ int grid::WriteGridX(FILE *fptr, char *base_name, int grid_id)
  
     } // end of (if GravitatingMassFieldParticles != NULL)
  
-    delete temp;
+    delete [] temp;
     for (dim = 0; dim < GridRank; dim++)
       delete tempdim[dim];
  
@@ -751,8 +751,8 @@ if ( 0 == 1 )
  
     /* clean up */
  
-    delete temp;
-    delete tempPINT;
+    delete [] temp;
+    delete [] tempPINT;
  
   } // end: if (MyProcessorNumber...)
   } // end: if (NumberOfParticles > 0)
