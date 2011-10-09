@@ -46,7 +46,6 @@ static int          LastActiveIndex = -1;
 /* function prototypes */
 void FreeBaryonFieldMemory(float *BF);
 void FreeParticleMemory(void *PF);
- 
 
 
 int CommunicationBufferPurge(void) { 
@@ -76,12 +75,16 @@ int CommunicationBufferPurge(void) {
 
 
 #ifdef MEMORY_POOL
-	  if (BaryonFieldMemoryPool->IsValidPointer(RequestBuffer[i]))
-	    FreeBaryonFieldMemory((float*) RequestBuffer[i]);
-	  else if (ParticleMemoryPool->IsValidPointer(RequestBuffer[i]))
-	    FreeParticleMemory((void*) RequestBuffer[i]);
-	  else
-	    delete [] RequestBuffer[i];
+	int stag = Status.MPI_TAG;
+	if (((stag >= MPI_SENDPARTFIELD_TAG) && (stag >= MPI_SENDPARTFIELD_TAG+5))
+	    || (stag ==  MPI_TRANSPOSE_TAG) || (stag == 0) || (stag == MPI_SENDREGION_TAG) ||
+	    (stag == MPI_FLUX_TAG))
+	  FreeBaryonFieldMemory((float*) RequestBuffer[i]);
+	else if ((stag ==  MPI_TRANSFERPARTICLE_TAG) || (stag == MPI_SENDPARTFLOAT_TAG) ||
+		 (stag == MPI_SENDPART_TAG) )
+	  FreeParticleMemory((void*) RequestBuffer[i]);
+	else
+	  delete [] RequestBuffer[i];
 #else
 	delete [] RequestBuffer[i];
 #endif
@@ -172,12 +175,16 @@ int CommunicationBufferedSend(void *buffer, int size, MPI_Datatype Type, int Tar
 	  /* If the request is done, deallocate associated buffer. */
 	  
 #ifdef MEMORY_POOL
-	  if (BaryonFieldMemoryPool->IsValidPointer(RequestBuffer[i]))
-	    FreeBaryonFieldMemory((float*) RequestBuffer[i]);
-	  else if (ParticleMemoryPool->IsValidPointer(RequestBuffer[i]))
-	    FreeParticleMemory((float*) RequestBuffer[i]);
-	  else
-	    delete [] RequestBuffer[i];
+	int stag = Status.MPI_TAG;
+	if (((stag >= MPI_SENDPARTFIELD_TAG) && (stag >= MPI_SENDPARTFIELD_TAG+5))
+	    || (stag ==  MPI_TRANSPOSE_TAG) || (stag == 0) || (stag == MPI_SENDREGION_TAG) ||
+	    (stag == MPI_FLUX_TAG))
+	  FreeBaryonFieldMemory((float*) RequestBuffer[i]);
+	else if ((stag ==  MPI_TRANSFERPARTICLE_TAG) || (stag == MPI_SENDPARTFLOAT_TAG) ||
+		 (stag == MPI_SENDPART_TAG) )
+	  FreeParticleMemory((void*) RequestBuffer[i]);
+	else
+	  delete [] RequestBuffer[i];
 #else
 	  delete [] RequestBuffer[i];
 #endif
