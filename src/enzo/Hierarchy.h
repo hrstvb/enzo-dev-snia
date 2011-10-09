@@ -18,8 +18,7 @@ struct HierarchyEntry
 #ifdef HIERARCHY_MEMORY_POOL
 void* operator new(size_t object_size)
 {
-  HierarchyEntry *H = HierarchyEntryMemoryPool->GetMemory(object_size);
-  return H;
+  return HierarchyEntryMemoryPool->GetMemory(object_size);
 }
 void operator delete(void* object)
 {

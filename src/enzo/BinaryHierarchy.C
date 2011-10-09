@@ -27,18 +27,23 @@
 #include "BinaryHierarchy.h"
 
 hierarchy_arrays HierarchyArrays;
+FLOAT *AllocateNewParticleMemory(int size);
+int *AllocateNewFlaggingField(int size);
+void FreeParticleMemory(void *PF);
+void FreeFlaggingFieldMemory(int *FF);
+
 
 void InitializeHierarchyArrayStorage(int grid_count)
 {
     HierarchyArrays.current_parent = -1;
     HierarchyArrays.grid_count = grid_count;
-    HierarchyArrays.ActiveDimensions = new int[MAX_DIMENSION * grid_count];
-    HierarchyArrays.LeftEdges = new FLOAT[MAX_DIMENSION * grid_count];
-    HierarchyArrays.RightEdges = new FLOAT[MAX_DIMENSION * grid_count];
-    HierarchyArrays.Level = new int[grid_count];
-    HierarchyArrays.ParentIDs = new int[grid_count];
-    HierarchyArrays.Processor = new int[grid_count];
-    HierarchyArrays.NumberOfParticles = new int[grid_count];
+    HierarchyArrays.ActiveDimensions = AllocateNewFlaggingField(MAX_DIMENSION * grid_count);
+    HierarchyArrays.LeftEdges = AllocateNewParticleMemory(MAX_DIMENSION * grid_count);
+    HierarchyArrays.RightEdges = AllocateNewParticleMemory(MAX_DIMENSION * grid_count);
+    HierarchyArrays.Level = AllocateNewFlaggingField(grid_count);
+    HierarchyArrays.ParentIDs = AllocateNewFlaggingField(grid_count);
+    HierarchyArrays.Processor = AllocateNewFlaggingField(grid_count);
+    HierarchyArrays.NumberOfParticles = AllocateNewFlaggingField(grid_count);
 }
 
 void WriteHierarchyArrayStorage(const char* name)
@@ -71,11 +76,11 @@ void WriteHierarchyArrayStorage(const char* name)
 
 void FinalizeHierarchyArrayStorage()
 {
-    delete HierarchyArrays.ActiveDimensions;
-    delete HierarchyArrays.LeftEdges;
-    delete HierarchyArrays.RightEdges;
-    delete HierarchyArrays.Level;
-    delete HierarchyArrays.ParentIDs;
-    delete HierarchyArrays.Processor;
-    delete HierarchyArrays.NumberOfParticles;
+  FreeFlaggingFieldMemory(HierarchyArrays.ActiveDimensions);
+  FreeParticleMemory((void*) HierarchyArrays.LeftEdges);
+  FreeParticleMemory((void*) HierarchyArrays.RightEdges);
+  FreeFlaggingFieldMemory(HierarchyArrays.Level);
+  FreeFlaggingFieldMemory(HierarchyArrays.ParentIDs);
+  FreeFlaggingFieldMemory(HierarchyArrays.Processor);
+  FreeFlaggingFieldMemory(HierarchyArrays.NumberOfParticles);
 }

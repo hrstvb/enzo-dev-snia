@@ -962,7 +962,7 @@ int WriteParameterFile(FILE *fptr, TopGridData &MetaData, char *name = NULL)
   /* Write unique simulation identifier. */
   fprintf(fptr, "MetaDataSimulationUUID          = %s\n", MetaData.SimulationUUID);
   /* Give this dataset a unique identifier. */
-  char dset_uuid[MAX_LINE_LENGTH];
+  static char dset_uuid[MAX_LINE_LENGTH];
   get_uuid(dset_uuid);
   fprintf(fptr, "MetaDataDatasetUUID             = %s\n", dset_uuid);
   /* If the restart data had a UUID, write that. */

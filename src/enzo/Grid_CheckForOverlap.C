@@ -41,7 +41,9 @@ int grid::CheckForOverlap(grid *OtherGrid,
     return SUCCESS;
  
   int i, j, k, dim;
-  FLOAT EdgeOffset[MAX_DIMENSION] = {0.0,0.0,0.0};
+  static FLOAT EdgeOffset[MAX_DIMENSION] = {0.0,0.0,0.0};
+  for (i=0; i<MAX_DIMENSION; i++) 
+    EdgeOffset[i] = 0.0;
  
   /* If the copy function is AddOverlappingParticleMassField, then
      apply to self, otherwise don't. */
@@ -104,9 +106,9 @@ int grid::CheckForOverlap(grid *OtherGrid,
 
   /* Pre-compute boundary checks for periodic bc's */
 
-  bool BoundaryCheck[2*MAX_DIMENSION];
+  static  bool BoundaryCheck[2*MAX_DIMENSION];
   bool ycheck, zcheck;
-  FLOAT DomainWidth[MAX_DIMENSION];
+  static FLOAT DomainWidth[MAX_DIMENSION];
   for (dim = 0; dim < GridRank; dim++) {
 
     BoundaryCheck[2*dim] = 

@@ -35,6 +35,18 @@ void FreeBaryonFieldMemory(float *BF)
   return;
 }
 
+FLOAT *AllocateNewParticleMemory(int size)
+{
+#ifndef MEMORY_POOL
+  return new FLOAT[size];
+#else
+  //  fprintf(stderr,"Allocate new flagging field.");
+  //  fflush(stderr);
+  return static_cast<FLOAT*>(ParticleMemoryPool->GetMemory(sizeof(FLOAT)*size));
+#endif
+
+}
+
 int *AllocateNewFlaggingField(int size)
 {
 #ifndef MEMORY_POOL

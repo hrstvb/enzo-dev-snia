@@ -41,12 +41,12 @@ class ProtoSubgrid
    // Memory pool overloads new and delete operators
  
 #ifdef PROTOSUBGRID_MEMORY_POOL
-void* ProtoSubgrid::operator new(size_t object_size)
+void* operator new(size_t object_size)
 {
   return ProtoSubgridMemoryPool->GetMemory(object_size);
 }
 
-void ProtoSubgrid::operator delete(void* object)
+void operator delete(void* object)
 {
   ProtoSubgridMemoryPool->FreeMemory(object);
   return;

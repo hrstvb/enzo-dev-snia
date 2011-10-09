@@ -25,6 +25,8 @@
 #include "Grid.h"
 #include "Hierarchy.h"
 void FreeBaryonFieldMemory(float *BF);
+void FreeFlaggingFieldMemory(int *BF);
+int *AllocateNewFlaggingField(int size);
 
 int grid::TransferSubgridParticles(grid* Subgrids[], int NumberOfSubgrids, 
 				   int* &NumberToMove, int StartIndex, 
@@ -81,7 +83,8 @@ int grid::TransferSubgridParticles(grid* Subgrids[], int NumberOfSubgrids,
     /* Count particles to move */
 
     int *subgrid = NULL;
-    subgrid = new int[NumberOfParticles];
+    //    subgrid = new int[NumberOfParticles];
+    subgrid = AllocateNewFlaggingField(NumberOfParticles);
 
     for (i = 0; i < NumberOfParticles; i++) {
 
@@ -118,7 +121,8 @@ int grid::TransferSubgridParticles(grid* Subgrids[], int NumberOfSubgrids,
     } // ENDFOR particles
 
     if (CountOnly == TRUE) {
-      delete [] subgrid;
+      //      delete [] subgrid;
+      FreeFlaggingFieldMemory(subgrid);
       return SUCCESS;
     }
 
@@ -179,7 +183,8 @@ int grid::TransferSubgridParticles(grid* Subgrids[], int NumberOfSubgrids,
 
     } // ENDIF particles to move
 
-    delete [] subgrid;
+    //    delete [] subgrid;
+    FreeFlaggingFieldMemory(subgrid);
     FreeBaryonFieldMemory(BaryonField[NumberOfBaryonFields]);
     BaryonField[NumberOfBaryonFields] = NULL;
 

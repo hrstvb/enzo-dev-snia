@@ -125,18 +125,18 @@ int Group_WriteAllData(char *basename, int filenumber,
 		 int CheckpointDump = FALSE)
 {
  
-  char id[MAX_CYCLE_TAG_SIZE], *cptr, name[MAX_LINE_LENGTH];
-  char dumpdirname[MAX_LINE_LENGTH];
-  char dumpdirroot[MAX_LINE_LENGTH];
-  char unixcommand[MAX_LINE_LENGTH];
-  char gridbasename[MAX_LINE_LENGTH];
-  char hierarchyname[MAX_LINE_LENGTH];
-  char bhierarchyname[MAX_LINE_LENGTH];
-  char radiationname[MAX_LINE_LENGTH];
-  char taskmapname[MAX_LINE_LENGTH];
-  char memorymapname[MAX_LINE_LENGTH];
-  char configurename[MAX_LINE_LENGTH];
-  char groupfilename[MAX_LINE_LENGTH];
+  static char id[MAX_CYCLE_TAG_SIZE], *cptr, name[MAX_LINE_LENGTH];
+  static char dumpdirname[MAX_LINE_LENGTH];
+  static char dumpdirroot[MAX_LINE_LENGTH];
+  static char unixcommand[MAX_LINE_LENGTH];
+  static char gridbasename[MAX_LINE_LENGTH];
+  static char hierarchyname[MAX_LINE_LENGTH];
+  static char bhierarchyname[MAX_LINE_LENGTH];
+  static char radiationname[MAX_LINE_LENGTH];
+  static char taskmapname[MAX_LINE_LENGTH];
+  static char memorymapname[MAX_LINE_LENGTH];
+  static char configurename[MAX_LINE_LENGTH];
+  static char groupfilename[MAX_LINE_LENGTH];
  
   int unixresult;
   int status;
@@ -144,7 +144,7 @@ int Group_WriteAllData(char *basename, int filenumber,
   int file_status;
   int ii, pe, nn;
  
-  char pid[MAX_TASK_TAG_SIZE];
+  static char pid[MAX_TASK_TAG_SIZE];
  
   FILE *fptr;
   FILE *sptr;
@@ -558,9 +558,10 @@ int Group_WriteAllData(char *basename, int filenumber,
  
   // Set MetaData.BoundaryConditionName
  
-  if (MetaData.BoundaryConditionName != NULL)
-    delete [] MetaData.BoundaryConditionName;
-  MetaData.BoundaryConditionName = new char[MAX_LINE_LENGTH];
+  //  if (MetaData.BoundaryConditionName != NULL)
+  //    delete [] MetaData.BoundaryConditionName;
+  if (MetaData.BoundaryConditionName == NULL)
+    MetaData.BoundaryConditionName = new char[MAX_LINE_LENGTH];
   strcpy(MetaData.BoundaryConditionName, name);
   strcat(MetaData.BoundaryConditionName, BCSuffix);
 
@@ -863,6 +864,7 @@ int Group_WriteAllData(char *basename, int filenumber,
     fprintf(sptr, "DATASET WRITTEN %s %8"ISYM" %18.16e\n", name, MetaData.CycleNumber, MetaData.Time);
     fclose(sptr);
   }
+   PrintMemoryUsage("Done writing.");
  
   return SUCCESS;
 }

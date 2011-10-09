@@ -217,7 +217,7 @@ int MultigridSolver(float *TopRHS, float *TopSolution, int Rank, int TopDims[],
  
   lmean = 0;
   for (i = 0; i < Size[0]; i++)
-    lmean += fabs(Solution[0][i]);
+    lmean += fabs((double)Solution[0][i]);
   lmean /= float(Size[0]);
   mean = lmean;
 

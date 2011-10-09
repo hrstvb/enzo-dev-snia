@@ -95,7 +95,8 @@ int grid::CopyZonesFromGrid(grid *OtherGrid, FLOAT EdgeOffset[MAX_DIMENSION])
 
   /* Compute the left and right edges of this grid (including ghost zones). */
  
-  FLOAT GridLeft[MAX_DIMENSION]; FLOAT GridRight[MAX_DIMENSION];
+  static FLOAT GridLeft[MAX_DIMENSION]; 
+  static FLOAT GridRight[MAX_DIMENSION];
 
   for (dim = 0; dim < GridRank; dim++) {
     GridLeft[dim]  = CellLeftEdge[dim][0] + EdgeOffset[dim];
@@ -115,11 +116,10 @@ int grid::CopyZonesFromGrid(grid *OtherGrid, FLOAT EdgeOffset[MAX_DIMENSION])
   /* There is some overlap, so copy overlapping region */
  
   //FLOAT Left, Right;
-  FLOAT Left[MAX_DIMENSION];
-  FLOAT Right[MAX_DIMENSION];
-  int Start[MAX_DIMENSION], End[MAX_DIMENSION];
-  int StartOther[MAX_DIMENSION], Dim[MAX_DIMENSION];
-  int OtherDim[MAX_DIMENSION];
+  static FLOAT Left[MAX_DIMENSION], Right[MAX_DIMENSION];
+  static int Start[MAX_DIMENSION], End[MAX_DIMENSION];
+  static int StartOther[MAX_DIMENSION], Dim[MAX_DIMENSION];
+  static int OtherDim[MAX_DIMENSION];
   
  
   /* compute start and stop indicies of overlapping region for both this
@@ -210,7 +210,7 @@ int grid::CopyZonesFromGrid(grid *OtherGrid, FLOAT EdgeOffset[MAX_DIMENSION])
   //need extra cell if you want to do shearing boundaries 
   //and that needs to be communicated from other grids possibly
 
-  int ShearingCommunicationDims[MAX_DIMENSION];  
+  static int ShearingCommunicationDims[MAX_DIMENSION];  
   
   for (dim = 0; dim <  MAX_DIMENSION; dim++){
     ShearingCommunicationDims[dim] = Dim[dim];
@@ -292,9 +292,9 @@ int grid::CopyZonesFromGrid(grid *OtherGrid, FLOAT EdgeOffset[MAX_DIMENSION])
 
  
 
-  int addDim[3] = {1, OtherDim[0], OtherDim[0]*OtherDim[1]};
-  int velocityTypes[3]={Velocity1, Velocity2, Velocity3};
-  int Zero[3] = {0,0,0};
+  static int addDim[3] = {1, OtherDim[0], OtherDim[0]*OtherDim[1]};
+  static int velocityTypes[3]={Velocity1, Velocity2, Velocity3};
+  static int Zero[3] = {0,0,0};
 
   if (!isShearing)
     for (int field = 0; field < NumberOfBaryonFields; field++)

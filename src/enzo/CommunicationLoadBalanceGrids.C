@@ -39,6 +39,11 @@ int CommunicationReceiveHandler(fluxes **SubgridFluxesEstimate[] = NULL,
 void WriteListOfFloats(FILE *fptr, int N, float floats[]);
 void fpcol(float *x, int n, int m, FILE *fptr);
 double ReturnWallTime(void);
+void FreeFlaggingFieldMemory(int *FF);
+int *AllocateNewFlaggingField(int size);
+float *AllocateNewBaryonField(int size);
+void FreeBaryonFieldMemory(float *BF);
+
  
 #define LOAD_BALANCE_RATIO 1.05
 #define NO_SYNC_TIMING
@@ -54,9 +59,9 @@ int CommunicationLoadBalanceGrids(HierarchyEntry *GridHierarchyPointer[],
  
   int i, GridMemory, NumberOfCells, CellsTotal, Particles, GridsMoved, proc;
   float AxialRatio, GridVolume;
-  float *ComputeTime = new float[NumberOfGrids];
-  float *ProcessorComputeTime = new float[NumberOfProcessors];
-  int *NewProcessorNumber = new int[NumberOfGrids];
+  float *ComputeTime = AllocateNewBaryonField(NumberOfGrids);
+  float *ProcessorComputeTime = AllocateNewBaryonField(NumberOfProcessors);
+  int *NewProcessorNumber = AllocateNewFlaggingField(NumberOfGrids);
  
 #ifdef MPI_INSTRUMENTATION
   starttime = MPI_Wtime();
@@ -319,9 +324,9 @@ int CommunicationLoadBalanceGrids(HierarchyEntry *GridHierarchyPointer[],
   }
 #endif 
 
-  delete [] NewProcessorNumber;
-  delete [] ComputeTime;
-  delete [] ProcessorComputeTime;
+  FreeFlaggingFieldMemory(NewProcessorNumber);
+  FreeBaryonFieldMemory(ComputeTime);
+  FreeBaryonFieldMemory(ProcessorComputeTime);
  
 #ifdef MPI_INSTRUMENTATION
   endtime = MPI_Wtime();

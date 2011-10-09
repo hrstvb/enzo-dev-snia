@@ -337,7 +337,7 @@ mallctl("arenas.purge", &narena, &len, NULL, 0);
 					   HierarchyEntrySize,
 					   HierarchyEntryMemorySize*HierarchyEntrySize, true);
 #endif
-  FlaggingFieldMemoryPool = new MPool::MemoryPool(4, sizeof(int)*1000000/NumberOfProcessors,
+  FlaggingFieldMemoryPool = new MPool::MemoryPool(4, sizeof(int)*1024*1024/NumberOfProcessors,
 						  sizeof(int)*32,
 						  sizeof(int)*200000, true);
 
