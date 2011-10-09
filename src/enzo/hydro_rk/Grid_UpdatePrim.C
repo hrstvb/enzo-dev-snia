@@ -57,8 +57,8 @@ int grid::UpdatePrim(float **dU, float c1, float c2)
 
   // ORIGINAL
   if ( (NSpecies+NColor) > 0) {
-    D = new float[activesize];
-    sum = new float[activesize];
+    D = AllocateNewBaryonField(activesize);
+    sum = AllocateNewBaryonField(activesize);
     for (i = 0; i < activesize; i++) {
       D[i] = 0.0;
       sum[i] = 0.0;
@@ -328,8 +328,8 @@ int grid::UpdatePrim(float **dU, float c1, float c2)
   this->UpdateElectronDensity();
 
   if ( (NSpecies+NColor) > 0) {
-    delete [] D;
-    delete [] sum;
+    FreeBaryonFieldMemory(D);
+    FreeBaryonFieldMemory(sum);
   }
 
   return SUCCESS;

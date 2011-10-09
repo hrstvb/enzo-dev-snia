@@ -85,7 +85,7 @@ int grid::MHDDecayingRandomFieldInitializeGrid(float rho_medium, float cs_medium
 
   float *RandomBField[3];
   for (int dim = 0; dim < 3; dim++) {
-    RandomBField[dim] = new float[activesize];
+    RandomBField[dim] = AllocateNewBaryonField(activesize);
     for (n = 0; n < activesize; n++) {
       RandomBField[dim][n] = 0.0;
     }
@@ -169,7 +169,7 @@ int grid::MHDDecayingRandomFieldInitializeGrid(float rho_medium, float cs_medium
   }
 
   for (int i = 0; i < 3; i++) {
-    delete [] RandomBField[i];
+    FreeBaryonFieldMemory(RandomBField[i]);
     }
 
 

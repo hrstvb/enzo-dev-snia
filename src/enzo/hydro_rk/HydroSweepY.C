@@ -48,25 +48,25 @@ int HydroSweepY(float **Prim, float **Flux3D, int GridDimension[],
   int Zactivesize = GridDimension[2] > 1 ? GridDimension[2]-2*DEFAULT_GHOST_ZONES : 1;
 
   for (int field = 0; field < NEQ_HYDRO+NSpecies+NColor; field++) {
-    FluxLine[field] = new float[Yactivesize+1];
+    FluxLine[field] = AllocateNewBaryonField(Yactivesize+1);
   }
 
   for (int field = 0; field < NEQ_HYDRO+NSpecies+NColor-idual; field++) {
-    Prim1[field] = new float[GridDimension[1]];
+    Prim1[field] = AllocateNewBaryonField(GridDimension[1]);
   }
 
   int extra = (ReconstructionMethod == PPM);
   for (int field = 0; field < NEQ_HYDRO-idual; field++) {
-    priml[field] = new float[Yactivesize+1+extra];
-    primr[field] = new float[Yactivesize+1+extra];
+    priml[field] = AllocateNewBaryonField(Yactivesize+1+extra);
+    primr[field] = AllocateNewBaryonField(Yactivesize+1+extra);
   }
 
   for (int field = 0; field < NSpecies; field ++) {
-    species[field] = new float[Yactivesize+1];
+    species[field] = AllocateNewBaryonField(Yactivesize+1);
   }
 
   for (int field = 0; field < NColor; field ++) {
-    colors[field] = new float[Yactivesize+1];
+    colors[field] = AllocateNewBaryonField(Yactivesize+1);
   }
 
   float min_coeff = 0.0;
@@ -144,24 +144,24 @@ int HydroSweepY(float **Prim, float **Flux3D, int GridDimension[],
 
 
   for (int field = 0; field < NEQ_HYDRO+NSpecies+NColor; field++) {
-    delete [] FluxLine[field];
+    FreeBaryonFieldMemory(FluxLine[field]);
   }
 
   for (int field = 0; field < NEQ_HYDRO+NSpecies+NColor-idual; field++) {
-    delete [] Prim1[field];
+    FreeBaryonFieldMemory(Prim1[field]);
   }
 
   for (int field = 0; field < NEQ_HYDRO-idual; field++) {
-    delete [] priml[field];
-    delete [] primr[field];
+    FreeBaryonFieldMemory(priml[field]);
+    FreeBaryonFieldMemory(primr[field]);
   }
 
   for (int field = 0; field < NSpecies; field++) {
-    delete [] species[field];
+    FreeBaryonFieldMemory(species[field]);
   }
 
   for (int field = 0; field < NColor; field++) {
-    delete [] colors[field];
+    FreeBaryonFieldMemory(colors[field]);
   }
 
 

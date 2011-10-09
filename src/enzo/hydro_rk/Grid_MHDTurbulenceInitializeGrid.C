@@ -90,7 +90,7 @@ int grid::MHDTurbulenceInitializeGrid(float rho_medium, float cs_medium, float m
       fprintf(stderr,"Or turn UseDrivingField off to study decaying turbulence \n");
       fprintf(stderr,"with this hydro solver. \n");
       ERROR_MESSAGE;
-      //      RandomForcingField[dim] = new float[size];
+      //      RandomForcingField[dim] = AllocateNewBaryonField(size);
     }
 
 
@@ -101,8 +101,8 @@ int grid::MHDTurbulenceInitializeGrid(float rho_medium, float cs_medium, float m
 
   float *TurbulenceVelocity[3],*DrivingField[3];
   for (int dim = 0; dim < 3; dim++) {
-    TurbulenceVelocity[dim] = new float[activesize];
-    if (UseDrivingField) DrivingField[dim] = new float[activesize];
+    TurbulenceVelocity[dim] = AllocateNewBaryonField(activesize);
+    if (UseDrivingField) DrivingField[dim] = AllocateNewBaryonField(activesize);
     for (n = 0; n < activesize; n++) {
       TurbulenceVelocity[dim][n] = 0.0;
     if (UseDrivingField) DrivingField[dim][n] = 0.0;
@@ -229,7 +229,7 @@ int grid::MHDTurbulenceInitializeGrid(float rho_medium, float cs_medium, float m
   }
 
   for (int i = 0; i < 3; i++) {
-    delete [] TurbulenceVelocity[i];
+    FreeBaryonFieldMemory(TurbulenceVelocity[i]);
     }
 
   /* Initialize driving force field = efficiency * density * velocity / t_ff*/
@@ -289,7 +289,7 @@ int grid::MHDTurbulenceInitializeGrid(float rho_medium, float cs_medium, float m
 
 
      for (int dim = 0; dim < GridRank; dim++) {
-      delete [] DrivingField[dim];
+       FreeBaryonFieldMemory(DrivingField[dim]);
       }
   }    
 

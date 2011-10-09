@@ -70,9 +70,9 @@ int grid::MHD1DTestWavesInitializeGrid(float rhol,
     }
   }
 
-  divB = new float[activesize];
+  divB = AllocateNewBaryonField(activesize);
   for (int dim = 0; dim < 3; dim++) {
-    gradPhi[dim] = new float[activesize];
+    gradPhi[dim] = AllocateNewBaryonField(activesize);
   }
 
   

@@ -131,7 +131,7 @@ int grid::MHDRK2_2ndStep(fluxes *SubgridFluxes[],
     activesize *= (GridDimension[dim] - 2*DEFAULT_GHOST_ZONES);
 
   for (int field = 0; field < NEQ_MHD+NSpecies+NColor; field++) {
-    dU[field] = new float[activesize];
+    dU[field] = AllocateNewBaryonField(activesize);
   }
 
   this->ReturnHydroRKPointers(Prim, true);  //##### added! because Hydro3D needs fractions for species
@@ -177,7 +177,7 @@ int grid::MHDRK2_2ndStep(fluxes *SubgridFluxes[],
   }
 
   for (int field = 0; field < NEQ_MHD+NSpecies+NColor; field++) {
-    delete [] dU[field];
+    FreeBaryonFieldMemory(dU[field]);
   }
 
   return SUCCESS;

@@ -22,6 +22,9 @@
 #include "global_data.h"
 #include "ReconstructionRoutines.h"
 
+void FreeBaryonFieldMemory(float *BF);
+float *AllocateNewBaryonField(int size);
+
 inline void dv_plm_point(float &vm1, float &v, float &vp1, float &dv_plm)
 {
   float dv_l, dv_r, dv_m, dv;
@@ -40,7 +43,7 @@ int cons_plm(float **prim, float **priml, float **primr, int ActiveSize, int Neq
   int idual = (DualEnergyFormalism) ? 1 : 0;
   float *dv[NEQ_MHD-idual];
   for (int field = 0; field < NEQ_MHD-idual; field++) 
-    dv[field] = new float[ActiveSize+1];
+    dv[field] = AllocateNewBaryonField(ActiveSize+1);
 
   for (int i = 0; i < ActiveSize+1; i++) {
     iprim = i + DEFAULT_GHOST_ZONES - 1;
@@ -88,6 +91,8 @@ int cons_plm(float **prim, float **priml, float **primr, int ActiveSize, int Neq
     }
   }
 
+  for (int field = 0; field < NEQ_MHD-idual; field++) 
+    FreeBaryonFieldMemory(dv[field]);
   return SUCCESS;
 
 }

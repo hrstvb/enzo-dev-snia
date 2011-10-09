@@ -68,10 +68,10 @@ int grid::MHDRK2_1stStep(fluxes *SubgridFluxes[],
        
       for (int field = 0; field < NumberOfBaryonFields; field++) {
 	if (SubgridFluxes[subgrid]->LeftFluxes[field][flux] == NULL) {
-	  SubgridFluxes[subgrid]->LeftFluxes[field][flux]  = new float[fluxsize];
+	  SubgridFluxes[subgrid]->LeftFluxes[field][flux]  = AllocateNewBaryonField(fluxsize);
 	}
 	if (SubgridFluxes[subgrid]->RightFluxes[field][flux] == NULL)
-	  SubgridFluxes[subgrid]->RightFluxes[field][flux] = new float[fluxsize];
+	  SubgridFluxes[subgrid]->RightFluxes[field][flux] = AllocateNewBaryonField(fluxsize);
 	for (int n = 0; n < fluxsize; n++) {
 	  SubgridFluxes[subgrid]->LeftFluxes[field][flux][n] = 0.0;
 	  SubgridFluxes[subgrid]->RightFluxes[field][flux][n] = 0.0;
@@ -126,7 +126,7 @@ int grid::MHDRK2_1stStep(fluxes *SubgridFluxes[],
     activesize *= (GridDimension[dim] - 2*DEFAULT_GHOST_ZONES);
 
   for (int field = 0; field < NEQ_MHD+NSpecies+NColor; field++)
-    dU[field] = new float[activesize];
+    dU[field] = AllocateNewBaryonField(activesize);
 
   this->ReturnHydroRKPointers(Prim, true); //##### added! because Hydro3D needs fractions for species
 
@@ -169,7 +169,7 @@ int grid::MHDRK2_1stStep(fluxes *SubgridFluxes[],
   }
 
   for (int field = 0; field < NEQ_MHD+NSpecies+NColor; field++) {
-    delete [] dU[field];
+    FreeBaryonFieldMemory(dU[field]);
   }
 
   return SUCCESS;

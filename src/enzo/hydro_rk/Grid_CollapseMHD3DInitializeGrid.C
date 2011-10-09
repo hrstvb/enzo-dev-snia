@@ -154,7 +154,7 @@ int grid::CollapseMHD3DInitializeGrid(int n_sphere,
   }
 
   for (dim = 0; dim < GridRank; dim++) {
-    TurbulenceVelocity[dim] = new float[activesize];
+    TurbulenceVelocity[dim] = AllocateNewBaryonField(activesize);
     for (int n = 0; n < activesize; n++) {
       TurbulenceVelocity[dim][n] = 0.0;
     }

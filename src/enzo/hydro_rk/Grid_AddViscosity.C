@@ -57,7 +57,7 @@ int grid::AddViscosity()
 
   /* Compute the kinematic viscosity */
 
-  float *viscosity = new float[activesize];
+  float *viscosity = AllocateNewBaryonField(activesize);
 
   this->ComputeViscosity(viscosity, DensNum);
 
@@ -167,8 +167,8 @@ int grid::AddViscosity()
     delete d2Vz[i];
   }
   
-  delete viscosity;
-  
+  //  delete viscosity;
+  FreeBaryonFieldMemory(viscosity);
   return SUCCESS;
 
 }

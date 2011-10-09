@@ -50,26 +50,26 @@ int MHDSweepX(float **Prim, float **Flux3D, int GridDimension[],
 
 
   for (int field = 0; field < NEQ_MHD+NSpecies+NColor; field++) {
-    FluxLine[field] = new float[Xactivesize+1];
+    FluxLine[field] = AllocateNewBaryonField(Xactivesize+1);
   }
 
   //+icons may be needed for ConservativeReconstruction implementation
   for (int field = 0; field < NEQ_MHD+NSpecies+NColor+idual; field++) {
-    Prim1[field] = new float[GridDimension[0]];
+    Prim1[field] = AllocateNewBaryonField(GridDimension[0]);
   }
 
   int extra = (ReconstructionMethod == PPM);
   for (int field = 0; field < NEQ_MHD-idual; field++) {
-    priml[field] = new float[Xactivesize+1+extra];
-    primr[field] = new float[Xactivesize+1+extra];
+    priml[field] = AllocateNewBaryonField(Xactivesize+1+extra);
+    primr[field] = AllocateNewBaryonField(Xactivesize+1+extra);
   }
 
   for (int field = 0; field < NSpecies; field ++) {
-    species[field] = new float[Xactivesize+1];
+    species[field] = AllocateNewBaryonField(Xactivesize+1);
   }
 
   for (int field = 0; field < NColor; field ++) {
-    colors[field] = new float[Xactivesize+1];
+    colors[field] = AllocateNewBaryonField(Xactivesize+1);
   }
 
   float etot, vx, vy, vz, v2, p, Bx, By, Bz, B2, rho;
@@ -155,24 +155,24 @@ int MHDSweepX(float **Prim, float **Flux3D, int GridDimension[],
 	     
 
   for (int field = 0; field < NEQ_MHD+NSpecies+NColor; field++) {
-    delete [] FluxLine[field];
+    FreeBaryonFieldMemory(FluxLine[field]);
   }
   //+icons may be needed for ConservativeReconstruction implementation
   for (int field = 0; field < NEQ_MHD+NSpecies+NColor-idual; field++) {   
-    delete [] Prim1[field];
+    FreeBaryonFieldMemory(Prim1[field]);
   }
 
   for (int field = 0; field < NEQ_MHD-idual; field++) {
-    delete [] priml[field];
-    delete [] primr[field];
+    FreeBaryonFieldMemory(priml[field]);
+    FreeBaryonFieldMemory(primr[field]);
   }
 
   for (int field = 0; field < NSpecies; field++) {
-    delete [] species[field];
+    FreeBaryonFieldMemory(species[field]);
   }
 
   for (int field = 0; field < NColor; field++) {
-    delete [] colors[field];
+    FreeBaryonFieldMemory(colors[field]);
   }
 
 

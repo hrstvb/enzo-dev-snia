@@ -65,7 +65,7 @@ int grid::Hydro3D(float **Prim, float **dU, float dt,
   int Zactivesize = GridDimension[2] > 1 ? GridDimension[2]-2*DEFAULT_GHOST_ZONES : 1;
 
   for (int field = 0; field < NEQ_HYDRO+NSpecies+NColor; field++) {
-    Flux3D[field] = new float[fluxsize];
+    Flux3D[field] = AllocateNewBaryonField(fluxsize);
   }
   for (int field = 0; field < NEQ_HYDRO+NSpecies+NColor; field++) {
     for (int i = 0; i < fluxsize; i++) {
@@ -254,7 +254,7 @@ int grid::Hydro3D(float **Prim, float **dU, float dt,
 
 
   for (int field = 0; field < NEQ_HYDRO+NSpecies+NColor; field++) {
-    delete [] Flux3D[field];
+    FreeBaryonFieldMemory(Flux3D[field]);
   }
 
   return SUCCESS;

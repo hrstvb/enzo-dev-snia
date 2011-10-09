@@ -63,10 +63,10 @@ int grid::RungeKutta2_1stStep(fluxes *SubgridFluxes[],
        
       for (int field = 0; field < NumberOfBaryonFields; field++) {
 	if (SubgridFluxes[subgrid]->LeftFluxes[field][flux] == NULL) {
-	  SubgridFluxes[subgrid]->LeftFluxes[field][flux]  = new float[fluxsize];
+	  SubgridFluxes[subgrid]->LeftFluxes[field][flux]  = AllocateNewBaryonField(fluxsize);
 	}
 	if (SubgridFluxes[subgrid]->RightFluxes[field][flux] == NULL)
-	  SubgridFluxes[subgrid]->RightFluxes[field][flux] = new float[fluxsize];
+	  SubgridFluxes[subgrid]->RightFluxes[field][flux] = AllocateNewBaryonField(fluxsize);
 	for (int n = 0; n < fluxsize; n++) {
 	  SubgridFluxes[subgrid]->LeftFluxes[field][flux][n] = 0.0;
 	  SubgridFluxes[subgrid]->RightFluxes[field][flux][n] = 0.0;
@@ -117,7 +117,7 @@ int grid::RungeKutta2_1stStep(fluxes *SubgridFluxes[],
 
   float *dU[NEQ_HYDRO+NSpecies+NColor];
   for (int field = 0; field < NEQ_HYDRO+NSpecies+NColor; field++) {
-    dU[field] = new float[activesize];
+    dU[field] = AllocateNewBaryonField(activesize);
     for (int i = 0; i < activesize; i++) {
       dU[field][i] = 0.0;
     }
@@ -158,7 +158,7 @@ int grid::RungeKutta2_1stStep(fluxes *SubgridFluxes[],
   }
 
   for (int field = 0; field < NEQ_HYDRO+NSpecies+NColor; field++) {
-    delete [] dU[field];
+    FreeBaryonFieldMemory(dU[field]);
   }
   //  PerformanceTimers[1] += ReturnWallTime() - time1;
   return SUCCESS;

@@ -331,9 +331,9 @@ int grid::MHD3DTestInitializeGrid(int MHD3DProblemType,
     float pres, eintl, eintu, h, cs, dpdrho, dpde,rhot, bx ,by, bz;
 
 
-    float *ax = new float[size];
-    float *ay = new float[size];
-    float *az = new float[size];
+    float *ax = AllocateNewBaryonField(size);
+    float *ay = AllocateNewBaryonField(size);
+    float *az = AllocateNewBaryonField(size);
     for (int k = 0; k < GridDimension[2]; k++) {
       for (int j = 0; j < GridDimension[1]; j++) {
 	for (int i = 0; i < GridDimension[0]; i++) {
@@ -399,9 +399,9 @@ int grid::MHD3DTestInitializeGrid(int MHD3DProblemType,
       } // endfor j 
     } // endfor k 
 
-    delete [] ax;
-    delete [] ay;
-    delete [] az;
+    FreeBaryonFieldMemory(ax);
+    FreeBaryonFieldMemory(ay);
+    FreeBaryonFieldMemory(az);
 
   } // if MHD3DProblemType == 4
   

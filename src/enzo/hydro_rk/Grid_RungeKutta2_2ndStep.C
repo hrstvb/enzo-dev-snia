@@ -115,7 +115,7 @@ int grid::RungeKutta2_2ndStep(fluxes *SubgridFluxes[],
 
   float *dU[NEQ_HYDRO+NSpecies+NColor];
   for (int field = 0; field < NEQ_HYDRO+NSpecies+NColor; field++) {
-    dU[field] = new float[activesize];
+    dU[field] = AllocateNewBaryonField(activesize);
     for (int i = 0; i < activesize; i++) {
       dU[field][i] = 0.0;
     }
@@ -159,7 +159,7 @@ int grid::RungeKutta2_2ndStep(fluxes *SubgridFluxes[],
   }
 
   for (int field = 0; field < NEQ_HYDRO+NSpecies+NColor; field++) {
-    delete [] dU[field];
+    FreeBaryonFieldMemory(dU[field]);
   }
 
   //  PerformanceTimers[1] += ReturnWallTime() - time1;

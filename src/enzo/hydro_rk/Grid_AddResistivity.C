@@ -69,7 +69,7 @@ int grid::AddResistivity()
 
   /* Compute the kinematic viscosity */
 
-  float *resistivity = new float[activesize];
+  float *resistivity = AllocateNewBaryonField(activesize);
 
   this->ComputeResistivity(resistivity, DensNum);
 
@@ -150,8 +150,8 @@ int grid::AddResistivity()
     delete d2Bz[dim];
   }
 
-  delete resistivity;
-  
+  //  delete resistivity;
+  FreeBaryonFieldMemory(resistivity);
   return SUCCESS;
 
 }
