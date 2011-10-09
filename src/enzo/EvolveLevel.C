@@ -264,7 +264,8 @@ int EvolveLevel(TopGridData *MetaData, LevelHierarchyEntry *LevelArray[],
 		)
 {
   /* Declarations */
-  PrintMemoryUsage("EL: enter EL ");
+  int ELPMU = 0;
+  if (ELPMU) PrintMemoryUsage("EL: enter EL ");
 
   int dbx = 0;
 
@@ -303,7 +304,7 @@ int EvolveLevel(TopGridData *MetaData, LevelHierarchyEntry *LevelArray[],
   SiblingGridList *SiblingList = new SiblingGridList[NumberOfGrids];
   CreateSiblingList(Grids, NumberOfGrids, SiblingList, StaticLevelZero,MetaData,level);
   
-  PrintMemoryUsage("EL: created siblinglist ");
+  if (ELPMU) PrintMemoryUsage("EL: created siblinglist ");
 
   /* Adjust the refine region so that only the finest particles 
      are included.  We don't want the more massive particles
@@ -311,7 +312,7 @@ int EvolveLevel(TopGridData *MetaData, LevelHierarchyEntry *LevelArray[],
 
   AdjustRefineRegion(LevelArray, MetaData, level);
 
-  PrintMemoryUsage("EL: adjusted refine region ");
+  if (ELPMU) PrintMemoryUsage("EL: adjusted refine region ");
 
   //EMISSIVITY if cleared here will not reach the FLD solver in 2.0, finding better place
   /* Adjust MustRefineParticlesRefineToLevel parameter if requested */
@@ -333,7 +334,7 @@ int EvolveLevel(TopGridData *MetaData, LevelHierarchyEntry *LevelArray[],
 #endif
   }
 
-  PrintMemoryUsage("EL: set boundaries before loop ");
+  if (ELPMU) PrintMemoryUsage("EL: set boundaries before loop ");
  
   /* Clear the boundary fluxes for all Grids (this will be accumulated over
      the subcycles below (i.e. during one current grid step) and used to by the
@@ -422,7 +423,7 @@ int EvolveLevel(TopGridData *MetaData, LevelHierarchyEntry *LevelArray[],
     ComputeRandomForcingNormalization(LevelArray, 0, MetaData,
 				      &norm, &TopGridTimeStep);
 
-    PrintMemoryUsage("EL: Before loop\n");
+    if (ELPMU) PrintMemoryUsage("EL: Before loop\n");
     /* ------------------------------------------------------- */
     /* Evolve all grids by timestep dtThisLevel. */
 
@@ -435,13 +436,13 @@ int EvolveLevel(TopGridData *MetaData, LevelHierarchyEntry *LevelArray[],
  
       if (SelfGravity) {
 	if (level <= MaximumGravityRefinementLevel) {
-	  //	  PrintMemoryUsage("EL: before solve potential");
+	  //	  if (ELPMU) PrintMemoryUsage("EL: before solve potential");
 	  /* Compute the potential. */
 	  if (level > 0)
 	    Grids[grid1]->GridData->SolveForPotential(level);
 	  Grids[grid1]->GridData->ComputeAccelerations(level);
 	  Grids[grid1]->GridData->CopyPotentialToBaryonField();
-	  //	  PrintMemoryUsage("EL: after  solve potential");
+	  //	  if (ELPMU) PrintMemoryUsage("EL: after  solve potential");
 	}
 	  /* otherwise, interpolate potential from coarser grid, which is
 	     now done in PrepareDensity. */
@@ -482,10 +483,10 @@ int EvolveLevel(TopGridData *MetaData, LevelHierarchyEntry *LevelArray[],
       Grids[grid1]->GridData->CopyBaryonFieldToOldBaryonField();
 
       /* Call hydro solver and save fluxes around subgrids. */
-      //      PrintMemoryUsage("EL: before solve hydro");
+      //      if (ELPMU) PrintMemoryUsage("EL: before solve hydro");
       Grids[grid1]->GridData->SolveHydroEquations(LevelCycleCount[level],
 	    NumberOfSubgrids[grid1], SubgridFluxesEstimate[grid1], level);
-      //      PrintMemoryUsage("EL: after  solve hydro");
+      //      if (ELPMU) PrintMemoryUsage("EL: after  solve hydro");
       /* Solve the cooling and species rate equations. */
  
       Grids[grid1]->GridData->MultiSpeciesHandler();
@@ -550,7 +551,7 @@ int EvolveLevel(TopGridData *MetaData, LevelHierarchyEntry *LevelArray[],
  
     }  // end loop over grids
 
-    PrintMemoryUsage("EL: after loop\n");
+    if (ELPMU) PrintMemoryUsage("EL: after loop\n");
 
 
     /* Finalize (accretion, feedback, etc.) star particles */
@@ -561,7 +562,7 @@ int EvolveLevel(TopGridData *MetaData, LevelHierarchyEntry *LevelArray[],
     /* For each grid: a) interpolate boundaries from the parent grid.
                       b) copy any overlapping zones from siblings. */
 
-     PrintMemoryUsage("EL: before set boundaries");
+     if (ELPMU) PrintMemoryUsage("EL: before set boundaries");
 
 #ifdef FAST_SIB
     SetBoundaryConditions(Grids, NumberOfGrids, SiblingList,
@@ -570,7 +571,7 @@ int EvolveLevel(TopGridData *MetaData, LevelHierarchyEntry *LevelArray[],
     SetBoundaryConditions(Grids, NumberOfGrids, level, MetaData,
 			  Exterior, LevelArray[level]);
 #endif
-     PrintMemoryUsage("EL: after set boundaries");
+     if (ELPMU) PrintMemoryUsage("EL: after set boundaries");
 
     /* If cosmology, then compute grav. potential for output if needed. */
 
@@ -594,7 +595,7 @@ int EvolveLevel(TopGridData *MetaData, LevelHierarchyEntry *LevelArray[],
           Grids[grid1]->GridData->SetTimeStep(dtThisLevel[level]);
     }
 
-    PrintMemoryUsage("EL: call EL with level+1");
+    if (ELPMU) PrintMemoryUsage("EL: call EL with level+1");
 
     if (LevelArray[level+1] != NULL) {
       if (EvolveLevel(MetaData, LevelArray, level+1, dtThisLevel[level], Exterior
@@ -642,7 +643,7 @@ int EvolveLevel(TopGridData *MetaData, LevelHierarchyEntry *LevelArray[],
      * (b) correct for the difference between this grid's fluxes and the
      *     subgrid's fluxes. (step #19)
      */
-     PrintMemoryUsage("EL: before sublinglist");
+     if (ELPMU) PrintMemoryUsage("EL: before sublinglist");
 
 #ifdef FLUX_FIX
     SUBlingList = new LevelHierarchyEntry*[NumberOfGrids];
@@ -653,7 +654,7 @@ int EvolveLevel(TopGridData *MetaData, LevelHierarchyEntry *LevelArray[],
     CreateSUBlingList(MetaData, LevelArray, level, &SUBlingList);
 #endif /* FAST_SIB */
 #endif /* FLUX_FIX */
-    PrintMemoryUsage("EL: before fluxfix");
+    if (ELPMU) PrintMemoryUsage("EL: before fluxfix");
 #ifdef FLUX_FIX
     UpdateFromFinerGrids(level, Grids, NumberOfGrids, NumberOfSubgrids,
 			     SubgridFluxesEstimate,SUBlingList,MetaData);
@@ -672,7 +673,7 @@ int EvolveLevel(TopGridData *MetaData, LevelHierarchyEntry *LevelArray[],
      (Note: this must be done after CorrectForRefinedFluxes). */
 
     FinalizeFluxes(Grids,SubgridFluxesEstimate,NumberOfGrids,NumberOfSubgrids);
-    PrintMemoryUsage("EL: after FinalFlu");
+    if (ELPMU) PrintMemoryUsage("EL: after FinalFlu");
     /* Recompute radiation field, if requested. */
     RadiationFieldUpdate(LevelArray, level, MetaData);
  
@@ -706,10 +707,10 @@ int EvolveLevel(TopGridData *MetaData, LevelHierarchyEntry *LevelArray[],
 
     /* Rebuild the Grids on the next level down.
        Don't bother on the last cycle, as we'll rebuild this grid soon. */
-   PrintMemoryUsage("EL: before rebuild");
+   if (ELPMU) PrintMemoryUsage("EL: before rebuild");
     if (dtThisLevelSoFar[level] < dtLevelAbove)
       RebuildHierarchy(MetaData, LevelArray, level);
-   PrintMemoryUsage("EL: after  rebuild");
+   if (ELPMU) PrintMemoryUsage("EL: after  rebuild");
 
     /* Count up number of grids on this level. */
 
