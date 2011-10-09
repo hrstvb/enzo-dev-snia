@@ -311,6 +311,8 @@ int EvolveLevel(TopGridData *MetaData, LevelHierarchyEntry *LevelArray[],
 
   AdjustRefineRegion(LevelArray, MetaData, level);
 
+  PrintMemoryUsage("EL: adjusted refine region ");
+
   //EMISSIVITY if cleared here will not reach the FLD solver in 2.0, finding better place
   /* Adjust MustRefineParticlesRefineToLevel parameter if requested */
   AdjustMustRefineParticlesRefineToLevel(MetaData, level);
@@ -330,6 +332,8 @@ int EvolveLevel(TopGridData *MetaData, LevelHierarchyEntry *LevelArray[],
       ENZO_FAIL("Error in SetBoundaryConditions (SlowSib)");
 #endif
   }
+
+  PrintMemoryUsage("EL: set boundaries before loop ");
  
   /* Clear the boundary fluxes for all Grids (this will be accumulated over
      the subcycles below (i.e. during one current grid step) and used to by the
