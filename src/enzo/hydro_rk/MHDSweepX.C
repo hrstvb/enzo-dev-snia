@@ -54,7 +54,7 @@ int MHDSweepX(float **Prim, float **Flux3D, int GridDimension[],
   }
 
   //+icons may be needed for ConservativeReconstruction implementation
-  for (int field = 0; field < NEQ_MHD+NSpecies+NColor+idual; field++) {
+  for (int field = 0; field < NEQ_MHD+NSpecies+NColor-idual; field++) {
     Prim1[field] = AllocateNewBaryonField(GridDimension[0]);
   }
 

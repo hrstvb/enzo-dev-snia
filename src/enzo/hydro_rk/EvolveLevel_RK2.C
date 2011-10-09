@@ -494,10 +494,6 @@ int EvolveLevel_RK2(TopGridData *MetaData, LevelHierarchyEntry *LevelArray[],
       if (UseViscosity) 
 	Grids[grid1]->GridData->AddViscosity();
 
-      /* If using comoving co-ordinates, do the expansion terms now. */
-      if (ComovingCoordinates)
-	Grids[grid1]->GridData->ComovingExpansionTerms();
-
       } // ENDIF UseHydro
 
 
@@ -530,6 +526,7 @@ int EvolveLevel_RK2(TopGridData *MetaData, LevelHierarchyEntry *LevelArray[],
 
       Grids[grid1]->GridData->DeleteParticleAcceleration();
  
+
       if (UseFloor) 
 	Grids[grid1]->GridData->SetFloor();
 
@@ -554,6 +551,12 @@ int EvolveLevel_RK2(TopGridData *MetaData, LevelHierarchyEntry *LevelArray[],
 #endif
 
     } // UseDivergenceCleaning ? 
+
+      /* If using comoving co-ordinates, do the expansion terms now. */
+    if (ComovingCoordinates)
+      for (grid1 = 0; grid1 < NumberOfGrids; grid1++) 
+	Grids[grid1]->GridData->ComovingExpansionTerms();
+    
 
     /* Finalize (accretion, feedback, etc.) star particles */
  
