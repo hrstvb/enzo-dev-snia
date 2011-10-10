@@ -27,7 +27,6 @@
 #    CONFIG_PYTHON
 #    CONFIG_NEW_PROBLEM_TYPES
 #    CONFIG_CVODE
-#    CONFIG_PAPI
 #    CONFIG_OOC_BOUNDARY
 #    CONFIG_ACCELERATION_BOUNDARY
 #    CONFIG_OPT
@@ -159,15 +158,6 @@
 #-----------------------------------------------------------------------
 
      CONFIG_LCAPERF = no
-
-#=======================================================================
-# CONFIG_PAPI
-#=======================================================================
-#    yes           use PAPI hardware counter package with lcaperf
-#    no            don't use PAPI hardware counter package with lcaperf
-#-----------------------------------------------------------------------
-
-     CONFIG_PAPI = no
 
 #=======================================================================
 # CONFIG_PYTHON

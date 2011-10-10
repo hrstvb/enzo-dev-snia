@@ -270,10 +270,12 @@ int EvolveLevel(TopGridData *MetaData, LevelHierarchyEntry *LevelArray[],
 
   // Update lcaperf "level" attribute
 
-  Eint32 lcaperf_level = level;
 #ifdef USE_LCAPERF
-  lcaperf.attribute ("level",&lcaperf_level,LCAPERF_INT);
+  Eint32 lcaperf_level = level;
+  lcaperf.attribute ("level",&lcaperf_level,LCAP_INT);
 #endif
+
+  LCAPERF_START("EvolveLevel");
 
   /* Create an array (Grids) of all the grids. */
 
@@ -586,7 +588,7 @@ int EvolveLevel(TopGridData *MetaData, LevelHierarchyEntry *LevelArray[],
 #ifdef USE_LCAPERF
     // Update lcaperf "level" attribute
 
-    lcaperf.attribute ("level",&lcaperf_level,LCAPERF_INT);
+    lcaperf.attribute ("level",&lcaperf_level,LCAP_INT);
 #endif
 
     OutputFromEvolveLevel(LevelArray, MetaData, level, Exterior
@@ -715,10 +717,6 @@ int EvolveLevel(TopGridData *MetaData, LevelHierarchyEntry *LevelArray[],
  
   ReportMemoryUsage("Memory usage report: Evolve Level");
  
-#ifdef USE_LCAPERF
-  lcaperf.attribute ("level",0,LCAPERF_NULL);
-#endif
-
   /* Clean up. */
  
   delete [] NumberOfSubgrids;
@@ -737,6 +735,12 @@ int EvolveLevel(TopGridData *MetaData, LevelHierarchyEntry *LevelArray[],
       delete [] SiblingList[grid1].GridList;
     delete [] SiblingList;
   }
+
+  LCAPERF_STOP("EvolveLevel");
+
+#ifdef USE_LCAPERF
+  lcaperf.attribute ("level",   0, LCAP_INT);
+#endif
 
   return SUCCESS;
  

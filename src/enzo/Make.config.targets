@@ -100,11 +100,6 @@ help-config:
 	@echo "      gmake lcaperf-yes"
 	@echo "      gmake lcaperf-no"
 	@echo
-	@echo "   Set whether to use the PAPI library with lcaperf"
-	@echo
-	@echo "      gmake papi-yes"
-	@echo "      gmake papi-no"
-	@echo
 	@echo "   Set whether to use embedded Python interpreter"
 	@echo
 	@echo "      gmake python-yes"
@@ -263,7 +258,6 @@ show-config:
 	@echo "   CONFIG_PACKED_AMR  [packed-amr-{yes,no}]                  : $(CONFIG_PACKED_AMR)"
 	@echo "   CONFIG_PACKED_MEM  [packed-mem-{yes,no}]                  : $(CONFIG_PACKED_MEM)"
 	@echo "   CONFIG_LCAPERF  [lcaperf-{yes,no}]                        : $(CONFIG_LCAPERF)"
-	@echo "   CONFIG_PAPI  [papi-{yes,no}]                              : $(CONFIG_PAPI)"
 	@echo "   CONFIG_PYTHON  [python-{yes,no}]                          : $(CONFIG_PYTHON)"
 	@echo "   CONFIG_NEW_PROBLEM_TYPES  [new-problem-types-{yes,no}]    : $(CONFIG_NEW_PROBLEM_TYPES)"
 	@echo "   CONFIG_CVODE  [cvode-{yes,no}]                            : $(CONFIG_CVODE)"
@@ -606,23 +600,6 @@ CONFIG_LCAPERF-%: suggest-clean
         mv $${tmp} $(MAKE_CONFIG_OVERRIDE); \
         echo "CONFIG_LCAPERF = $*" >> $(MAKE_CONFIG_OVERRIDE); \
 	$(MAKE)  show-config | grep CONFIG_LCAPERF; \
-	echo
-
-#-----------------------------------------------------------------------
-
-VALID_PAPI = papi-yes papi-no
-.PHONY: $(VALID_PAPI)
-
-papi-yes: CONFIG_PAPI-yes
-papi-no: CONFIG_PAPI-no
-papi-%:
-	@printf "\n\tInvalid target: $@\n\n\tValid targets: [$(VALID_PAPI)]\n\n"
-CONFIG_PAPI-%: suggest-clean
-	@tmp=.config.temp; \
-        grep -v CONFIG_PAPI $(MAKE_CONFIG_OVERRIDE) > $${tmp}; \
-        mv $${tmp} $(MAKE_CONFIG_OVERRIDE); \
-        echo "CONFIG_PAPI = $*" >> $(MAKE_CONFIG_OVERRIDE); \
-	$(MAKE)  show-config | grep CONFIG_PAPI; \
 	echo
 
 #-----------------------------------------------------------------------
