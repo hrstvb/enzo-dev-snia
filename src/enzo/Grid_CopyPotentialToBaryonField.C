@@ -55,7 +55,7 @@ int grid::CopyPotentialToBaryonField()
     ENZO_FAIL("PotentialField missing.\n");
   }
  
-  /* Well, it appears that currently GravitatingMassField is larger
+  /* GravitatingMassField is larger
      than active BaryonField by 2*max(BufferSize, DEFAULT_GHOST_ZONES) = 12
      zones. BufferSize = GRAVITY_BUFFER_SIZE*RefinementFactor = 6.
      In other words, GravitatingMassField has 6 ghost zones, compared to 3

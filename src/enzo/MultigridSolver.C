@@ -114,7 +114,7 @@ int MultigridSolver(float *TopRHS, float *TopSolution, int Rank, int TopDims[],
     FORTRAN_NAME(mg_prolong2)(RHS[depth], RHS[depth-1], &Rank,
 		     &Dims[0][depth  ], &Dims[1][depth  ], &Dims[2][depth  ],
     		     &Dims[0][depth-1], &Dims[1][depth-1], &Dims[2][depth-1]);
-    delete [] RHS[depth];
+    FreeBaryonFieldMemory(RHS[depth]);
   }
  
   //  if (start_depth == bottom)

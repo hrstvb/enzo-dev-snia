@@ -399,7 +399,6 @@ int PrepareDensityField(LevelHierarchyEntry *LevelArray[],
       if (iterate > 0)
 	CopyPotentialFieldAverage = 2;
 
- 
       for (grid1 = 0; grid1 < NumberOfGrids; grid1++) {
 	Grids[grid1]->GridData->SolveForPotential(level, EvaluateTime);
 	if (CopyGravPotential)
