@@ -76,9 +76,10 @@ int grid::FlagCellsToBeRefinedByMass(int level, int method)
     ENZO_VFAIL("Unrecognized mass refinement flagging method (%"ISYM")\n", 
 	    method)
   }
- 
+
   for (i = 0; i < size; i++)
     FlaggingField[i] += (ffield[i] > ModifiedMinimumMassForRefinement) ? 1 : 0;
+    
  
   /* Count number of flagged Cells. */
  

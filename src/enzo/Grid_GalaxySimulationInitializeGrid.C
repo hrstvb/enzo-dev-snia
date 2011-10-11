@@ -49,6 +49,7 @@ float gauss_mass(FLOAT rCell, FLOAT z, FLOAT xpos, FLOAT ypos, FLOAT zpos, FLOAT
 void rot_to_disk(FLOAT xpos, FLOAT ypos, FLOAT zpos, FLOAT &xrot, FLOAT &yrot, FLOAT &zrot, FLOAT inv [3][3]);
 
 static float DensityUnits, LengthUnits, TemperatureUnits = 1, TimeUnits, VelocityUnits;
+static double MassUnits;
 
 int grid::GalaxySimulationInitializeGrid(FLOAT DiskRadius,
 					 FLOAT ExternalGravityRadius,
@@ -135,6 +136,11 @@ int grid::GalaxySimulationInitializeGrid(FLOAT DiskRadius,
 		      &TimeUnits, &VelocityUnits, Time);
    CriticalDensity = 2.78e11*POW(HubbleConstantNow, 2); // in Msolar/Mpc^3
    BoxLength = ComovingBoxSize*ExpansionFactor/HubbleConstantNow;  // in Mpc
+ } else {
+   GetUnits(&DensityUnits,&LengthUnits,
+            &TemperatureUnits,&TimeUnits,
+            &VelocityUnits, &MassUnits, Time);
+   BoxLength = LengthUnits/Mpc;
  }
 
  /* Set up inflow */
@@ -174,8 +180,12 @@ int grid::GalaxySimulationInitializeGrid(FLOAT DiskRadius,
 	  y = CellLeftEdge[1][j] + 0.5*CellWidth[1][j];
 	if (GridRank > 2)
 	  z = CellLeftEdge[2][k] + 0.5*CellWidth[2][k];
-
-	density = 1.0;
+	
+	if (ComovingCoordinates)
+	  density = 1.0; 
+	else 
+	  density = 1e-4; // A small density (in density units)
+	
 	temperature = temp1 = InitialTemperature;
 	for (dim = 0; dim < MAX_DIMENSION; dim++)
 	  Velocity[dim] = 0;
@@ -390,7 +400,8 @@ float gauss_mass(FLOAT rCell, FLOAT z, FLOAT xpos, FLOAT ypos, FLOAT zpos, FLOAT
 	      rd = sqrt(POW(xrot,2.0)+POW(yrot,2.0));
 
 	      // Fitting formula for MW disk flaring from Kalberla & Kerp (2009), ARAA, Section 3.1.4
-	      ScaleHeightz = h0*exp((rd - Rsun)/R0);
+	      //ScaleHeightz = h0*exp((rd - Rsun)/R0);
+	      ScaleHeightz = h0;
 
 	      kappa = sqrt(2.)*CircularVelocity*sqrt(POW(float(rd),2.0)+2.0*POW(float(rCore),2.0))/(POW(float(rd),2.0)+POW(float(rCore),2.0));
 	      rho0 = kappa*SoundSpeed/(2.0*pi*GravConst*ToomreQ*float(ScaleHeightz));

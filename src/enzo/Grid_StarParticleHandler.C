@@ -572,7 +572,7 @@ int grid::StarParticleHandler(HierarchyEntry* SubgridPointer, int level,
   /* ------------------------------------------------------------------- */
   /* 1) StarParticle creation. */
  
-  //  if (StarParticleCreation > 0 && level == MaximumRefinementLevel) {
+  //if (StarParticleCreation > 0 && level == MaximumRefinementLevel) {
   if (StarParticleCreation > 0) {
     
     /* Generate a fake grid to keep the particles in. */
@@ -826,7 +826,7 @@ int grid::StarParticleHandler(HierarchyEntry* SubgridPointer, int level,
       
     }
 
-    if (STARMAKE_METHOD(INSTANT_STAR)) {
+    if (STARMAKE_METHOD(INSTANT_STAR) && level == MaximumRefinementLevel) {
 
       //---- MODIFIED SF ALGORITHM (NO-JEANS MASS, NO dt DEPENDENCE, NO STOCHASTIC SF, 
       //                            can reconsider star formation or feedback when MBH exists,
