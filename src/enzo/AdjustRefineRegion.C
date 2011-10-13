@@ -18,12 +18,6 @@
 #include <math.h>
 #include <time.h>
 #include "ErrorExceptions.h"
-#include "macros_and_parameters.h"
-#include "typedefs.h"
-#include "global_data.h"
-#include "Fluxes.h"
-#include "GridList.h"
-#include "ExternalBoundary.h"
 #include "Grid.h"
 #include "Hierarchy.h"
 #include "TopGridData.h"
