@@ -28,7 +28,7 @@ void my_exit(int status);
 
 // set this if you want to soft links to the daughter and parent
 // grids, and external links to the data file
-#define WITHOUT_HDF5_LINKS
+#define WITH_HDF5_LINKS
 
 // set this if you're using HDF5 1.8+ (regardless of H5_USE_16_API)
 #define HAVE_HDF5_18

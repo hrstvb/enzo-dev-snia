@@ -73,7 +73,7 @@ int WriteMemoryMap(FILE *fptr, HierarchyEntry *TopGrid,
 int WriteConfigure(FILE *optr);
 int WriteTaskMap(FILE *fptr, HierarchyEntry *TopGrid,
 		 char *gridbasename, int &GridID, FLOAT WriteTime);
-int WriteParameterFile(FILE *fptr, TopGridData &MetaData);
+int WriteParameterFile(FILE *fptr, TopGridData &MetaData, char *Filename);
 int WriteStarParticleData(FILE *fptr, TopGridData &MetaData);
 int WriteRadiationData(FILE *fptr);
  
@@ -84,7 +84,6 @@ int CommunicationCombineGrids(HierarchyEntry *OldHierarchy,
 void DeleteGridHierarchy(HierarchyEntry *GridEntry);
 void ContinueExecution(void);
 int CreateSmoothedDarkMatterFields(TopGridData &MetaData, HierarchyEntry *TopGrid);
- 
  
 int CreateGriddedStarParticleFields(TopGridData &MetaData, HierarchyEntry *TopGrid); 
 
@@ -143,7 +142,8 @@ int Group_WriteAllData(char *basename, int filenumber,
   int local, global;
   int file_status;
   int ii, pe, nn;
- 
+  double twrite0, twrite1;
+
   char pid[MAX_TASK_TAG_SIZE];
  
   FILE *fptr;
@@ -405,6 +405,9 @@ int Group_WriteAllData(char *basename, int filenumber,
 //  Synchronization point for directory creation
  
   CommunicationBarrier();
+#ifdef USE_MPI
+  twrite0 = MPI_Wtime();
+#endif
  
 //  Get cwd
 //  Generate command
@@ -607,7 +610,7 @@ int Group_WriteAllData(char *basename, int filenumber,
       fprintf(fptr, "# WARNING! Interpolated output: level = %"ISYM"\n",
 	      MetaData.OutputFirstTimeAtLevel-1);
     }
-    if (WriteParameterFile(fptr, MetaData) == FAIL)
+    if (WriteParameterFile(fptr, MetaData, name) == FAIL)
       ENZO_FAIL("Error in WriteParameterFile");
     fclose(fptr);
   
@@ -859,10 +862,14 @@ int Group_WriteAllData(char *basename, int filenumber,
   ContinueExecution();
  
   CommunicationBarrier();
+#ifdef USE_MPI
+  twrite1 = MPI_Wtime();
+#endif
 
   if ( MyProcessorNumber == ROOT_PROCESSOR ){
     sptr = fopen("OutputLog", "a");
-    fprintf(sptr, "DATASET WRITTEN %s \n", name);
+    fprintf(sptr, "DATASET WRITTEN %s %8"ISYM" %18.16"GSYM" %18.8"FSYM" %18.8"FSYM"\n", 
+	    name, MetaData.CycleNumber, MetaData.Time, twrite0, (twrite1-twrite0));
     fclose(sptr);
   }
  
