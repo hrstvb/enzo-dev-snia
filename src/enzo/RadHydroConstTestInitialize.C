@@ -106,8 +106,10 @@ int RadHydroConstTestInitialize(FILE *fptr, FILE *Outfptr,
   "        InitialFractionHII   = 0.0;\n"
   "        InitialFractionHeII  = 0.0;\n"
   "        InitialFractionHeIII = 0.0;\n"
-  "        Chemistry            = 1;\n"
+  "    };\n"
+  "    gFLD: {\n"
   "        Model                = 1;\n"
+  "        Chemistry            = 1;\n"
   "    };\n"
   "};\n";
 
