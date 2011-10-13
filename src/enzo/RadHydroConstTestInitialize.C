@@ -76,19 +76,19 @@ int RadHydroConstTestInitialize(FILE *fptr, FILE *Outfptr,
   //  8. initial fraction HeIII
   //  9. Number of chemical species
   // 10. mesh spacing
-  float RadHydroX0Velocity           = 0.0;
-  float RadHydroX1Velocity           = 0.0;
-  float RadHydroX2Velocity           = 0.0;
-  float RadHydroDensity              = 10.0;
-  float RadHydroTemperature          = 1.0;
-  float RadHydroIEnergy              = -1.0;
-  float RadHydroRadiationEnergy      = 10.0;
-  float RadHydroHydrogenMassFraction = 1.0;
-  float RadHydroInitialFractionHII   = 0.0;
-  float RadHydroInitialFractionHeII  = 0.0;
-  float RadHydroInitialFractionHeIII = 0.0;
-  int   RadHydroChemistry            = 1;
-  int   RadHydroModel                = 1;
+  float RadHydroX0Velocity;
+  float RadHydroX1Velocity;
+  float RadHydroX2Velocity;
+  float RadHydroDensity;
+  float RadHydroTemperature;
+  float RadHydroIEnergy;
+  float RadHydroRadiationEnergy;
+  float RadHydroHydrogenMassFraction;
+  float RadHydroInitialFractionHII;
+  float RadHydroInitialFractionHeII;
+  float RadHydroInitialFractionHeIII;
+  int   RadHydroChemistry;
+  int   RadHydroModel;
 
   const char config_rad_hydro_const_test_defaults[] = 
   "### RAD HYDRO CONST TEST DEFAULTS ###\n"
