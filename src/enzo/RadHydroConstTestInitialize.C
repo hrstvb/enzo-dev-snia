@@ -121,8 +121,8 @@ int RadHydroConstTestInitialize(FILE *fptr, FILE *Outfptr,
     if ((RHfptr = fopen(MetaData.RadHydroParameterFname, "r")) != NULL) {
       // read relevant problem parameters
       Param.GetArray(RadHydroVelocity, "Problem.RadHydro.Velocity");
-      Param.GetScalar(RadHydroChemistry, "Problem.RadHydro.Chemistry");
-      Param.GetScalar(RadHydroModel, "Problem.RadHydro.Model");
+      Param.GetScalar(RadHydroChemistry, "Problem.gFLD.Chemistry");
+      Param.GetScalar(RadHydroModel, "Problem.gFLD.Model");
       Param.GetScalar(RadHydroDensity, "Problem.RadHydro.Density");
       Param.GetScalar(RadHydroTemperature, "Problem.RadHydro.Temperature");
       Param.GetScalar(RadHydroIEnergy, "Problem.RadHydro.IEnergy");
