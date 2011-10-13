@@ -303,7 +303,9 @@ int DepositParticleMassFlaggingField(LevelHierarchyEntry* LevelArray[],
 
     int *SendProcs;
     int StartProc, EndProc, nSends;
+#ifdef TIMING
     double tt0, tt1;
+#endif
 
     for (StartProc = 0; StartProc < NumberOfProcessors; 
 	 StartProc += ProcessorsPerLoop) {

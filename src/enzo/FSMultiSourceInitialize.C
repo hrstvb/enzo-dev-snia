@@ -47,16 +47,16 @@ int FSMultiSourceInitialize(FILE *fptr, FILE *Outfptr, HierarchyEntry &TopGrid,
   if (MyProcessorNumber == ROOT_PROCESSOR)
     fprintf(stdout,"Entering FSMultiSourceInitialize routine\n");
 
-  char *DensName  = "Density";
-  char *TEName    = "TotalEnergy";
-  char *Vel0Name  = "x-velocity";
-  char *Vel1Name  = "y-velocity";
-  char *Vel2Name  = "z-velocity";
-  char *RadName   = "FS_Radiation";
+  const char *DensName  = "Density";
+  const char *TEName    = "TotalEnergy";
+  const char *Vel0Name  = "x-velocity";
+  const char *Vel1Name  = "y-velocity";
+  const char *Vel2Name  = "z-velocity";
+  const char *RadName   = "FS_Radiation";
 
   // local declarations
   char line[MAX_LINE_LENGTH];
-  int  dim, ret;
+  int  ret;
 
   // Setup and parameters:
   float Density              = 10.0;
@@ -108,12 +108,12 @@ int FSMultiSourceInitialize(FILE *fptr, FILE *Outfptr, HierarchyEntry &TopGrid,
 
   // set up field names and units
   int BaryonField = 0;
-  DataLabel[BaryonField++] = DensName;
-  DataLabel[BaryonField++] = TEName;
-  DataLabel[BaryonField++] = Vel0Name;
-  DataLabel[BaryonField++] = Vel1Name;
-  DataLabel[BaryonField++] = Vel2Name;
-  DataLabel[BaryonField++] = RadName;
+  DataLabel[BaryonField++] = (char*) DensName;
+  DataLabel[BaryonField++] = (char*) TEName;
+  DataLabel[BaryonField++] = (char*) Vel0Name;
+  DataLabel[BaryonField++] = (char*) Vel1Name;
+  DataLabel[BaryonField++] = (char*) Vel2Name;
+  DataLabel[BaryonField++] = (char*) RadName;
 
   for (int i=0; i<BaryonField; i++) 
     DataUnits[i] = NULL;

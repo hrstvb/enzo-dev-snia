@@ -40,46 +40,39 @@ int CoolingTestInitialize(FILE *fptr, FILE *Outfptr, HierarchyEntry &TopGrid,
 
   fprintf(stderr,"Initializing cooling test.\n");
 
-  char *DensName = "Density";
-  char *TEName   = "TotalEnergy";
-  char *GEName   = "GasEnergy";
-  char *Vel1Name = "x-velocity";
-  char *Vel2Name = "y-velocity";
-  char *Vel3Name = "z-velocity";
-  char *ElectronName = "Electron_Density";
-  char *HIName    = "HI_Density";
-  char *HIIName   = "HII_Density";
-  char *HeIName   = "HeI_Density";
-  char *HeIIName  = "HeII_Density";
-  char *HeIIIName = "HeIII_Density";
-  char *HMName    = "HM_Density";
-  char *H2IName   = "H2I_Density";
-  char *H2IIName  = "H2II_Density";
-  char *DIName    = "DI_Density";
-  char *DIIName   = "DII_Density";
-  char *HDIName   = "HDI_Density";
-  char *MetalName = "Metal_Density";
-  char *ExtraNames[2] = {"Z_Field1", "Z_Field2"};
+  const char *DensName = "Density";
+  const char *TEName   = "TotalEnergy";
+  const char *GEName   = "GasEnergy";
+  const char *Vel1Name = "x-velocity";
+  const char *Vel2Name = "y-velocity";
+  const char *Vel3Name = "z-velocity";
+  const char *ElectronName = "Electron_Density";
+  const char *HIName    = "HI_Density";
+  const char *HIIName   = "HII_Density";
+  const char *HeIName   = "HeI_Density";
+  const char *HeIIName  = "HeII_Density";
+  const char *HeIIIName = "HeIII_Density";
+  const char *HMName    = "HM_Density";
+  const char *H2IName   = "H2I_Density";
+  const char *H2IIName  = "H2II_Density";
+  const char *DIName    = "DI_Density";
+  const char *DIIName   = "DII_Density";
+  const char *HDIName   = "HDI_Density";
+  const char *MetalName = "Metal_Density";
+  const char *ExtraNames[2] = {"Z_Field1", "Z_Field2"};
 
    /* parameter declarations */
  
   FLOAT ConstantDensitySubgridLeft, ConstantDensitySubgridRight;
-  FLOAT LeftEdge[MAX_DIMENSION], RightEdge[MAX_DIMENSION];
-
-  float ConstantDensityVelocity[3]   = {0.0, 0.0, 0.0};
 
   /* local declarations */
  
   char line[MAX_LINE_LENGTH];
-  int  i, j, dim, ret, NumberOfSubgridZones[MAX_DIMENSION],
-    SubgridDims[MAX_DIMENSION];
+  int  i, j, dim, ret;
 
   MaximumRefinementLevel = 0;
 
-  float dx = (DomainRightEdge[0] - DomainLeftEdge[0])/
-     MetaData.TopGridDims[0];
- 
-//   /* set no subgrids by default. */
+  /* set no subgrids by default. */
  
   ConstantDensitySubgridLeft         = 0.0;    // start of subgrid(s)
   ConstantDensitySubgridRight        = 0.0;    // end of subgrid(s)
@@ -173,43 +166,43 @@ int CoolingTestInitialize(FILE *fptr, FILE *Outfptr, HierarchyEntry &TopGrid,
      fields.  Just FYI. */
 
   i = 0;
-  DataLabel[i++] = DensName;
-  DataLabel[i++] = TEName;
+  DataLabel[i++] = (char*) DensName;
+  DataLabel[i++] = (char*) TEName;
   if(DualEnergyFormalism)
-    DataLabel[i++] = GEName;
-  DataLabel[i++] = Vel1Name;
+    DataLabel[i++] = (char*) GEName;
+  DataLabel[i++] = (char*) Vel1Name;
 
   if(MetaData.TopGridRank > 1)
-    DataLabel[i++] = Vel2Name;
+    DataLabel[i++] = (char*) Vel2Name;
 
   if(MetaData.TopGridRank > 2)
-    DataLabel[i++] = Vel3Name;
+    DataLabel[i++] = (char*) Vel3Name;
 
   if (TestProblemData.MultiSpecies) {
-    DataLabel[i++] = ElectronName;
-    DataLabel[i++] = HIName;
-    DataLabel[i++] = HIIName;
-    DataLabel[i++] = HeIName;
-    DataLabel[i++] = HeIIName;
-    DataLabel[i++] = HeIIIName;
+    DataLabel[i++] = (char*) ElectronName;
+    DataLabel[i++] = (char*) HIName;
+    DataLabel[i++] = (char*) HIIName;
+    DataLabel[i++] = (char*) HeIName;
+    DataLabel[i++] = (char*) HeIIName;
+    DataLabel[i++] = (char*) HeIIIName;
     if (TestProblemData.MultiSpecies > 1) {
-      DataLabel[i++] = HMName;
-      DataLabel[i++] = H2IName;
-      DataLabel[i++] = H2IIName;
+      DataLabel[i++] = (char*) HMName;
+      DataLabel[i++] = (char*) H2IName;
+      DataLabel[i++] = (char*) H2IIName;
     }
     if (TestProblemData.MultiSpecies > 2) {
-      DataLabel[i++] = DIName;
-      DataLabel[i++] = DIIName;
-      DataLabel[i++] = HDIName;
+      DataLabel[i++] = (char*) DIName;
+      DataLabel[i++] = (char*) DIIName;
+      DataLabel[i++] = (char*) HDIName;
     }
   }
  
   if (TestProblemData.UseMetallicityField) {
-    DataLabel[i++] = MetalName;
+    DataLabel[i++] = (char*) MetalName;
 
     if(TestProblemData.MultiMetals){
-      DataLabel[i++] = ExtraNames[0];
-      DataLabel[i++] = ExtraNames[1];
+      DataLabel[i++] = (char*) ExtraNames[0];
+      DataLabel[i++] = (char*) ExtraNames[1];
     }
   }
  

@@ -47,19 +47,20 @@ int CosmologyComputeTimeFromRedshift(FLOAT Redshift, FLOAT *TimeCodeUnits);
 int AdiabaticExpansionInitialize(FILE *fptr, FILE *Outfptr,
 			       HierarchyEntry &TopGrid)
 {
-  char *DensName = "Density";
-  char *TEName   = "TotalEnergy";
-  char *GEName   = "GasEnergy";
-  char *Vel1Name = "x-velocity";
-  char *Vel2Name = "y-velocity";
-  char *Vel3Name = "z-velocity";
-  char *BxName = "Bx";
-  char *ByName = "By";
-  char *BzName = "Bz";
-  char *PhiName = "Phi";
-  char *DebugName = "Debug";
-  char *Phi_pName = "Phip";
-  char *GPotName  = "Grav_Potential";
+
+  const char *DensName = "Density";
+  const char *TEName   = "TotalEnergy";
+  const char *GEName   = "GasEnergy";
+  const char *Vel1Name = "x-velocity";
+  const char *Vel2Name = "y-velocity";
+  const char *Vel3Name = "z-velocity";
+  const char *BxName = "Bx";
+  const char *ByName = "By";
+  const char *BzName = "Bz";
+  const char *PhiName = "Phi";
+  const char *DebugName = "Debug";
+  const char *Phi_pName = "Phip";
+  const char *GPotName  = "Grav_Potential";
 
   /* declarations */
  
@@ -117,7 +118,8 @@ int AdiabaticExpansionInitialize(FILE *fptr, FILE *Outfptr,
   /* error checking */
   if (Mu != DEFAULT_MU) {
     if (MyProcessorNumber == ROOT_PROCESSOR)
-      fprintf(stderr, "warning: mu =%f assumed in initialization; setting Mu = %f for consistency.\n", DEFAULT_MU);
+      fprintf(stderr, "warning: mu =%f assumed in initialization; setting "
+	      "Mu = %f for consistency.\n", DEFAULT_MU, DEFAULT_MU);
     Mu = DEFAULT_MU;
   }
 
@@ -125,7 +127,7 @@ int AdiabaticExpansionInitialize(FILE *fptr, FILE *Outfptr,
   /* Get the units so we can convert temperature later. */
  
   float DensityUnits=1, LengthUnits=1, TemperatureUnits=1, TimeUnits=1,
-    VelocityUnits=1, PressureUnits=1.,MagneticUnits=1., a=1,dadt=0;
+    VelocityUnits=1, PressureUnits=1.,MagneticUnits=1.;
 
   if (GetUnits(&DensityUnits, &LengthUnits, &TemperatureUnits,
 	       &TimeUnits, &VelocityUnits, InitialTimeInCodeUnits) == FAIL) {
@@ -163,25 +165,25 @@ int AdiabaticExpansionInitialize(FILE *fptr, FILE *Outfptr,
   /* set up field names and units */
  
   int i = 0;
-  DataLabel[i++] = DensName;
-  DataLabel[i++] = TEName;
+  DataLabel[i++] = (char*) DensName;
+  DataLabel[i++] = (char*) TEName;
   if (DualEnergyFormalism)
-    DataLabel[i++] = GEName;
-  DataLabel[i++] = Vel1Name;
-  DataLabel[i++] = Vel2Name;
-  DataLabel[i++] = Vel3Name;
+    DataLabel[i++] = (char*) GEName;
+  DataLabel[i++] = (char*) Vel1Name;
+  DataLabel[i++] = (char*) Vel2Name;
+  DataLabel[i++] = (char*) Vel3Name;
   if (HydroMethod == MHD_RK) {
-    DataLabel[i++] = BxName;
-    DataLabel[i++] = ByName;
-    DataLabel[i++] = BzName;
-    DataLabel[i++] = PhiName;
+    DataLabel[i++] = (char*) BxName;
+    DataLabel[i++] = (char*) ByName;
+    DataLabel[i++] = (char*) BzName;
+    DataLabel[i++] = (char*) PhiName;
   }
   if(UseDivergenceCleaning){
-    DataLabel[i++] = Phi_pName;
-    DataLabel[i++] = DebugName;
+    DataLabel[i++] = (char*) Phi_pName;
+    DataLabel[i++] = (char*) DebugName;
   }
   if (WritePotential)
-    DataLabel[i++] = GPotName;  
+    DataLabel[i++] = (char*) GPotName;  
  
 
   DataUnits[0] = NULL;

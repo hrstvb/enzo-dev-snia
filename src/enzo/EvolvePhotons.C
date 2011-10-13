@@ -77,7 +77,7 @@ int StarParticleFindAll(LevelHierarchyEntry *LevelArray[], Star *&AllStars);
 int SetSubgridMarker(TopGridData &MetaData, 
 		     LevelHierarchyEntry *LevelArray[], int level,
 		     int UpdateReplicatedGridsOnly);
-void PrintMemoryUsage(char *str);
+void PrintMemoryUsage(const char *str);
 void fpcol(Eflt64 *x, int n, int m, FILE *log_fptr);
 double ReturnWallTime();
 

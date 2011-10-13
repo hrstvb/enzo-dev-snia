@@ -29,7 +29,7 @@ int FSProb::ComputeOpacityLW(float *H2Density)
   const float mh = 1.673e-24;
   double factor = H2ISigma * (DenUnits/mh);
 
-  int i, j, k, dim, size;
+  int i, dim, size;
 
   if (kappa_h2on == 0)
     return SUCCESS;

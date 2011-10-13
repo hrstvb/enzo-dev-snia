@@ -83,9 +83,6 @@ int gFLDProblem::ComputeTemperature(float *TempArr, float time,
   for (dim=0; dim<rank; dim++)  size *= ArrDims[dim];
 
 
-  float maxval, minval, avgval;
-
-
   ////////////////////////////
   // Compute the internal energy first, storing in Temperature array, and
   // converting to physical units
@@ -151,7 +148,7 @@ int gFLDProblem::ComputeTemperature(float *TempArr, float time,
     float mu, num_density, ne, nHI, nHII, nHeI, nHeII, nHeIII;
     // extract chemistry arrays
     float **ni = new float *[Nchem];
-    for (int i=1; i<=Nchem; i++)  ni[i-1] = u->GetData(1+i);
+    for (i=1; i<=Nchem; i++)  ni[i-1] = u->GetData(1+i);
 
     //   If performing Ionization test 0 or 1, decouple the gas energy from 
     //   the chemistry: use variable Mu (default 0.6) as in standard approach

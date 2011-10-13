@@ -712,7 +712,7 @@ int gFLDSplit::Initialize(HierarchyEntry &TopGrid, TopGridData &MetaData)
   // depending on the ProblemType
   float ZERO = 0.0;
   float ONE  = 1.0;
-  float SMALL = 1.0e-6;
+  //float SMALL = 1.0e-6;
   fptr = NULL;
 
   // set boundary conditions based on problem type

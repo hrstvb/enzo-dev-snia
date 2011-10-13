@@ -103,7 +103,7 @@ int CommunicationCollectParticles(LevelHierarchyEntry *LevelArray[],
   int *NumberToMove = new int[NumberOfProcessors];
   int *StarsToMove = new int[NumberOfProcessors];
 
-  int proc, i, j, k, jstart, jend, ThisID;
+  int i, j, jstart, jend, ThisID;
   int particle_data_size, star_data_size;
   int Zero = 0;
 

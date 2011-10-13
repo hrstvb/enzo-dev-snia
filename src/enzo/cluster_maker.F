@@ -99,17 +99,16 @@ c
       real    up(nmax), vp(nmax), wp(nmax)
       real    mp(nmax), tdp(nmax), tcp(nmax), metalf(nmax)
       integer type(nmax)
-      real    odthresh, masseff, starmass, min_tdyn, efficiency
+      real    odthresh, efficiency
       real    lifetime
       real    metalcrit
 c
 c  Locals:
 c
-      integer  i, j, k, ii, irad, ib, jb, kb, maxradius, radius2
+      integer  i, j, k, ii
       integer  dim
-      real   div, tdyn, dtot, wgt
-      real   pi, G, sndspdC, m1
-      real   isosndsp2, bmass, jeanmass, lum, min_temp
+      real   div, tdyn, dtot
+      real   pi, G, sndspdC, m1, bmass, min_temp
       REALSUB this_pos(3)
       double precision msolar, mh
       parameter (pi=pi_val, G=GravConst, sndspdC=1.3095d8,
@@ -357,10 +356,10 @@ c               write(6,777) d(i,j,k), xp(ii), yp(ii), zp(ii)
 c               write(6,7777) i, j, k
 c               write(6,778) up(ii), vp(ii), wp(ii), mp(ii)
 c               write(6,779) type(ii), tcp(ii), tdp(ii), metalf(ii)
- 777           format('clst_maker: ', e10.3, 3(f12.6))
- 7777          format('            ', 3(i5))
- 778           format('            ', 4(e15.3))
- 779           format('            ', i5, 3(f15.6))
+c 777           format('clst_maker: ', e10.3, 3(f12.6))
+c 7777          format('            ', 3(i5))
+c 778           format('            ', 4(e15.3))
+c 779           format('            ', i5, 3(f15.6))
 
 c
 c               write(7+procnum,1000) bmass*starfraction,tdp(ii),tcp(ii),
@@ -368,7 +367,7 @@ c     &                       metalf(ii)
 c               write(7+procnum,1000) level,bmass*starfraction,tcp(ii),
 c     &                           tdp(ii)*t1,d(i,j,k)*d1,z,metalf(ii)
 
- 1000          format(i5,1x,6(1pe10.3,1x))
+c 1000          format(i5,1x,6(1pe10.3,1x))
 c
 c              Do not generate more star particles than available
 c

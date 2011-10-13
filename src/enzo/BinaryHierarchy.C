@@ -43,7 +43,7 @@ void InitializeHierarchyArrayStorage(int grid_count)
 
 void WriteHierarchyArrayStorage(const char* name)
 {
-    hid_t file_id, group_id, dset_id, file_dsp_id, mem_dsp_id;
+    hid_t file_id;
     hsize_t dims[2]; /* At most two */
     herr_t h5_error = -1;
     Eint32 ndims;

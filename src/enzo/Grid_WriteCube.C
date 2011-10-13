@@ -42,7 +42,6 @@ void my_exit(int status);
  
 int FindCube(char *cube_name);
 int FindField(int f, int farray[], int n);
-int WriteStringAttr(hid_t dset_id, char *Alabel, char *String, FILE *log_fptr);
 
  
  

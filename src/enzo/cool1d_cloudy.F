@@ -86,7 +86,7 @@
 
 !  Locals
 
-      integer i, q
+      integer i
       real dclPar(clGridRank), inv_log10, log10_tCMB
 
 !  Slice locals
@@ -588,7 +588,7 @@
 !  General Arguments
 
       integer dataSize
-      integer gridDim(4)
+      integer gridDim(5)
       real input1, input2, input3, input4, input5, value
       real gridPar1(gridDim(1)), dgridPar1,
      &     gridPar2(gridDim(2)), dgridPar2,

@@ -68,8 +68,7 @@ c
 c
 c  Locals
 c
-      INTEGER i
-      double precision log_T, log_T_eV, T_ev, xx, dum
+      double precision log_T, log_T_eV, T_ev
 c
 c\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\/////////////////////////////////
 c=======================================================================

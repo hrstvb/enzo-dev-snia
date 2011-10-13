@@ -48,7 +48,7 @@ c
 c
 c  Locals
 c
-      double precision tl, a1, a, b, b1, c, c1, d, ftd
+      double precision tl, a1, a, b, b1, c, c1, d
       double precision y(21)
 c
 c\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\/////////////////////////////////

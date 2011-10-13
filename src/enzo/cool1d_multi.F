@@ -147,7 +147,7 @@
 
       integer xe_idx, tcmb_idx
       real logxe0, logxe1, dlogxea, xe, log_xe, xe1, dlogT, dlogxe, xi
-      real logTcmb, dlogTcmb, metalc_cmb, xe_max, metalfree
+      real logTcmb, dlogTcmb, metalc_cmb, xe_max
       real xe_slope, xe_logtem0, xe_min
       parameter (xe_slope = 5.d0, xe_logtem0 = 9.7859d0)  ! e^9.78 = 10^4.25 K
       parameter (xe_min = -9.21d0)  ! e^-9.21 = 1e-4

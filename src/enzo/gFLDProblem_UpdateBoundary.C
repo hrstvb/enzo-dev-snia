@@ -51,7 +51,7 @@ int gFLDProblem::UpdateBoundary(EnzoVector *u, float time, int flag)
     ENZO_FAIL("UpdateBoundary ERROR: gFLDProblem unprepared");
   
   // get information about the vector u, and check against BC dims
-  int i, j, k, l, m, idx, idxbc;
+  int j, k, l, m, idx, idxbc;
   int udims[4], ugh[3][2];
   u->size(&udims[0], &udims[1], &udims[2], &udims[3], 
 	  &ugh[0][0], &ugh[0][1], &ugh[1][0], 

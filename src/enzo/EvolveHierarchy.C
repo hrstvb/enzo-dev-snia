@@ -130,7 +130,7 @@ int ParticleSplitter(LevelHierarchyEntry *LevelArray[], int ThisLevel,
 		     TopGridData *MetaData); 
 int MagneticFieldResetter(LevelHierarchyEntry *LevelArray[], int ThisLevel,
 			  TopGridData *MetaData); 
-void PrintMemoryUsage(char *str);
+void PrintMemoryUsage(const char *str);
 int SetEvolveRefineRegion(FLOAT time);
 
 #ifdef MEM_TRACE
@@ -158,7 +158,7 @@ int EvolveHierarchy(HierarchyEntry &TopGrid, TopGridData &MetaData,
  
   float dt;
  
-  int i, dim, Stop = FALSE;
+  int i, Stop = FALSE;
   int Restart = FALSE;
   double tlev0, tlev1, treb0, treb1, tloop0, tloop1, tentry, texit;
   LevelHierarchyEntry *Temp;

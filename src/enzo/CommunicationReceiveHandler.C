@@ -100,7 +100,7 @@ int CommunicationReceiveHandler(fluxes **SubgridFluxesEstimate[],
 	}
 	fprintf(stdout, "P(%"ISYM") index %"ISYM" -- mpi error %"ISYM"\n", 
 		MyProcessorNumber, index, ListOfStatuses[index].MPI_ERROR);
-	fprintf(stdout, "%"ISYM": Type = %"ISYM", Grid1 = %x, Request = %"ISYM", "
+	fprintf(stdout, "%"ISYM": Type = %"ISYM", Grid1 = %p, Request = %p, "
 		"DependsOn = %"ISYM"\n", index, 
 		CommunicationReceiveCallType[index],
 		CommunicationReceiveGridOne[index],

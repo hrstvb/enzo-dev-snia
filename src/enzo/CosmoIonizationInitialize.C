@@ -48,20 +48,20 @@ int CosmoIonizationInitialize(FILE *fptr, FILE *Outfptr,
   if (MyProcessorNumber == ROOT_PROCESSOR)
     printf("Entering CosmoIonizationInitialize routine\n");
 
-  char *DensName  = "Density";
-  char *TEName    = "TotalEnergy";
-  char *GEName    = "GasEnergy";
-  char *Vel1Name  = "x-velocity";
-  char *Vel2Name  = "y-velocity";
-  char *Vel3Name  = "z-velocity";
-  char *RadName   = "Grey_Radiation_Energy";
-  char *HIName    = "HI_Density";
-  char *HIIName   = "HII_Density";
-  char *DeName    = "Electron_Density";
+  const char *DensName  = "Density";
+  const char *TEName    = "TotalEnergy";
+  const char *GEName    = "GasEnergy";
+  const char *Vel1Name  = "x-velocity";
+  const char *Vel2Name  = "y-velocity";
+  const char *Vel3Name  = "z-velocity";
+  const char *RadName   = "Grey_Radiation_Energy";
+  const char *HIName    = "HI_Density";
+  const char *HIIName   = "HII_Density";
+  const char *DeName    = "Electron_Density";
  
   // local declarations
   char  line[MAX_LINE_LENGTH];
-  int   dim, ret;
+  int   ret;
  
   // Setup and parameters:
   float RadHydroX0Velocity           = 0.0;
@@ -152,17 +152,17 @@ int CosmoIonizationInitialize(FILE *fptr, FILE *Outfptr,
 
   // set up field names and units
   int BaryonField = 0;
-  DataLabel[BaryonField++] = DensName;
-  DataLabel[BaryonField++] = TEName;
+  DataLabel[BaryonField++] = (char*) DensName;
+  DataLabel[BaryonField++] = (char*) TEName;
   if (DualEnergyFormalism) 
-    DataLabel[BaryonField++] = GEName;
-  DataLabel[BaryonField++] = Vel1Name;
-  DataLabel[BaryonField++] = Vel2Name;
-  DataLabel[BaryonField++] = Vel3Name;
-  DataLabel[BaryonField++] = RadName;
-  DataLabel[BaryonField++] = DeName;
-  DataLabel[BaryonField++] = HIName;
-  DataLabel[BaryonField++] = HIIName;
+    DataLabel[BaryonField++] = (char*) GEName;
+  DataLabel[BaryonField++] = (char*) Vel1Name;
+  DataLabel[BaryonField++] = (char*) Vel2Name;
+  DataLabel[BaryonField++] = (char*) Vel3Name;
+  DataLabel[BaryonField++] = (char*) RadName;
+  DataLabel[BaryonField++] = (char*) DeName;
+  DataLabel[BaryonField++] = (char*) HIName;
+  DataLabel[BaryonField++] = (char*) HIIName;
 
   for (int i=0; i<BaryonField; i++) 
     DataUnits[i] = NULL;

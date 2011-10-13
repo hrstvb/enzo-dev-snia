@@ -35,11 +35,11 @@
 int DoubleMachInitialize(FILE *fptr, FILE *Outfptr, HierarchyEntry &TopGrid,
 			 TopGridData &MetaData, ExternalBoundary &Exterior)
 {
-  char *DensName = "Density";
-  char *TEName   = "TotalEnergy";
-  char *Vel1Name = "x-velocity";
-  char *Vel2Name = "y-velocity";
-  char *Vel3Name = "z-velocity";
+  const char *DensName = "Density";
+  const char *TEName   = "TotalEnergy";
+  const char *Vel1Name = "x-velocity";
+  const char *Vel2Name = "y-velocity";
+  const char *Vel3Name = "z-velocity";
  
   /* local declarations */
  
@@ -143,11 +143,11 @@ int DoubleMachInitialize(FILE *fptr, FILE *Outfptr, HierarchyEntry &TopGrid,
  
   /* set up field names and units */
  
-  DataLabel[0] = DensName;
-  DataLabel[1] = TEName;
-  DataLabel[2] = Vel1Name;
-  DataLabel[3] = Vel2Name;
-  DataLabel[4] = Vel3Name;
+  DataLabel[0] = (char*) DensName;
+  DataLabel[1] = (char*) TEName;
+  DataLabel[2] = (char*) Vel1Name;
+  DataLabel[3] = (char*) Vel2Name;
+  DataLabel[4] = (char*) Vel3Name;
  
   DataUnits[0] = NULL;
   DataUnits[1] = NULL;

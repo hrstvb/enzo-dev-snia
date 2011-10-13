@@ -34,8 +34,6 @@ void my_exit(int status);
  
 // function prototypes
  
-int SysMkdir(char *startdir, char *directory);
- 
 int WriteDataCubes(HierarchyEntry *TopGrid, int TDdims[], char *gridbasename, int &GridID, FLOAT WriteTime);
  
 int CommunicationCombineGrids(HierarchyEntry *OldHierarchy,

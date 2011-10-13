@@ -53,8 +53,7 @@ c  Slice locals
 c 
       integer indixe(ijk)
       real t1(ijk), t2(ijk), logtem(ijk), tdef(ijk), p2d(ijk),
-     &     dtit(ijk), ttot(ijk), edot(ijk), tgas(ijk), tgasold(ijk),
-     &     cool(ijk)
+     &     edot(ijk), tgas(ijk), tgasold(ijk), cool(ijk)
 c
 c\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\/////////////////////////////////
 c=======================================================================

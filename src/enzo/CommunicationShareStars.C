@@ -55,7 +55,6 @@ int CommunicationShareStars(int *NumberToMove, star_data* &SendList,
   SharedList = NULL;
 
 #ifdef USE_MPI
-  MPI_Datatype DataType = (sizeof(float) == 4) ? MPI_FLOAT : MPI_DOUBLE;
   MPI_Datatype DataTypeInt = (sizeof(int) == 4) ? MPI_INT : MPI_LONG_LONG_INT;
   MPI_Datatype DataTypeByte = MPI_BYTE;
   MPI_Arg Count;

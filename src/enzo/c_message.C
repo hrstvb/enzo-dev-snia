@@ -29,7 +29,7 @@ int static warning_count = 0;
  
 //----------------------------------------------------------------------
  
-void c_error (char *sourcefile, Eint32 linenumber)
+void c_error (const char *sourcefile, Eint32 linenumber)
 {
 #ifdef USE_MPI
   int  ierr;
@@ -60,7 +60,7 @@ void c_error (char *sourcefile, Eint32 linenumber)
  
 //----------------------------------------------------------------------
  
-void c_warning (char *sourcefile, Eint32 linenumber)
+void c_warning (const char *sourcefile, Eint32 linenumber)
 {
 #ifdef USE_MPI
   int  ierr;

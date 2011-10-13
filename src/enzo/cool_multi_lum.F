@@ -80,7 +80,7 @@ c
 c  Locals
 c
       integer i, j, k, n
-      real comp1, comp2, energy
+      real comp1, comp2
       double precision dom, coolunit, dbase1, tbase1, xbase1, mh, ulum
       parameter (mh = mass_h)
 c
@@ -88,7 +88,7 @@ c  Slice locals
 c 
       integer indixe(ijk)
       real t1(ijk), t2(ijk), logtem(ijk), tdef(ijk), p2d(ijk),
-     &     dtit(ijk), ttot(ijk), tgas(ijk), tgasold(ijk)
+     &     tgas(ijk), tgasold(ijk)
       double precision edot(in,nlum)
 c
 c  Cooling/heating slice locals

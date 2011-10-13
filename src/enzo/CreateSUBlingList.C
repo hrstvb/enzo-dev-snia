@@ -70,7 +70,7 @@ int CreateSUBlingList(TopGridData *MetaData,
 
   int i, grid1, grid2, othergrid_id, count;
   int NumberOfGrids, NumberOfChildGrids, LocalNumberOfSUBlings, TotalNumberOfSUBlings;
-  LevelHierarchyEntry *Temp, *NextEntry, *LastEntry;
+  LevelHierarchyEntry *NextEntry, *LastEntry;
   HierarchyEntry *NextGrid, *OtherGrid;
   HierarchyEntry **Grids, **ChildGrids;
 

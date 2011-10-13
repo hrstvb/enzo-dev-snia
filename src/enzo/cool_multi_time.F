@@ -99,7 +99,7 @@
 
 !  Locals
 
-      integer i, j, k, n
+      integer i, j, k
       real comp1, comp2, energy
 
 !  Slice locals

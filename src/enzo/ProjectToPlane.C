@@ -37,7 +37,8 @@ void my_exit(int status);
  
 // function prototypes
  
-int  WriteStringAttr(hid_t dset_id, char *Alabel, char *String, FILE *log_fptr);
+int  WriteStringAttr(hid_t dset_id, const char *Alabel, 
+		     const char *String, FILE *log_fptr);
 void WriteListOfFloats(FILE *fptr, int N, float floats[]);
 int  DepositParticleMassField(HierarchyEntry *Grid, FLOAT Time = -1.0);
 int  CopyOverlappingZones(grid* CurrentGrid, TopGridData *MetaData,
@@ -55,7 +56,7 @@ int ProjectToPlane(TopGridData &MetaData, LevelHierarchyEntry *LevelArray[],
 		   int ProjectStartTemp[], int ProjectEndTemp[],
 		   FLOAT ProjectStartCoordinate[],
 		   FLOAT ProjectEndCoordinate[], int ProjectLevel,
-		   int ProjectionDimension, char *ProjectionFileName,
+		   int ProjectionDimension, const char *ProjectionFileName,
 		   int ProjectionSmooth, ExternalBoundary *Exterior)
 {
  

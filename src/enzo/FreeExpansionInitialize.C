@@ -41,18 +41,18 @@ int GetUnits(float *DensityUnits, float *LengthUnits,
 int FreeExpansionInitialize(FILE *fptr, FILE *Outfptr, HierarchyEntry &TopGrid,
 			    TopGridData &MetaData)
 {
-  char	*DensName  = "Density";
-  char	*TEName	   = "TotalEnergy";
-  char	*GEName	   = "GasEnergy";
-  char	*Vel1Name  = "x-velocity";
-  char	*Vel2Name  = "y-velocity";
-  char	*Vel3Name  = "z-velocity";
-  char	*B1Name	   = "Bx";
-  char	*B2Name	   = "By";
-  char	*B3Name	   = "Bz";
-  char	*PhiName   = "Phi";
-  char	*DebugName = "Debug";
-  char	*Phi_pName = "Phip";
+  const char	*DensName  = "Density";
+  const char	*TEName	   = "TotalEnergy";
+  const char	*GEName	   = "GasEnergy";
+  const char	*Vel1Name  = "x-velocity";
+  const char	*Vel2Name  = "y-velocity";
+  const char	*Vel3Name  = "z-velocity";
+  const char	*B1Name	   = "Bx";
+  const char	*B2Name	   = "By";
+  const char	*B3Name	   = "Bz";
+  const char	*PhiName   = "Phi";
+  const char	*DebugName = "Debug";
+  const char	*Phi_pName = "Phip";
 
   /* parameter declarations */
 
@@ -75,11 +75,6 @@ int FreeExpansionInitialize(FILE *fptr, FILE *Outfptr, HierarchyEntry &TopGrid,
   float FreeExpansionMass    = 1.0;   // Msun
   double FreeExpansionEnergy        = 1e51;   // ergs
   float FreeExpansionTemperature = 100;  // K
-  float dx = (DomainRightEdge[0] - DomainLeftEdge[0]) / MetaData.TopGridDims[0];
-
-  /* Use 3.5 zones on the finest level to resolve the initial explosion at t=0. */
-
-  float dr = 3.5*dx*max(POW(RefineBy,-MaximumRefinementLevel), 0.25);
 
   /* set no subgrids by default. */
 
@@ -98,16 +93,16 @@ int FreeExpansionInitialize(FILE *fptr, FILE *Outfptr, HierarchyEntry &TopGrid,
     ret += sscanf(line, "FreeExpansionMass  = %"FSYM, &FreeExpansionMass);
     ret += sscanf(line, "FreeExpansionRadius  = %"FSYM, &FreeExpansionRadius);
     ret += sscanf(line, "FreeExpansionDensity  = %"FSYM, &FreeExpansionDensity);
-    ret += sscanf(line, "FreeExpansionEnergy   = %"FSYM, &FreeExpansionEnergy);
+    ret += sscanf(line, "FreeExpansionEnergy   = %lf", &FreeExpansionEnergy);
     ret += sscanf(line, "FreeExpansionMaxVelocity   = %"FSYM, &FreeExpansionMaxVelocity);
     ret += sscanf(line, "FreeExpansionTemperature   = %"FSYM, &FreeExpansionTemperature);
     ret += sscanf(line, "FreeExpansionVelocity = %"FSYM" %"FSYM" %"FSYM, 
 		  FreeExpansionVelocity, FreeExpansionVelocity+1, FreeExpansionVelocity+2);
     ret += sscanf(line, "FreeExpansionBField = %"FSYM" %"FSYM" %"FSYM, 
 		  FreeExpansionBField, FreeExpansionBField+1, FreeExpansionBField+2);
-    ret += sscanf(line, "FreeExpansionSubgridLeft = %"FSYM, 
+    ret += sscanf(line, "FreeExpansionSubgridLeft = %"PSYM, 
 		  &FreeExpansionSubgridLeft);
-    ret += sscanf(line, "FreeExpansionSubgridRight = %"FSYM, 
+    ret += sscanf(line, "FreeExpansionSubgridRight = %"PSYM, 
 		  &FreeExpansionSubgridRight);
 
     /* if the line is suspicious, issue a warning */
@@ -153,7 +148,7 @@ int FreeExpansionInitialize(FILE *fptr, FILE *Outfptr, HierarchyEntry &TopGrid,
     B2 = 0.0;
     for (dim = 0; dim < MetaData.TopGridRank; dim++)
       B2 += FreeExpansionBField[dim] * FreeExpansionBField[dim];
-    FreeExpansionTotalEnergy + 0.5 * B2 / FreeExpansionDensity;
+    FreeExpansionTotalEnergy += 0.5 * B2 / FreeExpansionDensity;
   }
 
   
@@ -270,21 +265,21 @@ int FreeExpansionInitialize(FILE *fptr, FILE *Outfptr, HierarchyEntry &TopGrid,
 
   /* set up field names and units */
   int i = 0;
-  DataLabel[i++] = DensName;
-  DataLabel[i++] = TEName;
+  DataLabel[i++] = (char*) DensName;
+  DataLabel[i++] = (char*) TEName;
   if (DualEnergyFormalism)
-    DataLabel[i++] = GEName;
-  DataLabel[i++] = Vel1Name;
-  DataLabel[i++] = Vel2Name;
-  DataLabel[i++] = Vel3Name;
+    DataLabel[i++] = (char*) GEName;
+  DataLabel[i++] = (char*) Vel1Name;
+  DataLabel[i++] = (char*) Vel2Name;
+  DataLabel[i++] = (char*) Vel3Name;
   if (HydroMethod == MHD_RK) {
-    DataLabel[i++] = B1Name;
-    DataLabel[i++] = B2Name;
-    DataLabel[i++] = B3Name;
-    DataLabel[i++] = PhiName;
+    DataLabel[i++] = (char*) B1Name;
+    DataLabel[i++] = (char*) B2Name;
+    DataLabel[i++] = (char*) B3Name;
+    DataLabel[i++] = (char*) PhiName;
     if (UseDivergenceCleaning) {
-      DataLabel[i++] = Phi_pName;
-      DataLabel[i++] = DebugName;
+      DataLabel[i++] = (char*) Phi_pName;
+      DataLabel[i++] = (char*) DebugName;
     }
   }
 

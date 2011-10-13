@@ -36,12 +36,12 @@ void WriteListOfFloats(FILE *fptr, int N, float floats[]);
 int GravityEquilibriumTestInitialize(FILE *fptr, FILE *Outfptr,
 			      HierarchyEntry &TopGrid, TopGridData &MetaData)
 {
-  char *DensName = "Density";
-  char *TEName   = "TotalEnergy";
-  char *GEName   = "GasEnergy";
-  char *Vel1Name = "x-velocity";
-  char *Vel2Name = "y-velocity";
-  char *Vel3Name = "z-velocity";
+  const char *DensName = "Density";
+  const char *TEName   = "TotalEnergy";
+  const char *GEName   = "GasEnergy";
+  const char *Vel1Name = "x-velocity";
+  const char *Vel2Name = "y-velocity";
+  const char *Vel3Name = "z-velocity";
  
   /* declarations */
  
@@ -87,13 +87,13 @@ int GravityEquilibriumTestInitialize(FILE *fptr, FILE *Outfptr,
   /* set up field names and units */
  
   int count = 0;
-  DataLabel[count++] = DensName;
-  DataLabel[count++] = TEName;
+  DataLabel[count++] = (char*) DensName;
+  DataLabel[count++] = (char*) TEName;
   if (DualEnergyFormalism)
-    DataLabel[count++] = GEName;
-  DataLabel[count++] = Vel1Name;
-  DataLabel[count++] = Vel2Name;
-  DataLabel[count++] = Vel3Name;
+    DataLabel[count++] = (char*) GEName;
+  DataLabel[count++] = (char*) Vel1Name;
+  DataLabel[count++] = (char*) Vel2Name;
+  DataLabel[count++] = (char*) Vel3Name;
  
   DataUnits[0] = NULL;
   DataUnits[1] = NULL;

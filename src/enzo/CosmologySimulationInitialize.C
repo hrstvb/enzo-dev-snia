@@ -45,7 +45,7 @@
 void WriteListOfFloats(FILE *fptr, int N, float floats[]);
 void WriteListOfFloats(FILE *fptr, int N, FLOAT floats[]);
 void WriteListOfInts(FILE *fptr, int N, int nums[]);
-void PrintMemoryUsage(char *str);
+void PrintMemoryUsage(const char *str);
 int InitializeRateData(FLOAT Time);
 int GetUnits(float *DensityUnits, float *LengthUnits,
 	     float *TemperatureUnits, float *TimeUnits,
@@ -102,44 +102,45 @@ static float RadHydroInitialRadiationEnergy = 1.0e-32;
 int CosmologySimulationInitialize(FILE *fptr, FILE *Outfptr,
 			       HierarchyEntry &TopGrid, TopGridData &MetaData)
 {
-  char *DensName = "Density";
-  char *TEName   = "TotalEnergy";
-  char *GEName   = "GasEnergy";
-  char *Vel1Name = "x-velocity";
-  char *Vel2Name = "y-velocity";
-  char *Vel3Name = "z-velocity";
-  char *ElectronName = "Electron_Density";
-  char *HIName    = "HI_Density";
-  char *HIIName   = "HII_Density";
-  char *HeIName   = "HeI_Density";
-  char *HeIIName  = "HeII_Density";
-  char *HeIIIName = "HeIII_Density";
-  char *HMName    = "HM_Density";
-  char *H2IName   = "H2I_Density";
-  char *H2IIName  = "H2II_Density";
-  char *DIName    = "DI_Density";
-  char *DIIName   = "DII_Density";
-  char *HDIName   = "HDI_Density";
-  char *MetalName = "Metal_Density";
-  char *MetalIaName = "MetalSNIa_Density";
-  char *GPotName  = "Grav_Potential";
-  char *ForbidName  = "ForbiddenRefinement";
-  char *MachName   = "Mach";
-  char *PSTempName = "PreShock_Temperature";
-  char *PSDenName  = "PreShock_Density";
-  char *ExtraNames[2] = {"Z_Field1", "Z_Field2"};
-  char *BxName = "Bx";
-  char *ByName = "By";
-  char *BzName = "Bz";
-  char *PhiName = "Phi";
-  char *DebugName = "Debug";
-  char *Phi_pName = "Phip";
+
+  const char *DensName = "Density";
+  const char *TEName   = "TotalEnergy";
+  const char *GEName   = "GasEnergy";
+  const char *Vel1Name = "x-velocity";
+  const char *Vel2Name = "y-velocity";
+  const char *Vel3Name = "z-velocity";
+  const char *ElectronName = "Electron_Density";
+  const char *HIName    = "HI_Density";
+  const char *HIIName   = "HII_Density";
+  const char *HeIName   = "HeI_Density";
+  const char *HeIIName  = "HeII_Density";
+  const char *HeIIIName = "HeIII_Density";
+  const char *HMName    = "HM_Density";
+  const char *H2IName   = "H2I_Density";
+  const char *H2IIName  = "H2II_Density";
+  const char *DIName    = "DI_Density";
+  const char *DIIName   = "DII_Density";
+  const char *HDIName   = "HDI_Density";
+  const char *MetalName = "Metal_Density";
+  const char *MetalIaName = "MetalSNIa_Density";
+  const char *GPotName  = "Grav_Potential";
+  const char *ForbidName  = "ForbiddenRefinement";
+  const char *MachName   = "Mach";
+  const char *PSTempName = "PreShock_Temperature";
+  const char *PSDenName  = "PreShock_Density";
+  const char *ExtraNames[2] = {"Z_Field1", "Z_Field2"};
+  const char *BxName = "Bx";
+  const char *ByName = "By";
+  const char *BzName = "Bz";
+  const char *PhiName = "Phi";
+  const char *DebugName = "Debug";
+  const char *Phi_pName = "Phip";
 
 #ifdef TRANSFER
-  char *RadName    = "Grey_Radiation_Energy";
+  const char *RadName    = "Grey_Radiation_Energy";
 #endif
 #ifdef EMISSIVITY
-  char *EtaName    = "Emissivity";
+  const char *EtaName    = "Emissivity";
 #endif
  
 
@@ -694,82 +695,73 @@ int CosmologySimulationInitialize(FILE *fptr, FILE *Outfptr,
   // Set up field names and units
  
   i = 0;
-  DataLabel[i++] = DensName;
-  DataLabel[i++] = Vel1Name;
+
+  DataLabel[i++] = (char*) DensName;
+  DataLabel[i++] = (char*) Vel1Name;
   if (MetaData.TopGridRank > 1 || (HydroMethod == MHD_RK) || (HydroMethod == HD_RK))
-    DataLabel[i++] = Vel2Name;
+    DataLabel[i++] = (char*) Vel2Name;
   if (MetaData.TopGridRank > 2 || (HydroMethod == MHD_RK) || (HydroMethod == HD_RK))
-    DataLabel[i++] = Vel3Name;
-  DataLabel[i++] = TEName;
+    DataLabel[i++] = (char*) Vel3Name;
+  DataLabel[i++] = (char*) TEName;
   if (DualEnergyFormalism)
-    DataLabel[i++] = GEName;
+    DataLabel[i++] = (char*) GEName;
   if (HydroMethod == MHD_RK) {
-    DataLabel[i++] = BxName;
-    DataLabel[i++] = ByName;
-    DataLabel[i++] = BzName;
-    DataLabel[i++] = PhiName;
+    DataLabel[i++] = (char*) BxName;
+    DataLabel[i++] = (char*) ByName;
+    DataLabel[i++] = (char*) BzName;
+    DataLabel[i++] = (char*) PhiName;
     if(UseDivergenceCleaning){
-      DataLabel[i++] = Phi_pName;
-      DataLabel[i++] = DebugName;
+      DataLabel[i++] = (char*) Phi_pName;
+      DataLabel[i++] = (char*) DebugName;
     }
   }
-  /*
-  DataLabel[i++] = DensName;
-  DataLabel[i++] = TEName;
-  if (DualEnergyFormalism)
-    DataLabel[i++] = GEName;
-  DataLabel[i++] = Vel1Name;
-  DataLabel[i++] = Vel2Name;
-  DataLabel[i++] = Vel3Name;
-  */
+
 #ifdef TRANSFER
   if (RadiativeTransferFLD > 1)
-    DataLabel[i++] = RadName;
+    DataLabel[i++] = (char*) RadName;
 #endif
   if (MultiSpecies) {
-    DataLabel[i++] = ElectronName;
-    DataLabel[i++] = HIName;
-    DataLabel[i++] = HIIName;
-    DataLabel[i++] = HeIName;
-    DataLabel[i++] = HeIIName;
-    DataLabel[i++] = HeIIIName;
+    DataLabel[i++] = (char*) ElectronName;
+    DataLabel[i++] = (char*) HIName;
+    DataLabel[i++] = (char*) HIIName;
+    DataLabel[i++] = (char*) HeIName;
+    DataLabel[i++] = (char*) HeIIName;
+    DataLabel[i++] = (char*) HeIIIName;
     if (MultiSpecies > 1) {
-      DataLabel[i++] = HMName;
-      DataLabel[i++] = H2IName;
-      DataLabel[i++] = H2IIName;
+      DataLabel[i++] = (char*) HMName;
+      DataLabel[i++] = (char*) H2IName;
+      DataLabel[i++] = (char*) H2IIName;
     }
     if (MultiSpecies > 2) {
-      DataLabel[i++] = DIName;
-      DataLabel[i++] = DIIName;
-      DataLabel[i++] = HDIName;
+      DataLabel[i++] = (char*) DIName;
+      DataLabel[i++] = (char*) DIIName;
+      DataLabel[i++] = (char*) HDIName;
     }
   }
   if (CosmologySimulationUseMetallicityField) {
-    DataLabel[i++] = MetalName;
-    if (StarMakerTypeIaSNe)
-      DataLabel[i++] = MetalIaName;
+    DataLabel[i++] = (char*) MetalName;
     if(MultiMetals){
-      DataLabel[i++] = ExtraNames[0];
-      DataLabel[i++] = ExtraNames[1];
+      DataLabel[i++] = (char*) ExtraNames[0];
+      DataLabel[i++] = (char*) ExtraNames[1];
     }
   }
   if(STARMAKE_METHOD(COLORED_POP3_STAR)){
-    DataLabel[i++] = ForbidName;
+    DataLabel[i++] = (char*) ForbidName;
   }
  
   if (WritePotential)
-    DataLabel[i++] = GPotName;  
+    DataLabel[i++] = (char*) GPotName;  
 
 #ifdef EMISSIVITY
   if (StarMakerEmissivityField > 0)
-    DataLabel[i++] = EtaName;
+    DataLabel[i++] = (char*) EtaName;
 #endif
  
   if (ShockMethod) {
-    DataLabel[i++] = MachName;
+    DataLabel[i++] = (char*) MachName;
     if(StorePreShockFields){
-      DataLabel[i++] = PSTempName;
-      DataLabel[i++] = PSDenName;
+      DataLabel[i++] = (char*) PSTempName;
+      DataLabel[i++] = (char*) PSDenName;
     }
   } 
 

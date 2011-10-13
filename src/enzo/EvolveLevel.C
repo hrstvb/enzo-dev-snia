@@ -105,7 +105,7 @@ void RunEventHooks(char *, HierarchyEntry *Grid[], TopGridData &MetaData) {}
 
 int  RebuildHierarchy(TopGridData *MetaData,
 		      LevelHierarchyEntry *LevelArray[], int level);
-int  ReportMemoryUsage(char *header = NULL);
+int  ReportMemoryUsage(const char *header = NULL);
 int  UpdateParticlePositions(grid *Grid);
 int  CheckEnergyConservation(HierarchyEntry *Grids[], int grid,
 			     int NumberOfGrids, int level, float dt);
@@ -262,16 +262,12 @@ int EvolveLevel(TopGridData *MetaData, LevelHierarchyEntry *LevelArray[],
   int dbx = 0;
 
   FLOAT When, GridTime;
-  //float dtThisLevelSoFar = 0.0, dtThisLevel, dtGrid, dtActual, dtLimit;
-  //float dtThisLevelSoFar = 0.0, dtThisLevel;
-  int cycle = 0, counter = 0, grid1, subgrid, grid2;
-  HierarchyEntry *NextGrid;
-  int dummy_int;
+  int grid1, cycle = 0;
 
   // Update lcaperf "level" attribute
 
-  Eint32 lcaperf_level = level;
 #ifdef USE_LCAPERF
+  Eint32 lcaperf_level = level;
   lcaperf.attribute ("level",&lcaperf_level,LCAPERF_INT);
 #endif
 

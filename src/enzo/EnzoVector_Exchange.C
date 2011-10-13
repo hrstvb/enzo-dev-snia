@@ -48,9 +48,9 @@ int EnzoVector::exchange()
   // some local variables
   int i, j, k, l, idx;
   MPI_Arg myrank;
-  MPI_Arg one=1;
+  //MPI_Arg one=1;
+  //MPI_Datatype IDataType = (sizeof(int) == 4) ? MPI_INT : MPI_LONG_LONG_INT;
   MPI_Datatype FDataType = (sizeof(float) == 4) ? MPI_FLOAT : MPI_DOUBLE;
-  MPI_Datatype IDataType = (sizeof(int) == 4) ? MPI_INT : MPI_LONG_LONG_INT;
   int x0len = Nx0 + Ng0l + Ng0r;
   int x1len = Nx1 + Ng1l + Ng1r;
   int x2len = Nx2 + Ng2l + Ng2r;
@@ -724,11 +724,10 @@ int EnzoVector::exchange_component(int ivar)
   //  printf("Entering EnzoVector::exchange_component\n");
 
   // some local variables
-  int i, j, k, l, idx;
+  int i, j, k, idx;
   MPI_Arg myrank;
-  MPI_Arg one=1;
   MPI_Datatype FDataType = (sizeof(float) == 4) ? MPI_FLOAT : MPI_DOUBLE;
-  MPI_Datatype IDataType = (sizeof(int) == 4) ? MPI_INT : MPI_LONG_LONG_INT;
+  //MPI_Datatype IDataType = (sizeof(int) == 4) ? MPI_INT : MPI_LONG_LONG_INT;
   int x0len = Nx0 + Ng0l + Ng0r;
   int x1len = Nx1 + Ng1l + Ng1r;
   int x2len = Nx2 + Ng2l + Ng2r;

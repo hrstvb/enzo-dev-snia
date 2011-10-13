@@ -47,19 +47,20 @@ int RebuildHierarchy(TopGridData *MetaData,
 int GalaxySimulationInitialize(FILE *fptr, FILE *Outfptr, 
 			  HierarchyEntry &TopGrid, TopGridData &MetaData)
 {
-  char *DensName = "Density";
-  char *TEName   = "TotalEnergy";
-  char *GEName   = "GasEnergy";
-  char *Vel1Name = "x-velocity";
-  char *Vel2Name = "y-velocity";
-  char *Vel3Name = "z-velocity";
-  char *MetalName = "Metal_Density";
-  char *MetalIaName = "MetalSNIa_Density";
+
+  const char *DensName = "Density";
+  const char *TEName   = "TotalEnergy";
+  const char *GEName   = "GasEnergy";
+  const char *Vel1Name = "x-velocity";
+  const char *Vel2Name = "y-velocity";
+  const char *Vel3Name = "z-velocity";
+  const char *MetalName = "Metal_Density";
+  const char *MetalIaName = "MetalSNIa_Density";
 
   /* declarations */
 
   char  line[MAX_LINE_LENGTH];
-  int   dim, ret, level, disk, i;
+  int   level, dim, ret, i;
 
   /* make sure it is 3D */
   
@@ -262,19 +263,19 @@ int GalaxySimulationInitialize(FILE *fptr, FILE *Outfptr,
  /* set up field names and units */
 
  int count = 0;
- DataLabel[count++] = DensName;
- DataLabel[count++] = TEName;
+ DataLabel[count++] = (char*) DensName;
+ DataLabel[count++] = (char*) TEName;
  if (DualEnergyFormalism)
-   DataLabel[count++] = GEName;
- DataLabel[count++] = Vel1Name;
+   DataLabel[count++] = (char*) GEName;
+ DataLabel[count++] = (char*) Vel1Name;
  if(MetaData.TopGridRank > 1)
-   DataLabel[count++] = Vel2Name;
+   DataLabel[count++] = (char*) Vel2Name;
  if(MetaData.TopGridRank > 2)
-   DataLabel[count++] = Vel3Name;
+   DataLabel[count++] = (char*) Vel3Name;
  if (GalaxySimulationUseMetallicityField)
-   DataLabel[count++] = MetalName;
+   DataLabel[count++] = (char*) MetalName;
  if (StarMakerTypeIaSNe)
-   DataLabel[count++] = MetalIaName;
+   DataLabel[count++] = (char*) MetalIaName;
 
  for (i = 0; i < count; i++)
    DataUnits[i] = NULL;

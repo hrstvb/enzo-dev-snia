@@ -34,7 +34,7 @@ int FSProb::Dump(EnzoVector *ucur)
     fprintf(stderr,"  tnew = %g\n",tnew);
     fprintf(stderr,"  dt = %g\n",dt);
     fprintf(stderr,"  theta = %g\n",theta);
-    fprintf(stderr,"  kappa = %g\n",kappa);
+    fprintf(stderr,"  kappa = %g\n",kappa0);
     fprintf(stderr,"  NGammaDot = %g\n", NGammaDot);
     fprintf(stderr,"  EtaRadius = %g\n", EtaRadius);
     fprintf(stderr,"  EtaCenter = %g %g %g\n", 

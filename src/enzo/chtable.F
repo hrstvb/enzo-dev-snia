@@ -54,7 +54,7 @@ c
 c
 c  Locals
 c
-      integer N, NTI
+      integer N
       real    E0, sigma0, ya, P, yw, y0, y1, x, y, Fy, FNU, FNU2,
      &        SPTMO, SUM, TBB, RAT, FLAMRAT, FNURAT, ALA, A,
      &        FNUPOWBK1, FNUPOWBK2, SPITP(9), FNUITP(9), WORK(9),

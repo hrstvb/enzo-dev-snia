@@ -48,7 +48,6 @@ c
 c
 c  locals
 c
-      integer iii, jjj, kkk
       integer i1, j1, k1, n
       real    xpos, ypos, zpos, dx, dy, dz, fact
       REALSUB edge1, edge2, edge3, half

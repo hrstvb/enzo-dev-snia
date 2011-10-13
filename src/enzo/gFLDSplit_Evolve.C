@@ -585,8 +585,8 @@ int gFLDSplit::Evolve(HierarchyEntry *ThisGrid, float deltat)
     HeIsrc = extsrc->GetData(3);
     HeIIsrc = extsrc->GetData(4);
   }
-  float *Opacity_new = Temperature;
-  float *Opacity_old = OpacityE;
+  //float *Opacity_new = Temperature;
+  //float *Opacity_old = OpacityE;
   float *sol_ec   = sol->GetData(1);
   float *sol_HI   = NULL;
   float *sol_HeI  = NULL;
@@ -596,7 +596,7 @@ int gFLDSplit::Evolve(HierarchyEntry *ThisGrid, float deltat)
     sol_HeI  = sol->GetData(3);
     sol_HeII = sol->GetData(4);
   }
-  float *tmp, factor, epsilon2, *eh_tot, *eh_gas;
+  float epsilon2, *eh_tot, *eh_gas;
   for (int chemstep=0; chemstep<=100; chemstep++) {
 
     // update tchem

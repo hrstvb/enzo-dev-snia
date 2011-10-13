@@ -37,7 +37,7 @@ void AddLevel(LevelHierarchyEntry *LevelArray[], HierarchyEntry *Grid,
 	      int level);
 int FindSubgrids(HierarchyEntry *Grid, int level);
 void WriteListOfInts(FILE *fptr, int N, int nums[]);
-int  ReportMemoryUsage(char *header = NULL);
+int  ReportMemoryUsage(const char *header = NULL);
 int CommunicationShareGrids(HierarchyEntry *GridHierarchyPointer[], int grids);
 int CommunicationLoadBalanceGrids(HierarchyEntry *GridHierarchyPointer[],
 				  int NumberOfGrids, int MoveParticles = TRUE);

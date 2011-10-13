@@ -87,12 +87,12 @@ c
 c
 c  Locals
 c
-      integer i, j1, iter, iradfield, tcmb_idx
-      real dom, qq, vibl, logtem0, logtem9, dlogtem, energy, zr
-      real dt2, ttmin, comp1, comp2, scoef, acoef, HIdot,
-     &     hdlte1, hdlow1, gamma2, x, nH2, nother, fudge, fH2,
-     &     gphdl1, factor, ciefudge, tau, dlogTcmb, logtcmb, metalc_cmb
-      double precision coolunit, dbase1, tbase1, xbase1, rtunits
+      integer i, iter, tcmb_idx
+      real dom, logtem0, logtem9, dlogtem, zr
+      real comp1, comp2,
+     &     hdlte1, hdlow1, gamma2, x, nH2, nother, fudge,
+     &     gphdl1, ciefudge, dlogTcmb, logtcmb, metalc_cmb
+      double precision coolunit, dbase1, tbase1, xbase1
 c
 c  Slice locals
 c 
@@ -507,7 +507,7 @@ c
          logtcmb = log(comp2)
          tcmb_idx = max(1, int((logtcmb-logtem0)/dlogtem)+1)
          dlogTcmb = (logtcmb - (logtem0 + (tcmb_idx-1)*dlogtem)) 
-     $	/ dlogtem
+     $        / dlogtem
          do i = is+1, ie+1
             if (itmask(i)) then
                log_xe = max(min(log(de(i,j,k) / d(i,j,k)), logxe1), 

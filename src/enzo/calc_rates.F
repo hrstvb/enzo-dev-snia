@@ -1163,7 +1163,7 @@ c
 
 !         write(89,1089) hnu, fext(n),sigma24(n),k24, dum, piHI
 
- 1089     format(1p,10(e14.4,1x))
+c 1089     format(1p,10(e14.4,1x))
 c
           dum = hnu - e26*everg
           piHeI = piHeI + fext(n)*sigma26(n)*delnu/hnu*dum/coolunit

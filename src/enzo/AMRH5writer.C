@@ -97,7 +97,6 @@ void AMRHDF5Writer::AMRHDF5Create( const char*      fileName,
 
   /* Create a string array that has the field names */
 
-  char buf[80];
   int NumberOfParticleFields = (ParticlesOn == TRUE) ? 9+nParticleAttr : 0;
   int NumberOfAllFields = nFields + NumberOfParticleFields;
   int iField = 0;
@@ -217,8 +216,6 @@ herr_t AMRHDF5Writer::WriteTextures(  const int    timeStep,
   hid_t gridGrp, dataspace, dataset;
   hsize_t hdims[2] = { dims[0], dims[1] };
   int err = 0;
-  int size = dims[0]*dims[1];
-  int totalSize = 0;
   int i;
 
   /* Write index entry */
@@ -334,7 +331,6 @@ herr_t AMRHDF5Writer::WriteFlat(  const int    timeStep,
   hid_t gridGrp, dataspace, dataset;
   hsize_t hdims[3] = { dims[2], dims[1], dims[0] };
   int err = 0;
-  int size = dims[0] * dims[1] * dims[2];
   char level8bit = (char) levelIndex;
   short shortdims[3] = { dims[0], dims[1], dims[2] };
 
@@ -875,7 +871,6 @@ void AMRHDF5Writer::AMRHDF5CreateSeparateParticles( const char*      fileName,
 
   /* Create a string array that has the field names */
 
-  char buf[80];
   int NumberOfParticleFields = (ParticlesOn == TRUE) ? 9+nParticleAttr : 0;
   int iField = 0;
   char **HDF5_FieldNames = new char*[NumberOfParticleFields];

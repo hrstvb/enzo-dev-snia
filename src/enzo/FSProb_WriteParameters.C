@@ -29,7 +29,7 @@ int FSProb::WriteParameters(FILE *fptr)
   // set restart initial time step to current time step
   fprintf(fptr, "FSRadiationScaling = %22.16e\n", EScale);
   fprintf(fptr, "FSRadiationTheta = %22.16e\n", theta);
-  fprintf(fptr, "FSRadiationOpacity = %22.16e\n", kappa);
+  fprintf(fptr, "FSRadiationOpacity = %22.16e\n", kappa0);
   fprintf(fptr, "FSRadiationNGammaDot = %22.16e\n", NGammaDot);
   fprintf(fptr, "FSRadiationEtaRadius = %22.16e\n", EtaRadius);
   fprintf(fptr, "FSRadiationEtaCenter = %22.16e %22.16e %22.16e\n", 
