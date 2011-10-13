@@ -13,7 +13,9 @@
 ************************************************************************/
  
 // This routine intializes a new simulation based on the parameter file.
-//
+ 
+#include "ParameterControl/ParameterControl.h"
+extern Configuration Param;
  
 #include <string.h>
 #include <stdio.h>
@@ -28,7 +30,22 @@
 #include "Grid.h"
 #include "Hierarchy.h"
 #include "TopGridData.h"
- 
+
+const char config_shock_in_a_box_defaults[] = 
+"### SHOCK IN A BOX DEFAULTS ###\n"
+"\n"
+"Problem: {\n"
+"    ShockInABox: {\n"
+"        Direction = 0;\n"
+"        Boundary = 0.5;\n"
+"        Density = [-99999.0, -99999.0];\n"
+"        Pressure = [-99999.0, -99999.0];\n"
+"        Velocity = [-99999.0, -99999.0];\n"
+"        SubgridLeft = 0.0;"
+"        SubgridRight = 0.0;"
+"    };\n"
+"};\n";
+
 int ShockInABoxInitialize(FILE *fptr, FILE *Outfptr, HierarchyEntry &TopGrid,
 			  TopGridData &MetaData, ExternalBoundary &Exterior)
 {
@@ -50,62 +67,55 @@ int ShockInABoxInitialize(FILE *fptr, FILE *Outfptr, HierarchyEntry &TopGrid,
  
   FLOAT ShockInABoxBoundary = 0.5;     //
  
+ 
+  FLOAT ShockInABoxSubgridLeft  = 0.0;
+  FLOAT ShockInABoxSubgridRight = 0.0;
+ 
+
   float d1 = 1, v1 = 0, m = 2, p1 = 1, d2, p2, v2, c1, shockspeed = 0;
  
   d2 = d1*((Gamma+1)*m*m)/((Gamma-1)*m*m + 2);
   p2 = p1*(2.0*Gamma*m*m - (Gamma-1))/(Gamma+1);
   c1 = sqrt(Gamma*p1/d1);
   v2 = m*c1*(1-d1/d2);
- 
+
   shockspeed = 0.9*c1 * m;
- 
-  ShockInABoxDirection   = 0;
-  ShockInABoxDensity[0]  = d1;
-  ShockInABoxVelocity[0] = shockspeed-v1;
+
   ShockInABoxPressure[0] = p1;
- 
-  ShockInABoxDensity[1]  = d2;
   ShockInABoxPressure[1] = p2;
-  ShockInABoxVelocity[1] = shockspeed-v2;
+
+  ShockInABoxDensity[0] = d1;
+  ShockInABoxDensity[1] = d2;
+
+  ShockInABoxVelocity[0] = shockspeed - v1;
+  ShockInABoxVelocity[1] = shockspeed - v2;
+
+  Param.SetArray("Problem.ShockInABox.Density",ShockInABoxDensity);
+  
+  Param.SetArray("Problem.ShockInABox.Pressure", ShockInABoxPressure);
+  
+  Param.SetArray("Problem.ShockInABox.Velocity", ShockInABoxVelocity);
+
+
+
+  /* read parameters */
+  
+  Param.GetScalar(ShockInABoxDirection, "Problem.ShockInABox.Direction");
+  
+  Param.GetScalar(ShockInABoxBoundary, "Problem.ShockInABox.Boundary");
+  
+  Param.GetArray(ShockInABoxDensity, "Problem.ShockInABox.Density");
+  
+  Param.GetArray(ShockInABoxPressure, "Problem.ShockInABox.Pressure");
+  
+  Param.GetArray(ShockInABoxVelocity, "Problem.ShockInABox.Velocity");
+  
+  Param.GetScalar(ShockInABoxSubgridLeft, "Problem.ShockInABox.SubgridLeft");
+  Param.GetScalar(ShockInABoxSubgridRight, "Problem.ShockInABox.SubgridRight");
+
+
  
-  FLOAT ShockInABoxSubgridLeft  = 0.0;
-  FLOAT ShockInABoxSubgridRight = 0.0;
  
-  /* read input from file */
- 
-  while (fgets(line, MAX_LINE_LENGTH, fptr) != NULL) {
- 
-    ret = 0;
- 
-    /* read parameters */
- 
-    ret += sscanf(line, "ShockInABoxBoundary = %"PSYM, &ShockInABoxBoundary);
- 
-    ret += sscanf(line, "ShockInABoxLeftDensity = %"FSYM,
-		  &ShockInABoxDensity[0]);
-    ret += sscanf(line, "ShockInABoxLeftPressure = %"FSYM,
-		  &ShockInABoxPressure[0]);
-    ret += sscanf(line, "ShockInABoxLeftVelocity = %"FSYM,
-		  &ShockInABoxVelocity[0]);
- 
-    ret += sscanf(line, "ShockInABoxRightDensity = %"FSYM,
-		  &ShockInABoxDensity[1]);
-    ret += sscanf(line, "ShockInABoxRightPressure = %"FSYM,
-		  &ShockInABoxPressure[1]);
-    ret += sscanf(line, "ShockInABoxRightVelocity = %"FSYM,
-		  &ShockInABoxVelocity[1]);
- 
-    ret += sscanf(line, "ShockInABoxSubgridLeft = %"PSYM,
-		  &ShockInABoxSubgridLeft);
-    ret += sscanf(line, "ShockInABoxSubgridRight = %"PSYM,
-		  &ShockInABoxSubgridRight);
- 
-    /* if the line is suspicious, issue a warning */
- 
-    if (ret == 0 && strstr(line, "=") && strstr(line, "ShockInABox"))
-      fprintf(stderr, "warning: the following parameter line was not interpreted:\n%s\n", line);
- 
-  }
  
   /* set up grid */
  
