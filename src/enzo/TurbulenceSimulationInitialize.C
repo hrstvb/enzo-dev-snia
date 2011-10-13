@@ -18,6 +18,10 @@
  
 // This routine intializes a new simulation based on the parameter file.
 //
+
+#include "ParameterControl/ParameterControl.h"
+extern Configuration Param;
+
  
 #ifdef USE_MPI
 #include "mpi.h"
