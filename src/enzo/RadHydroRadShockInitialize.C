@@ -63,12 +63,28 @@ int RadHydroRadShockInitialize(FILE *fptr, FILE *Outfptr,
   //  6. Problem Type (1 = astrophysical setup parameters;
   //                   2=  "lab" setup parameters, after Lowrie)
 
-  float DensityConstant  = 1.0;
-  float GasTempConstant  = 1.0;
-  float RadTempConstant  = 1.0;
-  float VelocityConstant = 1.0;
-  int   ShockDir    = 0;
-  int   CGSType     = 1;
+  const char config_rad_hydro_rad_shock_defaults[] = 
+  "### RAD HYDRO RAD SHOCK DEFAULTS ###\n"
+  "\n"
+  "Problem: {\n"
+  "    RadHydro: {\n"
+  "        DensityConstant  = 1.0;\n"
+  "        GasTempConstant  = 1.0;\n"
+  "        RadTempConstant  = 1.0;\n"
+  "        VelocityConstant = 1.0;\n"
+  "        ShockDir    = 0;\n"
+  "        CGSType     = 1;\n"
+  "    };\n"
+  "};\n"; 
+
+  float DensityConstant;
+  float GasTempConstant;
+  float RadTempConstant;
+  float VelocityConstant;
+  int   ShockDir;
+  int   CGSType;
+
+  Param.Update(config_rad_hydro_rad_shock_defaults);
 
   // overwrite parameters from RadHydroParamFile file, if it exists
   char line[MAX_LINE_LENGTH];
@@ -76,16 +92,13 @@ int RadHydroRadShockInitialize(FILE *fptr, FILE *Outfptr,
   if (MetaData.RadHydroParameterFname != NULL) {
     FILE *RHfptr;
     if ((RHfptr = fopen(MetaData.RadHydroParameterFname, "r")) != NULL) {
-      while (fgets(line, MAX_LINE_LENGTH, RHfptr) != NULL) {
-	ret = 0;
-	// read relevant problem parameters
-	ret += sscanf(line, "DensityConstant = %"FSYM, &DensityConstant);
-	ret += sscanf(line, "GasTempConstant = %"FSYM, &GasTempConstant);
-	ret += sscanf(line, "RadTempConstant = %"FSYM, &RadTempConstant);
-	ret += sscanf(line, "VelocityConstant = %"FSYM, &VelocityConstant);
-	ret += sscanf(line, "ShockDir = %"ISYM, &ShockDir);
-	ret += sscanf(line, "CGSType = %"ISYM, &CGSType);
-      } // end input from parameter file
+      // read relevant problem parameters
+      Param.GetScalar(DensityConstant, "Problem.RadHydro.DensityConstant");
+      Param.GetScalar(GasTempConstant, "Problem.RadHydro.GasTempConstant");
+      Param.GetScalar(RadTempConstant, "Problem.RadHydro.RadTempConstant");
+      Param.GetScalar(VelocityConstant, "Problem.RadHydro.VelocityConstant");
+      Param.GetScalar(ShockDir, "Problem.RadHydro.ShockDir");
+      Param.GetScalar(CGSType, "Problem.RadHydro.CGSType");
       fclose(RHfptr);
     }
   }
