@@ -63,10 +63,25 @@ int RadHydroStreamTestInitialize(FILE *fptr, FILE *Outfptr,
   //  3. initial time step size
   //  4. dimension for streaming test problem {0,1,2}
   //  5. direction for streaming radiation {0:l->r, 1:r->l}
-  float RadHydroDensity   = 1.0;
-  float RadHydroRadEnergy = 1.0e-10;
-  int RadStreamDim        = 0;
-  int RadStreamDir        = 0;
+
+  const char config_rad_hydro_stream_test_defaults[] = 
+  "### RAD HYDRO STREAM DEFAULTS ###\n"
+  "\n"
+  "Problem: {\n"
+  "    RadHydro: {\n"
+  "        Density   = 1.0;\n"
+  "        RadEnergy = 1.0e-10;\n"
+  "        RadStreamDim        = 0;\n"
+  "        RadStreamDir        = 0;\n"
+  "    };\n"
+  "};\n"; 
+
+  float RadHydroDensity;
+  float RadHydroRadEnergy;
+  int RadStreamDim;
+  int RadStreamDir;
+
+  Param.Update(config_rad_hydro_stream_test_defaults);
 
   // overwrite parameters from RadHydroParamFile file, if it exists
   char line[MAX_LINE_LENGTH];
@@ -74,14 +89,11 @@ int RadHydroStreamTestInitialize(FILE *fptr, FILE *Outfptr,
   if (MetaData.RadHydroParameterFname != NULL) {
     FILE *RHfptr;
     if ((RHfptr = fopen(MetaData.RadHydroParameterFname, "r")) != NULL) {
-      while (fgets(line, MAX_LINE_LENGTH, RHfptr) != NULL) {
-	ret = 0;
-	// read relevant problem parameters
-	ret += sscanf(line, "RadHydroDensity = %"FSYM, &RadHydroDensity);
-	ret += sscanf(line, "RadHydroRadEnergy = %"FSYM, &RadHydroRadEnergy);
-	ret += sscanf(line, "RadStreamDim = %"ISYM, &RadStreamDim);
-	ret += sscanf(line, "RadStreamDir = %"ISYM, &RadStreamDir);
-      } // end input from parameter file
+      // read relevant problem parameters
+      Param.GetScalar(RadHydroDensity, "Problem.RadHydro.Density");
+      Param.GetScalar(RadHydroRadEnergy, "Problem.RadHydro.RadEnergy");
+      Param.GetScalar(RadStreamDim, "Problem.RadHydro.RadStreamDim");
+      Param.GetScalar(RadStreamDir, "Problem.RadHydro.RadStreamDir");
       fclose(RHfptr);
     }
   }
