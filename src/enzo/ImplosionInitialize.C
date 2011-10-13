@@ -70,7 +70,7 @@ extern Configuration Param;
 
 /* Set default parameter values. */
 
-const char config_cosmology_simulation_defaults[] =
+const char config_implosion_defaults[] =
 "### IMPLOSION DEFAULTS ###\n"
 "\n"
 "Problem: {\n"

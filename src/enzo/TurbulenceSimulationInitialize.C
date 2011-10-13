@@ -46,6 +46,14 @@ extern Configuration Param;
 #include "fortran.def"
 #include "error.h"
 #include "message.h"
+
+const char config_cosmology_simulation_defaults[] =
+"### COSMOLOGY SIMULATION DEFAULTS ###\n"
+"\n"
+"Problem: {\n"
+"    CosmologySimulation: {\n"
+
+
  
 /* function prototypes */
  
