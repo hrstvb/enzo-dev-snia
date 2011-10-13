@@ -25,18 +25,19 @@ c
 c -------------------------------------------------------------------
 c
       implicit NONE
+#include "fortran_types.def"
 c
 c     Arguments
 c
-      integer is, ie, ijk, iradtype, iradshield, nratec, 
+      INTG_PREC is, ie, ijk, iradtype, iradshield, nratec, 
      &        in, jn, kn, ispecies, j, k, threebody
-      real temstart, temend, tgas1d(in), tgasold(in), dom
+      R_PREC temstart, temend, tgas1d(in), tgasold(in), dom
       double precision coolunit, tbase1
       logical itmask(in), eqmask(in)
 c
 c     Chemistry rates as a function of temperature
 c
-      real k1a (nratec), k2a (nratec), k3a (nratec), k4a (nratec), 
+      R_PREC k1a (nratec), k2a (nratec), k3a (nratec), k4a (nratec), 
      &     k5a (nratec), k6a (nratec), k7a (nratec), k8a (nratec), 
      &     k9a (nratec), k10a(nratec), k11a(nratec), k12a(nratec), 
      &     k13a(nratec), k14a(nratec), k15a(nratec), k16a(nratec), 
@@ -49,14 +50,14 @@ c
 c
 c     Density fields
 c
-c      real    d(in,jn,kn), HI(in,jn,kn),   HII(in,jn,kn),
+c      R_PREC    d(in,jn,kn), HI(in,jn,kn),   HII(in,jn,kn),
 c     &        HeI(in,jn,kn), HeII(in,jn,kn)
-       real d(in,jn,kn)
-       real*8 HI(ijk), HII(ijk), HeI(ijk), HeII(ijk)
+       R_PREC d(in,jn,kn)
+       REAL*8 HI(ijk), HII(ijk), HeI(ijk), HeII(ijk)
 c
 c     Returned rate values
 c
-      real k1 (ijk), k2 (ijk), k3 (ijk), k4 (ijk), k5 (ijk),
+      R_PREC k1 (ijk), k2 (ijk), k3 (ijk), k4 (ijk), k5 (ijk),
      &     k6 (ijk), k7 (ijk), k8 (ijk), k9 (ijk), k10(ijk),
      &     k11(ijk), k12(ijk), k13(ijk), k14(ijk), k15(ijk),
      &     k16(ijk), k17(ijk), k18(ijk), k19(ijk), k21(ijk),
@@ -66,26 +67,27 @@ c
 c
 c     1D temporaries (passed in)
 c 
-      integer indixe(ijk)
-      real t1(ijk), t2(ijk), logtem(ijk), tdef(ijk)
+      INTG_PREC indixe(ijk)
+      R_PREC t1(ijk), t2(ijk), logtem(ijk), tdef(ijk)
 c     &     k13dd_dot1(ijk,7), k13dd_dot2(ijk,7)
 c
 c     Parameters
 c
       double precision everg, e24, e26, temp
-      parameter(everg = ev2erg, e24 = 13.6d0, e26 = 24.6d0)
+      parameter(everg = ev2erg, e24 = 13.6_RKIND, 
+     &          e26 = 24.6_RKIND)
 c
 c     locals
 c
-      integer i, n1
-      real factor, x, logtem0, logtem9, dlogtem, nh
+      INTG_PREC i, n1
+      R_PREC factor, x, logtem0, logtem9, dlogtem, nh
 c     &     k13dd_dot(ijk, 7), dd1, dd2, dd3, dd4, dd5, dd6, dd7
 c
 c     Set log values of start and end of lookup tables
 c
       logtem0 = log(temstart)
       logtem9 = log(temend)
-      dlogtem = (log(temend) - log(temstart))/real(nratec-1)
+      dlogtem = (log(temend) - log(temstart))/REAL(nratec-1,RKIND)
 c
       do i = is+1, ie+1
       if (itmask(i).eqv..true.) then
@@ -94,14 +96,14 @@ c
 c        Compute time-centered temperature (and log)
 c
          logtem(i) = log(tgas1d(i))
-c         logtem(i) = log(0.5*(tgas1d(i)+tgasold(i)))
+c         logtem(i) = log(0.5_RKIND*(tgas1d(i)+tgasold(i)))
          logtem(i) = max(logtem(i), logtem0)
          logtem(i) = min(logtem(i), logtem9)
 c
 c        Find index into table and precompute interpolation values
 c
          indixe(i) = min(nratec-1,
-     &                max(1,int((logtem(i)-logtem0)/dlogtem)+1))
+     &        max(1_IKIND,int((logtem(i)-logtem0)/dlogtem,IKIND)+1))
          t1(i) = (logtem0 + (indixe(i) - 1)*dlogtem)
          t2(i) = (logtem0 + (indixe(i)    )*dlogtem)
          tdef(i) = t2(i) - t1(i)
@@ -114,7 +116,7 @@ c
      &           *(k1a(indixe(i)LEFT) -k1a(indixe(i)RIGHT))/tdef(i)
          k2(i) = k2a(indixe(i)) + (logtem(i) - t1(i))
      &           *(k2a(indixe(i)LEFT) -k2a(indixe(i)RIGHT))/tdef(i)
-c         if(d(i,j,k)*dom.gt.1e12)k2(i)=tiny
+c         if(d(i,j,k)*dom.gt.1e12_RKIND)k2(i)=tiny
          k3(i) = k3a(indixe(i)) + (logtem(i) - t1(i))
      &           *(k3a(indixe(i)LEFT) -k3a(indixe(i)RIGHT))/tdef(i)
          k4(i) = k4a(indixe(i)) + (logtem(i) - t1(i))
@@ -229,13 +231,15 @@ c
       if (iradtype .eq. 8) then
          do i = is+1, ie+1
          if (itmask(i).eqv..true.) then
-            x = max(HII(i)/(HI(i)+HII(i)), 1.0d-4)
-            factor = 0.3908d0*(1.d0 - x**0.4092d0)**1.7592d0
-            k24shield(i) = k24shield(i) + 
-     &         factor*(piHI + 0.08d0*piHeI)/(e24*everg) *coolunit*tbase1
-            factor = 0.0554d0*(1.d0 - x**0.4614d0)**1.6660d0
-            k26shield(i) = k26shield(i) + 
-     &         factor*(piHI/0.08d0 + piHeI)/(e26*everg) *coolunit*tbase1
+            x = max(HII(i)/(HI(i)+HII(i)), 1.d-4)
+            factor = 0.3908_RKIND*(1._RKIND - 
+     &           x**0.4092_RKIND)**1.7592_RKIND
+            k24shield(i) = k24shield(i) + factor*(piHI + 
+     &           0.08_RKIND*piHeI)/(e24*everg) *coolunit*tbase1
+            factor = 0.0554_RKIND*(1._RKIND - 
+     &           x**0.4614_RKIND)**1.666_RKIND
+            k26shield(i) = k26shield(i) + factor*(piHI/0.08_RKIND + 
+     &           piHeI)/(e26*everg) *coolunit*tbase1
          endif
          enddo
       endif
@@ -253,15 +257,16 @@ c
             if ((ispecies .gt. 1).and.(threebody.eq.0)) then
                do i = is+1, ie+1
                if (itmask(i).eqv..true.) then
-                  nh = min(HI(i)*dom, 1.0d9)
+                  nh = min(HI(i)*dom, 1.d9)
                   k13(i) = tiny
-                  if (tgas1d(i) .ge. 500.d0 .and.
-     &                tgas1d(i) .lt. 1.0d6) then
+                  if (tgas1d(i) .ge. 500._RKIND .and.
+     &                tgas1d(i) .lt. 1.e6_RKIND) then
                      k13(i) = k13dd(i,1)-k13dd(i,2)/
-     &                          (1.d0+(nh/k13dd(i,5))**k13dd(i,7))
+     &                          (1._RKIND+(nh/k13dd(i,5))**k13dd(i,7))
      &                      + k13dd(i,3)-k13dd(i,4)/
-     &                          (1.d0+(nh/k13dd(i,6))**k13dd(i,7))
-                     k13(i) = max(10.d0**k13(i), tiny)
+     &                          (1._RKIND+(nh/k13dd(i,6))**k13dd(i,7))
+                     k13(i) = max(10._RKIND**k13(i), 
+     &                    REAL(tiny,RKIND))
                   endif
                endif
                enddo
