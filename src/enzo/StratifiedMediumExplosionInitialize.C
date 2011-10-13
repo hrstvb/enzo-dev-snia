@@ -15,6 +15,9 @@
 //  RETURNS: SUCCESS or FAIL
 //
 ////////////////////////////////////////////////////////////////////////////////
+
+#include "ParameterControl/ParameterControl.h"
+extern Configuration Param;
  
 #include <string.h>
 #include <stdio.h>
@@ -29,6 +32,19 @@
 #include "Grid.h"
 #include "Hierarchy.h"
 #include "TopGridData.h"
+
+/* Set default parameter values. */
+
+const char config_stratified_medium_explosion_defaults[] =
+"### STRATIFIED MEDIUM EXPLOSION DEFAULTS ###\n"
+"\n"
+"Problem: {\n"
+"    StratifiedMediumExplosion: {\n"
+// FIXME
+"    };\n"
+"};\n";
+
+
 
 int GetUnits(float *DensityUnits, float *LengthUnits,
 	     float *TemperatureUnits, float *TimeUnits,

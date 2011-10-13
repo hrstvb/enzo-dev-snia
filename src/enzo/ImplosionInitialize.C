@@ -118,14 +118,14 @@ int ImplosionInitialize(FILE *fptr, FILE *Outfptr, HierarchyEntry &TopGrid,
 
   /* read parameters */
 
-  Param.GetScalar(ImplosionDensity,"Implosion.Density");
-  Param.GetScalar(ImplosionPressure, "Implosion.Pressure");
+  Param.GetScalar(ImplosionDensity,"Problem.Implosion.Density");
+  Param.GetScalar(ImplosionPressure, "Problem.Implosion.Pressure");
 
-  Param.GetScalar(ImplosionDiamondDensity,"Implosion.DiamondDensity");
-  Param.GetScalar(ImplosionDiamondPressure,"Implosion.DiamondPressure");
+  Param.GetScalar(ImplosionDiamondDensity,"Problem.Implosion.DiamondDensity");
+  Param.GetScalar(ImplosionDiamondPressure,"Problem.Implosion.DiamondPressure");
 
-  Param.GetScalar(ImplosionSubgridLeft,"Implosion.SubgridLeft");
-  Param.GetScalar(ImplosionSubgridRight, "Implosion.SubgridRight");
+  Param.GetScalar(ImplosionSubgridLeft,"Problem.Implosion.SubgridLeft");
+  Param.GetScalar(ImplosionSubgridRight, "Problem.Implosion.SubgridRight");
  
  
   /* Compute total energies */
