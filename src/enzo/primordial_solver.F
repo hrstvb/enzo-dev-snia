@@ -1,7 +1,7 @@
 #include "fortran.def"
 #include "phys_const.def"
-#define EQOFFSET 1.5d0
-#define EQOVERLAP 3.d0
+#define EQOFFSET 1.5_RKIND
+#define EQOVERLAP 3._RKIND
 #define TOLERANCE 1d-20
 c=======================================================================
 c/////////////////////  SUBROUTINE SOLVE_RATE  \\\\\\\\\\\\\\\\\\\\\\\\\
@@ -100,19 +100,20 @@ c
 c-----------------------------------------------------------------------
 c
       implicit NONE
+#include "fortran_types.def"
 c
 c  General Arguments
 c
-      integer in, jn, kn, is, js, ks, ie, je, ke, nratec, imethod,
+      INTG_PREC in, jn, kn, is, js, ks, ie, je, ke, nratec, imethod,
      &        idual, iexpand, ih2co, ipiht, ispecies, idim,
      &        iradtype, nfreq, iradshield, iciecool, 
      &        ih2optical, errcode, omaskflag, threebody
-      real    aye, temstart, temend, eta1, eta2, gamma,
+      R_PREC    aye, temstart, temend, eta1, eta2, gamma,
      &        utim, uxyz, uaye, urho, utem, fh, dtoh, uvel
 #ifdef PYFORT
-      real    dt(in,jn,kn)
+      R_PREC    dt(in,jn,kn)
 #else
-      real    dt
+      R_PREC    dt
 #endif    
 c
 c  Density, energy and velocity fields fields
@@ -132,48 +133,48 @@ CF2PY INTENT(INOUT) ::  H2Ieqtable(nebins,nrhobins)
 CF2PY INTENT(INOUT) ::  tgasouti(in,jn,kn)
 CF2PY INTENT(INOUT) ::  tgasoutf(in,jn,kn)
 CF2PY INTENT(INOUT) ::  geout(in,jn,kn)
-      real    de(in,jn,kn),   HI(in,jn,kn),   HII(in,jn,kn),
+      R_PREC    de(in,jn,kn),   HI(in,jn,kn),   HII(in,jn,kn),
      &       HeI(in,jn,kn), HeII(in,jn,kn), HeIII(in,jn,kn)
-      real    HM(in,jn,kn),  H2I(in,jn,kn), H2II(in,jn,kn)
-      real    DI(in,jn,kn),  DII(in,jn,kn), HDI(in,jn,kn)
-      real    d(in,jn,kn),   ge(in,jn,kn),     e(in,jn,kn),
+      R_PREC    HM(in,jn,kn),  H2I(in,jn,kn), H2II(in,jn,kn)
+      R_PREC    DI(in,jn,kn),  DII(in,jn,kn), HDI(in,jn,kn)
+      R_PREC    d(in,jn,kn),   ge(in,jn,kn),     e(in,jn,kn),
      &        u(in,jn,kn),    v(in,jn,kn),     w(in,jn,kn),
      &        tgasouti(in,jn,kn)
 #ifdef PYFORT
      &        ,tgasoutf(in,jn,kn),geout(in,jn,kn)
 #endif
 #ifdef UNUSED_TABULATED_EQ
-      integer nebins,nrhobins
-      real    HIeqtable(nrhobins,nebins), HIIeqtable(nrhobins,nebins),
+      INTG_PREC nebins,nrhobins
+      R_PREC    HIeqtable(nrhobins,nebins), HIIeqtable(nrhobins,nebins),
      &        H2Ieqtable(nrhobins,nebins),
      &        rhostart, rhoend,
      &        estart, eend
 #endif
 #ifdef PYFORT
-      integer subgridmask(in,jn,kn)
+      INTG_PREC subgridmask(in,jn,kn)
 #else
-      integer subgridmask
+      INTG_PREC subgridmask
 #endif
-      integer subgridtempmask(in,jn,kn)
+      INTG_PREC subgridtempmask(in,jn,kn)
 c
 c  Cooling tables (coolings rates as a function of temperature)
 c
-      real    hyd01ka(nratec), h2k01a(nratec), vibha(nratec), 
+      R_PREC    hyd01ka(nratec), h2k01a(nratec), vibha(nratec), 
      &        rotha(nratec), rotla(nratec), gpldla(nratec),
      &        gphdla(nratec), hdltea(nratec), hdlowa(nratec),
      $        hdcoola(nratec, 5), ciecoa(nratec)
-      real    gaHIa(nratec), gaH2a(nratec), gaHea(nratec),
+      R_PREC    gaHIa(nratec), gaH2a(nratec), gaHea(nratec),
      &        gaHpa(nratec), gaela(nratec)
-      real    ceHIa(nratec), ceHeIa(nratec), ceHeIIa(nratec),
+      R_PREC    ceHIa(nratec), ceHeIa(nratec), ceHeIIa(nratec),
      &        ciHIa(nratec), ciHeIa(nratec), ciHeISa(nratec), 
      &        ciHeIIa(nratec), reHIIa(nratec), reHeII1a(nratec), 
      &        reHeII2a(nratec), reHeIIIa(nratec), brema(nratec)
-      real    compa, piHI, piHeI, piHeII, comp_xraya, comp_temp,
+      R_PREC    compa, piHI, piHeI, piHeII, comp_xraya, comp_temp,
      &        inutot(nfreq), avgsighp, avgsighep, avgsighe2p
 c
 c  Chemistry tables (rates as a function of temperature)
 c
-      real k1a (nratec), k2a (nratec), k3a (nratec), k4a (nratec), 
+      R_PREC k1a (nratec), k2a (nratec), k3a (nratec), k4a (nratec), 
      &     k5a (nratec), k6a (nratec), k7a (nratec), k8a (nratec), 
      &     k9a (nratec), k10a(nratec), k11a(nratec), k12a(nratec), 
      &     k13a(nratec), k14a(nratec), k15a(nratec), k16a(nratec), 
@@ -186,60 +187,60 @@ c
 c
 c  Parameters
 c
-      integer itmax, ijk
+      INTG_PREC itmax, ijk
       parameter (itmax = 1e8, ijk = MAX_ANY_SINGLE_DIRECTION)
       double precision mh
       parameter (mh = mass_h)
 c
 c  Locals
 c
-      integer i, j, k, n, m, iter, inneriter, imin, ifedtgas
-      real ttmin, dom, energy(ijk), comp1, comp2, maxchange, fH2, dfH2,
-     &     scaling, prevfH2, HIfrac(ijk), HIIfrac(ijk), H2Ifrac(ijk)
+      INTG_PREC i, j, k, n, m, iter, inneriter, imin, ifedtgas
+      double precision ttmin, dom, energy(ijk), comp1, comp2, maxchange, 
+     &     fH2, dfH2, scaling, prevfH2, HIfrac(ijk), HIIfrac(ijk), 
+     &     H2Ifrac(ijk)
       double precision coolunit, dbase1, tbase1, xbase1, kunit,
-     &                 kunit_3bdy,
-     &                  chunit, ciHIunit, ciHeIunit, ciHeIIunit
+     &     kunit_3bdy, chunit, ciHIunit, ciHeIunit, ciHeIIunit
 
 c  Stuff for TWOSTEP
-      real*8 s(ijk,NSPECIES), sp(ijk,NSPECIES), sp1(ijk,NSPECIES),
+      REAL*8 s(ijk,NSPECIES), sp(ijk,NSPECIES), sp1(ijk,NSPECIES),
      &       dsp(ijk,NSPECIES), dsq(ijk,NSPECIES), fd(ijk),
      &       temp1, temp2, temp3, kwq, kws,
      &       tsm1, tsp, ts, ty, dsqge, dspge,
      &       temptsc2, temp2tsc, temptsc12
-      real*8 qt, sm1(ijk,NSPECIES), 
+      REAL*8 qt, sm1(ijk,NSPECIES), 
      &       tsgamma(ijk), tsc(ijk), tscapy(ijk,NSPECIES)
-      real*8 temp, dtot(ijk), rtot(ijk), h2heatp(ijk), h2heatm(ijk),
+      REAL*8 temp, dtot(ijk), rtot(ijk), h2heatp(ijk), h2heatm(ijk),
      &       hiheatp(ijk), heiheatp(ijk), heiiheatp(ijk),
      &       esterr(ijk), itererror
-      integer iHI,iHII,ide,iHeI,iHeII,iHeIII,iH2I,iH2II,iHM,ige,
+      INTG_PREC iHI,iHII,ide,iHeI,iHeII,iHeIII,iH2I,iH2II,iHM,ige,
      &        iDI,iDII,iHDI,ncspecies,
      &        coriter, totaliter, nciter, oreas
-      real*8 dtcoef(NSPECIES)
+      REAL*8 dtcoef(NSPECIES)
       logical capycare(NSPECIES), eqable(NSPECIES)
       parameter (ncspecies=11, nciter=1)
 c
 c  row temporaries
 c 
-      integer indixe(ijk)
-      real t1(ijk), t2(ijk), logtem(ijk), tdef(ijk),
+      INTG_PREC indixe(ijk)
+      R_PREC t1(ijk), t2(ijk), logtem(ijk), tdef(ijk),
      &     dtit(ijk), ttot(ijk), p2d(ijk), tgas(ijk), tgasold(ijk),
      &     olddtit(ijk), correctH(ijk), 
      &     correctHe(ijk), correctD(ijk), geprime(ijk), dprime(ijk)
 c
 c  Rate equation row temporaries
 c
-      real gamma2(ijk), tto, scr1, scr2, ascr
+      R_PREC gamma2(ijk), tto, scr1, scr2, ascr
       double precision tgastemp
-      real*8 H2Idot_prev(ijk)
-      real k24shield(ijk), k25shield(ijk), k26shield(ijk)
-      real r1 (ijk), r2 (ijk), r3 (ijk), r4 (ijk), r5 (ijk),
+      REAL*8 H2Idot_prev(ijk)
+      R_PREC k24shield(ijk), k25shield(ijk), k26shield(ijk)
+      R_PREC r1 (ijk), r2 (ijk), r3 (ijk), r4 (ijk), r5 (ijk),
      &     r6 (ijk), r7 (ijk), r8 (ijk), r9 (ijk), r10(ijk),
      &     r11(ijk), r12(ijk), r13(ijk), r14(ijk), r15(ijk),
      &     r16(ijk), r17(ijk), r18(ijk), r19(ijk), r21(ijk),
      &     r22(ijk), r23(ijk), r50(ijk), r51(ijk), r52(ijk), 
      &     r53(ijk), r54(ijk), r55(ijk), r56(ijk),
      &     r24, r25, r26, r27, r28, r29, r30, r31
-      real k1 (ijk), k2 (ijk), k3 (ijk), k4 (ijk), k5 (ijk),
+      R_PREC k1 (ijk), k2 (ijk), k3 (ijk), k4 (ijk), k5 (ijk),
      &     k6 (ijk), k7 (ijk), k8 (ijk), k9 (ijk), k10(ijk),
      &     k11(ijk), k12(ijk), k13(ijk), k14(ijk), k15(ijk),
      &     k16(ijk), k17(ijk), k18(ijk), k19(ijk), k21(ijk),
@@ -253,12 +254,12 @@ c
      &     reHII(ijk), reHeII1(ijk), reHeII2(ijk), reHeIII(ijk),
      &     brem(ijk), edot(ijk), 
      &     edotplus(ijk), edotminus(ijk)
-      real hyd01k(ijk), h2k01(ijk), vibh(ijk), roth(ijk), rotl(ijk),
+      R_PREC hyd01k(ijk), h2k01(ijk), vibh(ijk), roth(ijk), rotl(ijk),
      &     gpldl(ijk), gphdl(ijk), hdlte(ijk), hdlow(ijk), 
      &     hdcool(ijk, 5), cieco(ijk)
 
 #ifdef UNUSED_TABULATED_EQ
-      real estartcode, eendcode, rhostartcode, rhoendcode
+      R_PREC estartcode, eendcode, rhostartcode, rhoendcode
 #endif
 
 c
@@ -268,12 +269,13 @@ c
      &         rejected(ijk), eulermask(ijk),
      &         eqflag, itflag, miscflag, doupdate
 
-      integer totaleq, mins(ijk)
+      INTG_PREC totaleq, mins(ijk)
 
       double precision everg, e24, e26
-      real dlogrho, dloge
-      parameter(everg = ev2erg, e24 = 13.6d0, e26 = 24.6d0)
-      integer totalit
+      R_PREC dlogrho, dloge
+      parameter(everg = ev2erg, e24 = 13.6_RKIND, 
+     &          e26 = 24.6_RKIND)
+      INTG_PREC totalit
       parameter(iHI=1,iHII=2,iHeI=3,iHeII=4,iHeIII=5,
      &          iH2I=6,ige=7,iDI=8,iDII=9,iHDI=10,
      &          ide=11,iHM=12,iH2II=13 ) ! eq species
@@ -298,31 +300,31 @@ c to do this second-order BDF
       eqable(iH2II)     =  .false.
       eqable(iHM)       =  .false.
 
-      dtcoef(iHI)      =  0.1d0
+      dtcoef(iHI)      =  0.1_RKIND
       capycare(iHI)    = .true.
-      dtcoef(iHII)     =  0.1d0
+      dtcoef(iHII)     =  0.1_RKIND
       capycare(iHII)   = .true.
-      dtcoef(ide)      =  0.1d0
+      dtcoef(ide)      =  0.1_RKIND
       capycare(ide)    = .false.
-      dtcoef(iHeI)     =  0.1d0
+      dtcoef(iHeI)     =  0.1_RKIND
       capycare(iHeI)   = .false.
-      dtcoef(iHeII)    =  0.1d0
+      dtcoef(iHeII)    =  0.1_RKIND
       capycare(iHeII)  = .false.
-      dtcoef(iHeIII)   =  0.1d0
+      dtcoef(iHeIII)   =  0.1_RKIND
       capycare(iHeIII) = .false.
-      dtcoef(iH2I)     =  0.01d0
+      dtcoef(iH2I)     =  0.01_RKIND
       capycare(iH2I)   = .true.
-      dtcoef(ige)      =  0.01d0
+      dtcoef(ige)      =  0.01_RKIND
       capycare(ige)    = .true.
-      dtcoef(iDI)      =  1.0d0
+      dtcoef(iDI)      =  1._RKIND
       capycare(iDI)    = .false.
-      dtcoef(iDII)     =  1.0d0
+      dtcoef(iDII)     =  1._RKIND
       capycare(iDII)   = .false.
-      dtcoef(iHDI)     =  1.0d0
+      dtcoef(iHDI)     =  1._RKIND
       capycare(iHDI)   = .false. ! Off for now; should track H2 directly
-      dtcoef(iH2II)    =  1.0d0
+      dtcoef(iH2II)    =  1._RKIND
       capycare(iH2II)  = .false.
-      dtcoef(iHM)      =  1.0d0
+      dtcoef(iHM)      =  1._RKIND
       capycare(iHM)    = .false.
 
 c
@@ -339,18 +341,18 @@ c
       kunit    = (uaye**3 * mh) / (dbase1 * tbase1)
       kunit_3bdy  = kunit * (uaye**3 * mh) / dbase1
 c     4.48 eV = 7.17775d-12 ergs
-      chunit = (7.17775d-12)/(2.d0*uvel*uvel*mh)
-      ciHIunit    = (2.18d-11)/(uvel*uvel*mh)
-      ciHeIunit   = (3.94d-11)/(4.d0*uvel*uvel*mh)
-      ciHeIIunit  = (8.72d-11)/(4.d0*uvel*uvel*mh)
+      chunit = (7.17775e-12_RKIND)/(2._RKIND*uvel*uvel*mh)
+      ciHIunit    = (2.18e-11_RKIND)/(uvel*uvel*mh)
+      ciHeIunit   = (3.94e-11_RKIND)/(4._RKIND*uvel*uvel*mh)
+      ciHeIIunit  = (8.72d-11)/(4._RKIND*uvel*uvel*mh)
 
 #ifdef UNUSED_TABULATED_EQ
-c      rhostartcode = log10((10**rhostart)/(urho*aye**3.d0))
-c      rhoendcode = log10((10**rhoend)/(urho*aye**3.d0))
-      estartcode = log10((10.d0**estart)/(uvel**2.d0))
-      eendcode = log10((10.d0**eend)/(uvel**2.d0))
-      rhostartcode = log10(10.d0**rhostart/(fh*dom))
-      rhoendcode = log10(10.d0**rhoend/(fh*dom))
+c      rhostartcode = log10((10**rhostart)/(urho*aye**3._RKIND))
+c      rhoendcode = log10((10**rhoend)/(urho*aye**3._RKIND))
+      estartcode = log10((10._RKIND**estart)/(uvel**2._RKIND))
+      eendcode = log10((10._RKIND**eend)/(uvel**2._RKIND))
+      rhostartcode = log10(10._RKIND**rhostart/(fh*dom))
+      rhoendcode = log10(10._RKIND**rhoend/(fh*dom))
 #endif
 
 #ifdef PYFORT_OFF
@@ -396,18 +398,18 @@ c        Initialize variables
 c
          iter = 1
          do i = is+1, ie+1
-            ttot(i) = 0.d0
+            ttot(i) = 0._RKIND
             omask(i) = .false.
             rejected(i) = .false.
             fd(i) = fh*d(i,j,k)
 #ifdef PYFORT
             if(subgridmask(i,j,k).eq.1
-     &        .and.dt(i,j,k).gt.0.0d0)then
+     &        .and.dt(i,j,k).gt.0._RKIND)then
               itmask(i)=.true.
             else
                itmask(i)=.false.
             endif
-            dtit(i) = dt(i,j,k)/5.d0
+            dtit(i) = dt(i,j,k)/5._RKIND
 #else
             dtit(i) = dt
             subgridmask = 1
@@ -415,13 +417,13 @@ c
 #endif
             eqmask(i) = .false.
 #ifdef UNUSED_TABULATED_EQ
-            dprime(i) = -35.d0
-            geprime(i) = -35.d0
+            dprime(i) = -35._RKIND
+            geprime(i) = -35._RKIND
             geprime(i) = log10((ge(i,j,k) +
-     &                 (fh - H2I(i,j,k)/d(i,j,k))*chunit)*(uvel**2.d0))
+     &           (fh - H2I(i,j,k)/d(i,j,k))*chunit)*(uvel**2._RKIND))
             dprime(i) = log10(d(i,j,k)*dom*fh)
 c            write(0,*) rhostartcode, rhostart, estartcode, estart
-            if ((dprime(i).gt.rhostart+3.5d0).and.
+            if ((dprime(i).gt.rhostart+3.5_RKIND).and.
      &           (geprime(i).gt.estart))then
                 totaleq = totaleq + 1
 c                eqmask(i) = .true.
@@ -431,27 +433,27 @@ c                write(0,*) (geprime(i).gt.estartcode)
 c                stop
             endif
 #endif
-            s(i,iHI) = max(HI(i,j,k),tiny)
-            s(i,iHII) = max(HII(i,j,k),tiny)
-            s(i,ide) = max(de(i,j,k),tiny)
-            s(i,iHeI) = max(HeI(i,j,k),tiny)
-            s(i,iHeII) = max(HeII(i,j,k),tiny)
-            s(i,iHeIII) = max(HeIII(i,j,k),tiny)
-            s(i,iH2I) = max(H2I(i,j,k),tiny)
-            s(i,iH2II) = max(H2II(i,j,k),tiny)
-            s(i,iHM) = max(HM(i,j,k),tiny)
-            s(i,ige) = max(ge(i,j,k),tiny)
-            s(i,iDI) = max(DI(i,j,k),tiny)
-            s(i,iDII) = max(DII(i,j,k),tiny)
-            s(i,iHDI) = max(HDI(i,j,k),tiny)
+            s(i,iHI) = max(HI(i,j,k),REAL(tiny,RKIND))
+            s(i,iHII) = max(HII(i,j,k),REAL(tiny,RKIND))
+            s(i,ide) = max(de(i,j,k),REAL(tiny,RKIND))
+            s(i,iHeI) = max(HeI(i,j,k),REAL(tiny,RKIND))
+            s(i,iHeII) = max(HeII(i,j,k),REAL(tiny,RKIND))
+            s(i,iHeIII) = max(HeIII(i,j,k),REAL(tiny,RKIND))
+            s(i,iH2I) = max(H2I(i,j,k),REAL(tiny,RKIND))
+            s(i,iH2II) = max(H2II(i,j,k),REAL(tiny,RKIND))
+            s(i,iHM) = max(HM(i,j,k),REAL(tiny,RKIND))
+            s(i,ige) = max(ge(i,j,k),REAL(tiny,RKIND))
+            s(i,iDI) = max(DI(i,j,k),REAL(tiny,RKIND))
+            s(i,iDII) = max(DII(i,j,k),REAL(tiny,RKIND))
+            s(i,iHDI) = max(HDI(i,j,k),REAL(tiny,RKIND))
             dtot(i) = fh*dtoh*d(i,j,k)
             rtot(i) = d(i,j,k)
             h2heatm(i) = tiny
             h2heatp(i) = tiny
             dmask(i) = itmask(i)
-            correctH(i) = 1.0d0
-            tsc(i) = 1.0d0
-            tsgamma(i) = 1.0d0
+            correctH(i) = 1._RKIND
+            tsc(i) = 1._RKIND
+            tsgamma(i) = 1._RKIND
 #ifdef PYFORT
             tgasouti(i,j,k) = tgas(i)
 #endif
@@ -473,20 +475,21 @@ c                stop
 #include "primordial_derivstep.inc"
 
          do n = 1, ncspecies
-           if(dtcoef(n).gt.0.d0) then
+           if(dtcoef(n).gt.0._RKIND) then
              do i = is+1, ie+1
              if((itmask(i).eqv..true.).and.(eqmask(i).eqv..false.))then
                ! Figure out our dtit here
-               kws = min(abs(dsq(i,n)-dsp(i,n)),huge)
-               qt = max(s(i,n),tiny) / max(tiny, kws)
-               temp1 = 0.1d0*abs(dtcoef(n)*qt)
+               kws = min(abs(dsq(i,n)-dsp(i,n)),1.d0*huge)
+               qt = max(s(i,n),REAL(tiny,8)) 
+     &              / max(REAL(tiny,8), kws)
+               temp1 = 0.1_RKIND*abs(dtcoef(n)*qt)
                if(temp1.lt.dtit(i).and.temp1.gt.tiny)then
                  dtit(i) = temp1
                  mins(i) = n
                endif
 #ifdef PYFORT
                tgasouti(i,j,k) = tgas(i)
-c               dtit(i) = dt(i,j,k)/10.d0
+c               dtit(i) = dt(i,j,k)/10._RKIND
 #endif
              endif
              enddo   ! end loop over i
@@ -495,9 +498,10 @@ c               dtit(i) = dt(i,j,k)/10.d0
          do i = is+1, ie+1
          if ((itmask(i).eqv..true.))then!.and.(eqmask(i).eqv..false.))then
 #ifdef PYFORT
-           dtit(i) = min(dt(i,j,k)/2.d0, abs(dt(i,j,k)-ttot(i)),dtit(i))
+           dtit(i) = min(dt(i,j,k)/2._RKIND, 
+     &                   abs(dt(i,j,k)-ttot(i)),dtit(i))
 #else
-           dtit(i) = min(dt/2.d0, abs(dt-ttot(i)), dtit(i))
+           dtit(i) = min(dt/2._RKIND, abs(dt-ttot(i)), dtit(i))
 #endif
            olddtit(i) = dtit(i) ! First iteration!
          endif
@@ -551,14 +555,14 @@ c               dtit(i) = dt(i,j,k)/10.d0
               rejected(i) = .false.
               if(iter.gt.1)then
                 tsc(i) = olddtit(i)/dtit(i) ! c
-                tsgamma(i) = (tsc(i)+1.0d0)/(tsc(i)+2.0d0) ! gamma
+                tsgamma(i) = (tsc(i)+1._RKIND)/(tsc(i)+2._RKIND) ! gamma
                 do n = 1, ncspecies
                   temp2tsc = tsc(i)+tsc(i)
                   temptsc2 = tsc(i)*tsc(i)
-                  temptsc12 = (tsc(i) + 1.0d0)*(tsc(i) + 1.0d0)
+                  temptsc12 = (tsc(i) + 1._RKIND)*(tsc(i) + 1._RKIND)
                   tscapy(i,n) = (temptsc12*sp(i,n)-sm1(i,n))
      &                        / (temptsc2 + temp2tsc)
-                  if(tscapy(i,n).lt.0.0d0.and.
+                  if(tscapy(i,n).lt.0._RKIND.and.
      &               capycare(n).eqv..true.)then
                     if(eqmask(i).eqv..true.)then!.and.eqable(n).eqv..true.)then
                     else
@@ -624,9 +628,9 @@ c         omaskflag = 0
             if((itmask(i).eqv..true.).and.(rejected(i).eqv..false.))then
               ttot(i) = ttot(i) + dtit(i)
 #ifdef PYFORT
-              if(dt(i,j,k).le.1.001d0*ttot(i))then
+              if(dt(i,j,k).le.1.001_RKIND*ttot(i))then
 #else
-              if(dt.le.1.001d0*ttot(i))then
+              if(dt.le.1.001_RKIND*ttot(i))then
 #endif
                 itmask(i) = .false.
 c                write(0,*) d(i,j,k),s(i,iH2I)/d(i,j,k)
@@ -646,8 +650,8 @@ c                write(0,*) 'finishing',i,j,k,iter
             if(iter.gt.itmax)then
               do i=is+1,ie+1
                 if(itmask(i).eqv..true.)then
-                  temp1 = ttot(i)/(
-     &                  (1.0d0/sqrt(1.11d-31*dom*d(i,j,k)))/utim)
+                  temp1 = ttot(i)/((1._RKIND
+     &                  / sqrt(1.11e-31_RKIND*dom*d(i,j,k)))/utim)
 #ifndef PYFORT
 c                  write(0,*)'FAILING?',i,j,k,mins(i),dtit(i),ttot(i),dt,olddtit(i),temp1
 c                  write(0,*)'Tried for:',dt,'but only got',ttot(i)
@@ -675,11 +679,11 @@ c           Guess stepsize for next iteration.
             if(itmask(i).eqv..true.)then
               if(rejected(i).eqv..false.) olddtit(i) = dtit(i)
 #ifdef PYFORT
-              dtit(i) = min(dt(i,j,k)-ttot(i),max(
-     &                  0.5d0,min(2.d0,0.8d0/sqrt(esterr(i))))*dtit(i))
+              dtit(i) = min( 1.d0*(dt(i,j,k)-ttot(i)), max( 0.5d0, 
+     &             min(2.d0, 0.8d0 / sqrt(esterr(i))))*dtit(i))
 #else
-              dtit(i) = min(dt-ttot(i),max(
-     &                  0.5d0,min(2.d0,0.8d0/sqrt(esterr(i))))*dtit(i))
+              dtit(i) = min( 1.d0*(dt-ttot(i)), max( 0.5d0, 
+     &             min(2.d0, 0.8d0 / sqrt(esterr(i))))*dtit(i) )
 #endif
             endif
             enddo
@@ -691,7 +695,7 @@ c
 
          do i=is+1, ie+1
            if(itmask(i).eqv..false.)then
-           if(s(i,ige).le.0.0d0)write(6,*)'ge raspberried',i,j,k
+           if(s(i,ige).le.0._RKIND)write(6,*)'ge raspberried',i,j,k
            HI(i,j,k) = s(i,iHI)
            HII(i,j,k) = s(i,iHII)
            de(i,j,k) = s(i,ide)
@@ -792,20 +796,21 @@ c
 c -------------------------------------------------------------------
 c
       implicit NONE
+#include "fortran_types.def"
 c
 c     Arguments
 c
-      integer in, jn, kn, is, ie, js, je, ks, ke, ispecies
-      real    de(in,jn,kn),   HI(in,jn,kn),   HII(in,jn,kn),
+      INTG_PREC in, jn, kn, is, ie, js, je, ks, ke, ispecies
+      R_PREC    de(in,jn,kn),   HI(in,jn,kn),   HII(in,jn,kn),
      &       HeI(in,jn,kn), HeII(in,jn,kn), HeIII(in,jn,kn)
-      real    HM(in,jn,kn),  H2I(in,jn,kn), H2II(in,jn,kn)
-      real    DI(in,jn,kn),  DII(in,jn,kn), HDI(in,jn,kn)
-      real     d(in,jn,kn)
-      real    factor
+      R_PREC    HM(in,jn,kn),  H2I(in,jn,kn), H2II(in,jn,kn)
+      R_PREC    DI(in,jn,kn),  DII(in,jn,kn), HDI(in,jn,kn)
+      R_PREC     d(in,jn,kn)
+      R_PREC    factor
 c
 c     locals
 c
-      integer i, j, k
+      INTG_PREC i, j, k
 c
 c     Multiply all fields by factor (1/a^3 or a^3)
 c
@@ -854,26 +859,27 @@ c
 c -------------------------------------------------------------------
 c
       implicit NONE
+#include "fortran_types.def"
 c
 c     Arguments
 c
-      integer in, jn, kn, is, ie, js, je, ks, ke, ispecies
-      real    de(in,jn,kn),   HI(in,jn,kn),   HII(in,jn,kn),
+      INTG_PREC in, jn, kn, is, ie, js, je, ks, ke, ispecies
+      R_PREC    de(in,jn,kn),   HI(in,jn,kn),   HII(in,jn,kn),
      &       HeI(in,jn,kn), HeII(in,jn,kn), HeIII(in,jn,kn),
      &         d(in,jn,kn)
-      real    HM(in,jn,kn),  H2I(in,jn,kn), H2II(in,jn,kn)
-      real    DI(in,jn,kn),  DII(in,jn,kn), HDI(in,jn,kn)  
-      real    fh, dtoh, correctH(in), correctHe(in)
+      R_PREC    HM(in,jn,kn),  H2I(in,jn,kn), H2II(in,jn,kn)
+      R_PREC    DI(in,jn,kn),  DII(in,jn,kn), HDI(in,jn,kn)  
+      R_PREC    fh, dtoh, correctH(in), correctHe(in)
 c
 c     Parameters
 c
-      integer ijk, iter
+      INTG_PREC ijk, iter
       parameter (ijk = MAX_ANY_SINGLE_DIRECTION)
 c
 c     locals
 c
-      integer i, j, k
-      real totalDen(ijk), totalH(ijk), totalHe(ijk), 
+      INTG_PREC i, j, k
+      R_PREC totalDen(ijk), totalH(ijk), totalHe(ijk), 
      &     totalD, correctD
 c
 c     Loop over all zones
@@ -923,7 +929,7 @@ c         endif
          HI(i,j,k)  = HI(i,j,k)*correctH(i)
          HII(i,j,k) = HII(i,j,k)*correctH(i)
 c
-         correctHe(i) = (1.d0 - fh)*(d(i,j,k)/totalHe(i))
+         correctHe(i) = (1._RKIND - fh)*(d(i,j,k)/totalHe(i))
          HeI(i,j,k)   = HeI(i,j,k)*correctHe(i)
          HeII(i,j,k)  = HeII(i,j,k)*correctHe(i)
          HeIII(i,j,k) = HeIII(i,j,k)*correctHe(i)
@@ -944,11 +950,12 @@ c
             DI  (i,j,k) = abs(DI  (i,j,k))
             DII (i,j,k) = abs(DII (i,j,k))
             HDI (i,j,k) = abs(HDI (i,j,k))
-            totalD = DI(i,j,k) + DII(i,j,k) + (2.d0/3.d0)*HDI(i,j,k)
+            totalD = DI(i,j,k) + DII(i,j,k) + 
+     &           (2._RKIND/3._RKIND)*HDI(i,j,k)
             correctD = fh*dtoh*(d(i,j,k)/totalD)
             DI  (i,j,k) = DI (i,j,k)*correctD
             DII (i,j,k) = DII(i,j,k)*correctD
-c            HDI (i,j,k) = HDI(i,j,k)*(3.d0/2.d0)*correctD
+c            HDI (i,j,k) = HDI(i,j,k)*(3._RKIND/2._RKIND)*correctD
             HDI (i,j,k) = HDI(i,j,k)*correctD
          enddo
       endif
@@ -959,9 +966,10 @@ c
          totalDen(i) = HI(i,j,k) + HII(i,j,k)
          totalDen(i) = totalDen(i) + HeI(i,j,k) + HeII(i,j,k)
      &               + HeIII(i,j,k)
-         de (i,j,k) = HII(i,j,k) + HeII(i,j,k)/4. + HeIII(i,j,k)/2.d0
+         de (i,j,k) = HII(i,j,k) + HeII(i,j,k)/4. + 
+     &        HeIII(i,j,k)/2._RKIND
          if (ispecies .gt. 1) then 
-            de(i,j,k) = de(i,j,k) - HM(i,j,k) + H2II(i,j,k)/2.d0
+            de(i,j,k) = de(i,j,k) - HM(i,j,k) + H2II(i,j,k)/2._RKIND
             totalDen(i) = totalDen(i) + HM(i,j,k) + H2I(i,j,k) 
      &                  + H2II(i,j,k)
          endif

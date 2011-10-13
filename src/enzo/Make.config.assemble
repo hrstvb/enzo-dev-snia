@@ -23,7 +23,8 @@
 #                      
 # Preprocessor defines
 #
-#    DEFINES            Preprocessor defines for C, C++, and Fortran
+#    CDEFINES           Preprocessor defines for C, C++.
+#    FDEFINES           Preprocessor defines for Fortran.
 #
 # Object files
 #
@@ -1064,6 +1065,8 @@
               $(ASSEMBLE_HDF4_DEFINES) \
               $(ASSEMBLE_GRAVITY_4S_DEFINES) \
               $(ASSEMBLE_ACCELERATION_BOUNDARY_DEFINES)
+    CDEFINES = $(DEFINES)
+    FDEFINES = $(addprefix $(MACH_FDEF),$(DEFINES))
 
     INCLUDES = $(MACH_INCLUDES) \
     	       $(ASSEMBLE_MPI_INCLUDES) \
