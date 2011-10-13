@@ -76,6 +76,8 @@ int RadHydroConstTestInitialize(FILE *fptr, FILE *Outfptr,
   //  8. initial fraction HeIII
   //  9. Number of chemical species
   // 10. mesh spacing
+
+  float RadHydroVelocity[MAX_DIMENSION];
   float RadHydroX0Velocity;
   float RadHydroX1Velocity;
   float RadHydroX2Velocity;
