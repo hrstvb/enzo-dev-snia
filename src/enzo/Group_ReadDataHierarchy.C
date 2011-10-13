@@ -146,8 +146,9 @@ int Group_ReadDataHierarchy(FILE *fptr, hid_t Hfile_id, HierarchyEntry *Grid, in
   if (LoadBalancing > 1 && RootGridProcessors != NULL)
     if (GridID <= NumberOfRootGrids)
       Task = RootGridProcessors[GridID-1];
-    else
-      // Load the child on the same processor as its parent
+    else if (StaticRefineRegionLevel[0] == INT_UNDEFINED)
+      // Load the child on the same processor as its parent only if
+      // it's not a zoom-in calculation
       Task = ParentGrid->GridData->ReturnProcessorNumber();
   
   Grid->GridData->SetProcessorNumber(Task);

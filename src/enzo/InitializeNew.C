@@ -19,6 +19,9 @@
  
 // This routine intializes a new simulation based on the parameter file.
  
+#ifdef USE_MPI
+#include "mpi.h"
+#endif /* USE_MPI */
  
 #include <string.h>
 #include <stdio.h>
@@ -33,12 +36,13 @@
 #include "Grid.h"
 #include "Hierarchy.h"
 #include "TopGridData.h"
+#include "CommunicationUtilities.h"
  
 // Function prototypes
  
 int InitializeMovieFile(TopGridData &MetaData, HierarchyEntry &TopGrid);
 int ReadParameterFile(FILE *fptr, TopGridData &MetaData, float *Initialdt);
-int WriteParameterFile(FILE *fptr, TopGridData &MetaData);
+int WriteParameterFile(FILE *fptr, TopGridData &MetaData, char *Filename=NULL);
 void ConvertTotalEnergyToGasEnergy(HierarchyEntry *Grid);
 int SetDefaultGlobalValues(TopGridData &MetaData);
 int CommunicationPartitionGrid(HierarchyEntry *Grid, int gridnum);
@@ -64,6 +68,10 @@ int ConductionTestInitialize(FILE *fptr, FILE *Outfptr, HierarchyEntry &TopGrid,
 			     TopGridData &MetaData);
 int ConductionBubbleInitialize(FILE *fptr, FILE *Outfptr, HierarchyEntry &TopGrid,
 			     TopGridData &MetaData);
+int ConductionCloudInitialize(FILE *fptr, FILE *Outfptr, HierarchyEntry &TopGrid,
+			     TopGridData &MetaData);
+int StratifiedMediumExplosionInitialize(FILE *fptr, FILE *Outfptr, HierarchyEntry &TopGrid,
+			     TopGridData &MetaData);
 int KHInitialize(FILE *fptr, FILE *Outfptr, HierarchyEntry &TopGrid,
                           TopGridData &MetaData);
 int NohInitialize(FILE *fptr, FILE *Outfptr, HierarchyEntry &TopGrid,
@@ -73,7 +81,7 @@ int SedovBlastInitialize(FILE *fptr, FILE *Outfptr, HierarchyEntry &TopGrid,
 int RadiatingShockInitialize(FILE *fptr, FILE *Outfptr, HierarchyEntry &TopGrid,
 			     TopGridData &MetaData);
 int ZeldovichPancakeInitialize(FILE *fptr, FILE *Outfptr,
-			       HierarchyEntry &TopGrid);
+			       HierarchyEntry &TopGrid, TopGridData &MetaData);
 int PressurelessCollapseInitialize(FILE *fptr, FILE *Outfptr,
 			       HierarchyEntry &TopGrid, TopGridData &MetaData);
 int AdiabaticExpansionInitialize(FILE *fptr, FILE *Outfptr,
@@ -105,6 +113,8 @@ int ProtostellarCollapseInitialize(FILE *fptr, FILE *Outfptr,
 				   TopGridData &MetaData);
 int CoolingTestInitialize(FILE *fptr, FILE *Outfptr, 
 			  HierarchyEntry &TopGrid, TopGridData &MetaData); 
+int OneZoneFreefallTestInitialize(FILE *fptr, FILE *Outfptr, 
+				  HierarchyEntry &TopGrid, TopGridData &MetaData);
 int CosmologySimulationInitialize(FILE *fptr, FILE *Outfptr,
                                   HierarchyEntry &TopGrid,
                                   TopGridData &MetaData);
@@ -181,13 +191,17 @@ int Collapse1DInitialize(FILE *fptr, FILE *Outfptr,
 			 HierarchyEntry &TopGrid, TopGridData &MetaData);
 int MHD1DTestInitialize(FILE *fptr, FILE *Outfptr,
                         HierarchyEntry &TopGrid, TopGridData &MetaData);
+int MHD1DTestWavesInitialize(FILE *fptr, FILE *Outfptr,
+                        HierarchyEntry &TopGrid, TopGridData &MetaData);
 int MHD2DTestInitialize(FILE *fptr, FILE *Outfptr,
                         HierarchyEntry &TopGrid, TopGridData &MetaData);
 int MHD3DTestInitialize(FILE *fptr, FILE *Outfptr, 
 			HierarchyEntry &TopGrid, TopGridData &MetaData);
 int CollapseMHD3DInitialize(FILE *fptr, FILE *Outfptr, 
-			    HierarchyEntry &TopGrid, TopGridData &MetaData);
+			    HierarchyEntry &TopGrid, TopGridData &MetaData, int SetBaryonFields);
 int MHDTurbulenceInitialize(FILE *fptr, FILE *Outfptr, 
+			    HierarchyEntry &TopGrid, TopGridData &MetaData, int SetBaryonFields);
+int MHDDecayingRandomFieldInitialize(FILE *fptr, FILE *Outfptr, 
 			    HierarchyEntry &TopGrid, TopGridData &MetaData, int SetBaryonFields);
 int GalaxyDiskInitialize(FILE *fptr, FILE *Outfptr, 
 			 HierarchyEntry &TopGrid, TopGridData &MetaData);
@@ -265,10 +279,12 @@ int InitializeNew(char *filename, HierarchyEntry &TopGrid,
   // Set the number of particle attributes, if left unset
  
   if (NumberOfParticleAttributes == INT_UNDEFINED)
-    if (StarParticleCreation || StarParticleFeedback)
+    if (StarParticleCreation || StarParticleFeedback) {
       NumberOfParticleAttributes = 3;
-    else
+      if (StarMakerTypeIaSNe) NumberOfParticleAttributes++;
+    } else {
       NumberOfParticleAttributes = 0;
+    }
  
   // Give unset parameters their default values
  
@@ -283,8 +299,8 @@ int InitializeNew(char *filename, HierarchyEntry &TopGrid,
  
   if (ProblemType != 40 && ProblemType != 51) {
  
-  // Error check the rank
-    printf("This should only run if not a restart!");
+    // Error check the rank
+    //printf("This should only run if not a restart!");
  
     if (MetaData.TopGridRank < 0 || MetaData.TopGridRank > 3) {
       ENZO_VFAIL("TopGridRank = %"ISYM" ill defined.\n", MetaData.TopGridRank)
@@ -329,6 +345,9 @@ int InitializeNew(char *filename, HierarchyEntry &TopGrid,
     
   } // end: if (ProblemType != 40 && ProblemType !=51)
   
+
+
+
   // Call problem initializer
 
   PrintMemoryUsage("Call problem init");
@@ -404,7 +423,7 @@ int InitializeNew(char *filename, HierarchyEntry &TopGrid,
   // 20) Zeldovich Pancake
  
   if (ProblemType == 20)
-    ret = ZeldovichPancakeInitialize(fptr, Outfptr, TopGrid);
+    ret = ZeldovichPancakeInitialize(fptr, Outfptr, TopGrid, MetaData);
  
   // 21) 1D Pressureless collapse
  
@@ -509,6 +528,10 @@ int InitializeNew(char *filename, HierarchyEntry &TopGrid,
   if (ProblemType == 62)
     ret = CoolingTestInitialize(fptr, Outfptr, TopGrid, MetaData);
 
+  // 63) 1-zone free-fall test problem
+  if (ProblemType == 63)
+    ret = OneZoneFreefallTestInitialize(fptr, Outfptr, TopGrid, MetaData);
+
   // 70) Conduction test problem with hydro disabled
   // 71) Conduction test problem with hydro turned on
   if (ProblemType == 70 || ProblemType == 71)
@@ -517,12 +540,15 @@ int InitializeNew(char *filename, HierarchyEntry &TopGrid,
   // 72) Conduction bubble test problem
   if (ProblemType == 72)
     ret = ConductionBubbleInitialize(fptr, Outfptr, TopGrid, MetaData);
-  
-  // Insert new problem intializer here...
-  
-  if (ProblemType ==300) {
-    ret = PoissonSolverTestInitialize(fptr, Outfptr, TopGrid, MetaData);
-  }
+
+  // 73) Conducting cloud test problem
+  if (ProblemType == 73)
+    ret = ConductionCloudInitialize(fptr, Outfptr, TopGrid, MetaData);  
+
+  // 80) Explosion in a stratified medium
+  if (ProblemType == 80)
+    ret = StratifiedMediumExplosionInitialize(fptr, Outfptr, TopGrid, MetaData);  
+
   
   /* 101) 3D Collapse */
   if (ProblemType == 101) {
@@ -558,7 +584,7 @@ int InitializeNew(char *filename, HierarchyEntry &TopGrid,
 
   /* 202) 3D MHD Collapse */
   if (ProblemType == 202) {
-    ret = CollapseMHD3DInitialize(fptr, Outfptr, TopGrid, MetaData);
+    ret = CollapseMHD3DInitialize(fptr, Outfptr, TopGrid, MetaData, 0);
   }
 
   /* 203) MHD Turbulence Collapse */
@@ -580,6 +606,17 @@ int InitializeNew(char *filename, HierarchyEntry &TopGrid,
   if (ProblemType == 208) {
     ret = AGNDiskInitialize(fptr, Outfptr, TopGrid, MetaData);
   }
+
+  /* 209) MHD 1D Waves */
+  if (ProblemType == 209) {
+    ret = MHD1DTestWavesInitialize(fptr, Outfptr, TopGrid, MetaData);
+  }
+
+  /* 210) MHD Decaying random magnetic fields */
+  if (ProblemType == 210) {
+    ret = MHDDecayingRandomFieldInitialize(fptr, Outfptr, TopGrid, MetaData, 0);
+  }
+
 
   /* ???? */
   if (ProblemType ==300) {
@@ -630,11 +667,17 @@ int InitializeNew(char *filename, HierarchyEntry &TopGrid,
     ret = FSMultiSourceInitialize(fptr, Outfptr, TopGrid, MetaData, 0);
 #endif /* TRANSFER */
 
+#ifdef NEW_PROBLEM_TYPES
+  if (ProblemType == -978)
+  {
+    /*CurrentProblemType = get_problem_types()[ProblemTypeName];*/
+    CurrentProblemType = select_problem_type(ProblemTypeName);
+    ret = CurrentProblemType->InitializeSimulation(fptr, Outfptr, TopGrid, MetaData);
+  }
+#endif
 
   // Insert new problem intializer here...
 
-
- 
   
   if (ret == INT_UNDEFINED) {
     ENZO_VFAIL("Problem Type %"ISYM" undefined.\n", ProblemType)
@@ -644,17 +687,12 @@ int InitializeNew(char *filename, HierarchyEntry &TopGrid,
     ENZO_FAIL("Error in problem initialization.");
   }
  
-  if (debug)
-    printf("InitializeNew: Finished problem initialization.\n");
-
-  /* If requested, initialize streaming data files. */
-
-  InitializeMovieFile(MetaData, TopGrid);
- 
   /* Do some error checking */
  
-  if (MetaData.StopTime == FLOAT_UNDEFINED)
-    ENZO_FAIL("StopTime never set.");
+  if (MetaData.StopTime == FLOAT_UNDEFINED && MetaData.StopCycle == INT_UNDEFINED)
+    ENZO_FAIL("StopTime nor StopCycle ever set.");
+  if (MetaData.StopCycle != INT_UNDEFINED && MetaData.StopTime == FLOAT_UNDEFINED)
+    MetaData.StopTime = huge_number;
 
   int nFields = TopGrid.GridData->ReturnNumberOfBaryonFields();
   if (nFields >= MAX_NUMBER_OF_BARYON_FIELDS) {
@@ -664,8 +702,8 @@ int InitializeNew(char *filename, HierarchyEntry &TopGrid,
   }
 
   PrintMemoryUsage("1st Initialization done");
-  
-  
+
+
   if (debug)
     printf("Initialize Exterior\n");
   
@@ -735,6 +773,7 @@ int InitializeNew(char *filename, HierarchyEntry &TopGrid,
     fprintf(stderr, "End of set exterior\n");
   }
   
+
   // Set values that were left undefined (above)
   
   if (MetaData.TimeLastDataDump == FLOAT_UNDEFINED)
@@ -882,7 +921,10 @@ int InitializeNew(char *filename, HierarchyEntry &TopGrid,
     //  if (HydroMethod == Zeus_Hydro) ConvertTotalEnergyToGasEnergy(&TopGrid);
   }
   
-  // For ProblemType 203 (Turbulence Simulation we only initialize the data
+    if (ProblemType == 202)
+    CollapseMHD3DInitialize(fptr, Outfptr, TopGrid, MetaData, 1);
+
+  // For ProblemType 203 (MHD Turbulence Simulation we only initialize the data
   // once the topgrid has been split.
   if (ProblemType == 203)
     if (MHDTurbulenceInitialize(fptr, Outfptr, TopGrid, MetaData, 1)
@@ -890,7 +932,15 @@ int InitializeNew(char *filename, HierarchyEntry &TopGrid,
       ENZO_FAIL("Error in MHDTurbulenceReInitialize.\n");
     }
   
-  
+  // initialize the data once the topgrid has been split.
+  if (ProblemType == 210)
+    if (MHDDecayingRandomFieldInitialize(fptr, Outfptr, TopGrid, MetaData, 1)
+	== FAIL) {
+      ENZO_FAIL("Error in MHDDecayingRandomField ReInitialize.\n");
+    }
+
+  CommunicationBarrier();
+ 
   // Close parameter files
   
   fclose(fptr);
@@ -907,6 +957,13 @@ int InitializeNew(char *filename, HierarchyEntry &TopGrid,
  
   MetaData.FirstTimestepAfterRestart = FALSE;
   
+  if (debug)
+    printf("InitializeNew: Finished problem initialization.\n");
+
+  /* If requested, initialize streaming data files. */
+
+  InitializeMovieFile(MetaData, TopGrid);
+ 
 
 
   return SUCCESS;
