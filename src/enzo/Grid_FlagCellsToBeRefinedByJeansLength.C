@@ -32,9 +32,7 @@ int GetUnits(float *DensityUnits, float *LengthUnits,
 	     float *TemperatureUnits, float *TimeUnits,
 	     float *VelocityUnits, FLOAT Time);
  
-float *AllocateNewBaryonField(int size);
-void FreeBaryonFieldMemory(float *BF);
- 
+
 int grid::FlagCellsToBeRefinedByJeansLength()
 {
   /* declarations */

@@ -21,10 +21,6 @@
 #include "Star.h"
 #include "FOF_allvars.h"
 #include "MemoryPool.h"
-#if 1  // garbage collection
-//#include "/Users/tabel/Downloads/gc-7.2alpha6/include/leak_detector.h"
-#include "gc_cpp.h"
-#endif
 
 #ifdef FLUX_FIX
 #include "TopGridData.h"
@@ -1005,7 +1001,7 @@ public:
 
    void CreateDensitySquaredField() {
      int size = GridDimension[0]*GridDimension[1]*GridDimension[2];
-     BaryonField[NumberOfBaryonFields] = static_cast<float*>(AllocateNewBaryonField(size));
+     BaryonField[NumberOfBaryonFields] = AllocateNewBaryonField(size);
      for (int i = 0; i < size; i++)
        BaryonField[NumberOfBaryonFields][i] = 
 	 BaryonField[0][i]*BaryonField[0][i];

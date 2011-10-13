@@ -60,7 +60,8 @@ int FinalizePythonInterface();
 #include "jemalloc/jemalloc.h"
 #endif
 // Function prototypes
- 
+void AllocateMemoryPools() ;
+   
 int InitializeNew(  char *filename, HierarchyEntry &TopGrid, TopGridData &tgd,
 		    ExternalBoundary &Exterior, float *Initialdt);
 int InitializeMovieFile(TopGridData &MetaData, HierarchyEntry &TopGrid);
@@ -309,54 +310,10 @@ mallctl("arenas.purge", &narena, &len, NULL, 0);
 #ifdef TASKMAP
   GetNodeFreeMemory();
 #endif
+  
+  // setup memory pools 
 
-  /* The initial size of the memory pool in units of photon packages.
-     Increase the memory pool by 1/4th of the initial size as more
-     memory is needed. */
-
-
-#ifdef MEMORY_POOL
-#ifdef GRID_MEMORY_POOL
-  const int GridObjectMemorySize = MEMORY_POOL_SIZE;
-  int GridObjectSize = sizeof(grid);
-  GridObjectMemoryPool = new MPool::MemoryPool(1, GridObjectMemorySize*GridObjectSize,
-					   GridObjectSize,
-					   GridObjectMemorySize*GridObjectSize/4, true);
-#endif
-#ifdef PROTOSUBGRID_MEMORY_POOL
-  const int ProtoSubgridMemorySize = 1024*128;
-  int ProtoSubgridSize = sizeof(ProtoSubgrid);
-  ProtoSubgridMemoryPool = new MPool::MemoryPool(2, ProtoSubgridMemorySize*ProtoSubgridSize,
-					   ProtoSubgridSize,
-					   ProtoSubgridMemorySize*ProtoSubgridSize, true);
-#endif
-#ifdef HIERARCHY_MEMORY_POOL
-  const int HierarchyEntryMemorySize =1024*128;
-  int HierarchyEntrySize = sizeof(HierarchyEntry);
-  HierarchyEntryMemoryPool = new MPool::MemoryPool(3, HierarchyEntryMemorySize*HierarchyEntrySize,
-					   HierarchyEntrySize,
-					   HierarchyEntryMemorySize*HierarchyEntrySize, true);
-#endif
-  FlaggingFieldMemoryPool = new MPool::MemoryPool(4, sizeof(int)*1024*1024/NumberOfProcessors,
-						  sizeof(int)*32,
-						  sizeof(int)*200000, true);
-
-  ParticleMemoryPool = new MPool::MemoryPool(5, sizeof(FLOAT)*4000000/NumberOfProcessors,
-					     sizeof(FLOAT)*64,
-					     sizeof(FLOAT)*2000000, true);
-
-  BaryonFieldMemoryPool = new MPool::MemoryPool(6, sizeof(float)*24000000/NumberOfProcessors,
-						sizeof(float)*64,
-						sizeof(float)*6000000, true);
-
-#ifdef TRANSFER
-  const int PhotonMemorySize = MEMORY_POOL_SIZE;
-  int PhotonSize = sizeof(PhotonPackageEntry);
-  PhotonMemoryPool = new MPool::MemoryPool(4, PhotonMemorySize*PhotonSize,
-					   PhotonSize,
-					   PhotonMemorySize*PhotonSize/4);
-#endif
-#endif
+  AllocateMemoryPools();
 
   // Begin 
 
