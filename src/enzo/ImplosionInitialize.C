@@ -45,6 +45,10 @@
  
 // This routine intializes a new simulation based on the parameter file.
 //
+
+#include "ParameterControl/ParameterControl.h"
+extern Configuration Param;
+
  
 #include <string.h>
 #include <stdio.h>
@@ -62,6 +66,28 @@
 #define DEFINE_STORAGE
 #include "ImplosionGlobalData.h"
 #undef DEFINE_STORAGE
+
+
+/* Set default parameter values. */
+
+const char config_implosion_defaults[] =
+"### IMPLOSION DEFAULTS ###\n"
+"\n"
+"Problem: {\n"
+"    Implosion: {\n"
+"        Velocity 	= [0.0,0.0,0.0];  # gas initally at rest\n"
+"        BField   	= [0.0,0.0,0.0];  # no magnetic field\n"
+"        Pressure 	= 1.0;\n"
+"        Density	= 1.0;\n"
+"        DiamondPressure= 0.14;\n"
+"        DiamondDensity	= 0.125;\n"
+"        SubgridLeft	= 0.0;      	# start of subgrid(s)\n"
+"        SubgridRight	= 0.0;      	# end of subgrid(s)\n"
+"    };\n"
+"};\n";
+
+
+
  
 int ImplosionInitialize(FILE *fptr, FILE *Outfptr, HierarchyEntry &TopGrid,
 		       TopGridData &MetaData)
@@ -80,55 +106,35 @@ int ImplosionInitialize(FILE *fptr, FILE *Outfptr, HierarchyEntry &TopGrid,
   /* local declarations */
  
   char line[MAX_LINE_LENGTH];
-  int  dim, ret, NumberOfSubgridZones[MAX_DIMENSION],
+  int  dim, NumberOfSubgridZones[MAX_DIMENSION],
                           SubgridDims[MAX_DIMENSION];
  
-  /* set default parameters */
- 
-  float ImplosionVelocity[3]     = {0.0, 0.0, 0.0};   // gas initally at rest
-  float ImplosionBField[3]      = {0.0, 0.0, 0.0};   // no magnetic field
-  float ImplosionPressure        = 1.0;
-  float ImplosionDiamondPressure = 0.14;
-  ImplosionDensity               = 1.0;
-  ImplosionDiamondDensity        = 0.125;
-  ImplosionSubgridLeft           = 0.0;    // start of subgrid(s)
-  ImplosionSubgridRight          = 0.0;    // end of subgrid(s)
- 
-  /* read input from file */
- 
-  while (fgets(line, MAX_LINE_LENGTH, fptr) != NULL) {
- 
-    ret = 0;
- 
-    /* read parameters */
- 
-    ret += sscanf(line, "ImplosionDensity  = %"FSYM, &ImplosionDensity);
-    ret += sscanf(line, "ImplosionPressure = %"FSYM, &ImplosionPressure);
-    ret += sscanf(line, "ImplosionDiamondDensity  = %"FSYM,
-		        &ImplosionDiamondDensity);
-    ret += sscanf(line, "ImplosionDiamondPressure = %"FSYM,
-		        &ImplosionDiamondPressure);
-    ret += sscanf(line, "ImplosionSubgridLeft = %"FSYM,
-		        &ImplosionSubgridLeft);
-    ret += sscanf(line, "ImplosionSubgridRight = %"FSYM,
-		        &ImplosionSubgridRight);
- 
-    /* if the line is suspicious, issue a warning */
- 
-    if (ret == 0 && strstr(line, "=") && strstr(line, "Implosion") &&
-	line[0] != '#' && MyProcessorNumber == ROOT_PROCESSOR)
-      fprintf(stderr,
-	 "warning: the following parameter line was not interpreted:\n%s\n",
-	      line);
- 
-  } // end input from parameter file
+  float ImplosionVelocity[3];
+  float ImplosionBField[3];
+  float ImplosionPressure;   
+  float ImplosionDiamondPressure;
+    
+  // Update the parameter config to include the local defaults. Note
+  // that this does not overwrite values previously specified.
+  Param.Update(config_implosion_defaults);
+
+
+  /* read parameters */
+
+  Param.GetScalar(ImplosionDensity,"Problem.Implosion.Density");
+  Param.GetScalar(ImplosionPressure, "Problem.Implosion.Pressure");
+
+  Param.GetScalar(ImplosionDiamondDensity,"Problem.Implosion.DiamondDensity");
+  Param.GetScalar(ImplosionDiamondPressure,"Problem.Implosion.DiamondPressure");
+
+  Param.GetScalar(ImplosionSubgridLeft,"Problem.Implosion.SubgridLeft");
+  Param.GetScalar(ImplosionSubgridRight, "Problem.Implosion.SubgridRight");
  
  
   /* Compute total energies */
  
   ImplosionTotalEnergy = ImplosionPressure/((Gamma - 1.0)*ImplosionDensity);
-  ImplosionDiamondTotalEnergy = ImplosionDiamondPressure/((Gamma - 1.0)*
-						   ImplosionDiamondDensity);
+  ImplosionDiamondTotalEnergy = ImplosionDiamondPressure/((Gamma-1.0)*ImplosionDiamondDensity);
  
   /* set the reflecting boundaries */
  

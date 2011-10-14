@@ -18,6 +18,9 @@
 // This routine intializes a new simulation based on the parameter file.
 //
  
+#include "ParameterControl/ParameterControl.h"
+extern Configuration Param;
+
 #include <string.h>
 #include <stdio.h>
 #include <math.h>
@@ -32,6 +35,16 @@
 #include "Hierarchy.h"
 #include "TopGridData.h"
  
+const char config_double_mach_defaults[]= 
+"### DOUBLE MACH DEFAULTS ###\n"
+"\n"
+"Problem: {\n"
+"       DoubleMach: {\n"
+"               SubgridLeft     = 0.0;\n"
+"               SubgridRight    = 0.0;\n"
+"    };\n"
+"};\n";
+
 int DoubleMachInitialize(FILE *fptr, FILE *Outfptr, HierarchyEntry &TopGrid,
 			 TopGridData &MetaData, ExternalBoundary &Exterior)
 {
@@ -52,8 +65,8 @@ int DoubleMachInitialize(FILE *fptr, FILE *Outfptr, HierarchyEntry &TopGrid,
  
   float d0 = 8.0, e0 = 291.25, u0 = 8.25*sqrt(3.0)/2.0, v0 = -8.25*0.5, w0 = 0;
   FLOAT DoubleMachSubgridLeft   = 0.0;    // start of subgrid
-  FLOAT DoubleMachSubgridRight  = 0.0;    // end of subgrid
- 
+  FLOAT DoubleMachSubgridRight  = 0.0;    // end of subgrid 
+
   /* read input from file */
  
   while (fgets(line, MAX_LINE_LENGTH, fptr) != NULL) {
@@ -62,10 +75,9 @@ int DoubleMachInitialize(FILE *fptr, FILE *Outfptr, HierarchyEntry &TopGrid,
  
     /* read parameters */
  
-    ret += sscanf(line, "DoubleMachSubgridLeft = %"PSYM,
-		  &DoubleMachSubgridLeft);
-    ret += sscanf(line, "DoubleMachSubgridRight = %"PSYM,
-		  &DoubleMachSubgridRight);
+    Param.GetScalar(DoubleMachSubgridLeft,"Problem.DoubleMach.SubgridLeft");
+
+    Param.GetScalar(DoubleMachSubgridRight,"Problem.DoubleMach.SubgridRight");
  
     /* if the line is suspicious, issue a warning */
  
