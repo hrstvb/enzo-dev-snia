@@ -13,7 +13,8 @@
 /
 ************************************************************************/
 
-
+#include "ParameterControl/ParameterControl.h"
+extern Configuration Param;
 
 #include <stdlib.h>
 #include <string.h>
@@ -30,6 +31,22 @@
 #include "Hierarchy.h"
 #include "LevelHierarchy.h"
 #include "TopGridData.h"
+
+/* Set default parameter values. */
+
+const char config_shearing_box_2d__defaults[] =
+"### SHEARING BOX 2D DEFAULTS ###\n"
+"\n"
+"Problem: {\n"
+"    ShearingBox2D: {\n"
+"        ThermalMagneticRatio		= 400;\n"
+"        FluctuationAmplitudeFraction	= 0.1;\n"
+"        ShearingGeometry		= 2.0;\n"
+"        InitialMagneticFieldConfiguration = 0;\n"
+"        RefineAtStart			= 1;\n"
+"    };\n"
+"};\n";
+
 
 // void WriteListOfFloats(FILE *fptr, int N, float floats[]);
 // void WriteListOfFloats(FILE *fptr, int N, FLOAT floats[]);
@@ -83,30 +100,29 @@ int ShearingBox2DInitialize (FILE *fptr, FILE *Outfptr,
   /* read input from file */
  
 
-  float ThermalMagneticRatio=400; 
-  float FluctuationAmplitudeFraction=0.1;
-  int ShearingBoxRefineAtStart   = FALSE;
-  float ShearingGeometry=2.0;
-  int InitialMagneticFieldConfiguration=0;
-  int RefineAtStart=1;
+  float ThermalMagneticRatio; 
+  float FluctuationAmplitudeFraction;
+  float ShearingGeometry;
+  int InitialMagneticFieldConfiguration;
+  int RefineAtStart;
 
-  int ret;
+  // Update the parameter config to include the local defaults. Note
+  // that this does not overwrite values previously specified.
+  Param.Update(config_shearing_box_2d_defaults);
 
-  
 
-  while (fgets(line, MAX_LINE_LENGTH, fptr) != NULL) {
+  /* read parameters */
 
-    ret = 0;
-
-/* read parameters */
-    ret += sscanf(line, "ShearingBoxRefineAtStart = %"ISYM, &RefineAtStart); 
-    ret += sscanf(line, "ShearingBoxThermalMagneticRatio= %"FSYM, &ThermalMagneticRatio);
-    ret += sscanf(line, "ShearingBoxFluctuationAmplitudeFraction = %"FSYM, &FluctuationAmplitudeFraction);
-    ret += sscanf(line, "ShearingBoxGeometry = %"FSYM, &ShearingGeometry);  
-    ret += sscanf(line, "ShearingBoxInitialMagneticFieldConfiguration = %"ISYM, &InitialMagneticFieldConfiguration);  
- 
-  } 
- 
+  Param.GetScalar(RefineAtStart,
+			"Problem.ShearingBox2D.RefineAtStart"); 
+  Param.GetScalar(ThermalMagneticRatio,
+			"Problem.ShearingBox2D.ThermalMagneticRatio");
+  Param.GetScalar(FluctuationAmplitudeFraction,
+			"Problem.ShearingBox2D.FluctuationAmplitudeFraction");
+  Param.GetScalar(ShearingGeometry,
+			"Problem.ShearingBox2D.ShearingGeometry");  
+  Param.GetScalar(InitialMagneticFieldConfiguration,
+			"Problem.ShearingBox2D.InitialMagneticFieldConfiguration");  
 
 
   if (TopGrid.GridData->ShearingBox2DInitializeGrid(ThermalMagneticRatio, FluctuationAmplitudeFraction, ShearingGeometry, InitialMagneticFieldConfiguration)

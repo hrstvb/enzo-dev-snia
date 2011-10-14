@@ -13,6 +13,9 @@
 
 // This routine intializes a new simulation based on the parameter file.
 
+#include "ParameterControl/ParameterControl.h"
+extern Configuration Param;
+
 #include <string.h>
 #include <stdio.h>
 #include <math.h>
@@ -112,6 +115,8 @@ int RadHydroConstTestInitialize(FILE *fptr, FILE *Outfptr,
   "        Chemistry            = 1;\n"
   "    };\n"
   "};\n";
+  // Update the parameter config to include the local defaults. Note
+  // that this does not overwrite values previously specified.
 
   Param.Update(config_rad_hydro_const_test_defaults);
 

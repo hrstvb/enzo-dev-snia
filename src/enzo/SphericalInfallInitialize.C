@@ -16,6 +16,9 @@
  
 // This routine intializes a new simulation based on the parameter file.
 //
+
+#include "ParameterControl/ParameterControl.h"
+extern Configuration Param;
  
 #include <string.h>
 #include <stdio.h>
@@ -35,6 +38,26 @@
 #include "SphericalInfall.h"
 #undef DEFINE_STORAGE
  
+/* Set default parameter values. */
+
+const char config_spherical_infall_defaults[] =
+"### SPHERICAL INFALL DEFAULTS ###\n"
+"\n"
+"Problem: {\n"
+"    SphericalInfall: {\n"
+"        InitialPerturbation 	= 0.1;		# density of central peak\n"
+"        SubgridLeft		= 0.0;  	# start of subgrid\n"
+"        SubgridRight		= 0.0;		# end of subgrid\n"
+"        OmegaBaryonNow 	= 1.0;\n"
+"        OmegaCDMNow 		= 0.0;\n"
+"        UseBaryons		= TRUE;\n"
+"\n"
+"        SubgridIsStatic	= FALSE;\n"
+"        FixedAcceleration	= FALSE;\n"
+"        FixedMass		= -999999.9;\n"
+"    };\n"
+"};\n";
+
  
 void WriteListOfFloats(FILE *fptr, int N, FLOAT floats[]);
  
@@ -63,55 +86,47 @@ int SphericalInfallInitialize(FILE *fptr, FILE *Outfptr,
  
   /* set default parameters */
  
-  float SphericalInfallInitialPerturbation = 0.1;  // density of central peak
-  FLOAT SphericalInfallSubgridLeft         = 0.0;  // start of subgrid
-  FLOAT SphericalInfallSubgridRight        = 0.0;  // end of subgrid
-  float SphericalInfallOmegaBaryonNow      = 1.0;
-  float SphericalInfallOmegaCDMNow         = 0.0;
-  int   SphericalInfallUseBaryons          = TRUE;
-  int   SphericalInfallSubgridIsStatic     = FALSE;
-        SphericalInfallFixedAcceleration   = FALSE;
-        SphericalInfallFixedMass           = FLOAT_UNDEFINED;
+  float SphericalInfallInitialPerturbation;  	// density of central peak
+  FLOAT SphericalInfallSubgridLeft;  		// start of subgrid
+  FLOAT SphericalInfallSubgridRight;  		// end of subgrid
+  float SphericalInfallOmegaBaryonNow;
+  float SphericalInfallOmegaCDMNow;
+  int   SphericalInfallUseBaryons;
+  int   SphericalInfallSubgridIsStatic;
+        SphericalInfallFixedAcceleration;
+        SphericalInfallFixedMass;
+
   for (dim = 0; dim < MAX_DIMENSION; dim++)
     SphericalInfallCenter[dim] = FLOAT_UNDEFINED;
+
+  // Update the parameter config to include the local defaults. Note
+  // that this does not overwrite values previously specified.
+  Param.Update(config_spherical_infall_defaults);
+
+
+  /* read parameters */
  
-  /* read input from file */
+  Param.GetScalar(SphericalInfallInitialPerturbation,
+		"Problem.SphericalInfall.InitialPerturbation");
+  Param.GetScalar(SphericalInfallSubgridLeft,
+		"Problem.SphericalInfall.SubgridLeft");
+  Param.GetScalar(SphericalInfallOmegaBaryonNow,
+		"Problem.SphericalInfall.OmegaBaryonNow");
+  Param.GetScalar(SphericalInfallOmegaCDMNow,
+		"Problem.SphericalInfall.OmegaCDMNow");
+  Param.GetScalar(SphericalInfallSubgridRight,
+		"Problem.SphericalInfall.SubgridRight");
+  Param.GetScalar(SphericalInfallUseBaryons,
+		"Problem.SphericalInfall.UseBaryons");
+  Param.GetScalar(SphericalInfallSubgridIsStatic,
+		"Problem.SphericalInfall.SubgridIsStatic");
+  Param.GetScalar(SphericalInfallFixedAcceleration,
+		"Problem.SphericalInfall.FixedAcceleration");
+  Param.GetScalar(SphericalInfallFixedMass,
+		"Problem.SphericalInfall.FixedMass");
+  Param.GetArray(SphericalInfallCenter,
+		"Problem.SphericalInfall.Center");
  
-  while (fgets(line, MAX_LINE_LENGTH, fptr) != NULL) {
- 
-    ret = 0;
- 
-    /* read parameters */
- 
-    ret += sscanf(line, "SphericalInfallInitialPerturbation = %"FSYM,
-		  &SphericalInfallInitialPerturbation);
-    ret += sscanf(line, "SphericalInfallSubgridLeft = %"PSYM,
-		  &SphericalInfallSubgridLeft);
-    ret += sscanf(line, "SphericalInfallOmegaBaryonNow = %"FSYM,
-		  &SphericalInfallOmegaBaryonNow);
-    ret += sscanf(line, "SphericalInfallOmegaCDMNow = %"FSYM,
-		  &SphericalInfallOmegaCDMNow);
-    ret += sscanf(line, "SphericalInfallSubgridRight = %"PSYM,
-		  &SphericalInfallSubgridRight);
-    ret += sscanf(line, "SphericalInfallUseBaryons = %"ISYM,
-		  &SphericalInfallUseBaryons);
-    ret += sscanf(line, "SphericalInfallSubgridIsStatic = %"ISYM,
-		  &SphericalInfallSubgridIsStatic);
-    ret += sscanf(line, "SphericalInfallFixedAcceleration = %"ISYM,
-		  &SphericalInfallFixedAcceleration);
-    ret += sscanf(line, "SphericalInfallFixedMass = %"FSYM,
-		  &SphericalInfallFixedMass);
-    ret += sscanf(line, "SphericalInfallCenter = %"PSYM" %"PSYM" %"PSYM,
-		  SphericalInfallCenter, SphericalInfallCenter+1,
-		  SphericalInfallCenter+2);
- 
-    /* if the line is suspicious, issue a warning */
- 
-    if (ret == 0 && strstr(line, "=") && strstr(line, "SphericalInfall")
-	&& line[0] != '#')
-      fprintf(stderr, "warning: the following parameter line was not interpreted:\n%s\n", line);
- 
-  } // end input from parameter file
  
   /* Set SphericalInfallCenter if left unset. */
  

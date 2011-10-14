@@ -35,7 +35,7 @@ extern Configuration Param;
 #include "Hierarchy.h"
 #include "TopGridData.h"
 
-const char config_cosmology_simulation_defaults[] = 
+const char config_KH_defaults[] = 
 "### KH DEFAULTS ###\n"
 "\n"
 "Problem: {\n"
@@ -79,11 +79,7 @@ int KHInitialize(FILE *fptr, FILE *Outfptr, HierarchyEntry &TopGrid,
 
   float KHInnerInternalEnergy, KHOuterInternalEnergy;
 
-  /* read input from file */
-
-  while (fgets(line, MAX_LINE_LENGTH, fptr) != NULL) {
-
-    ret = 0;
+  Param.Update(config_KH_defaults);
 
     /* read parameters */
 
@@ -92,16 +88,7 @@ int KHInitialize(FILE *fptr, FILE *Outfptr, HierarchyEntry &TopGrid,
     Param.GetScalar(KHInnerPressure,"Problem.KH.KHInnerPressure");
     Param.GetScalar(KHOuterPressure,"Problem.KH.KHOuterPressure");
     Param.GetScalar(KHVelocityJump,"Problem.KH.KHVelocityJump");
-    Param.GetScalar(KHPerturbationAmplitude,"Problem.KH.KHPerturbationAmplitude");                                   
-    /* if the line is suspicious, issue a warning */
-
-    if (ret == 0 && strstr(line, "=") && strstr(line, "KH") && 
-	line[0] != '#' && MyProcessorNumber == ROOT_PROCESSOR)
-      fprintf(stderr, 
-	 "warning: the following parameter line was not interpreted:\n%s\n", 
-	      line);
-
-  } // end input from parameter file
+    Param.GetScalar(KHPerturbationAmplitude,"Problem.KH.KHPerturbationAmplitude");                                  
 
 
   /* Compute internal energies and set velocities */
