@@ -49,92 +49,92 @@ extern Configuration Param;
 
 /* Set default parameter values. */
 
-const char config_cosmology_simulation_defaults[] = 
-"### COSMOLOGY SIMULATION DEFAULTS ###\n"
+const char config_radiating_shock_defaults[] = 
+"### RADIATING SHOCK DEFAULTS ###\n"
 "\n"
 "Problem: {\n"
 "    RadiatingShock: {\n"
-"       RadiatingShockInnerDensity  =1.0;\n"
-"       RadiatingShockOuterDensity  =1.0;\n"
-"       RadiatingShockPressure  =1e-5;\n"
-"       RadiatingShockEnergy  =1.0;\n"
-"       RadiatingShockSubgridLeft =;\n"
-"       RadiatingShockSubgridRight  =;\n"
-"       RadiatingShockUseDensityFluctuations  =0;\n"
-"       RadiatingShockRandomSeed  =123456789;\n"
-"       RadiatingShockDensityFluctuationLevel =0.1;\n"
-"       RadiatingShockInitializeWithKE  =0;\n"
-"       RadiatingShockSedovBlastRadius  =0.05;\n"
-"       RadiatingShockUseSedovProfile =0.05;\n"
-"       RadiatingShockKineticEnergyFraction =0.0;\n"
-"       RadiatingShockCenterPosition  =[0.5,0.5,0.5];\n"
-"       RadiatingShockSpreadOverNumZones  =3.5;\n"
-"       HydrogenFractionByMass  =;\n"
-"       DeuteriumToHydrogenRatio  =;\n"
-"       HI_Fraction_Inner =;\n"
-"       HII_Fraction_Inner  =;\n"
-"       HeI_Fraction_Inner  =;\n"
-"       HeII_Fraction_Inner =;\n"
-"       HeIII_Fraction_Inner  =;\n"
-"       HM_Fraction_Inner =;\n"
-"       H2I_Fraction_Inner  =;\n"
-"       H2II_Fraction_Inner =;\n"
-"       DI_Fraction_Inner =;\n"
-"       DII_Fraction_Inner  =;\n"
-"       HDI_Fraction_Inner  =;\n"
-"       COI_Fraction_Inner  =;\n"
-"       CI_Fraction_Inner =;\n"
-"       CII_Fraction_Inner  =;\n"
-"       OI_Fraction_Inner =;\n"
-"       OII_Fraction_Inner  =;\n"
-"       SiI_Fraction_Inner  =;\n"
-"       SiII_Fraction_Inner =;\n"
-"       SiIII_Fraction_Inner  =;\n"
-"       CHI_Fraction_Inner  =;\n"
-"       CH2I_Fraction_Inner =;\n"
-"       CH3II_Fraction_Inner  =;\n"
-"       C2I_Fraction_Inner  =;\n"
-"       HCOII_Fraction_Inner  =;\n"
-"       OHI_Fraction_Inner  =;\n"
-"       H2OI_Fraction_Inner =;\n"
-"       O2I_Fraction_Inner  =;\n"
-"       HI_Fraction =;\n"
-"       HII_Fraction  =;\n"
-"       HeI_Fraction  =;\n"
-"       HeII_Fraction =;\n"
-"       HeIII_Fraction  =;\n"
-"       HM_Fraction =;\n"
-"       H2I_Fraction  =;\n"
-"       H2II_Fraction =;\n"
-"       DI_Fraction =;\n"
-"       DII_Fraction  =;\n"
-"       HDI_Fraction  =;\n"
-"       COI_Fraction  =;\n"
-"       CI_Fraction =;\n"
-"       CII_Fraction  =;\n"
-"       OI_Fraction =;\n"
-"       OII_Fraction  =;\n"
-"       SiI_Fraction  =;\n"
-"       SiII_Fraction =;\n"
-"       SiIII_Fraction  =;\n"
-"       CHI_Fraction  =;\n"
-"       CH2I_Fraction =;\n"
-"       CH3II_Fraction  =;\n"
-"       C2I_Fraction  =;\n"
-"       HCOII_Fraction  =;\n"
-"       OHI_Fraction  =;\n"
-"       H2OI_Fraction =;\n"
-"       O2I_Fraction  =;\n"
-"       UseMetallicityField =;\n"
-"       MetallicityField_Fraction =;\n"
-"       UseMassInjection  =;\n"
-"       InitialHydrogenMass =;\n"
-"       InitialDeuteriumMass  =;\n"
-"       InitialHeliumMass =;\n"
-"       InitialMetalMass  =;\n"
-"       MultiMetals =;\n"
-"       MultiMetalsField1_Fraction  =;\n"
-"       MultiMetalsField2_Fraction  =;\n"
+"       InnerDensity  =1.0;\n"
+"       OuterDensity  =1.0;\n"
+"       Pressure  =1e-5;\n"
+"       Energy  =1.0;\n"
+"       SubgridLeft =0;\n"
+"       SubgridRight  =1;\n"
+"       UseDensityFluctuations  =0;\n"
+"       RandomSeed  =123456789;\n"
+"       DensityFluctuationLevel =0.1;\n"
+"       InitializeWithKE  =0;\n"
+"       SedovBlastRadius  =0.05;\n"
+"       UseSedovProfile =0.05;\n"
+"       KineticEnergyFraction =0.0;\n"
+"       CenterPosition  =[0.5,0.5,0.5];\n"
+"       SpreadOverNumZones  =3.5;\n"
+"       HydrogenFractionByMass  =0.0;\n"
+"       DeuteriumToHydrogenRatio  =0.0;\n"
+"       HI_Fraction_Inner =0.0;\n"
+"       HII_Fraction_Inner  =0.0;\n"
+"       HeI_Fraction_Inner  =0.0;\n"
+"       HeII_Fraction_Inner =0.0;\n"
+"       HeIII_Fraction_Inner  =0.0;\n"
+"       HM_Fraction_Inner =0.0;\n"
+"       H2I_Fraction_Inner  =0.0;\n"
+"       H2II_Fraction_Inner =0.0;\n"
+"       DI_Fraction_Inner =0.0;\n"
+"       DII_Fraction_Inner  =0.0;\n"
+"       HDI_Fraction_Inner  =0.0;\n"
+"       COI_Fraction_Inner  =0.0;\n"
+"       CI_Fraction_Inner =0.0;\n"
+"       CII_Fraction_Inner  =0.0;\n"
+"       OI_Fraction_Inner =0.0;\n"
+"       OII_Fraction_Inner  =0.0;\n"
+"       SiI_Fraction_Inner  =0.0;\n"
+"       SiII_Fraction_Inner =0.0;\n"
+"       SiIII_Fraction_Inner  =0.0;\n"
+"       CHI_Fraction_Inner  =0.0;\n"
+"       CH2I_Fraction_Inner =0.0;\n"
+"       CH3II_Fraction_Inner  =0.0;\n"
+"       C2I_Fraction_Inner  =0.0;\n"
+"       HCOII_Fraction_Inner  =0.0;\n"
+"       OHI_Fraction_Inner  =0.0;\n"
+"       H2OI_Fraction_Inner =0.0;\n"
+"       O2I_Fraction_Inner  =0.0;\n"
+"       HI_Fraction =0.0;\n"
+"       HII_Fraction  =0.0;\n"
+"       HeI_Fraction  =0.0;\n"
+"       HeII_Fraction =0.0;\n"
+"       HeIII_Fraction  =0.0;\n"
+"       HM_Fraction =0.0;\n"
+"       H2I_Fraction  =0.0;\n"
+"       H2II_Fraction =0.0;\n"
+"       DI_Fraction =0.0;\n"
+"       DII_Fraction  =0.0;\n"
+"       HDI_Fraction  =0.0;\n"
+"       COI_Fraction  =0.0;\n"
+"       CI_Fraction =0.0;\n"
+"       CII_Fraction  =0.0;\n"
+"       OI_Fraction =0.0;\n"
+"       OII_Fraction  =0.0;\n"
+"       SiI_Fraction  =0.0;\n"
+"       SiII_Fraction =0.0;\n"
+"       SiIII_Fraction  =0.0;\n"
+"       CHI_Fraction  =0.0;\n"
+"       CH2I_Fraction =0.0;\n"
+"       CH3II_Fraction  =0.0;\n"
+"       C2I_Fraction  =0.0;\n"
+"       HCOII_Fraction  =0.0;\n"
+"       OHI_Fraction  =0.0;\n"
+"       H2OI_Fraction =0.0;\n"
+"       O2I_Fraction  =0.0;\n"
+"       UseMetallicityField =0;\n"
+"       MetallicityField_Fraction =0.0;\n"
+"       UseMassInjection  =0;\n"
+"       InitialHydrogenMass =0.0;\n"
+"       InitialDeuteriumMass  =0.0;\n"
+"       InitialHeliumMass =0.0;\n"
+"       InitialMetalMass  =0.0;\n"
+"       MultiMetals =0;\n"
+"       MultiMetalsField1_Fraction  =0.0;\n"
+"       MultiMetalsField2_Fraction  =0.0;\n"
 "    };\n"
 "};\n";
 
@@ -240,119 +240,108 @@ int RadiatingShockInitialize(FILE *fptr, FILE *Outfptr, HierarchyEntry &TopGrid,
   TestProblemData.GloverChemistryModel = GloverChemistryModel; // set this from global data (kind of a hack, but necessary)
  
   /* read input from file */
- 
-  while (fgets(line, MAX_LINE_LENGTH, fptr) != NULL) {
- 
-    ret = 0;
- 
+
+  Param.Update(config_radiating_shock_defaults);
+
     /* read parameters specifically for radiating shock problem*/
  
-    Param.GetScalar(RadiatingShockInnerDensity,"Problem.RadiatingShockInnerDensity");
-    Param.GetScalar(RadiatingShockOuterDensity,"Problem.RadiatingShockOuterDensity");
-    Param.GetScalar(RadiatingShockPressure,"Problem.RadiatingShockPressure");
-    Param.GetScalar(RadiatingShockEnergy,"Problem.RadiatingShockEnergy");
-    Param.GetScalar(RadiatingShockSubgridLeft,"Problem.RadiatingShockSubgridLeft");
-    Param.GetScalar(RadiatingShockSubgridRight,"Problem.RadiatingShockSubgridRight");
-    Param.GetScalar(RadiatingShockUseDensityFluctuations,"Problem.RadiatingShockUseDensityFluctuations");
-    Param.GetScalar(RadiatingShockRandomSeed,"Problem.RadiatingShockRandomSeed");
-    Param.GetScalar(RadiatingShockDensityFluctuationLevel,"Problem.RadiatingShockDensityFluctuationLevel");
-    Param.GetScalar(RadiatingShockInitializeWithKE,"Problem.RadiatingShockInitializeWithKE");
-    Param.GetScalar(RadiatingShockUseSedovProfile,"Problem.RadiatingShockUseSedovProfile");
-    Param.GetScalar(RadiatingShockSedovBlastRadius,"Problem.RadiatingShockSedovBlastRadius");
+    Param.GetScalar(RadiatingShockInnerDensity,"Problem.RadiatingShock.InnerDensity");
+    Param.GetScalar(RadiatingShockOuterDensity,"Problem.RadiatingShock.OuterDensity");
+    Param.GetScalar(RadiatingShockPressure,"Problem.RadiatingShock.Pressure");
+    Param.GetScalar(RadiatingShockEnergy,"Problem.RadiatingShock.Energy");
+    Param.GetScalar(RadiatingShockSubgridLeft,"Problem.RadiatingShock.SubgridLeft");
+    Param.GetScalar(RadiatingShockSubgridRight,"Problem.RadiatingShock.SubgridRight");
+    Param.GetScalar(RadiatingShockUseDensityFluctuations,"Problem.RadiatingShock.UseDensityFluctuations");
+    Param.GetScalar(RadiatingShockRandomSeed,"Problem.RadiatingShock.RandomSeed");
+    Param.GetScalar(RadiatingShockDensityFluctuationLevel,"Problem.RadiatingShock.DensityFluctuationLevel");
+    Param.GetScalar(RadiatingShockInitializeWithKE,"Problem.RadiatingShock.InitializeWithKE");
+    Param.GetScalar(RadiatingShockUseSedovProfile,"Problem.RadiatingShock.UseSedovProfile");
+    Param.GetScalar(RadiatingShockSedovBlastRadius,"Problem.RadiatingShock.SedovBlastRadius");
 
-    Param.GetScalar(RadiatingShockKineticEnergyFraction,"Problem.RadiatingShockKineticEnergyFraction");
+    Param.GetScalar(RadiatingShockKineticEnergyFraction,"Problem.RadiatingShock.KineticEnergyFraction");
 
     for (i=0; i<MAX_DIMENSION; i++){
-        Param.GetArray(RadiatingShockCenterPosition[i],"Problem.RadiatingShockCenterPosition%s",i)}
+        Param.GetArray(RadiatingShockCenterPosition[i],"Problem.RadiatingShock.CenterPosition%s",i)}
 
-    Param.GetScalar(RadiatingShockSpreadOverNumZones,"Problem.RadiatingShockSpreadOverNumZones");
+    Param.GetScalar(RadiatingShockSpreadOverNumZones,"Problem.RadiatingShock.SpreadOverNumZones");
 
     /* read in more general test parameters to set species, turn on color fields, etc. */
-    Param.GetScalar(HydrogenFractionByMass,"Problem.HydrogenFractionByMass");
-    Param.GetScalar(DeuteriumToHydrogenRatio,"Problem.DeuteriumToHydrogenRatio");
+    Param.GetScalar(HydrogenFractionByMass,"Problem.RadiatingShock.HydrogenFractionByMass");
+    Param.GetScalar(DeuteriumToHydrogenRatio,"Problem.RadiatingShock.DeuteriumToHydrogenRatio");
 
-    Param.GetScalar(HI_Fraction_Inner,"Problem.HI_Fraction_Inner");
-    Param.GetScalar(HII_Fraction_Inner,"Problem.HII_Fraction_Inner");
-    Param.GetScalar(HeI_Fraction_Inner,"Problem.HeI_Fraction_Inner");
-    Param.GetScalar(HeII_Fraction_Inner,"Problem.HeII_Fraction_Inner");
-    Param.GetScalar(HeIII_Fraction_Inner,"Problem.HeIII_Fraction_Inner");
-    Param.GetScalar(HM_Fraction_Inner,"Problem.HM_Fraction_Inner");
-    Param.GetScalar(H2I_Fraction_Inner,"Problem.H2I_Fraction_Inner");
-    Param.GetScalar(H2II_Fraction_Inner,"Problem.H2II_Fraction_Inner");
+    Param.GetScalar(HI_Fraction_Inner,"Problem.RadiatingShock.HI_Fraction_Inner");
+    Param.GetScalar(HII_Fraction_Inner,"Problem.RadiatingShock.HII_Fraction_Inner");
+    Param.GetScalar(HeI_Fraction_Inner,"Problem.RadiatingShock.HeI_Fraction_Inner");
+    Param.GetScalar(HeII_Fraction_Inner,"Problem.RadiatingShock.HeII_Fraction_Inner");
+    Param.GetScalar(HeIII_Fraction_Inner,"Problem.RadiatingShock.HeIII_Fraction_Inner");
+    Param.GetScalar(HM_Fraction_Inner,"Problem.RadiatingShock.HM_Fraction_Inner");
+    Param.GetScalar(H2I_Fraction_Inner,"Problem.RadiatingShock.H2I_Fraction_Inner");
+    Param.GetScalar(H2II_Fraction_Inner,"Problem.RadiatingShock.H2II_Fraction_Inner");
 
-    Param.GetScalar(DI_Fraction_Inner,"Problem.DI_Fraction_Inner");
-    Param.GetScalar(DII_Fraction_Inner,"Problem.DII_Fraction_Inner");
-    Param.GetScalar(HDI_Fraction_Inner,"Problem.HDI_Fraction_Inner");
+    Param.GetScalar(DI_Fraction_Inner,"Problem.RadiatingShock.DI_Fraction_Inner");
+    Param.GetScalar(DII_Fraction_Inner,"Problem.RadiatingShock.DII_Fraction_Inner");
+    Param.GetScalar(HDI_Fraction_Inner,"Problem.RadiatingShock.HDI_Fraction_Inner");
 
-    Param.GetScalar(COI_Fraction_Inner,"Problem.COI_Fraction_Inner");
-    Param.GetScalar(CI_Fraction_Inner,"Problem.CI_Fraction_Inner");
-    Param.GetScalar(CII_Fraction_Inner,"Problem.CII_Fraction_Inner");
-    Param.GetScalar(OI_Fraction_Inner,"Problem.OI_Fraction_Inner");
-    Param.GetScalar(OII_Fraction_Inner,"Problem.OII_Fraction_Inner");
-    Param.GetScalar(SiI_Fraction_Inner,"Problem.iI_Fraction_Inner");
-    Param.GetScalar(SiII_Fraction_Inner,"Problem.SiII_Fraction_Inner");
-    Param.GetScalar(SiIII_Fraction_Inner,"Problem.SiIII_Fraction_Inner");
-    Param.GetScalar(CHI_Fraction_Inner,"Problem.CHI_Fraction_Inner");
-    Param.GetScalar(CH2I_Fraction_Inner,"Problem.CH2I_Fraction_Inner");
-    Param.GetScalar(CH3II_Fraction_Inner,"Problem.CH3II_Fraction_Inner");
-    Param.GetScalar(C2I_Fraction_Inner,"Problem.C2I_Fraction_Inner");
-    Param.GetScalar(HCOII_Fraction_Inner,"Problem.HCOII_Fraction_Inner");
-    Param.GetScalar(OHI_Fraction_Inner,"Problem.OHI_Fraction_Inner");
-    Param.GetScalar(H2OI_Fraction_Inner,"Problem.H2OI_Fraction_Inner");
-    Param.GetScalar(O2I_Fraction_Inner,"Problem.O2I_Fraction_Inner");
+    Param.GetScalar(COI_Fraction_Inner,"Problem.RadiatingShock.COI_Fraction_Inner");
+    Param.GetScalar(CI_Fraction_Inner,"Problem.RadiatingShock.CI_Fraction_Inner");
+    Param.GetScalar(CII_Fraction_Inner,"Problem.RadiatingShock.CII_Fraction_Inner");
+    Param.GetScalar(OI_Fraction_Inner,"Problem.RadiatingShock.OI_Fraction_Inner");
+    Param.GetScalar(OII_Fraction_Inner,"Problem.RadiatingShock.OII_Fraction_Inner");
+    Param.GetScalar(SiI_Fraction_Inner,"Problem.RadiatingShock.iI_Fraction_Inner");
+    Param.GetScalar(SiII_Fraction_Inner,"Problem.RadiatingShock.SiII_Fraction_Inner");
+    Param.GetScalar(SiIII_Fraction_Inner,"Problem.RadiatingShock.SiIII_Fraction_Inner");
+    Param.GetScalar(CHI_Fraction_Inner,"Problem.RadiatingShock.CHI_Fraction_Inner");
+    Param.GetScalar(CH2I_Fraction_Inner,"Problem.RadiatingShock.CH2I_Fraction_Inner");
+    Param.GetScalar(CH3II_Fraction_Inner,"Problem.RadiatingShock.CH3II_Fraction_Inner");
+    Param.GetScalar(C2I_Fraction_Inner,"Problem.RadiatingShock.C2I_Fraction_Inner");
+    Param.GetScalar(HCOII_Fraction_Inner,"Problem.RadiatingShock.HCOII_Fraction_Inner");
+    Param.GetScalar(OHI_Fraction_Inner,"Problem.RadiatingShock.OHI_Fraction_Inner");
+    Param.GetScalar(H2OI_Fraction_Inner,"Problem.RadiatingShock.H2OI_Fraction_Inner");
+    Param.GetScalar(O2I_Fraction_Inner,"Problem.RadiatingShock.O2I_Fraction_Inner");
 
-    Param.GetScalar(HI_Fraction,"Problem.HI_Fraction");
-    Param.GetScalar(HII_Fraction,"Problem.HII_Fraction");
-    Param.GetScalar(HeI_Fraction,"Problem.HeI_Fraction");
-    Param.GetScalar(HeII_Fraction,"Problem.HeII_Fraction");
-    Param.GetScalar(HeIII_Fraction,"Problem.HeIII_Fraction");
-    Param.GetScalar(HM_Fraction,"Problem.HM_Fraction");
-    Param.GetScalar(H2I_Fraction,"Problem.H2I_Fraction");
-    Param.GetScalar(H2II_Fraction,"Problem.H2II_Fraction");
+    Param.GetScalar(HI_Fraction,"Problem.RadiatingShock.HI_Fraction");
+    Param.GetScalar(HII_Fraction,"Problem.RadiatingShock.HII_Fraction");
+    Param.GetScalar(HeI_Fraction,"Problem.RadiatingShock.HeI_Fraction");
+    Param.GetScalar(HeII_Fraction,"Problem.RadiatingShock.HeII_Fraction");
+    Param.GetScalar(HeIII_Fraction,"Problem.RadiatingShock.HeIII_Fraction");
+    Param.GetScalar(HM_Fraction,"Problem.RadiatingShock.HM_Fraction");
+    Param.GetScalar(H2I_Fraction,"Problem.RadiatingShock.H2I_Fraction");
+    Param.GetScalar(H2II_Fraction,"Problem.RadiatingShock.H2II_Fraction");
 
-    Param.GetScalar(DI_Fraction,"Problem.DI_Fraction");
-    Param.GetScalar(DII_Fraction,"Problem.DII_Fraction");
-    Param.GetScalar(HDI_Fraction,"Problem.HDI_Fraction");
+    Param.GetScalar(DI_Fraction,"Problem.RadiatingShock.DI_Fraction");
+    Param.GetScalar(DII_Fraction,"Problem.RadiatingShock.DII_Fraction");
+    Param.GetScalar(HDI_Fraction,"Problem.RadiatingShock.HDI_Fraction");
 
-    Param.GetScalar(COI_Fraction,"Problem.COI_Fraction");
-    Param.GetScalar(CI_Fraction,"Problem.CI_Fraction");
-    Param.GetScalar(CII_Fraction,"Problem.CII_Fraction");
-    Param.GetScalar(OI_Fraction,"Problem.OI_Fraction");
-    Param.GetScalar(OII_Fraction,"Problem.OII_Fraction");
-    Param.GetScalar(SiI_Fraction,"Problem.SiI_Fraction");
-    Param.GetScalar(SiII_Fraction,"Problem.SiII_Fraction");
-    Param.GetScalar(SiIII_Fraction,"Problem.SiIII_Fraction");
-    Param.GetScalar(CHI_Fraction,"Problem.CHI_Fraction");
-    Param.GetScalar(CH2I_Fraction,"Problem.CH2I_Fraction");
-    Param.GetScalar(CH3II_Fraction,"Problem.CH3II_Fraction");
-    Param.GetScalar(C2I_Fraction,"Problem.C2I_Fraction");
-    Param.GetScalar(HCOII_Fraction,"Problem.HCOII_Fraction");
-    Param.GetScalar(OHI_Fraction,"Problem.OHI_Fraction");
-    Param.GetScalar(H2OI_Fraction,"Problem.H2OI_Fraction");
-    Param.GetScalar(O2I_Fraction,"Problem.O2I_Fraction");
+    Param.GetScalar(COI_Fraction,"Problem.RadiatingShock.COI_Fraction");
+    Param.GetScalar(CI_Fraction,"Problem.RadiatingShock.CI_Fraction");
+    Param.GetScalar(CII_Fraction,"Problem.RadiatingShock.CII_Fraction");
+    Param.GetScalar(OI_Fraction,"Problem.RadiatingShock.OI_Fraction");
+    Param.GetScalar(OII_Fraction,"Problem.RadiatingShock.OII_Fraction");
+    Param.GetScalar(SiI_Fraction,"Problem.RadiatingShock.SiI_Fraction");
+    Param.GetScalar(SiII_Fraction,"Problem.RadiatingShock.SiII_Fraction");
+    Param.GetScalar(SiIII_Fraction,"Problem.RadiatingShock.SiIII_Fraction");
+    Param.GetScalar(CHI_Fraction,"Problem.RadiatingShock.CHI_Fraction");
+    Param.GetScalar(CH2I_Fraction,"Problem.RadiatingShock.CH2I_Fraction");
+    Param.GetScalar(CH3II_Fraction,"Problem.RadiatingShock.CH3II_Fraction");
+    Param.GetScalar(C2I_Fraction,"Problem.RadiatingShock.C2I_Fraction");
+    Param.GetScalar(HCOII_Fraction,"Problem.RadiatingShock.HCOII_Fraction");
+    Param.GetScalar(OHI_Fraction,"Problem.RadiatingShock.OHI_Fraction");
+    Param.GetScalar(H2OI_Fraction,"Problem.RadiatingShock.H2OI_Fraction");
+    Param.GetScalar(O2I_Fraction,"Problem.RadiatingShock.O2I_Fraction");
 
-    Param.GetScalar(UseMetallicityField,"Problem.UseMetallicityField");
-    Param.GetScalar(MetallicityField_Fraction,"Problem.MetallicityField_Fraction");
+    Param.GetScalar(UseMetallicityField,"Problem.RadiatingShock.UseMetallicityField");
+    Param.GetScalar(MetallicityField_Fraction,"Problem.RadiatingShock.MetallicityField_Fraction");
 
-    Param.GetScalar(UseMassInjection,"Problem.UseMassInjection");
-    Param.GetScalar(InitialHydrogenMass,"Problem.InitialHydrogenMass");
-    Param.GetScalar(InitialDeuteriumMass,"Problem.InitialDeuteriumMass");
-    Param.GetScalar(InitialHeliumMass,"Problem.InitialHeliumMass");
-    Param.GetScalar(InitialMetalMass,"Problem.InitialMetalMass");
+    Param.GetScalar(UseMassInjection,"Problem.RadiatingShock.UseMassInjection");
+    Param.GetScalar(InitialHydrogenMass,"Problem.RadiatingShock.InitialHydrogenMass");
+    Param.GetScalar(InitialDeuteriumMass,"Problem.RadiatingShock.InitialDeuteriumMass");
+    Param.GetScalar(InitialHeliumMass,"Problem.RadiatingShock.InitialHeliumMass");
+    Param.GetScalar(InitialMetalMass,"Problem.RadiatingShock.InitialMetalMass");
 
-    Param.GetScalar(MultiMetals,"Problem.MultiMetals");
-    Param.GetScalar(MultiMetalsField1_Fraction,"Problem.MultiMetalsField1_Fraction");
-    Param.GetScalar(MultiMetalsField2_Fraction,"Problem.MultiMetalsField2_Fraction");
+    Param.GetScalar(MultiMetals,"Problem.RadiatingShock.MultiMetals");
+    Param.GetScalar(MultiMetalsField1_Fraction,"Problem.RadiatingShock.MultiMetalsField1_Fraction");
+    Param.GetScalar(MultiMetalsField2_Fraction,"Problem.RadiatingShock.MultiMetalsField2_Fraction");
 
-    /* if the line is suspicious, issue a warning */
- 
-    if (ret == 0 && strstr(line, "=") && (strstr(line, "RadiatingShock") || strstr(line, "TestProblem")) &&
-	line[0] != '#' && MyProcessorNumber == ROOT_PROCESSOR)
-      fprintf(stderr,
-	 "*** warning: the following parameter line was not interpreted:\n%s\n",
-	      line);
- 
-  } // end input from parameter file
  
   /* set number of zones on the finest level to resolve the initial explosion */
   FLOAT dr = RadiatingShockSpreadOverNumZones*dx*POW(RefineBy,-MaximumRefinementLevel);
