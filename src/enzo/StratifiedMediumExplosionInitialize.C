@@ -40,7 +40,17 @@ const char config_stratified_medium_explosion_defaults[] =
 "\n"
 "Problem: {\n"
 "    StratifiedMediumExplosion: {\n"
-// FIXME
+"        Density = 1.0;\n"
+"        TotalEnergy = 1.0;\n"
+"        GasEnergy = 1.0;\n"
+"        Energy = 1.0;\n"
+"        Velocity = [0.0,0.0,0.0]\n"
+"        InitialUniformBField = [0.0,0.0,0.0];   // in Gauss\n"
+"        RadiusOfBubble = 0.1;  // units of box size\n"
+"        PulseType = 1;  // pulse type\n"
+"        Center = [0.5,0.5,0.5];\n"
+"        SubgridLeft = [0.0,0.0,0.0]\n"
+"        SubgridRight = [0.0,0.0,0.0]\n"
 "    };\n"
 "};\n";
 
@@ -78,29 +88,21 @@ int StratifiedMediumExplosionInitialize(FILE *fptr, FILE *Outfptr, HierarchyEntr
 
   // Read parameters
 
-  while (fgets(line, MAX_LINE_LENGTH, fptr) != NULL) {
-    ret = 0;
-    ret += sscanf(line, "StratifiedMediumExplosionRadiusOfBubble = %"PSYM, &StratifiedMediumExplosionRadiusOfBubble);
-    ret += sscanf(line, "StratifiedMediumExplosionEnergy = %"FSYM, &StratifiedMediumExplosionEnergy);
-    ret += sscanf(line, "StratifiedMediumExplosionPulseType = %"ISYM, &StratifiedMediumExplosionPulseType);
-    ret += sscanf(line, "StratifiedMediumExplosionCenter = %"PSYM" %"PSYM" %"PSYM, &StratifiedMediumExplosionCenter[0],
-		  &StratifiedMediumExplosionCenter[1],&StratifiedMediumExplosionCenter[2]);
-    ret += sscanf(line, "StratifiedMediumExplosionSubgridLeft = %"PSYM" %"PSYM" %"PSYM,
-		  StratifiedMediumExplosionSubgridLeft,StratifiedMediumExplosionSubgridLeft+1,
-		  StratifiedMediumExplosionSubgridLeft+2);
-    ret += sscanf(line, "StratifiedMediumExplosionSubgridRight = %"PSYM" %"PSYM" %"PSYM,
-		  StratifiedMediumExplosionSubgridRight,StratifiedMediumExplosionSubgridRight+1,
-		  StratifiedMediumExplosionSubgridRight+2);
+  Param.GetScalar(StratifiedMediumExplosionRadiusOfBubble, 
+  		"Problem.StratifiedMediumExplosion.RadiusOfBubble");
+  Param.GetScalar(StratifiedMediumExplosionEnergy,
+		"Problem.StratifiedMediumExplosion.Energy");
+  Param.GetScalar(StratifiedMediumExplosionPulseType,
+  		"Problem.StratifiedMediumExplosion.PulseType");
+  Param.GetArray(StratifiedMediumExplosionCenter, 
+  		"Problem.StratifiedMediumExplosion.Center");
+  Param.GetArray(StratifiedMediumExplosionSubgridLeft,
+		"StratifiedMediumExplosionSubgridLeft");
+  Param.GetArray(StratifiedMediumExplosionSubgridRight,
+		"StratifiedMediumExplosionSubgridRight");
+  Param.GetScalar(TestProblemUseMetallicityField,"TestProblemData.UseMetallicityField");
+  Param.GetScalar(TestProblemInitialMetallicityFraction, "TestProblemData.MetallicityField_Fraction");
 
-    ret += sscanf(line, "TestProblemUseMetallicityField  = %"ISYM, &TestProblemData.UseMetallicityField);
-    ret += sscanf(line, "TestProblemInitialMetallicityFraction  = %"FSYM, &TestProblemData.MetallicityField_Fraction);
-
-    if (ret == 0 && 
-	strstr(line, "=") && strstr(line, "StratifiedMediumExplosion") &&
-	line[0] != '#' && MyProcessorNumber == ROOT_PROCESSOR) {
-      fprintf(stderr, "*** warning: the following parameter line was not interpreted:\n%s\n", line);
-    }
-  }
 
   StratifiedMediumExplosionGasEnergy = StratifiedMediumExplosionTotalEnergy;
 
