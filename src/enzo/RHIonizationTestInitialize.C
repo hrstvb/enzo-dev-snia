@@ -138,7 +138,9 @@ int RHIonizationTestInitialize(FILE *fptr, FILE *Outfptr,
       fclose(RHfptr);
     }
   }
-
+  RadHydroX0Velocity = RadHydroVelocity[0];
+  RadHydroX1Velocity = RadHydroVelocity[1];
+  RadHydroX2Velocity = RadHydroVelocity[2];
 
   // set up CoolData object if not already set up
   if (CoolData.ceHI == NULL) 
