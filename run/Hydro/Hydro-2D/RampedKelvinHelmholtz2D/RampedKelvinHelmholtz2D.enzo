@@ -12,7 +12,7 @@ ProblemType                =  201
 MHD2DProblemType = 9
 VelAnyl = 1
 TopGridRank                = 2
-TopGridDimensions          = 512 512
+TopGridDimensions          = 1024 1024
 SelfGravity                = 0
 TopGridGravityBoundary     = 0
 LeftFaceBoundaryCondition  = 3 3 3 
@@ -21,7 +21,8 @@ RightFaceBoundaryCondition = 3 3 3
 #  set I/O and stop/start parameters
 #
 StopTime = 2
-#StopCycle = 5
+StopCycle = 10
+CycleSkipDataDump = 1
 dtDataDump             = 0.05
 DataDumpName           = data
 #
@@ -37,8 +38,8 @@ Mu                          = 1
 HydroMethod                 = 0
 CourantSafetyNumber         = 0.8
 Theta_Limiter               = 1.9
-RiemannSolver               = 3
-ReconstructionMethod        = 0
+RiemannSolver               = 1
+#ReconstructionMethod        = 0
 DualEnergyFormalism         = 0           // Should stay 0 for isothermal problems
 RKOrder                     = 2
 SmallRho                    = 1e-4
@@ -55,7 +56,7 @@ LowerBx = 1e-9
 #Debug1 = 1
 
 UpperVelocityX = -0.5
-UpperVelocityY = 0
+UpperVelocityY = 0.01
 UpperPressure = 2.5
 UpperDensity = 1
 UpperBx = 0
