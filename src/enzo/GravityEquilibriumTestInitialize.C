@@ -74,7 +74,7 @@ int GravityEquilibriumTestInitialize(FILE *fptr, FILE *Outfptr,
 
   /* read parameters */
  
-  Param.GetScalar(GravityEquilibriumTestScaleHeight, "GravityEquilibriumTestScaleHeight");
+  Param.GetScalar(GravityEquilibriumTestScaleHeight, "Problem.GravityEquilibriumTest.ScaleHeight");
 
  
   /* Set up grid. */
