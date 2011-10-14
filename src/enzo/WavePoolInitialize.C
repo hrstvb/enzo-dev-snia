@@ -17,6 +17,9 @@
  
 // This routine intializes a new simulation based on the parameter file.
 //
+
+#include "ParameterControl/ParameterControl.h"
+extern Configuration Param;
  
 #include <string.h>
 #include <stdio.h>
@@ -33,6 +36,28 @@
 #define DEFINE_STORAGE
 #include "WavePoolGlobalData.h"
 #undef DEFINE_STORAGE
+
+/* Set default parameter values. */
+
+const char config_wave_pool_defaults[] =
+"### WAVE POOL DEFAULTS ###\n"
+"\n"
+"Problem: {\n"
+"    WavePool: {\n"
+"        Amplitude     = 0.01;   // linear wave\n"
+"        Wavelength    = 0.1;    // one-tenth of the box\n"
+"        NumberOfWaves = 1;      // just one wave\n"
+"        Angle         = 0.0;    // direction of wave propogation wrt x-axis\n"
+"\n"
+"        Density       = 1.0;    // uniform pool\n"
+"        Pressure      = 1.0;"
+"        Velocity      = [0.0,0.0,0.0];  // x, y and z velocities
+"\n"
+"        SubgridLeft   = 0.0;    // start of subgrid\n"
+"        SubgridRight  = 0.0;    // end of subgrid\n"
+"    };\n"
+"};\n";
+
  
 int WavePoolInitialize(FILE *fptr, FILE *Outfptr, HierarchyEntry &TopGrid,
 		       TopGridData &MetaData)
@@ -53,50 +78,32 @@ int WavePoolInitialize(FILE *fptr, FILE *Outfptr, HierarchyEntry &TopGrid,
   FLOAT LeftEdge[MAX_DIMENSION], RightEdge[MAX_DIMENSION];
   float ZeroBField[3] = {0.0, 0.0, 0.0};
  
-  /* set default parameters */
+  // Update the parameter config to include the local defaults. Note
+  // that this does not overwrite values previously specified.
+  Param.Update(config_wave_pool_defaults);
+
  
-  WavePoolAmplitude     = 0.01;   // linear wave
-  WavePoolWavelength    = 0.1;    // one-tenth of the box
-  WavePoolNumberOfWaves = 1;      // just one wave
-  WavePoolAngle         = 0.0;    // direction of wave propogation wrt x-axis
+  /* read parameters */
  
-  WavePoolDensity       = 1.0;  // uniform pool
-  WavePoolPressure      = 1.0;
-  WavePoolVelocity[0]   = 0.0;  // x, y and z velocities
-  WavePoolVelocity[1]   = 0.0;
-  WavePoolVelocity[2]   = 0.0;
+  Param.GetScalar(WavePoolAmplitude,
+		"Problem.WavePool.Amplitude");
+  Param.GetScalar(WavePoolWavelength,
+                "Problem.WavePool.Wavelength");
+  Param.GetScalar(WavePoolNumberOfWaves,
+                "Problem.WavePool.NumberOfWaves");
+  Param.GetScalar(WavePoolAngle,
+                "Problem.WavePool.Angle");
  
-  WavePoolSubgridLeft   = 0.0;   // start of subgrid
-  WavePoolSubgridRight  = 0.0;  // end of subgrid
- 
-  /* read input from file */
- 
-  while (fgets(line, MAX_LINE_LENGTH, fptr) != NULL) {
- 
-    ret = 0;
- 
-    /* read parameters */
- 
-    ret += sscanf(line, "WavePoolAmplitude = %"FSYM, &WavePoolAmplitude);
-    ret += sscanf(line, "WavePoolWavelength = %"FSYM, &WavePoolWavelength);
-    ret += sscanf(line, "WavePoolNumberOfWaves = %"FSYM, &WavePoolNumberOfWaves);
-    ret += sscanf(line, "WavePoolAngle = %"FSYM, &WavePoolAngle);
- 
-    ret += sscanf(line, "WavePoolDensity = %"FSYM, &WavePoolDensity);
-    ret += sscanf(line, "WavePoolPressure = %"FSYM, &WavePoolPressure);
-    ret += sscanf(line, "WavePoolVelocity1 = %"FSYM, &WavePoolVelocity[0]);
-    ret += sscanf(line, "WavePoolVelocity2 = %"FSYM, &WavePoolVelocity[1]);
-    ret += sscanf(line, "WavePoolVelocity3 = %"FSYM, &WavePoolVelocity[2]);
- 
-    ret += sscanf(line, "WavePoolSubgridLeft = %"PSYM, &WavePoolSubgridLeft);
-    ret += sscanf(line, "WavePoolSubgridRight = %"PSYM, &WavePoolSubgridRight);
- 
-    /* if the line is suspicious, issue a warning */
- 
-    if (ret == 0 && strstr(line, "=") && strstr(line, "WavePool"))
-      fprintf(stderr, "warning: the following parameter line was not interpreted:\n%s\n", line);
- 
-  } // end input from parameter file
+  Param.GetScalar(WavePoolDensity,
+                "Problem.WavePool.Density");
+  Param.GetScalar(WavePoolPressure,
+                "Problem.WavePool.Pressure");
+  Param.GetArray(WavePoolVelocity,
+                "Problem.WavePool.Velocity");
+  Param.GetScalar(WavePoolSubgridLeft,
+		"Problem.WavePool.SubgridLeft");
+  Param.GetScalar(WavePoolSubgridRight,
+                "Problem.WavePool.SubgridRight");
  
   /* set the inflow boundary on the left, otherwise leave things alone. */
  
