@@ -34,13 +34,31 @@ extern Configuration Param;
 #include "FSProb.h"
 #include "CosmologyParameters.h"
 
+
 const char config_shock_in_a_box_defaults[] = 
 "### FSRADIATION PROBLEM  DEFAULTS ###\n"
 "\n"
 "Problem: {\n"
 "    FSRADIATION: {\n"
-"        Direction = 0;\n"
-""
+"      Scaling = 1.0;\n"
+"      Theta = 1.0;\n"
+"      Opacity = 1.0e-31;\n"
+"      H2OpacityOn = 0;\n" 
+"      NGammaDot = 0.0;\n"
+"      EtaRadius = 0.0;\n"
+"      EtaCenter = [0];\n" 
+"      LimiterType = ;\n"
+"      BoundaryXoFaces = [0,0];\n"
+"      BoundaryX1Faces = [0,0];\n" 
+"      BoundaryX2Faces = [0,0];\n" 
+"      MaxDt = 0.0;\n"
+"      InitialGuess = 0.0;\n"
+"      Tolerance = 1e-5;\n"
+"      MaxMGIters = 50;\n"
+"      MGRelaxTypei = 2;\n"
+"      MGPreRelax = 5;\n"
+"      MGPostRelax = 5;\n"
+"\n"
 "    };\n"
 "};\n";
 
@@ -110,10 +128,11 @@ int FSProb::Initialize(HierarchyEntry &TopGrid, TopGridData &MetaData)
   kappa0  = 1.0e-31;    // negligible opacity
   kappa_h2on = 0;       // no spatially dependent (use background) opacity
   for (dim=0; dim<rank; dim++)       // set default radiation boundaries to 
-    for (face=0; face<2; face++)     // periodic in each direction
+z    for (face=0; face<2; face++)     // periodic in each direction
       BdryType[dim][face] = 0;
 
   // set default solver parameters
+  maxdt=0.0;
   initial_guess      = 0;         // previous time step
   sol_tolerance      = 1e-5;      // solver tolerance
   sol_printl         = 0;         // HYPRE print level
@@ -137,7 +156,10 @@ int FSProb::Initialize(HierarchyEntry &TopGrid, TopGridData &MetaData)
   int ret;
   char *dummy = new char[MAX_LINE_LENGTH];
   dummy[0] = 0;
-
+  // Update the parameter config to include the local defaults. Note
+  // that this does not overwrite values previously specified.
+  Param.Update(config_adiabatic_expansion_defaults);
+  
 
   Param.GetScalar(EScale,"Problem.FSRadiation.Scaling");
   Param.GetScalar(theta,"Problem.FSRadiation.Theta");
