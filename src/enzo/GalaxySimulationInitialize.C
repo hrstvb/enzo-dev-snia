@@ -15,7 +15,9 @@
 ************************************************************************/
 
 // This routine intializes a new simulation based on the parameter file.
-//
+
+#include "ParameterControl/ParameterControl.h"
+extern Configuration Param;
 
 #ifdef USE_MPI
 #include "mpi.h"
@@ -36,6 +38,40 @@
 #include "Hierarchy.h"
 #include "LevelHierarchy.h"
 #include "TopGridData.h"
+
+const char config_galaxy_simulation_defaults[] =
+"### GALAXY SIMULATION DEFAULTS ###\n"
+"\n"
+"Problem: {\n"
+"    GalaxySimulation: {\n"
+"        RefineAtStart 		= TRUE;\n"
+"        InitialRefinementLevel	= 0;\n"
+"        UseMetallicityField  	= FALSE;\n"
+"        InitialTemperature 	= 1000.0;\n"
+"        Disk: {\n"
+"            Position		= [0.5,0.5,0.5];\n"
+"            Radius 		= 0.2;     # [Mpc]\n"
+"            Temperature 	= 1.e4;    # [K]\n"
+"            ScaleHeightz   	= 325e-6;\n"
+"            ScaleHeightR   	= 3500e-6;\n"
+"            GasMass		= 4.0e10;\n"
+"            GalaxyMass		= 1.0e12;\n"
+"        };\n"
+"        DarkMatterConcentrationParameter = 12;\n"
+"        InflowTime 		= -1;\n"
+"        InflowDensity		= 0;\n"
+"        AngularMomentum	= [0.0,0.0,0.0];\n"
+"        UniformVelocity        = [0.0,0.0,0.0];\n"
+"        UniformDensity		= 1.0;\n"
+"        UniformEnergy		= 1.0;\n"
+"        SubgridLeft		= 0.0;    # start of subgrid(s)\n"
+"        SubgridRight		= 0.0;    # end of subgrid(s)\n"
+"        
+"    };\n"
+"};\n";
+
+
+// Function Prototypes
 
 void WriteListOfFloats(FILE *fptr, int N, float floats[]);
 void WriteListOfFloats(FILE *fptr, int N, FLOAT floats[]);
@@ -58,7 +94,7 @@ int GalaxySimulationInitialize(FILE *fptr, FILE *Outfptr,
   /* declarations */
 
   char  line[MAX_LINE_LENGTH];
-  int   dim, ret, level, disk, i;
+  int   dim, level, disk, i;
 
   /* make sure it is 3D */
   
@@ -97,91 +133,39 @@ int GalaxySimulationInitialize(FILE *fptr, FILE *Outfptr,
   int NumberOfSubgridZones[MAX_DIMENSION],
     SubgridDims[MAX_DIMENSION];
 
-  /* Default Values */
+  // Update the parameter config to include the local defaults. Note
+  // that this does not overwrite values previously specified.
+  Param.Update(config_galaxy_simulation_defaults);
 
-  GalaxySimulationRefineAtStart      = TRUE;
-  GalaxySimulationInitialRefinementLevel = 0;
-  GalaxySimulationUseMetallicityField  = FALSE;
-  GalaxySimulationInitialTemperature = 1000.0;
-  GalaxySimulationDiskRadius         = 0.2;      // [Mpc]
-  GalaxySimulationDiskTemperature    = 1.e4;     // [K]
-  GalaxySimulationDiskScaleHeightz   = 325e-6;
-  GalaxySimulationDiskScaleHeightR   = 3500e-6;
-  GalaxySimulationDarkMatterConcentrationParameter = 12;
-  GalaxySimulationGasMass            = 4.0e10;
-  GalaxySimulationGalaxyMass         = 1.0e12;
-  GalaxySimulationDiskTemperature    = 1000.0;
-  GalaxySimulationInflowTime         = -1;
-  GalaxySimulationInflowDensity      = 0;
-  for (dim = 0; dim < MAX_DIMENSION; dim++) {
-    GalaxySimulationDiskPosition[dim] = 0.5*(DomainLeftEdge[dim] +
-					     DomainRightEdge[dim]);
-    GalaxySimulationAngularMomentum[dim] = 0;
-    GalaxySimulationUniformVelocity[dim] = 0;
-  }
-  GalaxySimulationUniformDensity = 1.0;
-  GalaxySimulationUniformEnergy = 1.0;
-  
-  /* set no subgrids by default. */
-  
-  GalaxySimulationSubgridLeft         = 0.0;    // start of subgrid(s)
-  GalaxySimulationSubgridRight        = 0.0;    // end of subgrid(s)
 
-  /* read input from file */
+    /* read input from file */
 
-  while (fgets(line, MAX_LINE_LENGTH, fptr) != NULL) {
     
-    ret = 0;
-   
-    ret += sscanf(line, "GalaxySimulationRefineAtStart = %"ISYM,
-		  &GalaxySimulationRefineAtStart);
-    ret += sscanf(line, "GalaxySimulationInitialRefinementLevel = %"ISYM,
-		  &GalaxySimulationInitialRefinementLevel);
-    ret += sscanf(line, "GalaxySimulationUseMetallicityField = %"ISYM,
-		  &GalaxySimulationUseMetallicityField);
-    ret += sscanf(line, "GalaxySimulationInitialTemperature = %"FSYM,
-		  &GalaxySimulationInitialTemperature);
-    ret += sscanf(line, "GalaxySimulationUniformVelocity = %"FSYM" %"FSYM" %"FSYM,
-                  &GalaxySimulationUniformVelocity[0], &GalaxySimulationUniformVelocity[1],
-                  &GalaxySimulationUniformVelocity[2]);
-    ret += sscanf(line, "GalaxySimulationDiskRadius = %"PSYM,
-		  &GalaxySimulationDiskRadius);
-    ret += sscanf(line, "GalaxySimulationGalaxyMass = %"FSYM,
-		  &GalaxySimulationGalaxyMass);
-    ret += sscanf(line, "GalaxySimulationGasMass = %"FSYM,
-		  &GalaxySimulationGasMass);
-    ret += sscanf(line, "GalaxySimulationDiskPosition = %"PSYM" %"PSYM" %"PSYM, 
-		  &GalaxySimulationDiskPosition[0],
-		  &GalaxySimulationDiskPosition[1],
-		  &GalaxySimulationDiskPosition[2]);
-    ret += sscanf(line, "GalaxySimulationDiskScaleHeightz = %"PSYM,
-		  &GalaxySimulationDiskScaleHeightz);
-    ret += sscanf(line, "GalaxySimulationDiskScaleHeightR = %"PSYM,
-		  &GalaxySimulationDiskScaleHeightR);
-    ret += sscanf(line, "GalaxySimulationDarkMatterConcentrationParameter = %"FSYM,
-		  &GalaxySimulationDarkMatterConcentrationParameter);
-    ret += sscanf(line, "GalaxySimulationDiskTemperature = %"FSYM,
-		  &GalaxySimulationDiskTemperature);
-    ret += sscanf(line, "GalaxySimulationInflowTime = %"FSYM,
-		  &GalaxySimulationInflowTime);
-    ret += sscanf(line, "GalaxySimulationInflowDensity = %"FSYM,
-		  &GalaxySimulationInflowDensity);
-    ret += sscanf(line, "GalaxySimulationAngularMomentum = %"FSYM" %"FSYM" %"FSYM,
-		  &GalaxySimulationAngularMomentum[0],
-		  &GalaxySimulationAngularMomentum[1],
-		  &GalaxySimulationAngularMomentum[2]);
-    ret += sscanf(line, "GalaxySimulationSubgridLeft = %"PSYM,
-		  &GalaxySimulationSubgridLeft);
-    ret += sscanf(line, "GalaxySimulationSubgridRight = %"PSYM,
-		  &GalaxySimulationSubgridRight);
-    
-    /* if the line is suspicious, issue a warning */
-    
-    if (ret == 0 && strstr(line, "=") && strstr(line, "GalaxySimulation") 
-	&& line[0] != '#')
-      fprintf(stderr, "warning: the following parameter line was not interpreted:\n%s\n", line);
+    Param.GetScalar(GalaxySimulationRefineAtStart, "Problem.GalaxySimulation.RefineAtStart");
+    Param.GetScalar(GalaxySimulationInitialRefinementLevel, "Problem.GalaxySimulation.RefinementLevel");
 
-  } // end input from parameter file
+    Param.GetScalar(GaxySimulationUseMetallicityField, "Problem.GalaxySimulation.UseMetallicityField");
+    Param.GetScalar(GalaxySimulationInitialTemperature, "Problem.GalaxySimulation.Temperature");
+    Param.GetArray(GalaxySimulationUniformVelocity, "Problem.GalaxySimulation.UniformVelocity");
+
+    // Disk Parameters
+    Param.GetScalar(GalaxySimulationDiskRadius, "Problem.GalaxySimulation.Disk.Radius");
+    Param.GetScalar(GalaxySimulationGalaxyMass, "Problem.GalaxySimulation.Disk.Mass");
+    Param.GetScalar(GalaxySimulationGasMass, "Problem.GalaxySimulation.Disk.GasMass");
+    Param.GetArray(GalaxySimulationDiskPosition, "Problem.GalaxySimulation.Disk.Position");
+    Param.GetScalar(GalaxySimulationDiskScaleHeightz, "Problem.GalaxySimulation.Disk.ScaleHeightz");
+    Param.GetScalar(GalaxySimulationDiskScaleHeightR, "Problem.GalaxySimulation.Disk.ScaleHeightR");
+    Param.GetScalar(GalaxySimulationDiskTemperature, "Problem.GalaxySimulation.Disk.Temperature");
+
+    Param.GetScalar(GalaxySimulationDarkMatterConcentrationParameter,
+					"Problem.GalaxySimulation.DarkMatterConcentrationParameter");
+    Param.GetScalar(GalaxySimulationInflowTime, "Problem.GalaxySimulation.InflowTime");
+    Param.GetScalar(GalaxySimulationInflowDensity, "Problem.GalaxySimulation.InflowDensity");
+    Param.GetArray(GalaxySimulationAngularMomentum, "Problem.GalaxySimulation.AngularMomentum");
+
+    Param.GetScalar(GalaxySimulationSubgridLeft, "Problem.GalaxySimulation.SubgridLeft");
+    Param.GetScalar(GalaxySimulationSubgridRight, "Problem.GalaxySimulation.SubgridRight");
+    
 
 
   // do a couple of quick error checks

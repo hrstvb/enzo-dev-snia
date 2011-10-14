@@ -18,6 +18,9 @@
 
 // This routine intializes a new simulation based on the parameter file.
 
+#include "ParameterControl/ParameterControl.h"
+extern Configuration Param;
+
 #include <string.h>
 #include <stdio.h>
 #include <math.h>
@@ -33,6 +36,25 @@
 #include "TopGridData.h"
 #define DEFINE_STORAGE
 #undef DEFINE_STORAGE
+
+
+/* Set default parameter values. */
+
+const char config_protostellar_collapse_defaults[] =
+"### PROTOSTELLAR COLLAPSE DEFAULTS ###\n"
+"\n"
+"Problem: {\n"
+"    ProtostellarCollapse: {\n"
+"        Velocity	= [0.0, 0.0, 0.0];   # ambient gas initally at rest\n"
+"        BField		= [0.0, 0.0, 0.0];   # ambient gas initally at rest\n"
+"        CoreDensity    = 2000.0; 	     # 10^6/500\n"
+"        OuterDensity 	= 1.0;\n"
+"        OuterEnergy	= 1e3;\n"
+"        CoreRadius	= 0.005;\n"
+"        AngularVelocity = 0.0;\n"
+"        
+"    };\n"
+"};\n";
 
 int ProtostellarCollapseInitialize(FILE *fptr, FILE *Outfptr, 
 				   HierarchyEntry &TopGrid,
@@ -78,50 +100,37 @@ int ProtostellarCollapseInitialize(FILE *fptr, FILE *Outfptr,
 
   */
 
-  float ProtostellarCollapseVelocity[3]     = {0.0, 0.0, 0.0}; // ambient gas initally at rest
-  float ProtostellarCollapseBField[3]     = {0.0, 0.0, 0.0}; // ambient gas initally at rest
-  float ProtostellarCollapseCoreDensity     = 2000.0; // 10^6/500
-  float ProtostellarCollapseCoreEnergy      = 1e3;  // thermal energy, assumes Gamma = 1.001, p=1, d=1
-  float ProtostellarCollapseOuterDensity    = 1.0;
-  float ProtostellarCollapseOuterEnergy     = 1e3;
-  float ProtostellarCollapseCoreRadius      = 0.005;
-  float ProtostellarCollapseAngularVelocity = 0.0;
-  float dx = (DomainRightEdge[0] - DomainLeftEdge[0])/
-                                                   MetaData.TopGridDims[0];
+  float ProtostellarCollapseVelocity[3]; 	// ambient gas initally at rest
+  float ProtostellarCollapseBField[3]; 		// ambient gas initally at rest
+  float ProtostellarCollapseCoreDensity; 	// 10^6/500
+  float ProtostellarCollapseCoreEnergy;		// thermal energy, assumes Gamma = 1.001, p=1, d=1
+  float ProtostellarCollapseOuterDensity;	
+  float ProtostellarCollapseOuterEnergy;
+  float ProtostellarCollapseCoreRadius;
+  float ProtostellarCollapseAngularVelocity;
+
 
   /* set no subgrids by default. */
 
   ProtostellarCollapseSubgridLeft           = 0.0;    // start of subgrid(s)
   ProtostellarCollapseSubgridRight          = 0.0;    // end of subgrid(s)
 
-  /* read input from file */
+  // Update the parameter config to include the local defaults. Note
+  // that this does not overwrite values previously specified.
+  Param.Update(config_protostellar_collapse_defaults);
 
-  while (fgets(line, MAX_LINE_LENGTH, fptr) != NULL) {
+  /* read parameters */
 
-    ret = 0;
-
-    /* read parameters */
-
-    ret += sscanf(line, "ProtostellarCollapseCoreRadius      = %"FSYM, 
-		  &ProtostellarCollapseCoreRadius);
-    ret += sscanf(line, "ProtostellarCollapseOuterDensity    = %"FSYM, 
-		  &ProtostellarCollapseOuterDensity);
-    ret += sscanf(line, "ProtostellarCollapseAngularVelocity = %"FSYM, 
-		  &ProtostellarCollapseAngularVelocity);
-    ret += sscanf(line, "ProtostellarCollapseSubgridLeft     = %"FSYM, 
-		  &ProtostellarCollapseSubgridLeft);
-    ret += sscanf(line, "ProtostellarCollapseSubgridRight    = %"FSYM, 
-		  &ProtostellarCollapseSubgridRight);
-
-    /* if the line is suspicious, issue a warning */
-
-    if (ret == 0 && strstr(line, "=") && strstr(line, "ProtostellarCollapse") && 
-	line[0] != '#' && MyProcessorNumber == ROOT_PROCESSOR)
-      fprintf(stderr, 
-	 "warning: the following parameter line was not interpreted:\n%s\n", 
-	      line);
-
-  } // end input from parameter file
+  Param.GetScalar(ProtostellarCollapseCoreRadius,
+		"Problem.ProtostellarCollapse.CoreRadius");
+  Param.GetScalar(ProtostellarCollapseOuterDensity,
+		"Problem.ProtostellarCollapse.OuterDensity");
+  Param.GetScalar(ProtostellarCollapseAngularVelocity,
+		"Problem.ProtostellarCollapse.AngularVelocity");
+  Param.GetScalar(ProtostellarCollapseSubgridLeft,
+		"Problem.ProtostellarCollapse.SubgridLeft");
+  Param.GetScalar(ProtostellarCollapseSubgridRight,
+		"Problem.ProtostellarCollapse.SubgridRight");
 
 
   /* set the periodic boundaries */

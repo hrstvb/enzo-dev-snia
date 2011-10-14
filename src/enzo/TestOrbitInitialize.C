@@ -18,6 +18,9 @@
 // This routine intializes a new simulation based on the parameter file.
 //
 
+#include "ParameterControl/ParameterControl.h"
+extern Configuration Param;
+
 #include <string.h>
 #include <stdio.h>
 #include <math.h>
@@ -31,6 +34,22 @@
 #include "Grid.h"
 #include "Hierarchy.h"
 #include "TopGridData.h"
+
+/* Set default parameter values. */
+
+const char config_test_orbit_defaults[] =
+"### TEST ORBIT DEFAULTS ###\n"
+"\n"
+"Problem: {\n"
+"    TestOrbit: {\n"
+"        NumberOfParticles 	= 1;		# number of test particles\n"
+"        Radius			= 0.2;\n"
+"        CentralMass		= 1.0;\n"
+"        TestMass		= 1.0e-6;\n"
+"        UseBaryons		= FALSE; 	# not implemented
+"    };\n"
+"};\n";
+
 
 int TestOrbitInitialize(FILE *fptr, FILE *Outfptr, HierarchyEntry &TopGrid,
 			TopGridData &MetaData)
@@ -62,32 +81,23 @@ int TestOrbitInitialize(FILE *fptr, FILE *Outfptr, HierarchyEntry &TopGrid,
   float TestOrbitTestMass          = 1.0e-6;
   int   TestOrbitUseBaryons        = FALSE; // not implemented 
 
-  /* read input from file */
+  // Update the parameter config to include the local defaults. Note
+  // that this does not overwrite values previously specified.
+  Param.Update(config_test_orbit_defaults);
 
-  while (fgets(line, MAX_LINE_LENGTH, fptr) != NULL) {
+  /* read parameters */
 
-    ret = 0;
+  Param.GetScalar(TestOrbitNumberOfParticles,
+		"Problem.TestOrbit.NumberOfParticles");
+  Param.GetScalar(TestOrbitRadius,
+		"Problem.TestOrbit.Radius");
+  Param.GetScalar(TestOrbitCentralMass,
+		"Problem.TestOrbit.CentralMass");
+  Param.GetScalar(TestOrbitTestMass,
+		"Problem.TestOrbit.TestMass");
+  Param.GetScalar(TestOrbitUseBaryons,
+		"Problem.TestOrbitUseBaryons");
 
-    /* read parameters */
-
-    ret += sscanf(line, "TestOrbitNumberOfParticles = %"ISYM,
-		  &TestOrbitNumberOfParticles);
-    ret += sscanf(line, "TestOrbitRadius = %"PSYM,
-		  &TestOrbitRadius);
-    ret += sscanf(line, "TestOrbitCentralMass = %"FSYM,
-		  &TestOrbitCentralMass);
-    ret += sscanf(line, "TestOrbitTestMass = %"FSYM,
-		  &TestOrbitTestMass);
-    ret += sscanf(line, "TestOrbitUseBaryons = %"ISYM,
-		  &TestOrbitUseBaryons);
-
-    /* if the line is suspicious, issue a warning */
-
-    if (ret == 0 && strstr(line, "=") && strstr(line, "TestOrbit") 
-	&& line[0] != '#')
-      fprintf(stderr, "warning: the following parameter line was not interpreted:\n%s\n", line);
-
-  } // end input from parameter file
 
   /* set up grid */
 

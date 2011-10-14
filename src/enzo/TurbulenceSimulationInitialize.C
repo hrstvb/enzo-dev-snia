@@ -18,6 +18,10 @@
  
 // This routine intializes a new simulation based on the parameter file.
 //
+
+#include "ParameterControl/ParameterControl.h"
+extern Configuration Param;
+
  
 #ifdef USE_MPI
 #include "mpi.h"
@@ -42,6 +46,30 @@
 #include "fortran.def"
 #include "error.h"
 #include "message.h"
+
+const char config_turbulence_simulation_defaults[] =
+"### TURBULENCE SIMULATION DEFAULTS ###\n"
+"\n"
+"Problem: {\n"
+"    TurbulenceSimulation: {\n"
+"        InitialDensity				= -99999.0;\n"
+"        InitialDensityPerturbationAmplitude 	= -99999.0;\n"
+"        InitialTemperature			= -99999.0;\n"
+"        InitialPressure			= -99999.0;\n"
+"        InitialMagneticField[3] 		= [5.0,5.0,5.0];\n"
+"\n"
+"        DensityName		= \"\";\n"
+"        TotalEnergyName	= \"\";\n"
+"        GasPressureName	= \"\";\n"
+"        GasEnergyName		= \"\";\n"
+"        VelocityNames		= \"\";\n"
+"        RandomForcingNames	= \"\";\n"
+"        MagneticNames		= \"\";\n"
+"        SubgridsAreStatic	= TRUE;
+"        NumberofInitialSubgrids= 1;
+"    };\n"
+"};\n";
+
  
 /* function prototypes */
  
@@ -52,21 +80,20 @@ int CommunicationAllSumIntegerValues(int *Values, int Number);
  
 /* Turbulence Parameters (that need to be shared) */
  
-static float TurbulenceSimulationInitialDensity       = FLOAT_UNDEFINED;
-static float TurbulenceSimulationInitialDensityPerturbationAmplitude    = FLOAT_UNDEFINED;
-static float TurbulenceSimulationInitialTemperature   = FLOAT_UNDEFINED;
-static float TurbulenceSimulationInitialPressure   = FLOAT_UNDEFINED;
-static float TurbulenceSimulationInitialMagneticField[3] = {5.0,5.0,5.0};
+static float TurbulenceSimulationInitialDensityPerturbationAmplitude;
+static float TurbulenceSimulationInitialTemperature;
+static float TurbulenceSimulationInitialPressure;
+static float TurbulenceSimulationInitialMagneticField[3];
  
-static char *TurbulenceSimulationDensityName          = NULL;
-static char *TurbulenceSimulationTotalEnergyName      = NULL;
-static char *TurbulenceSimulationGasPressureName      = NULL;
-static char *TurbulenceSimulationGasEnergyName        = NULL;
+static char *TurbulenceSimulationDensityName;
+static char *TurbulenceSimulationTotalEnergyName;
+static char *TurbulenceSimulationGasPressureName;
+static char *TurbulenceSimulationGasEnergyName;
 static char *TurbulenceSimulationVelocityNames[MAX_DIMENSION];
 static char *TurbulenceSimulationRandomForcingNames[MAX_DIMENSION];
 static char *TurbulenceSimulationMagneticNames[MAX_DIMENSION];
-static int   TurbulenceSimulationSubgridsAreStatic    = TRUE;
-static int   TurbulenceSimulationNumberOfInitialGrids = 1;
+static int   TurbulenceSimulationSubgridsAreStatic;
+static int   TurbulenceSimulationNumberOfInitialGrids;
  
  
 #define MAX_INITIAL_GRIDS 10
@@ -144,82 +171,102 @@ int TurbulenceSimulationInitialize(FILE *fptr, FILE *Outfptr,
  
   char *dummy = new char[MAX_LINE_LENGTH];
   dummy[0] = 0;
-  while (fgets(line, MAX_LINE_LENGTH, fptr) != NULL) {
- 
-    ret = 0;
+  char dummy_arr[MAX_DIMENSION][MAX_LINE_LENGTH];
+
+
+  // Update the parameter config to include the local defaults. Note
+  // that this does not overwrite values previously specified.
+  Param.Update(config_turbulence_simulation_defaults);
+
  
     /* Read parameters */
- 
-    if (sscanf(line, "TurbulenceSimulationDensityName = %s", dummy) == 1)
-      TurbulenceSimulationDensityName = dummy;
-    if (sscanf(line, "TurbulenceSimulationTotalEnergyName = %s", dummy) == 1)
-      TurbulenceSimulationTotalEnergyName = dummy;
-    if (sscanf(line, "TurbulenceSimulationGasPressureName = %s", dummy) == 1)
-      TurbulenceSimulationGasPressureName = dummy;
-    if (sscanf(line, "TurbulenceSimulationGasEnergyName = %s", dummy) == 1)
-      TurbulenceSimulationGasEnergyName = dummy;
-    if (sscanf(line, "TurbulenceSimulationVelocity1Name = %s", dummy) == 1)
-      TurbulenceSimulationVelocityNames[0] = dummy;
-    if (sscanf(line, "TurbulenceSimulationVelocity2Name = %s", dummy) == 1)
-      TurbulenceSimulationVelocityNames[1] = dummy;
-    if (sscanf(line, "TurbulenceSimulationVelocity3Name = %s", dummy) == 1)
-      TurbulenceSimulationVelocityNames[2] = dummy;
-    if (sscanf(line, "TurbulenceSimulationRandomForcing1Name = %s", dummy) ==1)
-      TurbulenceSimulationRandomForcingNames[0] = dummy;
-    if (sscanf(line, "TurbulenceSimulationRandomForcing2Name = %s", dummy) ==1)
-      TurbulenceSimulationRandomForcingNames[1] = dummy;
-    if (sscanf(line, "TurbulenceSimulationRandomForcing3Name = %s", dummy) ==1)
-      TurbulenceSimulationRandomForcingNames[2] = dummy;
-    if (sscanf(line, "TurbulenceSimulationMagnetic1Name = %s", dummy) ==1)
-      TurbulenceSimulationMagneticNames[0] = dummy;
-    if (sscanf(line, "TurbulenceSimulationMagnetic2Name = %s", dummy) ==1)
-      TurbulenceSimulationMagneticNames[1] = dummy;
-    if (sscanf(line, "TurbulenceSimulationMagnetic3Name = %s", dummy) ==1)
-      TurbulenceSimulationMagneticNames[2] = dummy;
 
-    ret += sscanf(line, "TurbulenceSimulationInitialTemperature = %"FSYM,
-                  &TurbulenceSimulationInitialTemperature);
-    ret += sscanf(line, "TurbulenceSimulationInitialDensity = %"FSYM,
-                  &TurbulenceSimulationInitialDensity);
-    ret += sscanf(line, "TurbulenceSimulationSoundSpeed = %"FSYM,
-                  &TurbulenceSimulationSoundSpeed);
-    ret += sscanf(line, "TurbulenceSimulationInitialPressure = %"FSYM,
-                  &TurbulenceSimulationInitialPressure);
-    ret += sscanf(line, "TurbulenceSimulationInitialDensityPerturbationAmplitude = %"FSYM,
-                  &TurbulenceSimulationInitialDensityPerturbationAmplitude);
-    ret += sscanf(line, "TurbulenceSimulationNumberOfInitialGrids = %"ISYM,
-                  &TurbulenceSimulationNumberOfInitialGrids);
-    ret += sscanf(line, "TurbulenceSimulationSubgridsAreStatic = %"ISYM,
-                  &TurbulenceSimulationSubgridsAreStatic);
- 
-    if (sscanf(line, "TurbulenceSimulationGridLeftEdge[%"ISYM"]", &gridnum) > 0)
-      ret += sscanf(line, "TurbulenceSimulationGridLeftEdge[%"ISYM"] = %"PSYM" %"PSYM" %"PSYM,
-                    &gridnum, &TurbulenceSimulationGridLeftEdge[gridnum][0],
-                    &TurbulenceSimulationGridLeftEdge[gridnum][1],
-                    &TurbulenceSimulationGridLeftEdge[gridnum][2]);
-    if (sscanf(line, "TurbulenceSimulationGridRightEdge[%"ISYM"]", &gridnum) > 0)
-      ret += sscanf(line, "TurbulenceSimulationGridRightEdge[%"ISYM"] = %"PSYM" %"PSYM" %"PSYM,
-                    &gridnum,
-		    &TurbulenceSimulationGridRightEdge[gridnum][0],
-                    &TurbulenceSimulationGridRightEdge[gridnum][1],
-                    &TurbulenceSimulationGridRightEdge[gridnum][2]);
-    if (sscanf(line, "TurbulenceSimulationGridDimension[%"ISYM"]", &gridnum) > 0)
-      ret += sscanf(line, "TurbulenceSimulationGridDimension[%"ISYM"] = %"ISYM" %"ISYM" %"ISYM,
-                    &gridnum,
-		    &TurbulenceSimulationGridDimension[gridnum][0],
-                    &TurbulenceSimulationGridDimension[gridnum][1],
-                    &TurbulenceSimulationGridDimension[gridnum][2]);
-    if (sscanf(line, "TurbulenceSimulationGridLevel[%"ISYM"]", &gridnum) > 0)
-      ret += sscanf(line, "TurbulenceSimulationGridLevel[%"ISYM"] = %"ISYM,
-                    &gridnum, &TurbulenceSimulationGridLevel[gridnum]);
-                                                                                
-    if( sscanf(line, "TurbulenceSimulationInitialMagneticField = %"PSYM" %"PSYM" %"PSYM,
-		  TurbulenceSimulationInitialMagneticField,
-		  TurbulenceSimulationInitialMagneticField+1,
-	       TurbulenceSimulationInitialMagneticField+2) > 0){
-      ret++;
-      InitialMagneticFieldDefined = TRUE;
+     
+    Param.GetScalar(dummy, "Problem.TurbulenceSimulation.DensityName");
+    if( strlen(dummy) > 0 ) {
+      TurbulenceSimulationDensityName = new char[MAX_LINE_LENGTH];
+      strcpy(TurbulenceSimulationDensityName,dummy);
     }
+
+    Param.GetScalar(dummy, "Problem.TurbulenceSimulation.TotalEnergyName");
+    if( strlen(dummy) > 0 ) {
+      TurbulenceSimulationTotalEnergyName = new char[MAX_LINE_LENGTH];
+      strcpy(TurbulenceSimulationTotalEnergyName,dummy);
+    }
+
+    Param.GetScalar(dummy, "Problem.TurbulenceSimulation.GasPressureName");
+    if( strlen(dummy) > 0 ) {
+      TurbulenceSimulationGasPressureName = new char[MAX_LINE_LENGTH];
+      strcpy(TurbulenceSimulationGasPressureName,dummy);
+    }
+
+    Param.GetScalar(dummy, "Problem.TurbulenceSimulation.GasEnergyName");
+    if( strlen(dummy) > 0 ) {
+      TurbulenceSimulationGasEnergyName = new char[MAX_LINE_LENGTH];
+      strcpy(TurbulenceSimulationGasEnergyName,dummy);
+    }
+
+    Param.GetArray(dummy_arr, "Problem.TurbulenceSimulation.VelocityNames");
+    for( i=0; i<MAX_DIMENSION; i++) {
+      if( strlen(dummy_arr[i]) > 0 ) {
+        TurbulenceSimulationVelocityNames[i] = new char[MAX_LINE_LENGTH];
+        strcpy(TurbulenceSimulationVelocityNames[i], dummy_arr[i]);
+      }
+    }
+
+    Param.GetArray(dummy_arr, "Problem.TurbulenceSimulation.RandomForcingNames");
+    for( i=0; i<MAX_DIMENSION; i++) {
+      if( strlen(dummy_arr[i]) > 0 ) {
+        TurbulenceSimulationRandomForcingNames[i] = new char[MAX_LINE_LENGTH];
+        strcpy(TurbulenceSimulationRandomForcingNames[i], dummy_arr[i]);
+      }
+    }
+
+    Param.GetArray(dummy_arr, "Problem.TurbulenceSimulation.MagneticNames");
+    for( i=0; i<MAX_DIMENSION; i++) {
+      if( strlen(dummy_arr[i]) > 0 ) {
+        TurbulenceSimulationMagneticNames[i] = new char[MAX_LINE_LENGTH];
+        strcpy(TurbulenceSimulationMagneticNames[i], dummy_arr[i]);
+      }
+    }
+
+  Param.GetScalar(TurbulenceSimulationInitialTemperature, "Problem.TurbulenceSimulationInitialTemperature");
+  Param.GetScalar(TurbulenceSimulationInitialDensity, "Problem.TurbulenceSimulationInitialDensity");
+  Param.GetScalar(TurbulenceSimulationSoundSpeed, "Problem.TurbulenceSimulationSoundSpeed");
+  Param.GetScalar(TurbulenceSimulationInitialPressure, "Problem.TurbulenceSimulationInitialPressure");
+  Param.GetScalar(TurbulenceSimulationInitialDensityPerturbationAmplitude, 
+		"Problem.TurbulenceSimulation.InitialDensityPerturbationAmplitude");
+  Param.GetScalar(TurbulenceSimulationNumberOfInitialGrids, 
+		"Problem.TurbulenceSimulation.NumberOfInitialGrids");
+  Param.GetScalar(TurbulenceSimulationSubgridsAreStatic,
+		"Problem.TurbulenceSimulation.SubgridsAreStatic");
+
+
+  int NumberOfInitialSubgrids = Param.Size("Problem.TurbulenceSimulation.InitialSubgrids");
+  if (NumberOfInitialSubgrids+1 > MAX_INITIAL_GRIDS) {
+    ENZO_VFAIL("You've exceeded the maximum number of TurbulenceSimulation initial grids (%d)!\n",
+      MAX_INITIAL_GRIDS)
+  }// end if
+
+  TurbulenceSimulationNumberOfInitialGrids = NumberOfInitialSubgrids + 1;  // add 1 for the root grid
+
+  char InitialSubgridNames[MAX_LINE_LENGTH][MAX_INITIAL_GRIDS];
+  Param.GetArray(InitialSubgridNames,"Problem.TurbulenceSimulation.InitialSubgrids");
+
+  for (i = 0; i < NumberOfInitialSubgrids; i++) {
+    Param.GetArray(TurbulenceSimulationGridLeftEdge[i+1], 
+        "Problem.TurbulenceSimulation.%s.LeftEdge",InitialSubgridNames[i]);
+    Param.GetArray(TurbulenceSimulationGridRightEdge[i+1], 
+        "Problem.TurbulenceSimulation.%s.RightEdge",InitialSubgridNames[i]);
+    Param.GetArray(TurbulenceSimulationGridDimension[i+1],
+        "Problem.TurbulenceSimulation.%s.Dimension",InitialSubgridNames[i]);
+    Param.GetScalar(TurbulenceSimulationGridLevel[i+1], 
+        "Problem.TurbulenceSimulation.%s.Level",InitialSubgridNames[i]);
+  }// end i for
+
+  Param.GetArray(TurbulenceSimulationInitialMagneticField,"Problem.TurbulenceSimulation.InitialMagneticField");
+  Param.GetScalar(InitialMagneticFieldDefined,
+  		"Problem.TurbulenceSimulation.MagneticFieldDefined");
 
     /* If the dummy char space was used, then make another. */
  
@@ -227,15 +274,6 @@ int TurbulenceSimulationInitialize(FILE *fptr, FILE *Outfptr,
       dummy = new char[MAX_LINE_LENGTH];
       ret++;
     }
- 
-    /* if the line is suspicious, issue a warning */
- 
-    if (ret == 0 && strstr(line, "=") && strstr(line, "TurbulenceSimulation")
-	&& line[0] != '#')
-      fprintf(stderr,
-   "warning: the following parameter line was not interpreted:\n%s\n", line);
- 
-  }
  
   /* More error checking. */
   /* dcc removed in favor of in house generation.

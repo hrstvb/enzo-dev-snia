@@ -15,6 +15,9 @@
  
 // This routine intializes a new simulation based on the parameter file.
 //
+
+#include "ParameterControl/ParameterControl.h"
+extern Configuration Param;
  
 #include <string.h>
 #include <stdio.h>
@@ -29,6 +32,39 @@
 #include "Grid.h"
 #include "Hierarchy.h"
 #include "TopGridData.h"
+
+/* Set default parameter values. */
+
+const char config_one_zone_freefall_test_defaults[] =
+"### ONE ZONE FREEFALL TEST DEFAULTS ###\n"
+"\n"
+"Problem: {\n"
+"    OneZoneFreefallTest: {\n"
+"        InitialDensity 	= 1.0;\n"
+"        MinimumEnergy 		= 10.0;\n"
+"        MaximumEnergy 		= 1000.0;\n"
+"        MinimumMetallicity 	= 1e-6;\n"
+"        MaximumMetallicity 	= 1e-2;\n"
+"        ConstantDensityVelocity	= [0.0,0.0,0.0];\n"
+"        MaximumRefinementLevel = 0;\n"
+"\n"
+"        InitialHIFraction 	= -99999.9;\n"
+"        InitialHIIFraction	= -99999.9;\n" 
+"        InitialHeIFraction	= -99999.9;\n"
+"        InitialHeIIFraction	= -99999.9;\n"
+"        InitialHeIIIFraction 	= -99999.9;\n"
+"        InitialHMFraction 	= -99999.9;\n"
+"        InitialH2IFraction	= -99999.9;\n"
+"        InitialH2IIFraction 	= -99999.9;\n"
+"        InitialDIFraction 	= -99999.9;\n"
+"        InitialDIIFraction 	= -99999.9;\n"
+"        InitialHDIFraction 	= -99999.9;\n"
+"        UseMetallicityField 	= FALSE;\n"
+"        MetallicityNormalization  = 1.0\n"
+"        \n"
+"    };\n"
+"};\n";
+
 
 int GetUnits(float *DensityUnits, float *LengthUnits,
 	     float *TemperatureUnits, float *TimeUnits,
@@ -66,7 +102,7 @@ int OneZoneFreefallTestInitialize(FILE *fptr, FILE *Outfptr, HierarchyEntry &Top
   FLOAT ConstantDensitySubgridLeft, ConstantDensitySubgridRight;
   FLOAT LeftEdge[MAX_DIMENSION], RightEdge[MAX_DIMENSION];
 
-  float ConstantDensityVelocity[3]   = {0.0, 0.0, 0.0};
+  float ConstantDensityVelocity[3];
 
   /* local declarations */
  
@@ -76,15 +112,12 @@ int OneZoneFreefallTestInitialize(FILE *fptr, FILE *Outfptr, HierarchyEntry &Top
 
   MaximumRefinementLevel = 0;
 
-  float dx = (DomainRightEdge[0] - DomainLeftEdge[0])/
-     MetaData.TopGridDims[0];
-
-  float OneZoneFreefallTestInitialDensity = 1.0;
-  float OneZoneFreefallTestMinimumEnergy = 10.0;
-  float OneZoneFreefallTestMaximumEnergy = 1000.0;
-  float OneZoneFreefallTestMinimumMetallicity = 1e-6;
-  float OneZoneFreefallTestMaximumMetallicity = 1e-2;
-  TestProblemData.OneZoneFreefallTimestepFraction = 1e-3;
+  float OneZoneFreefallTestInitialDensity;
+  float OneZoneFreefallTestMinimumEnergy;
+  float OneZoneFreefallTestMaximumEnergy;
+  float OneZoneFreefallTestMinimumMetallicity;
+  float OneZoneFreefallTestMaximumMetallicity;
+  TestProblemData.OneZoneFreefallTimestepFraction;
 
 //   /* set no subgrids by default. */
  
@@ -93,53 +126,57 @@ int OneZoneFreefallTestInitialize(FILE *fptr, FILE *Outfptr, HierarchyEntry &Top
 
   TestProblemData.MultiSpecies = MultiSpecies;  // set this from global data (kind of a hack, but necessary)
 
-  /* read input from file */
+  // Update the parameter config to include the local defaults. Note
+  // that this does not overwrite values previously specified.
+  Param.Update(config_one_zone_freefall_test_defaults);
 
-  int comment_count = 0;
- 
-  while ((fgets(line, MAX_LINE_LENGTH, fptr) != NULL) 
-      && (comment_count < 2)) {
- 
-    ret = 0;
- 
-    /* read parameters specifically for constant density problem */
 
-    /* read in more general test parameters to set species, turn on color fields, etc. */
-    ret += sscanf(line, "OneZoneFreefallTestInitialDensity = %"FSYM, &OneZoneFreefallTestInitialDensity);
-    ret += sscanf(line, "OneZoneFreefallTestMinimumEnergy = %"FSYM, &OneZoneFreefallTestMinimumEnergy);
-    ret += sscanf(line, "OneZoneFreefallTestMaximumEnergy = %"FSYM, &OneZoneFreefallTestMaximumEnergy);
-    ret += sscanf(line, "OneZoneFreefallTestMinimumMetallicity = %"FSYM, &OneZoneFreefallTestMinimumMetallicity);
-    ret += sscanf(line, "OneZoneFreefallTestMaximumMetallicity = %"FSYM, &OneZoneFreefallTestMaximumMetallicity);
-    ret += sscanf(line, "OneZoneFreefallTimestepFraction = %"FSYM, 
-		  &TestProblemData.OneZoneFreefallTimestepFraction);
+  /* read parameters */
 
-    ret += sscanf(line, "TestProblemHydrogenFractionByMass = %"FSYM, &TestProblemData.HydrogenFractionByMass);
-    ret += sscanf(line, "TestProblemDeuteriumToHydrogenRatio = %"FSYM, &TestProblemData.DeuteriumToHydrogenRatio);
-    ret += sscanf(line, "TestProblemInitialHIFraction  = %"FSYM, &TestProblemData.HI_Fraction);
-    ret += sscanf(line, "TestProblemInitialHIIFraction  = %"FSYM, &TestProblemData.HII_Fraction);
-    ret += sscanf(line, "TestProblemInitialHeIFraction  = %"FSYM, &TestProblemData.HeI_Fraction);
-    ret += sscanf(line, "TestProblemInitialHeIIFraction  = %"FSYM, &TestProblemData.HeII_Fraction);
-    ret += sscanf(line, "TestProblemInitialHeIIIIFraction  = %"FSYM, &TestProblemData.HeIII_Fraction);
-    ret += sscanf(line, "TestProblemInitialHMFraction  = %"FSYM, &TestProblemData.HM_Fraction);
-    ret += sscanf(line, "TestProblemInitialH2IFraction  = %"FSYM, &TestProblemData.H2I_Fraction);
-    ret += sscanf(line, "TestProblemInitialH2IIFraction  = %"FSYM, &TestProblemData.H2II_Fraction);
-    ret += sscanf(line, "TestProblemInitialDIFraction  = %"FSYM, &TestProblemData.DI_Fraction);
-    ret += sscanf(line, "TestProblemInitialDIIFraction  = %"FSYM, &TestProblemData.DII_Fraction);
-    ret += sscanf(line, "TestProblemInitialHDIFraction  = %"FSYM, &TestProblemData.HDI_Fraction);
-    ret += sscanf(line, "TestProblemUseMetallicityField  = %"ISYM, &TestProblemData.UseMetallicityField);
-    ret += sscanf(line, "TestProblemMetallicityNormalization  = %"FSYM, &TestProblemData.MetallicityNormalization);
+  /* read in more general test parameters to set species, turn on color fields, etc. */
+  Param.GetScalar(OneZoneFreefallTestInitialDensity,
+		"Problem.OneZoneFreefallTest.InitialDensity");
+  Param.GetScalar(OneZoneFreefallTestMinimumEnergy,
+		"Problem.OneZoneFreefallTest.MinimumEnergy");
+  Param.GetScalar(OneZoneFreefallTestMaximumEnergy,
+		"Problem.OneZoneFreefallTest.MaximumEnergy");
+  Param.GetScalar(OneZoneFreefallTestMinimumMetallicity,
+		"Problem.OneZoneFreefallTest.MinimumMetallicity");
+  Param.GetScalar(OneZoneFreefallTestMaximumMetallicity,
+		"Problem.OneZoneFreefallTest.MaximumMetallicity");
+  Param.GetScalar(OneZoneFreefallTimestepFraction,
+		"Problem.OneZoneFreefall.TimestepFraction");
 
-    if (strstr(line, "\"\"\"")              ) comment_count++;
-
-    /* if the line is suspicious, issue a warning */
- 
-    if (ret == 0 && strstr(line, "=") && (strstr(line, "CoolingDensity") || strstr(line, "TestProblem")) &&
-	line[0] != '#' && MyProcessorNumber == ROOT_PROCESSOR)
-      fprintf(stderr,
-	      "*** warning: the following parameter line was not interpreted:\n%s\n",
-	      line);
- 
-  } // end input from parameter file
+  Param.GetScalar(TestProblemHydrogenFractionByMass,
+		"Problem.OneZoneFreefall.HydrogenFractionByMass");
+  Param.GetScalar(TestProblemDeuteriumToHydrogenRatio,
+		"Problem.OneZoneFreefall.DeuteriumToHydrogenRatio");
+  Param.GetScalar(TestProblemInitialHIFraction,
+		"Problem.OneZoneFreefall.HI_Fraction");
+  Param.GetScalar(TestProblemInitialHIIFraction, 
+		"Problem.OneZoneFreefall.HII_Fraction");
+  Param.GetScalar(TestProblemInitialHeIFraction, 
+		"Problem.OneZoneFreefall.HeI_Fraction");
+  Param.GetScalar(TestProblemInitialHeIIFraction, 
+		"Problem.OneZoneFreefall.HeII_Fraction");
+  Param.GetScalar(TestProblemInitialHeIIIIFraction, 
+		"Problem.OneZoneFreefall.HeIII_Fraction");
+  Param.GetScalar(TestProblemInitialHMFraction, 
+		"Problem.OneZoneFreefall.HM_Fraction");
+  Param.GetScalar(TestProblemInitialH2IFraction, 
+		"Problem.OneZoneFreefall.H2I_Fraction");
+  Param.GetScalar(TestProblemInitialH2IIFraction, 
+		"Problem.OneZoneFreefall.H2II_Fraction");
+  Param.GetScalar(TestProblemInitialDIFraction, 
+		"Problem.OneZoneFreefall.DI_Fraction");
+  Param.GetScalar(TestProblemInitialDIIFraction, 
+		"Problem.OneZoneFreefall.DII_Fraction");
+  Param.GetScalar(TestProblemInitialHDIFraction, 
+		"Problem.OneZoneFreefall.HDI_Fraction");
+  Param.GetScalar(TestProblemUseMetallicityField,
+		"Problem.OneZoneFreefall.UseMetallicityField");
+  Param.GetScalar(TestProblemMetallicityNormalization, 
+		"Problem.OneZoneFreefall.MetallicityNormalization");
 
   /* Set constant for analytical free-fall collapse. */
   TestProblemData.OneZoneFreefallConstant = pow(OneZoneFreefallTestInitialDensity, -0.5);

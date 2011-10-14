@@ -29,6 +29,9 @@
 #include "Hierarchy.h"
 #include "TopGridData.h"
 #include "CosmologyParameters.h"
+
+
+
  
 void WriteListOfFloats(FILE *fptr, int N, float floats[]);
 
@@ -70,52 +73,41 @@ int ZeldovichPancakeInitialize(FILE *fptr, FILE *Outfptr,
     fprintf(stderr, "ZeldovichPancake: check CellFlaggingMethod.\n");
  
   /* set default parameters */
- 
-  int   ZeldovichPancakeDirection          = 0;    // along the x-axis
-  float ZeldovichPancakeCentralOffset      = 0.0;  // no offset
-  float ZeldovichPancakeOmegaBaryonNow     = 1.0;  // standard
-  float ZeldovichPancakeOmegaCDMNow        = 0.0;  // no dark matter
-  float ZeldovichPancakeCollapseRedshift   = 1.0;  // free parameter
-  float ZeldovichPancakeInitialTemperature = 100;  // whatever
+  const char config_zeldovich_pancake_defaults[] = 
+  "### ZELDOVICH PANCAKE DEFAULTS ###\n"
+  "\n"
+  "Problem: {\n"
+  "    ZeldovichPancake: {\n"
+  "        Direction = 0;\n"
+  "        CentralOffset      = 0.0;\n"
+  "        OmegaBaryonNow     = 1.0;\n"
+  "        OmegaCDMNow        = 0.0;\n"
+  "        CollapseRedshift   = 1.0;\n"
+  "        InitialTemperature = 100;\n"
+  "        InitialUniformBField =  [0.0, 0.0, 0.0];\n"
+  "    };\n"
+  "};\n"; 
+  int   ZeldovichPancakeDirection;    // along the x-axis
+  float ZeldovichPancakeCentralOffset;  // no offset
+  float ZeldovichPancakeOmegaBaryonNow;  // standard
+  float ZeldovichPancakeOmegaCDMNow;  // no dark matter
+  float ZeldovichPancakeCollapseRedshift;  // free parameter
+  float ZeldovichPancakeInitialTemperature;  // whatever
   float ZeldovichPancakeInitialUniformBField[MAX_DIMENSION];  // in Gauss
 
-  for (int dim = 0; dim < MAX_DIMENSION; dim++) {
-    ZeldovichPancakeInitialUniformBField[dim] = 0.0;
-  }
-
-
-  /* read input from file */
- 
-  while (fgets(line, MAX_LINE_LENGTH, fptr) != NULL) {
- 
-    ret = 0;
+  Param.Update(config_zeldovich_pancake_defaults);
  
     /* read parameters */
  
-    ret += sscanf(line, "ZeldovichPancakeDirection = %"ISYM,
-		  &ZeldovichPancakeDirection);
-    ret += sscanf(line, "ZeldovichPancakeCentralOffset = %"FSYM,
-		  &ZeldovichPancakeCentralOffset);
-    ret += sscanf(line, "ZeldovichPancakeOmegaBaryonNow = %"FSYM,
-		  &ZeldovichPancakeOmegaBaryonNow);
-    ret += sscanf(line, "ZeldovichPancakeOmegaCDMNow = %"FSYM,
-		  &ZeldovichPancakeOmegaCDMNow);
-    ret += sscanf(line, "ZeldovichPancakeCollapseRedshift = %"FSYM,
-		  &ZeldovichPancakeCollapseRedshift);
-    ret += sscanf(line, "ZeldovichPancakeInitialTemperature = %"FSYM,
-		  &ZeldovichPancakeInitialTemperature);
-    ret += sscanf(line, "ZeldovichPancakeInitialUniformBField = %"FSYM" %"FSYM" %"FSYM,
-		  ZeldovichPancakeInitialUniformBField,
-		  ZeldovichPancakeInitialUniformBField+1,
-		  ZeldovichPancakeInitialUniformBField+2);
+  Param.GetScalar(ZeldovichPancakeDirection, "Problem.ZeldovichPancake.Direction");
+  Param.GetScalar(ZeldovichPancakeCentralOffset, "Problem.ZeldovichPancake.CentralOffset");
+  Param.GetScalar(ZeldovichPancakeOmegaBaryonNow, "Problem.ZeldovichPancake.OmegaBaryonNow");
+  Param.GetScalar(ZeldovichPancakeOmegaCDMNow, "Problem.ZeldovichPancake.OmegaCDMNow");
+  Param.GetScalar(ZeldovichPancakeCollapseRedshift, "Problem.ZeldovichPancake.CollapseRedshift");
+  Param.GetScalar(ZeldovichPancakeInitialTemperature, "Problem.ZeldovichPancake.InitialTemperature");
+  Param.GetArray(ZeldovichPancakeInitialUniformBField, "Problem.ZeldovichPancake.InitialUniformBField");
 
 
-    /* if the line is suspicious, issue a warning */
- 
-    if (ret == 0 && strstr(line, "=") && strstr(line, "ZeldovichPancake"))
-      fprintf(stderr, "warning: the following parameter line was not interpreted:\n%s\n", line);
- 
-  }
 
   /* Convert from Gauss */
   float DensityUnits=1, LengthUnits=1, TemperatureUnits=1, TimeUnits=1,

@@ -69,57 +69,72 @@ int RHIonizationClumpInitialize(FILE *fptr, FILE *Outfptr,
   //  6. initial fraction HII
   //  7. Number of chemical species
   //  8. mesh spacing
-  float RadHydroX0Velocity           = 0.0;
-  float RadHydroX1Velocity           = 0.0;
-  float RadHydroX2Velocity           = 0.0;
-  float RadHydroNumDensityIn         = 0.04;
-  float RadHydroNumDensityOut        = 0.0002;
-  float RadHydroTemperatureIn        = 40.0;
-  float RadHydroTemperatureOut       = 8000.0;
-  float RadHydroRadiationEnergy      = 1.0e-20;
-  float RadHydroHydrogenMassFraction = 1.0;
-  float RadHydroInitialFractionHII   = 0.0;
-  int   RadHydroChemistry            = 1;
-  int   RadHydroModel                = 1;
-  float ClumpCenterX                 = 1.54285e22;  // cm (5 kpc)
-  float ClumpCenterY                 = 1.018281e22; // cm (3.3 kpc)
-  float ClumpCenterZ                 = 1.018281e22; // cm (3.3 kpc)
-  float ClumpRadius                  = 2.46856e21;  // cm (0.8 kpc)
+
+  const char config_rad_hydro_ionization_clump_defaults[] = 
+  "### RAD HYDRO IONIZATION CLUMP DEFAULTS ###\n"
+  "\n"
+  "Problem: {\n"
+  "    RadHydro: {\n"
+  "        Velocity = [0.0, 0.0, 0.0];\n"
+  "        NumDensityIn         = 0.04;\n"
+  "        NumDensityOut        = 0.0002;\n"
+  "        TemperatureIn        = 40.0;\n"
+  "        TemperatureOut       = 8000.0;\n"
+  "        RadiationEnergy      = 1.0e-20;\n"
+  "        HydrogenMassFraction = 1.0;\n"
+  "        InitialFractionHII   = 0.0;\n"
+  "        ClumpCenter = [1.54285e22,1.018281e22,1.018281e22];\n" //cm (5, 3.3,3.3 kpc)
+  "        ClumpRadius          = 2.46856e21;\n"  // cm (0.8 kpc)
+  "    };\n"
+  "    gFLD: {\n"
+  "        Chemistry    = 1;\n"
+  "        Model        = 1;\n"
+  "    };\n"
+  "};\n";
+
+  float RadHydroVelocity[MAX_DIMENSION];
+  float RadHydroX0Velocity;
+  float RadHydroX1Velocity;
+  float RadHydroX2Velocity;
+  float RadHydroNumDensityIn;
+  float RadHydroNumDensityOut;
+  float RadHydroTemperatureIn;
+  float RadHydroTemperatureOut;
+  float RadHydroRadiationEnergy;
+  float RadHydroHydrogenMassFraction;
+  float RadHydroInitialFractionHII;
+  int   RadHydroChemistry;
+  int   RadHydroModel;
+  float ClumpCenter[MAX_DIMENSION];
+  float ClumpRadius;  // cm (0.8 kpc)
+
+  Param.Update(config_rad_hydro_ionization_clump_defaults);
 
   // overwrite input from RadHydroParamFile file, if it exists
   if (MetaData.RadHydroParameterFname != NULL) {
     FILE *RHfptr;
     if ((RHfptr = fopen(MetaData.RadHydroParameterFname, "r")) != NULL) {
-      while (fgets(line, MAX_LINE_LENGTH, RHfptr) != NULL) {
-	ret = 0;
-	// read relevant problem parameters
-	ret += sscanf(line, "RadHydroVelocity = %"FSYM" %"FSYM" %"FSYM,
-		      &RadHydroX0Velocity, &RadHydroX1Velocity, 
-		      &RadHydroX2Velocity);
-	ret += sscanf(line, "RadHydroChemistry = %"ISYM, 
-		      &RadHydroChemistry);
-	ret += sscanf(line, "RadHydroModel = %"ISYM, 
-		      &RadHydroModel);
-	ret += sscanf(line, "RadHydroNumDensityIn = %"FSYM, 
-		      &RadHydroNumDensityIn);
-	ret += sscanf(line, "RadHydroNumDensityOut = %"FSYM, 
-		      &RadHydroNumDensityOut);
-	ret += sscanf(line, "RadHydroTemperatureIn = %"FSYM, 
-		      &RadHydroTemperatureIn);
-	ret += sscanf(line, "RadHydroTemperatureOut = %"FSYM, 
-		      &RadHydroTemperatureOut);
-	ret += sscanf(line, "RadHydroRadiationEnergy = %"FSYM, 
-		      &RadHydroRadiationEnergy);
-	ret += sscanf(line, "RadHydroInitialFractionHII = %"FSYM, 
-		      &RadHydroInitialFractionHII);
-	
-	ret += sscanf(line, "ClumpCenter = %"FSYM" %"FSYM" %"FSYM,
-		      &ClumpCenterX, &ClumpCenterY, &ClumpCenterZ);
-	ret += sscanf(line, "ClumpRadius = %"FSYM, &ClumpRadius);
-      } // end input from parameter file
+      // read relevant problem parameters
+      Param.GetArray(RadHydroVelocity, "Problem.RadHydro.Velocity");
+      Param.GetScalar(RadHydroChemistry, "Problem.gFLD.Chemistry");
+      Param.GetScalar(RadHydroModel, "Problem.gFLD.Model");
+      Param.GetScalar(RadHydroNumDensityIn, "Problem.RadHydro.NumDensityIn");
+      Param.GetScalar(RadHydroNumDensityOut, "Problem.RadHydro.NumDensityOut");
+      Param.GetScalar(RadHydroTemperatureIn, "Problem.RadHydro.TemperatureIn");
+      Param.GetScalar(RadHydroTemperatureOut, "Problem.RadHydro.TemperatureOut");
+      Param.GetScalar(RadHydroRadiationEnergy, "Problem.RadHydro.RadiationEnergy");
+      Param.GetScalar(RadHydroInitialFractionHII, "Problem.RadHydro.InitialFractionHII");
+      Param.GetArray(ClumpCenter, "Problem.RadHydro.ClumpCenter");
+      Param.GetScalar(ClumpRadius, "Problem.RadHydro.ClumpRadius");
       fclose(RHfptr);
     }
   }
+  RadHydroX0Velocity = RadHydroVelocity[0];
+  RadHydroX1Velocity = RadHydroVelocity[1];
+  RadHydroX2Velocity = RadHydroVelocity[2];
+  ClumpCenterX = RadHydroCenter[0]
+  ClumpCenterY = RadHydroCenter[1]
+  ClumpCenterZ = RadHydroCenter[2]
 
   // ensure that we're performing only Hydrogen chemistry
   if (RadHydroChemistry != 1) 
