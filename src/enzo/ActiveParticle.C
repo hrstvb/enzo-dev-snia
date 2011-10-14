@@ -59,6 +59,10 @@ void EnableActiveParticleType(char *active_particle_type_name) {
     if (my_type == NULL) {
         ENZO_FAIL("Unknown ParticleType");
     }
+    
+    // retrieves active particle specific parameters
+    my_type->ifunc();
+
     EnabledActiveParticles[EnabledActiveParticlesCount++] = my_type;
     return;
 }

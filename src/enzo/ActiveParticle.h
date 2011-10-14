@@ -215,11 +215,16 @@ class ActiveParticleType_info
            std::string this_name,
            int (*ffunc)(grid *thisgrid_orig, ActiveParticleFormationData &data),
            void (*dfunc)(ActiveParticleFormationDataFlags &flags),
-           ParticleBufferHandler *(*abfunc)(int NumberOfParticles)
+           ParticleBufferHandler *(*abfunc)(int NumberOfParticles),
+	   int (*ifunc)(),
+	   int (*feedfunc)(grid *thisgrid_orig)
            ){
         this->formation_function = ffunc;
         this->describe_data_flags = dfunc;
         this->allocate_buffers = abfunc;
+	this->initialize = ifunc;
+	this->feedback_function = feedfunc;;
+
         get_active_particle_types()[this_name] = this;
        }
 
