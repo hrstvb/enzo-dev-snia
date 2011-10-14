@@ -64,50 +64,66 @@ int RHIonizationSteepInitialize(FILE *fptr, FILE *Outfptr,
   int  dim, ret;
 
   // Setup and parameters:
-  float RadHydroX0Velocity           = 0.0;
-  float RadHydroX1Velocity           = 0.0;
-  float RadHydroX2Velocity           = 0.0;
-  float RadHydroNumDensity           = 3.2;           // [cm^{-3}]
-  float RadHydroDensityRadius        = 2.8234155e+20; // 91.5 pc [cm]
-  float DensityCenter0               = 0.0;
-  float DensityCenter1               = 0.0;
-  float DensityCenter2               = 0.0;
-  float RadHydroTemperature          = 100.0;         // [K]
-  float RadHydroRadiationEnergy      = 1.0e-20;
-  float RadHydroInitialFractionHII   = 0.0;
-  int   RadHydroChemistry            = 1;
-  int   RadHydroModel                = 1;
+  const char config_rad_hydro_ionization_steep_defaults[] = 
+  "### RAD HYDRO IONIZATION STEEP DEFAULTS ###\n"
+  "\n"
+  "Problem: {\n"
+  "    RadHydro: {\n"
+  "        Velocity = [0.0, 0.0, 0.0];\n"
+  "        EtaCenter = [0.0, 0.0, 0.0];\n"
+  "        NumDensity           = 3.2;\n"           // [cm^{-3}]
+  "        DensityRadius        = 2.8234155e+20;\n" // 91.5 pc [cm]
+  "        RadHydroTemperature          = 100.0;\n"         // [K]
+  "        RadHydroRadiationEnergy      = 1.0e-20;\n"
+  "        RadHydroInitialFractionHII   = 0.0;\n"
+  "    };\n"
+  "    gFLD: {\n"
+  "        Chemistry    = 1;\n"
+  "        Model        = 1;\n"
+  "    };\n"
+  "};\n";
+
+  float RadHydroVelocity[MAX_DIMENSION];
+  float RadHydroX0Velocity;
+  float RadHydroX1Velocity;
+  float RadHydroX2Velocity;
+  float RadHydroNumDensity;// [cm^{-3}]
+  float RadHydroDensityRadius;// 91.5 pc [cm]
+  float EtaCenter[MAX_DIMENSION];
+  float DensityCenter0;
+  float DensityCenter1;
+  float DensityCenter2;
+  float RadHydroTemperature;// [K]
+  float RadHydroRadiationEnergy;
+  float RadHydroInitialFractionHII;
+  int   RadHydroChemistry;
+  int   RadHydroModel;
+
+  Param.Update(config_rad_hydro_ionization_steep_defaults);
 
   // overwrite input from RadHydroParamFile file, if it exists
   if (MetaData.RadHydroParameterFname != NULL) {
     FILE *RHfptr;
     if ((RHfptr = fopen(MetaData.RadHydroParameterFname, "r")) != NULL) {
-      while (fgets(line, MAX_LINE_LENGTH, RHfptr) != NULL) {
-	ret = 0;
-	// read relevant problem parameters
-	ret += sscanf(line, "RadHydroVelocity = %"FSYM" %"FSYM" %"FSYM,
-		      &RadHydroX0Velocity, &RadHydroX1Velocity, 
-		      &RadHydroX2Velocity);
-	ret += sscanf(line, "RadHydroChemistry = %"ISYM, 
-		      &RadHydroChemistry);
-	ret += sscanf(line, "RadHydroModel = %"ISYM, 
-		      &RadHydroModel);
-	ret += sscanf(line, "RadHydroNumDensity = %"FSYM, 
-		      &RadHydroNumDensity);
-	ret += sscanf(line, "RadHydroDensityRadius = %"FSYM, 
-		      &RadHydroDensityRadius);
-	ret += sscanf(line, "RadHydroTemperature = %"FSYM, 
-		      &RadHydroTemperature);
-	ret += sscanf(line, "RadHydroRadiationEnergy = %"FSYM, 
-		      &RadHydroRadiationEnergy);
-	ret += sscanf(line, "RadHydroInitialFractionHII = %"FSYM, 
-		      &RadHydroInitialFractionHII);
-	ret += sscanf(line, "EtaCenter = %"FSYM" %"FSYM" %"FSYM, 
-		      &DensityCenter0, &DensityCenter1, &DensityCenter2);
-      } // end input from parameter file
+      // read relevant problem parameters
+      Param.GetArray(RadHydroVelocity, "Problem.RadHydro.Velocity");
+      Param.GetScalar(RadHydroChemistry, "Problem.gFLD.Chemistry");
+      Param.GetScalar(RadHydroModel, "Problem.gFLD.Model");
+      Param.GetScalar(RadHydroNumDensity, "Problem.RadHydro.NumDensity");
+      Param.GetScalar(RadHydroDensityRadius, "Problem.RadHydro.DensityRadius");
+      Param.GetScalar(RadHydroTemperature, "Problem.RadHydro.Temperature");
+      Param.GetScalar(RadHydroRadiationEnergy, "Problem.RadHydro.RadiationEnergy");
+      Param.GetScalar(RadHydroInitialFractionHII, "Problem.RadHydro.InitialFractionHII");
+      Param.GetArray(EtaCenter, "Problem.RadHydro.EtaCenter");
       fclose(RHfptr);
     }
   }
+  RadHydroX0Velocity = RadHydroVelocity[0];
+  RadHydroX1Velocity = RadHydroVelocity[1];
+  RadHydroX2Velocity = RadHydroVelocity[2];
+  DensityCenter0 = EtaCenter[0]
+  DensityCenter1 = EtaCenter[1]
+  DensityCenter2 = EtaCenter[2]
 
   // ensure that we're performing only Hydrogen chemistry
   if (RadHydroChemistry != 1) 
