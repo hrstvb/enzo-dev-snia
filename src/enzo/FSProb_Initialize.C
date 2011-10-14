@@ -34,6 +34,16 @@ extern Configuration Param;
 #include "FSProb.h"
 #include "CosmologyParameters.h"
 
+const char config_shock_in_a_box_defaults[] = 
+"### FSRADIATION PROBLEM  DEFAULTS ###\n"
+"\n"
+"Problem: {\n"
+"    FSRADIATION: {\n"
+"        Direction = 0;\n"
+""
+"    };\n"
+"};\n";
+
 // character strings
 EXTERN char outfilename[];
 
@@ -136,20 +146,14 @@ int FSProb::Initialize(HierarchyEntry &TopGrid, TopGridData &MetaData)
   Param.GetScalar(NGammaDot,"Problem.FSRadiation.NGammaDot");
   Param.GetScalar(EtaRadius,"Problem.FSRadiation.EtaRadius");
 
+  Param.GetArray(EtaCenter,"Problem.FSRadiation.EtaCenter");
+  Param.GetScalar(LimType,"Problem.FSRadiation.LimiterType");
 
-  ret += sscanf(line, "FSRadiationEtaCenter = %"FSYM" %"FSYM" %"FSYM, 
-		&(EtaCenter[0]), &(EtaCenter[1]), &(EtaCenter[2]));
-  
-  ret += sscanf(line, "FSRadiationLimiterType = %"ISYM, &LimType);
-  
-  ret += sscanf(line, "FSRadiationBoundaryX0Faces = %"ISYM" %"ISYM, 
-		BdryType[0], BdryType[0]+1);
-  if (rank > 1) {
-    ret += sscanf(line, "FSRadiationBoundaryX1Faces = %"ISYM" %"ISYM,
-		  BdryType[1], BdryType[1]+1);
-    if (rank > 2) {
-      ret += sscanf(line, "FSRadiationBoundaryX2Faces = %"ISYM" %"ISYM,
-		    BdryType[2], BdryType[2]+1);
+  Param.GetArray(BdryType[0],"Problem.FSRadiation.BoundaryX0Faces");
+  if (rank >1){
+    Param.GetArray(BdryType[1],"Problem.FSRadiation.BoundaryX1Faces");
+    if (rank >2){
+      Param.GetArray(BdryType[2],"Problem.FSRadiation.BoundaryX2Faces");
     }
   }
   
