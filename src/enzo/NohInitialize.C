@@ -19,6 +19,9 @@
 
 // This routine intializes a new simulation based on the parameter file.
 
+#include "ParameterControl/ParameterControl.h"
+extern Configuration Param;
+
 #include <string.h>
 #include <stdio.h>
 #include <math.h>
@@ -73,37 +76,36 @@ int NohInitialize(FILE *fptr,
   /* Input parameters */
 
   /* Default parameters */
+  const char config_noh_defaults[] = 
+  "### NOH DEFAULTS ###\n"
+  "\n"
+  "Problem: {\n"
+  "    Noh: {\n"
+  "        NohProblemFullBox      = 0;\n"
+  "        Density       = 1.0000000000;\n"
+  "        Pressure      = 1.0000000000e-6;\n"
+  "        Velocity      = - 1.0000000000;\n"
+  "        SubgridLeft   = 0.0;\n"    // start of subgrid
+  "        SubgridRight  = 0.0;\n"    // end of subgrid
+  "    };\n"
+  "};\n";
 
-  NohProblemFullBox      = 0;
-  float NohDensity       = 1.0000000000;
-  float NohPressure      = 1.0000000000e-6;
-  float NohVelocity      = - 1.0000000000;
-  float NohSubgridLeft   = 0.0;    // start of subgrid
-  float NohSubgridRight  = 0.0;    // end of subgrid
+
+  float NohDensity;
+  float NohPressure;
+  float NohVelocity;
+  float NohSubgridLeft;    // start of subgrid
+  float NohSubgridRight;    // end of subgrid
 
   /* read input from file */
 
-  while (fgets(line, MAX_LINE_LENGTH, fptr) != NULL) {
+  Param.Update(config_noh_defaults);
 
-    ret = 0;
+  /* read parameters */
 
-    /* read parameters */
-
-    ret += sscanf(line, "NohProblemFullBox = %"ISYM,
-		  &NohProblemFullBox);
-    ret += sscanf(line, "NohSubgridLeft = %"FSYM, 
-		  &NohSubgridLeft);
-    ret += sscanf(line, "NohSubgridRight = %"FSYM,
-		  &NohSubgridRight);
-
-    /* if the line is suspicious, issue a warning */
-
-    if (ret == 0 && strstr(line, "=") && strstr(line, "Noh"))
-      fprintf(stderr, 
-	  "warning: the following parameter line was not interpreted:\n%s\n", 
-	      line);
-
-  } // end input from parameter file
+  Param.GetScalar(NohProblemFullBox, "Problem.Noh.ProblemFullBox");
+  Param.GetScalar(NohSubgridLeft, "Problem.Noh.SubgridLeft");
+  Param.GetScalar(NohSubgridRight, "Problem.Noh.SubgridRight");
 
   /* set up grid */
 
