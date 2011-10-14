@@ -54,9 +54,29 @@ public:
   static int EvaluateFormation(grid *thisgrid_orig, ActiveParticleFormationData &data);
   static void DescribeSupplementalData(ActiveParticleFormationDataFlags &flags);
   static ParticleBufferHandler *AllocateBuffers(int NumberOfParticles);
+  static int InitializeParticleType();
+  static int EvaluateFeedback(grid *thisgrid_orig);
+
+  // Pop III specific active particle parameters
+  static float OverDensityThreshold, PhysicalDensityThreshold;
+
 private:
   float Metallicity;
 };
+
+static int ActiveParticleType_SpringelHernquist::InitializeParticleType() {
+  // get some parameters from the Param object
+
+#ifdef NEW_CONFIG
+  Param.GetScalar(OverDensityThreshold, "Physics.ActiveParticles.SpringelHernquist.OverDensityThreshold");
+  Param.GetScalar(PhysicalDensityThreshold, "Physics.ActiveParticles.SpringelHernquist.PhysicalDensityThreshold");
+#else
+  // zero for now, just to check compiling
+  OverDensityThreshold = 0.0;
+  PhysicalDensityThreshold = 0.0;
+#endif
+
+}
 
 int ActiveParticleType_SpringelHernquist::EvaluateFormation
 (grid *thisgrid_orig, ActiveParticleFormationData &supp_data)
@@ -110,12 +130,12 @@ int ActiveParticleType_SpringelHernquist::EvaluateFormation
 	  continue;
 	
 	// 2. Density greater than threshold
-	if (density[index] < SpringelHernquistOverDensityThreshold)
+	if (density[index] < OverDensityThreshold)
 	  continue;
 
     // Calculate star formation timescale. Eq 21.
     tstar =  31556926.d0 * mintdyn * pow(density[index] * supp_data.DensityUnits / 
-    	SpringelHernquistPhysicalDensityThreshold, -0.5);
+    	PhysicalDensityThreshold, -0.5);
 
    /* note: minus sign is because 'coolrate' is actual backwards: when coolrate is 
     * negative, gas is cooling (which is the opposite of how it's defined in Springel
@@ -195,11 +215,15 @@ int ActiveParticleType_SpringelHernquist::EvaluateFormation
   return NumberOfNewParticles;
 }
 
+// SH star feedback
+int ActiveParticleType_SpringelHernquist::EvaluateFeedback(grid *thisgrid_orig)
+{
+  return SUCCESS;
+}
+
 void ActiveParticleType_SpringelHernquist::DescribeSupplementalData
 (ActiveParticleFormationDataFlags &flags)
 {
-  flags.DarkMatterDensity = true;
-  flags.H2Fraction = true;
   flags.CoolingTime = true;
   flags.Temperature = true;
   flags.UnitConversions = true;
@@ -223,6 +247,9 @@ namespace {
     ActiveParticleType_info *SampleInfo = new ActiveParticleType_info(
             "SpringelHernquist", (&ActiveParticleType_SpringelHernquist::EvaluateFormation),
 	    (&ActiveParticleType_SpringelHernquist::DescribeSupplementalData),
-	    (&ActiveParticleType_SpringelHernquist::AllocateBuffers));
+	    (&ActiveParticleType_SpringelHernquist::AllocateBuffers),
+	    (&ActiveParticleType_SpringelHernquist::InitializeParticleType),
+	    (&ActiveParticleType_SpringelHernquist::EvaluateFeedback );
+
 
 }

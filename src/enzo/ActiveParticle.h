@@ -125,6 +125,7 @@ struct ActiveParticleFormationData {
   float *DarkMatterDensity;
   float *H2Fraction;
   float *CoolingTime;
+  float *CoolingRate;
   float *Temperature;
   float *TotalMetals;
   float DensityUnits;
@@ -149,6 +150,7 @@ const struct ActiveParticleFormationData data_default = {
   NULL,     // DarkMatterDensity
   NULL,     // H2Fraction
   NULL,     // CoolingTime
+  NULL,     // CoolingRate
   NULL,     // Temperature
   NULL,     // TotalMetals
   0.0,      // DensityUnits
@@ -173,6 +175,7 @@ struct ActiveParticleFormationDataFlags {
   bool DarkMatterDensity;
   bool H2Fraction;
   bool CoolingTime;
+  bool CoolingRate;
   bool Temperature;
   bool UnitConversions;
   bool DataFieldNumbers;
@@ -183,6 +186,7 @@ const struct ActiveParticleFormationDataFlags flags_default = {
   false,    // DarkMatterDensity
   false,    // H2Fraction
   false,    // CoolingTime
+  false,    // CoolingRate
   false,    // Temperature
   false,    // UnitConversions
   false,    // DataFieldNumbers

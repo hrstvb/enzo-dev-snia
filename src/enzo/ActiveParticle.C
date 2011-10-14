@@ -97,6 +97,23 @@ void ActiveParticleType::ConstructData(grid *_grid,
         ENZO_FAIL("Error in IdentifyPhysicalQuantities.");
   }
  
+  /* Set the units. */
+ 
+  data.DensityUnits = 1, data.LengthUnits = 1, data.TemperatureUnits = 1,
+    data.TimeUnits = 1, data.VelocityUnits = 1;
+  if (GetUnits(&data.DensityUnits, &data.LengthUnits, &data.TemperatureUnits,
+	       &data.TimeUnits, &data.VelocityUnits, _grid->Time) == FAIL) {
+        ENZO_FAIL("Error in GetUnits.");
+  }
+
+  /* Now we fill in the *Num attributes of data */
+  data.DensNum = DensNum;
+  data.Vel1Num = Vel1Num;
+  data.Vel2Num = Vel2Num;
+  data.Vel3Num = Vel3Num;
+  data.MetalNum = MetalNum;
+  /*data.ColourNum = ColourNum;*/
+
   /* If using MHD, subtract magnetic energy from total energy because 
      density may be modified in star_maker8. */
   
@@ -197,6 +214,22 @@ void ActiveParticleType::ConstructData(grid *_grid,
     data.CoolingTime = new float[size];
     _grid->ComputeCoolingTime(data.CoolingTime);
   }
+
+  if (flags.CoolingRate) {
+
+    /* Compute the cooling rate. */
+ 
+    data.CoolingRate = new float[size];
+    float cgsdensity;
+    float *electronguessptr;
+    float electronguess = 0.01;
+    electronguessptr = &electronguess;
+    for (i = 0; i < size; i++)
+      cgsdensity = data.DensityUnits*_grid->BaryonField[DensNum][i];
+      data.CoolingRate[i] = GadgetCoolingRate
+	(log10(data.Temperature[i]), cgsdensity, electronguessptr, zred);
+
+  } // ENDIF CoolingRate
  
   /* If both metal fields exist, make a total metal field */
 
@@ -224,22 +257,6 @@ void ActiveParticleType::ConstructData(grid *_grid,
   }
 
   //printf("Star type \n");
-  /* Set the units. */
- 
-  data.DensityUnits = 1, data.LengthUnits = 1, data.TemperatureUnits = 1,
-    data.TimeUnits = 1, data.VelocityUnits = 1;
-  if (GetUnits(&data.DensityUnits, &data.LengthUnits, &data.TemperatureUnits,
-	       &data.TimeUnits, &data.VelocityUnits, _grid->Time) == FAIL) {
-        ENZO_FAIL("Error in GetUnits.");
-  }
-
-  /* Now we fill in the *Num attributes of data */
-  data.DensNum = DensNum;
-  data.Vel1Num = Vel1Num;
-  data.Vel2Num = Vel2Num;
-  data.Vel3Num = Vel3Num;
-  data.MetalNum = MetalNum;
-  /*data.ColourNum = ColourNum;*/
 
   data.MaxNumberOfNewParticles = size;
   data.NewParticles = new ActiveParticleType*[size];
@@ -256,6 +273,7 @@ void ActiveParticleType::DestroyData(grid *_grid,
     if (data.DarkMatterDensity != NULL) delete data.DarkMatterDensity;
     if (data.H2Fraction != NULL) delete data.H2Fraction;
     if (data.CoolingTime != NULL) delete data.CoolingTime;
+    if (data.CoolingRate != NULL) delete data.CoolingRate;
     if (data.Temperature != NULL) delete data.Temperature;
     if (data.TotalMetals != NULL) delete data.TotalMetals;
 

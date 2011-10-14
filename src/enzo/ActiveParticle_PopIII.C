@@ -74,10 +74,17 @@ private:
 static int ActiveParticleType_PopIII::InitializeParticleType() {
   // get some parameters from the Param object
 
+#ifdef NEW_CONFIG
   Param.GetScalar(OverDensityThreshold, "Physics.ActiveParticles.PopIII.OverDensityThreshold");
   Param.GetScalar(MetalCriticalFraction, "Physics.ActiveParticles.PopIII.MetalCriticalFraction");
   Param.GetScalar(H2CriticalFraction, "Physics.ActiveParticles.PopIII.H2CriticalFraction");
   Param.GetScalar(StarMass, "Physics.ActiveParticles.PopIII.StarMass");
+#else
+  OverDensityThreshold = 0;
+  MetalCriticalFraction = 0;
+  H2CriticalFraction = 0;
+  StarMass = 0;
+#endif
 
 }
 
