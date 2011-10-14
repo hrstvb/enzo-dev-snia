@@ -84,11 +84,11 @@ int TestGravityInitialize(FILE *fptr, FILE *Outfptr, HierarchyEntry &TopGrid,
  
   /* read parameters */
  
-  Param.GetScalar(TestGravityDensity, "TestGravityDensity");
-  Param.GetScalar(TestGravitySubgridLeft, "TestGravitySubgridLeft");
-  Param.GetScalar(TestGravitySubgridRight, "TestGravitySubgridRight");
-  Param.GetScalar(TestGravityNumberOfParticles, "TestGravityNumberOfParticles");
-  Param.GetScalar(TestGravityUseBaryons, "TestGravityUseBaryons");
+  Param.GetScalar(TestGravityDensity, "Problem.TestGravity.Density");
+  Param.GetScalar(TestGravitySubgridLeft, "Problem.TestGravity.SubgridLeft");
+  Param.GetScalar(TestGravitySubgridRight, "Problem.TestGravity.SubgridRight");
+  Param.GetScalar(TestGravityNumberOfParticles, "Problem.TestGravity.NumberOfParticles");
+  Param.GetScalar(TestGravityUseBaryons, "Problem.TestGravity.UseBaryons");
  
  
   /* set up grid */
