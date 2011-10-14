@@ -17,6 +17,8 @@
  
 // This routine intializes a new simulation based on the parameter file.
 //
+#include "ParameterControl/ParameterControl.h"
+extern Configuration Param;
  
 #include <string.h>
 #include <stdio.h>
@@ -35,6 +37,14 @@
 #include "CosmologyParameters.h"
 #include "fortran.def"
  
+const char config_cosmology_simulation_defaults[] = 
+"### PUT SINK RESTART INITIALIZE DEFAULTS ###\n"
+"\n"
+"Problem: {\n"
+"    PutSinkRestart: {\n"
+"        Name       = \"\";\n"
+"    };\n"
+"};\n";
 /* function prototypes */
  
 void WriteListOfFloats(FILE *fptr, int N, FLOAT floats[]);
@@ -98,9 +108,11 @@ int PutSinkRestartInitialize(FILE *fptr, FILE *Outfptr,
 // 		  SupernovaRestartEjectaCenter+2);
 //     ret += sscanf(line, "SupernovaRestartColourField = %"ISYM,
 // 		  &SupernovaRestartColourField);
- 
-    if (sscanf(line, "PutSinkRestartName = %s", dummy) == 1)
-      PutSinkRestartName = dummy;
+    Param.GetScalar(dummy,"Problem.PutSinkRestart.Name");
+    if (strlen(dummy)>0){
+      PutSinkRestartName = new char[MAX_LINE_LENGTH];
+      strcpy(PutSinkRestartName, dummy);
+    }
  
     /* If the dummy char space was used, then make another. */
  
