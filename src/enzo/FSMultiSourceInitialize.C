@@ -13,6 +13,8 @@
 ************************************************************************/
 
 // This routine intializes a new simulation based on the parameter file.
+#include "ParameterControl/ParameterControl.h"
+extern Configuration Param;
 
 #include <string.h>
 #include <stdio.h>
@@ -28,6 +30,17 @@
 #include "Hierarchy.h"
 #include "TopGridData.h"
 
+const char config_cosmology_simulation_defaults[] = 
+"### FS MULTI SOURCE DEFAULTS ###\n"
+"\n"
+"Problem: {\n"
+"    FSMultiSource: {\n"
+"         Density       = 10.0;\n"
+"         TEnergy       = 1.0;\n"
+"         RadiationEnergy  =10.0;\n"
+"         Velocity  = [0.0,0.0,0.0];\n"
+"    };\n"
+"};\n";
 
 /* default constants */
 #define DEFAULT_MU 0.6       // mean molecular mass
@@ -73,12 +86,15 @@ int FSMultiSourceInitialize(FILE *fptr, FILE *Outfptr, HierarchyEntry &TopGrid,
       while (fgets(line, MAX_LINE_LENGTH, RHfptr) != NULL) {
 	ret = 0;
 	// read relevant problem parameters
-	ret += sscanf(line, "FSProbVelocity = %"FSYM" %"FSYM" %"FSYM,
-		      &X0Velocity, &X1Velocity, &X2Velocity);
-	ret += sscanf(line, "FSProbDensity = %"FSYM, &Density);
-	ret += sscanf(line, "FSProbTEnergy = %"FSYM, &TEnergy);
-	ret += sscanf(line, "FSProbRadiationEnergy = %"FSYM, 
-		      &RadiationEnergy);
+  float temparray[3];
+  Param.GetArray(temparray,"Problem.FSMultiSource.Velocity");
+  X0Velocity=temparray[0];
+  X1Velocity=temparray[1];
+  X2Velocity=temparray[2];
+
+	Param.GetScalar(FSMultiSourceDensity,"Problem.FSMultiSource.Density");
+  Param.GetScalar(FSMultiSourceTEnergy,"Problem.FSMultiSource.TEnergy");
+  Param.GetScalar(FSMultiSourceRadiationEnergy,"Problem.FSMultiSource.RadiationEnergy");
       } // end input from parameter file
       fclose(RHfptr);
     }
