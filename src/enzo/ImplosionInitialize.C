@@ -75,14 +75,14 @@ const char config_implosion_defaults[] =
 "\n"
 "Problem: {\n"
 "    Implosion: {\n"
-"        Velocity 	= [0.0,0.0,0.0];  // gas initally at rest\n"
-"        BField   	= [0.0,0.0,0.0];  // no magnetic field\n"
+"        Velocity 	= [0.0,0.0,0.0];  # gas initally at rest\n"
+"        BField   	= [0.0,0.0,0.0];  # no magnetic field\n"
 "        Pressure 	= 1.0;\n"
 "        Density	= 1.0;\n"
 "        DiamondPressure= 0.14;\n"
 "        DiamondDensity	= 0.125;\n"
-"        SubgridLeft	= 0.0;      	// start of subgrid(s)\n"
-"        SubgridRight	= 0.0;      	// end of subgrid(s)\n"
+"        SubgridLeft	= 0.0;      	# start of subgrid(s)\n"
+"        SubgridRight	= 0.0;      	# end of subgrid(s)\n"
 "    };\n"
 "};\n";
 
