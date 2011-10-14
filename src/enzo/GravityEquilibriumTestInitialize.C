@@ -15,6 +15,9 @@
 // This routine intializes a new simulation based on the parameter file.
 //
  
+#include "ParameterControl/ParameterControl.h"
+extern Configuration Param;
+ 
 #include <string.h>
 #include <stdio.h>
 #include <math.h>
@@ -54,27 +57,25 @@ int GravityEquilibriumTestInitialize(FILE *fptr, FILE *Outfptr,
     fprintf(stderr, "warning: UniformGravity is off, should be on");
  
   /* set default parameters */
+  const char config_gravity_equilibrium_test_defaults[] = 
+  "### GRAVITY EQUILIBRIUM TEST DEFAULTS ###\n"
+  "\n"
+  "Problem: {\n"
+  "    GravityEquilibriumTest: {\n"
+  "        ScaleHeight = 0.1;\n"
+  "    };\n"
+  "};\n"; 
  
-  float GravityEquilibriumTestScaleHeight = 0.1;
+  float GravityEquilibriumTestScaleHeight;
  
   /* read input from file */
  
-  while (fgets(line, MAX_LINE_LENGTH, fptr) != NULL) {
+  Param.Update(config_gravity_equilibrium_test_defaults);
+
+  /* read parameters */
  
-    ret = 0;
- 
-    /* read parameters */
- 
-    ret += sscanf(line, "GravityEquilibriumTestScaleHeight = %"FSYM,
-		  &GravityEquilibriumTestScaleHeight);
- 
-    /* if the line is suspicious, issue a warning */
- 
-    if (ret == 0 && strstr(line, "=") &&
-	strstr(line, "GravityEquilibriumTest") && line[0] != '#')
-      fprintf(stderr, "warning: the following parameter line was not interpreted:\n%s\n", line);
- 
-  } // end input from parameter file
+  Param.GetScalar(GravityEquilibriumTestScaleHeight, "GravityEquilibriumTestScaleHeight");
+
  
   /* Set up grid. */
  
