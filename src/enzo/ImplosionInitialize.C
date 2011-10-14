@@ -114,6 +114,9 @@ int ImplosionInitialize(FILE *fptr, FILE *Outfptr, HierarchyEntry &TopGrid,
   float ImplosionPressure;   
   float ImplosionDiamondPressure;
     
+  // Update the parameter config to include the local defaults. Note
+  // that this does not overwrite values previously specified.
+  Param.Update(config_implosion_defaults);
 
 
   /* read parameters */

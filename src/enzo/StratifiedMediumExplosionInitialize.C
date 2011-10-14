@@ -86,6 +86,11 @@ int StratifiedMediumExplosionInitialize(FILE *fptr, FILE *Outfptr, HierarchyEntr
   FLOAT StratifiedMediumExplosionSubgridLeft[3]={0.0,0.0,0.0}; 
   FLOAT StratifiedMediumExplosionSubgridRight[3]={0.0,0.0,0.0};
 
+  // Update the parameter config to include the local defaults. Note
+  // that this does not overwrite values previously specified.
+  Param.Update(config_stratified_medium_explosion_defaults);
+
+
   // Read parameters
 
   Param.GetScalar(StratifiedMediumExplosionRadiusOfBubble, 

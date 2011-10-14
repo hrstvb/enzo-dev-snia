@@ -173,6 +173,11 @@ int TurbulenceSimulationInitialize(FILE *fptr, FILE *Outfptr,
   dummy[0] = 0;
   char dummy_arr[MAX_DIMENSION][MAX_LINE_LENGTH];
 
+
+  // Update the parameter config to include the local defaults. Note
+  // that this does not overwrite values previously specified.
+  Param.Update(config_turbulence_simulation_defaults);
+
  
     /* Read parameters */
 

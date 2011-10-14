@@ -82,7 +82,11 @@ int HydroShockTubesInitialize(FILE *fptr, FILE *Outfptr,
   float LeftVelocity[3];
   float CenterVelocity[3];
   float RightVelocity[3];
-  
+ 
+  // Update the parameter config to include the local defaults. Note
+  // that this does not overwrite values previously specified.
+  Param.Update(config_hydro_shocktubes_defaults);
+ 
 
   /* read parameters */
   

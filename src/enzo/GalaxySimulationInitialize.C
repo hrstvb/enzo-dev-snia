@@ -133,6 +133,11 @@ int GalaxySimulationInitialize(FILE *fptr, FILE *Outfptr,
   int NumberOfSubgridZones[MAX_DIMENSION],
     SubgridDims[MAX_DIMENSION];
 
+  // Update the parameter config to include the local defaults. Note
+  // that this does not overwrite values previously specified.
+  Param.Update(config_galaxy_simulation_defaults);
+
+
     /* read input from file */
 
     

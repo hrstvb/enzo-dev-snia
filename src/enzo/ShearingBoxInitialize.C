@@ -108,6 +108,12 @@ int ShearingBoxInitialize (FILE *fptr, FILE *Outfptr,
   int InitialMagneticFieldConfiguration;
   int RefineAtStart;
 
+  // Update the parameter config to include the local defaults. Note
+  // that this does not overwrite values previously specified.
+  Param.Update(config_shearing_box_defaults);
+
+
+
 /* read parameters */
     Param.GetScalar(ShearingBoxRefineAtStart, 
 		"Problem.ShearingBox.RefineAtStart"); 
