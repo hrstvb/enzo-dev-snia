@@ -157,7 +157,9 @@ int ActiveParticleType_SpringelHernquist::EvaluateFormation
     supp_data.NewParticles[supp_data.NumberOfNewParticles++] = np;
     //fprintf(stderr, "G_APH: Creating !\n");
 
+    // Give the star mass and then remove the same from the grid.
 	np->Mass = starfraction * density[index];
+	density[index] -= starfraction * density[index];
 
 	np->type = SpringelHernquist;
 	np->BirthTime = tg->Time;
