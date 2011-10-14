@@ -76,57 +76,71 @@ int RadHydroConstTestInitialize(FILE *fptr, FILE *Outfptr,
   //  8. initial fraction HeIII
   //  9. Number of chemical species
   // 10. mesh spacing
-  float RadHydroX0Velocity           = 0.0;
-  float RadHydroX1Velocity           = 0.0;
-  float RadHydroX2Velocity           = 0.0;
-  float RadHydroDensity              = 10.0;
-  float RadHydroTemperature          = 1.0;
-  float RadHydroIEnergy              = -1.0;
-  float RadHydroRadiationEnergy      = 10.0;
-  float RadHydroHydrogenMassFraction = 1.0;
-  float RadHydroInitialFractionHII   = 0.0;
-  float RadHydroInitialFractionHeII  = 0.0;
-  float RadHydroInitialFractionHeIII = 0.0;
-  int   RadHydroChemistry            = 1;
-  int   RadHydroModel                = 1;
+
+  float RadHydroVelocity[MAX_DIMENSION];
+  float RadHydroX0Velocity;
+  float RadHydroX1Velocity;
+  float RadHydroX2Velocity;
+  float RadHydroDensity;
+  float RadHydroTemperature;
+  float RadHydroIEnergy;
+  float RadHydroRadiationEnergy;
+  float RadHydroHydrogenMassFraction;
+  float RadHydroInitialFractionHII;
+  float RadHydroInitialFractionHeII;
+  float RadHydroInitialFractionHeIII;
+  int   RadHydroChemistry;
+  int   RadHydroModel;
+
+  const char config_rad_hydro_const_test_defaults[] = 
+  "### RAD HYDRO CONST TEST DEFAULTS ###\n"
+  "\n"
+  "Problem: {\n"
+  "    RadHydro: {\n"
+  "        Velocity             = [0.0, 0.0, 0.0];\n"
+  "        Density              = 10.0;\n"
+  "        Temperature          = 1.0;\n"
+  "        IEnergy              = -1.0;\n"
+  "        RadiationEnergy      = 10.0;\n"
+  "        HydrogenMassFraction = 1.0;\n"
+  "        InitialFractionHII   = 0.0;\n"
+  "        InitialFractionHeII  = 0.0;\n"
+  "        InitialFractionHeIII = 0.0;\n"
+  "    };\n"
+  "    gFLD: {\n"
+  "        Model                = 1;\n"
+  "        Chemistry            = 1;\n"
+  "    };\n"
+  "};\n";
+
+  Param.Update(config_rad_hydro_const_test_defaults);
 
   // overwrite input from RadHydroParamFile file, if it exists
   if (MetaData.RadHydroParameterFname != NULL) {
     FILE *RHfptr;
     if ((RHfptr = fopen(MetaData.RadHydroParameterFname, "r")) != NULL) {
-      while (fgets(line, MAX_LINE_LENGTH, RHfptr) != NULL) {
-	ret = 0;
-	// read relevant problem parameters
-	ret += sscanf(line, "RadHydroVelocity = %"FSYM" %"FSYM" %"FSYM,
-		      &RadHydroX0Velocity, &RadHydroX1Velocity, 
-		      &RadHydroX2Velocity);
-	ret += sscanf(line, "RadHydroChemistry = %"ISYM, 
-		      &RadHydroChemistry);
-	ret += sscanf(line, "RadHydroModel = %"ISYM, 
-		      &RadHydroModel);
-	ret += sscanf(line, "RadHydroDensity = %"FSYM, 
-		      &RadHydroDensity);
-	ret += sscanf(line, "RadHydroTemperature = %"FSYM, 
-		      &RadHydroTemperature);
-	ret += sscanf(line, "RadHydroIEnergy = %"FSYM, 
-		      &RadHydroIEnergy);
-	ret += sscanf(line, "RadHydroRadiationEnergy = %"FSYM, 
-		      &RadHydroRadiationEnergy);
-	if (RadHydroChemistry > 0)
-	  ret += sscanf(line, "RadHydroInitialFractionHII = %"FSYM, 
-			&RadHydroInitialFractionHII);
-	if (RadHydroChemistry > 1) {
-	  ret += sscanf(line, "RadHydroHFraction = %"FSYM, 
-			&RadHydroHydrogenMassFraction);
-	  ret += sscanf(line, "RadHydroInitialFractionHeII = %"FSYM, 
-			&RadHydroInitialFractionHeII);
-	  ret += sscanf(line, "RadHydroInitialFractionHeIII = %"FSYM, 
-			&RadHydroInitialFractionHeIII);
-	}
-      } // end input from parameter file
+      // read relevant problem parameters
+      Param.GetArray(RadHydroVelocity, "Problem.RadHydro.Velocity");
+      Param.GetScalar(RadHydroChemistry, "Problem.gFLD.Chemistry");
+      Param.GetScalar(RadHydroModel, "Problem.gFLD.Model");
+      Param.GetScalar(RadHydroDensity, "Problem.RadHydro.Density");
+      Param.GetScalar(RadHydroTemperature, "Problem.RadHydro.Temperature");
+      Param.GetScalar(RadHydroIEnergy, "Problem.RadHydro.IEnergy");
+      Param.GetScalar(RadHydroRadiationEnergy, "Problem.RadHydro.RadiationEnergy");
+      if (RadHydroChemistry > 0)
+	Param.GetScalar(RadHydroInitialFractionHII, "Problem.RadHydro.InitialFractionHII");
+      if (RadHydroChemistry > 1) {
+	Param.GetScalar(RadHydroHydrogenMassFraction, "Problem.RadHydro.HFraction");
+	Param.GetScalar(RadHydroInitialFractionHeII, "Problem.RadHydro.InitialFractionHeII");
+	Param.GetScalar(RadHydroInitialFractionHeIII, "Problem.RadHydro.InitialFractionHeIII");
+      }
       fclose(RHfptr);
     }
   }
+  RadHydroX0Velocity = RadHydroVelocity[0];
+  RadHydroX1Velocity = RadHydroVelocity[1];
+  RadHydroX2Velocity = RadHydroVelocity[2];
+
 
 
   // set up CoolData object if not already set up

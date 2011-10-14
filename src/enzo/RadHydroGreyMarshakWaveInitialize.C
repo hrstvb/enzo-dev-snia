@@ -55,10 +55,27 @@ int RadHydroGreyMarshakWaveInitialize(FILE *fptr, FILE *Outfptr,
   //  2. ambient radiation energy
   //  3. initial time step size
   //  4. propagation coordinate for marshak problem {0,1,2}
-  float RadHydroDensity   = 1.0;
-  float RadHydroGasEnergy = 1.0;
-  float RadHydroRadEnergy = 1.0;
-  int   GreyMarshDir      = 0;
+
+  const char config_rad_hydro_grey_marshak_wave_defaults[] = 
+  "### RAD HYDRO GREY MARSHAK WAVE DEFAULTS ###\n"
+  "\n"
+  "Problem: {\n"
+  "    RadHydro: {\n"
+  "        Density   = 1.0;\n"
+  "        GasEnergy = 1.0;\n"
+  "        RadEnergy = 1.0;\n"
+  "    };\n"
+  "    GreyMarsh: {\n"
+  "        Dir       = 0;\n"
+  "    };\n"
+  "};\n";
+
+  float RadHydroDensity;
+  float RadHydroGasEnergy;
+  float RadHydroRadEnergy;
+  int   GreyMarshDir;
+
+  Param.Update(config_rad_hydro_grey_marshak_wave_defaults);
 
   // overwrite parameters from RadHydroParamFile file, if it exists
   char line[MAX_LINE_LENGTH];
@@ -69,10 +86,10 @@ int RadHydroGreyMarshakWaveInitialize(FILE *fptr, FILE *Outfptr,
       while (fgets(line, MAX_LINE_LENGTH, RHfptr) != NULL) {
 	ret = 0;
 	// read relevant problem parameters
-	ret += sscanf(line, "RadHydroDensity = %"FSYM, &RadHydroDensity);
-	ret += sscanf(line, "RadHydroGasEnergy = %"FSYM, &RadHydroGasEnergy);
-	ret += sscanf(line, "RadHydroRadEnergy = %"FSYM, &RadHydroRadEnergy);
-	ret += sscanf(line, "GreyMarshDir = %"ISYM, &GreyMarshDir);
+	Param.GetScalar(RadHydroDensity, "Problem.RadHydro.Density");
+	Param.GetScalar(RadHydroGasEnergy, "Problem.RadHydro.GasEnergy");
+	Param.GetScalar(RadHydroRadEnergy, "Problem.RadHydro.RadEnergy");
+	Param.GetScalar(GreyMarshDir, "Problem.GreyMarsh.Dir");
       } // end input from parameter file
       fclose(RHfptr);
     }

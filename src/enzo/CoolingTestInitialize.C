@@ -15,7 +15,9 @@
  
 // This routine intializes a new simulation based on the parameter file.
 //
- 
+#include "ParameterControl/ParameterControl.h"
+extern Configuration Param;
+
 #include <string.h>
 #include <stdio.h>
 #include <math.h>
@@ -29,6 +31,36 @@
 #include "Grid.h"
 #include "Hierarchy.h"
 #include "TopGridData.h"
+   
+    
+const char config_cooling_test_defaults[] = 
+"### COOOLING TEST DEFAULTS ###\n"
+"\n"
+"Problem: {\n"
+"    Cooling Test: {\n"
+"       MinimumHNumberDensity    = 1.0;\n"   
+"       MaximumHNumberDensity    = 1e6;\n"  
+"       MinimumMetallicity       = 1e-6;\n"	     
+"       MaximumMetallicity       = 1;\n"	     
+"       MinimumTemperature       = 10;\n"	     
+"       MaximumTemperature       = 1e7;\n"	     
+"       ResetEnergies            = 1;\n"
+"\n"	     
+"       HydrogenFractionByMass   = 0.76;\n"  
+"       DeuteriumToHydrogenRatio = 2.0*3.4e-5 ; # Burles & Tytler 1998 \n"
+"\n"
+"       HI_Fraction              = 1.0;\n"	     
+"       HII_Fraction             = tiny_number;\n"	     
+"       HeI_Fraction             = 1.0;\n"	     
+"       HeIIFraction             = tiny_number;\n"	     
+"       HeIII_Fraction           = tiny_number;\n"	     
+"       HM_Fraction              = tiny_number;\n"	     
+"       H2I_Fraction             = tiny_number;\n"	     
+"       H2II_Fraction            = tiny_number;\n"	     
+"       UseMetallicityField      = False;\n"     
+"\n"  
+"    };\n"
+"};\n";
 
 int GetUnits(float *DensityUnits, float *LengthUnits,
 	     float *TemperatureUnits, float *TimeUnits,
@@ -98,38 +130,26 @@ int CoolingTestInitialize(FILE *fptr, FILE *Outfptr, HierarchyEntry &TopGrid,
     /* read parameters specifically for constant density problem */
 
     /* read in more general test parameters to set species, turn on color fields, etc. */
-    ret += sscanf(line, "CoolingTestMinimumHNumberDensity = %"FSYM, &TestProblemData.MinimumHNumberDensity);
-    ret += sscanf(line, "CoolingTestMaximumHNumberDensity = %"FSYM, &TestProblemData.MaximumHNumberDensity);
-    ret += sscanf(line, "CoolingTestMinimumMetallicity = %"FSYM, &TestProblemData.MinimumMetallicity);
-    ret += sscanf(line, "CoolingTestMaximumMetallicity = %"FSYM, &TestProblemData.MaximumMetallicity);
-    ret += sscanf(line, "CoolingTestMinimumTemperature = %"FSYM, &TestProblemData.MinimumTemperature);
-    ret += sscanf(line, "CoolingTestMaximumTemperature = %"FSYM, &TestProblemData.MaximumTemperature);
+    Param.GetScalar(TestProblemData.MinimumHNumberDensity, "Problem.CoolingTest.MinimumHNumberDensity");
+    Param.GetScalar(TestProblemData.MaximumHNumberDensity,"Problem.CoolingTest.MaximumHNumberDensity ");
+    Param.GetScalar(TestProblemData.MinimumMetallicity,"Problem.CoolingTest.MinimumMetallicity");
+    Param.GetScalar(TestProblemData.MaximumMetallicity,"Problem.CoolingTest.MaximumMetallicity");
+    Param.GetScalar(TestProblemData.MinimumTemperature,"Problem.CoolingTest.MinimumTemperature");
+    Param.GetScalar(TestProblemData.MaximumTemperature,"Problem.CoolingTest.MaximumTemperature");
+    Param.GetScalar(TestProblemData.ResetEnergies,"Problem.CoolingTest.ResetEnergies");
+    Param.GetScalar(TestProblemData.HydrogenFractionByMass,"Problem.CoolingTest.HydrogenFractionByMass");
+    Param.GetScalar(TestProblemData.DeuteriumToHydrogenRatio,"Problem.CoolingTest.DeuteriumToHydrogenRatio");
+    Param.GetScalar(TestProblemData.HI_Fraction,"Problem.CoolingTest.HI_Fraction ");
+    Param.GetScalar(TestProblemData.HII_Fraction,"Problem.CoolingTest.HII_Fraction");
+    Param.GetScalar(TestProblemData.HeI_Fraction,"Problem.CoolingTest.HeI_Fraction");
+    Param.GetScalar(TestProblemData.HeII_Fraction,"Problem.CoolingTest.HeIIFraction");
+    Param.GetScalar(TestProblemData.HeIII_Fraction,"Problem.CoolingTest.HeIII_Fraction");
+    Param.GetScalar(TestProblemData.HM_Fraction,"Problem.CoolingTest.HM_Fraction");
+    Param.GetScalar(TestProblemData.H2I_Fraction,"Problem.CoolingTest.H2I_Fraction");
+    Param.GetScalar(TestProblemData.H2II_Fraction,"Problem.CoolingTest.H2II_Fraction");		   
+    Param.GetScalar(TestProblemData.UseMetallicityField,"Problem.CoolingTest.UseMetallicityField");
+    
 
-    ret += sscanf(line, "CoolingTestResetEnergies = %"ISYM, &TestProblemData.ResetEnergies);
-
-    ret += sscanf(line, "TestProblemHydrogenFractionByMass = %"FSYM, &TestProblemData.HydrogenFractionByMass);
-    ret += sscanf(line, "TestProblemDeuteriumToHydrogenRatio = %"FSYM, &TestProblemData.DeuteriumToHydrogenRatio);
-
-    ret += sscanf(line, "TestProblemInitialHIFraction  = %"FSYM, &TestProblemData.HI_Fraction);
-    ret += sscanf(line, "TestProblemInitialHIIFraction  = %"FSYM, &TestProblemData.HII_Fraction);
-    ret += sscanf(line, "TestProblemInitialHeIFraction  = %"FSYM, &TestProblemData.HeI_Fraction);
-    ret += sscanf(line, "TestProblemInitialHeIIFraction  = %"FSYM, &TestProblemData.HeII_Fraction);
-    ret += sscanf(line, "TestProblemInitialHeIIIIFraction  = %"FSYM, &TestProblemData.HeIII_Fraction);
-    ret += sscanf(line, "TestProblemInitialHMFraction  = %"FSYM, &TestProblemData.HM_Fraction);
-    ret += sscanf(line, "TestProblemInitialH2IFraction  = %"FSYM, &TestProblemData.H2I_Fraction);
-    ret += sscanf(line, "TestProblemInitialH2IIFraction  = %"FSYM, &TestProblemData.H2II_Fraction);
-
-    ret += sscanf(line, "TestProblemUseMetallicityField  = %"ISYM, &TestProblemData.UseMetallicityField);
-
-    if (strstr(line, "\"\"\"")              ) comment_count++;
-
-    /* if the line is suspicious, issue a warning */
- 
-    if (ret == 0 && strstr(line, "=") && (strstr(line, "CoolingDensity") || strstr(line, "TestProblem")) &&
-	line[0] != '#' && MyProcessorNumber == ROOT_PROCESSOR)
-      fprintf(stderr,
-	      "*** warning: the following parameter line was not interpreted:\n%s\n",
-	      line);
  
   } // end input from parameter file
 
