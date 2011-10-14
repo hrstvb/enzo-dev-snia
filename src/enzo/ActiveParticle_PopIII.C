@@ -58,9 +58,10 @@ public:
   static int EvaluateFormation(grid *thisgrid_orig, ActiveParticleFormationData &data);
   static void DescribeSupplementalData(ActiveParticleFormationDataFlags &flags);
   static ParticleBufferHandler *AllocateBuffers(int NumberOfParticles);
-  static int ActiveParticleType_PopIII::InitializeParticleType();
+  static int InitializeParticleType();
   static int EvaluateFeedback(grid *thisgrid_orig);
 
+  // Pop III specific active particle parameters
   static float OverDensityThreshold, PopIIIMetalCriticalFraction, PopIIIH2CriticalFraction, StarMass;
 
 private:
@@ -171,9 +172,9 @@ int ActiveParticleType_PopIII::EvaluateFormation
 	   Note for an IMF, we have to recompute this after the random
 	   sampling. */
 
-    ActiveParticleType_PopIII *np = new ActiveParticleType_PopIII();
-    supp_data.NewParticles[supp_data.NumberOfNewParticles++] = np;
-    //fprintf(stderr, "G_APH: Creating !\n");
+	ActiveParticleType_PopIII *np = new ActiveParticleType_PopIII();
+	supp_data.NewParticles[supp_data.NumberOfNewParticles++] = np;
+	//fprintf(stderr, "G_APH: Creating !\n");
 
 	LifetimeInYears = CalculatePopIIILifetime(StarMass);
 
@@ -203,9 +204,9 @@ int ActiveParticleType_PopIII::EvaluateFormation
 
 	double *tvel = tg->AveragedVelocityAtCell(index, supp_data.DensNum,
 					       supp_data.Vel1Num);
-    np->vel[0] = tvel[0];
-    np->vel[1] = tvel[1];
-    np->vel[2] = tvel[2];
+	np->vel[0] = tvel[0];
+	np->vel[1] = tvel[1];
+	np->vel[2] = tvel[2];
 
 	/* Set the metallicity */
 
@@ -221,7 +222,7 @@ int ActiveParticleType_PopIII::EvaluateFormation
   return NumberOfNewParticles;
 }
 
-// Pop III feedback
+// Pop III feedback (done through rad. transfer and feedback spheres)
 int ActiveParticleType_PopIII::EvaluateFeedback(grid *thisgrid_orig)
 {
   return SUCCESS;

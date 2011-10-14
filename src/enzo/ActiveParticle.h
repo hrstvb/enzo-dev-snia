@@ -96,14 +96,14 @@ class ActiveParticleType
     
   protected:
     grid        *CurrentGrid;
-    FLOAT     pos[MAX_DIMENSION];
-    float         vel[MAX_DIMENSION];
-    double            Mass;        // Msun
-    float         BirthTime;
+    FLOAT	 pos[MAX_DIMENSION];
+    float        vel[MAX_DIMENSION];
+    double       Mass;		// Msun
+    float        BirthTime;
     PINT         Identifier;
-    int         level;
-    int         GridID;
-    star_type     type;
+    int		 level;
+    int		 GridID;
+    star_type    type;
 
     bool Active;
 
