@@ -17,6 +17,9 @@
  
 // This routine intializes a new simulation based on the parameter file.
 //
+
+#include "ParameterControl/ParameterControl.h"
+extern Configuration Param;
  
 #include <string.h>
 #include <stdio.h>
@@ -54,39 +57,39 @@ int TestGravityInitialize(FILE *fptr, FILE *Outfptr, HierarchyEntry &TopGrid,
   if (!SelfGravity)
     fprintf(stderr, "TestGravity: gravity is off!?!");
  
-  /* set default parameters */
+  /* set default parameters */  
+  const char config_test_gravity_defaults[] = 
+  "### TEST GRAVITY DEFAULTS ###\n"
+  "\n"
+  "Problem: {\n"
+  "    TestGravity: {\n"
+  "        Density           = 1.0;\n"  // density of central peak
+  "        SubgridLeft       = 0.0;\n"  // start of subgrid
+  "        SubgridRight      = 0.0;\n"  // end of subgrid
+  "        NumberOfParticles = 0;\n"    // number of test particles
+  "        UseBaryons        = False;\n"
+  "    };\n"
+  "};\n";
+
  
-  float TestGravityDensity           = 1.0;  // density of central peak
-  FLOAT TestGravitySubgridLeft       = 0.0;  // start of subgrid
-  FLOAT TestGravitySubgridRight      = 0.0;  // end of subgrid
-  int   TestGravityNumberOfParticles = 0;    // number of test particles
-  int   TestGravityUseBaryons        = FALSE;
+  float TestGravityDensity;  // density of central peak
+  FLOAT TestGravitySubgridLeft;  // start of subgrid
+  FLOAT TestGravitySubgridRight;  // end of subgrid
+  int   TestGravityNumberOfParticles;    // number of test particles
+  int   TestGravityUseBaryons;
  
   /* read input from file */
+
+  Param.Update(config_test_gravity_defaults);
  
-  while (fgets(line, MAX_LINE_LENGTH, fptr) != NULL) {
+  /* read parameters */
  
-    ret = 0;
+  Param.GetScalar(TestGravityDensity, "TestGravityDensity");
+  Param.GetScalar(TestGravitySubgridLeft, "TestGravitySubgridLeft");
+  Param.GetScalar(TestGravitySubgridRight, "TestGravitySubgridRight");
+  Param.GetScalar(TestGravityNumberOfParticles, "TestGravityNumberOfParticles");
+  Param.GetScalar(TestGravityUseBaryons, "TestGravityUseBaryons");
  
-    /* read parameters */
- 
-    ret += sscanf(line, "TestGravityDensity = %"FSYM, &TestGravityDensity);
-    ret += sscanf(line, "TestGravitySubgridLeft = %"PSYM,
-		  &TestGravitySubgridLeft);
-    ret += sscanf(line, "TestGravitySubgridRight = %"PSYM,
-		  &TestGravitySubgridRight);
-    ret += sscanf(line, "TestGravityNumberOfParticles = %"ISYM,
-		  &TestGravityNumberOfParticles);
-    ret += sscanf(line, "TestGravityUseBaryons = %"ISYM,
-		  &TestGravityUseBaryons);
- 
-    /* if the line is suspicious, issue a warning */
- 
-    if (ret == 0 && strstr(line, "=") && strstr(line, "TestGravity")
-	&& line[0] != '#')
-      fprintf(stderr, "warning: the following parameter line was not interpreted:\n%s\n", line);
- 
-  } // end input from parameter file
  
   /* set up grid */
  
