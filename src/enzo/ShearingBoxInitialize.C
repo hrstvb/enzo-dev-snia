@@ -13,6 +13,8 @@
 /
 ************************************************************************/
 
+#include "ParameterControl/ParameterControl.h"
+extern Configuration Param;
 
 
 #include <stdlib.h>
@@ -30,6 +32,25 @@
 #include "Hierarchy.h"
 #include "LevelHierarchy.h"
 #include "TopGridData.h"
+
+/* Set default parameter values. */
+
+const char config_shearing_box_defaults[] =
+"### SHEARING BOX DEFAULTS ###\n"
+"\n"
+"Problem: {\n"
+"    ShearingBox: {\n"
+"         ThermalMagneticRatio		= 400;\n"
+"         FluctuationAmplitudeFraction	= 0.1;\n"
+"         ShearingBoxRefineAtStart   	= FALSE;\n"
+"         ShearingGeometry		= 2.0;\n"
+"         InitialMagneticFieldConfiguration = 0;\n"
+"         RefineAtStart			= 1;\n"
+"    };\n"
+"};\n";
+
+
+
 
 // void WriteListOfFloats(FILE *fptr, int N, float floats[]);
 // void WriteListOfFloats(FILE *fptr, int N, FLOAT floats[]);
@@ -80,29 +101,24 @@ int ShearingBoxInitialize (FILE *fptr, FILE *Outfptr,
   /* read input from file */
  
 
-  float ThermalMagneticRatio=400; 
-  float FluctuationAmplitudeFraction=0.1;
-  int ShearingBoxRefineAtStart   = FALSE;
-  float ShearingGeometry=2.0;
-  int InitialMagneticFieldConfiguration=0;
-  int RefineAtStart=1;
-
-  int ret;
-
-  
-
-  while (fgets(line, MAX_LINE_LENGTH, fptr) != NULL) {
-
-    ret = 0;
+  float ThermalMagneticRatio; 
+  float FluctuationAmplitudeFraction;
+  int ShearingBoxRefineAtStart;
+  float ShearingGeometry;
+  int InitialMagneticFieldConfiguration;
+  int RefineAtStart;
 
 /* read parameters */
-    ret += sscanf(line, "ShearingBoxRefineAtStart = %"ISYM, &RefineAtStart); 
-    ret += sscanf(line, "ShearingBoxThermalMagneticRatio= %"FSYM, &ThermalMagneticRatio);
-    ret += sscanf(line, "ShearingBoxFluctuationAmplitudeFraction = %"FSYM, &FluctuationAmplitudeFraction);
-    ret += sscanf(line, "ShearingBoxGeometry = %"FSYM, &ShearingGeometry);  
-    ret += sscanf(line, "ShearingBoxInitialMagneticFieldConfiguration = %"ISYM, &InitialMagneticFieldConfiguration);  
- 
-  } 
+    Param.GetScalar(ShearingBoxRefineAtStart, 
+		"Problem.ShearingBox.RefineAtStart"); 
+    Param.GetScalar(ShearingBoxThermalMagneticRatio, 
+		"Problem.ShearingBox.ThermalMagneticRatio");
+    Param.GetScalar(ShearingBoxFluctuationAmplitudeFraction,
+		"Problem.ShearingBox.FluctuationAmplitudeFraction");
+    Param.GetScalar(ShearingBoxGeometry,
+		"Problem.ShearingBox.ShearingGeometry");
+    Param.GetScalar(BoxInitialMagneticFieldConfiguration,
+		"Problem.ShearingBox.InitialMagneticFieldConfiguration");  
  
 
 
