@@ -44,17 +44,17 @@ const char config_wave_pool_defaults[] =
 "\n"
 "Problem: {\n"
 "    WavePool: {\n"
-"        Amplitude     = 0.01;   // linear wave\n"
-"        Wavelength    = 0.1;    // one-tenth of the box\n"
-"        NumberOfWaves = 1;      // just one wave\n"
-"        Angle         = 0.0;    // direction of wave propogation wrt x-axis\n"
+"        Amplitude     = 0.01;   # linear wave\n"
+"        Wavelength    = 0.1;    # one-tenth of the box\n"
+"        NumberOfWaves = 1;      # just one wave\n"
+"        Angle         = 0.0;    # direction of wave propogation wrt x-axis\n"
 "\n"
-"        Density       = 1.0;    // uniform pool\n"
+"        Density       = 1.0;    # uniform pool\n"
 "        Pressure      = 1.0;"
-"        Velocity      = [0.0,0.0,0.0];  // x, y and z velocities
+"        Velocity      = [0.0,0.0,0.0];  # x, y and z velocities
 "\n"
-"        SubgridLeft   = 0.0;    // start of subgrid\n"
-"        SubgridRight  = 0.0;    // end of subgrid\n"
+"        SubgridLeft   = 0.0;    # start of subgrid\n"
+"        SubgridRight  = 0.0;    # end of subgrid\n"
 "    };\n"
 "};\n";
 
