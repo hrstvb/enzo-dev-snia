@@ -25,9 +25,61 @@
 /           stored here.
 /
 ************************************************************************/
+#include "ParameterControl/ParameterControl.h"
+extern Configuration Param;
+
 #ifdef TRANSFER
 #include "gFLDProblem.h"
 #include "CosmologyParameters.h"
+
+const char config_gfld_problem_defaults[] = 
+"### COSMOLOGY SIMULATION DEFAULTS ###\n"
+"\n"
+"Problem: {\n"
+"    gFLD: {\n"
+"         BoundaryX0FaceType = ;\n"
+"         BoundaryX1FaceType = ;\n"
+"         BoundaryX2FaceType = ;\n"
+"         IonizationParms ='\n"
+"         RadHydro: {\n"
+"              approx_jac = 0;\n"
+"              initial_guess = 0;\n"
+"              AnalyticChem = 1;\n"
+"              newt_linesearch = 1;\n"
+"              newt_maxit = 20;\n"
+"              newt_norm = 0;\n"
+"              newt_INconst = 1.0e-8;'\n"
+"              newt_tol = 1.0e-6;\n"
+"              newt_MinLinesearch = 1.0e-12;\n"
+"              sol_maxit = 20;\n"
+"              sol_rlxtype = 1;\n"
+"              sol_npre = 1;\n"
+"              sol_npost = 1;\n"
+"              ESpectrum = 1;\n"
+"              Nchem = 1;\n"
+"              HFraction = 1.0;\n"
+"              Model     = 1;\n"
+"              maxdt     = "
+"              mindt     = "
+"              initdt    = "
+"              dtnorm    = 2.0;\n"
+"         };\n"
+"         PlanckOpacity: {\n"
+"              C0   = 1.0\n"
+"              C1   = 1.0\n"
+"              C2   = 0.0\n"
+"              C3   = 1.0\n"
+"              C4   = 0.0\n"
+"         };\n"
+"         EnergyOpacity: {\n"
+"              C0   = 1.0\n"
+"              C1   = 1.0\n"
+"              C2   = 0.0\n"
+"              C3   = 1.0\n"
+"              C4   = 0.0\n"
+"         };\n"
+"    };\n"
+"};\n";
 
 // character strings
 EXTERN char outfilename[];
@@ -189,56 +241,46 @@ int gFLDProblem::Initialize(HierarchyEntry &TopGrid, TopGridData &MetaData)
       // read until out of lines
       while (fgets(line, MAX_LINE_LENGTH, fptr) != NULL) {
 	ret = 0;
-	ret += sscanf(line, "RadHydroESpectrum = %"ISYM, &ESpectrum);
-	ret += sscanf(line, "RadHydroChemistry = %"ISYM, &Nchem);
-	ret += sscanf(line, "RadHydroHFraction = %"FSYM, &HFrac);
-	ret += sscanf(line, "RadHydroModel = %"ISYM, &Model);
-	ret += sscanf(line, "RadHydroMaxDt = %"FSYM, &maxdt);
-	ret += sscanf(line, "RadHydroMinDt = %"FSYM, &mindt);
-	ret += sscanf(line, "RadHydroInitDt = %"FSYM, &initdt);
-	ret += sscanf(line, "RadHydroDtNorm = %"FSYM, &dtnorm);
-	ret += sscanf(line, "RadHydroDtRadFac = %"FSYM, &dtfac[0]);
-	ret += sscanf(line, "RadHydroDtGasFac = %"FSYM, &dtfac[1]);
-	ret += sscanf(line, "RadHydroDtChemFac = %"FSYM, &dtfac[2]);
-	ret += sscanf(line, "RadiationScaling = %"FSYM, &ErScale);
-	ret += sscanf(line, "EnergyCorrectionScaling = %"FSYM, &ecScale);
-	ret += sscanf(line, "ChemistryScaling = %"FSYM, &NiScale);
-	ret += sscanf(line, "RadHydroTheta = %"FSYM, &theta);
-	ret += sscanf(line, "RadHydroLimiterType = %"ISYM, &LimType);
-	ret += sscanf(line, "RadiationBoundaryX0Faces = %"ISYM" %"ISYM, 
-		      BdryType[0], BdryType[0]+1);
-	if (rank > 1) {
-	  ret += sscanf(line, "RadiationBoundaryX1Faces = %"ISYM" %"ISYM,
-			BdryType[1], BdryType[1]+1);
-	  if (rank > 2) {
-	    ret += sscanf(line, "RadiationBoundaryX2Faces = %"ISYM" %"ISYM,
-			  BdryType[2], BdryType[2]+1);
-	  }
-	}
-	ret += sscanf(line, "RadHydroAprxJacobian = %"ISYM, &approx_jac);
-	ret += sscanf(line, "RadHydroInitialGuess = %"ISYM, &initial_guess);
-	ret += sscanf(line, "RadHydroAnalyticChem = %"ISYM, &AnalyticChem);
-	ret += sscanf(line, "RadHydroNewtLinesearch = %"ISYM, &newt_linesearch);
-	ret += sscanf(line, "RadHydroNewtIters = %"ISYM, &newt_maxit);
-	ret += sscanf(line, "RadHydroNewtNorm = %"ISYM, &newt_norm);
-	ret += sscanf(line, "RadHydroINConst = %"FSYM, &newt_INconst);
-	ret += sscanf(line, "RadHydroNewtTolerance = %"FSYM, &newt_tol);
-	ret += sscanf(line, "RadHydroMinLinesearch = %"FSYM,
-		      &newt_MinLinesearch);
-	ret += sscanf(line, "RadHydroMaxMGIters = %i", &sol_maxit);
-	ret += sscanf(line, "RadHydroMGRelaxType = %i", &sol_rlxtype);
-	ret += sscanf(line, "RadHydroMGPreRelax = %i", &sol_npre);
-	ret += sscanf(line, "RadHydroMGPostRelax = %i", &sol_npost);
-	ret += sscanf(line, "PlanckOpacityC0 = %"FSYM, &PlanckOpacityC0);
-	ret += sscanf(line, "PlanckOpacityC1 = %"FSYM, &PlanckOpacityC1);
-	ret += sscanf(line, "PlanckOpacityC2 = %"FSYM, &PlanckOpacityC2);
-	ret += sscanf(line, "PlanckOpacityC3 = %"FSYM, &PlanckOpacityC3);
-	ret += sscanf(line, "PlanckOpacityC4 = %"FSYM, &PlanckOpacityC4);
-	ret += sscanf(line, "EnergyOpacityC0 = %"FSYM, &EnergyOpacityC0);
-	ret += sscanf(line, "EnergyOpacityC1 = %"FSYM, &EnergyOpacityC1);
-	ret += sscanf(line, "EnergyOpacityC2 = %"FSYM, &EnergyOpacityC2);
-	ret += sscanf(line, "EnergyOpacityC3 = %"FSYM, &EnergyOpacityC3);
-	ret += sscanf(line, "EnergyOpacityC4 = %"FSYM, &EnergyOpacityC4);
+	Param.GetScalar(RadHydroESpectrum,"Problem.gFLD.RadHydro.ESpectrum");
+	Param.GetScalar(RadHydroNchem,"Problem.gFLD.RadHydro.Nchem");
+	Param.GetScalar(RadHydroHFraction,"Problem.gFLD.RadHydro.HFrac");
+	Param.GetScalar(RadHydroModel,"Problem.gFLD.RadHydro.Model");
+	Param.GetScalar(RadHydromaxdt,"Problem.gFLD.RadHydro.maxdt");
+	Param.GetScalar(RadHydromindt,"Problem.gFLD.RadHydro.mindt");
+	Param.GetScalar(RadHydroinitdt,"Problem.gFLD.RadHydro.initdt");
+	Param.GetScalar(RadHydrodtnorm,"Problem.gFLD.RadHydro.dtnorm");
+     Param.GetArray(dtfac,"Problem.gFLD.dtfac");
+     Param.GetScalar(RadiationScalingErScale,"Problem.gFLD.ErScale");
+     Param.GetScalar(RadiationScalingecScale,"Problem.gFLD.ecScale");
+     Param.GetScalar(ChemistryScalingNeScale,"Problem.gFLD.NiScale");
+	Param.GetScalar(RadHydrotheta,"Problem.gFLD.RadHydro.theta");
+     Param.GetScalar(RadHydroLimType,"Problem.gFLD.RadHydro.LimType");
+	Param.GetArray(BdryType[0],"Problem.gFLD.BoundaryX0FaceType");
+     Param.GetArray(BdryType[1],"Problem.gFLD.BoundaryX1FaceType");
+     Param.GetArray(BdryType[2],"Problem.gFLD.BoundaryX2FaceType");
+     Param.GetScalar(RadHydroapprox_jac,"Problem.gFLD.RadHydro.approx_jac");
+     Param.GetScalar(RadHydroinitial_guess,"Problem.gFLD.RadHydro.initial_guess");
+     Param.GetScalar(RadHydroAnalyticChem,"Problem.gFLD.RadHydro.AnalyticChem");
+     Param.GetScalar(RadHydronewt_linesearch,"Problem.gFLD.RadHydro.newt_linesearch");
+     Param.GetScalar(RadHydronewt_maxit,"Problem.gFLD.RadHydro.newt_maxit");
+     Param.GetScalar(RadHydronewt_norm,"Problem.gFLD.RadHydro.newt_norm");
+     Param.GetScalar(RadHydronewt_INconst,"Problem.gFLD.RadHydro.newt_INconst");
+     Param.GetScalar(RadHydronewt_tol,"Problem.gFLD.RadHydro.newt_tol");
+     Param.GetScalar(RadHydronewt_MinLinesearch,"Problem.gFLD.RadHydro.newt_MinLinesearch");
+     Param.GetScalar(RadHydrosol_maxit,"Problem.gFLD.RadHydro.sol_maxit");
+     Param.GetScalar(RadHydrosol_rlxtype,"Problem.gFLD.RadHydro.sol_rlxtype");
+     Param.GetScalar(RadHydrosol_npre,"Problem.gFLD.RadHydro.sol_npre");
+     Param.GetScalar(RadHydrosol_npost,"Problem.gFLD.RadHydro.sol_npost");
+     Param.GetScalar(PlanckOpacityC0,"Problem.gFLD.PlanckOpacity.C0");
+     Param.GetScalar(PlanckOpacityC1,"Problem.gFLD.PlanckOpacity.C1");
+     Param.GetScalar(PlanckOpacityC2,"Problem.gFLD.PlanckOpacity.C2");
+     Param.GetScalar(PlanckOpacityC3,"Problem.gFLD.PlanckOpacity.C3");
+     Param.GetScalar(PlanckOpacityC4,"Problem.gFLD.PlanckOpacity.C4");
+     Param.GetScalar(EnergyOpacityC0,"Problem.gFLD.EnergyOpacity.C0");
+     Param.GetScalar(EnergyOpacityC1,"Problem.gFLD.EnergyOpacity.C1");
+     Param.GetScalar(EnergyOpacityC2,"Problem.gFLD.EnergyOpacity.C2");
+	Param.GetScalar(EnergyOpacityC3,"Problem.gFLD.EnergyOpacity.C3");
+     Param.GetScalar(EnergyOpacityC4,"Problem.gFLD.EnergyOpacity.C4");
 	
       }  // end loop over file lines
 
@@ -265,10 +307,7 @@ int gFLDProblem::Initialize(HierarchyEntry &TopGrid, TopGridData &MetaData)
 	IonizationParms[4] = 0.0;
         while (fgets(line, MAX_LINE_LENGTH, fptr) != NULL) {
 	  ret = 0;
-	  ret += sscanf(line, "NGammaDot = %"FSYM, &IonizationParms[0]);
-	  ret += sscanf(line, "EtaRadius = %"FSYM, &IonizationParms[1]);
-	  ret += sscanf(line, "EtaCenter = %"FSYM" %"FSYM" %"FSYM, 
-			&IonizationParms[2], &IonizationParms[3], &IonizationParms[4]);
+	  Param.GetArray(IonizationParms,"Problems.gFLD.IonizationParms");
         }  // end loop over file lines
         if (debug) {
 	  printf("gFLDProblem_Initialize: NGammaDot = %g\n",IonizationParms[0]);

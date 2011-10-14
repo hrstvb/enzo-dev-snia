@@ -18,6 +18,8 @@
 
 // This routine intializes a new simulation based on the parameter file.
 //
+#include "ParameterControl/ParameterControl.h"
+extern Configuration Param;
 
 #include <string.h>
 #include <stdio.h>
@@ -32,6 +34,20 @@
 #include "Grid.h"
 #include "Hierarchy.h"
 #include "TopGridData.h"
+
+const char config_cosmology_simulation_defaults[] = 
+"### KH DEFAULTS ###\n"
+"\n"
+"Problem: {\n"
+"    KH: {\n"
+"       KHInnerPressure         = 2.5;\n"
+"       KHOuterPressure         = 2.5;\n"
+"       KHVelocityJump          = 1.0;\n"
+"       KHPerturbationAmplitude = 0.01;\n"
+"       KHInnerDensity          = 2.0;\n"
+"       KHOuterDensity          = 1.0;\n"
+"    };\n"
+"};\n";
 
 int KHInitialize(FILE *fptr, FILE *Outfptr, HierarchyEntry &TopGrid,
 		       TopGridData &MetaData)
@@ -71,13 +87,12 @@ int KHInitialize(FILE *fptr, FILE *Outfptr, HierarchyEntry &TopGrid,
 
     /* read parameters */
 
-    ret += sscanf(line, "KHInnerDensity  = %"FSYM, &KHInnerDensity);
-    ret += sscanf(line, "KHOuterDensity  = %"FSYM, &KHOuterDensity);
-    ret += sscanf(line, "KHInnerPressure = %"FSYM, &KHInnerPressure);
-    ret += sscanf(line, "KHOuterPressure = %"FSYM, &KHOuterPressure);
-    ret += sscanf(line, "KHVelocityJump  = %"FSYM, &KHVelocityJump);
-    ret += sscanf(line, "KHPerturbationAmplitude = %"FSYM, 
-		                                   &KHPerturbationAmplitude);
+    Param.GetScalar(KHInnerDensity,"Problem.KH.KHInnerDensity");
+    Param.GetScalar(KHOuterDensity,"Problem.KH.KHOuterDensity");
+    Param.GetScalar(KHInnerPressure,"Problem.KH.KHInnerPressure");
+    Param.GetScalar(KHOuterPressure,"Problem.KH.KHOuterPressure");
+    Param.GetScalar(KHVelocityJump,"Problem.KH.KHVelocityJump");
+    Param.GetScalar(KHPerturbationAmplitude,"Problem.KH.KHPerturbationAmplitude");                                   
     /* if the line is suspicious, issue a warning */
 
     if (ret == 0 && strstr(line, "=") && strstr(line, "KH") && 
