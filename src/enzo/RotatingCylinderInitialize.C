@@ -14,6 +14,9 @@
  
 // This routine intializes a new simulation based on the parameter file.
 //
+
+#include "ParameterControl/ParameterControl.h"
+extern Configuration Param;
  
 #include <string.h>
 #include <stdio.h>
@@ -47,9 +50,9 @@ int RotatingCylinderInitialize(FILE *fptr, FILE *Outfptr, HierarchyEntry &TopGri
 
   /* parameter declarations */
  
-  FLOAT RotatingCylinderSubgridLeft[MAX_DIMENSION], RotatingCylinderSubgridRight[MAX_DIMENSION];
+
   FLOAT LeftEdge[MAX_DIMENSION], RightEdge[MAX_DIMENSION];
-  FLOAT RotatingCylinderCenterPosition[MAX_DIMENSION];
+
 
   /* local declarations */
  
@@ -62,71 +65,57 @@ int RotatingCylinderInitialize(FILE *fptr, FILE *Outfptr, HierarchyEntry &TopGri
   if (MetaData.TopGridRank != 3) {
     ENZO_VFAIL("Cannot do RotatingCylinder in %"ISYM" dimension(s)\n", MetaData.TopGridRank)
   }
- 
-  for(i=0; i<MAX_DIMENSION; i++)
-    RotatingCylinderCenterPosition[i] = 0.5;  // right in the middle of the box
-
-  float RotatingCylinderVelocity[3]   = {0.0, 0.0, 0.0};   // gas initally at rest
-  float RotatingCylinderBField[3]   = {0.0, 0.0, 0.0};   // gas initally at rest
-  FLOAT RotatingCylinderRadius = 0.3;
-  float RotatingCylinderLambda = 0.05;
-  float RotatingCylinderOverdensity = 20.0;
-  float RotatingCylinderDensity = 1.0;
-  float RotatingCylinderTotalEnergy = 1.0;
-  float Pi                      = 3.14159;
 
   /* set no subgrids by default. */
- 
-  RotatingCylinderSubgridLeft[0] = RotatingCylinderSubgridLeft[1] = 
-    RotatingCylinderSubgridLeft[2] = 0.0;    // start of subgrid(s)
+  const char config_rotating_cylinder_defaults[] = 
+  "### ROTATING CYLINDER DEFAULTS ###\n"
+  "\n"
+  "Problem: {\n"
+  "    RotatingCylinder: {\n"
+  "        Velocity = [0.0, 0.0, 0.0];\n"   // gas initally at rest
+  "        BField   = [0.0, 0.0, 0.0];\n"   // gas initally at rest
+  "        RotatingCylinderCenterPosition = [0.5, 0.5, 0.5];\n" // right in the middle of the box
+  "        RotatingCylinderSubgridLeft=[0.0, 0.0, 0.0];\n"
+  "        RotatingCylinderSubgridRight=[0.0, 0.0, 0.0];\n"
+  "        Radius = 0.3;\n"
+  "        Lambda = 0.05;\n"
+  "        Overdensity = 20.0;\n"
+  "        Density = 1.0;\n"
+  "        TotalEnergy = 1.0;\n"
+  "    };\n"
+  "};\n";
 
-  RotatingCylinderSubgridRight[0] = RotatingCylinderSubgridRight[1] = 
-    RotatingCylinderSubgridRight[2] = 0.0;    // end of subgrid(s)
+  FLOAT RotatingCylinderSubgridLeft[MAX_DIMENSION];
+  FLOAT RotatingCylinderSubgridRight[MAX_DIMENSION];
+  FLOAT RotatingCylinderCenterPosition[MAX_DIMENSION];
+  float RotatingCylinderVelocity[MAX_DIMENSION];   // gas initally at rest
+  float RotatingCylinderBField[MAX_DIMENSION];   // gas initally at rest
+  FLOAT RotatingCylinderRadius;
+  float RotatingCylinderLambda;
+  float RotatingCylinderOverdensity;
+  float RotatingCylinderDensity;
+  float RotatingCylinderTotalEnergy;
+
+  Param.Update(config_rotating_cylinder_defaults);
 
   /* read input from file */
  
-  while (fgets(line, MAX_LINE_LENGTH, fptr) != NULL) {
- 
-    ret = 0;
- 
-    /* read parameters specifically for radiating shock problem*/
+  /* read parameters specifically for radiating shock problem*/
 
-    ret += sscanf(line, "RotatingCylinderOverdensity  = %"FSYM, &RotatingCylinderOverdensity);
-    ret += sscanf(line, "RotatingCylinderSubgridLeft = %"PSYM" %"PSYM" %"PSYM,
-		  RotatingCylinderSubgridLeft,RotatingCylinderSubgridLeft+1,RotatingCylinderSubgridLeft+2);
-    ret += sscanf(line, "RotatingCylinderSubgridRight = %"PSYM" %"PSYM" %"PSYM,
-		  RotatingCylinderSubgridRight,RotatingCylinderSubgridRight+1,RotatingCylinderSubgridRight+2);
-    ret += sscanf(line, "RotatingCylinderLambda = %"FSYM,
-		        &RotatingCylinderLambda);
-
-    ret += sscanf(line, "RotatingCylinderTotalEnergy = %"FSYM,
-		        &RotatingCylinderTotalEnergy);
-
-    ret += sscanf(line, "RotatingCylinderRadius = %"PSYM,
-		        &RotatingCylinderRadius);
-    ret += sscanf(line, "RotatingCylinderCenterPosition = %"PSYM" %"PSYM" %"PSYM,
-		  RotatingCylinderCenterPosition, RotatingCylinderCenterPosition+1,
-		  RotatingCylinderCenterPosition+2);
-
-    ret += sscanf(line, "TestProblemUseMetallicityField  = %"ISYM, &TestProblemData.UseMetallicityField);
-    ret += sscanf(line, "TestProblemInitialMetallicityFraction  = %"FSYM, &TestProblemData.MetallicityField_Fraction);
-
-    /* if the line is suspicious, issue a warning */
- 
-    if (ret == 0 && strstr(line, "=") && (strstr(line, "RotatingCylinder") || strstr(line, "TestProblem")) &&
-	line[0] != '#' && MyProcessorNumber == ROOT_PROCESSOR)
-      fprintf(stderr,
-	 "*** warning: the following parameter line was not interpreted:\n%s\n",
-	      line);
- 
-  } // end input from parameter file
- 
- 
+  Param.GetArray(RotatingCylinderSubgridLeft, "Problem.RotatingCylinder.SubgridLeft");
+  Param.GetArray(RotatingCylinderSubgridRight, "Problem.RotatingCylinder.SubgridRight");
+  Param.GetArray(RotatingCylinderCenterPosition, "Problem.RotatingCylinder.CenterPosition");
+  Param.GetScalar(RotatingCylinderOverdensity, "Problem.RotatingCylinder.Overdensity");
+  Param.GetScalar(RotatingCylinderLambda, "Problem.RotatingCylinder.Lambda");
+  Param.GetScalar(RotatingCylinderTotalEnergy, "Problem.RotatingCylinder.TotalEnergy");
+  Param.GetScalar(RotatingCylinderRadius, "Problem.RotatingCylinder.Radius");
+  Param.GetScalar(TestProblemData.UseMetallicityField, "Problem.RotatingCylinder.UseMetallicityField");
+  Param.GetScalar(TestProblemData.MetallicityField_Fraction, "Problem.RotatingCylinder.InitialMetallicityFraction"); 
   if (TopGrid.GridData->InitializeUniformGrid(RotatingCylinderDensity,
 					      RotatingCylinderTotalEnergy,
 					      RotatingCylinderTotalEnergy,
 					      RotatingCylinderVelocity,
-					      RotatingCylinderBField) == FAIL) {
+					      RotatingCylinderBField) == FAIL){
         ENZO_FAIL("Error in InitializeUniformGrid.");
   }
  

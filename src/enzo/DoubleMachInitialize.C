@@ -67,24 +67,17 @@ int DoubleMachInitialize(FILE *fptr, FILE *Outfptr, HierarchyEntry &TopGrid,
   FLOAT DoubleMachSubgridLeft   = 0.0;    // start of subgrid
   FLOAT DoubleMachSubgridRight  = 0.0;    // end of subgrid 
 
-  /* read input from file */
- 
-  while (fgets(line, MAX_LINE_LENGTH, fptr) != NULL) {
- 
-    ret = 0;
+  // Update the parameter config to include the local defaults. Note
+  // that this does not overwrite values previously specified.
+  Param.Update(config_adiabatic_expansion_defaults);
+
  
     /* read parameters */
  
     Param.GetScalar(DoubleMachSubgridLeft,"Problem.DoubleMach.SubgridLeft");
 
     Param.GetScalar(DoubleMachSubgridRight,"Problem.DoubleMach.SubgridRight");
- 
-    /* if the line is suspicious, issue a warning */
- 
-    if (ret == 0 && strstr(line, "=") && strstr(line, "DoubleMach"))
-      fprintf(stderr, "warning: the following parameter line was not interpreted:\n%s\n", line);
- 
-  } // end input from parameter file
+
  
   /* set up grid */
  

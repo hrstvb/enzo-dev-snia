@@ -62,44 +62,56 @@ int CosmoIonizationInitialize(FILE *fptr, FILE *Outfptr,
   // local declarations
   char  line[MAX_LINE_LENGTH];
   int   dim, ret;
+
+  const char config_cosmo_ionization_defaults[] = 
+  "### COSMO IONIZATION CLUMP DEFAULTS ###\n"
+  "\n"
+  "Problem: {\n"
+  "    RadHydro: {\n"
+  "        Velocity = [0.0, 0.0, 0.0];\n"
+  "        Temperature          = 10000.0;\n"       // [K]
+  "        RadiationEnergy      = 1.0e-32;\n"
+  "        InitialFractionHII   = 0.0;\n"
+  "        OmegaBaryonNow       = 0.2;\n"
+  "    };\n"
+  "    gFLD: {\n"
+  "        Chemistry    = 1;\n"
+  "        Model        = 1;\n"
+  "    };\n"
+  "};\n";
  
   // Setup and parameters:
-  float RadHydroX0Velocity           = 0.0;
-  float RadHydroX1Velocity           = 0.0;
-  float RadHydroX2Velocity           = 0.0;
-  float RadHydroTemperature          = 10000.0;       // [K]
-  float RadHydroRadiationEnergy      = 1.0e-32;
-  float RadHydroInitialFractionHII   = 0.0;
-  float RadHydroOmegaBaryonNow       = 0.2;
-  int   RadHydroChemistry            = 1;
-  int   RadHydroModel                = 1;
+  float RadHydroVelocity[MAX_DIMENSION];
+  float RadHydroX0Velocity;
+  float RadHydroX1Velocity;
+  float RadHydroX2Velocity;
+  float RadHydroTemperature;        // [K]
+  float RadHydroRadiationEnergy;
+  float RadHydroInitialFractionHII;
+  float RadHydroOmegaBaryonNow;
+  int   RadHydroChemistry;
+  int   RadHydroModel;
+
+  Param.Update(config_cosmo_ionization_defaults);
 
   // overwrite input from RadHydroParamFile file, if it exists
   if (MetaData.RadHydroParameterFname != NULL) {
     FILE *RHfptr;
     if ((RHfptr = fopen(MetaData.RadHydroParameterFname, "r")) != NULL) {
-      while (fgets(line, MAX_LINE_LENGTH, RHfptr) != NULL) {
-	ret = 0;
-	// read relevant problem parameters
-	ret += sscanf(line, "RadHydroVelocity = %"FSYM" %"FSYM" %"FSYM,
-		      &RadHydroX0Velocity, &RadHydroX1Velocity, 
-		      &RadHydroX2Velocity);
-	ret += sscanf(line, "RadHydroChemistry = %"ISYM, 
-		      &RadHydroChemistry);
-	ret += sscanf(line, "RadHydroModel = %"ISYM, 
-		      &RadHydroModel);
-	ret += sscanf(line, "RadHydroTemperature = %"FSYM, 
-		      &RadHydroTemperature);
-	ret += sscanf(line, "RadHydroRadiationEnergy = %"FSYM, 
-		      &RadHydroRadiationEnergy);
-	ret += sscanf(line, "RadHydroInitialFractionHII = %"FSYM, 
-		      &RadHydroInitialFractionHII);
-	ret += sscanf(line, "RadHydroOmegaBaryonNow = %"FSYM, 
-		      &RadHydroOmegaBaryonNow);
-      } // end input from parameter file
+      // read relevant problem parameters
+      Param.GetArray(RadHydroVelocity, "Problem.RadHydro.Velocity");
+      Param.GetScalar(RadHydroChemistry, "Problem.gFLD.Chemistry");
+      Param.GetScalar(RadHydroModel, "Problem.gFLD.Model");
+      Param.GetScalar(RadHydroTemperature, "Problem.RadHydro.Temperature");
+      Param.GetScalar(RadHydroRadiationEnergy, "Problem.RadHydro.RadiationEnergy");
+      Param.GetScalar(RadHydroInitialFractionHII, "Problem.RadHydro.InitialFractionHII");
+      Param.GetScalar(RadHydroOmegaBaryonNow, "Problem.RadHydro.OmegaBaryonNow");
       fclose(RHfptr);
     }
   }
+  RadHydroX0Velocity = RadHydroVelocity[0];
+  RadHydroX1Velocity = RadHydroVelocity[1];
+  RadHydroX2Velocity = RadHydroVelocity[2];
 
   // require Hydrogen only chemistry
   if (RadHydroChemistry != 1) 

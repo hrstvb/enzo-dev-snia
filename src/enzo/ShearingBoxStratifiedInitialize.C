@@ -13,7 +13,8 @@
 /
 ************************************************************************/
 
-
+#include "ParameterControl/ParameterControl.h"
+extern Configuration Param;
 
 #include <stdlib.h>
 #include <string.h>
@@ -76,33 +77,38 @@ int ShearingBoxStratifiedInitialize (FILE *fptr, FILE *Outfptr,
 
   /* set default parameters */
 
+  const char config_shearing_box_stratified_defaults[] = 
+  "### SHEARING BOX STRATEFIED DEFAULTS ###\n"
+  "\n"
+  "Problem: {\n"
+  "    Shearing: {\n"
+  "        ThermalMagneticRatio=400;\n"
+  "        FluctuationAmplitudeFraction=0.1;\n"
+  "        BoxRefineAtStart   = False;\n"
+  "        Geometry=2.0;\n"
+  "        InitialMagneticFieldConfiguration=0;\n"
+  "        RefineAtStart=1;\n"
+  "    };\n"
+  "};\n";
+
+  float ThermalMagneticRatio; 
+  float FluctuationAmplitudeFraction;
+  int ShearingBoxRefineAtStart;
+  float ShearingGeometry;
+  int InitialMagneticFieldConfiguration;
+  int RefineAtStart;
  
   /* read input from file */
  
+  Param.Update(config_shearing_box_stratified_defaults);
 
-  float ThermalMagneticRatio=400; 
-  float FluctuationAmplitudeFraction=0.1;
-  int ShearingBoxRefineAtStart   = FALSE;
-  float ShearingGeometry=2.0;
-  int InitialMagneticFieldConfiguration=0;
-  int RefineAtStart=1;
-
-  int ret;
-
+  /* read parameters */
+  Param.GetScalar(RefineAtStart, "Problem.Shearing.BoxRefineAtStart"); 
+  Param.GetScalar(ThermalMagneticRatio, "Problem.Shearing.ThermalMagneticRatio");
+  Param.GetScalar(FluctuationAmplitudeFraction, "Problem.Shearing.FluctuationAmplitudeFraction");
+  Param.GetScalar(ShearingGeometry, "Problem.Shearing.Geometry");  
+  Param.GetScalar(InitialMagneticFieldConfiguration, "Problem.Shearing.InitialMagneticFieldConfiguration");  
   
-
-  while (fgets(line, MAX_LINE_LENGTH, fptr) != NULL) {
-
-    ret = 0;
-
-/* read parameters */
-    ret += sscanf(line, "ShearingBoxRefineAtStart = %"ISYM, &RefineAtStart); 
-    ret += sscanf(line, "ShearingBoxThermalMagneticRatio= %"FSYM, &ThermalMagneticRatio);
-    ret += sscanf(line, "ShearingBoxFluctuationAmplitudeFraction = %"FSYM, &FluctuationAmplitudeFraction);
-    ret += sscanf(line, "ShearingBoxGeometry = %"FSYM, &ShearingGeometry);  
-    ret += sscanf(line, "ShearingBoxInitialMagneticFieldConfiguration = %"ISYM, &InitialMagneticFieldConfiguration);  
- 
-  } 
  
 
 

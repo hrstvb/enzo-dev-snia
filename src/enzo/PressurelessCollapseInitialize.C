@@ -15,6 +15,9 @@
 // This routine intializes a new simulation based on the parameter file.
 //
  
+#include "ParameterControl/ParameterControl.h"
+extern Configuration Param; 
+
 #include <string.h>
 #include <stdio.h>
 #include "ErrorExceptions.h"
@@ -57,32 +60,31 @@ int PressurelessCollapseInitialize(FILE *fptr, FILE *Outfptr,
     fprintf(stderr, "PressurelessCollapse: PressureFree is not ON!\n");
  
   /* set default parameters */
+
+  const char config_pressureless_collapse_defaults[] = 
+  "### PRESSURELESS COLLAPSE DEFAULTS ###\n"
+  "\n"
+  "Problem: {\n"
+  "    PressurelessCollapse: {\n"
+  "        Direction          = 0;\n"    // along the x-axis
+  "        InitialDensity     = 1;\n"
+  "        NumberOfCells      = INT_UNDEFINED;\n"
+  "    };\n"
+  "};\n";
  
-  int   PressurelessCollapseDirection          = 0;    // along the x-axis
-  float PressurelessCollapseInitialDensity     = 1;
-  int   PressurelessCollapseNumberOfCells      = INT_UNDEFINED;
+  int   PressurelessCollapseDirection;    // along the x-axis
+  float PressurelessCollapseInitialDensity;
+  int   PressurelessCollapseNumberOfCells;
  
   /* read input from file */
  
-  while (fgets(line, MAX_LINE_LENGTH, fptr) != NULL) {
+  Param.Update(config_pressureless_collapse_defaults);
+
+  /* read parameters */
  
-    ret = 0;
- 
-    /* read parameters */
- 
-    ret += sscanf(line, "PressurelessCollapseDirection = %"ISYM,
-		  &PressurelessCollapseDirection);
-    ret += sscanf(line, "PressurelessCollapseInitialDensity = %"FSYM,
-		  &PressurelessCollapseInitialDensity);
-    ret += sscanf(line, "PressurelessCollapseNumberOfCells = %"ISYM,
-		  &PressurelessCollapseNumberOfCells);
- 
-    /* if the line is suspicious, issue a warning */
- 
-    if (ret == 0 && strstr(line, "=") && strstr(line, "PressurelessCollapse"))
-      fprintf(stderr, "warning: the following parameter line was not interpreted:\n%s\n", line);
- 
-  }
+  Param.GetScalar(PressurelessCollapseDirection, "Problem.PressurelessCollapse.Direction");
+  Param.GetScalar(PressurelessCollapseInitialDensity, "Problem.PressurelessCollapse.InitialDensity");
+  Param.GetScalar(PressurelessCollapseNumberOfCells, "Problem.PressurelessCollapse.NumberOfCells");
  
   /* set up grid */
  

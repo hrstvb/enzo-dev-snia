@@ -37,10 +37,10 @@ const char config_gfld_problem_defaults[] =
 "\n"
 "Problem: {\n"
 "    gFLD: {\n"
-"         BoundaryX0FaceType = ;\n"
-"         BoundaryX1FaceType = ;\n"
-"         BoundaryX2FaceType = ;\n"
-"         IonizationParms ='\n"
+"         BoundaryX0FaceType = [0,0];\n"
+"         BoundaryX1FaceType = [0,0] ;\n"
+"         BoundaryX2FaceType = [0,0];\n"
+"         IonizationParms = 0;\n"
 "         RadHydro: {\n"
 "              approx_jac = 0;\n"
 "              initial_guess = 0;\n"
@@ -59,24 +59,24 @@ const char config_gfld_problem_defaults[] =
 "              Nchem = 1;\n"
 "              HFraction = 1.0;\n"
 "              Model     = 1;\n"
-"              maxdt     = "
-"              mindt     = "
-"              initdt    = "
+"              maxdt     = 0;\n"
+"              mindt     = 0;\n"
+"              initdt    = 0;\n"
 "              dtnorm    = 2.0;\n"
 "         };\n"
 "         PlanckOpacity: {\n"
-"              C0   = 1.0\n"
-"              C1   = 1.0\n"
-"              C2   = 0.0\n"
-"              C3   = 1.0\n"
-"              C4   = 0.0\n"
+"              C0   = 1.0;\n"
+"              C1   = 1.0;\n"
+"              C2   = 0.0;\n"
+"              C3   = 1.0;\n"
+"              C4   = 0.0;\n"
 "         };\n"
 "         EnergyOpacity: {\n"
-"              C0   = 1.0\n"
-"              C1   = 1.0\n"
-"              C2   = 0.0\n"
-"              C3   = 1.0\n"
-"              C4   = 0.0\n"
+"              C0   = 1.0;\n"
+"              C1   = 1.0;\n"
+"              C2   = 0.0;\n"
+"              C3   = 1.0;\n"
+"              C4   = 0.0;\n"
 "         };\n"
 "    };\n"
 "};\n";
@@ -230,59 +230,54 @@ int gFLDProblem::Initialize(HierarchyEntry &TopGrid, TopGridData &MetaData)
   char *dummy = new char[MAX_LINE_LENGTH];
   dummy[0] = 0;
   int numMarshakParms = 1;
+  
 
-  // check whether input file is non-null
-  if (MetaData.RadHydroParameterFname != NULL) {
-    if ((fptr = fopen(MetaData.RadHydroParameterFname, "r")) == NULL)
-      fprintf(stderr,"Error opening RadHydro parameter file %s, using defaults\n",
-	      MetaData.RadHydroParameterFname);
-    else {
+   // Update the parameter config to include the local defaults. Note
+  // that this does not overwrite values previously specified.
+  Param.Update(config_gfld_problem_defaults);
 
-      // read until out of lines
-      while (fgets(line, MAX_LINE_LENGTH, fptr) != NULL) {
-	ret = 0;
-	Param.GetScalar(RadHydroESpectrum,"Problem.gFLD.RadHydro.ESpectrum");
-	Param.GetScalar(RadHydroNchem,"Problem.gFLD.RadHydro.Nchem");
-	Param.GetScalar(RadHydroHFraction,"Problem.gFLD.RadHydro.HFrac");
-	Param.GetScalar(RadHydroModel,"Problem.gFLD.RadHydro.Model");
-	Param.GetScalar(RadHydromaxdt,"Problem.gFLD.RadHydro.maxdt");
-	Param.GetScalar(RadHydromindt,"Problem.gFLD.RadHydro.mindt");
-	Param.GetScalar(RadHydroinitdt,"Problem.gFLD.RadHydro.initdt");
-	Param.GetScalar(RadHydrodtnorm,"Problem.gFLD.RadHydro.dtnorm");
-     Param.GetArray(dtfac,"Problem.gFLD.dtfac");
-     Param.GetScalar(RadiationScalingErScale,"Problem.gFLD.ErScale");
-     Param.GetScalar(RadiationScalingecScale,"Problem.gFLD.ecScale");
-     Param.GetScalar(ChemistryScalingNeScale,"Problem.gFLD.NiScale");
-	Param.GetScalar(RadHydrotheta,"Problem.gFLD.RadHydro.theta");
-     Param.GetScalar(RadHydroLimType,"Problem.gFLD.RadHydro.LimType");
-	Param.GetArray(BdryType[0],"Problem.gFLD.BoundaryX0FaceType");
-     Param.GetArray(BdryType[1],"Problem.gFLD.BoundaryX1FaceType");
-     Param.GetArray(BdryType[2],"Problem.gFLD.BoundaryX2FaceType");
-     Param.GetScalar(RadHydroapprox_jac,"Problem.gFLD.RadHydro.approx_jac");
-     Param.GetScalar(RadHydroinitial_guess,"Problem.gFLD.RadHydro.initial_guess");
-     Param.GetScalar(RadHydroAnalyticChem,"Problem.gFLD.RadHydro.AnalyticChem");
-     Param.GetScalar(RadHydronewt_linesearch,"Problem.gFLD.RadHydro.newt_linesearch");
-     Param.GetScalar(RadHydronewt_maxit,"Problem.gFLD.RadHydro.newt_maxit");
-     Param.GetScalar(RadHydronewt_norm,"Problem.gFLD.RadHydro.newt_norm");
-     Param.GetScalar(RadHydronewt_INconst,"Problem.gFLD.RadHydro.newt_INconst");
-     Param.GetScalar(RadHydronewt_tol,"Problem.gFLD.RadHydro.newt_tol");
-     Param.GetScalar(RadHydronewt_MinLinesearch,"Problem.gFLD.RadHydro.newt_MinLinesearch");
-     Param.GetScalar(RadHydrosol_maxit,"Problem.gFLD.RadHydro.sol_maxit");
-     Param.GetScalar(RadHydrosol_rlxtype,"Problem.gFLD.RadHydro.sol_rlxtype");
-     Param.GetScalar(RadHydrosol_npre,"Problem.gFLD.RadHydro.sol_npre");
-     Param.GetScalar(RadHydrosol_npost,"Problem.gFLD.RadHydro.sol_npost");
-     Param.GetScalar(PlanckOpacityC0,"Problem.gFLD.PlanckOpacity.C0");
-     Param.GetScalar(PlanckOpacityC1,"Problem.gFLD.PlanckOpacity.C1");
-     Param.GetScalar(PlanckOpacityC2,"Problem.gFLD.PlanckOpacity.C2");
-     Param.GetScalar(PlanckOpacityC3,"Problem.gFLD.PlanckOpacity.C3");
-     Param.GetScalar(PlanckOpacityC4,"Problem.gFLD.PlanckOpacity.C4");
-     Param.GetScalar(EnergyOpacityC0,"Problem.gFLD.EnergyOpacity.C0");
-     Param.GetScalar(EnergyOpacityC1,"Problem.gFLD.EnergyOpacity.C1");
-     Param.GetScalar(EnergyOpacityC2,"Problem.gFLD.EnergyOpacity.C2");
-	Param.GetScalar(EnergyOpacityC3,"Problem.gFLD.EnergyOpacity.C3");
-     Param.GetScalar(EnergyOpacityC4,"Problem.gFLD.EnergyOpacity.C4");
+  Param.GetScalar(RadHydroESpectrum,"Problem.gFLD.RadHydro.ESpectrum");
+  Param.GetScalar(RadHydroNchem,"Problem.gFLD.RadHydro.Nchem");
+  Param.GetScalar(RadHydroHFraction,"Problem.gFLD.RadHydro.HFrac");
+  Param.GetScalar(RadHydroModel,"Problem.gFLD.RadHydro.Model");
+  Param.GetScalar(RadHydromaxdt,"Problem.gFLD.RadHydro.maxdt");
+  Param.GetScalar(RadHydromindt,"Problem.gFLD.RadHydro.mindt");
+  Param.GetScalar(RadHydroinitdt,"Problem.gFLD.RadHydro.initdt");
+  Param.GetScalar(RadHydrodtnorm,"Problem.gFLD.RadHydro.dtnorm");
+  Param.GetArray(dtfac,"Problem.gFLD.dtfac");
+  Param.GetScalar(RadiationScalingErScale,"Problem.gFLD.ErScale");
+  Param.GetScalar(RadiationScalingecScale,"Problem.gFLD.ecScale");
+  Param.GetScalar(ChemistryScalingNeScale,"Problem.gFLD.NiScale");
+  Param.GetScalar(RadHydrotheta,"Problem.gFLD.RadHydro.theta");
+  Param.GetScalar(RadHydroLimType,"Problem.gFLD.RadHydro.LimType");
+  Param.GetArray(BdryType[0],"Problem.gFLD.BoundaryX0FaceType");
+  Param.GetArray(BdryType[1],"Problem.gFLD.BoundaryX1FaceType");
+  Param.GetArray(BdryType[2],"Problem.gFLD.BoundaryX2FaceType");
+  Param.GetScalar(RadHydroapprox_jac,"Problem.gFLD.RadHydro.approx_jac");
+  Param.GetScalar(RadHydroinitial_guess,"Problem.gFLD.RadHydro.initial_guess");
+  Param.GetScalar(RadHydroAnalyticChem,"Problem.gFLD.RadHydro.AnalyticChem");
+  Param.GetScalar(RadHydronewt_linesearch,"Problem.gFLD.RadHydro.newt_linesearch");
+  Param.GetScalar(RadHydronewt_maxit,"Problem.gFLD.RadHydro.newt_maxit");
+  Param.GetScalar(RadHydronewt_norm,"Problem.gFLD.RadHydro.newt_norm");
+  Param.GetScalar(RadHydronewt_INconst,"Problem.gFLD.RadHydro.newt_INconst");
+  Param.GetScalar(RadHydronewt_tol,"Problem.gFLD.RadHydro.newt_tol");
+  Param.GetScalar(RadHydronewt_MinLinesearch,"Problem.gFLD.RadHydro.newt_MinLinesearch");
+  Param.GetScalar(RadHydrosol_maxit,"Problem.gFLD.RadHydro.sol_maxit");
+  Param.GetScalar(RadHydrosol_rlxtype,"Problem.gFLD.RadHydro.sol_rlxtype");
+  Param.GetScalar(RadHydrosol_npre,"Problem.gFLD.RadHydro.sol_npre");
+  Param.GetScalar(RadHydrosol_npost,"Problem.gFLD.RadHydro.sol_npost");
+  Param.GetScalar(PlanckOpacityC0,"Problem.gFLD.PlanckOpacity.C0");
+  Param.GetScalar(PlanckOpacityC1,"Problem.gFLD.PlanckOpacity.C1");
+  Param.GetScalar(PlanckOpacityC2,"Problem.gFLD.PlanckOpacity.C2");
+  Param.GetScalar(PlanckOpacityC3,"Problem.gFLD.PlanckOpacity.C3");
+  Param.GetScalar(PlanckOpacityC4,"Problem.gFLD.PlanckOpacity.C4");
+  Param.GetScalar(EnergyOpacityC0,"Problem.gFLD.EnergyOpacity.C0");
+  Param.GetScalar(EnergyOpacityC1,"Problem.gFLD.EnergyOpacity.C1");
+  Param.GetScalar(EnergyOpacityC2,"Problem.gFLD.EnergyOpacity.C2");
+  Param.GetScalar(EnergyOpacityC3,"Problem.gFLD.EnergyOpacity.C3");
+  Param.GetScalar(EnergyOpacityC4,"Problem.gFLD.EnergyOpacity.C4");
 	
-      }  // end loop over file lines
+
 
       // if doing a Marshak-type problem (20 <= Model < 30), input 
       // additional Marshak parameters from the input file
