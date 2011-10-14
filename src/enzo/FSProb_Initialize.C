@@ -27,6 +27,9 @@
 /           called prior to knowledge of the local grid sizes).
 /
 ************************************************************************/
+#include "ParameterControl/ParameterControl.h"
+extern Configuration Param;
+
 #ifdef TRANSFER
 #include "FSProb.h"
 #include "CosmologyParameters.h"
@@ -40,6 +43,7 @@ EXTERN char outfilename[];
 int FSMultiSourceInitialize(FILE *fptr, FILE *Outfptr,
 			    HierarchyEntry &TopGrid,
 			    TopGridData &MetaData, int local);
+
 
 
 
@@ -124,48 +128,41 @@ int FSProb::Initialize(HierarchyEntry &TopGrid, TopGridData &MetaData)
   char *dummy = new char[MAX_LINE_LENGTH];
   dummy[0] = 0;
 
-  // check whether input file is non-null
-  if (MetaData.RadHydroParameterFname != NULL) {
-    if ((fptr = fopen(MetaData.RadHydroParameterFname, "r")) == NULL)
-      fprintf(stderr,"Error opening RadHydro parameter file %s, using defaults\n",
-	      MetaData.RadHydroParameterFname);
-    else {
 
-      // read until out of lines
-      while (fgets(line, MAX_LINE_LENGTH, fptr) != NULL) {
-	ret = 0;
-	ret += sscanf(line, "FSRadiationScaling = %"FSYM, &EScale);
-	ret += sscanf(line, "FSRadiationTheta = %"FSYM, &theta);
-	ret += sscanf(line, "FSRadiationOpacity = %"FSYM, &kappa0);
-	ret += sscanf(line, "FSRadiationH2OpacityOn = %"ISYM, &kappa_h2on);
-	ret += sscanf(line, "FSRadiationNGammaDot = %lf", &NGammaDot);
-	ret += sscanf(line, "FSRadiationEtaRadius = %"FSYM, &EtaRadius);
-	ret += sscanf(line, "FSRadiationEtaCenter = %"FSYM" %"FSYM" %"FSYM, 
-		      &(EtaCenter[0]), &(EtaCenter[1]), &(EtaCenter[2]));
-	ret += sscanf(line, "FSRadiationLimiterType = %"ISYM, &LimType);
-	ret += sscanf(line, "FSRadiationBoundaryX0Faces = %"ISYM" %"ISYM, 
-		      BdryType[0], BdryType[0]+1);
-	if (rank > 1) {
-	  ret += sscanf(line, "FSRadiationBoundaryX1Faces = %"ISYM" %"ISYM,
-			BdryType[1], BdryType[1]+1);
-	  if (rank > 2) {
-	    ret += sscanf(line, "FSRadiationBoundaryX2Faces = %"ISYM" %"ISYM,
-			  BdryType[2], BdryType[2]+1);
-	  }
-	}
-	ret += sscanf(line, "FSRadiationMaxDt = %"FSYM, &maxdt);
-	ret += sscanf(line, "FSRadiationInitialGuess = %"ISYM, &initial_guess);
-	ret += sscanf(line, "FSRadiationTolerance = %g", &sol_tolerance);
-	ret += sscanf(line, "FSRadiationMaxMGIters = %i", &sol_maxit);
-	ret += sscanf(line, "FSRadiationMGRelaxType = %i", &sol_rlxtype);
-	ret += sscanf(line, "FSRadiationMGPreRelax = %i", &sol_npre);
-	ret += sscanf(line, "FSRadiationMGPostRelax = %i", &sol_npost);
-	
-      }  // end loop over file lines
+  Param.GetScalar(EScale,"Problem.FSRadiation.Scaling");
+  Param.GetScalar(theta,"Problem.FSRadiation.Theta");
+  Param.GetScalar(kappa0,"Problem.FSRadiation.Opacity");
+  Param.GetScalar(kappa_h2on,"Problem.FSRadiation.H2OpacityOn");
+  Param.GetScalar(NGammaDot,"Problem.FSRadiation.NGammaDot");
+  Param.GetScalar(EtaRadius,"Problem.FSRadiation.EtaRadius");
 
-    }  // end successful file open
-  }  // end if file name exists
- 
+
+  ret += sscanf(line, "FSRadiationEtaCenter = %"FSYM" %"FSYM" %"FSYM, 
+		&(EtaCenter[0]), &(EtaCenter[1]), &(EtaCenter[2]));
+  
+  ret += sscanf(line, "FSRadiationLimiterType = %"ISYM, &LimType);
+  
+  ret += sscanf(line, "FSRadiationBoundaryX0Faces = %"ISYM" %"ISYM, 
+		BdryType[0], BdryType[0]+1);
+  if (rank > 1) {
+    ret += sscanf(line, "FSRadiationBoundaryX1Faces = %"ISYM" %"ISYM,
+		  BdryType[1], BdryType[1]+1);
+    if (rank > 2) {
+      ret += sscanf(line, "FSRadiationBoundaryX2Faces = %"ISYM" %"ISYM,
+		    BdryType[2], BdryType[2]+1);
+    }
+  }
+  
+  Param.GetScalar(maxdt,"Problem.FSRadiation.MaxDt");
+  Param.GetScalar(initial_guess,"Problem.FSRadiation.InitialGuess");
+  Param.GetScalar(sol_tolerance,"Problem.FSRadiation.Tolerance");
+  Param.GetScalar(sol_maxit,"Problem.FSRadiation.MaxMGIters");
+  Param.GetScalar(sol_rlxtype,"Problem.FSRadiation.MGRelaxTypei");
+  Param.GetScalar(sol_npre,"Problem.FSRadiation.MGPreRelax");
+  Param.GetScalar(sol_npost,"Problem.FSRadiation.MGPostRelax");
+  
+  // end if file name exists
+  
   // clean up
   delete[] dummy;
   rewind(fptr);
