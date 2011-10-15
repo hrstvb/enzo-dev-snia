@@ -65,8 +65,8 @@ int grid::MoveAllParticles(int NumberOfGrids, grid* FromGrid[])
 #ifndef MEMORY_POOL
   // classic: use system malloc to get memory
   float *Mass = new float[TotalNumberOfParticles];
-  Number = new PINT[TotalNumberOfParticles];
-  Type = new int[TotalNumberOfParticles];
+  PINT *Number = new PINT[TotalNumberOfParticles];
+  int *Type = new int[TotalNumberOfParticles];
   for (int dim = 0; dim < GridRank; dim++) {
     Position[dim] = new FLOAT[TotalNumberOfParticles];
     Velocity[dim] = new float[TotalNumberOfParticles];
