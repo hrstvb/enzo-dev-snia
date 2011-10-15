@@ -338,14 +338,17 @@ int grid::InterpolateFieldValues(grid *ParentGrid)
 
       if (FieldType[field] != Density && FieldType[field] != DebugField) {
 	//      if (FieldType[field] != Density) {
-	FORTRAN_NAME(interpolate)(&GridRank,
-				  ParentTemp[field], ParentTempDim,
-				  ParentTempStartIndex, ParentTempEndIndex,
-                                     Refinement,
-				  TemporaryField, TempDim, ZeroVector, Work,
-				  &InterpolationMethod,
-				  &SecondOrderBFlag[field], &interp_error);
-	if (interp_error) {
+	
+	  FORTRAN_NAME(interpolate)(&GridRank,
+				    ParentTemp[field], ParentTempDim,
+				    ParentTempStartIndex, ParentTempEndIndex,
+				    Refinement,
+				    TemporaryField, TempDim, ZeroVector, Work,
+				    &InterpolationMethod,
+				    &SecondOrderBFlag[field], &interp_error);
+	  // With WritePotential early outputs might get a wrong value
+	  // do not break on this
+	  if (interp_error && (FieldType[field] != GravPotential)) {
 	  printf("P%d: Error interpolating field %d (%s).\n"
 		     "ParentGrid ID = %d\n"
 		     "\t LeftEdge  = %"PSYM" %"PSYM" %"PSYM"\n"
@@ -392,7 +395,7 @@ int grid::InterpolateFieldValues(grid *ParentGrid)
       if (FieldType[field] == Density)
 	FieldPointer = TemporaryDensityField;
       else 
-	  FieldPointer = TemporaryField;
+	FieldPointer = TemporaryField;
  
       /* Copy needed portion of temp field to current grid. */
  

@@ -12,11 +12,11 @@ ProblemType                =  201
 MHD2DProblemType = 9
 VelAnyl = 1
 TopGridRank                = 2
-TopGridDimensions          = 1024 1024
+TopGridDimensions          = 512 512
 SelfGravity                = 0
 TopGridGravityBoundary     = 0
-LeftFaceBoundaryCondition  = 3 3 3 
-RightFaceBoundaryCondition = 3 3 3
+LeftFaceBoundaryCondition  = 3 3  
+RightFaceBoundaryCondition = 3 3 
 #
 #  set I/O and stop/start parameters
 #
