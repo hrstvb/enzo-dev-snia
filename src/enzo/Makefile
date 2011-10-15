@@ -41,6 +41,7 @@ SHELL    = /bin/bash
 TOP_DIR  = ../..
 EXE      = enzo
 OUTPUT   = out.compile
+FOUTPUT  = fout.compile
 
 ENZO_DIR = .
 MODULES  = 
@@ -211,9 +212,9 @@ verbose: $(EXE).exe
              exit 1; \
           fi ; \
 	else \
-	  $(FC) -c -o $@ $(FFLAGS)  $(DEFINES) $*.F >> $(OUTPUT) 2>&1 ; \
+	  $(FC) -c -o $@ $(FFLAGS)  $(DEFINES) $*.F >> $(FOUTPUT) 2>&1 ; \
 	  if [ ! -e $@ ]; then \
-	     echo "See $(OUTPUT) for error messages"; \
+	     echo "See $(FOUTPUT) for error messages"; \
 	     exit 1; \
 	  fi ; \
 	fi)
@@ -235,9 +236,9 @@ verbose: $(EXE).exe
              exit 1; \
 	  fi ; \
 	else \
-	  $(F90) -c -o $@ $(F90FLAGS) $(DEFINES) $*.F90 >> $(OUTPUT) 2>&1 ; \
+	  $(F90) -c -o $@ $(F90FLAGS) $(DEFINES) $*.F90 >> $(FOUTPUT) 2>&1 ; \
 	  if [ ! -e $@ ]; then \
-	     echo "See $(OUTPUT) for error messages"; \
+	     echo "See $(FOUTPUT) for error messages"; \
 	     exit 1; \
 	  fi ; \
 	fi)

@@ -97,7 +97,7 @@
 #ifdef NEW_PROBLEM_TYPES
 #include "EventHooks.h"
 #else
-void RunEventHooks(char *, HierarchyEntry *Grid[], TopGridData &MetaData) {}
+void RunEventHooks(const char *, HierarchyEntry *Grid[], TopGridData &MetaData) {}
 #endif
  
 /* function prototypes */

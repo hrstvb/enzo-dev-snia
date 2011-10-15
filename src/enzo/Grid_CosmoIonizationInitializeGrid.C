@@ -113,7 +113,6 @@ int grid::CosmoIonizationInitializeGrid(int NumChemicals,
     float TEConstant = (IEConstant + 0.5*(VxConstant*VxConstant + 
 					  VyConstant*VyConstant + 
 					  VzConstant*VzConstant));
-    float mp = 1.67262171e-24;      // proton mass [g]
     float rhoConstant = OmegaBaryonNow/OmegaMatterNow*DensityUnits;
     float HIIConstant = rhoConstant*InitialFractionHII;
     float HIConstant = rhoConstant - HIIConstant;

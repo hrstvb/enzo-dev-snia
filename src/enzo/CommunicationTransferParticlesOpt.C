@@ -65,7 +65,6 @@ int CommunicationTransferParticles(grid *GridPointer[], int NumberOfGrids,
   int *StartIndex[MAX_DIMENSION];
   int Layout[MAX_DIMENSION], LayoutTemp[MAX_DIMENSION];
   int Rank, grid_num, CenterIndex;
-  int *pbin;
   int GridPosition[MAX_DIMENSION], Dims[MAX_DIMENSION];
   FLOAT Left[MAX_DIMENSION], Right[MAX_DIMENSION];
 
@@ -175,7 +174,7 @@ int CommunicationTransferParticles(grid *GridPointer[], int NumberOfGrids,
 
   SharedList = SendList;
   NumberOfReceives = TotalNumberToMove;
-  int particle_data_size = sizeof(particle_data);
+  //int particle_data_size = sizeof(particle_data);
   //qsort(SharedList, TotalNumberToMove, particle_data_size, compare_grid);
   std::sort(SharedList, SharedList+TotalNumberToMove, cmp_grid());
 

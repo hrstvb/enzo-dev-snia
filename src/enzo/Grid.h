@@ -537,7 +537,7 @@ public:
 
 /* Debugging support. */
 
-   int DebugCheck(char *message = "Debug");
+   int DebugCheck(const char *message = "Debug");
 
 #ifdef EMISSIVITY
    /* define function prototype as a grid member function */

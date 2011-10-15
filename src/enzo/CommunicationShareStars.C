@@ -46,7 +46,6 @@ int CommunicationShareStars(int *NumberToMove, star_data* &SendList,
   // destination processor
 
   int TotalNumberToMove = 0;
-  int star_data_size = sizeof(star_data);
   for (proc = 0; proc < NumberOfProcessors; proc++)
     TotalNumberToMove += NumberToMove[proc];
   //qsort(SendList, TotalNumberToMove, star_data_size, compare_star_proc);

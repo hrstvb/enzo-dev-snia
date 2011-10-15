@@ -54,7 +54,7 @@ int grid::CosmologyInitializeParticles(
 		   int *Offset, int level)
 {
 
-  int dim, i, j, k, index, index1, index2;
+  int dim, i, j, k, index;
   bool OneComponentPerFile;
 
   float DensityUnits=1, LengthUnits=1, TemperatureUnits=1, TimeUnits=1,

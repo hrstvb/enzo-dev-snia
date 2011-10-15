@@ -41,8 +41,7 @@ int ConductionTestInitialize(FILE *fptr, FILE *Outfptr, HierarchyEntry &TopGrid,
   }
 
   char line[MAX_LINE_LENGTH];
-  float LeftEdge[MAX_DIMENSION], RightEdge[MAX_DIMENSION];
-  int i, j, dim, ret;
+  int i, j, ret;
 
   float ConductionTestDensity = 1.0;
   float ConductionTestTemperature = 1.0;
@@ -148,24 +147,24 @@ int ConductionTestInitialize(FILE *fptr, FILE *Outfptr, HierarchyEntry &TopGrid,
 
   // set up field names and units
   i = 0;
-  DataLabel[i++] = "Density";
-  DataLabel[i++] = "TotalEnergy";
-  if (DualEnergyFormalism) {DataLabel[i++] = "GasEnergy";}
-  if (MetaData.TopGridRank > 0) {DataLabel[i++] = "x-velocity";}
-  if (MetaData.TopGridRank > 1 || HydroMethod > 2) {DataLabel[i++] = "y-velocity";}
-  if (MetaData.TopGridRank > 2 || HydroMethod > 2) {DataLabel[i++] = "z-velocity";}
+  DataLabel[i++] = (char*) "Density";
+  DataLabel[i++] = (char*) "TotalEnergy";
+  if (DualEnergyFormalism) {DataLabel[i++] = (char*) "GasEnergy";}
+  if (MetaData.TopGridRank > 0) {DataLabel[i++] = (char*) "x-velocity";}
+  if (MetaData.TopGridRank > 1 || HydroMethod > 2) {DataLabel[i++] = (char*) "y-velocity";}
+  if (MetaData.TopGridRank > 2 || HydroMethod > 2) {DataLabel[i++] = (char*) "z-velocity";}
   if (HydroMethod == MHD_RK) {
-    DataLabel[i++] = "Bx";
-    DataLabel[i++] = "By";
-    DataLabel[i++] = "Bz";
-    DataLabel[i++] = "Phi";
+    DataLabel[i++] = (char*) "Bx";
+    DataLabel[i++] = (char*) "By";
+    DataLabel[i++] = (char*) "Bz";
+    DataLabel[i++] = (char*) "Phi";
     if(UseDivergenceCleaning){
-      DataLabel[i++] = "Phip";
+      DataLabel[i++] = (char*) "Phip";
     }
   }
 
   if (TestProblemData.UseMetallicityField)
-    DataLabel[i++] = "Metal_Density";
+    DataLabel[i++] = (char*) "Metal_Density";
 
   for (j=0; j < i; j++) 
     DataUnits[j] = NULL;

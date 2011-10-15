@@ -49,7 +49,7 @@ int grid::CheckForSharedFace(grid *OtherGrid,
  
   /* Check all 26 neighbours. */
  
-  int FullPeriod = TRUE;
+  //int FullPeriod = TRUE;
  
   /* Always overlap with self. */
  
@@ -204,7 +204,7 @@ int grid::CheckForSharedFaceHelper(grid *OtherGrid,
   /* declarations */
  
  
-  int dim, dim2, GotSide=0;
+  int dim, dim2;
   FLOAT CellEpsilon[MAX_DIMENSION];
  
   FLOAT Left[MAX_DIMENSION], Right[MAX_DIMENSION];

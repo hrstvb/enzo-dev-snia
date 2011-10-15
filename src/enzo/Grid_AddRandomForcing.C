@@ -51,7 +51,6 @@ int grid::AddRandomForcing(float * norm, float dtTopGrid)
   if (RandomForcingField[0] == NULL)
     ERROR_MESSAGE;
  
-  int corneri=  GridStartIndex[0] + GridDimension[0]*(GridStartIndex[1]+GridStartIndex[2]*GridDimension[1]);
   if (RandomForcingField[0][0] == 0.0)
     ENZO_FAIL("");
   fprintf(stderr, "TopGridTimeStep: %g\n", dtTopGrid);

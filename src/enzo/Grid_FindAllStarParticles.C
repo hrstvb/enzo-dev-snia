@@ -39,7 +39,7 @@ int grid::FindAllStarParticles(int level)
   if (NumberOfParticles == 0)
     return SUCCESS;
 
-  int i, StarType;
+  int i;
   Star *NewStar;
   
   /* Read only active star particles.  Unborn stars will be read later

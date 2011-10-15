@@ -79,44 +79,44 @@ struct field_map{
 // data types. It may even be better than
 // Grid.h
 const field_map field_map_list[] = {
-  {Density, "Density", 0},
-  {TotalEnergy,"TotalEnergy", 0},
-  {InternalEnergy,"InternalEnergy", 0},
-  {Pressure,"Pressure", 0},
-  {Velocity1,"Velocity1", 0},
-  {Velocity2,"Velocity2", 0},
-  {Velocity3,"Velocity3", 0},
-  {ElectronDensity,"ElectronDensity", 0},
-  {HIDensity,"HIDensity", 0},
-  {HIIDensity,"HIIDensity", 0},
-  {HeIDensity,"HeIDensity", 0},
-  {HeIIDensity,"HeIIDensity", 0},
-  {HeIIIDensity,"HeIIIDensity", 0},
-  {HMDensity,"HMDensity", 0},
-  {H2IDensity,"H2IDensity", 0},
-  {H2IIDensity,"H2IIDensity", 0},
-  {DIDensity,"DIDensity", 0},
-  {DIIDensity,"DIIDensity", 0},
-  {HDIDensity,"HDIDensity", 0},
-  {Metallicity,"Metallicity", 0},
-  {ExtraType0,"ExtraType0", 0},
-  {ExtraType1,"ExtraType1", 0},
-  {GravPotential,"GravPotential", 0},
-  {Acceleration0,"Acceleration0", 0},
-  {Acceleration1,"Acceleration1", 0},
-  {Acceleration2,"Acceleration2", 0},
-  {gParticlePosition,"ParticlePosition", 1},
-  {gParticleVelocity,"ParticleVelocity", 0},
-  {gParticleMass,"ParticleMass", 0},
-  {gParticleAcceleration,"ParticleAcceleration", 0},
-  {gParticleNumber,"ParticleNumber", 2},
-  {gParticleType,"ParticleType", 2},
-  {gParticleAttribute,"ParticleAttribute", 0},
-  {gPotentialField,"PotentialField", 0},
-  {gAccelerationField,"AccelerationField", 0},
-  {gGravitatingMassField,"GravitatingMassField", 0},
-  {gFlaggingField,"FlaggingField", 3},
-  {gVelocity, "Velocity", 0}};
+  {Density, (char*) "Density", 0},
+  {TotalEnergy, (char*)"TotalEnergy", 0},
+  {InternalEnergy, (char*)"InternalEnergy", 0},
+  {Pressure, (char*)"Pressure", 0},
+  {Velocity1, (char*)"Velocity1", 0},
+  {Velocity2, (char*)"Velocity2", 0},
+  {Velocity3, (char*)"Velocity3", 0},
+  {ElectronDensity, (char*)"ElectronDensity", 0},
+  {HIDensity, (char*)"HIDensity", 0},
+  {HIIDensity, (char*)"HIIDensity", 0},
+  {HeIDensity, (char*)"HeIDensity", 0},
+  {HeIIDensity, (char*)"HeIIDensity", 0},
+  {HeIIIDensity, (char*)"HeIIIDensity", 0},
+  {HMDensity, (char*)"HMDensity", 0},
+  {H2IDensity, (char*)"H2IDensity", 0},
+  {H2IIDensity, (char*)"H2IIDensity", 0},
+  {DIDensity, (char*)"DIDensity", 0},
+  {DIIDensity, (char*)"DIIDensity", 0},
+  {HDIDensity, (char*)"HDIDensity", 0},
+  {Metallicity, (char*)"Metallicity", 0},
+  {ExtraType0, (char*)"ExtraType0", 0},
+  {ExtraType1, (char*)"ExtraType1", 0},
+  {GravPotential, (char*)"GravPotential", 0},
+  {Acceleration0, (char*)"Acceleration0", 0},
+  {Acceleration1, (char*)"Acceleration1", 0},
+  {Acceleration2, (char*)"Acceleration2", 0},
+  {gParticlePosition, (char*)"ParticlePosition", 1},
+  {gParticleVelocity, (char*)"ParticleVelocity", 0},
+  {gParticleMass, (char*)"ParticleMass", 0},
+  {gParticleAcceleration, (char*)"ParticleAcceleration", 0},
+  {gParticleNumber, (char*)"ParticleNumber", 2},
+  {gParticleType, (char*)"ParticleType", 2},
+  {gParticleAttribute, (char*)"ParticleAttribute", 0},
+  {gPotentialField, (char*)"PotentialField", 0},
+  {gAccelerationField, (char*)"AccelerationField", 0},
+  {gGravitatingMassField, (char*)"GravitatingMassField", 0},
+  {gFlaggingField, (char*)"FlaggingField", 3},
+  {gVelocity, (char*) "Velocity", 0}};
 
 field_type get_field_id(char *field_name){
   
@@ -344,7 +344,6 @@ EnzoArray<FLOAT> *grid::CreateFieldArrayFLOAT(field_type field){
   int i, dims[MAX_DIMENSION], sindex[MAX_DIMENSION], eindex[MAX_DIMENSION];
   EnzoArray<FLOAT> *array = NULL;
   //  float cell_width[] = {0, 0, 0};
-  field_type field_index;
   
   //  for(i = 0; i < this->GridRank; i++){
   //    cell_width[i] = this->CellWidth[i][0];
@@ -376,7 +375,6 @@ EnzoArray<int> *grid::CreateFieldArrayInt(field_type field){
   int i, dims[MAX_DIMENSION], sindex[MAX_DIMENSION], eindex[MAX_DIMENSION];
   EnzoArray<int> *array = NULL;
   FLOAT cell_width[] = {0, 0, 0};
-  field_type field_index;
   
   for(i = 0; i < this->GridRank; i++){
     cell_width[i] = this->CellWidth[i][0];
@@ -418,7 +416,6 @@ EnzoArray<PINT> *grid::CreateFieldArrayPINT(field_type field){
   int i, dims[MAX_DIMENSION], sindex[MAX_DIMENSION], eindex[MAX_DIMENSION];
   EnzoArray<PINT> *array = NULL;
   FLOAT cell_width[] = {0, 0, 0};
-  field_type field_index;
   
   for(i = 0; i < this->GridRank; i++){
     cell_width[i] = this->CellWidth[i][0];
@@ -444,10 +441,9 @@ EnzoArray<PINT> *grid::CreateFieldArrayPINT(field_type field){
 
 EnzoArray<bool> *grid::CreateFieldArrayBool(field_type field){
 
-  int i, dims[MAX_DIMENSION], sindex[MAX_DIMENSION], eindex[MAX_DIMENSION];
+  int i;
   EnzoArray<bool> *array = NULL;
   FLOAT cell_width[] = {0, 0, 0};
-  field_type field_index;
   
   for(i = 0; i < this->GridRank; i++){
     cell_width[i] = this->CellWidth[i][0];

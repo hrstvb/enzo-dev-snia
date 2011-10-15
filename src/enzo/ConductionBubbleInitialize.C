@@ -43,8 +43,7 @@ int ConductionBubbleInitialize(FILE *fptr, FILE *Outfptr, HierarchyEntry &TopGri
   }
 
   char line[MAX_LINE_LENGTH];
-  float LeftEdge[MAX_DIMENSION], RightEdge[MAX_DIMENSION];
-  int i, j, dim, ret;
+  int i, j, ret;
 
   float ConductionBubbleDensity = 1.0;
   float ConductionBubbleTotalEnergy = 1.0;
@@ -140,24 +139,24 @@ int ConductionBubbleInitialize(FILE *fptr, FILE *Outfptr, HierarchyEntry &TopGri
 
   // set up field names and units
   i = 0;
-  DataLabel[i++] = "Density";
-  DataLabel[i++] = "TotalEnergy";
-  if (DualEnergyFormalism) {DataLabel[i++] = "GasEnergy";}
-  if (MetaData.TopGridRank > 0) {DataLabel[i++] = "x-velocity";}
-  if (MetaData.TopGridRank > 1 || HydroMethod > 2) {DataLabel[i++] = "y-velocity";}
-  if (MetaData.TopGridRank > 2 || HydroMethod > 2) {DataLabel[i++] = "z-velocity";}
+  DataLabel[i++] = (char*) "Density";
+  DataLabel[i++] = (char*) "TotalEnergy";
+  if (DualEnergyFormalism) {DataLabel[i++] = (char*) "GasEnergy";}
+  if (MetaData.TopGridRank > 0) {DataLabel[i++] = (char*) "x-velocity";}
+  if (MetaData.TopGridRank > 1 || HydroMethod > 2) {DataLabel[i++] = (char*) "y-velocity";}
+  if (MetaData.TopGridRank > 2 || HydroMethod > 2) {DataLabel[i++] = (char*) "z-velocity";}
   if (HydroMethod == MHD_RK) {
-    DataLabel[i++] = "Bx";
-    DataLabel[i++] = "By";
-    DataLabel[i++] = "Bz";
-    DataLabel[i++] = "Phi";
+    DataLabel[i++] = (char*) "Bx";
+    DataLabel[i++] = (char*) "By";
+    DataLabel[i++] = (char*) "Bz";
+    DataLabel[i++] = (char*) "Phi";
     if(UseDivergenceCleaning){
-      DataLabel[i++] = "Phip";
+      DataLabel[i++] = (char*) "Phip";
     }
   }
 
   if (TestProblemData.UseMetallicityField)
-    DataLabel[i++] = "Metal_Density";
+    DataLabel[i++] = (char*) "Metal_Density";
 
   for (j=0; j < i; j++) 
     DataUnits[j] = NULL;
@@ -171,8 +170,8 @@ int ConductionBubbleInitialize(FILE *fptr, FILE *Outfptr, HierarchyEntry &TopGri
     fprintf(Outfptr, "ConductionBubbleMidpointEntropy = %"FSYM"\n", ConductionBubbleMidpointEntropy);
     fprintf(Outfptr, "ConductionBubbleEntropyGradient = %"FSYM"\n", ConductionBubbleEntropyGradient);
     fprintf(Outfptr, "ConductionBubbleMidpointTemperature = %"FSYM"\n", ConductionBubbleMidpointTemperature);
-    fprintf(Outfptr, "ConductionBubbleCenter = %"PSYM" %"PSYM" %"PSYM"\n", ConductionBubbleCenter,
-		  ConductionBubbleCenter+1,ConductionBubbleCenter+2);
+    fprintf(Outfptr, "ConductionBubbleCenter = %"PSYM" %"PSYM" %"PSYM"\n", 
+	    ConductionBubbleCenter[0], ConductionBubbleCenter[1], ConductionBubbleCenter[2]);
     fprintf(Outfptr, "TestProblemUseMetallicityField  = %"ISYM"\n", TestProblemData.UseMetallicityField);
     fprintf(Outfptr, "TestProblemInitialMetallicityFraction  = %"FSYM"\n", TestProblemData.MetallicityField_Fraction);
     fprintf(Outfptr, "ConductionBubbleBField = %"FSYM" %"FSYM" %"FSYM"\n",ConductionBubbleInitialUniformBField[0],

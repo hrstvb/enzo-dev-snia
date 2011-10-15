@@ -285,8 +285,7 @@ int grid::CollapseTestInitializeGrid(int NumberOfSpheres,
     float  DMRotVelocityCorrection = 1, GasRotVelocityCorrection = 1;
     double VelocitySound[MAX_SPHERES];
     double SphereMass, SphereCoreMass, SphereCoreDens;
-    double alpha, beta, theta;
-    double SphereCritMass;
+    double theta;
     double Scale_Factor[MAX_SPHERES];
     double term1, term2;
     double radius_vr[NR], vr[NR], exterior_rho[NR], radial_velocity;
@@ -1047,7 +1046,7 @@ double Maxwellian(double c_tilda, double vel_unit, double mu, double gamma)
   double u2 = rand();
   u2 = u2/RAND_MAX;
   double x1 = mean + stdev*sqrt(-2*log(u1))*cos(2*pi*u2);
-  double x2 = mean + stdev*sqrt(-2*log(u1))*sin(2*pi*u2);
+  //double x2 = mean + stdev*sqrt(-2*log(u1))*sin(2*pi*u2);
   return (x1/vel_unit);
 }
 
@@ -1064,14 +1063,14 @@ int ComputeRadialVelocity(float density, double mass, float r_init,
 {
 
   const float theta0 = 0.5*M_PI, theta1 = 1.9*M_PI;
-  const float Grav = 6.673e-8, Mpc = 3.086e24, yr = 3.1557e7, Msun = 1.989e33;
+  const float Grav = 6.673e-8, yr = 3.1557e7;
   const float delta_i = 0.5;
   float dtheta, delta_t[NTHETA], Theta[NTHETA], Lambda[NTHETA], Chi;
   float beta[NTHETA], little_d[NTHETA];
   float local_Vr[NTHETA], local_radius[NTHETA], local_rho[NTHETA], vmax, Vl;
   float t_init, t_i, r_i, dr;
   float z_vir, t_vir;
-  float factor, t_ta, rho_ci, r_ta_now;
+  float t_ta, rho_ci, r_ta_now;
   int i, n, iinit, iturn, i_boundary, ithis;
 
   dtheta = (theta1 - theta0) / (NTHETA-1.0);

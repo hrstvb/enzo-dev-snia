@@ -39,7 +39,7 @@ static double dtdr(double n);
 
 static double *rad,*nofr,*Tofr, g, bunch_of_constants, dKdr, 
   dKdr_cgs, K_mid, T_mid, n_mid,r_mid, 
-  r_mid_cgs, r_max, r_max_cgs;
+  r_mid_cgs, r_max_cgs;
 static int ncells;
 
 #define KEV_KELVIN 1.1604e+7
@@ -343,7 +343,7 @@ static void get_dens_temp(void){
 
   double r, dr;
   double this_n, this_t, last_n, last_t;
-  int i,Nsteps=200;
+  int i;
 
   this_n = last_n = n_mid;
   this_t = last_t = T_mid;

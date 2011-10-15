@@ -43,10 +43,9 @@ int grid::CommunicationTransferParticles(grid* Grids[], int NumberOfGrids,
  
   /* Declarations. */
  
-  int i, j, k, dim, grid, proc, grid_num, bin, CenterIndex;
+  int i, j, dim, grid, proc, grid_num, CenterIndex;
   int GridPosition[MAX_DIMENSION];
-  int *ToGrid, *pbin;
-  FLOAT r[MAX_DIMENSION];
+  int *ToGrid;
  
   for (dim = 0; dim < MAX_DIMENSION; dim++)
     GridPosition[dim] = 0;

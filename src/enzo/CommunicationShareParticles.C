@@ -47,7 +47,6 @@ int CommunicationShareParticles(int *NumberToMove, particle_data* &SendList,
   // destination processor
 
   int TotalNumberToMove = 0;
-  int particle_data_size = sizeof(particle_data);
   for (proc = 0; proc < NumberOfProcessors; proc++)
     TotalNumberToMove += NumberToMove[proc];
   //qsort(SendList, TotalNumberToMove, particle_data_size, compare_proc);

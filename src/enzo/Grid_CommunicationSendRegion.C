@@ -49,11 +49,8 @@ int grid::CommunicationSendRegion(grid *ToGrid, int ToProcessor,int SendField,
 			      int NewOrOld, int RegionStart[], int RegionDim[])
 {
 #ifdef USE_MPI 
-  MPI_Request  RequestHandle;
   MPI_Status Status;
   MPI_Datatype DataType = (sizeof(float) == 4) ? MPI_FLOAT : MPI_DOUBLE;
-  MPI_Arg Count;
-  MPI_Arg Source;
 
   /* Return if not on processor. */
 

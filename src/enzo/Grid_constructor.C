@@ -46,7 +46,7 @@ grid::grid()
  
   /* clear MAX_DIMENSION vectors */
  
-  int i, j;
+  int i;
   for (i = 0; i < MAX_DIMENSION; i++) {
     GridDimension[i]                 = 1;
     GridStartIndex[i]                = 0;

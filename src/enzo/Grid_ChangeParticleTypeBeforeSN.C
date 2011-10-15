@@ -40,7 +40,7 @@ int grid::ChangeParticleTypeBeforeSN(int _type, int level,
   if (Stars == NULL)
     return SUCCESS;
 
-  const float pc = 3.086e18, mh = 1.673e-24, Msun = 1.989e33;
+  const float pc = 3.086e18;
   const float PISNLowerMass = 140.0, PISNUpperMass = 260.0;
   const float StartRefineAtTime = 0.99;  // Percentage of stellar lifetime
   const float EndRefineAtTime = 1.0;

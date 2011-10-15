@@ -63,8 +63,6 @@ int grid::CopyPotentialToBaryonField()
      See Grid_InitializeGravitatingMassField.C for details.
   */
  
-  int BaryonFieldBufferSize = DEFAULT_GHOST_ZONES;
-  int GravityBufferSize = GRAVITY_BUFFER_SIZE;
   int DimTemp, BufferSize;
   int dim;
   int Off[3];

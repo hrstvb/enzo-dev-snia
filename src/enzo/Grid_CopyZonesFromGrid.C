@@ -75,8 +75,6 @@ int grid::CopyZonesFromGrid(grid *OtherGrid, FLOAT EdgeOffset[MAX_DIMENSION])
     L=(DomainRightEdge[ShearingBoundaryDirection]-DomainLeftEdge[ShearingBoundaryDirection]);
 
    
-    bool noMove=false;
-
     delta=L*AngularVelocity*VelocityGradient;
   
     //printf("L: %"GSYM" Delta: %"GSYM" %"GSYM" (%"GSYM" %"GSYM")\n", L, delta, delta, AngularVelocity, VelocityGradient);
@@ -187,7 +185,6 @@ int grid::CopyZonesFromGrid(grid *OtherGrid, FLOAT EdgeOffset[MAX_DIMENSION])
 
 
   //Shearing Boundary Variables
-  float rho, vx, vy, vz, v2, b2, bx, by, bz=0.0;
   int thisindex, otherindex=0;
   FLOAT a,b;  FLOAT val1=-9999;FLOAT val2=-9999;
   
@@ -294,7 +291,6 @@ int grid::CopyZonesFromGrid(grid *OtherGrid, FLOAT EdgeOffset[MAX_DIMENSION])
 
   int addDim[3] = {1, OtherDim[0], OtherDim[0]*OtherDim[1]};
   int velocityTypes[3]={Velocity1, Velocity2, Velocity3};
-  int Zero[3] = {0,0,0};
 
   if (!isShearing)
     for (int field = 0; field < NumberOfBaryonFields; field++)

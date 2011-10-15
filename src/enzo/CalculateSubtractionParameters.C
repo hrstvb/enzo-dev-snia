@@ -46,12 +46,11 @@ int CalculateSubtractionParameters(LevelHierarchyEntry *LevelArray[], int level,
   const double pc = 3.086e18, Msun = 1.989e33, Grav = 6.673e-8,
     k_b = 1.38e-16, m_h = 1.673e-24;
 
-  float mdot, AccretedMass, SafetyFactor;
+  float mdot, AccretedMass, SafetyFactor, old_mass;
   float MassEnclosed = 0, Metallicity = 0, ColdGasMass = 0, OneOverRSquaredSum, AvgVelocity[MAX_DIMENSION];
-  float *temperature, density, old_mass, mu, number_density;
   
-  int igrid[MAX_DIMENSION], dim, l, index, c_s;
-  int size=1, FirstLoop = TRUE;
+  int dim, l, c_s;
+  int FirstLoop = TRUE;
   LevelHierarchyEntry *Temp, *Temp2;
   FLOAT Time;
 
@@ -80,6 +79,9 @@ int CalculateSubtractionParameters(LevelHierarchyEntry *LevelArray[], int level,
   /* If star_CurrentGrid is on the current processor, 
      find mu, temperature[], and c_s so that we can eventually calculate Bondi radius.
      One has to broadcast c_s to other processors */
+
+  float *temperature, density, mu, number_density;
+  int igrid[MAX_DIMENSION], index, size=1;
   
   if (star_CurrentGrid->ReturnProcessorNumber() ==  MyProcessorNumber) {
     

@@ -91,9 +91,6 @@ int GalaxySimulationInitialize(FILE *fptr, FILE *Outfptr,
   int   GalaxySimulationRefineAtStart,
     GalaxySimulationUseMetallicityField;
   
-  FLOAT LeftEdge[MAX_DIMENSION], RightEdge[MAX_DIMENSION];
-  float ZeroBField[3] = {0.0, 0.0, 0.0};
-
   /* Default Values */
 
   GalaxySimulationRefineAtStart      = TRUE;

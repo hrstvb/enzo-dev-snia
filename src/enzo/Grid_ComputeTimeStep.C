@@ -72,7 +72,7 @@ float grid::ComputeTimeStep()
   float dtMHD          = huge_number;
   float dtConduction   = huge_number;
   float dtGasDrag      = huge_number;
-  int dim, i, result;
+  int dim, i;
  
   /* Compute the field size. */
  
@@ -220,7 +220,6 @@ float grid::ComputeTimeStep()
     FLOAT dxinv = 1.0 / CellWidth[0][0]/a;
     FLOAT dyinv = (GridRank > 1) ? 1.0 / CellWidth[1][0]/a : 0.0;
     FLOAT dzinv = (GridRank > 2) ? 1.0 / CellWidth[2][0]/a : 0.0;
-    float vxm, vym, vzm, Bm, rhom;
     float dt_temp = 1.e-20, dt_ltemp, dt_x, dt_y, dt_z;
     float rho, p, vx, vy, vz, v2, eint, etot, h, cs, cs2, dpdrho, dpde,
       v_signal_x, v_signal_y, v_signal_z, cf, cf2, temp1, Bx, By, Bz, B2, ca2;
@@ -375,7 +374,7 @@ float grid::ComputeTimeStep()
   /* 8) If star formation, set a minimum timestep */
 
   float TemperatureUnits, DensityUnits, LengthUnits, 
-    VelocityUnits, TimeUnits, aUnits = 1;
+    VelocityUnits, TimeUnits;
 
   if (GetUnits(&DensityUnits, &LengthUnits, &TemperatureUnits,
 	       &TimeUnits, &VelocityUnits, Time) == FAIL) {
@@ -404,7 +403,6 @@ float grid::ComputeTimeStep()
   /* 9) If using radiation pressure, calculate minimum dt */
 
   float dtRadPressure = huge_number;
-  float absVel, absAccel;
 
   if (RadiationPressure && RadiativeTransfer) {
 

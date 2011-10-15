@@ -35,7 +35,7 @@
  
  
  
-int grid::DebugCheck(char *message)
+int grid::DebugCheck(const char *message)
 {
  
 #ifdef TRACE_ON

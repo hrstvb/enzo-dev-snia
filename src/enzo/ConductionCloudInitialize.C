@@ -39,8 +39,7 @@ int ConductionCloudInitialize(FILE *fptr, FILE *Outfptr, HierarchyEntry &TopGrid
   }
 
   char line[MAX_LINE_LENGTH];
-  float LeftEdge[MAX_DIMENSION], RightEdge[MAX_DIMENSION];
-  int i, j, dim, ret;
+  int i, j, ret;
 
   float ConductionCloudDensity = 1.0;
   float ConductionCloudTemperature = 1.0;
@@ -151,34 +150,34 @@ int ConductionCloudInitialize(FILE *fptr, FILE *Outfptr, HierarchyEntry &TopGrid
 
   // set up field names and units
   i = 0;
-  DataLabel[i++] = "Density";
-  DataLabel[i++] = "TotalEnergy";
-  if (DualEnergyFormalism) {DataLabel[i++] = "GasEnergy";}
-  if (MetaData.TopGridRank > 0) {DataLabel[i++] = "x-velocity";}
-  if (MetaData.TopGridRank > 1) {DataLabel[i++] = "y-velocity";}
-  if (MetaData.TopGridRank > 2) {DataLabel[i++] = "z-velocity";}
+  DataLabel[i++] = (char*) "Density";
+  DataLabel[i++] = (char*) "TotalEnergy";
+  if (DualEnergyFormalism) {DataLabel[i++] = (char*) "GasEnergy";}
+  if (MetaData.TopGridRank > 0) {DataLabel[i++] = (char*) "x-velocity";}
+  if (MetaData.TopGridRank > 1) {DataLabel[i++] = (char*) "y-velocity";}
+  if (MetaData.TopGridRank > 2) {DataLabel[i++] = (char*) "z-velocity";}
 
   if (TestProblemData.MultiSpecies) {
-    DataLabel[i++] = "Electron_Density";
-    DataLabel[i++] = "HI_Density";
-    DataLabel[i++] = "HII_Density";
-    DataLabel[i++] = "HeI_Density";
-    DataLabel[i++] = "HeII_Density";
-    DataLabel[i++] = "HeIII_Density";
+    DataLabel[i++] = (char*) "Electron_Density";
+    DataLabel[i++] = (char*) "HI_Density";
+    DataLabel[i++] = (char*) "HII_Density";
+    DataLabel[i++] = (char*) "HeI_Density";
+    DataLabel[i++] = (char*) "HeII_Density";
+    DataLabel[i++] = (char*) "HeIII_Density";
     if (TestProblemData.MultiSpecies > 1) {
-      DataLabel[i++] = "HM_Density";
-      DataLabel[i++] = "H2I_Density";
-      DataLabel[i++] = "H2II_Density";
+      DataLabel[i++] = (char*) "HM_Density";
+      DataLabel[i++] = (char*) "H2I_Density";
+      DataLabel[i++] = (char*) "H2II_Density";
     }
     if (TestProblemData.MultiSpecies > 2) {
-      DataLabel[i++] = "DI_Density";
-      DataLabel[i++] = "DII_Density";
-      DataLabel[i++] = "HDI_Density";
+      DataLabel[i++] = (char*) "DI_Density";
+      DataLabel[i++] = (char*) "DII_Density";
+      DataLabel[i++] = (char*) "HDI_Density";
     }
   }
 
   if (TestProblemData.UseMetallicityField)
-    DataLabel[i++] = "Metal_Density";
+    DataLabel[i++] = (char*) "Metal_Density";
 
   for (j=0; j < i; j++) 
     DataUnits[j] = NULL;

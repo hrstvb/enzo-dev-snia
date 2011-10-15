@@ -95,7 +95,7 @@ int grid::FlagCellsToBeRefinedByTotalJeansLength()
   
   FLOAT CellWidthSquared = CellWidth[0][0]*CellWidth[0][0];
   int j, jj, k, index;
-  float rhox, rhoy, rhoz, rhoxy, rhoxz, rhoyz,  rhomax, maxmax;
+  float rhox, rhoy, rhoz, rhoxy, rhoxz, rhoyz;
 
   if ((GPotNum = FindField(GravPotential, FieldType, NumberOfBaryonFields)) < 0) {
     ENZO_FAIL("Cannot find Gravitational Potential. Set WritePotential = 1 ... hack");
