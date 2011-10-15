@@ -73,6 +73,11 @@ private:
 
 };
 
+float ActiveParticleType_PopIII::OverDensityThreshold = FLOAT_UNDEFINED;
+float ActiveParticleType_PopIII::MetalCriticalFraction = FLOAT_UNDEFINED;
+float ActiveParticleType_PopIII::H2CriticalFraction = FLOAT_UNDEFINED;
+float ActiveParticleType_PopIII::StarMass = FLOAT_UNDEFINED;
+
 int ActiveParticleType_PopIII::InitializeParticleType() {
   // get some parameters from the Param object
 
