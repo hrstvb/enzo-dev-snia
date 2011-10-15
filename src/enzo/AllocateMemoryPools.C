@@ -12,8 +12,8 @@
 /     
 /
 ************************************************************************/
-#include <stdio.h>
 #include <stdlib.h>
+#include <stdio.h>
 #include "macros_and_parameters.h"
 #include "typedefs.h"
 #include "global_data.h"
@@ -21,6 +21,7 @@
 #include "GridList.h"
 #include "ExternalBoundary.h"
 #include "Grid.h"
+#include "MemoryPool.h"
 
 void AllocateMemoryPools() 
 {
@@ -51,15 +52,15 @@ void AllocateMemoryPools()
 						   HierarchyEntrySize,
 						   HierarchyEntryMemorySize*HierarchyEntrySize, true);
 #endif
-  FlaggingFieldMemoryPool = new MPool::MemoryPool(4, sizeof(int)*1024*1024/NumberOfProcessors,
+  FlaggingFieldMemoryPool = new MPool::MemoryPool(4, sizeof(int)*1024*1024/CoresPerNode,
 						  sizeof(int)*32,
 						  sizeof(int)*200000, true);
   
-  ParticleMemoryPool = new MPool::MemoryPool(5, sizeof(FLOAT)*4000000/NumberOfProcessors,
+  ParticleMemoryPool = new MPool::MemoryPool(5, sizeof(FLOAT)*4000000/CoresPerNode,
 					     sizeof(FLOAT)*64,
 					     sizeof(FLOAT)*2000000, true);
   
-  BaryonFieldMemoryPool = new MPool::MemoryPool(6, sizeof(float)*24000000/NumberOfProcessors,
+  BaryonFieldMemoryPool = new MPool::MemoryPool(6, sizeof(float)*24000000/CoresPerNode,
 						sizeof(float)*64,
 						sizeof(float)*6000000, true);
 
