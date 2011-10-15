@@ -16,6 +16,11 @@
 
 OBJS_CONFIG_LIB = \
         acml_st1.o \
+        ActiveParticle.o \
+        ActiveParticle_Kravtsov.o \
+        ActiveParticle_PopIII.o \
+        ActiveParticle_SampleParticle.o \
+        ActiveParticle_SpringelHernquist.o \
         AdiabaticExpansionInitialize.o \
         AdjustRefineRegion.o \
         AdjustMustRefineParticlesRefineToLevel.o \
@@ -42,6 +47,7 @@ OBJS_CONFIG_LIB = \
         CheckEmissivity.o \
         ClearEmissivity.o \
         CalculateSubtractionParameters.o \
+	CalculatePopIIILifetime.o \
         CallProblemSpecificRoutines.o \
         CallPython.o \
         CheckEnergyConservation.o \
@@ -291,6 +297,7 @@ OBJS_CONFIG_LIB = \
 	GravityEquilibriumTestInitialize.o \
 	Grid_AccelerationBoundaryRoutines.o \
 	Grid_AccessBaryonFields.o \
+	Grid_ActiveParticleHandler.o \
 	Grid_AddBaryonsToGravitatingMassField.o \
 	Grid_AddExternalAcceleration.o \
 	Grid_AddExternalPotentialField.o \
@@ -305,6 +312,7 @@ OBJS_CONFIG_LIB = \
 	Grid_AnalyzeTrackPeaks.o \
 	Grid_AppendForcingToBaryonFields.o \
 	Grid_ApplyTimeAction.o \
+	Grid_AveragedVelocityAtCell.o \
 	Grid_CalculateAngularMomentum.o \
 	Grid_ChangeParticleTypeBeforeSN.o \
 	Grid_CheckForExternalReflections.o \
@@ -364,6 +372,7 @@ OBJS_CONFIG_LIB = \
 	Grid_constructor.o \
 	Grid_ConvertTotalEnergyToGasEnergy.o \
 	Grid_ConvertToNumpy.o \
+	Grid_ConvertColorFieldsToFractions.o \
 	Grid_CoolingTestResetEnergies.o \
 	Grid_CoolingTestInitializeGrid.o \
 	Grid_CopyBaryonFieldToOldBaryonField.o \
@@ -848,11 +857,6 @@ OBJS_CONFIG_LIB = \
         uuid/unpack.o \
         uuid/unparse.o \
         uuid/uuid_time.o \
-		libconfig/grammar.o \
-		libconfig/libconfig.o \
-		libconfig/scanctx.o \
-		libconfig/scanner.o \
-		libconfig/strbuf.o \
         wall_clock.o \
         WavePoolInitialize.o \
         wrapper1d.o \

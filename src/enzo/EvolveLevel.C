@@ -502,6 +502,11 @@ int EvolveLevel(TopGridData *MetaData, LevelHierarchyEntry *LevelArray[],
       Grids[grid1]->GridData->StarParticleHandler
 	(Grids[grid1]->NextGridNextLevel, level ,dtLevelAbove);
 
+#ifdef ACTIVE_PARTICLE_IMPLEMENTED
+      Grids[grid1]->GridData->ActiveParticleHandler
+	(Grids[grid1]->NextGridNextLevel, level ,dtLevelAbove);
+#endif
+
       /* Include shock-finding */
 
       Grids[grid1]->GridData->ShocksHandler();

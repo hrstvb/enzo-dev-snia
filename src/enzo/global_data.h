@@ -928,7 +928,12 @@ EXTERN float IsotropicConductionSpitzerFraction;  // f_Spitzer
 EXTERN float AnisotropicConductionSpitzerFraction;  // f_Spitzer
 EXTERN float ConductionCourantSafetyNumber;
 
+class ActiveParticleType_info;
+
 /* For the database */
 EXTERN char *DatabaseLocation;
+
+EXTERN ActiveParticleType_info *EnabledActiveParticles[MAX_ACTIVE_PARTICLE_TYPES];
+EXTERN int EnabledActiveParticlesCount;
 
 #endif

@@ -57,14 +57,11 @@ struct HierarchyEntry;
 extern int CommunicationDirection;
 int FindField(int f, int farray[], int n);
 struct LevelHierarchyEntry;
+class ActiveParticleType;
 
 class grid
 {
-#ifdef NEW_PROBLEM_TYPES
  protected:
-#else
- private:
-#endif
 //
 //  General grid class data
 //
@@ -125,6 +122,12 @@ class grid
 //
   int NumberOfStars;
   Star *Stars;
+
+//
+//  Active particle data
+//
+  int NumberOfActiveParticles;
+  ActiveParticleType *ActiveParticles;
 //
 //  Gravity data
 // 
@@ -175,6 +178,7 @@ class grid
   friend int ExternalBoundary::Prepare(grid *TopGrid);
   friend int ProtoSubgrid::CopyFlaggedZonesFromGrid(grid *Grid);
   friend class Star;
+  friend class ActiveParticleType;
 #ifdef NEW_PROBLEM_TYPES
   friend class EnzoProblemType;
 #endif
@@ -2217,6 +2221,13 @@ int zEulerSweep(int j, int NumberOfSubgrids, fluxes *SubgridFluxes[],
   int StarParticleHandler(HierarchyEntry* SubgridPointer, int level,
 			  float dtLevelAbove);
 
+  int ActiveParticleHandler(HierarchyEntry* SubgridPointer, int level,
+			    float dtLevelAbove);
+
+  /* Returns averaged velocity from the 6 neighbor cells and itself */
+
+  float* AveragedVelocityAtCell(int index, int DensNum, int Vel1Num);
+
 /* Particle splitter routine. */
 
   int ParticleSplitter(int level);
@@ -2443,6 +2454,9 @@ int zEulerSweep(int j, int NumberOfSubgrids, fluxes *SubgridFluxes[],
 	InterpolatedField[i] = NULL;
       }
   }
+
+  void ConvertColorFieldsToFractions(); 
+  void ConvertColorFieldsFromFractions(); 
 
 //-----------------------------------------------------------------------
 //  Returns radiative cooling by component

@@ -762,6 +762,9 @@ int SetDefaultGlobalValues(TopGridData &MetaData)
   VelAnyl                     = 0;
   BAnyl                     = 0;
 
+  for (i = 0; i < MAX_ACTIVE_PARTICLE_TYPES; i++) EnabledActiveParticles[i] = NULL;
+  EnabledActiveParticlesCount = 0;
+
   /* Gas drag parameters */
   UseGasDrag = 0;
   GasDragCoefficient = 0.;
