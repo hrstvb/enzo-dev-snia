@@ -61,7 +61,7 @@ void EnableActiveParticleType(char *active_particle_type_name) {
     }
     
     // retrieves active particle specific parameters
-    //my_type->ifunc();
+    my_type->initialize();
 
     EnabledActiveParticles[EnabledActiveParticlesCount++] = my_type;
     return;

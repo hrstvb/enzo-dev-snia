@@ -233,13 +233,12 @@ class ActiveParticleType_info
        }
 
   static int count(){return get_active_particle_types().size();}
-
+  
   int (*initialize)(void);
   int (*formation_function)(grid *thisgrid_orig, ActiveParticleFormationData &data);
   int (*feedback_function)(grid *thisgrid_orig);
   void (*describe_data_flags)(ActiveParticleFormationDataFlags &flags);
   ParticleBufferHandler* (*allocate_buffers)(int NumberOfParticles);
-
 };
 
 #endif

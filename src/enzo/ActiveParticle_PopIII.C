@@ -32,9 +32,28 @@
 #include "phys_constants.h"
 
 #ifdef NEW_CONFIG
+
 #include "ParameterControl/ParameterControl.h"
 extern Configuration Param;
+
+/* Set default parameter values. */
+
+const char config_popiii_particle_defaults[] = 
+"### POPIII STAR PARTICLE DEFAULTS ###\n"
+"\n"
+"Physics: {\n"
+"    ActiveParticles: {\n"
+"        PopIII: {\n"
+"            OverDensityThreshold = 1e6;\n"
+"            MetalCriticalFraction = 1e-4;\n"
+"            H2CriticalFraction = 5e-4;\n"
+"            StarMass = 100;\n"
+"        };\n"
+"    };\n"
+"};\n";
+
 #endif
+
 
 float CalculatePopIIILifetime(float Mass);
 
@@ -78,21 +97,31 @@ float ActiveParticleType_PopIII::MetalCriticalFraction = FLOAT_UNDEFINED;
 float ActiveParticleType_PopIII::H2CriticalFraction = FLOAT_UNDEFINED;
 float ActiveParticleType_PopIII::StarMass = FLOAT_UNDEFINED;
 
+// get some parameters from the Param object
 int ActiveParticleType_PopIII::InitializeParticleType() {
-  // get some parameters from the Param object
 
 #ifdef NEW_CONFIG
+
+  // Update the parameter config to include the local defaults. Note
+  // that this does not overwrite any values previously specified.
+  Param.Update(config_popiii_particle_defaults);
+
+  // Retrieve parameters from Param structure
   Param.GetScalar(OverDensityThreshold, "Physics.ActiveParticles.PopIII.OverDensityThreshold");
   Param.GetScalar(MetalCriticalFraction, "Physics.ActiveParticles.PopIII.MetalCriticalFraction");
   Param.GetScalar(H2CriticalFraction, "Physics.ActiveParticles.PopIII.H2CriticalFraction");
   Param.GetScalar(StarMass, "Physics.ActiveParticles.PopIII.StarMass");
+
 #else
-  OverDensityThreshold = 0;
-  MetalCriticalFraction = 0;
-  H2CriticalFraction = 0;
-  StarMass = 0;
+
+  OverDensityThreshold = 0.0;
+  MetalCriticalFraction = 0.0;
+  H2CriticalFraction = 0.0;
+  StarMass = 0.0;
+
 #endif
 
+  return SUCCESS;
 }
 
 
@@ -129,12 +158,12 @@ int ActiveParticleType_PopIII::EvaluateFormation
     for (j = tg->GridStartIndex[1]; j <= tg->GridEndIndex[1]; j++) {
       index = GRIDINDEX_NOGHOST(tg->GridStartIndex[0], j, k);
       for (i = tg->GridStartIndex[0]; i <= tg->GridEndIndex[0]; i++, index++) {
-
-    // 0. If no more room for particles, quit.
-    if (supp_data.NumberOfNewParticles >=
-        supp_data.MaxNumberOfNewParticles)
+	
+	// 0. If no more room for particles, quit.
+	if (supp_data.NumberOfNewParticles >=
+	    supp_data.MaxNumberOfNewParticles)
           continue;
-
+	
 	// 1. Finest level of refinement
 	if (tg->BaryonField[tg->NumberOfBaryonFields][index] != 0.0) 
 	  continue;
@@ -272,6 +301,6 @@ namespace {
 	    (&ActiveParticleType_PopIII::DescribeSupplementalData),
 	    (&ActiveParticleType_PopIII::AllocateBuffers),
 	    (&ActiveParticleType_PopIII::InitializeParticleType),
-	    (&ActiveParticleType_PopIII::EvaluateFeedback ) );
+	    (&ActiveParticleType_PopIII::EvaluateFeedback) );
 
 }
