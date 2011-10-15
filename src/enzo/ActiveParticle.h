@@ -227,16 +227,19 @@ class ActiveParticleType_info
         this->describe_data_flags = dfunc;
         this->allocate_buffers = abfunc;
 	this->initialize = ifunc;
-	this->feedback_function = feedfunc;;
+	this->feedback_function = feedfunc;
 
         get_active_particle_types()[this_name] = this;
        }
 
-       static int count(){return get_active_particle_types().size();}
+  static int count(){return get_active_particle_types().size();}
 
-       int (*formation_function)(grid *thisgrid_orig, ActiveParticleFormationData &data);
-       void (*describe_data_flags)(ActiveParticleFormationDataFlags &flags);
-       ParticleBufferHandler* (*allocate_buffers)(int NumberOfParticles);
+  int (*initialize)(void);
+  int (*formation_function)(grid *thisgrid_orig, ActiveParticleFormationData &data);
+  int (*feedback_function)(grid *thisgrid_orig);
+  void (*describe_data_flags)(ActiveParticleFormationDataFlags &flags);
+  ParticleBufferHandler* (*allocate_buffers)(int NumberOfParticles);
+
 };
 
 #endif

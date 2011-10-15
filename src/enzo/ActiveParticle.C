@@ -61,7 +61,7 @@ void EnableActiveParticleType(char *active_particle_type_name) {
     }
     
     // retrieves active particle specific parameters
-    my_type->ifunc();
+    //my_type->ifunc();
 
     EnabledActiveParticles[EnabledActiveParticlesCount++] = my_type;
     return;
@@ -106,14 +106,6 @@ void ActiveParticleType::ConstructData(grid *_grid,
         ENZO_FAIL("Error in GetUnits.");
   }
 
-  /* Now we fill in the *Num attributes of data */
-  data.DensNum = DensNum;
-  data.Vel1Num = Vel1Num;
-  data.Vel2Num = Vel2Num;
-  data.Vel3Num = Vel3Num;
-  data.MetalNum = MetalNum;
-  /*data.ColourNum = ColourNum;*/
-
   /* If using MHD, subtract magnetic energy from total energy because 
      density may be modified in star_maker8. */
   
@@ -145,6 +137,14 @@ void ActiveParticleType::ConstructData(grid *_grid,
 				 Galaxy1ColourNum, Galaxy2ColourNum) == FAIL) {
     ENZO_FAIL("Error in grid->IdentifyColourFields.\n");
   }
+
+  /* Now we fill in the *Num attributes of data */
+  data.DensNum = DensNum;
+  data.Vel1Num = Vel1Num;
+  data.Vel2Num = Vel2Num;
+  data.Vel3Num = Vel3Num;
+  data.MetalNum = MetalNum;
+  /*data.ColourNum = ColourNum;*/
 
   /* Compute the redshift. */
  
@@ -226,7 +226,7 @@ void ActiveParticleType::ConstructData(grid *_grid,
     electronguessptr = &electronguess;
     for (i = 0; i < size; i++)
       cgsdensity = data.DensityUnits*_grid->BaryonField[DensNum][i];
-      data.CoolingRate[i] = GadgetCoolingRate
+      data.CoolingRate[i] = _grid->GadgetCoolingRate
 	(log10(data.Temperature[i]), cgsdensity, electronguessptr, zred);
 
   } // ENDIF CoolingRate

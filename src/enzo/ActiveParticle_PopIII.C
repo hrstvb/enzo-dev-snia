@@ -31,8 +31,10 @@
 #include "ActiveParticle.h"
 #include "phys_constants.h"
 
+#ifdef NEW_CONFIG
 #include "ParameterControl/ParameterControl.h"
 extern Configuration Param;
+#endif
 
 float CalculatePopIIILifetime(float Mass);
 
@@ -62,16 +64,16 @@ public:
   static int EvaluateFeedback(grid *thisgrid_orig);
 
   // Pop III specific active particle parameters
-  static float OverDensityThreshold, PopIIIMetalCriticalFraction, PopIIIH2CriticalFraction, StarMass;
+  static float OverDensityThreshold, MetalCriticalFraction, 
+    H2CriticalFraction, StarMass;
 
 private:
   float LifeTime;
   float Metallicity;
 
-
 };
 
-static int ActiveParticleType_PopIII::InitializeParticleType() {
+int ActiveParticleType_PopIII::InitializeParticleType() {
   // get some parameters from the Param object
 
 #ifdef NEW_CONFIG
@@ -209,8 +211,8 @@ int ActiveParticleType_PopIII::EvaluateFormation
 	*/
 
 
-	double *tvel = tg->AveragedVelocityAtCell(index, supp_data.DensNum,
-					       supp_data.Vel1Num);
+	float *tvel = tg->AveragedVelocityAtCell(index, supp_data.DensNum,
+						 supp_data.Vel1Num);
 	np->vel[0] = tvel[0];
 	np->vel[1] = tvel[1];
 	np->vel[2] = tvel[2];
@@ -265,6 +267,6 @@ namespace {
 	    (&ActiveParticleType_PopIII::DescribeSupplementalData),
 	    (&ActiveParticleType_PopIII::AllocateBuffers),
 	    (&ActiveParticleType_PopIII::InitializeParticleType),
-	    (&ActiveParticleType_PopIII::EvaluateFeedback );
+	    (&ActiveParticleType_PopIII::EvaluateFeedback ) );
 
 }
