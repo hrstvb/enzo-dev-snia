@@ -17,9 +17,10 @@
 OBJS_CONFIG_LIB = \
         acml_st1.o \
         ActiveParticle.o \
-        ActiveParticle_SampleParticle.o \
-        ActiveParticle_PopIII.o \
         ActiveParticle_Kravtsov.o \
+        ActiveParticle_PopIII.o \
+        ActiveParticle_SampleParticle.o \
+        ActiveParticle_SpringelHernquist.o \
         AdiabaticExpansionInitialize.o \
         AdjustRefineRegion.o \
         AdjustMustRefineParticlesRefineToLevel.o \
@@ -847,11 +848,6 @@ OBJS_CONFIG_LIB = \
         uuid/unpack.o \
         uuid/unparse.o \
         uuid/uuid_time.o \
-		libconfig/grammar.o \
-		libconfig/libconfig.o \
-		libconfig/scanctx.o \
-		libconfig/scanner.o \
-		libconfig/strbuf.o \
         wall_clock.o \
         WavePoolInitialize.o \
         wrapper1d.o \
