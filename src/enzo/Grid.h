@@ -12,12 +12,6 @@
 
 #ifndef GRID_DEFINED__
 #define GRID_DEFINED__
-#include "macros_and_parameters.h"
-#include "typedefs.h"
-#include "global_data.h"
-#include "Fluxes.h"
-#include "GridList.h"
-#include "ExternalBoundary.h"
 
 #include "ProtoSubgrid.h"
 #include "ListOfParticles.h"
