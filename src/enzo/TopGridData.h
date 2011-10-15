@@ -12,9 +12,6 @@
 /  PURPOSE:
 /
 ************************************************************************/
-#include "macros_and_parameters.h"
-#include "typedefs.h"
-
 #include "AMRH5writer.h"
 struct TopGridData
 {
