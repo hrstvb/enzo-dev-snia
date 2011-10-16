@@ -71,9 +71,7 @@ int OutputFromEvolveLevel(LevelHierarchyEntry *LevelArray[],TopGridData *MetaDat
 #endif
 			  ){
 
-  int WriteOutput = FALSE, ExitEnzo = FALSE, NumberOfGrids;
-  int PackedStatus = 0;
-  int CheckpointDump = FALSE;
+  int WriteOutput = FALSE, ExitEnzo = FALSE, CheckpointDump = FALSE;
 
   //Do all "bottom of hierarchy" checks
   if (LevelArray[level+1] == NULL){

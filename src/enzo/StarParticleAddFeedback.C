@@ -51,12 +51,9 @@ int StarParticleAddFeedback(TopGridData *MetaData,
 			    Star* &AllStars, bool* &AddedFeedback)
 {
 
-  const double pc = 3.086e18, Msun = 1.989e33, pMass = 1.673e-24, 
-    gravConst = 6.673e-8, yr = 3.1557e7, Myr = 3.1557e13;
-
   Star *cstar;
   bool MarkedSubgrids = false;
-  int i, l, dim, temp_int, SkipMassRemoval, SphereContained,
+  int l, SkipMassRemoval, SphereContained,
       SphereContainedNextLevel, dummy, count;
   float influenceRadius, RootCellWidth, SNe_dt, dtForThisStar;
   double EjectaThermalEnergy, EjectaDensity, EjectaMetalDensity;

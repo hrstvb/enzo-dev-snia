@@ -59,7 +59,6 @@ int ReadDataHierarchy(FILE *fptr, HierarchyEntry *Grid, int GridID,
 
   //dcollins, August 5 2009.  Updated failsafe for old files that don't have Task defined.
   int NewProc = ReadDataGridCounter % NumberOfProcessors;
-  int ProcMap = ABS(NewProc - NumberOfProcessors) % NumberOfProcessors;
 
   FILE * ptr_task_check = fptr;
   
@@ -119,6 +118,7 @@ int ReadDataHierarchy(FILE *fptr, HierarchyEntry *Grid, int GridID,
 
 #ifdef USE_PERMUTED_CPU_DISTRIBUTION
 
+  int ProcMap = ABS(NewProc - NumberOfProcessors) % NumberOfProcessors;
   Grid->GridData->SetProcessorNumber(ProcMap);
 
   if ( MyProcessorNumber == 0 )

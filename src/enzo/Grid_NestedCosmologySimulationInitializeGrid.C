@@ -62,7 +62,8 @@ int ReadIntFile(char *name, int Rank, int Dims[], int StartIndex[],
 		int EndIndex[], int BufferOffset[], int *buffer,
 		int **tempbuffer, int Part, int Npart);
 
-void ReadAttribute(hid_t dset_id, int *Attribute, char *AttributeName, FILE *log_fptr, int io_log);
+void ReadAttribute(hid_t dset_id, int *Attribute, const char *AttributeName, 
+		   FILE *log_fptr, int io_log);
 int ReadAttr(char *Fname, int *Rank, int Dims[], int *NSeg, int *LSeg, FILE *log_fptr);
  
 void fcol(float *x, int n, int m, FILE *log_fptr);
@@ -129,27 +130,23 @@ int grid::NestedCosmologySimulationInitializeGrid(
   inits_type *tempbuffer = NULL;
   int *int_tempbuffer = NULL;
  
-  hid_t       file_id, dset_id, attr_id, type_id, int_type_id;
-  hid_t       mem_dsp_id, file_dsp_id, attr_dsp_id;
+  hid_t       file_id, dset_id, type_id, int_type_id;
+  hid_t       mem_dsp_id, file_dsp_id;
  
   herr_t      h5_status;
   herr_t      h5_error = -1;
  
-  hsize_t     xfer_size;
   hsize_t     Slab_Dims[4];
   int         Slab_Rank;
  
-  hsize_t     mem_stride, mem_count, mem_block;
-  hsize_t     slab_stride[4], slab_count[4], slab_block[4];
-  hsize_t     attr_count;
+  hsize_t     mem_stride, mem_count;
+  hsize_t     slab_stride[4], slab_block[4];
  
   hsize_t    mem_offset;
   hsize_t    slab_offset[4];
  
-  int NSeg, LSeg, Part;
+  int NSeg, LSeg;
  
-  int component_rank_attr;
-  int component_size_attr;
   int field_rank_attr;
   int field_dims_attr[3];
  
@@ -695,7 +692,7 @@ int grid::NestedCosmologySimulationInitializeGrid(
 
       // Get the total number of particles from this file by reading the file attributes
  
-      int TempInt, Dim[1], Start[1] = {0}, End[1], Zero[1] = {0};
+      int TempInt, Dim[1], Start[1] = {0}, End[1];
       int TempIntArray[MAX_DIMENSION], TotalParticleCount;
       if (!CosmologySimulationCalculatePositions) {
 

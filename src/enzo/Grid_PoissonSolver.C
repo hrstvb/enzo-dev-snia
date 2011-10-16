@@ -131,7 +131,6 @@ int grid::PoissonSolver(int level)
   int type=UseDivergenceCleaning;
 
    if(debug){
-   bool badDiv=false;
     float divSum = 0;
     for (int k = GridStartIndex[2]; k <= GridEndIndex[2]; k++) {
       for (int j = GridStartIndex[1]; j <= GridEndIndex[1]; j++) {
@@ -705,11 +704,9 @@ int grid::PrintToScreenBoundaries(float *field, char *display, int direction, in
 //   fprintf(fptr, "x\ty\tvalue\twidth\theight\n");
 
   int xD[3]={GridDimension[0],GridDimension[1], GridDimension[2]};
-   int diffs[3]={1, xD[0], xD[1]*xD[0]}; 
- 
 
   bool fail=false;
-  int index;    int ijk[3];
+  int index, ijk[3];
 
   if (check==0){fail=true;}
 
@@ -735,8 +732,6 @@ int grid::PrintToScreenBoundaries(float *field, char *display, int direction, in
     printf("Grid Edges %g %g %g\n", GridLeftEdge[0], GridLeftEdge[1], GridLeftEdge[2]);
     printf( "\n\n*******Processor # %d ********\n", ProcessorNumber);
     printf( "\n\n*******Displaying Data (Slice in %d on cell %d) (TopGrid %d)  ********\n", direction, slice, isTopGrid() );
-    
-    bool intertemp;
     
     int ind1, ind2;
     if (direction==0){ ind1=1; ind2=2;}
@@ -767,16 +762,17 @@ int grid::PrintToScreenBoundaries(float *field, char *display, int direction, in
    }
   //fclose(fptr);
  
- return true;
+ return SUCCESS;
 }
 
-int grid::PrintToScreenBoundaries(float *field, char *display, int direction, int slice){
+int grid::PrintToScreenBoundaries(float *field, const char *display, 
+				  int direction, int slice){
   PrintToScreenBoundaries(field, display, direction, slice, 0, 0.0); 
-  return true;
+  return SUCCESS;
 }
 
 
-int grid::PrintToScreenBoundaries(float *field, char *display){
+int grid::PrintToScreenBoundaries(float *field, const char *display){
  if (!debug) return SUCCESS;
 
   //return SUCCESS;
@@ -808,6 +804,9 @@ int grid::PrintToScreenBoundaries(){
     PrintToScreenBoundaries(OldBaryonField[i], "old", 0, DEFAULT_GHOST_ZONES, 0, 0.0);
     PrintToScreenBoundaries(BaryonField[i], "new", 0, DEFAULT_GHOST_ZONES, 0, 0.0);
   }
+
+  return SUCCESS;
+
 }
 
 

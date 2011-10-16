@@ -81,7 +81,7 @@ int star_maker8(int *nx, int *ny, int *nz, int *size, float *d, float *te, float
 		float *temp, float *gamma, float *mu, int *nproc, int *nstar)
 {
 
-  int		i, j, k, index, ii, inew, n, bb, cc, nsinks, closest;
+  int		i, j, k, index, ii, n, bb, cc, nsinks, closest;
   int           xo, yo, zo;
 #define MAX_SUPERCELL_NUMBER 1000
   int           n_cell, ind_cell[MAX_SUPERCELL_NUMBER];
@@ -166,7 +166,7 @@ int star_maker8(int *nx, int *ny, int *nz, int *size, float *d, float *te, float
      //printf("note:   G = %"FSYM" in code units \n",G);
      double csgrid2, radius2, radius;
   float densgrid, tempgrid, msink, drho,
-    usink, vsink, wsink, vrel2,vrelc2,vreld2, mdot, e, de;
+    usink, vsink, wsink, vrel2,vrelc2,vreld2, mdot;
   FLOAT r_bh, r_k, x_cell, y_cell, z_cell, weight_total, density_sum, dens_sum, del_rho;
   FLOAT ugridc,vgridc,wgridc; 
   FLOAT radius_cell[MAX_SUPERCELL_NUMBER];
@@ -784,7 +784,7 @@ int star_maker8(int *nx, int *ny, int *nz, int *size, float *d, float *te, float
 
   if (*level == MaximumRefinementLevel) {
     float oldrho;
-    float SinkCollapseDistance = SinkMergeDistance;
+    //float SinkCollapseDistance = SinkMergeDistance;
     for (k = *ibuff; k < *nz-*ibuff; k++) {
       for (j = *ibuff; j < *ny-*ibuff; j++) {
 	index = (k * (*ny) + j) * (*nx) + (*ibuff);

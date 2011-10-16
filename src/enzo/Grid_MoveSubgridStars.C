@@ -41,7 +41,7 @@ int grid::MoveSubgridStars(int NumberOfSubgrids, grid* ToGrids[],
     return SUCCESS;
 
   Star *cstar, *MoveStar;
-  int i, j, dim, index, subgrid, n;
+  int i, index, subgrid;
 
   /* Initialize. */
 

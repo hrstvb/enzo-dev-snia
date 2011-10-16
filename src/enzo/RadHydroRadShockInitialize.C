@@ -43,16 +43,13 @@ int RadHydroRadShockInitialize(FILE *fptr, FILE *Outfptr,
   if (MyProcessorNumber == ROOT_PROCESSOR)
     fprintf(stdout,"Entering RadHydroRadShockInitialize routine\n");
 
-  char *DensName  = "Density";
-  char *TEName    = "TotalEnergy";
-  char *IEName    = "Internal_Energy";
-  char *Vel0Name  = "x-velocity";
-  char *Vel1Name  = "y-velocity";
-  char *Vel2Name  = "z-velocity";
-  char *RadName   = "Grey_Radiation_Energy";
-
-  // local declarations
-  int dim;
+  const char *DensName  = "Density";
+  const char *TEName    = "TotalEnergy";
+  const char *IEName    = "Internal_Energy";
+  const char *Vel0Name  = "x-velocity";
+  const char *Vel1Name  = "y-velocity";
+  const char *Vel2Name  = "z-velocity";
+  const char *RadName   = "Grey_Radiation_Energy";
 
   // Setup and parameters:
   //  1. ambient density (g/cc)
@@ -93,7 +90,7 @@ int RadHydroRadShockInitialize(FILE *fptr, FILE *Outfptr,
   /* error checking */
   if (Mu != DEFAULT_MU) {
     if (MyProcessorNumber == ROOT_PROCESSOR)
-      fprintf(stderr, "warning: mu =%f assumed in initialization; setting Mu = %f for consistency.\n", DEFAULT_MU);
+      fprintf(stderr, "warning: mu =%f assumed in initialization; setting Mu = %f for consistency.\n", DEFAULT_MU, DEFAULT_MU);
     Mu = DEFAULT_MU;
   }
 

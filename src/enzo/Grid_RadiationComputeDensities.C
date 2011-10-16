@@ -125,10 +125,10 @@ int grid::RadiationComputeDensities(int level)
 	    RadiationData.HIMeanDensity[level] += nHI*Volume*
 	      exp(-RadiationData.HIAveragePhotoionizationCrossSection*
 		   nHI*factor);
-	    RadiationData.HeIMeanDensity[level] += nHeI*Volume;
+	    RadiationData.HeIMeanDensity[level] += nHeI*Volume*
 	      exp(-RadiationData.HeIAveragePhotoionizationCrossSection*
 		   nHeI*factor);
-	    RadiationData.HeIIMeanDensity[level] += nHeII*Volume;
+	    RadiationData.HeIIMeanDensity[level] += nHeII*Volume*
 	      exp(-RadiationData.HeIIAveragePhotoionizationCrossSection*
 		   nHeII*factor);
 	  } else {

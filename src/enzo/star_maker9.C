@@ -72,17 +72,12 @@ int star_maker9(int *nx, int *ny, int *nz, int *size, float *d, float *te, float
 		float *temp, float *gamma, float *mu, int *nproc, int *nstar)
 {
 
-  int		i, j, k, index, ii, inew, n, bb, cc, nsinks, closest;
+  int		i, j, k, index, ii, n, cc, nsinks, closest;
   int           xo, yo, zo;
 #define MAX_SUPERCELL_NUMBER 1000
-  int           n_cell, ind_cell[MAX_SUPERCELL_NUMBER];
-  float		densthresh, maxdens, adddens, ugrid, vgrid, wgrid, m_cell;
+  float		densthresh, ugrid, vgrid, wgrid;
   double	jeansthresh, jlsquared, dx2, dist2, total_density, nearestdx2;
   FLOAT		xpos, ypos, zpos, delx, dely, delz;
-  double        DensityFloor;
-  double        Pi = 3.1415926;
-  float nx_cell[MAX_SUPERCELL_NUMBER], 
-    ny_cell[MAX_SUPERCELL_NUMBER], nz_cell[MAX_SUPERCELL_NUMBER];
   double msun = 1.989e33;
   double umass = (*d1)*POW(*x1,3)/msun;
 
@@ -125,8 +120,6 @@ int star_maker9(int *nx, int *ny, int *nz, int *size, float *d, float *te, float
   //printf("BigStarFormationDone = %"ISYM" MyProcessorNumber = %"ISYM"\n", BigStarFormationDone,MyProcessorNumber);
   if(BigStarFormationDone == 0){
     if (*level == MaximumRefinementLevel) {
-      float oldrho;
-      float SinkCollapseDistance = SinkMergeDistance;
       for (k = *ibuff; k < *nz-*ibuff; k++) {
 	for (j = *ibuff; j < *ny-*ibuff; j++) {
 	  index = (k * (*ny) + j) * (*nx) + (*ibuff);

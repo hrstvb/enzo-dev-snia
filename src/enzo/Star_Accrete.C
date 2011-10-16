@@ -33,7 +33,7 @@ int Star::Accrete(void)
   if (this->CurrentGrid == NULL || this->naccretions == 0)
     return SUCCESS;
 
-  const double Msun = 1.989e33, yr = 3.1557e7;
+  const double yr = 3.1557e7;
   int dim, i, n, count;
   FLOAT time = CurrentGrid->Time;
   float dt = CurrentGrid->dtFixed;
@@ -70,7 +70,7 @@ int Star::Accrete(void)
   /* [2] For Star Formation, 
      We can still do this in approximate way (JHW, Jan10) */
 
-  double ratio1, ratio2, new_vel;
+  double ratio1, ratio2;
 
   if (type != MBH || type != BlackHole) {
     ratio2 = DeltaMass / Mass;

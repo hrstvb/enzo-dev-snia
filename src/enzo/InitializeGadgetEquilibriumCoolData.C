@@ -58,7 +58,7 @@ int InitializeGadgetEquilibriumCoolData(FLOAT Time)
 
   GadgetInitCoolMemory();
   GadgetMakeCoolingTable();  
-  GadgetReadIonizeParams("TREECOOL");
+  GadgetReadIonizeParams((char*) "TREECOOL");
   GadgetIonizeParamsTable(redshift);
   
   if(debug) printf("InitializeGadgetEquilibriumCoolData:  Cooling tables initialized.  Done\n");

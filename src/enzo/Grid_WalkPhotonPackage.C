@@ -64,7 +64,7 @@ int grid::WalkPhotonPackage(PhotonPackageEntry **PP,
 
   int i, index, dim, splitMe, direction;
   int keep_walking, count, H2Thin, type, TemperatureField;
-  int g[3], celli[3], u_dir[3], u_sign[3];
+  int g[3], u_dir[3], u_sign[3];
   int cindex;
   float m[3], slice_factor, slice_factor2, sangle_inv;
   float MinTauIfront, PhotonEscapeRadius[3], c, c_inv, tau;
@@ -118,7 +118,7 @@ int grid::WalkPhotonPackage(PhotonPackageEntry **PP,
   /* Calculate the normal direction (HEALPix) */
 
   if (pix2vec_nest((long) (1 << (*PP)->level), (*PP)->ipix, dir_vec)==FAIL) {
-    ENZO_VFAIL("WalkPhotonPackage: pix2vec_nest outor %ld %ld %g %x\n",
+    ENZO_VFAIL("WalkPhotonPackage: pix2vec_nest outor %ld %ld %g %p\n",
 	    (long) (1 << (*PP)->level), (*PP)->ipix, (*PP)->Photons, (*PP) )
   }
 
@@ -429,7 +429,7 @@ int grid::WalkPhotonPackage(PhotonPackageEntry **PP,
     }  // if (splitting condition)
     
     if (DEBUG > 1) 
-      fprintf(stdout, "%x %"ISYM" %"ISYM" %"ISYM" %"GSYM" %"GSYM"\t|\n",
+      fprintf(stdout, "%p %"ISYM" %"ISYM" %"ISYM" %"GSYM" %"GSYM"\t|\n",
 	      (*PP), g[0], g[1], g[2], (*PP)->Radius, dr);
 
     index = cindex;

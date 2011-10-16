@@ -58,7 +58,7 @@ int PutSinkRestartInitialize(FILE *fptr, FILE *Outfptr,
   /* declarations */
  
   char line[MAX_LINE_LENGTH];
-  int dim, level, ret;
+  int level, ret;
   float dummyf;
   /* Set default supernova parameters. */
  

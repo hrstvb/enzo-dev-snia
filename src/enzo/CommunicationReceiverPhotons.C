@@ -58,16 +58,13 @@ int CommunicationReceiverPhotons(LevelHierarchyEntry *LevelArray[],
 
   /* Get any buffered receives */
 
-  int NoErrorSoFar = TRUE;
-  int FirstTime = TRUE;
-  MPI_Arg ReceivesCompletedToDate = 0, NumberOfCompletedRequests, index, errcode;
+  MPI_Arg ReceivesCompletedToDate = 0, NumberOfCompletedRequests, index;
   MPI_Arg TotalReceives = PH_CommunicationReceiveMaxIndex;
   int TotalReceivedPhotons = 0;
   bool *CompletedRequests = NULL;
   PhotonPackageEntry *NewPack, *ToPP;
-  int lvl, gi, dim, i, count, NumberOfActiveRequests;
+  int lvl, gi, dim, i, level;
   grid *ToGrid;
-  int ret, level;
 
   HierarchyEntry **Grids[MAX_DEPTH_OF_HIERARCHY];
   int nGrids[MAX_DEPTH_OF_HIERARCHY];

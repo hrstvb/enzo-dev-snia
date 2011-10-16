@@ -257,8 +257,8 @@ void PrintSourceClusteringTree(SuperSourceEntry *leaf)
   if (leaf == NULL)
     return;
 
-  printf("Source clustering[P%"ISYM"]: leaf %"ISYM", SRC = %x, parent = %x,\n"
-	 "                        children = %x %x\n"
+  printf("Source clustering[P%"ISYM"]: leaf %"ISYM", SRC = %p, parent = %p,\n"
+	 "                        children = %p %p\n"
 	 "                        pos = %"FSYM" %"FSYM" %"FSYM", cradius = %"GSYM"\n",
 	 MyProcessorNumber, leaf->LeafID, leaf, leaf->ParentSource,
 	 leaf->ChildSource[0], leaf->ChildSource[1], leaf->Position[0],

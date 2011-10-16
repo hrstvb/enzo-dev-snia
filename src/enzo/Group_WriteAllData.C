@@ -128,7 +128,9 @@ int Group_WriteAllData(char *basename, int filenumber,
   char id[MAX_CYCLE_TAG_SIZE], *cptr, name[MAX_LINE_LENGTH];
   char dumpdirname[MAX_LINE_LENGTH];
   char dumpdirroot[MAX_LINE_LENGTH];
+#ifdef SYSCALL
   char unixcommand[MAX_LINE_LENGTH];
+#endif
   char gridbasename[MAX_LINE_LENGTH];
   char hierarchyname[MAX_LINE_LENGTH];
   char bhierarchyname[MAX_LINE_LENGTH];
@@ -139,9 +141,7 @@ int Group_WriteAllData(char *basename, int filenumber,
   char groupfilename[MAX_LINE_LENGTH];
  
   int unixresult;
-  int status;
   int local, global;
-  int file_status;
   int ii, pe, nn;
   double twrite0, twrite1;
 
@@ -149,15 +149,18 @@ int Group_WriteAllData(char *basename, int filenumber,
  
   FILE *fptr;
   FILE *sptr;
-  FILE *gptr;
+#ifdef TASKMAP
   FILE *tptr;
+#endif
   FILE *mptr;
   FILE *optr;
  
   hid_t       file_id;
+#ifdef USE_HDF5_OUTPUT_BUFFERING
   hid_t       file_acc_template;
   size_t      memory_increment; // in bytes
   hbool_t     dump_flag;
+#endif
  
   herr_t      h5_status;
   herr_t      h5_error = -1;
@@ -165,7 +168,9 @@ int Group_WriteAllData(char *basename, int filenumber,
   int GridID = 1;
   int GridJD = 1;
   int GridKD = 1;
+#ifdef TASKMAP
   int GridLD = 1;
+#endif
  
   /* If this is an interpolated time step, then temporary replace  the time
      in MetaData.  Note:  Modified 6 Feb 2006 to fix interpolated  data outputs. */

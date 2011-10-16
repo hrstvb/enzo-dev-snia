@@ -106,10 +106,10 @@ int grid::RadHydroPulseTestInitializeGrid(float DensityConstant,
     // radiation energy, electron density, chemical species
     int i, j, k;
 
-    float pi=4.0*atan(1.0);
+    //float pi=4.0*atan(1.0);
+    //float BoltzCon = 1.38066e-16;
+    //float mH       = 1.66053e-24;
     float StBz=5.6704e-5;
-    float BoltzCon = 1.38066e-16;
-    float mH       = 1.66053e-24;
     float c=2.99792458e10;
     float RadCon = 4.0*StBz/c;
 
@@ -131,8 +131,8 @@ int grid::RadHydroPulseTestInitializeGrid(float DensityConstant,
     
     if (debug) {
       fprintf(stdout,"RadHydroPulseTestInitializeGrid:\n");
-      printf("        RadPulseDim = %"ISYM"\n",MyProcessorNumber,RadPulseDim);
-      printf("     MaxRadiationDt = %g\n",MyProcessorNumber,MaxRadiationDt);
+      printf("        RadPulseDim = %"ISYM"\n",RadPulseDim);
+      printf("     MaxRadiationDt = %g\n",MaxRadiationDt);
 
       printf("    DensityConstant = %g\n",DensityConstant);    
       printf("         TEConstant = %g\n",TEConstant);    

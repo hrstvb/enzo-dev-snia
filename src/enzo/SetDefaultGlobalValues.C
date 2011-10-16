@@ -43,9 +43,6 @@ char DefaultHistoryDir[] = "HD";
 char DefaultRedshiftDir[] = "RD";
 char DefaultTracerParticleDir[] = "TD";
  
- 
- 
- 
 int SetDefaultGlobalValues(TopGridData &MetaData)
 {
  
@@ -382,7 +379,7 @@ int SetDefaultGlobalValues(TopGridData &MetaData)
   RateData.DustTemperatureEnd      = 1500.0;
 
   CloudyCoolingData.CloudyCoolingGridRank          = 0;
-  CloudyCoolingData.CloudyCoolingGridFile          = "";
+  CloudyCoolingData.CloudyCoolingGridFile          = (char*) "";
   CloudyCoolingData.IncludeCloudyHeating           = 0;
   CloudyCoolingData.CMBTemperatureFloor            = 1;         // use CMB floor.
   CloudyCoolingData.CloudyElectronFractionFactor = 9.153959e-3; // calculated using Cloudy 07.02 abundances

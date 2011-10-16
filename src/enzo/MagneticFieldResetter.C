@@ -46,7 +46,7 @@ int MagneticFieldResetter(LevelHierarchyEntry *LevelArray[], int ThisLevel,
       !(MetaData->FirstTimestepAfterRestart)) 
     return SUCCESS;
 
-  int level, i, grid1;
+  int level, grid1;
   HierarchyEntry **Grids;
   int NumberOfGrids;
   

@@ -87,23 +87,23 @@ int Group_ReadAllData(char *name, HierarchyEntry *TopGrid, TopGridData &MetaData
 
   FILE *fptr;
   FILE *tptr;
+#ifdef TASKMAP
   FILE *mptr;
+#endif /* TASKMAP */
 
   hid_t       file_id;
+#ifdef USE_HDF5_INPUT_BUFFERING
   hid_t       file_acc_template;
   size_t      memory_increment; // in bytes
+  herr_t      h5_status;
+#endif
   hbool_t     dump_flag;
 
-  herr_t      h5_status;
   herr_t      h5_error = -1;
 
   int GridID = 1;
-  int GridKD = 1;
 
-  float dummy;
   int dummy_int;
-
-  int *NumberOfSubgridCells;
 
   // store the original parameter file name, in case we need it later
   strcpy(PrevParameterFileName, name);

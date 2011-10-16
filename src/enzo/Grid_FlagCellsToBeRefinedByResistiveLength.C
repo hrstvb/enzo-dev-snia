@@ -42,22 +42,19 @@ int grid::FlagCellsToBeRefinedByResistiveLength()
   }
 
 
-  float denu = 1.0, lenu = 1.0, velu = 1.0, tu, tempu;
-    
   int igrid;
   
-  float rho, eint, etot, vx, vy, vz, v2, p, h, cs, dpdrho, dpde, l_res, 
+  float rho, l_res, 
     curlBx, curlBy, curlBz, absB2, curlB2;
   int xmo, xpo, ymo, ypo, zmo, zpo;
-  FLOAT x, y, z, r;
 
-    int iBx, iBy, iBz;
-    if (useMHD){
-      iBx=FindField(Bfield1, FieldType, NumberOfBaryonFields);
-      iBy=FindField(Bfield2, FieldType, NumberOfBaryonFields);
-      if (GridRank==3) iBz=FindField(Bfield3, FieldType, NumberOfBaryonFields);
-      
-    }
+  int iBx, iBy, iBz;
+  if (useMHD){
+    iBx=FindField(Bfield1, FieldType, NumberOfBaryonFields);
+    iBy=FindField(Bfield2, FieldType, NumberOfBaryonFields);
+    if (GridRank==3) iBz=FindField(Bfield3, FieldType, NumberOfBaryonFields);
+    
+  }
 
       
   for (int k = GridStartIndex[2]; k < GridEndIndex[2]; k++) {
@@ -87,8 +84,6 @@ int grid::FlagCellsToBeRefinedByResistiveLength()
 
 	l_res = sqrt(absB2)/max(sqrt(curlB2),tiny_number);
 
-
-	int oldflag = FlaggingField[igrid];
 	if (CellWidth[0][i]*RefineByResistiveLengthSafetyFactor > l_res) {	  
 	  FlaggingField[igrid]++;
 	}

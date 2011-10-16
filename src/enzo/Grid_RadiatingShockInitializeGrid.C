@@ -114,7 +114,6 @@ int grid::RadiatingShockInitializeGrid(FLOAT dr,
     MetalNum = 0;
 
 
-  FILE *fptr;
   double *sedovradius=NULL,*sedovdensity=NULL,*sedovpressure=NULL,*sedovvelocity=NULL;
   int numbins=1000;
 

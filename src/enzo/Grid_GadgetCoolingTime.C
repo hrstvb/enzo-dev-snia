@@ -89,7 +89,7 @@ int grid::GadgetCoolingTime(float *d, float *e, float *ge,
   /* local variables */
   int i,j,k;
 
-  float u_new,u_old,  /* u_new, u_old are internal energy per unit mass*/
+  float u_old,  /* u_old is internal energy per unit mass*/
     totalenergypermass, gasenergypermass,
     density,
     vx,vy,vz,ne_guess,

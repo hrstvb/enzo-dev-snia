@@ -74,9 +74,9 @@ int Star::CalculateMassAccretion(float &BondiRadius, float &density)
     }
 
   int igrid[MAX_DIMENSION], dim, index, size = 1;
-  float c_s, mu, number_density, old_mass, delta_mass, mdot;
-  float mdot_original = 0.0, mdot_UpperLimit, mdot_Edd;
-  float *temperature, v_rel, dvel;
+  float c_s, mu, number_density, old_mass, mdot;
+  float mdot_original = 0.0, mdot_Edd;
+  float *temperature, v_rel;
 
   for (dim = 0; dim < MAX_DIMENSION; dim++) {
     size *= CurrentGrid->GridDimension[dim];

@@ -59,7 +59,7 @@ int grid::RegridPausedPhotonPackage(PhotonPackageEntry** PP, grid* ParentGrid,
   // Calculate original unit directional vector
   if (pix2vec_nest((long) (1 << (*PP)->level), (*PP)->ipix, original_vec) == FAIL) {
     ENZO_VFAIL("grid::RegridPausedPhotonPackages(1) -- "
-	       "pix2vec_nest %"ISYM" %"ISYM" %"GSYM"\n",
+	       "pix2vec_nest %ld %ld %"GSYM"\n",
 	       (long) (1 << (*PP)->level), (*PP)->ipix, (*PP)->Photons)
   }
 
@@ -99,14 +99,14 @@ int grid::RegridPausedPhotonPackage(PhotonPackageEntry** PP, grid* ParentGrid,
   // Calculate new pixel number with the super source
   if (vec2pix_nest( (long) (1 << (*PP)->level), vec, &((*PP)->ipix) ) == FAIL) {
     ENZO_VFAIL("grid::RegridPausedPhotonPackages -- "
-	       "vec2pix_nest %"ISYM" %"ISYM" %"GSYM"\n",
+	       "vec2pix_nest %ld %ld %"GSYM"\n",
 	       (long) (1 << (*PP)->level), (*PP)->ipix, (*PP)->Photons)
   }
   
   // Calculate new unit directional vector for merged package
   if (pix2vec_nest((long) (1 << (*PP)->level), (*PP)->ipix, new_vec) == FAIL) {
     ENZO_VFAIL("grid::RegridPausedPhotonPackages(2) -- "
-	       "pix2vec_nest %"ISYM" %"ISYM" %"GSYM"\n",
+	       "pix2vec_nest %ld %ld %"GSYM"\n",
 	       (long) (1 << (*PP)->level), (*PP)->ipix, (*PP)->Photons)
   }
 

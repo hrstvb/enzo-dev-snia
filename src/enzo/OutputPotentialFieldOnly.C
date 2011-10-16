@@ -112,7 +112,7 @@ int OutputPotentialFieldOnly(char *ParameterFile,
   Exterior.AddField(GravPotential);
 
   int n = LevelArray[0]->GridData->ReturnNumberOfBaryonFields();
-  DataLabel[n-1] = "PotentialField";
+  DataLabel[n-1] = (char*) "PotentialField";
 
   /* If we're not using parallel root grid I/O and we're parallel, we
      need to rebuild the hierarchy with the multiple root grids. */

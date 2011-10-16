@@ -38,12 +38,11 @@ int ProtostellarCollapseInitialize(FILE *fptr, FILE *Outfptr,
 				   HierarchyEntry &TopGrid,
 				   TopGridData &MetaData)
 {
-  char *DensName = "Density";
-  char *TEName   = "TotalEnergy";
-  char *Vel1Name = "x-velocity";
-  char *Vel2Name = "y-velocity";
-  char *Vel3Name = "z-velocity";
-  char *GPotName = "Grav_Potential";
+  const char *DensName = "Density";
+  const char *TEName   = "TotalEnergy";
+  const char *Vel1Name = "x-velocity";
+  const char *Vel2Name = "y-velocity";
+  const char *Vel3Name = "z-velocity";
 
   /* parameter declarations */
 
@@ -54,8 +53,7 @@ int ProtostellarCollapseInitialize(FILE *fptr, FILE *Outfptr,
 
   char line[MAX_LINE_LENGTH];
   int  dim, ret, NumberOfSubgridZones[MAX_DIMENSION],
-                          SubgridDims[MAX_DIMENSION],
-                                  xyz[MAX_DIMENSION];
+    SubgridDims[MAX_DIMENSION];
   float TopCell[MAX_DIMENSION];
 
   /* make sure it is 3D */
@@ -108,9 +106,9 @@ int ProtostellarCollapseInitialize(FILE *fptr, FILE *Outfptr,
 		  &ProtostellarCollapseOuterDensity);
     ret += sscanf(line, "ProtostellarCollapseAngularVelocity = %"FSYM, 
 		  &ProtostellarCollapseAngularVelocity);
-    ret += sscanf(line, "ProtostellarCollapseSubgridLeft     = %"FSYM, 
+    ret += sscanf(line, "ProtostellarCollapseSubgridLeft     = %"PSYM, 
 		  &ProtostellarCollapseSubgridLeft);
-    ret += sscanf(line, "ProtostellarCollapseSubgridRight    = %"FSYM, 
+    ret += sscanf(line, "ProtostellarCollapseSubgridRight    = %"PSYM, 
 		  &ProtostellarCollapseSubgridRight);
 
     /* if the line is suspicious, issue a warning */
@@ -280,16 +278,12 @@ int ProtostellarCollapseInitialize(FILE *fptr, FILE *Outfptr,
   DataLabel[2] = Vel1Name;
   DataLabel[3] = Vel2Name;
   DataLabel[4] = Vel3Name;
-  //  if (WritePotential)   //DR: not using this of Alexei's for now
-  //    DataLabel[5] = GPotName;
 
   DataUnits[0] = NULL;
   DataUnits[1] = NULL;
   DataUnits[2] = NULL;
   DataUnits[3] = NULL;
   DataUnits[4] = NULL;
-  //  if (WritePotential)   //DR: not using this of Alexei's for now
-  //    DataUnits[5] = NULL;
 
 
   /* Write parameters to parameter output file */

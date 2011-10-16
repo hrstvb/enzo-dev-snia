@@ -229,7 +229,7 @@ int ReadPhotonSources(FILE *fptr, FLOAT CurrentTime)
     if (RadSources->Type != Isotropic && RadSources->Type != Beamed &&
 	RadSources->Type != Episodic) {
       if (MyProcessorNumber == ROOT_PROCESSOR)
-	fprintf(stderr, "PhotonTestSourceType must be 1, -2, -3.\n",
+	fprintf(stderr, "PhotonTestSourceType must be 1, -2, -3.\n"
 		"\tChanging to 1 (isotropic)\n");
       RadSources->Type = Isotropic;
     }

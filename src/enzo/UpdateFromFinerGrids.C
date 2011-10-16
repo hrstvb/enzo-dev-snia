@@ -72,7 +72,6 @@ int UpdateFromFinerGrids(int level, HierarchyEntry *Grids[], int NumberOfGrids,
   HierarchyEntry *NextGrid;
  
 #ifdef FLUX_FIX
-  int SUBlingGrid;
   LevelHierarchyEntry *NextEntry;
 #endif
  

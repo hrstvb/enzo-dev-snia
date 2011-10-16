@@ -43,7 +43,7 @@ int grid::SetParticleMassFlaggingField(int StartProc, int EndProc, int level,
 {
 
   //printf("grid::SetParticleMassFlaggingField called \n");
-  int i, irecv, dim, size, proc, MPI_Tag;
+  int i, dim, size, proc;
 
   /* Return if we're not needed here */
 

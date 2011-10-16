@@ -49,6 +49,8 @@ int FindField(int f, int farray[], int n);
 int grid::WriteCube(char *base_name, int grid_id, int TGdims[])
 {
 
+#ifdef PARALLEL_HDF5
+ 
   int i, j, k, dim, field, size, ActiveDim[MAX_DIMENSION];
   int file_status;
   int output_cube;
@@ -109,22 +111,22 @@ int grid::WriteCube(char *base_name, int grid_id, int TGdims[])
   char PartName[80+1];
   char LogName[80+1];
  
-  char *ParticlePositionLabel[] =
+  const char *ParticlePositionLabel[] =
      {"particle_position_x", "particle_position_y", "particle_position_z"};
  
-  char *ParticleVelocityLabel[] =
+  const char *ParticleVelocityLabel[] =
      {"particle_velocity_x", "particle_velocity_y", "particle_velocity_z"};
  
-  char *ParticleMassLabel = "particle_mass";
-  char *ParticleTypeLabel = "particle_type";
-  char *ParticleIndexLabel = "particle_index";
+  const char *ParticleMassLabel = "particle_mass";
+  const char *ParticleTypeLabel = "particle_type";
+  const char *ParticleIndexLabel = "particle_index";
 #ifdef WINDS
-    char *ParticleAttributeLabel[] = 
-      {"creation_time", "dynamical_time", "metallicity_fraction", "particle_jet_x", 
-       "particle_jet_y", "particle_jet_z", "typeia_fraction"};
+  const char *ParticleAttributeLabel[] = 
+    {"creation_time", "dynamical_time", "metallicity_fraction", "particle_jet_x", 
+     "particle_jet_y", "particle_jet_z", "typeia_fraction"};
 #else
-    char *ParticleAttributeLabel[] = 
-      {"creation_time", "dynamical_time", "metallicity_fraction", "typeia_fraction"};
+  const char *ParticleAttributeLabel[] = 
+    {"creation_time", "dynamical_time", "metallicity_fraction", "typeia_fraction"};
 #endif
 #ifdef IO_LOG
   int         io_log = 1;
@@ -136,8 +138,6 @@ int grid::WriteCube(char *base_name, int grid_id, int TGdims[])
   io_log = 1;
  
 // Begin
- 
-#ifdef PARALLEL_HDF5
  
   int ii = sizeof(float32);
  

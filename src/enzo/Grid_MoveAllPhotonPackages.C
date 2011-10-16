@@ -38,7 +38,7 @@ int grid::MoveAllPhotonPackages(int NumberOfGrids, grid* FromGrid[])
   /* Determine total number of particles. */
 
   int TotalNumberOfPackages = NumberOfPhotonPackages;
-  int i, j, gridcount, dim, *Number, *Type;
+  int gridcount;
 
   for (gridcount = 0; gridcount < NumberOfGrids; gridcount++) 
     TotalNumberOfPackages += FromGrid[gridcount]->NumberOfPhotonPackages;

@@ -48,8 +48,7 @@ float grid::ComputePhotonTimestepHII(float DensityUnits, float LengthUnits,
 //    return huge_number;
 
   int i, j, k, dim, index, indexn, size;
-  float dt, this_dt, sigma_dx, *temperature;
-  const double sigmaHI = 6.345e-18, mh = 1.673e-24;
+  float dt, this_dt, *temperature;
 
   dt = huge_number;
   
@@ -158,7 +157,7 @@ float grid::ComputePhotonTimestepHII(float DensityUnits, float LengthUnits,
   /* Use a weighted averaged of the timestep in a 3^3 cube */
 
   int i0, j0, k0, i1, j1, k1, ii, jj, kk;
-  int imin, ikernel, nx, ny, nz, nn;
+  int imin, nx, ny, nz, nn;
   float weight, kernel2;
   
   const float kernel[] = 

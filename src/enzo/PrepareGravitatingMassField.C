@@ -62,7 +62,7 @@ int PrepareGravitatingMassField1(HierarchyEntry *Grid)
   /* Baryons: copy parent density (no interpolation) to regions in
      GravitatingMassField which are beyond the boundary of the current grid. */
 
-  int CommunicationReceiveIndexLast = CommunicationReceiveIndex;
+  //int CommunicationReceiveIndexLast = CommunicationReceiveIndex;
   CommunicationReceiveCurrentDependsOn = COMMUNICATION_NO_DEPENDENCE;
   if (Grid->ParentGrid != NULL)
    if (CurrentGrid->CopyParentToGravitatingFieldBoundary(

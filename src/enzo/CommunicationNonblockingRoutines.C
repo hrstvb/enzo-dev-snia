@@ -47,7 +47,7 @@ static MPI_Status PH_ListOfStatuses[MAX_PH_RECEIVE_BUFFERS];
 int InitializePhotonCommunication(void)
 {
 #ifdef USE_MPI
-  int i, proc;
+  int i;
 
   /* Receive any orphaned messages from the last RT call, so they
      don't interfere with this cycle. */
@@ -293,7 +293,6 @@ int CommunicationFindOpenRequest(MPI_Request *requests, Eint32 last_free,
 {
   int i, count;
   bool FoundOpenRequest = false;
-  MPI_Status status;
 
   max_index = max(max_index, index);
   i = (last_free != NO_HINT) ? last_free : 0;
@@ -322,11 +321,8 @@ int InitializePhotonReceive(int max_size, bool local_transport,
 			    MPI_Datatype MPI_PhotonType)
 {
 
-  MPI_Status status;
-  MPI_Arg proc, MessageReceived;
-  Eint32 NumberOfMessages, NumberOfReceives;
-  GroupPhotonList *ReceiveBuffer = NULL;
-  int i, j, index, RecvProc;
+  Eint32 NumberOfReceives;
+  int i, index, RecvProc;
 
   /* Receive MPI messages that contain how many messages with the
      actual photon data that we'll be receiving from each process. */
@@ -424,9 +420,8 @@ int KeepTransportingCheck(char* &kt_global, int &keep_transporting)
   int i, index, RecvProc;
   char value = keep_transporting;
   char received = RECV_DATA;
-  bool PingRequired, PingReceived, AcceptMessage;
+  bool PingRequired, AcceptMessage;
   MPI_Arg proc, NumberOfReceives, MessageReceived;
-  MPI_Status status;
 
 //  if (DEBUG)
 //    printf("P%d: keep_transporting(before) = %d, KTMaxIndex = %d\n", 
@@ -564,7 +559,7 @@ int KeepTransportingCheck(char* &kt_global, int &keep_transporting)
 
 #ifdef USE_MPI
 void CommunicationCheckForErrors(int NumberOfStatuses, MPI_Status *statuses,
-				 char *msg)
+				 const char *msg)
 {
   int i;
   char error_string[1024];

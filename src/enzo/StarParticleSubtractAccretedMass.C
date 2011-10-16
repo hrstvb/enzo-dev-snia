@@ -46,14 +46,10 @@ int StarParticleSubtractAccretedMass(TopGridData *MetaData,
 				     Star *&AllStars)
 {
 
-  const double pc = 3.086e18, Msun = 1.989e33, pMass = 1.673e-24, 
-    gravConst = 6.673e-8, yr = 3.1557e7, Myr = 3.1557e13;
-
   Star *cstar;
   bool MarkedSubgrids = false;
-  int i, l, dim, temp_int, SkipMassRemoval, SphereContained,
-      SphereContainedNextLevel, dummy;
-  float influenceRadius, RootCellWidth, SNe_dt, mdot;
+  int l, SphereContained, SphereContainedNextLevel, dummy;
+  float influenceRadius, RootCellWidth, SNe_dt;
   float dtForThisStar, StarLevelCellWidth;
   double Subtraction, dummy_float = 0;
   FLOAT Time;
@@ -117,7 +113,7 @@ int StarParticleSubtractAccretedMass(TopGridData *MetaData,
 
       /* Compute some parameters, similar to Star_CalculateFeedbackParameters */
 
-      grid *cstar_grid = cstar->ReturnCurrentGrid();
+      //grid *cstar_grid = cstar->ReturnCurrentGrid();
 
       CalculateSubtractionParameters(LevelArray, level, cstar->ReturnPosition(), cstar->ReturnMass(),
 				     cstar->ReturnLastAccretionRate(), cstar->ReturnType(),

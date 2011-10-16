@@ -52,7 +52,6 @@ int WriteAllDataCubes(char *basename, int filenumber,
   char cycle_id[9];
   char name[MAX_LINE_LENGTH];
  
-  int GridID = 1;
   int GridJD = 1;
 
   /* If this is an interpolated time step, then temporary replace  the time

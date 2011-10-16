@@ -232,7 +232,7 @@ int grid::Shine(RadiationSourceEntry *RadiationSource)
 	if (pix2vec_nest((long) (1<<NewPack->level), NewPack->ipix, 
 			 dir_vec) == FAIL) {
 	  NewPack->Photons=-1;
-	  ENZO_VFAIL("grid::WalkPhotonPackage:  pix2vec_nest outor %"ISYM" %"ISYM" %"GSYM" %"ISYM"\n",
+	  ENZO_VFAIL("grid::WalkPhotonPackage:  pix2vec_nest outor %ld %ld %"GSYM" %p\n",
 		  (long) (pow(2,NewPack->level)), NewPack->ipix, 
 		  NewPack->Photons, NewPack )
 	}
@@ -291,8 +291,7 @@ int grid::Shine(RadiationSourceEntry *RadiationSource)
     if (DEBUG) fprintf(stdout,"counted %"ISYM" packages\n", count);
   }
 
-  if (DEBUG) fprintf(stdout, "Shine: PhotonPackages : %"ISYM"   NextPackage  %"ISYM"\n", 
-
+  if (DEBUG) fprintf(stdout, "Shine: PhotonPackages : %p   NextPackage  %p\n", 
 		     PhotonPackages, PhotonPackages->NextPackage);
   
   return SUCCESS;

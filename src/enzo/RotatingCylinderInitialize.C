@@ -37,13 +37,13 @@ int RotatingCylinderInitialize(FILE *fptr, FILE *Outfptr, HierarchyEntry &TopGri
     fflush(stdout);
   }
 
-  char *DensName = "Density";
-  char *TEName   = "TotalEnergy";
-  char *GEName   = "GasEnergy";
-  char *Vel1Name = "x-velocity";
-  char *Vel2Name = "y-velocity";
-  char *Vel3Name = "z-velocity";
-  char *MetalName = "Metal_Density";
+  const char *DensName = "Density";
+  const char *TEName   = "TotalEnergy";
+  const char *GEName   = "GasEnergy";
+  const char *Vel1Name = "x-velocity";
+  const char *Vel2Name = "y-velocity";
+  const char *Vel3Name = "z-velocity";
+  const char *MetalName = "Metal_Density";
 
   /* parameter declarations */
  
@@ -73,7 +73,6 @@ int RotatingCylinderInitialize(FILE *fptr, FILE *Outfptr, HierarchyEntry &TopGri
   float RotatingCylinderOverdensity = 20.0;
   float RotatingCylinderDensity = 1.0;
   float RotatingCylinderTotalEnergy = 1.0;
-  float Pi                      = 3.14159;
 
   /* set no subgrids by default. */
  
@@ -270,8 +269,8 @@ int RotatingCylinderInitialize(FILE *fptr, FILE *Outfptr, HierarchyEntry &TopGri
     fprintf(Outfptr, "RotatingCylinderTotalEnergy         = %"FSYM"\n"  , RotatingCylinderTotalEnergy);
     fprintf(Outfptr, "RotatingCylinderRadius         = %"PSYM"\n"  , RotatingCylinderRadius);
     fprintf(Outfptr, "RotatingCylinderCenterPosition = %"PSYM" %"PSYM" %"PSYM"\n",
-		  RotatingCylinderCenterPosition, RotatingCylinderCenterPosition+1,
-		  RotatingCylinderCenterPosition+2);
+		  RotatingCylinderCenterPosition[0], RotatingCylinderCenterPosition[1],
+		  RotatingCylinderCenterPosition[2]);
     fprintf(Outfptr, "TestProblemUseMetallicityField  = %"ISYM"\n", TestProblemData.UseMetallicityField);
     fprintf(Outfptr, "TestProblemInitialMetallicityFraction  = %"FSYM"\n", TestProblemData.MetallicityField_Fraction);
 

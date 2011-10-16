@@ -35,7 +35,6 @@ int ReadRadiativeTransferSpectrumTable(float TemperatureUnits, float LengthUnits
   FILE *fptr;
   char line[MAX_LINE_LENGTH];
   int i, nbins;
-  float TemperatureRange[2];
 
   // open the file
 

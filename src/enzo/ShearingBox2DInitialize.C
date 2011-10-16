@@ -69,8 +69,6 @@ int ShearingBox2DInitialize (FILE *fptr, FILE *Outfptr,
   const char *ByName = "By";
   // const char *BzName = "Bz";
   const char *PhiName = "Phi";
-  const char *DebugName = "Debug";
-  const char *Phi_pName = "Phip";
   
   /* declarations */
 
@@ -85,7 +83,6 @@ int ShearingBox2DInitialize (FILE *fptr, FILE *Outfptr,
 
   float ThermalMagneticRatio=400; 
   float FluctuationAmplitudeFraction=0.1;
-  int ShearingBoxRefineAtStart   = FALSE;
   float ShearingGeometry=2.0;
   int InitialMagneticFieldConfiguration=0;
   int RefineAtStart=1;

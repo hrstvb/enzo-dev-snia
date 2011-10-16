@@ -85,7 +85,6 @@ int grid::FlagCellsToBeRefinedByOpticalDepth()
     ConvertToProperNumberDensity * CellWidth[0][0] * sigmaHI;
 
   float tau0, tau1, tau2;
-  float inv_dt_sec = 1.0 / (dtFixed * TimeUnits);
 
   /* Loop over grid. */
 

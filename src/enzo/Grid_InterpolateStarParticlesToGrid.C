@@ -49,7 +49,7 @@ int grid::InterpolateStarParticlesToGrid(int NumberOfSPFields)
  
   /* initialize */
  
-  int dim, i, j, k, size, field;
+  int dim, i, size, field;
   int xindex, yindex, zindex, index;
   int StarDensNum, FormingStarDensNum, SFRDensNum, CreationTimeNum;
   int ActiveDim[MAX_DIMENSION];

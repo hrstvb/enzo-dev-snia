@@ -43,18 +43,11 @@ int WriteStreamData(LevelHierarchyEntry *LevelArray[], int level,
 		    TopGridData *MetaData, int *CycleCount, int open=FALSE) 
 {
 
-  float MaxDensity = -1e20;
   float root_dx = 1.0 / MetaData->TopGridDims[0];
   FLOAT *pos;
-  FLOAT lbbox[] = { huge_number,  huge_number,  huge_number};
-  FLOAT rbbox[] = {-huge_number, -huge_number, -huge_number};
-  FLOAT Left[3], Right[3];
-  int Dims[3], Rank, i, j;
-
-  int ilevel, Zero = FALSE;
+  int i, j;
+  int Zero = FALSE;
   LevelHierarchyEntry *Temp;
-
-  int count;
 
 //  if (debug)
 //    printf("Movie: %d %d\n", level, CycleCount[level]);
@@ -340,20 +333,6 @@ int WriteStreamData(LevelHierarchyEntry *LevelArray[], int level,
 	 MetaData->MovieTimestepCounter, open, WriteTime,
 	 alreadyopened, NumberOfStarParticlesOnProcOnLvl);
 
-#define NOFIND_DENSEST
-#ifdef FIND_DENSEST
-      Temp->GridData->FindMaximumBaryonDensity(&MaxDensity, pos);
-
-      if (MyProcessorNumber == ROOT_PROCESSOR) {
-	Temp->GridData->ReturnGridInfo(&Rank, Dims, Left, Right);
-	for (i = 0; i < MAX_DIMENSION; i++) {
-	  lbbox[i] = MIN(lbbox[i], Left[i]);
-	  rbbox[i] = MAX(rbbox[i], Right[i]);
-	}
-      }
-
-#endif /* FIND_DENSEST */
-
       Temp = Temp->NextGridThisLevel;
 
     } /* ENDWHILE: grid loop */
@@ -475,42 +454,6 @@ int WriteStreamData(LevelHierarchyEntry *LevelArray[], int level,
 #endif
 
   }
-
-#ifdef FIND_DENSEST
-  float value = MaxDensity;
-  int haveMax = FALSE;
-  int procWithMax = -1;
-  int tempProcNum = 0;
-
-#ifdef USE_MPI
-  CommunicationAllReduceValues(&value, 1, MPI_MAX);
-  if (fabs(value-MaxDensity) < 1e-5) haveMax = TRUE;
-  MaxDensity = value;
-
-  if (haveMax == FALSE)
-    for (i = 0; i < MAX_DIMENSION; i++)
-      pos[i] = -huge_number;
-
-  CommunicationReduceValues(pos, 3, MPI_MAX);
-#endif /* USE_MPI */    
-
-  FILE *fptr;
-  if (MyProcessorNumber == ROOT_PROCESSOR) {
-    if (open == TRUE) {
-      if ((fptr = fopen("densestPoint.dat", "w")) == NULL)
-	ENZO_FAIL("Error in opening file densestPoint.dat\n");
-      fprintf(fptr, "# Time   Density   Densest_Point    Left_Bounding_Box    Right_Bounding_Box\n");
-    } else
-      if ((fptr = fopen("densestPoint.dat", "a")) == NULL)
-	ENZO_FAIL("Error in opening file densestPoint.dat\n");
-
-    fprintf(fptr, "%"GOUTSYM" %15.6g %"GOUTSYM" %"GOUTSYM" %"GOUTSYM" %"GOUTSYM" %"GOUTSYM" %"GOUTSYM" %"GOUTSYM" %"GOUTSYM" %"GOUTSYM"\n",
-	    MetaData->Time, MaxDensity, pos[0], pos[1], pos[2],
-	    lbbox[0], lbbox[1], lbbox[2], rbbox[0], rbbox[1], rbbox[2]);
-    fclose(fptr);
-  } // ENDIF ROOT PROCESSOR
-
-#endif  /* FIND_DENSEST */
 
   delete [] pos;
 

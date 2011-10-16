@@ -31,7 +31,7 @@ int ReadMetalCoolingRatios(char *filename)
 
   FILE *fptr;
   char line[MAX_LINE_LENGTH];
-  int i, nbins;
+  int nbins;
 
   if ((fptr = fopen(filename, "r")) == NULL) {
     ENZO_VFAIL("Error opening metal cooling table %s\n", filename)

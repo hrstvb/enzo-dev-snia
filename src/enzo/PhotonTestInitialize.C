@@ -84,7 +84,7 @@ int PhotonTestInitialize(FILE *fptr, FILE *Outfptr,
 
   char  line[MAX_LINE_LENGTH];
   char *dummy = new char[MAX_LINE_LENGTH];
-  int   dim, ret, level, sphere, i, source;
+  int   dim, ret, level, sphere, i;
   int   TotalRefinement;
 
   /* set default parameters */

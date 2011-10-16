@@ -51,7 +51,7 @@ int ZeusSource(float *d, float *e, float *u, float *v, float *w, float *p,
   /* Local declarations */
 
   int i, j, k, jsm1, ksm1, jep1, kep1, jsm2, ksm2, jep2, kep2, n, nstep;
-  float  alpha, q[ijk], div[ijk], deltav, deltavmax, e1, gamma1, dt1;
+  float  alpha, q[ijk], div[ijk], deltav, e1, gamma1, dt1;
 
   /* ======================================================================= */
 

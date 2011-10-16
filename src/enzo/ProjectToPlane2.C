@@ -85,7 +85,7 @@ int ProjectToPlane2(char *ParameterFile, HierarchyEntry &TopGrid,
 
   /* Declarations */
 
-  int i, j, dim, field, level, ret, size = 1;
+  int i, j, dim, field, level, size = 1;
   int NumberOfProjectedFields = NUMBER_OF_PROJECTED_FIELDS;
   int ProjectDim[MAX_DIMENSION];
   float **ProjectedField, TempCellWidth;
@@ -357,7 +357,6 @@ int ProjectToPlane2(char *ParameterFile, HierarchyEntry &TopGrid,
     /* Write projected planes to HDF file. */
 
     float *density_squared = new float[size];
-    float Tcmb, exp_tau, temp_b;
     int RhoWeighted, Rho2Weighted, LuminosityField, SubmmField;
     const char *FieldName, *Units;
 

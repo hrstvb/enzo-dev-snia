@@ -39,7 +39,7 @@ int grid::TransferSubgridStars(grid* Subgrids[], int NumberOfSubgrids,
  
   /* Declarations. */
 
-  int i, j, index, dim, n1, grid, proc;
+  int i, index, dim, n1, proc;
   int i0, j0, k0;
   Star *cstar, *MoveStar;
   StarBuffer *TempBuffer;

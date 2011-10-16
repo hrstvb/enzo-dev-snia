@@ -52,8 +52,8 @@ int ReadListOfInts(FILE *fptr, int N, int nums[]);
 int grid::ReadRandomForcingFields(FILE *fptr)
 {
  
-  int i, j, k, dim, field, size, active_size;
-  char name[MAX_LINE_LENGTH], dummy[MAX_LINE_LENGTH];
+  int i, j, k, dim, size, active_size;
+  char name[MAX_LINE_LENGTH];
  
   int ActiveDim[MAX_DIMENSION];
  
@@ -62,15 +62,11 @@ int grid::ReadRandomForcingFields(FILE *fptr)
   hid_t       file_id, dset_id;
   hid_t       float_type_id, FLOAT_type_id;
   hid_t       file_dsp_id;
-  hid_t       num_type;
  
   hsize_t     OutDims[MAX_DIMENSION];
-  hsize_t     TempIntArray[MAX_DIMENSION];
  
   herr_t      h5_status;
   herr_t      h5_error = -1;
- 
-  int         num_size;
  
 #ifdef IO_LOG
   int         io_log = 1;

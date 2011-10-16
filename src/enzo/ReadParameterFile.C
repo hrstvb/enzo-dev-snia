@@ -391,12 +391,12 @@ int ReadParameterFile(FILE *fptr, TopGridData &MetaData, float *Initialdt)
  
     ret += sscanf(line, "ExternalGravity         = %"ISYM,&ExternalGravity);
     ret += sscanf(line, "ExternalGravityConstant = %"FSYM, &ExternalGravityConstant);
-    ret += sscanf(line, "ExternalGravityRadius   = %"FSYM,&ExternalGravityRadius);
+    ret += sscanf(line, "ExternalGravityRadius   = %"PSYM,&ExternalGravityRadius);
     ret += sscanf(line, "ExternalGravityDensity  = %"FSYM,&ExternalGravityDensity);
     ret += sscanf(line, "ExternalGravityPosition = %"PSYM" %"PSYM" %"PSYM,
 		  ExternalGravityPosition, ExternalGravityPosition+1,
 		  ExternalGravityPosition+2);
-    ret += sscanf(line, "ExternalGravityOrientation = %"FSYM" %"FSYM" %"FSYM, 
+    ret += sscanf(line, "ExternalGravityOrientation = %"PSYM" %"PSYM" %"PSYM, 
 		  ExternalGravityOrientation, ExternalGravityOrientation+1, 
 		  ExternalGravityOrientation+2);
 
@@ -427,8 +427,8 @@ int ReadParameterFile(FILE *fptr, TopGridData &MetaData, float *Initialdt)
     ret += sscanf(line, "RootGridCourantSafetyNumber = %"FSYM,
 		  &RootGridCourantSafetyNumber);
     ret += sscanf(line, "RandomForcing = %"ISYM, &RandomForcing); //AK
-    ret += sscanf(line, "RandomForcingEdot = %"FSYM, &RandomForcingEdot); //AK
-    ret += sscanf(line, "RandomForcingMachNumber = %"FSYM, //AK
+    ret += sscanf(line, "RandomForcingEdot = %"PSYM, &RandomForcingEdot); //AK
+    ret += sscanf(line, "RandomForcingMachNumber = %"PSYM, //AK
                   &RandomForcingMachNumber);
     ret += sscanf(line, "RadiativeCooling = %"ISYM, &RadiativeCooling);
     ret += sscanf(line, "RadiativeCoolingModel = %"ISYM, &RadiativeCoolingModel);
@@ -1538,7 +1538,7 @@ int ReadParameterFile(FILE *fptr, TopGridData &MetaData, float *Initialdt)
   }
  
   char *cwd_buffer = new char[MAX_LINE_LENGTH];
-  size_t cwd_buffer_len = MAX_LINE_LENGTH;
+  //size_t cwd_buffer_len = MAX_LINE_LENGTH;
  
   if ( (MetaData.GlobalDir == NULL) && (MetaData.LocalDir == NULL) ) {
     /*if(getcwd(cwd_buffer, cwd_buffer_len) == NULL) {

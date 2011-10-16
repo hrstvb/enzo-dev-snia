@@ -59,10 +59,9 @@ int StarParticleInitialize(HierarchyEntry *Grids[], TopGridData *MetaData,
   if (PopIIIInitialMassFunction)
     StarParticlePopIII_IMFInitialize();
 
-  int level, grids;
+  int level;
   Star *cstar;
   LevelHierarchyEntry *Temp;
-  grid *GridPointer[MAX_NUMBER_OF_SUBGRIDS];
   FLOAT TimeNow = LevelArray[ThisLevel]->GridData->ReturnTime();
 
   /* Initialize all star particles if this is a restart */

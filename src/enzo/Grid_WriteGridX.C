@@ -52,7 +52,6 @@ int grid::WriteGridX(FILE *fptr, char *base_name, int grid_id)
 {
  
   int i, j, k, dim, field, size, ActiveDim[MAX_DIMENSION];
-  int file_status;
  
   float32 *temp;
  
@@ -69,14 +68,19 @@ int grid::WriteGridX(FILE *fptr, char *base_name, int grid_id)
   herr_t      h5_status;
   herr_t      h5_error = -1;
  
-  char *ParticlePositionLabel[] =
+  const char *ParticlePositionLabel[] =
      {"particle_position_x", "particle_position_y", "particle_position_z"};
-  char *ParticleVelocityLabel[] =
+  const char *ParticleVelocityLabel[] =
      {"particle_velocity_x", "particle_velocity_y", "particle_velocity_z"};
-  char *ParticleAttributeLabel[] = {"creation_time", "dynamical_time",
-				    "metallicity_fraction", "particle_jet_x", "particle_jet_y", "particle_jet_z", "alpha_fraction"};
-  /*  char *ParticleAttributeLabel[] = {"creation_time", "dynamical_time",
-      "metallicity_fraction", "alpha_fraction"};*/
+#ifdef WINDS
+  const char *ParticleAttributeLabel[] = 
+    {"creation_time", "dynamical_time", "metallicity_fraction", "particle_jet_x", 
+     "particle_jet_y", "particle_jet_z", "typeia_fraction"};
+#else
+  const char *ParticleAttributeLabel[] = 
+    {"creation_time", "dynamical_time", "metallicity_fraction", "typeia_fraction"};
+#endif
+
 #ifdef IO_LOG
   int         io_log = 1;
 #else
@@ -299,7 +303,7 @@ int grid::WriteGridX(FILE *fptr, char *base_name, int grid_id)
  
       if ( DataUnits[field] == NULL )
       {
-        DataUnits[field] = "none";
+        DataUnits[field] = (char*) "none";
       }
  
       WriteStringAttr(dset_id, "Label", DataLabel[field], log_fptr);
@@ -368,7 +372,7 @@ int grid::WriteGridX(FILE *fptr, char *base_name, int grid_id)
  
       if ( DataUnits[field] == NULL )
       {
-        DataUnits[field] = "none";
+        DataUnits[field] = (char*) "none";
       }
  
       WriteStringAttr(dset_id, "Label", "Temperature", log_fptr);
@@ -459,7 +463,7 @@ int grid::WriteGridX(FILE *fptr, char *base_name, int grid_id)
  
       if ( DataUnits[field] == NULL )
       {
-        DataUnits[field] = "none";
+        DataUnits[field] = (char*) "none";
       }
  
       WriteStringAttr(dset_id, "Label", "Dark_Matter_Density", log_fptr);

@@ -51,7 +51,7 @@ int ReadIntFile(char *name, int Rank, int Dim[], int StartIndex[],
  
   hid_t       file_id, dset_id, attr_id;
   hid_t       file_dsp_id, mem_dsp_id, attr_dsp_id;
-  hid_t       file_type_id, mem_type_id, attr_type_id;
+  hid_t       file_type_id, mem_type_id;
  
   hsize_t     xfer_size;
   hsize_t     Slab_Dims[4];

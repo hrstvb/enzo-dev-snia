@@ -31,7 +31,7 @@ int WriteMemoryMap(FILE *fptr, HierarchyEntry *Grid,
 		   char* base_name, int &GridID, FLOAT WriteTime)
 {
  
-  int OriginalID, NextGridThisLevelID, NextGridNextLevelID;
+  int OriginalID, NextGridThisLevelID;
  
   OriginalID = GridID;
  

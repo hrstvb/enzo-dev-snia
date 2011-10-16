@@ -29,8 +29,8 @@ int grid::PutSinkRestartInitialize(int level, int *NumberOfCellsSet)
 {
   /* declarations */
  
-  int dim, i, j, k,l, n;
-  FLOAT delx, dely, delz, radius2, DomainWidth[MAX_DIMENSION];
+  int dim, i, j, k, l;
+  FLOAT DomainWidth[MAX_DIMENSION];
 
   float DensityUnits = 1.0, LengthUnits = 1.0, TemperatureUnits = 1.0, TimeUnits = 1.0,
     VelocityUnits = 1.0;

@@ -49,7 +49,6 @@ int grid::ShearingBox2DInitializeGrid(float ThermalMagneticRatio, float fraction
 
  /* declarations */
 
-  int phip_num;
   NumberOfBaryonFields = 0;
   FieldType[iden=NumberOfBaryonFields++] = Density;
   FieldType[ivx=NumberOfBaryonFields++] = Velocity1;
@@ -93,7 +92,7 @@ int grid::ShearingBox2DInitializeGrid(float ThermalMagneticRatio, float fraction
     TimeUnits = 1.0, VelocityUnits = 1.0;
   if (UsePhysicalUnit)
     GetUnits(&DensityUnits, &LengthUnits, &TemperatureUnits, &TimeUnits, &VelocityUnits, Time);
-  float MagneticUnits = sqrt(4.0*Pi*DensityUnits)*VelocityUnits;
+  //float MagneticUnits = sqrt(4.0*Pi*DensityUnits)*VelocityUnits;
   
   /* Problem parameters */
   float rho = 1.0;
@@ -274,7 +273,8 @@ int grid::ShearingBox2DInitializeGrid(float ThermalMagneticRatio, float fraction
 	  
 	  float dvx = vx0 * cs * cos(kx0 * x + ky * y);
 	  float dvy = -kx0 / ky * dvx;
-	  float drho = rho/(cs*ky) * (-2.0*kx0*kx0*q*Omega + 2.0*(q-1.0)*Omega) * vx0 * sin(kx0*x + ky*y);
+//	  float drho = rho/(cs*ky) * 
+//	    (-2.0*kx0*kx0*q*Omega + 2.0*(q-1.0)*Omega) * vx0 * sin(kx0*x + ky*y);
 	  
 	  //BaryonField[iden][igrid] += drho;
 	 

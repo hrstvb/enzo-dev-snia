@@ -75,7 +75,7 @@ int CommunicationLoadBalancePhotonGrids(HierarchyEntry **Grids[], int *NumberOfG
   int *NewProcessorNumber, *NonZeroList;
   grid **NonZeroGrids;
 
-  int i, index, index2, lvl, dim, proc, GridsMoved, TotalNumberOfGrids;
+  int i, index, index2, lvl, proc, GridsMoved, TotalNumberOfGrids;
   int NumberOfBaryonFields, Nonzero;
   int FieldTypes[MAX_NUMBER_OF_BARYON_FIELDS];
 

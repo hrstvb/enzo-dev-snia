@@ -41,7 +41,7 @@ int grid::TransportPhotonPackages(int level, ListOfPhotonsToMove **PhotonsToMove
 				  grid *ParentGrid, grid *CurrentGrid)
 {
 
-  int i,j,k, dim, index, count;
+  int i, dim, count;
   grid *MoveToGrid;
 
   if (MyProcessorNumber != ProcessorNumber)
@@ -194,12 +194,12 @@ int grid::TransportPhotonPackages(int level, ListOfPhotonsToMove **PhotonsToMove
     }
 
     if (DEBUG > 1) 
-      fprintf(stdout, "photon #%"ISYM" %x %x %x\n",
+      fprintf(stdout, "photon #%"ISYM" %p %p %p\n",
 	      tcount,  PP,  PhotonPackages, 
 	      MoveToGrid); 
 
     if (PauseMe == TRUE) {
-      if (DEBUG > 1) fprintf(stdout, "paused photon %x\n", PP);
+      if (DEBUG > 1) fprintf(stdout, "paused photon %p\n", PP);
       this->RegridPausedPhotonPackage(&PP, ParentGrid, &MoveToGrid, DeltaLevel,
 				      DeleteMe, DomainWidth, LightSpeed);
 
@@ -214,7 +214,7 @@ int grid::TransportPhotonPackages(int level, ListOfPhotonsToMove **PhotonsToMove
     }
 
     if (DeleteMe == TRUE) {
-      if (DEBUG > 1) fprintf(stdout, "delete photon %x\n", PP);
+      if (DEBUG > 1) fprintf(stdout, "delete photon %p\n", PP);
       dcount++;
       PP = DeletePhotonPackage(PP);
       MoveToGrid = NULL;
@@ -222,9 +222,9 @@ int grid::TransportPhotonPackages(int level, ListOfPhotonsToMove **PhotonsToMove
 
     if (MoveToGrid != NULL) {
       if (DEBUG) {
-	fprintf(stdout, "moving photon from %x to %x\n", 
+	fprintf(stdout, "moving photon from %p to %p\n", 
 		 CurrentGrid,  MoveToGrid);
-	fprintf(stdout, "moving photon %x %x %x %x\n", 
+	fprintf(stdout, "moving photon %p %p %p %p\n", 
 		 PP,  PP->PreviousPackage, 
 		 PP->NextPackage,  PhotonPackages);
       }

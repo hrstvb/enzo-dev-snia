@@ -134,11 +134,11 @@ int grid::SphericalInfallGetProfile(int level, int ReportLevel)
  
   char *mode;
   if (ReportLevel == 1) {
-    mode = "a";
-    SphericalInfallReportName = "SphericalInfallReport";
+    mode = (char*) "a";
+    SphericalInfallReportName = (char*) "SphericalInfallReport";
   }
   else {
-    mode = "w";
+    mode = (char*) "w";
     SphericalInfallReportName = ProfileName;
   }
  

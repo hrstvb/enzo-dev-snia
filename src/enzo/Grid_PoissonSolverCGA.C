@@ -382,7 +382,6 @@ int grid::PoissonSolverCGA(int difftype, double *divB_p)
   }
 
   int counter = 0;
-  double maxnr;
   while (!converge && counter < size){
 
     if (PoissonBoundaryType==Dirichlet){

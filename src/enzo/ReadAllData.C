@@ -69,13 +69,11 @@ int ReadAllData(char *name, HierarchyEntry *TopGrid, TopGridData &MetaData,
   char memorymapname[MAX_LINE_LENGTH];
 
   FILE *fptr;
-  FILE *tptr;
+#ifdef TASKMAP
   FILE *mptr;
+#endif
 
   int GridID = 1;
-  int GridKD = 1;
-
-  float dummy;
 
   // store the original parameter file name, in case we need it later
   strcpy(PrevParameterFileName, name);

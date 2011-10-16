@@ -77,10 +77,7 @@ int grid::TurbulenceSimulationInitializeGrid(
  
   /* declarations */
  
-  int idim, dim, i, j, vel, ibx;
-  int DeNum;
- 
-  int ExtraField[2];
+  int dim, i, vel, ibx;
  
   inits_type *tempbuffer = NULL;
  

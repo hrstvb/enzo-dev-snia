@@ -26,7 +26,7 @@ int ReadEvolveRefineFile(void)
     return FAIL;
   }
 
-  while (fscanf(fptr, "%"FSYM" %"FSYM" %"FSYM" %"FSYM" %"FSYM" %"FSYM" %"FSYM,
+  while (fscanf(fptr, "%"PSYM" %"PSYM" %"PSYM" %"PSYM" %"PSYM" %"PSYM" %"PSYM,
 		&(EvolveRefineRegionTime[i]),
 		&(EvolveRefineRegionLeftEdge[i][0]),
 		&(EvolveRefineRegionLeftEdge[i][1]),

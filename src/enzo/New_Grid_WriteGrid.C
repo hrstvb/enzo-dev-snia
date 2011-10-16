@@ -56,18 +56,13 @@ int grid::Group_WriteGrid(FILE *fptr, char *base_name, int grid_id, HDF5_hid_t f
 {
  
   int i, j, k, dim, field, size, active_size, ActiveDim[MAX_DIMENSION];
-  int file_status;
  
-  float *temp, *temp_VelAnyl;
+  float *temp;
   float *temperature, *dust_temperature,
     *cooling_time;
  
-  FILE *log_fptr;
-  FILE *procmap_fptr;
- 
   hid_t       group_id, dset_id;
-  hid_t       float_type_id, FLOAT_type_id;
-  hid_t       file_type_id, FILE_type_id;
+  hid_t       file_type_id;
   hid_t       file_dsp_id;
   hid_t       old_fields, acc_node;
  
@@ -86,19 +81,19 @@ int grid::Group_WriteGrid(FILE *fptr, char *base_name, int grid_id, HDF5_hid_t f
   int CopyOnlyActive = TRUE;
   //if(WriteEverything==TRUE)CopyOnlyActive = FALSE;
  
-  char *ParticlePositionLabel[] =
+  const char *ParticlePositionLabel[] =
      {"particle_position_x", "particle_position_y", "particle_position_z"};
-  char *ParticleVelocityLabel[] =
+  const char *ParticleVelocityLabel[] =
      {"particle_velocity_x", "particle_velocity_y", "particle_velocity_z"};
 #ifdef WINDS
-  char *ParticleAttributeLabel[] =
+  const char *ParticleAttributeLabel[] =
     {"creation_time", "dynamical_time", "metallicity_fraction", "particle_jet_x", 
      "particle_jet_y", "particle_jet_z", "typeia_fraction"};
 #else
-  char *ParticleAttributeLabel[] = 
+  const char *ParticleAttributeLabel[] = 
     {"creation_time", "dynamical_time", "metallicity_fraction", "typeia_fraction"};
 #endif
-  char *SmoothedDMLabel[] = {"Dark_Matter_Density", "Velocity_Dispersion",
+  const char *SmoothedDMLabel[] = {"Dark_Matter_Density", "Velocity_Dispersion",
 			     "Particle_x-velocity", "Particle_y-velocity",
 			     "Particle_z-velocity"};
   /* initialize */
@@ -446,7 +441,7 @@ int grid::Group_WriteGrid(FILE *fptr, char *base_name, int grid_id, HDF5_hid_t f
       cooling_time = new float[size];
  
       float TemperatureUnits = 1, DensityUnits = 1, LengthUnits = 1,
-	VelocityUnits = 1, TimeUnits = 1, aUnits = 1;
+	VelocityUnits = 1, TimeUnits = 1;
 
       GetUnits(&DensityUnits, &LengthUnits, &TemperatureUnits,
 	       &TimeUnits, &VelocityUnits, Time);
@@ -672,7 +667,7 @@ int grid::Group_WriteGrid(FILE *fptr, char *base_name, int grid_id, HDF5_hid_t f
 }
 #endif
 
-int grid::write_dataset(int ndims, hsize_t *dims, char *name, hid_t group,
+int grid::write_dataset(int ndims, hsize_t *dims, const char *name, hid_t group,
                   hid_t data_type, void *data, int active_only,
                   float *temp)
 {
@@ -763,6 +758,8 @@ int grid::WriteAllFluxes(hid_t grid_node)
   H5Gclose(subgrid_group);
   H5Gclose(fluxes_node);
 
+  return SUCCESS;
+
 }
 
 int grid::WriteFluxGroup(hid_t top_group, fluxes *fluxgroup)
@@ -770,7 +767,7 @@ int grid::WriteFluxGroup(hid_t top_group, fluxes *fluxgroup)
   hid_t h5_error = -1;
   hid_t axis_group = h5_error;
   hid_t left_group, right_group;
-  int i, j, field, dim;
+  int j, field, dim;
   hsize_t size;
 
   char name[255];
@@ -828,4 +825,7 @@ int grid::WriteFluxGroup(hid_t top_group, fluxes *fluxgroup)
 
     H5Gclose(axis_group);
   }
+
+  return SUCCESS;
+
 }

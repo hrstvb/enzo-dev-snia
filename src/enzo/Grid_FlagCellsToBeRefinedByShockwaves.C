@@ -35,7 +35,7 @@ int grid::FlagCellsToBeRefinedByShockwaves(int level)
 {
   /* declarations */
  
-  int i, j, k, index, dim, NumberOfFlaggedCells = 0;
+  int i, dim, NumberOfFlaggedCells = 0;
   float CellVolume;
  
   /* Return if this grid is not on this processor. */
@@ -80,7 +80,7 @@ int grid::FlagCellsToBeRefinedByShockwaves(int level)
     size *= GridDimension[dim];
 
   float TemperatureUnits = 1, DensityUnits = 1, LengthUnits = 1,
-    VelocityUnits = 1, TimeUnits = 1, MassUnits = 1, aUnits = 1;
+    VelocityUnits = 1, TimeUnits = 1;
 
   if (GetUnits(&DensityUnits, &LengthUnits, &TemperatureUnits,
 	       &TimeUnits, &VelocityUnits, Time) == FAIL) {

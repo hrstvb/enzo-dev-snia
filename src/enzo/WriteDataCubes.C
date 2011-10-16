@@ -30,7 +30,7 @@ int WriteDataCubes(HierarchyEntry *Grid, int TGdims[],
 		   char* base_name, int &GridID, FLOAT WriteTime)
 {
  
-  int OriginalID, NextGridThisLevelID, NextGridNextLevelID;
+  int OriginalID, NextGridThisLevelID;
  
   OriginalID = GridID;
  

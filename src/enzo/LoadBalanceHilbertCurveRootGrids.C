@@ -58,7 +58,7 @@ int LoadBalanceHilbertCurveRootGrids(FLOAT *GridCenters[], int *CellCount,
 
   FLOAT ThisCenter[MAX_DIMENSION];
   int TotalWork, WorkThisProcessor, WorkPerProcessor, WorkLeft;
-  int i, dim, grid_num, Rank, block_num, Dims[MAX_DIMENSION];
+  int i, dim, grid_num, block_num;
   int iter;
 
   /* Compute the position of each grid on a Hilbert curve */
@@ -133,7 +133,7 @@ int LoadBalanceHilbertCurveRootGrids(FLOAT *GridCenters[], int *CellCount,
      Hilbert curve. */
 
   const double CriticalBalance = 0.1 / NumberOfProcessors;
-  double div_hkey, min_hkey, max_hkey, global_min_hkey;
+  double div_hkey, min_hkey, max_hkey;
   double hkey_boundary;
   char direction;
   int LoadedBlock, UnloadedBlock, WorkDifference;

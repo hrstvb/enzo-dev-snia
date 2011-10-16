@@ -811,9 +811,8 @@ int InitializeNew(char *filename, HierarchyEntry &TopGrid,
   
   // If using StarParticles, set the number to zero 
   // (assuming it hasn't already been set)
-  if (NumberOfStarParticles == NULL)
-    if (StarParticleCreation || StarParticleFeedback)
-      NumberOfStarParticles = 0;
+  if (StarParticleCreation || StarParticleFeedback)
+    NumberOfStarParticles = 0;
   
   // Convert minimum initial overdensity for refinement to mass
   // (unless MinimumMass itself was actually set)
@@ -847,8 +846,6 @@ int InitializeNew(char *filename, HierarchyEntry &TopGrid,
   // Walk the grids
   
   HierarchyEntry *CurrentGrid;
-  FLOAT WT = -1.0;
-  int GP = 1;
   int gridcounter = 0;
   
   CurrentGrid = &TopGrid;
@@ -856,8 +853,6 @@ int InitializeNew(char *filename, HierarchyEntry &TopGrid,
 
  
   while (CurrentGrid != NULL) {
-    
-    // WriteHierarchyStuff(stderr, CurrentGrid, "UUUU", GP, WT);
     
     if (debug)
       printf("InitializeNew: Partition Initial Grid %"ISYM"\n", gridcounter);

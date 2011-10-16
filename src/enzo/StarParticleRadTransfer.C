@@ -42,10 +42,10 @@ int StarParticleRadTransfer(LevelHierarchyEntry *LevelArray[], int level,
   if (ProblemType == 50)
     return SUCCESS;
 
-  int i, j, nShine, nbins;
+  int j, nbins;
   double Q[MAX_ENERGY_BINS], QTotal;
-  float qFrac, lramp, energies[MAX_ENERGY_BINS];
-  float XRayLuminosityFraction = 0.43;
+  float energies[MAX_ENERGY_BINS];
+  //float XRayLuminosityFraction = 0.43;
   Star *cstar;
 
   /* If sources exist, delete them */
@@ -105,7 +105,6 @@ int StarParticleRadTransfer(LevelHierarchyEntry *LevelArray[], int level,
       /* (TODO) If requested, calculate ramping time for the luminosity */
 
       float ramptime = 0.0;   // zero for no ramp
-      float tdyn, ti;
       if (cstar->ReturnType() == PopII) {
 	if (StarClusterUnresolvedModel) {  // Cen & Ostriker
 	  ramptime = cstar->ReturnLifetime();

@@ -202,7 +202,6 @@ static int factorAndCombine(int factorMe, int numFactors, int *factors)
     int numPrimeFactors, factorCount, insertIndex = 0;
     int numPrimeLeft;
     double nthRoot, distance, minDistance = 0.0;
-    int mpi_errno;
 
     /* Check for wacky input values. */
     if ((factorMe <= 0) || (factorMe >= (MAX_PRIME * MAX_PRIME)) || 
@@ -681,8 +680,6 @@ int XXMPI_Dims_create(
 {
   int i, *newDims, newNdims;
   int testProduct, freeNodes, stat, ii;
-  int mpi_errno = 0;
-  static char myname[] = "MPI_DIMS_CREATE";
 
   /* Check for wacky input values. */
 /*

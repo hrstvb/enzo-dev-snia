@@ -74,26 +74,25 @@ static int   TurbulenceSimulationNumberOfInitialGrids = 1;
 int TurbulenceSimulationInitialize(FILE *fptr, FILE *Outfptr,
 			       HierarchyEntry &TopGrid, TopGridData &MetaData)
 {
-  char *DensName = "Density";
-  char *TEName   = "TotalEnergy";
-  char *GEName   = "GasEnergy";
-  char *Vel1Name = "x-velocity";
-  char *Vel2Name = "y-velocity";
-  char *Vel3Name = "z-velocity";
-  char *BxName = "Bx";
-  char *ByName = "By";
-  char *BzName = "Bz";
-  char *PhiName = "Phi";
-  char *Drive1Name = "DrivingField1";
-  char *Drive2Name = "DrivingField2";
-  char *Drive3Name = "DrivingField3";
-  char *GravPotName = "GravPotential";
+  const char *DensName = "Density";
+  const char *TEName   = "TotalEnergy";
+  const char *GEName   = "GasEnergy";
+  const char *Vel1Name = "x-velocity";
+  const char *Vel2Name = "y-velocity";
+  const char *Vel3Name = "z-velocity";
+  const char *BxName = "Bx";
+  const char *ByName = "By";
+  const char *BzName = "Bz";
+  const char *PhiName = "Phi";
+  const char *Drive1Name = "DrivingField1";
+  const char *Drive2Name = "DrivingField2";
+  const char *Drive3Name = "DrivingField3";
+  const char *GravPotName = "GravPotential";
  
   /* declarations */
  
   char line[MAX_LINE_LENGTH];
-  int i, j, dim, gridnum, ret, SubgridsAreStatic, region;
-  HierarchyEntry *Subgrid;
+  int i, j, dim, gridnum, ret;
  
   char *DensityName = NULL, *TotalEnergyName = NULL, *GasPressureName = NULL, *GasEnergyName = NULL,
        *VelocityNames[MAX_DIMENSION],
@@ -213,7 +212,7 @@ int TurbulenceSimulationInitialize(FILE *fptr, FILE *Outfptr,
       ret += sscanf(line, "TurbulenceSimulationGridLevel[%"ISYM"] = %"ISYM,
                     &gridnum, &TurbulenceSimulationGridLevel[gridnum]);
                                                                                 
-    if( sscanf(line, "TurbulenceSimulationInitialMagneticField = %"PSYM" %"PSYM" %"PSYM,
+    if( sscanf(line, "TurbulenceSimulationInitialMagneticField = %"FSYM" %"FSYM" %"FSYM,
 		  TurbulenceSimulationInitialMagneticField,
 		  TurbulenceSimulationInitialMagneticField+1,
 	       TurbulenceSimulationInitialMagneticField+2) > 0){
@@ -431,9 +430,8 @@ int TurbulenceSimulationReInitialize(HierarchyEntry *TopGrid,
   /* Declarations. */
  
   int dim, gridnum = 0;
-  char *DensityName = NULL, *TotalEnergyName = NULL,*GasPressureName = NULL, *GasEnergyName = NULL,
-       *ParticlePositionName = NULL, *ParticleVelocityName = NULL, 
-       *ParticleMassName = NULL, *VelocityNames[MAX_DIMENSION], 
+  char *DensityName = NULL, *TotalEnergyName = NULL,*GasPressureName = NULL, 
+    *GasEnergyName = NULL, *VelocityNames[MAX_DIMENSION], 
     *RandomForcingNames[MAX_DIMENSION],
     *MagneticNames[MAX_DIMENSION];
 

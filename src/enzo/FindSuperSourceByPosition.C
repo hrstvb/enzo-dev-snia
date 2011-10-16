@@ -18,7 +18,7 @@
 int FindSuperSourceByPosition(PhotonPackageEntry **PP)
 {
 
-  int i, dim_search, loop_count = 0, found = FALSE;
+  int dim_search, loop_count = 0;
   SuperSourceEntry *temp = OldSourceClusteringTree;
   float SearchRadius;  // min clustering search radius
   SearchRadius = 0.5*(*PP)->Radius / RadiativeTransferPhotonMergeRadius;

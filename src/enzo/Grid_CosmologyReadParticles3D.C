@@ -54,7 +54,7 @@ int grid::CosmologyReadParticles3D(
 		   int *Offset, int level)
 {
 
-  int dim, i, j, k, index, index1, index2;
+  int dim, i, j, k, index;
 
   float DensityUnits=1, LengthUnits=1, TemperatureUnits=1, TimeUnits=1,
     VelocityUnits=1;
@@ -118,9 +118,6 @@ int grid::CosmologyReadParticles3D(
 	} // ENDFOR j
     } // ENDIF level
   } // ENDFOR region
-
-  hid_t file_id;
-  herr_t err = 0, h5_error = -1;
 
   /* Read in particle velocities, positions (with displacements),
      store velocities, and then clean up. */

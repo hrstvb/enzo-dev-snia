@@ -102,7 +102,7 @@ int grid::ZeusSolver(float *gamma, int igamfield, int nhy,
 
   /*  Locals */
 
-  int i, ie, is, j, je, js, k, ks, ke, n, ixyz, ret;
+  int ie, is, je, js, k, ks, ke, n, ixyz, ret;
   int DensNum, GENum, TENum, Vel1Num, Vel2Num, Vel3Num;
   float pmin;
   float *d, *e, *u, *v, *w;

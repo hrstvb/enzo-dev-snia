@@ -103,8 +103,6 @@ int CommunicationTransferPhotons(LevelHierarchyEntry *LevelArray[],
 
 #ifdef USE_MPI
 
-  MPI_Status status;
-  
   /* Generate a new MPI type corresponding to the PhotonList struct. */
   
   if (FirstTimeCalled) {
@@ -116,10 +114,7 @@ int CommunicationTransferPhotons(LevelHierarchyEntry *LevelArray[],
   /* If parallel, Partition photons into linked lists that are
      transferred to the same grid */
 
-  float value;
-  int ivalue, GridNum, level, i, dim, proc;
-  int NumberOfGrids = 0, count = 0;
-
+  int i, dim, proc;
   GroupPhotonList **SendList = new GroupPhotonList*[NumberOfProcessors];
   int *PhotonCounter = new int[NumberOfProcessors];
   int *nPhoton = new int[NumberOfProcessors];

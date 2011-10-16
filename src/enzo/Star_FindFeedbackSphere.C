@@ -41,13 +41,12 @@ int Star::FindFeedbackSphere(LevelHierarchyEntry *LevelArray[], int level,
 			     bool &MarkedSubgrids)
 {
 
-  const double pc = 3.086e18, Msun = 1.989e33, pMass = 1.673e-24, 
+  const double pc = 3.086e18, Msun = 1.989e33,
     gravConst = 6.673e-8, yr = 3.1557e7, Myr = 3.1557e13;
 
   float values[7];
   float AccretedMass, DynamicalTime = 0, AvgDensity, AvgVelocity[MAX_DIMENSION];
-  int StarType, i, l, dim, FirstLoop = TRUE, SphereTooSmall, 
-    MBHFeedbackThermalRadiusTooSmall;
+  int StarType, l, dim, SphereTooSmall;
   float MassEnclosed, Metallicity2, Metallicity3, ColdGasMass, 
     ColdGasFraction, initialRadius, tdyn_code;
   float ShellMass, ShellMetallicity2, ShellMetallicity3, ShellColdGasMass, 

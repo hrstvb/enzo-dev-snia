@@ -50,7 +50,7 @@ int grid::CommunicationSendPhotonPackages(grid *ToGrid, int ToProcessor,
 					  PhotonPackageEntry **ToPP)
 {
 
-  int index, dim, temp_int;
+  int index, dim;
   PhotonPackageEntry *PP;
 
   if (CommunicationShouldExit(ProcessorNumber, ToProcessor))
@@ -199,7 +199,7 @@ int grid::CommunicationSendPhotonPackages(grid *ToGrid, int ToProcessor,
 		     MPI_PHOTON_TAG, MPI_COMM_WORLD, &status) != MPI_SUCCESS) {
 	  fprintf(stderr, "P(%"ISYM"): MPI_Recv error %"ISYM"\n", MyProcessorNumber,
 		  status.MPI_ERROR);
-	  fprintf(stderr, "P(%"ISYM"): TransferSize = %"ISYM" ProcessorNumber = %"ISYM"\n", 
+	  fprintf(stderr, "P(%"ISYM"): TransferSize = %ld ProcessorNumber = %"ISYM"\n", 
 		  MyProcessorNumber, Count*sizeof(PhotonBuffer), ProcessorNumber);
 	  char errstr[MPI_MAX_ERROR_STRING];
 	  Eint32 errlen;

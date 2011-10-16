@@ -43,7 +43,7 @@ int GetUnits(float *DensityUnits, float *LengthUnits,
 void WriteListOfFloats(FILE *fptr, int N, FLOAT floats[]);
 void WriteListOfInts(FILE *fptr, int N, int nums[]);
  
-static char SummarySuffix[] = ".summary";
+//static char SummarySuffix[] = ".summary";
  
 int WriteTracerParticleData(char *basename, int dumpnumber,
 		   LevelHierarchyEntry *LevelArray[], TopGridData *MetaData,

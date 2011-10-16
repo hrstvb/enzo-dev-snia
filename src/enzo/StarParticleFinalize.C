@@ -62,7 +62,7 @@ int StarParticleFinalize(HierarchyEntry *Grids[], TopGridData *MetaData,
 
   int l, NumberOfStars;
   float TotalMass;
-  Star *ThisStar, *MoveStar;
+  Star *ThisStar;
   LevelHierarchyEntry *Temp;
   FLOAT TimeNow;
 

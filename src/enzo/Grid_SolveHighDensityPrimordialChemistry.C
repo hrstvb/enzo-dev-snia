@@ -159,7 +159,7 @@ int grid::SolveHighDensityPrimordialChemistry()
   /* If using cosmology, compute the expansion factor and get units. */
 
   float TemperatureUnits = 1, DensityUnits = 1, LengthUnits = 1, 
-    VelocityUnits = 1, TimeUnits = 1, MassUnits = 1, aUnits = 1;
+    VelocityUnits = 1, TimeUnits = 1, aUnits = 1;
 
   if (ComovingCoordinates) {
 
@@ -197,7 +197,7 @@ int grid::SolveHighDensityPrimordialChemistry()
 
   /* Call the fortran routine to solve cooling equations. */
 
-  int RTCoupledSolverIntermediateStep = FALSE;
+  //int RTCoupledSolverIntermediateStep = FALSE;
   int mask = 1;
   int ErrCode = 0, OutputFlag = 0;
 

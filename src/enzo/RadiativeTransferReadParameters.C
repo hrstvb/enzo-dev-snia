@@ -87,7 +87,7 @@ int RadiativeTransferReadParameters(FILE *fptr)
 		  &RadiativeTransferSourceRadius);
     ret += sscanf(line, "RadiativeTransferPropagationSpeedFraction = %"FSYM, 
 		  &RadiativeTransferPropagationSpeedFraction);
-    ret += sscanf(line, "RadiativeTransferPropagationDistance = %"FSYM, 
+    ret += sscanf(line, "RadiativeTransferPropagationDistance = %"PSYM,
 		  &RadiativeTransferPropagationDistance);
     ret += sscanf(line, "RadiativeTransferCoupledRateSolver = %"ISYM, 
 		  &RadiativeTransferCoupledRateSolver);
@@ -171,7 +171,8 @@ int RadiativeTransferReadParameters(FILE *fptr)
   if (RadiativeTransferFLDCallOnLevel < 0) {
     if (MyProcessorNumber == ROOT_PROCESSOR)
       fprintf(stderr, "Warning: RadiativeTransferFLDCallOnLevel = %"ISYM
-	      " cannot be negative!  Setting to 0.\n");
+	      " cannot be negative!  Setting to 0.\n",
+	      RadiativeTransferFLDCallOnLevel);
     RadiativeTransferFLDCallOnLevel = 0;
   }
 

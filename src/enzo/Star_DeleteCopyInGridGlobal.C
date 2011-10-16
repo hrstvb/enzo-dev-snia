@@ -32,7 +32,7 @@ int GenerateGridArray(LevelHierarchyEntry *LevelArray[], int level,
 int Star::DeleteCopyInGridGlobal(LevelHierarchyEntry *LevelArray[])
 {
 
-  int i, nPart, n, NumberOfGrids, changedGrid = INT_UNDEFINED, found = FALSE;
+  int i, NumberOfGrids, changedGrid = INT_UNDEFINED;
   HierarchyEntry **Grids;
   
   NumberOfGrids = GenerateGridArray(LevelArray, this->level, &Grids);

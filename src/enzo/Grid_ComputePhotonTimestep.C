@@ -70,7 +70,7 @@ float grid::ComputePhotonTimestep()
 
   /* If using cosmology, get units. */
 
-  float TemperatureUnits, DensityUnits, LengthUnits, VelocityUnits, TimeUnits, aUnits = 1;
+  float TemperatureUnits, DensityUnits, LengthUnits, VelocityUnits, TimeUnits;
 
   if (GetUnits(&DensityUnits, &LengthUnits, &TemperatureUnits,
 	       &TimeUnits, &VelocityUnits, Time) == FAIL) {
@@ -217,7 +217,6 @@ float grid::ComputePhotonTimestep()
   /* 7) If using radiation pressure, calculate minimum dt */
 
   float dtRadPressure = huge_number;
-  float absVel, absAccel;
 
   if (RadiationPressure && RadiativeTransfer) {
 

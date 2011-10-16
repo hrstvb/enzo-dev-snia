@@ -351,8 +351,11 @@ int EvolvePhotons(TopGridData *MetaData, LevelHierarchyEntry *LevelArray[],
     int keep_transporting = 1;
     int local_keep_transporting = 1, last_keep_transporting;
     int secondary_kt_check = TRUE, iteration = 0;
-    bool initial_call = true;
     char *kt_global = NULL;
+
+#ifdef NONBLOCKING_RT    
+    bool initial_call = true;
+#endif
 
     HierarchyEntry **Temp0;
     int nGrids0 = GenerateGridArray(LevelArray, 0, &Temp0);

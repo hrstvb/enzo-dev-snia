@@ -189,7 +189,7 @@ int anneal(int ngrids, int nnodes, int* &proc, double* cells, double* scells,
 	   float temperature, float node_weight, float same_node_prob)
 {
 
-  int change_grid, old_proc, new_proc, old_node, new_node;
+  int change_grid, old_proc, new_proc, old_node;
   int random_proc_on_node;
   float prob;
   double H0, H1, dH;

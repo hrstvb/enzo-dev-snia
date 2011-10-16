@@ -48,12 +48,9 @@ int grid::SetSubgridMarkerFromParent(grid *Parent, int level)
 
   /* declarations */
     
-  int i, j, k, dim, field, index, pindex, size, activesize, gzsize;
+  int i, j, k, dim, index, pindex, gzsize;
   int pi, pj, pk, buffer_index, marker_level;
   int GZStart[MAX_DIMENSION], GZEnd[MAX_DIMENSION];
-  FLOAT GridLeft[MAX_DIMENSION], GridRight[MAX_DIMENSION];
-  FLOAT Left[MAX_DIMENSION], Right[MAX_DIMENSION];
-  int Start[MAX_DIMENSION], End[MAX_DIMENSION];
   int ParentStart[MAX_DIMENSION], CellOffset[MAX_DIMENSION];
   int Refinement[MAX_DIMENSION], MarkerRefinement;
   Eint32 *buffer = NULL;

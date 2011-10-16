@@ -23,13 +23,11 @@ int WRITE_BV(float *bv_buffer,
   int io_log = 1;
   int i;
 
-  char *Name = "BoundaryValue";
-  char *FieldName = "BaryonName";
+  const char *Name = "BoundaryValue";
 
-  hid_t       file_id, dset_id, attr_id;
-  hid_t       file_dsp_id, mem_dsp_id, attr_dsp_id;
+  hid_t       file_id, dset_id;
+  hid_t       file_dsp_id, mem_dsp_id;
   hid_t       file_type_id, mem_type_id;
-  hid_t       int_file_type_id, int_mem_type_id;
 
   hsize_t     mem_stride, mem_count, mem_block;
   hsize_t     file_stride[4], file_count[4], file_block[4];

@@ -42,16 +42,13 @@ int RadHydroPulseTestInitialize(FILE *fptr, FILE *Outfptr,
   if (MyProcessorNumber == ROOT_PROCESSOR)
     fprintf(stdout,"Entering RadHydroPulseTestInitialize routine\n");
 
-  char *DensName  = "Density";
-  char *TEName    = "TotalEnergy";
-  char *IEName    = "Internal_Energy";
-  char *Vel0Name  = "x-velocity";
-  char *Vel1Name  = "y-velocity";
-  char *Vel2Name  = "z-velocity";
-  char *RadName   = "Grey_Radiation_Energy";
-
-  // local declarations
-  int dim;
+  const char *DensName  = "Density";
+  const char *TEName    = "TotalEnergy";
+  const char *IEName    = "Internal_Energy";
+  const char *Vel0Name  = "x-velocity";
+  const char *Vel1Name  = "y-velocity";
+  const char *Vel2Name  = "z-velocity";
+  const char *RadName   = "Grey_Radiation_Energy";
 
   // make sure it is 3D
   if (MetaData.TopGridRank != 3) {

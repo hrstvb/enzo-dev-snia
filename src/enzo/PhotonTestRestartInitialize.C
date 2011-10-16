@@ -62,16 +62,8 @@ int PhotonTestRestartInitialize(FILE *fptr, FILE *Outfptr,
   char line[MAX_LINE_LENGTH];
   int dim,source, level, ret;
   float dummyf;
-  char *numbers;
-  char *delims = (char*) " ";
-  char *value;
-  int count;
-  bool EnergyBinsDefined = false;
-
-
   char *PhotonTestRestartName = NULL;
 
-  int   PhotonTestNumberOfSources=1;
   int   PhotonTestSourceType[MAX_SOURCES];
   int   PhotonTestSourceEnergyBins[MAX_SOURCES];
   double PhotonTestSourceLuminosity[MAX_SOURCES];

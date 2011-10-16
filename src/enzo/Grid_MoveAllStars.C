@@ -31,7 +31,6 @@ Star* StarBufferToList(StarBuffer *buffer, int n);
 int grid::MoveAllStars(int NumberOfGrids, grid* FromGrid[], int TopGridDimension)
 {
 
-  StarBuffer *buffer;
   Star *NewStar, *cstar;
 
   if (NumberOfGrids < 1) {
@@ -40,11 +39,11 @@ int grid::MoveAllStars(int NumberOfGrids, grid* FromGrid[], int TopGridDimension
 
   /* Determine total number of stars. */
 
+  int grid_num;
   int TotalNumberOfStars = NumberOfStars;
-  int i, j, grid, dim;
 
-  for (grid = 0; grid < NumberOfGrids; grid++)
-    TotalNumberOfStars += FromGrid[grid]->NumberOfStars;
+  for (grid_num = 0; grid_num < NumberOfGrids; grid_num++)
+    TotalNumberOfStars += FromGrid[grid_num]->NumberOfStars;
   if (TotalNumberOfStars == 0)
     return SUCCESS;
 
@@ -59,13 +58,13 @@ int grid::MoveAllStars(int NumberOfGrids, grid* FromGrid[], int TopGridDimension
 
   /* Copy FromGrids' stars to new grid. */
 
-  for (grid = 0; grid < NumberOfGrids; grid++) {
+  for (grid_num = 0; grid_num < NumberOfGrids; grid_num++) {
 
    /* Move to grid but not to the host processor.  We will take care
       of that in CommunicationCollectParticles. */
 
-    if (FromGrid[grid]->Stars != NULL) {
-      cstar = FromGrid[grid]->Stars;
+    if (FromGrid[grid_num]->Stars != NULL) {
+      cstar = FromGrid[grid_num]->Stars;
       while (cstar != NULL) {
 	NewStar = PopStar(cstar); // also advances cstar pointer
 	NewStar->CurrentGrid = this;
@@ -74,15 +73,15 @@ int grid::MoveAllStars(int NumberOfGrids, grid* FromGrid[], int TopGridDimension
 	InsertStarAfter(this->Stars, NewStar);
 	//cstar = cstar->NextStar;
       } // ENDWHILE stars
-      FromGrid[grid]->Stars = NULL;
+      FromGrid[grid_num]->Stars = NULL;
     }
 
 //    /* Otherwise, communicate. */
 //
 //    else {
 //      if (MyProcessorNumber == ProcessorNumber ||
-//          MyProcessorNumber == FromGrid[grid]->ProcessorNumber)
-//	if (FromGrid[grid]->CommunicationSendStars(this, ProcessorNumber) == FAIL) {
+//          MyProcessorNumber == FromGrid[grid_num]->ProcessorNumber)
+//	if (FromGrid[grid_num]->CommunicationSendStars(this, ProcessorNumber) == FAIL) {
 //	  ENZO_FAIL("Error in grid->CommunicationSendStars.\n");
 //        }
 //
@@ -99,10 +98,10 @@ int grid::MoveAllStars(int NumberOfGrids, grid* FromGrid[], int TopGridDimension
      we copy the pointer to the new grid, and we shouldn't delete the
      linked list.  */
 
-  for (grid = 0; grid < NumberOfGrids; grid++) {
-    FromGrid[grid]->NumberOfStars = 0;
-//    if (MyProcessorNumber == FromGrid[grid]->ProcessorNumber)
-//      DeleteStarList(FromGrid[grid]->Stars);
+  for (grid_num = 0; grid_num < NumberOfGrids; grid_num++) {
+    FromGrid[grid_num]->NumberOfStars = 0;
+//    if (MyProcessorNumber == FromGrid[grid_num]->ProcessorNumber)
+//      DeleteStarList(FromGrid[grid_num]->Stars);
   }
 
   return SUCCESS;
@@ -125,7 +124,6 @@ int grid::MoveAllStars(int NumberOfGrids, grid* FromGrid[], int TopGridDimension
 int grid::MoveAllStarsOld(int NumberOfGrids, grid* FromGrid[], int TopGridDimension)
 {
 
-  StarBuffer *buffer;
   Star *NewStar, *cstar;
 
   if (NumberOfGrids < 1) {
@@ -134,11 +132,11 @@ int grid::MoveAllStarsOld(int NumberOfGrids, grid* FromGrid[], int TopGridDimens
 
   /* Determine total number of stars. */
 
+  int grid_num;
   int TotalNumberOfStars = NumberOfStars;
-  int i, j, grid, dim;
 
-  for (grid = 0; grid < NumberOfGrids; grid++)
-    TotalNumberOfStars += FromGrid[grid]->NumberOfStars;
+  for (grid_num = 0; grid_num < NumberOfGrids; grid_num++)
+    TotalNumberOfStars += FromGrid[grid_num]->NumberOfStars;
   if (TotalNumberOfStars == 0)
     return SUCCESS;
 
@@ -153,13 +151,13 @@ int grid::MoveAllStarsOld(int NumberOfGrids, grid* FromGrid[], int TopGridDimens
 
   /* Copy FromGrids' stars to new grid. */
 
-  for (grid = 0; grid < NumberOfGrids; grid++) {
+  for (grid_num = 0; grid_num < NumberOfGrids; grid_num++) {
 
    /* Move to grid but not to the host processor.  We will take care
       of that in CommunicationCollectParticles. */
 
-    if (FromGrid[grid]->Stars != NULL) {
-      cstar = FromGrid[grid]->Stars;
+    if (FromGrid[grid_num]->Stars != NULL) {
+      cstar = FromGrid[grid_num]->Stars;
       while (cstar != NULL) {
 	NewStar = PopStar(cstar); // also advances cstar pointer
 	NewStar->CurrentGrid = this;
@@ -168,15 +166,15 @@ int grid::MoveAllStarsOld(int NumberOfGrids, grid* FromGrid[], int TopGridDimens
 	InsertStarAfter(this->Stars, NewStar);
 	//cstar = cstar->NextStar;
       } // ENDWHILE stars
-      FromGrid[grid]->Stars = NULL;
+      FromGrid[grid_num]->Stars = NULL;
     }
 
     /* Otherwise, communicate. */
 
     else {
       if (MyProcessorNumber == ProcessorNumber ||
-          MyProcessorNumber == FromGrid[grid]->ProcessorNumber)
-	if (FromGrid[grid]->CommunicationSendStars(this, ProcessorNumber) == FAIL) {
+          MyProcessorNumber == FromGrid[grid_num]->ProcessorNumber)
+	if (FromGrid[grid_num]->CommunicationSendStars(this, ProcessorNumber) == FAIL) {
 	  ENZO_FAIL("Error in grid->CommunicationSendStars.\n");
         }
 
@@ -193,11 +191,11 @@ int grid::MoveAllStarsOld(int NumberOfGrids, grid* FromGrid[], int TopGridDimens
      we copy the pointer to the new grid, and we shouldn't delete the
      linked list.  */
 
-  for (grid = 0; grid < NumberOfGrids; grid++) {
-    FromGrid[grid]->NumberOfStars = 0;
-    if (MyProcessorNumber == FromGrid[grid]->ProcessorNumber)
+  for (grid_num = 0; grid_num < NumberOfGrids; grid_num++) {
+    FromGrid[grid_num]->NumberOfStars = 0;
+    if (MyProcessorNumber == FromGrid[grid_num]->ProcessorNumber)
 
-      DeleteStarList(FromGrid[grid]->Stars);
+      DeleteStarList(FromGrid[grid_num]->Stars);
   }
 
   return SUCCESS;

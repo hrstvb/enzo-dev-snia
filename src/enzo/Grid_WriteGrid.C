@@ -56,7 +56,6 @@ int grid::WriteGrid(FILE *fptr, char *base_name, int grid_id)
   printf("In WriteGrid**");
  
   int i, j, k, dim, field, size, active_size, ActiveDim[MAX_DIMENSION];
-  int file_status;
   float *temperature, *dust_temperature,
     *cooling_time;
 
@@ -81,19 +80,19 @@ int grid::WriteGrid(FILE *fptr, char *base_name, int grid_id)
   herr_t      h5_status;
   herr_t      h5_error = -1;
  
-  char *ParticlePositionLabel[] =
+  const char *ParticlePositionLabel[] =
      {"particle_position_x", "particle_position_y", "particle_position_z"};
-  char *ParticleVelocityLabel[] =
+  const char *ParticleVelocityLabel[] =
      {"particle_velocity_x", "particle_velocity_y", "particle_velocity_z"};
 #ifdef WINDS
-    char *ParticleAttributeLabel[] = 
-      {"creation_time", "dynamical_time", "metallicity_fraction", "particle_jet_x", 
-       "particle_jet_y", "particle_jet_z", "typeia_fraction"};
+  const char *ParticleAttributeLabel[] = 
+    {"creation_time", "dynamical_time", "metallicity_fraction", "particle_jet_x", 
+     "particle_jet_y", "particle_jet_z", "typeia_fraction"};
 #else
-    char *ParticleAttributeLabel[] = 
-      {"creation_time", "dynamical_time", "metallicity_fraction", "typeia_fraction"};
+  const char *ParticleAttributeLabel[] = 
+    {"creation_time", "dynamical_time", "metallicity_fraction", "typeia_fraction"};
 #endif
-  char *SmoothedDMLabel[] = {"Dark_Matter_Density", "Velocity_Dispersion",
+  const char *SmoothedDMLabel[] = {"Dark_Matter_Density", "Velocity_Dispersion",
 			     "Particle_x-velocity", "Particle_y-velocity",
 			     "Particle_z-velocity"};
 #ifdef IO_LOG
@@ -309,7 +308,7 @@ int grid::WriteGrid(FILE *fptr, char *base_name, int grid_id)
  
       if ( DataUnits[field] == NULL )
       {
-        DataUnits[field] = "none";
+        DataUnits[field] = (char*) "none";
       }
  
       WriteStringAttr(dset_id, "Label", DataLabel[field], log_fptr);
@@ -370,7 +369,7 @@ int grid::WriteGrid(FILE *fptr, char *base_name, int grid_id)
  
       if ( DataUnits[field] == NULL )
       {
-        DataUnits[field] = "none";
+        DataUnits[field] = (char*) "none";
       }
  
       WriteStringAttr(dset_id, "Label", "Temperature", log_fptr);
@@ -447,7 +446,7 @@ int grid::WriteGrid(FILE *fptr, char *base_name, int grid_id)
  
       if ( DataUnits[field] == NULL )
       {
-        DataUnits[field] = "none";
+        DataUnits[field] = (char*) "none";
       }
  
       WriteStringAttr(dset_id, "Label", "Dust_Temperature", log_fptr);
@@ -584,14 +583,14 @@ int grid::WriteGrid(FILE *fptr, char *base_name, int grid_id)
       
       char *DataLabelN[4];
       if (GridRank==2) {
-	DataLabelN[0]="Velocity_Div";
-	DataLabelN[1]="Velocity_Vorticity";
+	DataLabelN[0]=(const char*) "Velocity_Div";
+	DataLabelN[1]=(const char*) "Velocity_Vorticity";
       }
       if (GridRank==3) {
-	DataLabelN[0]="Velocity_Div";
-	DataLabelN[1]="Velocity_Vorticity1";
-	DataLabelN[2]="Velocity_Vorticity2";
-	DataLabelN[3]="Velocity_Vorticity3";
+	DataLabelN[0]=(const char*) "Velocity_Div";
+	DataLabelN[1]=(const char*) "Velocity_Vorticity1";
+	DataLabelN[2]=(const char*) "Velocity_Vorticity2";
+	DataLabelN[3]=(const char*) "Velocity_Vorticity3";
       }
 
       
@@ -616,7 +615,7 @@ int grid::WriteGrid(FILE *fptr, char *base_name, int grid_id)
  
       if ( DataUnits[field] == NULL )
       {
-        DataUnits[field] = "none";
+        DataUnits[field] = (char*) "none";
       }
  
     
@@ -677,7 +676,7 @@ int grid::WriteGrid(FILE *fptr, char *base_name, int grid_id)
       cooling_time = new float[size];
  
       float TemperatureUnits = 1, DensityUnits = 1, LengthUnits = 1,
-	VelocityUnits = 1, TimeUnits = 1, aUnits = 1;
+	VelocityUnits = 1, TimeUnits = 1;
 
       GetUnits(&DensityUnits, &LengthUnits, &TemperatureUnits,
 	       &TimeUnits, &VelocityUnits, Time);
@@ -716,7 +715,7 @@ int grid::WriteGrid(FILE *fptr, char *base_name, int grid_id)
  
       if ( DataUnits[field] == NULL )
       {
-        DataUnits[field] = "none";
+        DataUnits[field] = (char*) "none";
       }
  
       WriteStringAttr(dset_id, "Label", "Cooling_Time", log_fptr);
@@ -799,7 +798,7 @@ int grid::WriteGrid(FILE *fptr, char *base_name, int grid_id)
         if( dset_id == h5_error ){my_exit(EXIT_FAILURE);}
  
 	if ( DataUnits[field] == NULL )
-	  DataUnits[field] = "none";
+	  DataUnits[field] = (char*) "none";
  
 	WriteStringAttr(dset_id, "Label", "Cooling_Time", log_fptr);
 	WriteStringAttr(dset_id, "Units", "s", log_fptr);

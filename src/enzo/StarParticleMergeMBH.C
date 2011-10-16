@@ -43,11 +43,10 @@ int StarParticleMergeMBH(LevelHierarchyEntry *LevelArray[], Star *&AllStars)
 {
 
   Star *ThisStar, *OtherStar, *MoveStar, *LastStar;
-  LevelHierarchyEntry *Temp;
   float rmerge2;
   double vcirc2;
   FLOAT TimeNow;
-  int dim, level;
+  int level;
   bool MBH_Exists = false;
   const float pc = 3.086e18;
   const double Grav = 6.673e-8, Msun = 1.989e33;

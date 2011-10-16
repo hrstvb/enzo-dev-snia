@@ -71,7 +71,7 @@ int grid::RHIonizationClumpInitializeGrid(int NumChemicals,
 
   // create necessary baryon fields
   int RhoNum, TENum, IENum, V0Num, V1Num, V2Num, EgNum, DeNum, 
-    HINum, HIINum, HeINum, HeIINum, HeIIINum;
+    HINum, HIINum;//, HeINum, HeIINum, HeIIINum;
   NumberOfBaryonFields = 0;
   FieldType[RhoNum = NumberOfBaryonFields++] = Density;
   FieldType[TENum = NumberOfBaryonFields++]  = TotalEnergy;
@@ -136,9 +136,9 @@ int grid::RHIonizationClumpInitializeGrid(int NumChemicals,
     float HIConstOut  = HMassFrac * RhoConstOut - HIIConstOut;
     float DeConstIn   = HIIConstIn;
     float DeConstOut  = HIIConstOut;
-    float HeIConst    = 0.0;
-    float HeIIConst   = 0.0;
-    float HeIIIConst  = 0.0;
+    //float HeIConst    = 0.0;
+    //float HeIIConst   = 0.0;
+    //float HeIIIConst  = 0.0;
     float eUnits = VelocityUnits*VelocityUnits;
     float EUnits = DensityUnits*eUnits;
     // initialize clump-independent quantities
@@ -150,7 +150,6 @@ int grid::RHIonizationClumpInitializeGrid(int NumChemicals,
     }
     
     // initialize clump-dependent quantities
-    float Vint, Vext;
     float gridx0l = GridLeftEdge[0];
     float gridx0r = GridRightEdge[0];
     float gridx1l = GridLeftEdge[1];

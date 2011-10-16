@@ -60,7 +60,7 @@ int ProjectToPlane(TopGridData &MetaData, LevelHierarchyEntry *LevelArray[],
 		   int ProjectionSmooth, ExternalBoundary *Exterior)
 {
  
-  int i, j, dim, field, level, ret, size = 1;
+  int i, j, dim, field, level, size = 1;
   int ProjectDim[MAX_DIMENSION];
   float *ProjectedField[NUMBER_OF_PROJECTED_FIELDS], TempCellWidth;
   FLOAT ProjectLeft[MAX_DIMENSION], ProjectRight[MAX_DIMENSION];
@@ -424,7 +424,7 @@ int ProjectToPlane(TopGridData &MetaData, LevelHierarchyEntry *LevelArray[],
     {
  
       case 0:
-        dset_name = "projected_gas_density";
+        dset_name = (char*) "projected_gas_density";
  
         if (io_log) fprintf(log_fptr, "H5Dcreate with Name = %s\n", dset_name);
  
@@ -439,7 +439,7 @@ int ProjectToPlane(TopGridData &MetaData, LevelHierarchyEntry *LevelArray[],
         break;
  
       case 1:
-        dset_name = "projected_x-ray_luminosity_div1e23";
+        dset_name = (char*) "projected_x-ray_luminosity_div1e23";
  
         if (io_log) fprintf(log_fptr, "H5Dcreate with Name = %s\n", dset_name);
  
@@ -454,7 +454,7 @@ int ProjectToPlane(TopGridData &MetaData, LevelHierarchyEntry *LevelArray[],
         break;
  
       case 2:
-        dset_name = "projected_dm_density";
+        dset_name = (char*) "projected_dm_density";
  
         if (io_log) fprintf(log_fptr, "H5Dcreate with Name = %s\n", dset_name);
  
@@ -469,7 +469,7 @@ int ProjectToPlane(TopGridData &MetaData, LevelHierarchyEntry *LevelArray[],
         break;
  
       case 3:
-        dset_name = "projected_x-ray_weighted_temperature";
+        dset_name = (char*) "projected_x-ray_weighted_temperature";
  
         if (io_log) fprintf(log_fptr, "H5Dcreate with Name = %s\n", dset_name);
  
@@ -484,7 +484,7 @@ int ProjectToPlane(TopGridData &MetaData, LevelHierarchyEntry *LevelArray[],
         break;
  
       case 4:
-        dset_name = "projected_level";
+        dset_name = (char*) "projected_level";
  
         if (io_log) fprintf(log_fptr, "H5Dcreate with Name = %s\n", dset_name);
  
@@ -499,7 +499,7 @@ int ProjectToPlane(TopGridData &MetaData, LevelHierarchyEntry *LevelArray[],
         break;
  
       case 5:
-        dset_name = "SZ_y_effect";
+        dset_name = (char*) "SZ_y_effect";
  
         if (io_log) fprintf(log_fptr, "H5Dcreate with Name = %s\n", dset_name);
  
@@ -514,7 +514,7 @@ int ProjectToPlane(TopGridData &MetaData, LevelHierarchyEntry *LevelArray[],
         break;
  
       case 6:
-        dset_name = "DT_over_T_Doppler_effect";
+        dset_name = (char*) "DT_over_T_Doppler_effect";
  
         if (io_log) fprintf(log_fptr, "H5Dcreate with Name = %s\n", dset_name);
  
@@ -529,7 +529,7 @@ int ProjectToPlane(TopGridData &MetaData, LevelHierarchyEntry *LevelArray[],
         break;
  
       case 7:
-        dset_name = "Metallicity";
+        dset_name = (char*) "Metallicity";
  
         if (io_log) fprintf(log_fptr, "H5Dcreate with Name = %s\n", dset_name);
  
@@ -544,7 +544,7 @@ int ProjectToPlane(TopGridData &MetaData, LevelHierarchyEntry *LevelArray[],
         break;
  
       case 8:
-        dset_name = "projected_star_density";
+        dset_name = (char*) "projected_star_density";
  
         if (io_log) fprintf(log_fptr, "H5Dcreate with Name = %s\n", dset_name);
  
@@ -559,7 +559,7 @@ int ProjectToPlane(TopGridData &MetaData, LevelHierarchyEntry *LevelArray[],
         break;
  
       case 9:
-        dset_name = "OVII column density";
+        dset_name = (char*) "OVII column density";
  
         if (io_log) fprintf(log_fptr, "H5Dcreate with Name = %s\n", dset_name);
  

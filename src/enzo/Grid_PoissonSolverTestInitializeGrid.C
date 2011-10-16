@@ -21,7 +21,7 @@ int grid::PoissonSolverTestInitializeGrid(int TestType, float GeometryControl)
 {
   /* declarations */
 
-  int dim, i, j, k, m, field, sphere, size,B1, B2, B3, phip_num;
+  int dim, i, j, k, field, size,B1, B2, B3, phip_num;
 
   int TE, IE;
   NumberOfBaryonFields = 0;

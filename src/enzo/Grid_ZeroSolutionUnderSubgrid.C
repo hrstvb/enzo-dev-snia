@@ -90,7 +90,7 @@ int grid::ZeroSolutionUnderSubgrid(grid *Subgrid, int FieldsToZero,
   /* Compute start and stop indices of the active region of the subgrid
      within this grid (and check to make sure subgrid is within this grid). */
 
-  FLOAT Left, Right, SubLeft, SubRight;
+  FLOAT Left, Right;
   int NumberOfGhostZones;
  
   for (dim = 0; dim < GridRank; dim++) {

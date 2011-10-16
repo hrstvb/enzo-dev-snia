@@ -54,11 +54,11 @@ int sink_maker(int *nx, int *ny, int *nz, int *size, float *d, float *u,
 		int *typeold, int *ctype, float *jlrefine, float *temp, float *JRCT)
 {
 
-  int		i, j, k, index, ii, inew, n, dim, bb, cc, nsinks, closest;
+  int		i, j, k, index, ii, inew, n, bb, cc, nsinks, closest;
   int           xo, yo, zo;
   float         huge_number = 1e20;
   float		densthresh, maxdens, adddens, ugrid, vgrid, wgrid, my_temp;
-  double	jeansthresh, jlsquared, dx2, dist2, total_density, nearestdx2;
+  double	jeansthresh, jlsquared, dx2, dist2, nearestdx2;
   FLOAT		xpos, ypos, zpos, delx, dely, delz;
 
   // When refining by Jeans, make a sink particle when the density

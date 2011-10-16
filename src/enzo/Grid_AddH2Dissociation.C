@@ -34,10 +34,9 @@ int grid::AddH2Dissociation(Star *AllStars)
   Star *cstar;
   FLOAT DomainWidth[MAX_DIMENSION];
   FLOAT *ddr2[MAX_DIMENSION];
-  FLOAT innerFront, outerFront, innerFront2, outerFront2;
   double Luminosity[MAX_ENERGY_BINS];
   float energies[MAX_ENERGY_BINS], kdiss_r2;
-  int ipart, dim, i, j, k, index, indixe, nbins;
+  int dim, i, j, k, index, nbins;
   int ActiveDims[MAX_DIMENSION];
   int DeNum, HINum, HIINum, HeINum, HeIINum, HeIIINum, HMNum, H2INum, H2IINum,
       DINum, DIINum, HDINum;
@@ -83,7 +82,7 @@ int grid::AddH2Dissociation(Star *AllStars)
   /* If using cosmology, get units. */
 
   float TemperatureUnits, DensityUnits, LengthUnits, VelocityUnits, 
-    TimeUnits, aUnits = 1;
+    TimeUnits;
 
   GetUnits(&DensityUnits, &LengthUnits, &TemperatureUnits,
 	   &TimeUnits, &VelocityUnits, PhotonTime);
@@ -100,7 +99,6 @@ int grid::AddH2Dissociation(Star *AllStars)
   // Dilution factor (prevent breaking in the rate solver near the star)
   float dilutionRadius = 10.0 * pc / (double) LengthUnits;
   float dilRadius2 = dilutionRadius * dilutionRadius;
-  float LightTravelDist = TimeUnits * clight / LengthUnits;
 
   // Convert from #/s to RT units
   double LConv = (double) TimeUnits / pow(LengthUnits,3);

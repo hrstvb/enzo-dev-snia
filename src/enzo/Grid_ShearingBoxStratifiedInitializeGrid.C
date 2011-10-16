@@ -35,13 +35,8 @@ double Gaussian(double cs);
 int grid::ShearingBoxStratifiedInitializeGrid(float ThermalMagneticRatio, float fraction, float ShearingGeometry, int InitialMagneticFieldConfiguration)
 {
 
-  
   /* declarations */
 
-
-  
- 
-  int phip_num;
   NumberOfBaryonFields = 0;
   FieldType[iden=NumberOfBaryonFields++] = Density;
   FieldType[ivx=NumberOfBaryonFields++] = Velocity1;
@@ -96,7 +91,7 @@ int grid::ShearingBoxStratifiedInitializeGrid(float ThermalMagneticRatio, float 
 
   int i,j,k; 
   int n=0; 
-  float eint, v2, vx,vy,vz;
+  float eint, v2;
 
   float rhou, lenu, tempu, tu, velu;
   GetUnits(&rhou, &lenu, &tempu, &tu, &velu, Time);
@@ -112,7 +107,7 @@ int grid::ShearingBoxStratifiedInitializeGrid(float ThermalMagneticRatio, float 
   float lengthy=DomainRightEdge[1]-DomainLeftEdge[1];
   float lengthz=DomainRightEdge[2]-DomainLeftEdge[2];
 
-  float h, cs, dpdrho, dpde, H, pressure;  	
+  float h, cs, dpdrho, dpde, pressure;  	
   float bunit=sqrt(4.0*3.14159*rhou*velu*velu);
 
   FLOAT x,y,z;

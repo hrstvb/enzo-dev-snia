@@ -46,19 +46,17 @@ int ReadGridFile(char *name, int Rank, int Dim[], int StartIndex[],
  
   hid_t       file_id, dset_id, attr_id;
   hid_t       file_dsp_id, mem_dsp_id, attr_dsp_id;
-  hid_t       file_type_id, mem_type_id, attr_type_id;
+  hid_t       file_type_id, mem_type_id;
  
   hsize_t     xfer_size;
   hsize_t     Slab_Dims[4];
   int         Slab_Rank;
   hsize_t     mem_stride, mem_count, mem_block;
   hsize_t     file_stride[4], file_count[4], file_block[4];
-  hsize_t     slab_stride[4], slab_count[4], slab_block[4];
   hsize_t     attr_count;
  
   hsize_t    mem_offset;
   hsize_t    file_offset[4];
-  hsize_t    slab_offset[4];
  
   herr_t      h5_status;
   herr_t      h5_error = -1;

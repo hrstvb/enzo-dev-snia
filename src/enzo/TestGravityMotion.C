@@ -56,7 +56,7 @@ int TestGravityMotion(FILE *fptr, FILE *Outfptr, HierarchyEntry &TopGrid,
  
     /* read parameters */
  
-    ret += sscanf(line, "TestGravityMotionParticleVelocity = %"PSYM,
+    ret += sscanf(line, "TestGravityMotionParticleVelocity = %"FSYM,
 		  &TestGravityParticleVelocity);
  
     /* if the line is suspicious, issue a warning */

@@ -55,11 +55,10 @@ int Zeus_xTransport(float *d, float *e, float *u, float *v, float *w,
 
   int i, j, k, jm1, km1, i1, i2, n, idim, jdim, dim, offset, ic,
       fistart, fjstart, fiend, fjend, lface, rface;
-  float dnew, q[ijk], div[ijk], f2[ijk], f3[ijk], f4[ijk], f5[ijk],
+  float dnew, f2[ijk], f3[ijk], f4[ijk], f5[ijk],
         dstar[ijk], estar[ijk], ustar[ijk], vstar[ijk], wstar[ijk],
         uavgi[ijk], uavgj[ijk], uavgk[ijk], df, ueff[ijk];
   float *colstar[MAX_COLOR];
-  int ip1, im2, im3, ip2;
 
 //=======================================================================
 

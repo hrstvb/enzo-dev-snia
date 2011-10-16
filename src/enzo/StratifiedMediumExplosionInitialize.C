@@ -232,15 +232,15 @@ int StratifiedMediumExplosionInitialize(FILE *fptr, FILE *Outfptr, HierarchyEntr
 
   // set up field names and units
   i = 0;
-  DataLabel[i++] = "Density";
-  DataLabel[i++] = "TotalEnergy";
-  if (DualEnergyFormalism) {DataLabel[i++] = "GasEnergy";}
-  if (MetaData.TopGridRank > 0) {DataLabel[i++] = "x-velocity";}
-  if (MetaData.TopGridRank > 1 || HydroMethod > 2) {DataLabel[i++] = "y-velocity";}
-  if (MetaData.TopGridRank > 2 || HydroMethod > 2) {DataLabel[i++] = "z-velocity";}
+  DataLabel[i++] = (char*) "Density";
+  DataLabel[i++] = (char*) "TotalEnergy";
+  if (DualEnergyFormalism) {DataLabel[i++] = (char*) "GasEnergy";}
+  if (MetaData.TopGridRank > 0) {DataLabel[i++] = (char*) "x-velocity";}
+  if (MetaData.TopGridRank > 1 || HydroMethod > 2) {DataLabel[i++] = (char*) "y-velocity";}
+  if (MetaData.TopGridRank > 2 || HydroMethod > 2) {DataLabel[i++] = (char*) "z-velocity";}
 
   if (TestProblemData.UseMetallicityField)
-    DataLabel[i++] = "Metal_Density";
+    DataLabel[i++] = (char*) "Metal_Density";
 
   for (j=0; j < i; j++) 
     DataUnits[j] = NULL;
@@ -251,8 +251,8 @@ int StratifiedMediumExplosionInitialize(FILE *fptr, FILE *Outfptr, HierarchyEntr
     fprintf(Outfptr, "StratifiedMediumExplosionRadiusOfBubble = %"PSYM"\n", StratifiedMediumExplosionRadiusOfBubble);
     fprintf(Outfptr, "StratifiedMediumExplosionPulseType = %"ISYM"\n", StratifiedMediumExplosionPulseType);
     fprintf(Outfptr, "StratifiedMediumExplosionEnergy = %"FSYM"\n", StratifiedMediumExplosionEnergy);
-    fprintf(Outfptr, "StratifiedMediumExplosionCenter = %"PSYM" %"PSYM" %"PSYM"\n", StratifiedMediumExplosionCenter,
-		  StratifiedMediumExplosionCenter+1,StratifiedMediumExplosionCenter+2);
+    fprintf(Outfptr, "StratifiedMediumExplosionCenter = %"PSYM" %"PSYM" %"PSYM"\n", StratifiedMediumExplosionCenter[0],
+		  StratifiedMediumExplosionCenter[1],StratifiedMediumExplosionCenter[2]);
     fprintf(Outfptr, "TestProblemUseMetallicityField  = %"ISYM"\n", TestProblemData.UseMetallicityField);
     fprintf(Outfptr, "TestProblemInitialMetallicityFraction  = %"FSYM"\n", TestProblemData.MetallicityField_Fraction);
   }

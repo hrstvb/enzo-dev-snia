@@ -281,7 +281,7 @@ int grid::PhotonTestInitializeGrid(int NumberOfSpheres,
     hid_t file_id;
 
     // Parse DensityFilename into filename and dataset name
-    char *delim = "/";
+    const char *delim = "/";
     data_filename = strtok(DensityFilename, delim);
     dataset_name = strtok(NULL, delim);
 
@@ -921,6 +921,6 @@ double ph_Maxwellian(double c_tilda, double vel_unit, double mu, double gamma)
    double u2 = rand();
    u2 = u2/RAND_MAX;
    double x1 = mean + stdev*sqrt(-2*log(u1))*cos(2*pi*u2);
-   double x2 = mean + stdev*sqrt(-2*log(u1))*sin(2*pi*u2);
+   //double x2 = mean + stdev*sqrt(-2*log(u1))*sin(2*pi*u2);
    return (x1/vel_unit);
 }

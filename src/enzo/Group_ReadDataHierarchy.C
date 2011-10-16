@@ -145,7 +145,6 @@ int Group_ReadDataHierarchy(FILE *fptr, HierarchyEntry *Grid, int GridID,
 
 
   int NewProc = ReadDataGridCounter % NumberOfProcessors;
-  int ProcMap = ABS(NewProc - NumberOfProcessors) % NumberOfProcessors;
 
 #ifdef USE_CYCLIC_CPU_DISTRIBUTION
 
@@ -158,6 +157,7 @@ int Group_ReadDataHierarchy(FILE *fptr, HierarchyEntry *Grid, int GridID,
 
 #ifdef USE_PERMUTED_CPU_DISTRIBUTION
 
+  int ProcMap = ABS(NewProc - NumberOfProcessors) % NumberOfProcessors;
   Grid->GridData->SetProcessorNumber(ProcMap);
 
   if ( MyProcessorNumber == 0 )

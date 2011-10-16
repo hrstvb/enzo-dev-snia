@@ -84,7 +84,7 @@ int grid::InterpolateRadiationFromParent(grid *ParentGrid, int Field)
   int ZeroVector[MAX_DIMENSION], ParentTempStartIndex[MAX_DIMENSION];
   int ParentTempDim[MAX_DIMENSION], TempDim[MAX_DIMENSION];
   int ParentDim[MAX_DIMENSION];
-  int ParentTempSize, WorkSize, TempSize, GridSize, One = 1, Zero = 0;
+  int ParentTempSize, WorkSize, TempSize, GridSize, Zero = 0;
   int dim, interp_error;
   float *TemporaryField, *Work, *ParentTemp;
 

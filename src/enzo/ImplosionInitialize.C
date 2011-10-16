@@ -66,11 +66,11 @@
 int ImplosionInitialize(FILE *fptr, FILE *Outfptr, HierarchyEntry &TopGrid,
 		       TopGridData &MetaData)
 {
-  char *DensName = "Density";
-  char *TEName   = "TotalEnergy";
-  char *Vel1Name = "x-velocity";
-  char *Vel2Name = "y-velocity";
-  char *Vel3Name = "z-velocity";
+  const char *DensName = "Density";
+  const char *TEName   = "TotalEnergy";
+  const char *Vel1Name = "x-velocity";
+  const char *Vel2Name = "y-velocity";
+  const char *Vel3Name = "z-velocity";
  
   /* parameter declarations */
  
@@ -108,9 +108,9 @@ int ImplosionInitialize(FILE *fptr, FILE *Outfptr, HierarchyEntry &TopGrid,
 		        &ImplosionDiamondDensity);
     ret += sscanf(line, "ImplosionDiamondPressure = %"FSYM,
 		        &ImplosionDiamondPressure);
-    ret += sscanf(line, "ImplosionSubgridLeft = %"FSYM,
+    ret += sscanf(line, "ImplosionSubgridLeft = %"PSYM,
 		        &ImplosionSubgridLeft);
-    ret += sscanf(line, "ImplosionSubgridRight = %"FSYM,
+    ret += sscanf(line, "ImplosionSubgridRight = %"PSYM,
 		        &ImplosionSubgridRight);
  
     /* if the line is suspicious, issue a warning */

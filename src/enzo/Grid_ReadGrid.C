@@ -52,7 +52,7 @@ int grid::ReadGrid(FILE *fptr, int GridID,
 {
   bool TryHDF5 = TRUE; 
   int i, j, k, dim, field, size, active_size;
-  char name[MAX_LINE_LENGTH], dummy[MAX_LINE_LENGTH];
+  char name[MAX_LINE_LENGTH];
   char logname[MAX_LINE_LENGTH];
  
   int ActiveDim[MAX_DIMENSION];
@@ -61,7 +61,7 @@ int grid::ReadGrid(FILE *fptr, int GridID,
  
   hid_t       file_id, dset_id;
   hid_t       float_type_id, FLOAT_type_id;
-  hid_t       file_type_id, FILE_type_id;
+  hid_t       FILE_type_id;
   hid_t       file_dsp_id;
   hid_t       num_type;
  
@@ -73,17 +73,17 @@ int grid::ReadGrid(FILE *fptr, int GridID,
  
   int         num_size;
  
-  char *ParticlePositionLabel[] =
+  const char *ParticlePositionLabel[] =
     {"particle_position_x", "particle_position_y", "particle_position_z"};
-  char *ParticleVelocityLabel[] =
+  const char *ParticleVelocityLabel[] =
     {"particle_velocity_x", "particle_velocity_y", "particle_velocity_z"};
 #ifdef WINDS
-    char *ParticleAttributeLabel[] = 
-      {"creation_time", "dynamical_time", "metallicity_fraction", "particle_jet_x", 
-       "particle_jet_y", "particle_jet_z", "typeia_fraction"};
+  const char *ParticleAttributeLabel[] = 
+    {"creation_time", "dynamical_time", "metallicity_fraction", "particle_jet_x", 
+     "particle_jet_y", "particle_jet_z", "typeia_fraction"};
 #else
-    char *ParticleAttributeLabel[] = 
-      {"creation_time", "dynamical_time", "metallicity_fraction", "typeia_fraction"};
+  const char *ParticleAttributeLabel[] = 
+    {"creation_time", "dynamical_time", "metallicity_fraction", "typeia_fraction"};
 #endif
 
 #ifdef USE_HDF4
@@ -415,7 +415,7 @@ int grid::ReadGrid(FILE *fptr, int GridID,
     if ((PhiNum = FindField(PhiField, FieldType, NumberOfBaryonFields)) < 0) {
       fprintf(stderr, "Starting with Dedner MHD method with no Phi field. \n");
       fprintf(stderr, "Adding it in Grid_ReadGrid.C \n");
-      char *PhiName = "Phi";
+      const char *PhiName = "Phi";
       PhiNum = NumberOfBaryonFields;
       int PhiToAdd = PhiField;
       this->AddFields(&PhiToAdd, 1);
@@ -429,7 +429,7 @@ int grid::ReadGrid(FILE *fptr, int GridID,
       if ((Phi_pNum = FindField(Phi_pField, FieldType, NumberOfBaryonFields)) < 0) {
 	fprintf(stderr, "Want to use divergence cleaning with no Phi_p field. \n");
 	fprintf(stderr, "Adding it in Grid_ReadGrid.C \n");
-	char *Phi_pName = "Phi_p";
+	const char *Phi_pName = "Phi_p";
 	Phi_pNum = NumberOfBaryonFields;
 	int Phi_pToAdd = Phi_pField;
 	this->AddFields(&Phi_pToAdd, 1);

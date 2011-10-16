@@ -26,7 +26,7 @@
 #include "Grid.h"
 #include "SedovBlastGlobalData.h"
 
-int grid::SedovBlastInitializeGrid3D(char * SedovBlastFileName)
+int grid::SedovBlastInitializeGrid3D(const char * SedovBlastFileName)
 {
 
   if (ProcessorNumber != MyProcessorNumber)
