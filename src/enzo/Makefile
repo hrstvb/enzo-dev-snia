@@ -408,7 +408,7 @@ help:
 clean:
 	-@rm -f *.so *.o uuid/*.o *.mod *.f *.f90 DEPEND.bak *~ $(OUTPUT) *.exe \
           auto_show*.C svn_version.def hydro_rk/*.o *.oo hydro_rk/*.oo \
-          uuid/*.oo DEPEND TAGS \
+          uuid/*.oo DEPEND TAGS $(FOUTPUT) \
           libconfig/*.o \
           python_bridge/problemtype_handler.C \
           python_bridge/problemtype_handler.h \

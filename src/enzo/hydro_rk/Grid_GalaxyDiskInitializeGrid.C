@@ -121,7 +121,7 @@ int grid::GalaxyDiskInitializeGrid(int NumberOfHalos,
 
   double  mu = Mu; // assume fully ionized cosmic gas
   float DensityUnits = 1.0, LengthUnits = 1.0, TemperatureUnits = 1, TimeUnits, 
-    VelocityUnits, CriticalDensity = 1, BoxLength = 1, MagneticUnits;
+    VelocityUnits;
   double MassUnits;
   GetUnits(&DensityUnits, &LengthUnits, &TemperatureUnits,
 	   &TimeUnits, &VelocityUnits, Time);
@@ -208,7 +208,7 @@ int grid::GalaxyDiskInitializeGrid(int NumberOfHalos,
  
 
   /* Find the average density */
-  double rho_nfw = 3.0*NFWMass[i_vir]/(4.0*M_PI*pow(NFWRadius[i_vir]*LengthUnits,3));
+  //double rho_nfw = 3.0*NFWMass[i_vir]/(4.0*M_PI*pow(NFWRadius[i_vir]*LengthUnits,3));
 
   /* Renormalize velocity using virial relation */
   double Ek = 0.0;
@@ -295,7 +295,7 @@ int grid::GalaxyDiskInitializeGrid(int NumberOfHalos,
     int n = 0;
     float f_b = 1.0/10.0;
     float RotVelocity[3];
-    FLOAT xpos, ypos, zpos, drad, cosphi, sinphi, sintheta; 
+    FLOAT xpos, ypos, zpos, cosphi, sinphi, vphi, sintheta; 
 
     
     // this sets up an isothermal disk in equilbrium vertically and radially within a static NFW halo
@@ -318,7 +318,7 @@ int grid::GalaxyDiskInitializeGrid(int NumberOfHalos,
     double rho_0 = Sigma_0*Sigma_0*M_PI*GravConst/(c_s*c_s);
     double h_0   = Sigma_0/2/rho_0;
 
-    double rhoc, nd, SigmaR, Omega, Mdr, hr, Vrot, ToomreQ, yd, vphidisk, vdm, vpress;
+    double rhoc, SigmaR, Omega, Mdr, hr, Vrot, ToomreQ, yd, vphidisk, vdm, vpress;
     if (GalaxyType[sphere] == 5) { 
       fptr = fopen("DiskProfile.out", "w");
       printf("#mdisk= %g, r_disk = %g kpc, T_disk=%g K, central height h_0=%g kpc, \nrho_0=%g [g/cm3], c_s=%g km/s, Sigma_0=%g Msun/pc^2\n", 
@@ -412,7 +412,6 @@ int grid::GalaxyDiskInitializeGrid(int NumberOfHalos,
 		 velocity dispersion)*/
 	      
 	      if (GalaxyType[sphere] == 3) {
-		double vphi, vphim, vphip;
 		x1 = r/HaloCoreRadius[sphere];
 		density = f_b*HaloDensity[sphere]/((x1+0.2)*(1.0+x1)*(1.0+x1));
 		for (m = 1; m < NFW_POINTS; m++) {
@@ -449,7 +448,7 @@ int grid::GalaxyDiskInitializeGrid(int NumberOfHalos,
 	      if (GalaxyType[sphere] == 4 && 
 		  R < DiskRadius[sphere] &&
 		  fabs(zpos) < DiskHeight[sphere]) {
-		double vphi, vphim, vphip, m_disk;
+		double vphi, m_disk;
 		density = DiskDensity[sphere];		
 		temperature = DiskTemperature[sphere];
 		// add random perturbation to density and temperature

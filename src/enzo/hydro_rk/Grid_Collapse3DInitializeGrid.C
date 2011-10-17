@@ -35,7 +35,7 @@ int grid::Collapse3DInitializeGrid(int n_sphere,
 {
   /* declarations */
 
-  int dim, i, j, k, m, field, sphere, size;
+  int dim, i, j, k, field, sphere, size;
   int DeNum, HINum, HIINum, HeINum, HeIINum, HeIIINum, HMNum, H2INum, H2IINum,
     DINum, DIINum, HDINum,  kphHINum, gammaNum, kphHeINum, 
     kphHeIINum, kdissH2INum, RPresNum1, RPresNum2, RPresNum3;
@@ -130,7 +130,7 @@ int grid::Collapse3DInitializeGrid(int n_sphere,
 
   // if use BE sphere, read in the BE sphere density profile
 
-  char *filename = "be.dat";
+  const char *filename = "be.dat";
   int n_bin = 6401;
   float radius[n_bin];
   float rho_be[n_bin];
@@ -149,7 +149,7 @@ int grid::Collapse3DInitializeGrid(int n_sphere,
   }
 
   
-  float rho, vel[3], eint, etot, h, cs, dpdrho, dpde, v2;
+  float rho, vel[3], eint, h, cs, dpdrho, dpde, v2;
   FLOAT sinphi, cosphi;
   int n = 0;
   for (k = 0; k < GridDimension[2]; k++) {
@@ -178,8 +178,8 @@ int grid::Collapse3DInitializeGrid(int n_sphere,
 
 	  if (r < r_sphere[sphere]) {
 
-            FLOAT xpos, ypos, zpos, drad;
-                                                                                                                                                          
+            FLOAT xpos, ypos, zpos;
+
 	    /* Compute position. */
 	    
 	    xpos = x-sphere_position[sphere][0];
@@ -204,8 +204,8 @@ int grid::Collapse3DInitializeGrid(int n_sphere,
 
 	    if (sphere_type[sphere] == 2) {
 	      rho = rho_sphere[sphere];
-	      FLOAT cos2phi = cosphi*cosphi -sinphi*sinphi;
-	      FLOAT cos3phi = 4.0*pow(cosphi,3) - 3.0*cosphi;
+	      //FLOAT cos2phi = cosphi*cosphi -sinphi*sinphi;
+	      //FLOAT cos3phi = 4.0*pow(cosphi,3) - 3.0*cosphi;
 	      //rho *= (1.0 + 0.5*cos2phi);
 	      //rho *= (1.0 + 0.5*cos3phi);
 	      //EOS(p_sphere[sphere], rho, eint, h, cs, dpdrho, dpde, EOSType, 1);
@@ -242,10 +242,10 @@ int grid::Collapse3DInitializeGrid(int n_sphere,
 	      rho = rho_sphere[sphere]*rho_be[n];
 	      eint = pow(cs_sphere[sphere], 2)/(Gamma-1.0);
 	      FLOAT cos2phi = cosphi*cosphi - sinphi*sinphi;
-	      FLOAT cos3phi = 4.0*pow(cosphi,3) - 3.0*cosphi;
-	      FLOAT sin3phi = 3.0*sinphi - 4.0*pow(sinphi, 3);
 	      FLOAT phi0 = M_PI/4.0;
-	      FLOAT cos3phi0 = cos3phi*cos(phi0) - sin3phi*sin(phi0);
+	      //FLOAT cos3phi = 4.0*pow(cosphi,3) - 3.0*cosphi;
+	      //FLOAT sin3phi = 3.0*sinphi - 4.0*pow(sinphi, 3);
+	      //FLOAT cos3phi0 = cos3phi*cos(phi0) - sin3phi*sin(phi0);
 	      FLOAT omega2 = 0.0;//omega_sphere[sphere]; // velocity perturbation
 	      FLOAT omega = omega_sphere[sphere] + omega2*cos2phi;
 	      //rho *= (1.0 + 0.5*(cos2phi+cos3phi0));

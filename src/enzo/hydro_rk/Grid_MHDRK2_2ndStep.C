@@ -44,9 +44,6 @@ int grid::MHDRK2_2ndStep(fluxes *SubgridFluxes[],
     return SUCCESS;
   }
 
-
-  double time1 = ReturnWallTime();
-
   float *Prim[NEQ_MHD+NSpecies+NColor];
   float *OldPrim[NEQ_MHD+NSpecies+NColor];
 

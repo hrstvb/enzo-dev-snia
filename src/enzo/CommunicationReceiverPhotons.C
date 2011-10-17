@@ -34,7 +34,7 @@
 static Eint32 PH_ListOfIndices[MAX_PH_RECEIVE_BUFFERS];
 static MPI_Status PH_ListOfStatuses[MAX_PH_RECEIVE_BUFFERS];
 void CommunicationCheckForErrors(int NumberOfStatuses, MPI_Status *statuses,
-				 char *msg=NULL);
+				 const char *msg=NULL);
 int CommunicationFindOpenRequest(MPI_Request *requests, Eint32 last_free,
 				 Eint32 nrequests, Eint32 index, 
 				 Eint32 &max_index);

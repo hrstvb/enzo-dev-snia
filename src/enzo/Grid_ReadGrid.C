@@ -419,7 +419,7 @@ int grid::ReadGrid(FILE *fptr, int GridID,
       PhiNum = NumberOfBaryonFields;
       int PhiToAdd = PhiField;
       this->AddFields(&PhiToAdd, 1);
-      DataLabel[PhiNum] = PhiName;
+      DataLabel[PhiNum] = (char*)PhiName;
     }
 
     /* if we restart from a different solvers output without a Phi_pField 
@@ -433,7 +433,7 @@ int grid::ReadGrid(FILE *fptr, int GridID,
 	Phi_pNum = NumberOfBaryonFields;
 	int Phi_pToAdd = Phi_pField;
 	this->AddFields(&Phi_pToAdd, 1);
-	DataLabel[Phi_pNum] = Phi_pName;
+	DataLabel[Phi_pNum] = (char*)Phi_pName;
       }
     }
 

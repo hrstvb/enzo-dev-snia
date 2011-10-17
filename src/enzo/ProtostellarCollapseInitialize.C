@@ -84,8 +84,6 @@ int ProtostellarCollapseInitialize(FILE *fptr, FILE *Outfptr,
   float ProtostellarCollapseOuterEnergy     = 1e3;
   float ProtostellarCollapseCoreRadius      = 0.005;
   float ProtostellarCollapseAngularVelocity = 0.0;
-  float dx = (DomainRightEdge[0] - DomainLeftEdge[0])/
-                                                   MetaData.TopGridDims[0];
 
   /* set no subgrids by default. */
 
@@ -273,11 +271,11 @@ int ProtostellarCollapseInitialize(FILE *fptr, FILE *Outfptr,
 
   /* set up field names and units */
 
-  DataLabel[0] = DensName;
-  DataLabel[1] = TEName;
-  DataLabel[2] = Vel1Name;
-  DataLabel[3] = Vel2Name;
-  DataLabel[4] = Vel3Name;
+  DataLabel[0] = (char*)DensName;
+  DataLabel[1] = (char*)TEName;
+  DataLabel[2] = (char*)Vel1Name;
+  DataLabel[3] = (char*)Vel2Name;
+  DataLabel[4] = (char*)Vel3Name;
 
   DataUnits[0] = NULL;
   DataUnits[1] = NULL;

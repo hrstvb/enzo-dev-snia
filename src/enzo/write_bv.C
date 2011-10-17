@@ -19,7 +19,6 @@ int WRITE_BV(float *bv_buffer,
              int NumberOfBaryonFields)
 {
 
-  FILE *log;
   int io_log = 1;
   int i;
 

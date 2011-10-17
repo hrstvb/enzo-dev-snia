@@ -32,7 +32,7 @@ int GenerateGridArray(LevelHierarchyEntry *LevelArray[], int level,
 int Star::DisableParticle(LevelHierarchyEntry *LevelArray[])
 {
 
-  int i, nPart, NumberOfGrids, changedGrid = INT_UNDEFINED, found = FALSE;
+  int i, NumberOfGrids, changedGrid = INT_UNDEFINED, found = FALSE;
   HierarchyEntry **Grids;
   
   NumberOfGrids = GenerateGridArray(LevelArray, this->level, &Grids);

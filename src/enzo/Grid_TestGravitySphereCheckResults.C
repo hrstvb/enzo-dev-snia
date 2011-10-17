@@ -103,9 +103,9 @@ int grid::TestGravitySphereCheckResults(FILE *fptr)
     BaryonField[NumberOfBaryonFields++] = new float[size];
     BaryonField[NumberOfBaryonFields++] = new float[size];
  
-    DataLabel[NumberOfBaryonFields-3] = TGSTangName;
-    DataLabel[NumberOfBaryonFields-2] = TGSRadialName;
-    DataLabel[NumberOfBaryonFields-1] = TGSAnalyticName;
+    DataLabel[NumberOfBaryonFields-3] = (char*)TGSTangName;
+    DataLabel[NumberOfBaryonFields-2] = (char*)TGSRadialName;
+    DataLabel[NumberOfBaryonFields-1] = (char*)TGSAnalyticName;
  
     float r, GridPos[MAX_DIMENSION];
     int n = 0;

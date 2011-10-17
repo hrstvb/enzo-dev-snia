@@ -101,7 +101,7 @@ int LoadBalanceSimulatedAnnealing(int NumberOfGrids, int NumberOfNodes,
   }
 
   int i, j, node, nsucc;
-  float temperature, H;
+  float temperature;
   double *ProcWork, *NodeWork;
 
   ProcWork = new double[NumberOfProcessors];

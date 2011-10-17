@@ -56,7 +56,7 @@ void Star::CalculateFeedbackParameters(float &Radius,
   float StarLevelCellWidth, tdyn, frac;
   double EjectaVolume, SNEnergy, HeliumCoreMass, Delta_SF, MetalMass;
 
-  int bin, size=1;
+  int bin;
   float mdot;
 
   Radius = 0.0;

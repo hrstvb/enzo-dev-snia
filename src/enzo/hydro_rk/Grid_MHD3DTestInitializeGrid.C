@@ -146,7 +146,6 @@ int grid::MHD3DTestInitializeGrid(int MHD3DProblemType,
   int igrid;
   FLOAT x, y, z;
   if (MHD3DProblemType == 0) { // Planar shock
-  float pres, eintl, eintu, h, cs, dpdrho, dpde;
   for (int k = 0; k < GridDimension[2]; k++) {
     for (int j = 0; j < GridDimension[1]; j++) {
       for (int i = 0; i < GridDimension[0]; i++) {
@@ -195,7 +194,7 @@ int grid::MHD3DTestInitializeGrid(int MHD3DProblemType,
   }
 
   if (MHD3DProblemType == 1) { // Uniform Density with a Shear
-    float pres, eintl, eintu, h, cs, dpdrho, dpde;
+    float pres, eintl, h, cs, dpdrho, dpde;
     for (int k = 0; k < GridDimension[2]; k++) {
       for (int j = 0; j < GridDimension[1]; j++) {
 	for (int i = 0; i < GridDimension[0]; i++) {
@@ -326,7 +325,7 @@ int grid::MHD3DTestInitializeGrid(int MHD3DProblemType,
 
   if (MHD3DProblemType == 4) { 
 
-    float pres, eintl, eintu, h, cs, dpdrho, dpde,rhot, bx ,by, bz;
+    float pres, eintl, h, cs, dpdrho, dpde, bx ,by, bz;
 
 
     float *ax = new float[size];

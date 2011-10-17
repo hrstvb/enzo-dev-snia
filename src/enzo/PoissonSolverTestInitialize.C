@@ -110,21 +110,21 @@ int PoissonSolverTestInitialize(FILE *fptr, FILE *Outfptr,
   /* set up field names and units */
 
   int count = 0;
-  DataLabel[count++] = DensName;
-  DataLabel[count++] = Vel1Name;
-  DataLabel[count++] = Vel2Name;
-  DataLabel[count++] = Vel3Name;
-  DataLabel[count++] = TEName;
+  DataLabel[count++] = (char*)DensName;
+  DataLabel[count++] = (char*)Vel1Name;
+  DataLabel[count++] = (char*)Vel2Name;
+  DataLabel[count++] = (char*)Vel3Name;
+  DataLabel[count++] = (char*)TEName;
   if (DualEnergyFormalism) {
-    DataLabel[count++] = GEName;
+    DataLabel[count++] = (char*)GEName;
   }
-  DataLabel[count++] = BxName;
-  DataLabel[count++] = ByName;
-  DataLabel[count++] = BzName;
-  DataLabel[count++] = PhiName;
+  DataLabel[count++] = (char*)BxName;
+  DataLabel[count++] = (char*)ByName;
+  DataLabel[count++] = (char*)BzName;
+  DataLabel[count++] = (char*)PhiName;
   if(UseDivergenceCleaning){
 
-    DataLabel[count++] = Phi_pName;
+    DataLabel[count++] = (char*)Phi_pName;
   }
 
 

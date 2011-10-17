@@ -34,7 +34,7 @@ int CommunicationBufferedSend(void *buffer, int size, MPI_Datatype Type, int Tar
 int CommunicationFindOpenRequest(MPI_Request *requests, Eint32 last_free,
 				 Eint32 nrequests, Eint32 index, Eint32 &max_index);
 void CommunicationCheckForErrors(int NumberOfStatuses, MPI_Status *statuses,
-				 char *msg=NULL);
+				 const char *msg=NULL);
 int KeepTransportingSend(int keep_transporting);
 int KeepTransportingCheck(char* &kt_global, int &keep_transporting);
 int InitializePhotonMessages(void);
@@ -306,7 +306,7 @@ int CommunicationFindOpenRequest(MPI_Request *requests, Eint32 last_free,
       i++;
       i = i % nrequests;
       if (count++ > MAX_PH_RECEIVE_BUFFERS)
-	ENZO_VFAIL("Exceeded number (%d) of comm. buffers MAX_PH_RECEIVE_BUFFERS :: %d %d %d %x", count, last_free, i, nrequests, requests[i]);
+	ENZO_VFAIL("Exceeded number (%d) of comm. buffers MAX_PH_RECEIVE_BUFFERS :: %d %d %d %p", count, last_free, i, nrequests, requests[i]);
     }
   } // ENDWHILE
 

@@ -19,7 +19,6 @@ int WRITE_BT(boundary_type *bt_buffer,
              int NumberOfBaryonFields)
 {
 
-  FILE *log;
   int io_log = 0;
   int i;
 

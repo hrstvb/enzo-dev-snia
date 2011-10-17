@@ -128,7 +128,7 @@ int Group_WriteAllData(char *basename, int filenumber,
   char id[MAX_CYCLE_TAG_SIZE], *cptr, name[MAX_LINE_LENGTH];
   char dumpdirname[MAX_LINE_LENGTH];
   char dumpdirroot[MAX_LINE_LENGTH];
-#ifdef SYSCALL
+#ifndef SYSCALL
   char unixcommand[MAX_LINE_LENGTH];
 #endif
   char gridbasename[MAX_LINE_LENGTH];

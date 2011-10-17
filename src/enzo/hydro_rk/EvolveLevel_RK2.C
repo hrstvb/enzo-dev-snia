@@ -188,17 +188,15 @@ void my_exit(int status);
 /* Counters for performance and cycle counting. */
 
 static int MovieCycleCount[MAX_DEPTH_OF_HIERARCHY];
-static double LevelWallTime[MAX_DEPTH_OF_HIERARCHY];
-static double LevelZoneCycleCount[MAX_DEPTH_OF_HIERARCHY];
-static double LevelZoneCycleCountPerProc[MAX_DEPTH_OF_HIERARCHY];
+//static double LevelWallTime[MAX_DEPTH_OF_HIERARCHY];
+//static double LevelZoneCycleCount[MAX_DEPTH_OF_HIERARCHY];
+//static double LevelZoneCycleCountPerProc[MAX_DEPTH_OF_HIERARCHY];
  
 int ComputeRandomForcingNormalization(LevelHierarchyEntry *LevelArray[],
                                       int level, TopGridData *MetaData,
                                       float * norm, float * pTopGridTimeStep);
 static float norm = 0.0;            //AK
 static float TopGridTimeStep = 0.0; //AK
-
-static int StaticSiblingListInitialized = 0;
 
 #ifdef STATIC_SIBLING_LIST
 static SiblingGridList StaticSiblingList[MAX_NUMBER_OF_SUBGRIDS];
@@ -219,16 +217,14 @@ int EvolveLevel_RK2(TopGridData *MetaData, LevelHierarchyEntry *LevelArray[],
 		    FLOAT dt0)
 {
 
-  float dtGrid;
-  int RefinementFactors[MAX_DIMENSION];
-  int cycle = 0, counter = 0, grid1, subgrid, iLevel;
+  int cycle = 0, counter = 0, grid1;
   HierarchyEntry *NextGrid;
   double time1 = ReturnWallTime();
 
   // Update lcaperf "level" attribute
 
-  Eint32 jb_level = level;
 #ifdef USE_JBPERF
+  Eint32 jb_level = level;
   jbPerf.attribute ("level",&jb_level,JB_INT);
 #endif
 
@@ -376,7 +372,6 @@ int EvolveLevel_RK2(TopGridData *MetaData, LevelHierarchyEntry *LevelArray[],
 
       /* Gravity: compute acceleration field for grid and particles. */
       if (SelfGravity) {
-	int Dummy;
 	if (level <= MaximumGravityRefinementLevel) {
 	  if (level > 0) 
 	    Grids[grid1]->GridData->SolveForPotential(level) ;
@@ -440,7 +435,6 @@ int EvolveLevel_RK2(TopGridData *MetaData, LevelHierarchyEntry *LevelArray[],
 
       /* Gravity: compute acceleration field for grid and particles. */
       if (RK2SecondStepBaryonDeposit && SelfGravity) {
-	int Dummy;
 	if (level <= MaximumGravityRefinementLevel) {
 	  if (level > 0) 
 	    Grids[grid1]->GridData->SolveForPotential(level) ;
@@ -683,9 +677,9 @@ int EvolveLevel_RK2(TopGridData *MetaData, LevelHierarchyEntry *LevelArray[],
 
     /* Count up number of grids on this level. */
 
+#ifdef UNUSED
     int GridMemory, NumberOfCells, CellsTotal, Particles;
     float AxialRatio, GridVolume;
-#ifdef UNUSED
     for (grid1 = 0; grid1 < NumberOfGrids; grid1++) {
       Grids[grid1]->GridData->CollectGridInformation
         (GridMemory, GridVolume, NumberOfCells, AxialRatio, CellsTotal, Particles);

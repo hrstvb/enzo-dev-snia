@@ -140,7 +140,7 @@ int grid::NestedCosmologySimulationInitializeGrid(
   int         Slab_Rank;
  
   hsize_t     mem_stride, mem_count;
-  hsize_t     slab_stride[4], slab_block[4];
+  hsize_t     slab_stride[4], slab_count[4];
  
   hsize_t    mem_offset;
   hsize_t    slab_offset[4];

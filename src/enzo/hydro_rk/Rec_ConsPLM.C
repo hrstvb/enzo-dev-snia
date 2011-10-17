@@ -24,7 +24,7 @@
 
 inline void dv_plm_point(float &vm1, float &v, float &vp1, float &dv_plm)
 {
-  float dv_l, dv_r, dv_m, dv;
+  float dv_l, dv_r, dv_m;
   
   dv_l = (v-vm1) * Theta_Limiter;
   dv_r = (vp1-v) * Theta_Limiter;
@@ -36,7 +36,7 @@ inline void dv_plm_point(float &vm1, float &v, float &vp1, float &dv_plm)
 
 int cons_plm(float **prim, float **priml, float **primr, int ActiveSize, int Neq, char direc)
 {
-  int iprim, iv;
+  int iprim;
   int idual = (DualEnergyFormalism) ? 1 : 0;
   float *dv[NEQ_MHD-idual];
   for (int field = 0; field < NEQ_MHD-idual; field++) 

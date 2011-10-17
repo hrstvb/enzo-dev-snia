@@ -23,7 +23,6 @@
 #include "Grid.h"
 
 
-double ReturnWallTime();
 int HydroTimeUpdate_CUDA(float **Prim, int GridDimension[], int GridStartIndex[], int GridEndIndex[], int GridRank,
 		          float dtdx, float dt);
 
@@ -44,8 +43,6 @@ int grid::RungeKutta2_2ndStep(fluxes *SubgridFluxes[],
   if (NumberOfBaryonFields == 0) {
     return SUCCESS;
   }
-
-  double time1 = ReturnWallTime();
 
   float *Prim[NEQ_HYDRO+NSpecies+NColor];
   float *OldPrim[NEQ_HYDRO+NSpecies+NColor];
@@ -161,8 +158,6 @@ int grid::RungeKutta2_2ndStep(fluxes *SubgridFluxes[],
   for (int field = 0; field < NEQ_HYDRO+NSpecies+NColor; field++) {
     delete [] dU[field];
   }
-
-  //  PerformanceTimers[1] += ReturnWallTime() - time1;
 
   return SUCCESS;
 

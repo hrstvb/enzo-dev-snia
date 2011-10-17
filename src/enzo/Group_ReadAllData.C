@@ -86,7 +86,6 @@ int Group_ReadAllData(char *name, HierarchyEntry *TopGrid, TopGridData &MetaData
   char line[MAX_LINE_LENGTH];
 
   FILE *fptr;
-  FILE *tptr;
 #ifdef TASKMAP
   FILE *mptr;
 #endif /* TASKMAP */
@@ -96,8 +95,8 @@ int Group_ReadAllData(char *name, HierarchyEntry *TopGrid, TopGridData &MetaData
   hid_t       file_acc_template;
   size_t      memory_increment; // in bytes
   herr_t      h5_status;
-#endif
   hbool_t     dump_flag;
+#endif
 
   herr_t      h5_error = -1;
 

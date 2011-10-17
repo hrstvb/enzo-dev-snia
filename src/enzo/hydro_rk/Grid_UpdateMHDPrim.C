@@ -42,7 +42,7 @@ int grid::UpdateMHDPrim(float **dU, float c1, float c2)
   this->IdentifyPhysicalQuantities(DensNum, GENum, Vel1Num, Vel2Num, 
 				   Vel3Num, TENum, B1Num, B2Num, B3Num, PhiNum);
 
-  int i, j, k, n, n_dU, dim, igrid, field, size, activesize;
+  int i, j, k, n, dim, igrid, field, size, activesize;
   for (dim = 0, size = 1; dim < GridRank; dim++) {
     size *= GridDimension[dim];
   }
@@ -131,8 +131,8 @@ int grid::UpdateMHDPrim(float **dU, float c1, float c2)
   } //close if (NoMultiSpeciesButColors == 1)
   /* Update conserved variables */
 
-  float rho_old, vx_old, vy_old, vz_old, e_old, etot_old, Tau_old, eint_old,
-    rho, vx, vy, vz, e, etot, Tau, eint, p, v2,
+  float rho_old, vx_old, vy_old, vz_old, etot_old, Tau_old, eint_old,
+    rho, vx, vy, vz, etot, Tau, eint, p, v2,
     D_new, S1_new, S2_new, S3_new, Tau_new, h, cs, dpdrho, dpde, Eint_new,
     Bx_old, By_old, Bz_old, Bx, By, Bz, Bx_new, By_new, Bz_new,
     Phi_old, Phi, Phi_new, B2;

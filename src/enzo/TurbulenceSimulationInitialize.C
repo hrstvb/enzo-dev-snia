@@ -344,26 +344,26 @@ int TurbulenceSimulationInitialize(FILE *fptr, FILE *Outfptr,
   /* set up field names and units */
  
   i = 0;
-  DataLabel[i++] = DensName;
-  DataLabel[i++] = TEName;
+  DataLabel[i++] = (char*)DensName;
+  DataLabel[i++] = (char*)TEName;
   if (DualEnergyFormalism)
-    DataLabel[i++] = GEName;
-  DataLabel[i++] = Vel1Name;
-  DataLabel[i++] = Vel2Name;
-  DataLabel[i++] = Vel3Name;
+    DataLabel[i++] = (char*)GEName;
+  DataLabel[i++] = (char*)Vel1Name;
+  DataLabel[i++] = (char*)Vel2Name;
+  DataLabel[i++] = (char*)Vel3Name;
   if (HydroMethod == MHD_RK) {
-    DataLabel[i++] = BxName;
-    DataLabel[i++] = ByName;
-    DataLabel[i++] = BzName;
-    DataLabel[i++] = PhiName;
+    DataLabel[i++] = (char*)BxName;
+    DataLabel[i++] = (char*)ByName;
+    DataLabel[i++] = (char*)BzName;
+    DataLabel[i++] = (char*)PhiName;
   }
   if (UseDrivingField) {
-    DataLabel[i++] = Drive1Name;
-    DataLabel[i++] = Drive2Name;
-    DataLabel[i++] = Drive3Name;
+    DataLabel[i++] = (char*)Drive1Name;
+    DataLabel[i++] = (char*)Drive2Name;
+    DataLabel[i++] = (char*)Drive3Name;
   }
   if(WritePotential)
-      DataLabel[i++] = GravPotName;
+      DataLabel[i++] = (char*)GravPotName;
 
   for (j = 0; j < i; j++)
     DataUnits[j] = NULL;

@@ -41,8 +41,8 @@ int ComputeDednerWaveSpeeds(TopGridData *MetaData, LevelHierarchyEntry *LevelArr
   if (HydroMethod != MHD_RK) 
     return SUCCESS;
 
-  float DensityUnits = 1.0, LengthUnits = 1.0, TemperatureUnits = 1, TimeUnits, 
-    VelocityUnits, CriticalDensity = 1, BoxLength = 1, MagneticUnits;
+  float DensityUnits = 1.0, LengthUnits = 1.0, TemperatureUnits = 1, TimeUnits = 1, 
+    VelocityUnits = 1;
   double MassUnits;
   GetUnits(&DensityUnits, &LengthUnits, &TemperatureUnits, &TimeUnits, &VelocityUnits, 1.0);
   MassUnits = DensityUnits*pow(LengthUnits,3);

@@ -25,35 +25,35 @@ int GetUnits(float *DensityUnits, float *LengthUnits,
 int Collapse3DInitialize(FILE *fptr, FILE *Outfptr, 
 			  HierarchyEntry &TopGrid, TopGridData &MetaData)
 {
-  char *DensName = "Density";
-  char *TEName   = "TotalEnergy";
-  char *GEName   = "GasEnergy";
-  char *Vel1Name = "x-velocity";
-  char *Vel2Name = "y-velocity";
-  char *Vel3Name = "z-velocity";
-  char *ColourName = "colour";
-  char *ElectronName = "Electron_Density";
-  char *HIName    = "HI_Density";
-  char *HIIName   = "HII_Density";
-  char *HeIName   = "HeI_Density";
-  char *HeIIName  = "HeII_Density";
-  char *HeIIIName = "HeIII_Density";
-  char *HMName    = "HM_Density";
-  char *H2IName   = "H2I_Density";
-  char *H2IIName  = "H2II_Density";
-  char *DIName    = "DI_Density";
-  char *DIIName   = "DII_Density";
-  char *HDIName   = "HDI_Density";
-  char *kphHIName    = "HI_kph";
-  char *gammaHIName  = "HI_gamma";
-  char *kphHeIName   = "HeI_kph";
-  char *gammaHeIName = "HeI_gamma";
-  char *kphHeIIName  = "HeII_kph";
-  char *gammaHeIIName= "HeII_gamma";
-  char *kdissH2IName = "H2I_kdiss";
-  char *RadAccel1Name = "RadAccel1";
-  char *RadAccel2Name = "RadAccel2";
-  char *RadAccel3Name = "RadAccel3";
+  const char *DensName = "Density";
+  const char *TEName   = "TotalEnergy";
+  const char *GEName   = "GasEnergy";
+  const char *Vel1Name = "x-velocity";
+  const char *Vel2Name = "y-velocity";
+  const char *Vel3Name = "z-velocity";
+  //const char *ColourName = "colour";
+  const char *ElectronName = "Electron_Density";
+  const char *HIName    = "HI_Density";
+  const char *HIIName   = "HII_Density";
+  const char *HeIName   = "HeI_Density";
+  const char *HeIIName  = "HeII_Density";
+  const char *HeIIIName = "HeIII_Density";
+  const char *HMName    = "HM_Density";
+  const char *H2IName   = "H2I_Density";
+  const char *H2IIName  = "H2II_Density";
+  const char *DIName    = "DI_Density";
+  const char *DIIName   = "DII_Density";
+  const char *HDIName   = "HDI_Density";
+  const char *kphHIName    = "HI_kph";
+  const char *gammaHIName  = "HI_gamma";
+  const char *kphHeIName   = "HeI_kph";
+  const char *gammaHeIName = "HeI_gamma";
+  const char *kphHeIIName  = "HeII_kph";
+  const char *gammaHeIIName= "HeII_gamma";
+  const char *kdissH2IName = "H2I_kdiss";
+  const char *RadAccel1Name = "RadAccel1";
+  const char *RadAccel2Name = "RadAccel2";
+  const char *RadAccel3Name = "RadAccel3";
 
 
   /* declarations */
@@ -302,51 +302,51 @@ int Collapse3DInitialize(FILE *fptr, FILE *Outfptr,
   /* set up field names and units */
 
   int count = 0;
-  DataLabel[count++] = DensName;
-  DataLabel[count++] = Vel1Name;
-  DataLabel[count++] = Vel2Name;
-  DataLabel[count++] = Vel3Name;
-  DataLabel[count++] = TEName;
+  DataLabel[count++] = (char*)DensName;
+  DataLabel[count++] = (char*)Vel1Name;
+  DataLabel[count++] = (char*)Vel2Name;
+  DataLabel[count++] = (char*)Vel3Name;
+  DataLabel[count++] = (char*)TEName;
   if (DualEnergyFormalism) {
-    DataLabel[count++] = GEName;
+    DataLabel[count++] = (char*)GEName;
   }
   if (MultiSpecies) {
-    DataLabel[count++] = ElectronName;
-    DataLabel[count++] = HIName;
-    DataLabel[count++] = HIIName;
-    DataLabel[count++] = HeIName;
-    DataLabel[count++] = HeIIName;
-    DataLabel[count++] = HeIIIName;
+    DataLabel[count++] = (char*)ElectronName;
+    DataLabel[count++] = (char*)HIName;
+    DataLabel[count++] = (char*)HIIName;
+    DataLabel[count++] = (char*)HeIName;
+    DataLabel[count++] = (char*)HeIIName;
+    DataLabel[count++] = (char*)HeIIIName;
     if (MultiSpecies > 1) {
-      DataLabel[count++] = HMName;
-      DataLabel[count++] = H2IName;
-      DataLabel[count++] = H2IIName;
+      DataLabel[count++] = (char*)HMName;
+      DataLabel[count++] = (char*)H2IName;
+      DataLabel[count++] = (char*)H2IIName;
     }
     if (MultiSpecies > 2) {
-      DataLabel[count++] = DIName;
-      DataLabel[count++] = DIIName;
-      DataLabel[count++] = HDIName;
+      DataLabel[count++] = (char*)DIName;
+      DataLabel[count++] = (char*)DIIName;
+      DataLabel[count++] = (char*)HDIName;
     }
   }  // if Multispecies                                                                                                      
   //if (PhotonTestUseColour)
-  //DataLabel[count++] = ColourName;
+  //DataLabel[count++] = (char*)ColourName;
 #ifdef TRANSFER
   if (RadiativeTransfer)
     if (MultiSpecies) {
-      DataLabel[count++]  = kphHIName;
-      DataLabel[count++]  = gammaHIName;
-      DataLabel[count++]  = kphHeIName;
-      DataLabel[count++]  = gammaHeIName;
-      DataLabel[count++]  = kphHeIIName;
-      DataLabel[count++]  = gammaHeIIName;
+      DataLabel[count++]  = (char*)kphHIName;
+      DataLabel[count++]  = (char*)gammaHIName;
+      DataLabel[count++]  = (char*)kphHeIName;
+      DataLabel[count++]  = (char*)gammaHeIName;
+      DataLabel[count++]  = (char*)kphHeIIName;
+      DataLabel[count++]  = (char*)gammaHeIIName;
       if (MultiSpecies > 1)
-        DataLabel[count++]= kdissH2IName;
+        DataLabel[count++]= (char*)kdissH2IName;
     } // if RadiativeTransfer                                                                                                
 
   if (RadiationPressure) {
-    DataLabel[count++]  = RadAccel1Name;
-    DataLabel[count++]  = RadAccel2Name;
-    DataLabel[count++]  = RadAccel3Name;
+    DataLabel[count++]  = (char*)RadAccel1Name;
+    DataLabel[count++]  = (char*)RadAccel2Name;
+    DataLabel[count++]  = (char*)RadAccel3Name;
   }
 #endif
 

@@ -23,8 +23,8 @@
 int hll_mhd(float **FluxLine, float **priml, float **primr, float **prim, int ActiveSize)
 {
   float Ul[NEQ_MHD], Ur[NEQ_MHD], Fl[NEQ_MHD], Fr[NEQ_MHD];
-  float etot, eint, h, dpdrho, dpde, W, W2, ap, am, cs, cs2, ca2, ca, cf, cf2, v_yz, v_yz2, v2,
-    vx, vx2, vy, vz, rho, p, lm_l, lp_l, lm_r, lp_r, v, Bx, By, Bz, Phi, B2, Bv; 
+  float etot, eint, h, dpdrho, dpde, ap, am, cs, cs2, ca2, cf, cf2, v2,
+    vx, vy, vz, rho, p, lm_l, lp_l, lm_r, lp_r, Bx, By, Bz, Phi, B2, Bv; 
   float Zero = 0.0;
   float temp1;
 

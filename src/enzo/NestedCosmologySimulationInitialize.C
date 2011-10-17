@@ -669,66 +669,66 @@ int NestedCosmologySimulationInitialize(FILE *fptr, FILE *Outfptr,
   // set up field names and units
  
   i = 0;
-  DataLabel[i++] = DensName;
-  DataLabel[i++] = Vel1Name;
+  DataLabel[i++] = (char*)DensName;
+  DataLabel[i++] = (char*)Vel1Name;
   if (MetaData.TopGridRank > 1 || (HydroMethod == MHD_RK) || (HydroMethod == HD_RK))
-    DataLabel[i++] = Vel2Name;
+    DataLabel[i++] = (char*)Vel2Name;
   if (MetaData.TopGridRank > 2 || (HydroMethod == MHD_RK) || (HydroMethod == HD_RK))
-    DataLabel[i++] = Vel3Name;
-  DataLabel[i++] = TEName;
+    DataLabel[i++] = (char*)Vel3Name;
+  DataLabel[i++] = (char*)TEName;
   if (DualEnergyFormalism)
-    DataLabel[i++] = GEName;
+    DataLabel[i++] = (char*)GEName;
   if (HydroMethod == MHD_RK) {
-    DataLabel[i++] = BxName;
-    DataLabel[i++] = ByName;
-    DataLabel[i++] = BzName;
-    DataLabel[i++] = PhiName;
+    DataLabel[i++] = (char*)BxName;
+    DataLabel[i++] = (char*)ByName;
+    DataLabel[i++] = (char*)BzName;
+    DataLabel[i++] = (char*)PhiName;
     if(UseDivergenceCleaning){
-      DataLabel[i++] = Phi_pName;
-      DataLabel[i++] = DebugName;
+      DataLabel[i++] = (char*)Phi_pName;
+      DataLabel[i++] = (char*)DebugName;
     }
   }
    if (MultiSpecies) {
-    DataLabel[i++] = ElectronName;
-    DataLabel[i++] = HIName;
-    DataLabel[i++] = HIIName;
-    DataLabel[i++] = HeIName;
-    DataLabel[i++] = HeIIName;
-    DataLabel[i++] = HeIIIName;
+    DataLabel[i++] = (char*)ElectronName;
+    DataLabel[i++] = (char*)HIName;
+    DataLabel[i++] = (char*)HIIName;
+    DataLabel[i++] = (char*)HeIName;
+    DataLabel[i++] = (char*)HeIIName;
+    DataLabel[i++] = (char*)HeIIIName;
     if (MultiSpecies > 1) {
-      DataLabel[i++] = HMName;
-      DataLabel[i++] = H2IName;
-      DataLabel[i++] = H2IIName;
+      DataLabel[i++] = (char*)HMName;
+      DataLabel[i++] = (char*)H2IName;
+      DataLabel[i++] = (char*)H2IIName;
     }
     if (MultiSpecies > 2) {
-      DataLabel[i++] = DIName;
-      DataLabel[i++] = DIIName;
-      DataLabel[i++] = HDIName;
+      DataLabel[i++] = (char*)DIName;
+      DataLabel[i++] = (char*)DIIName;
+      DataLabel[i++] = (char*)HDIName;
     }
   }
  
   if (CosmologySimulationUseMetallicityField) {
-    DataLabel[i++] = MetalName;
+    DataLabel[i++] = (char*)MetalName;
     if (StarMakerTypeIaSNe)
-      DataLabel[i++] = MetalIaName;
+      DataLabel[i++] = (char*)MetalIaName;
     if(MultiMetals){
-      DataLabel[i++] = ExtraNames[0];
-      DataLabel[i++] = ExtraNames[1];
+      DataLabel[i++] = (char*)ExtraNames[0];
+      DataLabel[i++] = (char*)ExtraNames[1];
     }
   }
  
   if(STARMAKE_METHOD(COLORED_POP3_STAR)){
-    DataLabel[i++] = ForbidName;
+    DataLabel[i++] = (char*)ForbidName;
   }
 
   if (WritePotential)
-    DataLabel[i++] = GPotName;
+    DataLabel[i++] = (char*)GPotName;
  
   if (ShockMethod) {
-    DataLabel[i++] = MachName;
+    DataLabel[i++] = (char*)MachName;
     if(StorePreShockFields){
-      DataLabel[i++] = PSTempName;
-      DataLabel[i++] = PSDenName;
+      DataLabel[i++] = (char*)PSTempName;
+      DataLabel[i++] = (char*)PSDenName;
     }
   } 
  

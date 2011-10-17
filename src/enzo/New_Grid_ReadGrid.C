@@ -307,7 +307,7 @@ int grid::Group_ReadGrid(FILE *fptr, int GridID, HDF5_hid_t file_id,
 	PhiNum = NumberOfBaryonFields;
 	int PhiToAdd = PhiField;
 	this->AddFields(&PhiToAdd, 1);
-	DataLabel[PhiNum] = PhiName;
+	DataLabel[PhiNum] = (char*)PhiName;
       } else { 
 	if (0) 
 	  for (int n = 0; n < size; n++)
@@ -325,7 +325,7 @@ int grid::Group_ReadGrid(FILE *fptr, int GridID, HDF5_hid_t file_id,
 	  Phi_pNum = NumberOfBaryonFields;
 	  int Phi_pToAdd = Phi_pField;
 	  this->AddFields(&Phi_pToAdd, 1);
-	  DataLabel[Phi_pNum] = Phi_pName;
+	  DataLabel[Phi_pNum] = (char*)Phi_pName;
 	}
       }
 

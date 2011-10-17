@@ -40,7 +40,7 @@ int grid::SourceTerms(float **dU)
   }
 
   int DensNum, GENum, TENum, Vel1Num, Vel2Num, Vel3Num, 
-    B1Num, B2Num, B3Num, HMNum, H2INum, H2IINum;
+    B1Num, B2Num, B3Num;
   if (this->IdentifyPhysicalQuantities(DensNum, GENum, Vel1Num, Vel2Num, 
 				       Vel3Num, TENum, B1Num, B2Num, B3Num) == FAIL) {
     fprintf(stderr, "Error in IdentifyPhysicalQuantities.\n");
@@ -138,7 +138,7 @@ int grid::SourceTerms(float **dU)
   }
 
   if (Coordinate == Spherical) {
-    float rho, etot, eint, vx, vy, vz, v2, e, h, cs, p, dpdrho, dpde, coty;
+    float rho, etot, eint, vx, vy, vz, v2, h, cs, p, dpdrho, dpde, coty;
     FLOAT x, y, dtxinv;
     float pi = 4.0*atan(1.0);
     int n = 0, igrid;
@@ -177,7 +177,7 @@ int grid::SourceTerms(float **dU)
   if ((SelfGravity) || ExternalGravity || (PointSourceGravity > 0)) {
     int igrid;
     float rho, gx, gy, gz;
-    float vx, vy, vz, vx_old, vy_old, vz_old;
+    float vx, vy, vz;
     int n = 0;
     for (int k = GridStartIndex[2]; k <= GridEndIndex[2]; k++) {
       for (int j = GridStartIndex[1]; j <= GridEndIndex[1]; j++) {
@@ -266,7 +266,7 @@ int grid::SourceTerms(float **dU)
 
   if ((ProblemType == 35 || ProblemType == 36 ||ProblemType == 37) && ShearingBoxProblemType !=0) {
     int igrid;
-    float rho, gx, gy, gz;
+    float rho;
     FLOAT xPos[3];
     float vels[3]; 
     int n = 0;

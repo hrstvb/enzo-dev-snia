@@ -65,9 +65,9 @@ int CollapseMHD3DInitialize(FILE *fptr, FILE *Outfptr,
    const char *DebugName = "Debug";
    const char *Phi_pName = "Phip";
    const char *GravPotenName = "PotentialField";
-   const char *Acce1Name = "AccelerationField1";
-   const char *Acce2Name = "AccelerationField2";
-   const char *Acce3Name = "AccelerationField3";
+//   const char *Acce1Name = "AccelerationField1";
+//   const char *Acce2Name = "AccelerationField2";
+//   const char *Acce3Name = "AccelerationField3";
 
   /* declarations */
 
@@ -233,7 +233,6 @@ int CollapseMHD3DInitialize(FILE *fptr, FILE *Outfptr,
     float MediumEnergy;
     float DensityUnits, LengthUnits, TemperatureUnits, TimeUnits, 
       VelocityUnits;
-    float tmp1, tmp2, tmp3;
     GetUnits(&DensityUnits, &LengthUnits, &TemperatureUnits, &TimeUnits, 
 	     &VelocityUnits, MetaData.Time);
     MediumEnergy = MediumTemperature / TemperatureUnits / ((Gamma-1.0)*Mu);

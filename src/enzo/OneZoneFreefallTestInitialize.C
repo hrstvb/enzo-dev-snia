@@ -168,43 +168,43 @@ int OneZoneFreefallTestInitialize(FILE *fptr, FILE *Outfptr, HierarchyEntry &Top
      fields.  Just FYI. */
 
   i = 0;
-  DataLabel[i++] = DensName;
-  DataLabel[i++] = TEName;
+  DataLabel[i++] = (char*)DensName;
+  DataLabel[i++] = (char*)TEName;
   if(DualEnergyFormalism)
-    DataLabel[i++] = GEName;
-  DataLabel[i++] = Vel1Name;
+    DataLabel[i++] = (char*)GEName;
+  DataLabel[i++] = (char*)Vel1Name;
 
   if(MetaData.TopGridRank > 1)
-    DataLabel[i++] = Vel2Name;
+    DataLabel[i++] = (char*)Vel2Name;
 
   if(MetaData.TopGridRank > 2)
-    DataLabel[i++] = Vel3Name;
+    DataLabel[i++] = (char*)Vel3Name;
 
   if (TestProblemData.MultiSpecies) {
-    DataLabel[i++] = ElectronName;
-    DataLabel[i++] = HIName;
-    DataLabel[i++] = HIIName;
-    DataLabel[i++] = HeIName;
-    DataLabel[i++] = HeIIName;
-    DataLabel[i++] = HeIIIName;
+    DataLabel[i++] = (char*)ElectronName;
+    DataLabel[i++] = (char*)HIName;
+    DataLabel[i++] = (char*)HIIName;
+    DataLabel[i++] = (char*)HeIName;
+    DataLabel[i++] = (char*)HeIIName;
+    DataLabel[i++] = (char*)HeIIIName;
     if (TestProblemData.MultiSpecies > 1) {
-      DataLabel[i++] = HMName;
-      DataLabel[i++] = H2IName;
-      DataLabel[i++] = H2IIName;
+      DataLabel[i++] = (char*)HMName;
+      DataLabel[i++] = (char*)H2IName;
+      DataLabel[i++] = (char*)H2IIName;
     }
     if (TestProblemData.MultiSpecies > 2) {
-      DataLabel[i++] = DIName;
-      DataLabel[i++] = DIIName;
-      DataLabel[i++] = HDIName;
+      DataLabel[i++] = (char*)DIName;
+      DataLabel[i++] = (char*)DIIName;
+      DataLabel[i++] = (char*)HDIName;
     }
   }
  
   if (TestProblemData.UseMetallicityField) {
-    DataLabel[i++] = MetalName;
+    DataLabel[i++] = (char*)MetalName;
 
     if(TestProblemData.MultiMetals){
-      DataLabel[i++] = ExtraNames[0];
-      DataLabel[i++] = ExtraNames[1];
+      DataLabel[i++] = (char*)ExtraNames[0];
+      DataLabel[i++] = (char*)ExtraNames[1];
     }
   }
  

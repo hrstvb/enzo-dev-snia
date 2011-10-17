@@ -42,25 +42,25 @@ int GetUnits(float *DensityUnits, float *LengthUnits,
 int MHD2DTestInitialize(FILE *fptr, FILE *Outfptr, 
 			HierarchyEntry &TopGrid, TopGridData &MetaData) 
 {
-  char *DensName = "Density";
-  char *PresName = "Pressure";
-  char *TEName   = "TotalEnergy";
-  char *GEName   = "GasEnergy";
-  char *Vel1Name = "x-velocity";
-  char *Vel2Name = "y-velocity";
-  char *Vel3Name = "z-velocity";
-  char *ColourName = "colour";
-  char *BxName = "Bx";
-  char *ByName = "By";
-  char *BzName = "Bz";
-  char *PhiName = "Phi";
-  char *DebugName = "Debug";
-  char *Phi_pName = "Phip";
+  const char *DensName = "Density";
+  //const char *PresName = "Pressure";
+  const char *TEName   = "TotalEnergy";
+  const char *GEName   = "GasEnergy";
+  const char *Vel1Name = "x-velocity";
+  const char *Vel2Name = "y-velocity";
+  const char *Vel3Name = "z-velocity";
+  const char *ColourName = "colour";
+  const char *BxName = "Bx";
+  const char *ByName = "By";
+  const char *BzName = "Bz";
+  const char *PhiName = "Phi";
+  const char *DebugName = "Debug";
+  const char *Phi_pName = "Phip";
 
   /* declarations */
 
   char  line[MAX_LINE_LENGTH];
-  int   dim, ret, level, sphere, i;
+  int   ret, level, i;
 
   /* set default parameters */
 
@@ -224,26 +224,26 @@ int MHD2DTestInitialize(FILE *fptr, FILE *Outfptr,
   /* set up field names and units */
 
   int count = 0;
-  DataLabel[count++] = DensName;
-  DataLabel[count++] = Vel1Name;
-  DataLabel[count++] = Vel2Name;
-  DataLabel[count++] = Vel3Name;
-  DataLabel[count++] = TEName;
+  DataLabel[count++] = (char*)DensName;
+  DataLabel[count++] = (char*)Vel1Name;
+  DataLabel[count++] = (char*)Vel2Name;
+  DataLabel[count++] = (char*)Vel3Name;
+  DataLabel[count++] = (char*)TEName;
   if (DualEnergyFormalism) {
-    DataLabel[count++] = GEName;
+    DataLabel[count++] = (char*)GEName;
   }
   if (HydroMethod == MHD_RK) {
-    DataLabel[count++] = BxName;
-    DataLabel[count++] = ByName;
-    DataLabel[count++] = BzName;
-    DataLabel[count++] = PhiName;
+    DataLabel[count++] = (char*)BxName;
+    DataLabel[count++] = (char*)ByName;
+    DataLabel[count++] = (char*)BzName;
+    DataLabel[count++] = (char*)PhiName;
     if(UseDivergenceCleaning){
-      DataLabel[count++] = Phi_pName;
-      DataLabel[count++] = DebugName;
+      DataLabel[count++] = (char*)Phi_pName;
+      DataLabel[count++] = (char*)DebugName;
     }
   }
   if (UseColour == TRUE)
-    DataLabel[count++] = ColourName;
+    DataLabel[count++] = (char*)ColourName;
 
   for (i = 0; i < count; i++)
     DataUnits[i] = NULL;

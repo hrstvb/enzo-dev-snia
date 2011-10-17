@@ -675,7 +675,7 @@ int grid::PoissonSolverMultigrid()
 
 
 
-int grid::PrintToScreenBoundaries(float *field, char *display, int direction, int slice,
+int grid::PrintToScreenBoundaries(float *field, const char *display, int direction, int slice,
 				   int check, float diffvalue){
 
   
@@ -775,14 +775,11 @@ int grid::PrintToScreenBoundaries(float *field, const char *display,
 int grid::PrintToScreenBoundaries(float *field, const char *display){
  if (!debug) return SUCCESS;
 
-  //return SUCCESS;
-
-
-
-
   PrintToScreenBoundaries(field, display, 1, (int) floor(GridDimension[1]/2.0), 1, 0.0); 
   //PrintToScreenBoundaries(field, display, 1, DEFAULT_GHOST_ZONES, 0, 0.0);
   // PrintToScreenBoundaries(field, display, 0, DEFAULT_GHOST_ZONES, 0, 0.0);
+
+  return SUCCESS;
 
 }
 

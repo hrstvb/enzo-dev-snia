@@ -583,14 +583,14 @@ int grid::WriteGrid(FILE *fptr, char *base_name, int grid_id)
       
       char *DataLabelN[4];
       if (GridRank==2) {
-	DataLabelN[0]=(const char*) "Velocity_Div";
-	DataLabelN[1]=(const char*) "Velocity_Vorticity";
+	DataLabelN[0]=(char*) "Velocity_Div";
+	DataLabelN[1]=(char*) "Velocity_Vorticity";
       }
       if (GridRank==3) {
-	DataLabelN[0]=(const char*) "Velocity_Div";
-	DataLabelN[1]=(const char*) "Velocity_Vorticity1";
-	DataLabelN[2]=(const char*) "Velocity_Vorticity2";
-	DataLabelN[3]=(const char*) "Velocity_Vorticity3";
+	DataLabelN[0]=(char*) "Velocity_Div";
+	DataLabelN[1]=(char*) "Velocity_Vorticity1";
+	DataLabelN[2]=(char*) "Velocity_Vorticity2";
+	DataLabelN[3]=(char*) "Velocity_Vorticity3";
       }
 
       

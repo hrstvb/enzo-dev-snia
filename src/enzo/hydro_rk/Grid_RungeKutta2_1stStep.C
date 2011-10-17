@@ -41,9 +41,8 @@ int grid::RungeKutta2_1stStep(fluxes *SubgridFluxes[],
     return SUCCESS;
   }
 
-  double time1 = ReturnWallTime();
-  int igrid;
   /* allocate space for fluxes */
+
   int fluxsize;
   for (int subgrid = 0; subgrid < NumberOfSubgrids; subgrid++) {
     for (int flux = 0; flux < GridRank; flux++)  {
@@ -160,7 +159,7 @@ int grid::RungeKutta2_1stStep(fluxes *SubgridFluxes[],
   for (int field = 0; field < NEQ_HYDRO+NSpecies+NColor; field++) {
     delete [] dU[field];
   }
-  //  PerformanceTimers[1] += ReturnWallTime() - time1;
+
   return SUCCESS;
 
 }

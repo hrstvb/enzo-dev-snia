@@ -25,22 +25,20 @@ int GetUnits(float *DensityUnits, float *LengthUnits,
 int Collapse1DInitialize(FILE *fptr, FILE *Outfptr, 
 			 HierarchyEntry &TopGrid, TopGridData &MetaData)
 {
-  char *DensName = "Density";
-  char *TEName   = "TotalEnergy";
-  char *GEName   = "GasEnergy";
-  char *Vel1Name = "x-velocity";
-  char *Vel2Name = "y-velocity";
-  char *Vel3Name = "z-velocity";
-  char *ColourName = "colour";
+  const char *DensName = "Density";
+  const char *TEName   = "TotalEnergy";
+  const char *GEName   = "GasEnergy";
+  const char *Vel1Name = "x-velocity";
+  const char *Vel2Name = "y-velocity";
+  const char *Vel3Name = "z-velocity";
 
   /* declarations */
 
   char  line[MAX_LINE_LENGTH];
-  int   dim, ret, level, sphere, i;
+  int   ret, level, i;
 
   /* set default parameters */
 
-  int n_sphere = 1;
   int RefineAtStart   = TRUE;
   int UseParticles    = FALSE;
   float MediumDensity = 1.0, 
@@ -214,13 +212,13 @@ int Collapse1DInitialize(FILE *fptr, FILE *Outfptr,
   /* set up field names and units */
 
   int count = 0;
-  DataLabel[count++] = DensName;
-  DataLabel[count++] = Vel1Name;
-  DataLabel[count++] = Vel2Name;
-  DataLabel[count++] = Vel3Name;
-  DataLabel[count++] = TEName;
+  DataLabel[count++] = (char*)DensName;
+  DataLabel[count++] = (char*)Vel1Name;
+  DataLabel[count++] = (char*)Vel2Name;
+  DataLabel[count++] = (char*)Vel3Name;
+  DataLabel[count++] = (char*)TEName;
   if (DualEnergyFormalism) {
-    DataLabel[count++] = GEName;
+    DataLabel[count++] = (char*)GEName;
   }
 
 

@@ -243,20 +243,20 @@ int RotatingCylinderInitialize(FILE *fptr, FILE *Outfptr, HierarchyEntry &TopGri
      fields.  Just FYI. */
 
   i = 0;
-  DataLabel[i++] = DensName;
-  DataLabel[i++] = TEName;
+  DataLabel[i++] = (char*)DensName;
+  DataLabel[i++] = (char*)TEName;
   if(DualEnergyFormalism)
-    DataLabel[i++] = GEName;
-  DataLabel[i++] = Vel1Name;
+    DataLabel[i++] = (char*)GEName;
+  DataLabel[i++] = (char*)Vel1Name;
 
   if(MetaData.TopGridRank > 1)
-    DataLabel[i++] = Vel2Name;
+    DataLabel[i++] = (char*)Vel2Name;
 
   if(MetaData.TopGridRank > 2)
-    DataLabel[i++] = Vel3Name;
+    DataLabel[i++] = (char*)Vel3Name;
 
   if (TestProblemData.UseMetallicityField)
-    DataLabel[i++] = MetalName;
+    DataLabel[i++] = (char*)MetalName;
 
   for(j=0; j < i; j++)
     DataUnits[j] = NULL;

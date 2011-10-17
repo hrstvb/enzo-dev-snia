@@ -162,17 +162,17 @@ int RHIonizationSteepInitialize(FILE *fptr, FILE *Outfptr,
   // note: we must set up He species fields as well since Enzo 
   //       requires them for H chemistry (initialized to zero)
   int BaryonField = 0;
-  DataLabel[BaryonField++] = DensName;
-  DataLabel[BaryonField++] = TEName;
+  DataLabel[BaryonField++] = (char*)DensName;
+  DataLabel[BaryonField++] = (char*)TEName;
   if (DualEnergyFormalism) 
-    DataLabel[BaryonField++] = IEName;
-  DataLabel[BaryonField++] = Vel0Name;
-  DataLabel[BaryonField++] = Vel1Name;
-  DataLabel[BaryonField++] = Vel2Name;
-  DataLabel[BaryonField++] = RadName;
-  DataLabel[BaryonField++] = DeName;
-  DataLabel[BaryonField++] = HIName;
-  DataLabel[BaryonField++] = HIIName;
+    DataLabel[BaryonField++] = (char*)IEName;
+  DataLabel[BaryonField++] = (char*)Vel0Name;
+  DataLabel[BaryonField++] = (char*)Vel1Name;
+  DataLabel[BaryonField++] = (char*)Vel2Name;
+  DataLabel[BaryonField++] = (char*)RadName;
+  DataLabel[BaryonField++] = (char*)DeName;
+  DataLabel[BaryonField++] = (char*)HIName;
+  DataLabel[BaryonField++] = (char*)HIIName;
 
   for (int i=0; i<BaryonField; i++) 
     DataUnits[i] = NULL;

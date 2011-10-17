@@ -113,14 +113,14 @@ int RadHydroPulseTestInitialize(FILE *fptr, FILE *Outfptr,
 
   // set up field names and units
   int BaryonField = 0;
-  DataLabel[BaryonField++] = DensName;
-  DataLabel[BaryonField++] = TEName;
+  DataLabel[BaryonField++] = (char*)DensName;
+  DataLabel[BaryonField++] = (char*)TEName;
   if (DualEnergyFormalism) 
-    DataLabel[BaryonField++] = IEName;
-  DataLabel[BaryonField++] = Vel0Name;
-  DataLabel[BaryonField++] = Vel1Name;
-  DataLabel[BaryonField++] = Vel2Name;
-  DataLabel[BaryonField++] = RadName;
+    DataLabel[BaryonField++] = (char*)IEName;
+  DataLabel[BaryonField++] = (char*)Vel0Name;
+  DataLabel[BaryonField++] = (char*)Vel1Name;
+  DataLabel[BaryonField++] = (char*)Vel2Name;
+  DataLabel[BaryonField++] = (char*)RadName;
 
   for (int i=0; i<BaryonField; i++) 
     DataUnits[i] = NULL;

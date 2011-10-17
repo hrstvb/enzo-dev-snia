@@ -27,7 +27,7 @@ int grid::Collapse1DInitializeGrid(FLOAT r_sphere,
 {
   /* declarations */
 
-  int dim, i, j, k, m, field, sphere, size;
+  int dim, i, field, size;
 
   NumberOfBaryonFields = 0;
   FieldType[NumberOfBaryonFields++] = Density;
@@ -64,7 +64,7 @@ int grid::Collapse1DInitializeGrid(FLOAT r_sphere,
 
   // if use BE sphere, read in the BE sphere density profile
 
-  char *filename = "be.dat";
+  const char *filename = "be.dat";
   int n_bin = 6401;
   float radius[n_bin];
   float rho_be[n_bin];
@@ -86,7 +86,7 @@ int grid::Collapse1DInitializeGrid(FLOAT r_sphere,
   printf("rho_sphere=%"GSYM", cs_sphere=%"GSYM", rho_medium=%"GSYM", p_medium=%"GSYM"\n",
 	 rho_sphere, cs_sphere, rho_medium, p_medium);
   
-  float rho, vel[3], eint, etot, h, cs, dpdrho, dpde, v2;
+  float rho, vel[3], eint, h, cs, dpdrho, dpde, v2;
   for (i = 0; i < GridDimension[0]; i++) {
     
     FLOAT r = CellLeftEdge[0][i] + 0.5*CellWidth[0][i];

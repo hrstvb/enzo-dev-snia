@@ -62,7 +62,7 @@ int grid::MHDDecayingRandomFieldInitializeGrid(float rho_medium, float cs_medium
   
 
   float rhou = 1.0, lenu = 1.0, tempu = 1.0, tu = 1.0,
-    velu = 1.0, CriticalDensity = 1, BoxLength = 1;
+    velu = 1.0;
   if (UsePhysicalUnit)
     GetUnits(&rhou, &lenu, &tempu, &tu, &velu, Time);
   
@@ -116,13 +116,13 @@ int grid::MHDDecayingRandomFieldInitializeGrid(float rho_medium, float cs_medium
 
 
   // assume isothermal initially
-  float p_medium = rho_medium*cs_medium*cs_medium;
+  //float p_medium = rho_medium*cs_medium*cs_medium;
 
 
   // For coding efficiency, we set the radius, density contrast of the 
   // initial cloud by hand below. Should be changed in the future
   // Initialize field without turbulent velocity field
-  float eint, h, dpdrho, dpde, cs;
+  float eint;
   eint = cs_medium*cs_medium;
   n=0;
   for (int k = 0; k < GridDimension[2]; k++) {

@@ -21,9 +21,6 @@
 #include "TopGridData.h"
 #include "Grid.h"
 
-
-double ReturnWallTime();
-
 int MHDTimeUpdate_CUDA(float **Prim, int GridDimension[], 
 			int GridStartIndex[], int GridEndIndex[], int GridRank,
 		       float dtdx, float dt, float C_h, float C_p, float cTheta_Limiter);
@@ -44,9 +41,6 @@ int grid::MHDRK2_1stStep(fluxes *SubgridFluxes[],
   if (NumberOfBaryonFields == 0) {
     return SUCCESS;
   }
-
-  double time1 = ReturnWallTime();
-  int igrid;
 
   /* allocate space for fluxes */
   int fluxsize;

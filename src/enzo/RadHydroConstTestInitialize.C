@@ -205,23 +205,23 @@ int RadHydroConstTestInitialize(FILE *fptr, FILE *Outfptr,
 
   // set up field names and units
   int BaryonField = 0;
-  DataLabel[BaryonField++] = DensName;
-  DataLabel[BaryonField++] = TEName;
+  DataLabel[BaryonField++] = (char*)DensName;
+  DataLabel[BaryonField++] = (char*)TEName;
   if (DualEnergyFormalism) 
-    DataLabel[BaryonField++] = IEName;
-  DataLabel[BaryonField++] = Vel0Name;
-  DataLabel[BaryonField++] = Vel1Name;
-  DataLabel[BaryonField++] = Vel2Name;
-  DataLabel[BaryonField++] = RadName;
+    DataLabel[BaryonField++] = (char*)IEName;
+  DataLabel[BaryonField++] = (char*)Vel0Name;
+  DataLabel[BaryonField++] = (char*)Vel1Name;
+  DataLabel[BaryonField++] = (char*)Vel2Name;
+  DataLabel[BaryonField++] = (char*)RadName;
   if (RadHydroChemistry > 0) {
-    DataLabel[BaryonField++] = DeName;
-    DataLabel[BaryonField++] = HIName;
-    DataLabel[BaryonField++] = HIIName;
+    DataLabel[BaryonField++] = (char*)DeName;
+    DataLabel[BaryonField++] = (char*)HIName;
+    DataLabel[BaryonField++] = (char*)HIIName;
   }
   if (RadHydroChemistry == 3) {
-    DataLabel[BaryonField++] = HeIName;
-    DataLabel[BaryonField++] = HeIIName;
-    DataLabel[BaryonField++] = HeIIIName;
+    DataLabel[BaryonField++] = (char*)HeIName;
+    DataLabel[BaryonField++] = (char*)HeIIName;
+    DataLabel[BaryonField++] = (char*)HeIIIName;
   }
   for (int i=0; i<BaryonField; i++) 
     DataUnits[i] = NULL;

@@ -105,7 +105,6 @@ int grid::ElectronFractionEstimate(float dt)
   dbase1 = DensityUnits * pow((afloat*aUnits), 3);
   CoolUnit = (pow(aUnits,5) * pow(xbase1,2) * pow(mh,2)) /
     (pow(TimeUnits,3) * dbase1);
-  float a3 = afloat*afloat*afloat;
 
   for (k = GridStartIndex[2]; k <= GridEndIndex[2]; k++) {
     for (j = GridStartIndex[1]; j <= GridEndIndex[1]; j++) {

@@ -69,7 +69,7 @@ int grid::MHDTurbulenceInitializeGrid(float rho_medium, float cs_medium, float m
   
 
   float rhou = 1.0, lenu = 1.0, tempu = 1.0, tu = 1.0,
-    velu = 1.0, CriticalDensity = 1, BoxLength = 1;
+    velu = 1.0;
   if (UsePhysicalUnit)
     GetUnits(&rhou, &lenu, &tempu, &tu, &velu, Time);
   
@@ -134,13 +134,13 @@ int grid::MHDTurbulenceInitializeGrid(float rho_medium, float cs_medium, float m
 
 
   // assume isothermal initially
-  float p_medium = rho_medium*cs_medium*cs_medium;
+  //float p_medium = rho_medium*cs_medium*cs_medium;
 
 
   // For coding efficiency, we set the radius, density contrast of the 
   // initial cloud by hand below. Should be changed in the future
   // Initialize field without turbulent velocity field
-  float eint, h, dpdrho, dpde, cs;
+  float eint;
   eint = cs_medium*cs_medium/(Gamma-1.0);
   FLOAT xc = 0.5, yc = 0.5, zc = 0.5, x, y, z, r;
   FLOAT rs = 1.; // 0.3;
@@ -200,7 +200,6 @@ int grid::MHDTurbulenceInitializeGrid(float rho_medium, float cs_medium, float m
   }
 
   // Set the turbulent velocity field
-  float v2;
 
   int igrid;
   n = 0;

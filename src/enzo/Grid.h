@@ -2654,10 +2654,10 @@ int zEulerSweep(int j, int NumberOfSubgrids, fluxes *SubgridFluxes[],
 
   
 
-  int PrintToScreenBoundaries(float *field, char *display, int direction, int slice,
+  int PrintToScreenBoundaries(float *field, const char *display, int direction, int slice,
 			      int check, float diffvalue);  
-  int PrintToScreenBoundaries(float *field, char *display, int direction, int slice);
-  int PrintToScreenBoundaries(float *field, char *display);
+  int PrintToScreenBoundaries(float *field, const char *display, int direction, int slice);
+  int PrintToScreenBoundaries(float *field, const char *display);
   int PrintToScreenBoundaries();
   int PrintToScreenBoundaries(int field);
 

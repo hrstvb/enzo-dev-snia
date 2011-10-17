@@ -41,7 +41,7 @@ int grid::AddH2Dissociation(Star *AllStars)
   int DeNum, HINum, HIINum, HeINum, HeIINum, HeIIINum, HMNum, H2INum, H2IINum,
       DINum, DIINum, HDINum;
 
-  const double pc = 3.086e18, clight = 3e10;
+  const double pc = 3.086e18;
   double H2Luminosity, H2ISigma = 3.71e-18;
 
   if (MyProcessorNumber != ProcessorNumber)

@@ -135,8 +135,8 @@ int grid::MHDSourceTerms(float **dU)
   }
 
   if (Coordinate == Cylindrical) {
-    float rho, etot, eint, vx, vy, vz, v2, e, h, cs, p, 
-      dpdrho, dpde, coty, Bx, By, Bz, B2;
+    float rho, etot, eint, vx, vy, vz, v2, h, cs, p, 
+      dpdrho, dpde, Bx, By, Bz, B2;
     FLOAT x, dtxinv;
     int n = 0, igrid;
     for (int k = GridStartIndex[2]; k <= GridEndIndex[2]; k++) {
@@ -177,7 +177,7 @@ int grid::MHDSourceTerms(float **dU)
   if (UseConstantAcceleration) {
     int igrid;
     float rho, gx, gy, gz;
-    float vx, vy, vz, vx_old, vy_old, vz_old;
+    float vx, vy, vz;
     int n = 0;
     for (int k = GridStartIndex[2]; k <= GridEndIndex[2]; k++) {
       for (int j = GridStartIndex[1]; j <= GridEndIndex[1]; j++) {
@@ -207,7 +207,7 @@ int grid::MHDSourceTerms(float **dU)
   if ((UseGasDrag != 0) && (GasDragCoefficient != 0.)) {
     int igrid;
     float rho;
-    float vx, vy, vz, vx_old, vy_old, vz_old;
+    float vx, vy, vz;
     int n = 0;
     for (int k = GridStartIndex[2]; k <= GridEndIndex[2]; k++) {
       for (int j = GridStartIndex[1]; j <= GridEndIndex[1]; j++) {
@@ -237,7 +237,7 @@ int grid::MHDSourceTerms(float **dU)
   if ((SelfGravity) || ExternalGravity || UniformGravity || PointSourceGravity) {
     int igrid;
     float rho, gx, gy, gz;
-    float vx, vy, vz, vx_old, vy_old, vz_old;
+    float vx, vy, vz;
     int n = 0;
     for (int k = GridStartIndex[2]; k <= GridEndIndex[2]; k++) {
       for (int j = GridStartIndex[1]; j <= GridEndIndex[1]; j++) {
@@ -329,13 +329,12 @@ int grid::MHDSourceTerms(float **dU)
 	  vy     = BaryonField[Vel2Num      ][igrid];
 	  vz     = BaryonField[Vel3Num      ][igrid];
 
-	  float eint = BaryonField[TENum][igrid] - 0.5*sqrt(vx*vx + vy*vy + vz*vz)
-	    -0.5*sqrt(pow(BaryonField[B1Num][igrid],2)+pow(BaryonField[B2Num][igrid],2)
-		      +pow(BaryonField[B3Num][igrid],2))/rho;
+	//float eint = BaryonField[TENum][igrid] - 0.5*sqrt(vx*vx + vy*vy + vz*vz)
+	//  -0.5*sqrt(pow(BaryonField[B1Num][igrid],2)+pow(BaryonField[B2Num][igrid],2)
+	//	      +pow(BaryonField[B3Num][igrid],2))/rho;
 
-	  float T = eint*Mu*(Gamma-1.0)*tempu;
-
-	  FLOAT R = sqrt(pow(x-0.5,2) + pow(y-0.5,2));
+	  //float T = eint*Mu*(Gamma-1.0)*tempu;
+	  //FLOAT R = sqrt(pow(x-0.5,2) + pow(y-0.5,2));
 
 	  //if (T > 90.0) {
 	  //if (z < 0.1 || z > 0.9) {
@@ -361,7 +360,7 @@ int grid::MHDSourceTerms(float **dU)
 
 
  int igrid;
-    float rho, gx, gy, gz;
+ float rho;
     FLOAT xPos[3];
     float vels[3]; 
     int n = 0;
@@ -381,7 +380,7 @@ int grid::MHDSourceTerms(float **dU)
     float lengthy=DomainRightEdge[1]-DomainLeftEdge[1];
     float lengthz;
     if (GridRank==3) lengthz=DomainRightEdge[2]-DomainLeftEdge[2];
-    else lengthz-0.0;
+    else lengthz=0.0;
     
 
     for (int k = GridStartIndex[2]; k <= GridEndIndex[2]; k++) {

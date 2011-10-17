@@ -149,23 +149,23 @@ int ZeldovichPancakeInitialize(FILE *fptr, FILE *Outfptr,
   /* set up field names and units */
  
   int i = 0;
-  DataLabel[i++] = DensName;
-  DataLabel[i++] = Vel1Name;
+  DataLabel[i++] = (char*)DensName;
+  DataLabel[i++] = (char*)Vel1Name;
   if (MetaData.TopGridRank > 1 || (HydroMethod == MHD_RK) || (HydroMethod == HD_RK))
-    DataLabel[i++] = Vel2Name;
+    DataLabel[i++] = (char*)Vel2Name;
   if (MetaData.TopGridRank > 2 || (HydroMethod == MHD_RK) || (HydroMethod == HD_RK))
-    DataLabel[i++] = Vel3Name;
-  DataLabel[i++] = TEName;
+    DataLabel[i++] = (char*)Vel3Name;
+  DataLabel[i++] = (char*)TEName;
   if (DualEnergyFormalism)
-    DataLabel[i++] = GEName;
+    DataLabel[i++] = (char*)GEName;
   if (HydroMethod == MHD_RK) {
-    DataLabel[i++] = BxName;
-    DataLabel[i++] = ByName;
-    DataLabel[i++] = BzName;
-    DataLabel[i++] = PhiName;
+    DataLabel[i++] = (char*)BxName;
+    DataLabel[i++] = (char*)ByName;
+    DataLabel[i++] = (char*)BzName;
+    DataLabel[i++] = (char*)PhiName;
     if(UseDivergenceCleaning){
-      DataLabel[i++] = Phi_pName;
-      DataLabel[i++] = DebugName;
+      DataLabel[i++] = (char*)Phi_pName;
+      DataLabel[i++] = (char*)DebugName;
     }
   }
  

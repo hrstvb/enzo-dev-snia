@@ -192,13 +192,13 @@ int HydroShockTubesInitialize(FILE *fptr, FILE *Outfptr,
   /* set up field names and units */
 
   int count = 0;
-  DataLabel[count++] = DensName;
-  DataLabel[count++] = Vel1Name;
-  DataLabel[count++] = Vel2Name;
-  DataLabel[count++] = Vel3Name;
-  DataLabel[count++] = TEName;
+  DataLabel[count++] = (char*)DensName;
+  DataLabel[count++] = (char*)Vel1Name;
+  DataLabel[count++] = (char*)Vel2Name;
+  DataLabel[count++] = (char*)Vel3Name;
+  DataLabel[count++] = (char*)TEName;
   if (DualEnergyFormalism) {
-    DataLabel[count++] = GEName;
+    DataLabel[count++] = (char*)GEName;
   }
 
   for (i = 0; i < count; i++)

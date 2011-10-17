@@ -40,13 +40,13 @@ int MHD3DTestInitialize(FILE *fptr, FILE *Outfptr,
 			HierarchyEntry &TopGrid, TopGridData &MetaData) 
 {
   const char *DensName = "Density";
-  const char *PresName = "Pressure";
+  //const char *PresName = "Pressure";
   const char *TEName   = "TotalEnergy";
   const char *GEName   = "GasEnergy";
   const char *Vel1Name = "x-velocity";
   const char *Vel2Name = "y-velocity";
   const char *Vel3Name = "z-velocity";
-  const char *ColourName = "colour";
+  //const char *ColourName = "colour";
   const char *ElectronName = "Electron_Density";
   const char *HIName    = "HI_Density";
   const char *HIIName   = "HII_Density";
@@ -67,7 +67,7 @@ int MHD3DTestInitialize(FILE *fptr, FILE *Outfptr,
   /* declarations */
 
   char  line[MAX_LINE_LENGTH];
-  int   dim, ret, level, sphere, i;
+  int   ret, level, i;
 
   /* set default parameters */
 

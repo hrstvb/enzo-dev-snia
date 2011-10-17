@@ -32,7 +32,7 @@ int grid::UpdatePrim(float **dU, float c1, float c2)
     return SUCCESS;
   }
 
-  int i, j, k, n, n_dU, dim, igrid, field, size, activesize;
+  int i, j, k, n, dim, igrid, field, size, activesize;
   for (dim = 0, size = 1; dim < GridRank; dim++) {
     size *= GridDimension[dim];
   }
@@ -186,8 +186,8 @@ int grid::UpdatePrim(float **dU, float c1, float c2)
 
   this->IdentifyPhysicalQuantities(DensNum, GENum, Vel1Num, Vel2Num, Vel3Num, TENum);
 
-  float rho_old, vx_old, vy_old, vz_old, e_old, etot_old, Tau_old, eint_old,
-    rho, vx, vy, vz, e, etot, Tau, eint, p, v2,
+  float rho_old, vx_old, vy_old, vz_old, etot_old, Tau_old, eint_old,
+    rho, vx, vy, vz, etot, Tau, eint, p, v2,
     D_new, S1_new, S2_new, S3_new, Tau_new, h, cs, dpdrho, dpde, Eint_new;
 
   n = 0;

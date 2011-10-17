@@ -37,13 +37,13 @@ int grid::SetFloor()
   }
 
   float DensityUnits = 1.0, LengthUnits = 1.0, TemperatureUnits = 1, TimeUnits, 
-    VelocityUnits, CriticalDensity = 1, BoxLength = 1, MagneticUnits;
-  double MassUnits;
+    VelocityUnits;
+
   GetUnits(&DensityUnits, &LengthUnits, &TemperatureUnits,
 	   &TimeUnits, &VelocityUnits, 1.0);
 
   int DensNum, GENum, TENum, Vel1Num, Vel2Num, Vel3Num, 
-    B1Num, B2Num, B3Num, HMNum, H2INum, H2IINum;
+    B1Num, B2Num, B3Num;
   if (this->IdentifyPhysicalQuantities(DensNum, GENum, Vel1Num, Vel2Num, 
 				       Vel3Num, TENum, B1Num, B2Num, B3Num) == FAIL) {
     fprintf(stderr, "Error in IdentifyPhysicalQuantities.\n");

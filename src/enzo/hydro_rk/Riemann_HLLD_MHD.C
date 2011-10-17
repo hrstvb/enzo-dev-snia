@@ -26,7 +26,6 @@ int hlld_mhd(float **FluxLine, float **priml, float **primr, float **prim, int A
   float etot_l,etot_r, eint_l, eint_r, h, dpdrho, dpde, rho_l, rho_r, vx_l, vy_l, vz_l, vx_r, vy_r, vz_r, Bx_l, Bx_r,Bx, By_l, Bz_l, By_r, Bz_r, Phi_l, Phi_r, v2, B2, Bv_l, Bv_r, p_l, p_r, cs_l, cs_r, pt_l, pt_r;
   float rho_ls, rho_rs, vy_ls, vy_rs, vz_ls, vz_rs, vv_ls, vv_rs, By_ls, By_rs, Bz_ls, Bz_rs, Bv_ls, Bv_rs, bb_ls, bb_rs, eint_ls, eint_rs, etot_ls, etot_rs, pt_s;
   float vy_ss, vz_ss, By_ss, Bz_ss, Bv_ss, eint_lss, eint_rss, etot_lss, etot_rss, rho_savg;
-  float Zero = 0.0;
   float S_l, S_r, S_ls, S_rs, S_M; // wave speeds
   float cf_l, cf_r, sam, sap; // fast speeds
 

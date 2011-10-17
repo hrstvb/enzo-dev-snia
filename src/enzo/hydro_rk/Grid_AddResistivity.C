@@ -168,7 +168,7 @@ int grid::ComputeResistivity(float *resistivity, int DensNum)
   int n = 0, igrid;
   float rho, p, eint, h, cs, dpdrho, dpde, T, nH2;
   double mp = 1.67e-24;
-  FLOAT x, y, R;
+  FLOAT y;
   for (int k = GridStartIndex[2]; k <= GridEndIndex[2]; k++) {
     for (int j = GridStartIndex[1]; j <= GridEndIndex[1]; j++) {
       y = CellLeftEdge[1][j] + 0.5*CellWidth[1][j];
