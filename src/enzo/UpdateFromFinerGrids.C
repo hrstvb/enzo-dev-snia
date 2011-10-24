@@ -337,7 +337,40 @@ int UpdateFromFinerGrids(int level, HierarchyEntry *Grids[], int NumberOfGrids,
 
   } // ENDFOR grid batches
   LCAPERF_STOP("ProjectSolutionToParentGrid");
+#ifdef MHDCT
+  if( useMHDCT) {
+  //Face projection.  Needs to be updated for 3 phase communication.
+  CommunicationDirection = COMMUNICATION_SEND;
 
+  for (grid1 = 0; grid1 < NumberOfGrids; grid1++) {
+    fprintf(stderr,"CLOWN hi boss\n");
+
+    NextGrid = Grids[grid1]->NextGridNextLevel;
+    subgrid = 0;
+
+      NextSubgrid = SUBlingList[grid1];
+      if( NextSubgrid == NULL ){
+        fprintf(stderr,"CLOWN fuck everything.\n");
+      }
+      while( NextSubgrid != NULL ){
+	
+	if (NextSubgrid->GridData->MHD_ProjectFace
+	    (*Grids[grid1]->GridData, MetaData->LeftFaceBoundaryCondition,
+	     MetaData->RightFaceBoundaryCondition  ) == FAIL) {
+	  fprintf(stderr, "Error in grid->MHD_ProjectFace, Send Pass.\n");
+	  return FAIL;
+	}
+	
+	NextSubgrid = NextSubgrid->NextGridThisLevel;
+      }
+  }
+  CommunicationDirection = COMMUNICATION_SEND_RECEIVE;
+  for (grid1 = 0; grid1 < NumberOfGrids; grid1++) {
+      NextSubgrid = SUBlingList[grid1];
+      fprintf(stderr,"CLOWN sup nigga\n");
+  }//2nd grid loop
+  }//MHD Used
+#endif //MHDCT
 #ifdef FORCE_MSG_PROGRESS 
   CommunicationBarrier();
 #endif
