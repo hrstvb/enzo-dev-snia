@@ -152,7 +152,7 @@ int grid::CheckForSharedFace(grid *OtherGrid,
 
  
 	  /* Full periodic case (26 checks).
-	     This ONLY checks the Periodic shifts.  (that's the i!=0 || ... crap) */
+	     This ONLY checks the Periodic shifts.  (that's the i!=0 || ... stuff) */
 	
 
 
