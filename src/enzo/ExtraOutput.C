@@ -57,6 +57,7 @@ int ExtraOutput(int output_flag, LevelHierarchyEntry *LevelArray[],TopGridData *
 			  , ImplicitProblemABC *ImplicitSolver
 #endif
         ){
+    //initialize output_number array.
     int n_outputs=30;
     if( output_number == NULL){
         output_number = new int[n_outputs];
@@ -64,6 +65,8 @@ int ExtraOutput(int output_flag, LevelHierarchyEntry *LevelArray[],TopGridData *
             output_number[nout]=0;
         }
     }
+
+    //Check for ouptut
     int WriteOut = FALSE;
     for( int i=0; i<MAX_EXTRA_OUTPUTS; i++){
         if( output_flag == ExtraOutputs[i]){
