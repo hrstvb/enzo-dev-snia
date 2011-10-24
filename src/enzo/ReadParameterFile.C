@@ -915,6 +915,7 @@ int ReadParameterFile(FILE *fptr, TopGridData &MetaData, float *Initialdt)
 
 #ifdef MHDCT
     //MHDCT variables
+    ret += sscanf(line, "DEBUG_LOOP             = %"ISYM, &DEBUG_LOOP);
     ret += sscanf(line, "WriteBoundary          = %"ISYM, &WriteBoundary);
     ret += sscanf(line,"TracerParticlesAddToRestart = %"ISYM,&TracerParticlesAddToRestart);
     ret += sscanf(line,"RefineByJeansLengthUnits = %"ISYM,&RefineByJeansLengthUnits);
@@ -1562,6 +1563,13 @@ int ReadParameterFile(FILE *fptr, TopGridData &MetaData, float *Initialdt)
   if (debug) printf("Initialdt in ReadParameterFile = %e\n", *Initialdt);
 
   CheckShearingBoundaryConsistency(MetaData);
+#ifdef MHDCT
+  //DEBUG_LOOP is for use with parallel gdb sessions.
+  if( DEBUG_LOOP ){
+    fprintf(stderr,"WARNING: DEBUG_LOOP = TRUE.  Entering infinite loop.\n");
+    while( DEBUG_LOOP ){};
+  }
+#endif //MHDCT
   return SUCCESS;
 #endif /* ndef CONFIG_USE_LIBCONFIG */
 }
