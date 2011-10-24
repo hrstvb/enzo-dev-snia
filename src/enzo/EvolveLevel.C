@@ -194,7 +194,7 @@ int CreateSiblingList(HierarchyEntry ** Grids, int NumberOfGrids, SiblingGridLis
 		      int StaticLevelZero,TopGridData * MetaData,int level);
 
 #ifdef FLUX_FIX
-#ifdef FAST_SIB 
+#ifdef FAST_SIB
 int CreateSUBlingList(TopGridData *MetaData,
 		      LevelHierarchyEntry *LevelArray[], int level,
 		      SiblingGridList SiblingList[],
@@ -207,6 +207,7 @@ int CreateSUBlingList(TopGridData *MetaData,
 int DeleteSUBlingList(int NumberOfGrids,
 		      LevelHierarchyEntry **SUBlingList);
 #endif
+
 
 int StarParticleInitialize(HierarchyEntry *Grids[], TopGridData *MetaData,
 			   int NumberOfGrids, LevelHierarchyEntry *LevelArray[], 
@@ -705,6 +706,16 @@ int EvolveLevel(TopGridData *MetaData, LevelHierarchyEntry *LevelArray[],
     CreateSUBlingList(MetaData, LevelArray, level, &SUBlingList);
 #endif /* FAST_SIB */
 #endif /* FLUX_FIX */
+
+#ifdef MHDCT
+  ExtraOutput(7,LevelArray,MetaData,level,Exterior
+#ifdef TRANSFER
+		      , ImplicitSolver
+#endif
+          );
+#endif //MHDCT
+
+
 #ifdef FLUX_FIX
     UpdateFromFinerGrids(level, Grids, NumberOfGrids, NumberOfSubgrids,
 			     SubgridFluxesEstimate,SUBlingList,MetaData);
