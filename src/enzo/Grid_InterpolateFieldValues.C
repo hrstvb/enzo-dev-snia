@@ -561,7 +561,7 @@ int grid::InterpolateFieldValues(grid *ParentGrid
       //for the call to mhd_interpolate.  They aren't actually needed byt that routine, either,
       //but I'm making sure all this shit works before going about the process of seperating the
       //mhd_interpolate into two routines.
-      CommunicationDirection = COMMUNICATION_RECEIVE;
+      CommunicationDirection = COMMUNICATION_SEND_RECEIVE;
       //wall_time("Start IVF_CID");
       if( MHD_CID(OldFineLevel, MetaData, Offset, TempDim, Refinement) == FAIL ){
 	fprintf(stderr, "Shit!  MHD_CID failed.\n");
