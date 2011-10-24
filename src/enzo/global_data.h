@@ -401,6 +401,7 @@ EXTERN int   StaticRefineRegionLevel[MAX_STATIC_REGIONS];
 /* Evolving refinement region. */
 EXTERN char *RefineRegionFile;
 EXTERN int RefineRegionTimeType; // 0=time 1=redshift
+EXTERN int EvolveRefineRegionNtimes;
 EXTERN FLOAT EvolveRefineRegionTime[MAX_REFINE_REGIONS]; // time bins
 EXTERN FLOAT EvolveRefineRegionLeftEdge[MAX_REFINE_REGIONS][3]; // left corners
 EXTERN FLOAT EvolveRefineRegionRightEdge[MAX_REFINE_REGIONS][3]; // right corners
@@ -893,6 +894,7 @@ EXTERN float ConductionCourantSafetyNumber;
 EXTERN int RefineByJeansLengthUnits;// determines method for computing jeans length. 0==std cosmology, 1==isothermal, 2==adiabatic ( code units )
 EXTERN float IsothermalSoundSpeed;
 #ifdef MHDCT
+EXTERN int DEBUG_LOOP;
 EXTERN int WriteBoundary;
 EXTERN int ExtraOutputs[MAX_EXTRA_OUTPUTS];
 EXTERN mhd_ct_interpolation_type MHD_InterpolationMethod;

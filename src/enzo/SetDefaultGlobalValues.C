@@ -728,6 +728,7 @@ int SetDefaultGlobalValues(TopGridData &MetaData)
   useMHD=0;
 #ifdef MHDCT
   //MHDCT variables
+  DEBUG_LOOP                = FALSE; //causes a while loop to start just after communication starts.
   WriteBoundary             = FALSE;
   MHD_InterpolationMethod   = BalsaraDirect;
   CT_AthenaDissipation = 0.0;

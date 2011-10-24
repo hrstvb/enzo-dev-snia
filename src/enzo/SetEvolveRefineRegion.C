@@ -37,12 +37,18 @@ int SetEvolveRefineRegion (FLOAT time)
   /* Set time=redshift if that's what we're doing. */
   if (RefineRegionTimeType == 1) {
     time = redshift;
+    for(timestep=0; timestep<EvolveRefineRegionNtimes; timestep++){
+      if( time > EvolveRefineRegionTime[timestep] ){
+        break;
+      }
+    }
+  }else{
+    for(timestep=0; timestep<EvolveRefineRegionNtimes; timestep++){
+      if( time < EvolveRefineRegionTime[timestep] ){
+        break;
+      }
+    }
   }
-  timestep = 0;
-  while (timestep < MAX_REFINE_REGIONS && 
-	 EvolveRefineRegionTime[timestep] >= FLOAT_UNDEFINED &&
-	 time < EvolveRefineRegionTime[timestep])
-    timestep++;
   timestep -= 1;
   if (timestep < 0) return SUCCESS;
 
@@ -71,6 +77,20 @@ int SetEvolveRefineRegion (FLOAT time)
 	    RefineRegionLeftEdge[2], RefineRegionRightEdge[0],
 	    RefineRegionRightEdge[1], RefineRegionRightEdge[2]);
 
+#ifdef MHDCT
+  //dcollins October 2012: also evolve MustRefineRegion.
+  int method;
+  for (method = 0; method < MAX_FLAGGING_METHODS; method++) {
+    if( CellFlaggingMethod[method] == 12 ){
+      for( int dim=0; dim<MAX_DIMENSION; dim++){
+        MustRefineRegionLeftEdge[dim] = EvolveRefineRegionLeftEdge[timestep][dim];
+        MustRefineRegionRightEdge[dim] = EvolveRefineRegionRightEdge[timestep][dim];
+      }
+    }
+  }
+ 
+  
+#endif
   return SUCCESS;
 
 }
