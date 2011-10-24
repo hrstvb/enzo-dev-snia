@@ -291,7 +291,7 @@ int grid::TurbulenceSimulationInitializeGrid(
   /* Read the magnetic fields. */
  
   if (TurbulenceSimulationMagneticNames[0] != NULL && ReadData && 
-      (HydroMethod == MHD_RK || HydroMethod == MHD_Li) )
+      (HydroMethod == MHD_RK || HydroMethod == MHD_Li) ){
 
     for (dim = 0; dim < GridRank; dim++){
   if( strcmp( TurbulenceSimulationMagneticNames[0] , TurbulenceSimulationMagneticNames[1] ) == 0 ){
@@ -326,6 +326,7 @@ int grid::TurbulenceSimulationInitializeGrid(
     this->CenterMagneticField();
       }
 #endif //MHDCT
+  }
   /* Get RandomForcing data */
  
   if (RandomForcing == TRUE && TurbulenceSimulationRandomForcingNames[0] != NULL) {
