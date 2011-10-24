@@ -12,7 +12,7 @@
 #include "Hierarchy.h"
 #include "LevelHierarchy.h"
 
-extern "C" void FORTRAN_NAME(mhdct_fine_derivatives)
+extern "C" void FORTRAN_NAME(mhd_interpolate)
                                (float *parentx, float *parenty, float *parentz,
 				int parentdim[], int refine[],
 				float * childx, float * childy, float *childz,
@@ -356,7 +356,7 @@ int grid::MHD_CIDWorker(grid* OldFineGrid, FLOAT EdgeOffset[MAX_DIMENSION]){
       
       Step = 1;
       //wall_time("Start CIDW_int");
-      FORTRAN_NAME(mhdct_fine_derivatives)(this->MHDParentTemp[0], 
+      FORTRAN_NAME(mhd_interpolate)(this->MHDParentTemp[0], 
 				    this->MHDParentTemp[1], 
 				    this->MHDParentTemp[2], 
 				    this->MHDParentTempPermanent,
