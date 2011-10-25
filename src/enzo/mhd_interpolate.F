@@ -139,7 +139,7 @@ c      REALSUB Lx, Ly, Lz, dxi, dyi, dzi
       real minmod
       real tol
       integer NanLoo
-c     this is just what it sounds like:  it's a dummy variable that holds shit together while
+c     this is just what it sounds like:  it's a dummy variable that holds things together while
 c     I debug, before I rip this routine appart.
       integer methodkludge
 
@@ -533,7 +533,7 @@ c     This is where the step that already has the derivatives goes.
       
       if( step .ne. 0 .and. step .ne. 2 ) goto 666
 c      write(*,*) "MHD_INT: STEP ", step      
-c      write(*,*) "mhd_int, the rest of the shit, s=", step
+c      write(*,*) "mhd_int, the rest of the stuff, s=", step
 c
 c     Calulate interpolation coefficients.
 c     See balsara for derivation
@@ -656,32 +656,32 @@ c         if( method .lt. 0 ) then
          
          
 c         if( (a(7,i,j,k) + b(7,i,j,k) + 2*c(5,i,j,k) ) .gt. tol )then
-c            write(*,*) "Shit. Prolong fail 1"
+c            write(*,*) " Prolong fail 1"
 c         endif
 c         if( (a(9,i,j,k) +2*b(11,i,j,k)+2*c(11,i,j,k)) .gt. tol) then
-c            write(*,*) "Shit.  prolong fail 2"
+c            write(*,*) "  prolong fail 2"
 c         endif
 c         if((2*a(11,i,j,k) +b(9,i,j,k) +2*c(10,i,j,k)) .gt. tol) then
-c            write(*,*) "Shit. prolong fail 3"
+c            write(*,*) " prolong fail 3"
 c         endif
 c         if( (2*a(10,i,j,k)+2*b(10,i,j,k)+c(9,i,j,k)) .gt. tol) then
-c            write(*,*) "Shit. prolong fail 4"
+c            write(*,*) " prolong fail 4"
 c         endif
          
 
          
 c         if( a(2,i,j,k)+b(3,i,j,k)+c(4,i,j,k) .ge. tol ) then
-c            write(*,*) "Interp Shit: a2+b3+c4 != 0",i,j,k
+c            write(*,*) "Interp  a2+b3+c4 != 0",i,j,k
 c            write(*,*) a(2,i,j,k),b(3,i,j,k),c(4,i,j,k)
 c         endif
 c         if( 2*a(5,i,j,k) + b(6,i,j,k)+c(6,i,j,k) .ge. tol ) then
-c            write(*,*) "Interp Shit: 2a5+b6+c6 != 0"
+c            write(*,*) "Interp  2a5+b6+c6 != 0"
 c         endif
 c         if( a(6,i,j,k) + 2*b(5,i,j,k) + c(7,i,j,k) .ge. tol ) then
-c            write(*,*) "Interp Shit: a6 ..."
+c            write(*,*) "Interp  a6 ..."
 c         endif
 c         if( a(7,i,j,k) + b(7,i,j,k) + 2*c(5,i,j,k) .ge. tol ) then
-c            write(*,*) "Interp Shit: a7 ..."
+c            write(*,*) "Interp  a7 ..."
 c         endif
          
          

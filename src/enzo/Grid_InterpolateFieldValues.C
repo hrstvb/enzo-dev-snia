@@ -505,7 +505,7 @@ int grid::InterpolateFieldValues(grid *ParentGrid
 
       //Allocates space for DxyBz, etc, derivatives.  The derivatives are currently not
       //used in this stage, but space should be allocated anyway.  They will be used in 
-      //the prolongation crap later.
+      //the prolongation stuff later.
 
       //fprintf(stderr,"Heycf1p\n");
       MHD_ProlongAllocate(TempDim);
@@ -556,15 +556,10 @@ int grid::InterpolateFieldValues(grid *ParentGrid
       //variables, one of the primary concerns of the MHD 
       //implimentor. (the author realizes as he's finishing.)
 
-      //MHDparentTemp and ParentTempDim aren't actually needed by this routine, 
-      //but they're needed
-      //for the call to mhd_interpolate.  They aren't actually needed byt that routine, either,
-      //but I'm making sure all this shit works before going about the process of seperating the
-      //mhd_interpolate into two routines.
       CommunicationDirection = COMMUNICATION_SEND_RECEIVE;
       //wall_time("Start IVF_CID");
       if( MHD_CID(OldFineLevel, MetaData, Offset, TempDim, Refinement) == FAIL ){
-	fprintf(stderr, "Shit!  MHD_CID failed.\n");
+	fprintf(stderr, "Error: MHD_CID failed.\n");
 	return FAIL;
       }
       //wall_time("End IVF_CID");
@@ -590,7 +585,7 @@ int grid::InterpolateFieldValues(grid *ParentGrid
       for(field=0;field<3;field++)
 	for(i=0;i<MHDChildTempSize[field];i++)
 	  if( MHDChildTemp[field][i] != MHDChildTemp[field][i] )
-	    fprintf(stderr,"shit.  nan.\n");
+	    fprintf(stderr,"Error: nan. in MHDCHildTemp\n");
       //wall_time("Start IVF_horse");
       FORTRAN_NAME(mhd_interpolate)(MHDParentTemp[0], MHDParentTemp[1], MHDParentTemp[2],
 				    ParentTempDim,    Refinement,
@@ -611,7 +606,7 @@ int grid::InterpolateFieldValues(grid *ParentGrid
 	
 	for(i=0;i<MHDChildTempSize[field];i++)
 	  if( MHDChildTemp[field][i] != MHDChildTemp[field][i] )
-	    fprintf(stderr,"shit.  nan after.\n");
+	    fprintf(stderr,"Nan in MHDChildTemp\n");
       }//field
       if( MHD_DCheck(TempDim, "I can't believe this thing doesnt work") == FAIL ){
 	//fprintf(stderr, "dcheck3\n");

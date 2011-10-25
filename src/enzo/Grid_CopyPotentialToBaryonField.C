@@ -109,8 +109,6 @@ int grid::CopyPotentialToBaryonField()
     }
   }
  
-//  fprintf(stderr, "STUFF field %"ISYM"  elements %"ISYM"  %16.8e  %16.8e\n", field, crap, big, low);
-//  if (debug1) printf("Potential minimum: %g \t maximum: %g\n", minPot, maxPot);
 
 
   return SUCCESS;

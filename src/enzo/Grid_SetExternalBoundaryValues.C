@@ -138,21 +138,21 @@ int grid::SetExternalBoundaryValues(ExternalBoundary *Exterior)
       if( Exterior->SetExternalBoundary(GridRank, GridDimension, GridOffset,
 					GridStartIndex, GridEndIndex,
 					CenteredB[0], Velocity1) == FAIL){
-	fprintf( stderr, "Shit!  Something's wrong with the CenteredB[0] boundary\n");
+	fprintf( stderr, "Error: Something's wrong with the CenteredB[0] boundary\n");
 	return FAIL;
       }
       
       if( Exterior->SetExternalBoundary(GridRank, GridDimension, GridOffset,
 					GridStartIndex, GridEndIndex,
 					CenteredB[1], Velocity2) == FAIL){
-	fprintf( stderr, "Shit!  Something's wrong with the CenteredB[1] boundary\n");
+	fprintf( stderr, "Error: Something's wrong with the CenteredB[1] boundary\n");
 	return FAIL;
       }
 
       if( Exterior->SetExternalBoundary(GridRank, GridDimension, GridOffset,
 					GridStartIndex, GridEndIndex,
 					CenteredB[2], Velocity3) == FAIL){
-	fprintf( stderr, "Shit!  Something's wrong with the CenteredB[2] boundary\n");
+	fprintf( stderr, "Error: Something's wrong with the CenteredB[2] boundary\n");
 	return FAIL;
       }
           

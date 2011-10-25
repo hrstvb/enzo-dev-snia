@@ -316,7 +316,7 @@ int grid::SolveMHDEquations(int CycleNumber, int NumberOfSubgrids,
     for(i=0;i<ElectricSize[field]; i++) ElectricField[field][i] = 0.0;
     
     if(MagneticField[field]==NULL){
-      fprintf(stderr, "========== Solve MHD create Magnetic Field\nShit, that's not good.\n");
+      fprintf(stderr, "========== Solve MHD create Magnetic Field: Error with MagneticField\n");
       return FAIL;
     }
     
@@ -642,7 +642,7 @@ int grid::SolveMHDEquations(int CycleNumber, int NumberOfSubgrids,
     FILE *dummy = fopen(basename, "a");   
 
     if( this->WriteGrid(dummy, basename, MyGridNumber) == FAIL ){
-      fprintf(stderr, "Shit.  Problem with Write Grid in SMHD.\n");
+      fprintf(stderr, "Error: Problem with Write Grid in SMHD.\n");
       return FAIL;
     }
     fclose(dummy);
@@ -733,7 +733,6 @@ int grid::SolveMHDEquations(int CycleNumber, int NumberOfSubgrids,
 	      
 	    }
 
-  //shit hat
   //JBMEM_MESSAGE(MyProcessorNumber,"jb: SMHDEFlux0");  
 
   //JBMEM_MESSAGE(MyProcessorNumber,"jb: SMHDBeforeMagFluxDelete");  
@@ -771,7 +770,7 @@ if(MultiSpecies>0){
     sprintf(basename, "data39%02d%d.grid",CycleNumber, level);
     FILE *dummy = fopen(basename, "a");    
     if( this->WriteGrid(dummy, basename, MyGridNumber) == FAIL ){
-      fprintf(stderr, "Shit.  Problem with Write Grid in SMHD.\n");
+      fprintf(stderr, "Error Problem with Write Grid in SMHD.\n");
       return FAIL;
     }
     fclose(dummy);

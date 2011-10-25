@@ -52,7 +52,7 @@ int grid::MHD_DCheck(int * ChildDim, char * mess){
   
   for(i=0; i<dYsize; i++)
     if(DxBy[i] !=DxBy[i] ){
-      fprintf(stderr,"Dcheck Fail: 5 mother fucker\n");
+      fprintf(stderr,"Dcheck Fail: 5\n");
       return FAIL;
     }
 

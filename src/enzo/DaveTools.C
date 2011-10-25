@@ -214,7 +214,7 @@ void WriteSingleCube(float * array, int Dims[], char* string, int dNum, int gNum
   dataset_id = H5Dcreate(file_id, "monkey", float_type_id, dataspace_id, H5P_DEFAULT);
   
   //Write the Data Set
-  //                (set, memory type, mem. space, file space, transfer shit, actual data)
+  //                (set, memory type, mem. space, file space, transfer details, actual data)
   fprintf(stderr,"Writing set\n");
   status = H5Dwrite(dataset_id, float_type_id, H5S_ALL, H5S_ALL, H5P_DEFAULT, 
 		    array);

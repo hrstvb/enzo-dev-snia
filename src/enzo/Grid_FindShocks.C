@@ -430,7 +430,7 @@ int grid::FindShocks()
 	//Speed of sound in code units of velocity
 	Csound = sqrt(Gamma*kboltz*preT/(DEFAULT_MU*mh))/VelocityUnits;
 
-	/*-------------Lots of Extra Crap------------/
+	/*-------------Lots of Extra Stuff------------/
 	sarea = CellWidth[0][0] * CellWidth[0][0];
 	vol = CellWidth[0][0] * sarea;
 	//For now calculate the kinetic energy flux through the shock.

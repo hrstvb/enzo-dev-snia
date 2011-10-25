@@ -81,7 +81,7 @@ int MHDOrszagTangInit(FILE *fptr, FILE *Outfptr, HierarchyEntry &TopGrid,
 
 
   if( TopGrid.GridData->MHDOrszagTangInitGrid(Density,Pressure,V0,B0) == FAIL ){
-    fprintf(stderr, " Shit, Man, the Tangs all funky.\n");
+    fprintf(stderr, " Error in Orszag Tang\n");
     return FAIL;
   }
 

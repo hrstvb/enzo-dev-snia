@@ -469,17 +469,6 @@ int grid::CopyZonesFromGrid(grid *OtherGrid, FLOAT EdgeOffset[MAX_DIMENSION])
 	    
 	    //MagneticField[field][thisindex] = ((dccCounter < 0 )? 0 : OtherGrid->MagneticField[field][otherindex]);
 	    MagneticField[field][thisindex] = OtherGrid->MagneticField[field][otherindex];
-#ifdef KILL_THIS
-	    if( thisindex >= MagneticSize[field] ){
-		fprintf(stderr, "Severe Error: Grid_CopyZonesFromGrid overstepped array bounds.\n");
-		Pout(" ---------- fuck: this index >= Magnetic Size\n");
-		return FAIL;
-	      }
-	      if(otherindex >= othersize[field]){
-		fprintf(stderr, "Severe Error: Grid_CopyZonesFromGrid overstepped array bounds (other field).\n");
-		return FAIL;
-	      }
-#endif //KILL_THIS
 	    }//i
     }//field
     

@@ -343,14 +343,14 @@ int UpdateFromFinerGrids(int level, HierarchyEntry *Grids[], int NumberOfGrids,
   CommunicationDirection = COMMUNICATION_SEND;
 
   for (grid1 = 0; grid1 < NumberOfGrids; grid1++) {
-    fprintf(stderr,"CLOWN hi boss\n");
+    fprintf(stderr,"CLOWN first face loop\n");
 
     NextGrid = Grids[grid1]->NextGridNextLevel;
     subgrid = 0;
 
       NextSubgrid = SUBlingList[grid1];
       if( NextSubgrid == NULL ){
-        fprintf(stderr,"CLOWN fuck everything.\n");
+        fprintf(stderr,"CLOWN Empty subling list\n");
       }
       while( NextSubgrid != NULL ){
 	
@@ -367,7 +367,7 @@ int UpdateFromFinerGrids(int level, HierarchyEntry *Grids[], int NumberOfGrids,
   CommunicationDirection = COMMUNICATION_SEND_RECEIVE;
   for (grid1 = 0; grid1 < NumberOfGrids; grid1++) {
       NextSubgrid = SUBlingList[grid1];
-      fprintf(stderr,"CLOWN sup nigga\n");
+      fprintf(stderr,"CLOWN Second face projection list\n");
   }//2nd grid loop
   }//MHD Used
 #endif //MHDCT

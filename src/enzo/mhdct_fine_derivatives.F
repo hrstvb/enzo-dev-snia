@@ -138,7 +138,7 @@ c      REALSUB Lx, Ly, Lz, dxi, dyi, dzi
       real minmod
       real tol
       integer NanLoo
-c     this is just what it sounds like:  it's a dummy variable that holds shit together while
+c     this is just what it sounds like:  it's a dummy variable that holds things together while
 c     I debug, before I rip this routine appart.
       integer methodkludge
 

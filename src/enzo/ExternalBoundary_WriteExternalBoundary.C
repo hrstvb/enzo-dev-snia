@@ -170,7 +170,7 @@ int ExternalBoundary::WriteExternalBoundary(FILE *fptr, char *hdfname)
 	  else
 	    {
 	      BoundaryValuePresent[2*dim+i] = TRUE;
-	      fprintf(stderr, "Shit!  You're not writing out the Inflow Conditions.\n");
+	      fprintf(stderr, "Error You're not writing out the Inflow Conditions.\n");
 	      fprintf(stderr, "You'd better write that\n");
 	      fprintf(stderr, "MagneticBV[0][%d][%d] ",dim,i);
 	      return FAIL;

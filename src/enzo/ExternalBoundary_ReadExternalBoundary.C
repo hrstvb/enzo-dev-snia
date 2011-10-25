@@ -185,7 +185,7 @@ int ExternalBoundary::ReadExternalBoundary(FILE *fptr, int ReadText, int ReadDat
       for(dim=0; dim<3; dim++)
 	for(int i=0;i<2;i++){
 	if( MagneticBoundaryValuePresent[2*dim+i] == TRUE ){
-	  fprintf(stderr, "Shit!  You're not reading in the Inflow Conditions.\n");
+	  fprintf(stderr, "Error You're not reading in the Inflow Conditions.\n");
 	  fprintf(stderr, "You'd better write the code to write the value to HDF5 files.\n");
 	  fprintf(stderr, "When you do, make sure you change WriteExternalBoundary, too\n");
 	  return FAIL;
@@ -235,7 +235,7 @@ int ExternalBoundary::ReadExternalBoundary(FILE *fptr, int ReadText, int ReadDat
 		    &MagneticBoundaryType[2][2][1]);
 
       if( ret != 18 ){
-	fprintf(stderr, "Shit.  MagneticBoundaryType not defined ret = %d \n", ret);
+	fprintf(stderr, "Error. MagneticBoundaryType not defined ret = %d \n", ret);
 	return FAIL;
       }
     }//mhd used

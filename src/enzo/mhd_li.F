@@ -220,7 +220,7 @@ c -------- I opted for clarity over cleverness. (if this comment is confusing, i
 
       enddo
 
-c     end of sub-crap -------------------
+c     end of subgrid stuff -------------------
 
 c      open(unit=700,file='file.X0',status='unknown',position='append')
 c      open(unit=710,file='file.X1',status='unknown',position='append')
@@ -349,7 +349,7 @@ c               enddo
 
 c               do mmm=1,10
 c                  if( wx(i,mmm) .ne. wx(i,mmm) ) then
-c                     write(*,*) "SHIT! failure, beginning of x"
+c                     write(*,*) "failure, beginning of x"
 cc                     ERROR_MESSAGE
 c                  endif
 c               enddo               
@@ -443,7 +443,7 @@ c     way, please let me know.
      +                  + TotalOffset(dim, s)
 
 c                        if( index .ge. totalfluxsize ) then
-c                           write(*,*) "SHIT!  Exceeding flux array",
+c                           write(*,*) "Error Exceeding flux array",
 c     +                      index, totalfluxsize, "(",i,j,k,s,face,
 c     +                      ")[",fdim(1,1,s), fdim(1,2,s), fdim(1,3,s),
 c     +                      "]",sizeothersubgrids(s), 
@@ -471,7 +471,7 @@ c1000*j+10*mmm+face
                         endif
 c                        do mmm=1,7
 c                           if( fluxx(i-1,mmm) .ne. fluxx(i-1,mmm)) then
-c                              write(*,*) "SHIT! Flux Failure x, ijkflg"
+c                              write(*,*) "Error Flux Failure x, ijkflg"
 c                              
 c                              write(*,*) i,j,k,mmm, level, grid
 c                              ERROR_MESSAGE
@@ -481,7 +481,7 @@ c                        enddo
                      endif
                   enddo
                enddo
-c ------------ end the flux shit               
+c ------------ end the flux 
                
             enddo
             
@@ -547,7 +547,7 @@ c            enddo
 
 c            do mmm=1,10
 c               if( wy(j,mmm) .ne. wy(j,mmm) ) then
-c                  write(*,*) "SHIT! failure, beginning of y"
+c                  write(*,*) "Error failure, beginning of y"
 cc                  ERROR_MESSAGE
 c               endif
 c            enddo
@@ -624,7 +624,7 @@ c         enddo
 
 c            do mmm=1,10
 c               if( wy(j,mmm) .ne. wy(j,mmm) ) then
-c                  write(*,*) "SHIT! failure, end of y"
+c                  write(*,*) "Error failure, end of y"
 cc                  ERROR_MESSAGE
 c               endif
 c            enddo
@@ -649,7 +649,7 @@ c     dim=2 is set at the beginning of the sweep.
      +                  + TotalOffset(dim, s)
 
 c                        if( index .ge. totalfluxsize ) then
-c                           write(*,*) "SHIT!  Exceeding flux array, y",
+c                           write(*,*) "Error  Exceeding flux array, y",
 c     +                    index, totalfluxsize, "(",i,j,k,s,face,
 c     +                ")[",fdim(dim,1,s), fdim(dim,2,s), fdim(dim,3,s),
 c     +                "]",sizeothersubgrids(s), 
@@ -679,7 +679,7 @@ c                        do mmm=1,7
 c                           if( fluxy(j-1,mmm) .ne. fluxy(j-1,mmm)
 c     +                          .and. mmm .ne. 6
 c     +                          .and. mmm. ne. 5) then
-c                          write(*,*) "SHIT! Flux Failure y, ijkflg"
+c                          write(*,*) "Error Flux Failure y, ijkflg"
 c                              
 c                              write(*,*) i,j,k,mmm, level, grid
 c                              ERROR_MESSAGE
@@ -689,7 +689,7 @@ c                        enddo
                      endif
                   enddo
                enddo
-c ------------ end the flux shit               
+c ------------ end the flux 
 
 
             
@@ -749,7 +749,7 @@ c         do j=js+1, je
             endif
 c            do mmm=1,10
 c               if( wz(k,mmm) .ne. wz(k,mmm) ) then
-c                  write(*,*) "SHIT! failure, beginning of z"
+c                  write(*,*) "Error! failure, beginning of z"
 cc                  ERROR_MESSAGE
 c               endif
 c            enddo
@@ -815,7 +815,7 @@ c         enddo
 
 c            do mmm=1,10
 c               if( wz(k,mmm) .ne. wz(k,mmm) ) then
-c                  write(*,*) "SHIT! failure, end of z", i, j, k, mmm
+c                  write(*,*) "Error! failure, end of z", i, j, k, mmm
 cc                  ERROR_MESSAGE
 c               endif
 c            enddo
@@ -853,7 +853,7 @@ c     dim=3 is set at the beginning of the sweep.
      +                  + TotalOffset(dim, s)
 
 c                        if( index .ge. totalfluxsize ) then
-c                           write(*,*) "SHIT!  Exceeding flux array, y",
+c                           write(*,*) "Error!  Exceeding flux array, y",
 c     +                    index, totalfluxsize, "(",i,j,k,s,face,
 c     +                ")[",fdim(dim,1,s), fdim(dim,2,s), fdim(dim,3,s),
 c     +                "]",sizeothersubgrids(s), 
@@ -883,7 +883,7 @@ c                        do mmm=1,7
 c                           if( fluxz(k-1,mmm) .ne. fluxz(k-1,mmm)
 c     +                          .and. mmm .ne. 5 
 c     +                          .and. mmm .ne. 6) then
-c                              write(*,*) "SHIT! Flux Failure z ijfklg"
+c                              write(*,*) "Error! Flux Failure z ijfklg"
 c                              
 c                              write(*,*) i,j,k,mmm, level, grid
 c                              ERROR_MESSAGE
@@ -893,7 +893,7 @@ c                        enddo
                      endif
                   enddo
                enddo
-c ------------ end the flux shit               
+c ------------ end the flux               
 
             
          enddo

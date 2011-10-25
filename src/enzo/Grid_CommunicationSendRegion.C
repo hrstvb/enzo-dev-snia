@@ -408,7 +408,7 @@ int grid::CommunicationSendRegion(grid *ToGrid, int ToProcessor,int SendField,
       if (NewOrOld == NEW_AND_OLD || NewOrOld == OLD_ONLY)
 	for(field=0;field<3;field++){
 	  if( OldMagneticField[field] != NULL )
-	    fprintf(stderr,"shit: CommSendRegion: OldMagneticField != NULL" );
+	    fprintf(stderr,"Warning: CommSendRegion: OldMagneticField != NULL" );
 	  delete ToGrid->OldMagneticField[field];
 	  ToGrid->OldMagneticField[field] = new float[MHDRegionSize[field]];
 	  FORTRAN_NAME(copy3d)(&buffer[index], OldMagneticField[field],

@@ -904,7 +904,7 @@ int grid::MHDBlastInitializeGrid(float DensityA, float DensityB,
     sprintf(basename,"data9900.grid");//, LevelCycleCount[level], level, grid);
     FILE * dccptr = fopen(basename,"a");
     if( this->WriteGrid(dccptr,basename,1) == FAIL ){
-      fprintf(stderr,"Robert Anton Wilson says fuck.\n");
+      fprintf(stderr,"Robert Anton Wilson says Dump \n");
       return FAIL;
     }
     fclose(dccptr);

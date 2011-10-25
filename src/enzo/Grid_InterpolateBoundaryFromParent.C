@@ -539,21 +539,6 @@ int grid::InterpolateBoundaryFromParent(grid *ParentGrid)
 	MHDParentTemp[field] = new float[ MHDParentTempSize[field] ];
 	MHDChildTemp[field] = new float[ MHDChildTempSize[field] ];
 	
-	/*
-	if( CenteredB[field] == NULL ){
-	  fprintf(stderr, "Shit!  Why isn't the centered B field declared in Interpl Bdry?\n ");
-	  return FAIL;
-	}
-	if( MagneticField[field] == NULL ){
-	  fprintf(stderr, "Shit!  Why isn't the magnetic field declared in Interpl Bdry?\n ");
-	  return FAIL;
-	}
-	if(ParentGrid->OldMagneticField[field] == NULL){
-	  fprintf(stderr, "Shit! OldMagneticField not defined in InterpolateBoundaryFromParent\n",field);
-
-	  return FAIL;
-	}
-	********/
 	for(i=0;i<MHDParentTempSize[field];i++) MHDParentTemp[field][i] = -10000000.0;
 	
 	float *ParentOld = ParentGrid->OldMagneticField[field];
@@ -648,7 +633,7 @@ int grid::InterpolateBoundaryFromParent(grid *ParentGrid)
 	      
 	      if(  MHDChildTemp[field][tempindex] !=  MHDChildTemp[field][tempindex] ){
 
-		fprintf(stderr,"Shit: Bad Child Temp. %d (%d,%d,%d)\n",
+		fprintf(stderr,"Error: Bad Child Temp. %d (%d,%d,%d)\n",
 			field,i,j,k);
 	      }
 

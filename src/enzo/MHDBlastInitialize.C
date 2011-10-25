@@ -380,7 +380,7 @@ int MHDBlastInitialize(FILE *fptr, FILE *Outfptr, HierarchyEntry &TopGrid,
 					       PerturbAmplitude, PerturbMethod,PerturbWavelength,
 					       InitStyle, MHDBlastNormal) == FAIL )
     {
-      fprintf(stderr, "MHDBlastInitialize: Shit.  Error in MHDBlastInitializeGrid.\n");
+      fprintf(stderr, "MHDBlastInitialize:  Error in MHDBlastInitializeGrid.\n");
       return FAIL;
     }
 
@@ -454,7 +454,7 @@ int MHDBlastInitialize(FILE *fptr, FILE *Outfptr, HierarchyEntry &TopGrid,
 							   PerturbAmplitude, PerturbMethod,PerturbWavelength,
 							   InitStyle, MHDBlastNormal) == FAIL )
 	  {
-	    fprintf(stderr, "MHDBlastInitialize: Shit.  Error in MHDBlastInitializeGrid.\n");
+	    fprintf(stderr, "MHDBlastInitialize: Error in MHDBlastInitializeGrid.\n");
 	    return FAIL;
 	  }
 

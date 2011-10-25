@@ -43,7 +43,7 @@ c     loop indicies
       integer i,j,k
 
 
-c     temporary crap
+c     temporary stuff
       integer ip,jp,kp
 
 c     square of the alfven speed, b/sqrt(4 pi d): the sound speed.
@@ -139,7 +139,7 @@ c     We use the Godunov stability criterion.  See Godunov et all, 1962.
                   dt = min( dt, 1/(dtx) )
                endif
                if( dt .ne. dt ) then
-                  write(*,*) "Shit: dt failure.  (i,j,k) = ",i,j,k,
+                  write(*,*) "dt failure.  (i,j,k) = ",i,j,k,
      +                 "(d,p,bx,by,bz) ", d(i,j,k), p(i,j,k), 
      +                 bxc(i,j,k), byc(i,j,k), bzc(i,j,k)
                   ERROR_MESSAGE
