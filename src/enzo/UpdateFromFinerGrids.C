@@ -336,38 +336,41 @@ int UpdateFromFinerGrids(int level, HierarchyEntry *Grids[], int NumberOfGrids,
     CommunicationReceiveHandler();
 
   } // ENDFOR grid batches
-  LCAPERF_STOP("ProjectSolutionToParentGrid");
+
+
+    /* -------------- Face Projection.  Still with blocking receive. ----------------- */
+
 #ifdef MHDCT
   if( useMHDCT) {
-  //Face projection.  Needs to be updated for 3 phase communication.
   CommunicationDirection = COMMUNICATION_SEND;
 
   for (grid1 = 0; grid1 < NumberOfGrids; grid1++) {
-    fprintf(stderr,"CLOWN first face loop\n");
-
-    NextGrid = Grids[grid1]->NextGridNextLevel;
-    subgrid = 0;
 
       NextSubgrid = SUBlingList[grid1];
-      if( NextSubgrid == NULL ){
-        fprintf(stderr,"CLOWN Empty subling list\n");
-      }
       while( NextSubgrid != NULL ){
 	
-	if (NextSubgrid->GridData->MHD_ProjectFace
-	    (*Grids[grid1]->GridData, MetaData->LeftFaceBoundaryCondition,
-	     MetaData->RightFaceBoundaryCondition  ) == FAIL) {
-	  fprintf(stderr, "Error in grid->MHD_ProjectFace, Send Pass.\n");
-	  return FAIL;
-	}
+        if (NextSubgrid->GridData->MHD_ProjectFace
+            (*Grids[grid1]->GridData, MetaData->LeftFaceBoundaryCondition,
+             MetaData->RightFaceBoundaryCondition  ) == FAIL) {
+          fprintf(stderr, "Error in grid->MHD_ProjectFace, Send Pass.\n");
+          return FAIL;
+        }
 	
-	NextSubgrid = NextSubgrid->NextGridThisLevel;
+  	    NextSubgrid = NextSubgrid->NextGridThisLevel;
       }
   }
   CommunicationDirection = COMMUNICATION_SEND_RECEIVE;
   for (grid1 = 0; grid1 < NumberOfGrids; grid1++) {
       NextSubgrid = SUBlingList[grid1];
-      fprintf(stderr,"CLOWN Second face projection list\n");
+      while( NextSubgrid != NULL ){
+          if (NextSubgrid->GridData->MHD_ProjectFace
+              (*Grids[grid1]->GridData, MetaData->LeftFaceBoundaryCondition,
+               MetaData->RightFaceBoundaryCondition  ) == FAIL) {
+            fprintf(stderr, "Error in grid->MHD_ProjectFace, Receive Pass.\n");
+            return FAIL;
+          }
+    	    NextSubgrid = NextSubgrid->NextGridThisLevel;
+      }
   }//2nd grid loop
   }//MHD Used
 #endif //MHDCT
