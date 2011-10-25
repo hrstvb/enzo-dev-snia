@@ -30,7 +30,6 @@ int grid::MHD_ProjectFace(grid &ParentGrid,
 				      boundary_type LeftFaceBoundaryCondition[],
 				      boundary_type RightFaceBoundaryCondition[])
 {
-  fprintf(stderr,"CLOWN Code 4\n");
 
   //
   // checks that there is something do be done on this processor, with this pair of grids, now.
@@ -54,7 +53,7 @@ int grid::MHD_ProjectFace(grid &ParentGrid,
     return SUCCESS;
   }
 
-  if (CommunicationDirection == COMMUNICATION_RECEIVE &&
+  if (CommunicationDirection == COMMUNICATION_SEND_RECEIVE &&
       MyProcessorNumber != ParentGrid.ProcessorNumber &&
       ProcessorNumber != ParentGrid.ProcessorNumber){
     return SUCCESS;
@@ -344,6 +343,7 @@ int grid::MHD_ProjectFace(grid &ParentGrid,
 	      // Allocate if necessary
 
 	      if(ParentGrid.ProcessorNumber != MyProcessorNumber ){
+          fprintf(stderr,"PFACE: Make New Parent Grid.\n");
 		if(ParentGrid.ElectricField[field] != NULL ){
 		  delete ParentGrid.ElectricField[field];
 		}
@@ -501,8 +501,6 @@ int grid::MHD_ProjectFace(grid &ParentGrid,
 	/* If necessary, copy the projected field from the 'fake' ParentGrid to
 	   the real one. */
 	if (ProcessorNumber != ParentGrid.ProcessorNumber) {
-	  if (CommunicationDirection == COMMUNICATION_SEND )
-	  if (CommunicationDirection == COMMUNICATION_RECEIVE)
 	  for (dim = 0; dim < MAX_DIMENSION; dim++)
 	    ParentRegionDim[dim] = ParentEndIndex[dim] - ParentStartIndex[dim] + 1;
 	  ParentGrid.CommunicationReceiveRegion(&ParentGrid, ProcessorNumber,
