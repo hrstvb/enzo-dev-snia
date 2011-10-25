@@ -894,6 +894,7 @@ EXTERN float ConductionCourantSafetyNumber;
 EXTERN int RefineByJeansLengthUnits;// determines method for computing jeans length. 0==std cosmology, 1==isothermal, 2==adiabatic ( code units )
 EXTERN float IsothermalSoundSpeed;
 #ifdef MHDCT
+EXTERN int dcc_hack_flag;
 EXTERN int DEBUG_LOOP;
 EXTERN int WriteBoundary;
 EXTERN int ExtraOutputs[MAX_EXTRA_OUTPUTS];

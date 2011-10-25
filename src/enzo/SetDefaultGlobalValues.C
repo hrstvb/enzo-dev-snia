@@ -727,6 +727,7 @@ int SetDefaultGlobalValues(TopGridData &MetaData)
   ShearingBoxProblemType = 0; 
   useMHD=0;
 #ifdef MHDCT
+  dcc_hack_flag = FALSE; //This is a global for debugging.
   //MHDCT variables
   DEBUG_LOOP                = FALSE; //causes a while loop to start just after communication starts.
   WriteBoundary             = FALSE;
