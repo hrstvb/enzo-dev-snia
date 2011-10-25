@@ -21,8 +21,6 @@ name = ''
 answer_testing_script = None  'my_test_file.py'
 nprocs = 1
 runtime = 'short', 'medium', 'long'
-critical = True False
-cadence = 'nightly'
 hydro = False, True
 mhd = False, True
 gravity = False, True
@@ -49,4 +47,6 @@ Additional flags are:
   --repo=REPOSITORY     Path to repository being tested.
   --sim-only            Only run simulations.
   --test-only           Only perform tests.
+  --time-multiplier=TIME_MULTIPLIER
+                        Multiply simulation time limit by this factor.
   -v, --verbose         Slightly more verbose output.
