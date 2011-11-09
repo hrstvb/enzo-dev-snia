@@ -88,10 +88,9 @@ int grid::SolveMHDEquations(int CycleNumber, int NumberOfSubgrids,
     return SUCCESS;
   
   wall_time("Start SMHD");
-  
 
-  fprintf(stderr,"===  SMHD n = %d L = %d g = %d proc = %d dt = %15.12e ===\n",
-	  CycleNumber, level, grid, MyProcessorNumber, dtFixed);
+  fprintf(stderr,"===  SMHD n = %d L = %d g = %d proc = %d dt = %15.12e === Right (%0.2e, %0.2e, %0.2e)\n",
+	  CycleNumber, level, grid, MyProcessorNumber, dtFixed, GridRightEdge[0], GridRightEdge[1], GridRightEdge[2]);
 
   int DensNum, GENum, TENum, Vel1Num, Vel2Num, Vel3Num;
   int i, j, k, n, dim, field, axis, face, index, z, coord, Findex, Cindex, index2, size;
