@@ -47,7 +47,7 @@ extern "C" void FORTRAN_NAME(div3d)(float *source, float *dest,
 int MakeFieldConservative(field_type field);
 int grid::ProjectSolutionToParentGrid(grid &ParentGrid)
 {
-  fprintf(stderr,"CLOWN Kludge 3\n");
+  fprintf(stderr,"KLUDGE No Project Solution\n");
   return SUCCESS;
   /* Return if this doesn't involve us. */
  

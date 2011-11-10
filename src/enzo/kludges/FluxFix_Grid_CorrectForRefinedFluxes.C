@@ -56,14 +56,28 @@ int grid::CorrectForRefinedFluxes(fluxes *InitialFluxes,
 				  TopGridData *MetaData)
 {
  
-  fprintf(stderr,"CLOWN Kludge 1\n");
-  return SUCCESS;
+
+  //fprintf(stderr,"CLOWN Kludge 1\n");
+  //return SUCCESS;
   // Return if this doesn't concern us.
  
   if (ProcessorNumber != MyProcessorNumber || !UseHydro)
     return SUCCESS;
+
+  if( SUBlingGrid == FALSE){
+    fprintf(stderr,"CFR p%d Only Sublings Today\n",MyProcessorNumber);
+    return SUCCESS;
+  }else{
+    fprintf(stderr,"CFR p%d Doing Sublings\n",MyProcessorNumber);
+  }
+  fprintf(stderr,"CFR: p%d SUBLING %d\n", MyProcessorNumber, SUBlingGrid);
  
   // declarations
+  int dtemp = 2;
+    fprintf(stderr,"CFR One p%d dtemp %d IF LeftStart %d RF RightStart %d\n",
+        MyProcessorNumber,
+        dtemp, InitialFluxes->LeftFluxStartGlobalIndex[dtemp][dtemp],
+        RefinedFluxes->RightFluxStartGlobalIndex[dtemp][dtemp]);
  
   int i1, i2, i, j, k, dim, field, ffield, index;
   int FieldIndex, FluxIndex, GridFluxIndex, Offset, RefinedFluxIndex;
@@ -111,10 +125,15 @@ int grid::CorrectForRefinedFluxes(fluxes *InitialFluxes,
  
  
     /* Main loop over all faces. */
- 
+   
+  int dtemp = 2;
+  
+    fprintf(stderr,"CFR Three p%d dtemp %d IF LeftStart %d RF RightStart %d\n",
+        MyProcessorNumber,
+        dtemp, InitialFluxes->LeftFluxStartGlobalIndex[dtemp][dtemp],
+        RefinedFluxes->RightFluxStartGlobalIndex[dtemp][dtemp]);
     for (dim = 0; dim < GridRank; dim++) {
       if (GridDimension[dim] > 1) {
-	
 	/* Check that the dims of InitialFluxes & RefinedFluxes are the same */
  
 	/* don't do this for SUBlings */
@@ -188,7 +207,14 @@ int grid::CorrectForRefinedFluxes(fluxes *InitialFluxes,
 	     since SUBling grids can only have contact along a
 	     single axis. any corrections to this statement
 	     earns a beer */
+  }
+  int dtemp = 2;
+    fprintf(stderr,"CFR Four p%d dtemp %d IF LeftStart %d RF RightStart %d\n",
+        MyProcessorNumber,
+        dtemp, InitialFluxes->LeftFluxStartGlobalIndex[dtemp][dtemp],
+        RefinedFluxes->RightFluxStartGlobalIndex[dtemp][dtemp]);
 	
+  fprintf(stderr,"CFR: p%d IM OK1 %d %d\n",MyProcessorNumber,CorrectLeftBaryonField , CorrectRightBaryonField);
 	
 	  //note these are integers, so comparing them directly is ok.
 	  //Also note that here we don't do the complete check for SUBling-ness.
@@ -210,6 +236,10 @@ int grid::CorrectForRefinedFluxes(fluxes *InitialFluxes,
 	    CorrectLeftBaryonField = FALSE;
 	  }
 	
+    fprintf(stderr,"CFR IF dim %d LeftStart %d RF RightStart %d\n",
+        dim, InitialFluxes->LeftFluxStartGlobalIndex[dim][dim],
+        RefinedFluxes->RightFluxStartGlobalIndex[dim][dim]);
+  fprintf(stderr,"CFR: IM OK %d %d\n",CorrectLeftBaryonField , CorrectRightBaryonField);
 	  for (i = 0; i < MAX_DIMENSION; i++) {
 	    /* calculate the offset, so the index of the refined fluxes can
 	       be determined from the grid's index */
@@ -221,6 +251,11 @@ int grid::CorrectForRefinedFluxes(fluxes *InitialFluxes,
 	  RefinedOffset[dim]=0;
  
 	}//Subling == TRUE	
+  int dtemp = 2;
+    fprintf(stderr,"CFR Two p%d dtemp %d IF LeftStart %d RF RightStart %d\n",
+        MyProcessorNumber,
+        dtemp, InitialFluxes->LeftFluxStartGlobalIndex[dtemp][dtemp],
+        RefinedFluxes->RightFluxStartGlobalIndex[dtemp][dtemp]);
  
 	if( CorrectLeftBaryonField || CorrectRightBaryonField){
 	
@@ -448,10 +483,12 @@ int grid::CorrectForRefinedFluxes(fluxes *InitialFluxes,
 			
 		      }else{ /* if( SUBlingGrid == False) */
 			
+            //fprintf(stderr,"CFR: Doin It Left\n");
 			CorrectionAmountLeft = 
 			  -(InitialFluxes->LeftFluxes[field][dim][FluxIndex] -
 			    RefinedFluxes->RightFluxes[field][dim][RefinedFluxIndex]);
 			BaryonField[field][FieldIndex] += CorrectionAmountLeft;
+			BaryonField[field][FieldIndex] = 500;
 			
 		      }
 		    }
@@ -472,7 +509,8 @@ int grid::CorrectForRefinedFluxes(fluxes *InitialFluxes,
 			BaryonField[field][FieldIndex + Offset] += CorrectionAmountRight;
 			
 		      }else{ /* if( SUBlingGrid == FALSE ){ */
-			  CorrectionAmountRight = 
+            fprintf(stderr,"CFR: Doin It Right\n");
+			  CorrectionAmountRight = 400;//
 			    InitialFluxes->RightFluxes[field][dim][FluxIndex] -
 			    RefinedFluxes->LeftFluxes[field][dim][RefinedFluxIndex];
 			  BaryonField[field][FieldIndex + Offset] += CorrectionAmountRight;

@@ -44,8 +44,8 @@ void DeleteFluxes(fluxes *Fluxes);
  
 int grid::GetProjectedBoundaryFluxes(grid *ParentGrid, fluxes &ProjectedFluxes)
 {
-  fprintf(stderr,"CLOWN Kludge2\n");
-  return SUCCESS;
+  fprintf(stderr,"CLOWN program2\n");
+  //return SUCCESS;
  
   /* Return if this doesn't involve us. */
   
