@@ -76,7 +76,61 @@ int grid::DebugCheck(char *message)
 		ParticlePosition[k1][k2], ParticleVelocity[k1][k2]);
 	exit(EXIT_FAILURE);
       }
- 
+#ifdef MHDCT 
+  int HasProblem=FALSE, FailHard=FALSE;
+  if( useMHDCT ){
+
+    
+    for(field=0;field<3;field++){
+      
+      
+      for(k=0;k<MagneticDims[field][2];k++)
+	for(j=0;j<MagneticDims[field][1];j++)
+	  for(i=0;i<MagneticDims[field][0];i++){
+
+      if(field == 0)
+	return i+MagneticDims[0][0]*(j+MagneticDims[0][1]*k);
+
+      if(field == 1)
+	return i+MagneticDims[1][0]*(j+MagneticDims[1][1]*k);
+      if(field == 2)
+	  return i+MagneticDims[2][0]*(j+MagneticDims[2][1]*k);
+	    
+	    if( HasProblem == FALSE ){
+	      if( isnan(MagneticField[field][index]) ){
+		fprintf(stderr, "DebugCheck[%s](Proc %d nan): MagneticField[%d][%d,%d,%d]= %g Left = %13g %13g %13g Width %13g\n\n", message,
+			MyProcessorNumber, field, i,j,k, MagneticField[field][index],
+			GridLeftEdge[0],GridLeftEdge[1],GridLeftEdge[2], CellWidth[0][0]);
+		HasProblem=TRUE;
+	      }
+	      if( isinf(MagneticField[field][index]) ){
+		fprintf(stderr, "\nDebugCheck[%s](Proc %d inf): MagneticField[%d][%d,%d,%d]= %g Left = %13g %13g %13g Width %13g\n", message,
+			MyProcessorNumber, field, i,j,k, MagneticField[field][index],
+			GridLeftEdge[0],GridLeftEdge[1],GridLeftEdge[2], CellWidth[0][0]);
+		HasProblem=TRUE;
+	      }
+	    }
+	  }//i,j,k
+      
+      if( ElectricField[field] != NULL )
+	for(k=0;k<ElectricDims[field][2];k++)
+	  for(j=0;j<ElectricDims[field][1];j++)
+	    for(i=0;i<ElectricDims[field][0];i++){
+	      index=i+ElectricDims[field][0]*(j+ElectricDims[field][1]*k);
+	  if( (FailHard == TRUE && HasProblem == FALSE ) || FailHard == FALSE ) {
+	      if (ElectricField[field][index+ThisIsZero] != ElectricField[field][index]) {
+		fprintf(stderr, "DebugCheck[%s](Proc %d): ElectricField[%d][%d,%d,%d]= %g\n", message, 
+			MyProcessorNumber, field, i,j,k, ElectricField[field][index]);
+		HasProblem=TRUE;
+	      }
+	  }
+	    }//i,j,k
+      
+    }//field
+
+  }//MHD
+
+#endif //MHDCT
 #if 0		
   if (NumberOfBaryonFields > 0)
     for (k1 = 0; k1 < 2+DualEnergyFormalism; k1++)
