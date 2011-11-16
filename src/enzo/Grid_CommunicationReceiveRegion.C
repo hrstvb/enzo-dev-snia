@@ -71,9 +71,9 @@ int grid::CommunicationReceiveRegion(grid *FromGrid, int FromProcessor,
   // Compute size of region to transfer
   int NumberOfFields, RegionSize, TransferSize;
 
+int SendAllBaryonFields = FALSE;
 #ifdef MHDCT
 
-  int SendAllBaryonFields = FALSE;
   switch( SendField ){
   case ALL_FIELDS:
   case JUST_BARYONS:
@@ -243,10 +243,6 @@ int grid::CommunicationReceiveRegion(grid *FromGrid, int FromProcessor,
     
   }//useMHDCT
 
-  //This is slightly dirty.  Really, SendField should remain unchanged and
-  //the logic below changed, but that would be a much more invasive merge.
-  SendField = ( (SendAllBaryonFields ) ? ALL_FIELDS : SendField);
-
 #else //MHDCT 
   NumberOfFields = ((SendField == ALL_FIELDS)? NumberOfBaryonFields : 1) *
     ((NewOrOld == NEW_AND_OLD)? 2 : 1);
@@ -286,7 +282,7 @@ int grid::CommunicationReceiveRegion(grid *FromGrid, int FromProcessor,
  
     if (NewOrOld == NEW_AND_OLD || NewOrOld == NEW_ONLY)
       for (field = 0; field < FromGrid->NumberOfBaryonFields; field++)
-	if (field == SendField || SendField == ALL_FIELDS) {
+	if (field == SendField || SendField == ALL_FIELDS || SendAllBaryonFields == TRUE) {
 	  FORTRAN_NAME(copy3d)(FromGrid->BaryonField[field], &buffer[index],
 			       FromDim, FromDim+1, FromDim+2,
 			       RegionDim, RegionDim+1, RegionDim+2,
@@ -297,7 +293,7 @@ int grid::CommunicationReceiveRegion(grid *FromGrid, int FromProcessor,
  
     if (NewOrOld == NEW_AND_OLD || NewOrOld == OLD_ONLY)
       for (field = 0; field < FromGrid->NumberOfBaryonFields; field++)
-	if (field == SendField || SendField == ALL_FIELDS) {
+	if (field == SendField || SendField == ALL_FIELDS || SendAllBaryonFields == TRUE ){
 	  FORTRAN_NAME(copy3d)(FromGrid->OldBaryonField[field], &buffer[index],
 			       FromDim, FromDim+1, FromDim+2,
 			       RegionDim, RegionDim+1, RegionDim+2,
@@ -442,7 +438,7 @@ int grid::CommunicationReceiveRegion(grid *FromGrid, int FromProcessor,
  
     if (NewOrOld == NEW_AND_OLD || NewOrOld == NEW_ONLY)
       for (field = 0; field < NumberOfBaryonFields; field++)
-	if (field == SendField || SendField == ALL_FIELDS) {
+	if (field == SendField || SendField == ALL_FIELDS || SendAllBaryonFields == TRUE ){
 	  if (BaryonField[field] == NULL) {
 	    BaryonField[field] = new float[GridSize];
 	    for (i = 0; i < GridSize; i++)
@@ -459,7 +455,7 @@ int grid::CommunicationReceiveRegion(grid *FromGrid, int FromProcessor,
  
     if (NewOrOld == NEW_AND_OLD || NewOrOld == OLD_ONLY)
       for (field = 0; field < NumberOfBaryonFields; field++)
-	if (field == SendField || SendField == ALL_FIELDS) {
+	if (field == SendField || SendField == ALL_FIELDS || SendAllBaryonFields == TRUE) {
 	  if (OldBaryonField[field] == NULL) {
 	    OldBaryonField[field] = new float[GridSize];
 	    for (i = 0; i < GridSize; i++)
