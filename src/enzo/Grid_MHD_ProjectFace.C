@@ -343,7 +343,6 @@ int grid::MHD_ProjectFace(grid &ParentGrid,
 	      // Allocate if necessary
 
 	      if(ParentGrid.ProcessorNumber != MyProcessorNumber ){
-          fprintf(stderr,"PFACE: Make New Parent Grid.\n");
 		if(ParentGrid.ElectricField[field] != NULL ){
 		  delete ParentGrid.ElectricField[field];
 		}
