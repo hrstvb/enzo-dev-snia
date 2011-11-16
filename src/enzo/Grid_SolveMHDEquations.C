@@ -776,15 +776,6 @@ if(MultiSpecies>0){
     MHD_WriteElectric=writetmp;
   }  
 
- if( CycleNumber > 0 ){
-   for( int Bumper=0;Bumper<3;Bumper++){
-     fprintf(stderr,"BUTTOX\n"); 
-     if( fabs( StaticRefineRegionRightEdge[0][Bumper] - 0.34375 ) < 0.0001 ){
-       StaticRefineRegionRightEdge[0][Bumper] += 2./64;
-     }
-   }
- }
- //</dbg>
 
 
 
