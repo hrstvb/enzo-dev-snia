@@ -352,8 +352,8 @@ int EvolveLevel(TopGridData *MetaData, LevelHierarchyEntry *LevelArray[],
       if(useMHDCT == TRUE && level > 0 ){
             Grids[grid1]->GridData->ClearAvgElectricField();
       }
-    }
 #endif //MHDCT
+    }
 
   }
  
@@ -378,14 +378,14 @@ int EvolveLevel(TopGridData *MetaData, LevelHierarchyEntry *LevelArray[],
   while ((CheckpointRestart == TRUE)
         || (dtThisLevelSoFar[level] < dtLevelAbove)) {
     if(CheckpointRestart == FALSE) {
-        fprintf(stderr,"MagField loopstart\n"); //<dbg> printf
+        //fprintf(stderr,"MagField loopstart\n"); //<dbg> printf
  
     SetLevelTimeStep(Grids, NumberOfGrids, level, 
         &dtThisLevelSoFar[level], &dtThisLevel[level], dtLevelAbove);
     //<dbg>
-    for (grid1 = 0; grid1 < NumberOfGrids; grid1++) {
-        Grids[grid1]->GridData->ExtraFunction("At Timestep Set");
-    }
+    //for (grid1 = 0; grid1 < NumberOfGrids; grid1++) {
+        //Grids[grid1]->GridData->ExtraFunction("At Timestep Set");
+    //}
     //<dbg>
 
     /* Streaming movie output (write after all parent grids are
