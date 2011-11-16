@@ -153,7 +153,7 @@ int grid::ProjectSolutionToParentGrid(grid &ParentGrid)
   /* For each field, accumulate it's conserved quantities in the parent
      grid. */
  
-  if (ProcessorNumber == MyProcessorNumber)
+  if (ProcessorNumber == MyProcessorNumber){
     for (field = 0; field < NumberOfBaryonFields; field++) {
       skipi = skipj = skipk = 1;
       float weight = RelativeVolume;
@@ -333,7 +333,7 @@ int grid::ProjectSolutionToParentGrid(grid &ParentGrid)
   }//mhd_used
    
 #endif //MHDCT
-
+  }//Processor==MyProcessor
 
     
  
@@ -343,6 +343,23 @@ int grid::ProjectSolutionToParentGrid(grid &ParentGrid)
   if (ProcessorNumber != ParentGrid.ProcessorNumber) {
 
     /* If posting a receive, then record details of call. */
+#ifdef MHDCT
+  int FieldToSend = JUST_BARYONS; 
+
+  if( MHD_Used == TRUE ){
+
+    if( MHD_ProjectB == TRUE ){
+      FieldToSend = BARYONS_MAGNETIC;
+    }
+    if( MHD_ProjectE == TRUE ){
+      FieldToSend =  BARYONS_ELECTRIC;
+    }
+
+  }
+#else
+  //
+#define FieldToSend ALL_FIELDS
+#endif //MHDCT
 
 #ifdef USE_MPI
     if (CommunicationDirection == COMMUNICATION_POST_RECEIVE) {
@@ -356,7 +373,7 @@ int grid::ProjectSolutionToParentGrid(grid &ParentGrid)
     for (dim = 0; dim < MAX_DIMENSION; dim++)
       ParentRegionDim[dim] = ParentEndIndex[dim] - ParentStartIndex[dim] + 1;
     ParentGrid.CommunicationReceiveRegion(&ParentGrid, ProcessorNumber,
-	      ALL_FIELDS, NEW_ONLY, ParentStartIndex, ParentRegionDim, TRUE);
+	      FieldToSend, NEW_ONLY, ParentStartIndex, ParentRegionDim, TRUE);
 
     /* Return if only posting the receive, not actually getting the data. */
 
