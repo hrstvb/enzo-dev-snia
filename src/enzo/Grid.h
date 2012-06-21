@@ -667,13 +667,6 @@ public:
 
    int SolveRateAndCoolEquations(int RTCoupledSolverIntermediateStep);
 
-/* Solve the joint rate and radiative cooling/heating equations using MTurk's Solver */
-
-   int SolveHighDensityPrimordialChemistry();
-#ifdef USE_CVODE
-   int SolvePrimordialChemistryCVODE();
-#endif
-
 /* Compute densities of various species for RadiationFieldUpdate. */
 
    int RadiationComputeDensities(int level);
@@ -1475,6 +1468,7 @@ public:
 /* Particles: append particles belonging to this grid from a list */
 
    int AddParticlesFromList(ParticleEntry *List, const int &Size, int *AddedNewParticleNumber);
+   int AddOneParticleFromList(ParticleEntry *List, const int place);
    int CheckGridBoundaries(FLOAT *Position);
 
 /* Particles: sort particle data in ascending order by number (id) or type. */
