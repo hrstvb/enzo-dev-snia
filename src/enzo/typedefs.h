@@ -252,7 +252,8 @@ const mhd_ct_method
   CT_None = 0,
   CT_BalsaraSpicer = 1,
   CT_Athena_LF = 2,
-  CT_Athena_Switch = 3;
+  CT_Athena_Switch = 3,
+  CT_Biermann = 4;
 
 /* Definitions for streaming format */
 

@@ -1,4 +1,7 @@
-#define USESTRANG
+c#include "fortran.def"
+c#include "error.def"
+c#define tiny 1.0e-20
+c#define USESTRANG
       
       subroutine mhd_li(d, e, vx, vy, vz, 
      +     bxc, byc, bzc, 
