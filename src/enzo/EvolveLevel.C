@@ -517,7 +517,9 @@ int EvolveLevel(TopGridData *MetaData, LevelHierarchyEntry *LevelArray[],
 
       /* Call hydro solver and save fluxes around subgrids. */
 
-      if( UseMHDCT && HydroMethod == MHD_Li ){
+      if( UseMHDCT && HydroMethod == MHD_Li && MHDCT_debug_flag == 1){
+        //Temporarily allow the option of calling SolveMHDEqations 
+        //while I transition MHDCT to SolveHydroEquations.
 	Grids[grid1]->GridData->SolveMHDEquations(LevelCycleCount[level],
 		NumberOfSubgrids[grid1], SubgridFluxesEstimate[grid1], level ,grid1); 
 	

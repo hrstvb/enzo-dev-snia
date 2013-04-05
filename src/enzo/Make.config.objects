@@ -540,6 +540,7 @@ OBJS_CONFIG_LIB = \
 	Grid_SolveForPotential.o \
         Grid_SolveHydroEquations.o \
 	Grid_SolveOneZoneFreefall.o \
+  Grid_SolveMHD_Li.o \
 	Grid_SolvePPM_DE.o \
         Grid_SolveRadiativeCooling.o \
         Grid_SolveRateAndCoolEquations.o \
@@ -907,6 +908,7 @@ OBJS_CONFIG_LIB = \
     	 Grid_MHD_Curl.o\
     	 pde1dsolver_mhd.o\
     	 pde1dsolver_mhd_ms.o \
+       pde1dsolver_mhd_NewMS.o\
     	 riemann_mhd.o\
     	 mhd_hlld_isothermal.o\
     	 mhd_hlld_adiabatic.o\
