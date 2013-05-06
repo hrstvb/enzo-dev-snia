@@ -413,6 +413,7 @@ int ReadParameterFile(FILE *fptr, TopGridData &MetaData, float *Initialdt)
     ret += sscanf(line, "ComputePotential      = %"ISYM, &ComputePotential);
     ret += sscanf(line, "PotentialIterations   = %"ISYM, &PotentialIterations);
     ret += sscanf(line, "WritePotential        = %"ISYM, &WritePotential);
+    ret += sscanf(line, "WriteAcceleration      = %"ISYM, &WriteAcceleration);
     ret += sscanf(line, "BaryonSelfGravityApproximation = %"ISYM,
 		  &BaryonSelfGravityApproximation);
  
@@ -1018,6 +1019,40 @@ int ReadParameterFile(FILE *fptr, TopGridData &MetaData, float *Initialdt)
 		  ExtraOutputs +1,ExtraOutputs +2,ExtraOutputs +3,
 		  ExtraOutputs +4,ExtraOutputs +5,ExtraOutputs +6,
 		  ExtraOutputs +7,ExtraOutputs +8,ExtraOutputs +9);
+
+    //MHDCT variables
+    ret += sscanf(line, "MHDCT_debug_flag      = %"ISYM, &MHDCT_debug_flag);
+    ret += sscanf(line, "MHDCTPowellSource             = %"ISYM, &MHDCTPowellSource);
+    ret += sscanf(line, "MHDCTDualEnergyMethod             = %"ISYM, &MHDCTDualEnergyMethod);
+    ret += sscanf(line, "MHDCTSlopeLimiter             = %"ISYM, &MHDCTSlopeLimiter);
+    ret += sscanf(line, "MHDCTUseSpecificEnergy             = %"ISYM, &MHDCTUseSpecificEnergy);
+    ret += sscanf(line, "WriteBoundary          = %"ISYM, &WriteBoundary);
+    ret += sscanf(line,"TracerParticlesAddToRestart = %"ISYM,&TracerParticlesAddToRestart);
+    ret += sscanf(line,"RefineByJeansLengthUnits = %"ISYM,&RefineByJeansLengthUnits);
+    ret += sscanf(line, "ProcessorTopology      = %"ISYM" %"ISYM" %"ISYM,
+		  ProcessorTopology,ProcessorTopology+1,ProcessorTopology+2);
+
+    ret += sscanf(line,"CT_AthenaDissipation = %"FSYM,&CT_AthenaDissipation);
+    ret += sscanf(line,"MHD_WriteElectric = %"ISYM,&MHD_WriteElectric);
+
+    ret += sscanf(line,"tiny_pressure = %"FSYM,&tiny_pressure);
+    ret += sscanf(line,"MHD_CT_Method = %"ISYM,&MHD_CT_Method);
+		  
+    ret += sscanf(line,"NumberOfGhostZones = %"ISYM,&NumberOfGhostZones);
+    ret += sscanf(line,"MHD_ProjectB = %"ISYM,&MHD_ProjectB);
+    ret += sscanf(line,"MHD_ProjectE = %"ISYM,&MHD_ProjectE);
+    ret += sscanf(line,"EquationOfState = %"ISYM,&EquationOfState);
+    if(sscanf(line, "MHDLabel[%"ISYM"] = %s\n", &dim, dummy) == 2)
+      MHDLabel[dim] = dummy;
+    if(sscanf(line, "MHDUnits[%"ISYM"] = %s\n", &dim, dummy) == 2)
+      MHDUnits[dim] = dummy;
+    if(sscanf(line, "MHDcLabel[%"ISYM"] = %s\n", &dim, dummy) == 2)
+      MHDcLabel[dim] = dummy;
+    if(sscanf(line, "MHDeLabel[%"ISYM"] = %s\n", &dim, dummy) ==2)
+      MHDeLabel[dim] = dummy;
+    if(sscanf(line, "MHDeUnits[%"ISYM"] = %s\n", &dim, dummy) == 2)
+      MHDeUnits[dim] = dummy;
+
     ret += sscanf(line, "CorrectParentBoundaryFlux             = %"ISYM, &CorrectParentBoundaryFlux);
     ret += sscanf(line, "MoveParticlesBetweenSiblings = %"ISYM,
 		  &MoveParticlesBetweenSiblings);
@@ -1153,9 +1188,21 @@ int ReadParameterFile(FILE *fptr, TopGridData &MetaData, float *Initialdt)
       ReconstructionMethod = PLM;
   }
 
-  if (HydroMethod==MHD_RK) useMHD = 1;
-  //if (HydroMethod==MHD_Li) useMHDCT = 1;
-  //if (useMHDCT) CorrectParentBoundaryFlux = TRUE;
+  else if (HydroMethod == MHD_Li )
+    if (RiemannSolver == INT_UNDEFINED) 
+        RiemannSolver = HLLD;
+    if (ReconstructionMethod == INT_UNDEFINED)
+        ReconstructionMethod = PLM;
+
+  if (HydroMethod==MHD_RK) UseMHD = 1;
+  if (HydroMethod==MHD_Li) UseMHDCT = 1;
+  if (UseMHDCT) CorrectParentBoundaryFlux = TRUE;
+
+    if (DualEnergyFormalism == FALSE)
+        MHDCTDualEnergyMethod = 0;
+    else
+      if ( MHDCTDualEnergyMethod == INT_UNDEFINED || MHDCTDualEnergyMethod == 0)
+        MHDCTDualEnergyMethod = 2;
 
   //  OutputTemperature = ((ProblemType == 7) || (ProblemType == 11));
 
@@ -1205,11 +1252,15 @@ int ReadParameterFile(FILE *fptr, TopGridData &MetaData, float *Initialdt)
 
   // make sure that MHD is turned on if we're trying to use anisotropic conduction.
   // if not, alert user.
-  if(AnisotropicConduction==TRUE && useMHD==0){
+  if(AnisotropicConduction==TRUE && UseMHD==0){
     ENZO_FAIL("AnisotropicConduction can only be used if MHD is turned on!\n");
   }  
   if(AnisotropicConduction==TRUE && MetaData.TopGridRank < 2){
     ENZO_FAIL("AnisotropicConduction can only be used if TopGridRank is >= 2!\n");
+  }
+
+  if(EquationOfState == 1 && HydroMethod != MHD_Li){
+    ENZO_FAIL("If EquationOfState = 1, you must be using MHD-CT!\n");
   }
 
 

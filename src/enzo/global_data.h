@@ -892,7 +892,7 @@ EXTERN float VelocityGradient;
 EXTERN int ShearingBoundaryDirection;
 EXTERN int ShearingVelocityDirection;
 EXTERN int ShearingOtherDirection;
-EXTERN int useMHD;
+EXTERN int UseMHD;
 EXTERN FLOAT TopGridDx[MAX_DIMENSION];
 EXTERN int ShearingBoxProblemType; // 0 = advecting sphere; 1 = shearing box; 2 = vortex wave ; 3 = stratified
 
@@ -962,6 +962,32 @@ EXTERN float ClusterSMBHEnoughColdGas;  // To turn jet on, in SolarMass
 EXTERN float ClusterSMBHAccretionTime;  // Used only when CalculateGasMass=2
 EXTERN int ClusterSMBHJetDim;  // Jet dimension
 EXTERN float ClusterSMBHAccretionEpsilon;  // Edot=epsilon*Mdot(accreted/removed)*c^2
+
+EXTERN int MHDCT_debug_flag;
+EXTERN int MHDCTSlopeLimiter;
+EXTERN int MHDCTDualEnergyMethod;
+EXTERN int MHDCTPowellSource;
+EXTERN int MHDCTUseSpecificEnergy;
+EXTERN float FixedTimestep;
+EXTERN int WriteBoundary;
+EXTERN int WriteAcceleration;
+EXTERN int TracerParticlesAddToRestart;// forces addition of tracer particles to already initialized simulations
+EXTERN int MHD_ProjectThisFace[3]; //Used for determining face projection/communication needs for 
+                                   //face centered fields
+EXTERN int ProcessorTopology[3]; //user define processor topology.
+EXTERN float CT_AthenaDissipation;
+EXTERN int MHD_WriteElectric;
+EXTERN float tiny_pressure;
+EXTERN int MHD_CT_Method;
+EXTERN int MHD_ProjectB;// Should always be FALSE for the evoloution. May be used in initialization.
+EXTERN int MHD_ProjectE;// Should always be TRUE for the evoloution
+EXTERN int UseMHDCT;
+EXTERN int EquationOfState;
+EXTERN char *MHDLabel[3];
+EXTERN char *MHDcLabel[3];
+EXTERN char *MHDUnits[3];
+EXTERN char *MHDeLabel[3];
+EXTERN char *MHDeUnits[3];
 
 /* For the database */
 EXTERN char *DatabaseLocation;
