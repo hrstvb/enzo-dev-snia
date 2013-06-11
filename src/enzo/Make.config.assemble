@@ -20,10 +20,6 @@
 #    FFLAGS             Flags for the Fortran 77 compiler
 #    F90FLAGS           Flags for the Fortran 90 compiler
 #    LDFLAGS            Flags for the Linker      
-#                      
-# Preprocessor defines
-#
-#    DEFINES            Preprocessor defines for C, C++, and Fortran
 #
 # Object files
 #
@@ -87,7 +83,6 @@
     ifeq ($(CONFIG_INTEGERS),32)
         ERROR_INTEGERS = 0
         ASSEMBLE_INTEGER_DEFINES = -DSMALL_INTS
-        ASSEMBLE_INTEGER_FFLAGS = $(MACH_FFLAGS_INTEGER_32)
     endif
 
     # Settings for 64-bit integers
@@ -95,7 +90,6 @@
     ifeq ($(CONFIG_INTEGERS),64)
         ERROR_INTEGERS = 0
         ASSEMBLE_INTEGER_DEFINES = -DLARGE_INTS
-        ASSEMBLE_INTEGER_FFLAGS = $(MACH_FFLAGS_INTEGER_64)
     endif
 
     # error if CONFIG_INTEGERS is incorrect
@@ -117,7 +111,6 @@
     ifeq ($(CONFIG_PRECISION),32)
         ERROR_PRECISION = 0
         ASSEMBLE_PRECISION_DEFINES = -DCONFIG_BFLOAT_4
-        ASSEMBLE_PRECISION_FFLAGS = $(MACH_FFLAGS_REAL_32)
         ASSEMBLE_PRECISION_NUMBER = 4
     endif
 
@@ -126,7 +119,6 @@
     ifeq ($(CONFIG_PRECISION),64)
         ERROR_PRECISION = 0
         ASSEMBLE_PRECISION_DEFINES = -DCONFIG_BFLOAT_8
-        ASSEMBLE_PRECISION_FFLAGS = $(MACH_FFLAGS_REAL_64)
         ASSEMBLE_PRECISION_NUMBER = 8
     endif
 
@@ -277,6 +269,7 @@
 #-----------------------------------------------------------------------
 	
     ASSEMBLE_CUDACOMPILER = $(MACH_CUDACOMPILER)
+    ASSEMBLE_CUDAFLAGS = $(MACH_OPT_CUDA)	
 
 #-----------------------------------------------------------------------
 # DETERMINE OBJECT MODE SETTINGS
@@ -551,7 +544,7 @@
 
     ifeq ($(CONFIG_ACCELERATION_BOUNDARY),yes)
         ERROR_ACCELERATION_BOUNDARY = 0
-        ASSEMBLE_ACCELERATION_BOUNDARY_DEFINES = -DSET_ACCELERATION_BOUNDARY
+        ASSEMBLE_ACCELERATION_BOUNDARY_DEFINES = -DSAB
     endif
 
     # Settings to turn OFF the setting of Acceleration Boundary
@@ -889,33 +882,6 @@
     endif
 
 
-#-----------------------------------------------------------------------
-# DETERMINE FLUX FIX SETTINGS
-#-----------------------------------------------------------------------
-
-    ERROR_FLUX_FIX = 1
-
-    # Settings to turn FLUX FIX on
-
-    ifeq ($(CONFIG_FLUX_FIX),yes)
-        ERROR_FLUX_FIX = 0
-        ASSEMBLE_FLUX_FIX_DEFINES = -DFLUX_FIX
-    endif
-
-    # Settings to turn FLUX FIX off
-
-    ifeq ($(CONFIG_FLUX_FIX),no)
-        ERROR_FLUX_FIX = 0
-        ASSEMBLE_FLUX_FIX_DEFINES =
-    endif
-
-    # error if CONFIG_FLUX_FIX is incorrect
-
-    ifeq ($(ERROR_FLUX_FIX),1)
-       .PHONY: error_transfer
-       error_tpvel:
-	$(error Illegal value '$(CONFIG_FLUX_FIX)' for $$(CONFIG_FLUX_FIX))
-    endif
 
 #-----------------------------------------------------------------------
 # DETERMINE HDF4 USAGE
@@ -1022,12 +988,8 @@
     CXXFLAGS = $(MACH_CXXFLAGS) \
                $(ASSEMBLE_OPT_FLAGS)
     FFLAGS   = $(MACH_FFLAGS) \
-               $(ASSEMBLE_PRECISION_FFLAGS) \
-               $(ASSEMBLE_INTEGER_FFLAGS) \
                $(ASSEMBLE_OPT_FLAGS)
     F90FLAGS = $(MACH_F90FLAGS) \
-               $(ASSEMBLE_PRECISION_FFLAGS) \
-               $(ASSEMBLE_INTEGER_FFLAGS) \
                $(ASSEMBLE_OPT_FLAGS)
     LDFLAGS  = $(MACH_LDFLAGS) \
                $(ASSEMBLE_OPT_FLAGS)
@@ -1058,13 +1020,13 @@
               $(ASSEMBLE_NEW_GRID_IO_DEFINES) \
               $(ASSEMBLE_FAST_SIB_DEFINES) \
               $(ASSEMBLE_BITWISE_IDENTICALITY_DEFINES) \
-              $(ASSEMBLE_FLUX_FIX_DEFINES) \
               $(ASSEMBLE_ECUDA_DEFINES) \
               $(ASSEMBLE_CUDADEBUG_DEFINES) \
               $(ASSEMBLE_HDF4_DEFINES) \
               $(ASSEMBLE_GRAVITY_4S_DEFINES) \
               $(ASSEMBLE_ENZO_PERFORMANCE_DEFINES) \
               $(ASSEMBLE_ACCELERATION_BOUNDARY_DEFINES)
+
 
     INCLUDES = $(MACH_INCLUDES) \
     	       $(ASSEMBLE_MPI_INCLUDES) \

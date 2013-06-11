@@ -236,6 +236,7 @@ int WriteParameterFile(FILE *fptr, TopGridData &MetaData, char *name = NULL)
     if (CubeDumps[dim] != NULL)
       fprintf(fptr, "CubeDump[%"ISYM"]            = %s\n", dim, CubeDumps[dim]);
 
+  fprintf(fptr, "NumberOfGhostZones    = %"ISYM"\n", NumberOfGhostZones);
   fprintf(fptr, "LoadBalancing          = %"ISYM"\n", LoadBalancing);
   fprintf(fptr, "ResetLoadBalancing     = %"ISYM"\n", ResetLoadBalancing);
   fprintf(fptr, "LoadBalancingCycleSkip = %"ISYM"\n", LoadBalancingCycleSkip);
@@ -304,7 +305,7 @@ int WriteParameterFile(FILE *fptr, TopGridData &MetaData, char *name = NULL)
   fprintf(fptr, "HydroMethod                    = %"ISYM"\n", HydroMethod);
   fprintf(fptr, "huge_number                    = %e\n", huge_number);
   fprintf(fptr, "tiny_number                    = %e\n", tiny_number);
-  fprintf(fptr, "Gamma                          = %"GSYM"\n", Gamma);
+  fprintf(fptr, "Gamma                          = %"GOUTSYM"\n", Gamma);
   fprintf(fptr, "PressureFree                   = %"ISYM"\n", PressureFree);
   fprintf(fptr, "RefineBy                       = %"ISYM"\n", RefineBy);
   fprintf(fptr, "MaximumRefinementLevel         = %"ISYM"\n", MaximumRefinementLevel);
@@ -853,6 +854,27 @@ int WriteParameterFile(FILE *fptr, TopGridData &MetaData, char *name = NULL)
   if (MBHInsertLocationFilename != NULL)
     fprintf(fptr, "MBHInsertLocationFilename           = %s\n\n", MBHInsertLocationFilename);
 
+  fprintf(fptr, "ClusterSMBHFeedback           = %"ISYM"\n", ClusterSMBHFeedback);
+  fprintf(fptr, "ClusterSMBHJetMdot            = %"FSYM"\n", ClusterSMBHJetMdot);
+  fprintf(fptr, "ClusterSMBHJetVelocity        = %"FSYM"\n", ClusterSMBHJetVelocity);
+  fprintf(fptr, "ClusterSMBHJetRadius          = %"FSYM"\n", ClusterSMBHJetRadius);
+  fprintf(fptr, "ClusterSMBHJetLaunchOffset    = %"FSYM"\n", ClusterSMBHJetLaunchOffset);
+  fprintf(fptr, "ClusterSMBHStartTime          = %"FSYM"\n", ClusterSMBHStartTime);
+  fprintf(fptr, "ClusterSMBHTramp              = %"FSYM"\n", ClusterSMBHTramp);
+  fprintf(fptr, "ClusterSMBHJetOpenAngleRadius = %"FSYM"\n", ClusterSMBHJetOpenAngleRadius);
+  fprintf(fptr, "ClusterSMBHFastJetRadius      = %"FSYM"\n", ClusterSMBHFastJetRadius);
+  fprintf(fptr, "ClusterSMBHFastJetVelocity    = %"FSYM"\n", ClusterSMBHFastJetVelocity);
+  fprintf(fptr, "ClusterSMBHJetEdot            = %"FSYM"\n", ClusterSMBHJetEdot);
+  fprintf(fptr, "ClusterSMBHKineticFraction    = %"FSYM"\n", ClusterSMBHKineticFraction);
+  fprintf(fptr, "ClusterSMBHJetAngleTheta      = %"FSYM"\n", ClusterSMBHJetAngleTheta);
+  fprintf(fptr, "ClusterSMBHJetAnglePhi        = %"FSYM"\n", ClusterSMBHJetAnglePhi);
+  fprintf(fptr, "ClusterSMBHJetPrecessionPeriod= %"FSYM"\n", ClusterSMBHJetPrecessionPeriod);
+  fprintf(fptr, "ClusterSMBHCalculateGasMass   = %"ISYM"\n", ClusterSMBHCalculateGasMass);
+  fprintf(fptr, "ClusterSMBHFeedbackSwitch     = %"ISYM"\n", ClusterSMBHFeedbackSwitch);
+  fprintf(fptr, "ClusterSMBHEnoughColdGas      = %"FSYM"\n", ClusterSMBHEnoughColdGas);
+  fprintf(fptr, "ClusterSMBHAccretionTime      = %"FSYM"\n", ClusterSMBHAccretionTime);
+  fprintf(fptr, "ClusterSMBHJetDim             = %"ISYM"\n", ClusterSMBHJetDim);
+  fprintf(fptr, "ClusterSMBHAccretionEpsilon   = %"FSYM"\n", ClusterSMBHAccretionEpsilon);
   fprintf(fptr, "H2StarMakerEfficiency              = %"GSYM"\n", H2StarMakerEfficiency);
   fprintf(fptr, "H2StarMakerNumberDensityThreshold  = %"GSYM"\n", H2StarMakerNumberDensityThreshold);
   fprintf(fptr, "H2StarMakerMinimumMass             = %"GSYM"\n", H2StarMakerMinimumMass);
@@ -1004,6 +1026,26 @@ int WriteParameterFile(FILE *fptr, TopGridData &MetaData, char *name = NULL)
 
   MustRefineParticlesMinimumMass /= POW(1/(float(MetaData.TopGridDims[0])
 				       *POW(float(RefineBy), float(MustRefineParticlesRefineToLevel))),3);
+  //MHDCT variables
+  fprintf(fptr, "MHDCTSlopeLimiter          = %"ISYM"\n", MHDCTSlopeLimiter);
+  fprintf(fptr, "MHDCTDualEnergyMethod          = %"ISYM"\n", MHDCTDualEnergyMethod);
+  fprintf(fptr, "MHDPowellSource          = %"ISYM"\n", MHDCTPowellSource);
+  fprintf(fptr, "MHDCTUseSpecificEnergy          = %"ISYM"\n", MHDCTUseSpecificEnergy);
+  fprintf(fptr, "WriteBoundary          = %"ISYM"\n", WriteBoundary);
+  fprintf(fptr,"CT_AthenaDissipation          =%"GSYM"\n",CT_AthenaDissipation);
+  fprintf(fptr,"MHD_WriteElectric             =%"ISYM"\n",MHD_WriteElectric);
+  fprintf(fptr,"tiny_pressure                 =%"GSYM"\n",tiny_pressure);
+  fprintf(fptr,"MHD_CT_Method                 =%"ISYM"\n",MHD_CT_Method);
+  fprintf(fptr,"NumberOfGhostZones           =%"ISYM"\n",NumberOfGhostZones);
+  fprintf(fptr,"IsothermalSoundSpeed          =%"GSYM"\n",IsothermalSoundSpeed);
+  fprintf(fptr,"FixedTimestep          =%"GSYM"\n",FixedTimestep);
+  fprintf(fptr,"MHD_ProjectB                  =%"ISYM"\n",MHD_ProjectB);
+  fprintf(fptr,"MHD_ProjectE                  =%"ISYM"\n",MHD_ProjectE);
+  fprintf(fptr,"ProcessorTopology             =%"ISYM" %"ISYM" %"ISYM"\n",
+          ProcessorTopology[0],ProcessorTopology[1],ProcessorTopology[2]);
+  fprintf(fptr,"EquationOfState               =%"ISYM"\n",EquationOfState);
+
+  fprintf(fptr, "CorrectParentBoundaryFlux          = %d\n", CorrectParentBoundaryFlux);
 
   /* Output current time */
   time_t ID;

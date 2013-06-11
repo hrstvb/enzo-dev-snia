@@ -89,7 +89,7 @@ int grid::FlagCellsToBeRefinedBySecondDerivative()
   int Offsets[3];
   for (dim=0; dim<GridRank; dim++)
     Offsets[dim] = 1;
-  float sderiv_epsilon = 0.2;
+  float sderiv_epsilon = 1.0e-2;
   
   for (dim = 0; dim<GridRank-1; dim++){
     Offsets[dim+1] = Offsets[dim]*GridDimension[dim]; 
@@ -109,48 +109,48 @@ int grid::FlagCellsToBeRefinedBySecondDerivative()
       }
     }
 
-    if (doField){
+    if (!doField)
+      continue;
 
-      /* loop over active dimensions */
-      for (i = 0; i < size; i++){
-        *(TopBuffer + i) = 0.0;
-        *(BottomBuffer + i) = 1.0; //Protects from 0.0/0.0 later on.
-      }
+    /* loop over active dimensions */
+    for (i = 0; i < size; i++){
+      TopBuffer[i] = 0.0;
+      BottomBuffer[i] = 1.0; //Protects from 0.0/0.0 later on.
+    }
 
-      /* compute second derivative criteria */
-      for (k = Start[2]; k <= End[2]; k++)
-        for (j = Start[1]; j <= End[1]; j++)
-          for (i = Start[0]; i <= End[0]; i++) {
-            index = i + j*GridDimension[0] +
-                k*GridDimension[1]*GridDimension[0];
-            BottomBuffer[index] = 0.0;
-            for (int dimk = 0; dimk < GridRank; dimk++){
-              for (int diml = 0; diml < GridRank; diml++){
-                /* zero slope */
-                TopBuffer[index] += 
-                    0.125*POW(BaryonField[field][index + Offsets[dimk] + Offsets[diml]] -
-                              BaryonField[field][index + Offsets[dimk] - Offsets[diml]] -
-                              BaryonField[field][index - Offsets[dimk] + Offsets[diml]] +
-                              BaryonField[field][index - Offsets[dimk] - Offsets[diml]], 2.0);
-                BottomBuffer[index] +=
-                    POW(0.5*(fabs(BaryonField[field][index + Offsets[dimk]] -
-                                  BaryonField[field][index]) +
-                             fabs(BaryonField[field][index] -
-                                  BaryonField[field][index - Offsets[dimk]])) +
-                        sderiv_epsilon * (fabs(BaryonField[field][index + Offsets[dimk] + Offsets[diml]]) +
-                                          fabs(BaryonField[field][index + Offsets[dimk] - Offsets[diml]]) +
-                                          fabs(BaryonField[field][index - Offsets[dimk] + Offsets[diml]]) +
-                                          fabs(BaryonField[field][index - Offsets[dimk] - Offsets[dimk]])) , 2.0);
-              }
+    /* compute second derivative criteria */
+    for (k = Start[2]; k <= End[2]; k++)
+      for (j = Start[1]; j <= End[1]; j++)
+        for (i = Start[0]; i <= End[0]; i++) {
+          index = i + j*GridDimension[0] +
+              k*GridDimension[1]*GridDimension[0];
+          BottomBuffer[index] = 0.0;
+          for (int dimk = 0; dimk < GridRank; dimk++){
+            for (int diml = 0; diml < GridRank; diml++){
+              /* zero slope */
+              TopBuffer[index] += 
+                  0.125*POW(BaryonField[field][index + Offsets[dimk] + Offsets[diml]] -
+                            BaryonField[field][index + Offsets[dimk] - Offsets[diml]] -
+                            BaryonField[field][index - Offsets[dimk] + Offsets[diml]] +
+                            BaryonField[field][index - Offsets[dimk] - Offsets[diml]], 2.0);
+              BottomBuffer[index] +=
+                  POW(0.5*(fabs(BaryonField[field][index + Offsets[dimk]] -
+                                BaryonField[field][index]) +
+                           fabs(BaryonField[field][index] -
+                                BaryonField[field][index - Offsets[dimk]])) +
+                      sderiv_epsilon * (fabs(BaryonField[field][index + Offsets[dimk] + Offsets[diml]]) +
+                                        fabs(BaryonField[field][index + Offsets[dimk] - Offsets[diml]]) +
+                                        fabs(BaryonField[field][index - Offsets[dimk] + Offsets[diml]]) +
+                                        fabs(BaryonField[field][index - Offsets[dimk] - Offsets[dimk]])) , 2.0);
             }
           }
-      /* flag field based on second derivative */
+        }
+    /* flag field based on second derivative */
 
-      for (i = 0; i < size; i++){
-        TopBuffer[i] = sqrt(TopBuffer[i]/BottomBuffer[i]);
-        FlaggingField[i] += (TopBuffer[i] > MinimumSecondDerivativeForRefinementThis) ? 1 : 0;
-      }
-    } // doField
+    for (i = 0; i < size; i++){
+      TopBuffer[i] = sqrt(TopBuffer[i]/BottomBuffer[i]);
+      FlaggingField[i] += (TopBuffer[i] > MinimumSecondDerivativeForRefinementThis) ? 1 : 0;
+    }
   }  // end loop over field
 
 

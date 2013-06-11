@@ -1,7 +1,4 @@
-#include <string.h>
-#include <stdio.h>
-#include <math.h>
-#include "ErrorExceptions.h"
+#include "preincludes.h"
 #include "macros_and_parameters.h"
 #include "typedefs.h"
 #include "global_data.h"
@@ -36,6 +33,9 @@ int HydroShockTubesInitialize(FILE *fptr, FILE *Outfptr,
   char *Vel2Name = "y-velocity";
   char *Vel3Name = "z-velocity";
   char *ColourName = "colour";
+  char *MachName   = "Mach";
+  char *PSTempName = "PreShock_Temperature";
+  char *PSDenName  = "PreShock_Density";
 
   /* declarations */
 
@@ -45,7 +45,7 @@ int HydroShockTubesInitialize(FILE *fptr, FILE *Outfptr,
   /* set default parameters */
 
   int RefineAtStart   = FALSE;
-  float  InitialDiscontinuity = 0.5, SecondDiscontinuity = 0.5,
+  float  InitialDiscontinuity = 0.5, SecondDiscontinuity = FLOAT_UNDEFINED,
     LeftDensity = 1.0, RightDensity = 1.0, CenterDensity = 1.0, 
     LeftVelocityX = 0.0, RightVelocityX = 0.0, CenterVelocityX = 1.0,
     LeftVelocityY = 0.0, RightVelocityY = 0.0, CenterVelocityY = 1.0,
@@ -111,6 +111,13 @@ int HydroShockTubesInitialize(FILE *fptr, FILE *Outfptr,
 	       &TimeUnits, &VelocityUnits, MetaData.Time) == FAIL) {
     fprintf(stderr, "Error in GetUnits.\n");
     return FAIL;
+  }
+
+  /* check if SecondDiscontinuity is defined, if not, then make it
+     sit on top of InitialDiscontinuity (to mimic a 2-region shock) */
+
+  if (SecondDiscontinuity == FLOAT_UNDEFINED) {
+      SecondDiscontinuity = InitialDiscontinuity;
   }
 
   /* set up grid */
@@ -202,6 +209,14 @@ int HydroShockTubesInitialize(FILE *fptr, FILE *Outfptr,
   if (DualEnergyFormalism) {
     DataLabel[count++] = GEName;
   }
+
+  if (ShockMethod) {
+    DataLabel[count++] = MachName;
+    if(StorePreShockFields){
+      DataLabel[count++] = PSTempName;
+      DataLabel[count++] = PSDenName;
+    }
+  } 
 
   for (i = 0; i < count; i++)
     DataUnits[i] = NULL;

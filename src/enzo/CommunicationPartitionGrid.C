@@ -84,7 +84,7 @@ int CommunicationPartitionGrid(HierarchyEntry *Grid, int gridnum)
   Grid->GridData->ReturnGridInfo(&Rank, Dims, Left, Right);
  
   for (dim = 0; dim < Rank; dim++)
-    Dims[dim] -= 2*DEFAULT_GHOST_ZONES;
+    Dims[dim] -= 2*NumberOfGhostZones;
  
   float Edge = POW(float(Dims[0]*Dims[1]*Dims[2])/float(NumberOfProcessors),
 		   1/float(Rank));
@@ -141,6 +141,19 @@ int CommunicationPartitionGrid(HierarchyEntry *Grid, int gridnum)
     for (dim = 0; dim < Rank; dim++)
       Layout[dim] = 6;
 */
+
+  /* If defined, use user defined Processor Topology. */
+  if( ProcessorTopology[0] != INT_UNDEFINED &&
+      ProcessorTopology[1] != INT_UNDEFINED &&
+      ProcessorTopology[2] != INT_UNDEFINED ){
+    
+    if( ProcessorTopology[0]* ProcessorTopology[1]* ProcessorTopology[2] == NumberOfProcessors)
+      for( dim = 0 ; dim<Rank; dim++)
+	Layout[dim] = ProcessorTopology[dim];
+    else
+      fprintf(stderr, "WARNING!!!! Not using User Defined Processor Topology: %"ISYM" * %"ISYM" * %"ISYM" != %"ISYM"\n",
+	      ProcessorTopology[0],ProcessorTopology[1], ProcessorTopology[2], NumberOfProcessors);
+  }
 
   if (MyProcessorNumber == ROOT_PROCESSOR) {
     fprintf(stderr, "ENZO_layout %"ISYM" x %"ISYM" x %"ISYM"\n", Layout[0], Layout[1], Layout[2]);
@@ -256,7 +269,7 @@ int CommunicationPartitionGrid(HierarchyEntry *Grid, int gridnum)
     } // ENDELSE ThisLevel == 1
 
     if (ParentGridNum == INT_UNDEFINED) {
-      ENZO_VFAIL("CommunicationPartitionGrid: grid %d (%d), Parent not found?\n",
+      ENZO_VFAIL("CommunicationPartitionGrid: grid %"ISYM" (%"ISYM"), Parent not found?\n",
 	      gridnum, ThisLevel)
     }
 
@@ -464,7 +477,7 @@ int CommunicationPartitionGrid(HierarchyEntry *Grid, int gridnum)
 	  RightEdge[dim] = Left[dim] + (Right[dim] - Left[dim])*
 	    FLOAT(StartIndex[dim][ijk]+TempDims[dim])/FLOAT(Dims[dim]);
 	  if (dim < Rank)
-	    TempDims[dim] += 2*DEFAULT_GHOST_ZONES;
+	    TempDims[dim] += 2*NumberOfGhostZones;
  
 //        printf("  LeftEdge[%"ISYM"] = %8.4"FSYM"  RightEdge[%"ISYM"] = %8.4"FSYM"\n",
 //               dim, LeftEdge[dim], dim, RightEdge[dim]);
