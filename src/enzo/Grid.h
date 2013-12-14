@@ -1833,15 +1833,25 @@ int zEulerSweep(int j, int NumberOfSubgrids, fluxes *SubgridFluxes[],
   /* Initialize a grid for the KH instability problem. */
 
   int KHInitializeGrid(float KHInnerDensity,
-                       float KHOuterDensity,
                        float KHInnerInternalEnergy,
                        float KHOuterInternalEnergy,
                        float KHPerturbationAmplitude,
                        float KHInnerVx, float KHOuterVx,
                        float KHInnerPressure,
-                       float KHOuterPressure,
-                       float KHConvergentICs,
-                       float KHRampWidth);
+                       float KHOuterPressure);
+
+  /* Initialize a grid for the KH instability problem including a ramp. */
+
+  int KHInitializeGridRamp(float KHInnerDensity,
+                           float KHOuterDensity,
+                           float KHInnerInternalEnergy,
+                           float KHOuterInternalEnergy,
+                           float KHPerturbationAmplitude,
+                           float KHInnerVx, float KHOuterVx,
+                           float KHInnerPressure,
+                           float KHOuterPressure,
+                           float KHRampWidth,
+                           int   level);
 
   /* Initialize a grid and set boundary for the 2D/3D Noh problem. */
 
