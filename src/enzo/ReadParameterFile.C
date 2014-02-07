@@ -119,6 +119,7 @@ int ReadParameterFile(FILE *fptr, TopGridData &MetaData, float *Initialdt)
     ret += sscanf(line, "dtHistoryDump       = %"PSYM, &MetaData.dtHistoryDump);
  
     ret += sscanf(line, "TracerParticleOn  = %"ISYM, &TracerParticleOn);
+    ret += sscanf(line, "TracerParticleOutputVelocity  = %"ISYM, &TracerParticleOutputVelocity);
     ret += sscanf(line, "WriteGhostZones = %"ISYM, &WriteGhostZones);
     ret += sscanf(line, "ReadGhostZones = %"ISYM, &ReadGhostZones);
     ret += sscanf(line, "OutputParticleTypeGrouping = %"ISYM,
@@ -837,6 +838,8 @@ int ReadParameterFile(FILE *fptr, TopGridData &MetaData, float *Initialdt)
 		  &StarMakerOverDensityThreshold);
     ret += sscanf(line, "StarMakerSHDensityThreshold = %"FSYM,
 		  &StarMakerSHDensityThreshold);
+    ret += sscanf(line, "StarMakerTimeIndependentFormation = %"ISYM,
+		  &StarMakerTimeIndependentFormation);
     ret += sscanf(line, "StarMakerMassEfficiency = %"FSYM,
 		  &StarMakerMassEfficiency);
     ret += sscanf(line, "StarMakerMinimumMass = %"FSYM, &StarMakerMinimumMass);
