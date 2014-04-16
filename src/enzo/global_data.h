@@ -365,6 +365,12 @@ EXTERN FLOAT   RandomForcingEdot;
 EXTERN FLOAT   RandomForcingMachNumber;  //#####
 EXTERN fpos_t  BaryonFileNamePosition;
 
+#ifdef USE_GRACKLE
+/* Grackle chemistry and cooling. */
+EXTERN code_units grackle_units;
+EXTERN chemistry_data grackle_chemistry;
+#endif
+
 /* Multi-species rate equation flag and associated data. */
 
 EXTERN int MultiSpecies;
@@ -632,6 +638,7 @@ EXTERN char  *CubeDumps[MAX_CUBE_DUMPS];
 /* Parameters governing whether tracer particles are on or off. */
 
 EXTERN int   TracerParticleOn;
+EXTERN int   TracerParticleOutputVelocity;
 EXTERN FLOAT TracerParticleCreationSpacing;
 EXTERN FLOAT TracerParticleCreationLeftEdge[MAX_DIMENSION];
 EXTERN FLOAT TracerParticleCreationRightEdge[MAX_DIMENSION];
@@ -888,11 +895,16 @@ EXTERN RadiativeTransferSpectrumTableType RadiativeTransferSpectrumTable;
 #endif /* TRANSFER  */
 
 EXTERN int LevelCycleCount[MAX_DEPTH_OF_HIERARCHY];
+EXTERN int LevelSubCycleCount[MAX_DEPTH_OF_HIERARCHY];
+EXTERN float dtRebuildHierarchy[MAX_DEPTH_OF_HIERARCHY];
+EXTERN float TimeSinceRebuildHierarchy[MAX_DEPTH_OF_HIERARCHY];
 EXTERN float dtThisLevelSoFar[MAX_DEPTH_OF_HIERARCHY];
 EXTERN float dtThisLevel[MAX_DEPTH_OF_HIERARCHY];
 
 /* RebuildHierarchy on this level every N cycles. */
 EXTERN int RebuildHierarchyCycleSkip[MAX_DEPTH_OF_HIERARCHY];
+EXTERN int ConductionDynamicRebuildHierarchy;
+EXTERN int ConductionDynamicRebuildMinLevel;
 
 /* Coupled radiative transfer, cooling, and rate solver */
 EXTERN int RadiativeTransferCoupledRateSolver;
@@ -973,6 +985,7 @@ EXTERN int AnisotropicConduction;  // TRUE OR FALSE
 EXTERN float IsotropicConductionSpitzerFraction;  // f_Spitzer
 EXTERN float AnisotropicConductionSpitzerFraction;  // f_Spitzer
 EXTERN float ConductionCourantSafetyNumber;
+EXTERN int SpeedOfLightTimeStepLimit; // TRUE OR FALSE
 
 /* SMBH Feedback in galaxy clusters*/
 EXTERN int ClusterSMBHFeedback;  // TRUE OR FALSE

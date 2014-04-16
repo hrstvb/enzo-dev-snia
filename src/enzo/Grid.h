@@ -381,7 +381,7 @@ public:
 /* Member functions for dealing with thermal conduction */
    int ComputeHeat(float dedt[]);	     /* Compute Heat */
    int ConductHeat();			     /* Conduct Heat */
-   int ComputeConductionTimeStep(float &dt); /* Estimate conduction time-step */
+   float ComputeConductionTimeStep(float &dt); /* Estimate conduction time-step */
 
 /* Baryons: Copy current solution to Old solution (returns success/fail)
     (for step #16) */
@@ -665,6 +665,10 @@ gradient force to gravitational force for one-zone collapse test. */
 /* Handle the selection of cooling and chemistry modules */
 
    int MultiSpeciesHandler();
+
+/* Wrap the grackle chemistry solver. */
+
+   int GrackleWrapper();
 
 /* Handle the selection of shock finding algorithm */
 
