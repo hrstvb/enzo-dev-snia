@@ -288,6 +288,9 @@ int SetDefaultGlobalValues(TopGridData &MetaData)
   NumberOfRootGridTilesPerDimensionPerProcessor = 1;
   PartitionNestedGrids        = FALSE;
   ExtractFieldsOnly           = TRUE;
+  for (i = 0; i < MAX_DIMENSION; i++) {
+    UserDefinedRootGridLayout[i] = INT_UNDEFINED;
+  }
 
   ExternalBoundaryIO          = FALSE;
   ExternalBoundaryTypeIO      = FALSE;
@@ -852,9 +855,6 @@ int SetDefaultGlobalValues(TopGridData &MetaData)
   MHDCTDualEnergyMethod = INT_UNDEFINED;
   MHDCTPowellSource = 0;
   MHDCTUseSpecificEnergy = TRUE;
-  ProcessorTopology[0]      = INT_UNDEFINED;
-  ProcessorTopology[1]      = INT_UNDEFINED;
-  ProcessorTopology[2]      = INT_UNDEFINED;
   FixedTimestep = -1.0;
   WriteBoundary             = FALSE;
   CT_AthenaDissipation = 0.1;
