@@ -604,11 +604,11 @@ int WriteParameterFile(FILE *fptr, TopGridData &MetaData, char *name = NULL)
       fprintf(fptr, "MultiRefineRegionRadius[%"ISYM"] = %"GSYM"\n", ireg,
               MultiRefineRegionRadius[ireg]);
 
-      fprintf(fptr, "MultiRefineRegionWidth[%"ISYM"] = %"GSYM"\n",
+      fprintf(fptr, "MultiRefineRegionWidth[%"ISYM"] = %"GSYM"\n", ireg,
               MultiRefineRegionWidth[ireg]);
 
       fprintf(fptr, "MultiRefineRegionStaggeredRefinement[%"ISYM"] =%"GSYM"\n",
-              MultiRefineRegionStaggeredRefinement[ireg]);
+              ireg, MultiRefineRegionStaggeredRefinement[ireg]);
 
       fprintf(fptr, "MultiRefineRegionLeftEdge[%"ISYM"] = ", ireg);
       WriteListOfFloats(fptr, MAX_DIMENSION, MultiRefineRegionLeftEdge[ireg]);
@@ -647,7 +647,11 @@ int WriteParameterFile(FILE *fptr, TopGridData &MetaData, char *name = NULL)
   fprintf(fptr, "PartitionNestedGrids            = %"ISYM"\n", PartitionNestedGrids);
   fprintf(fptr, "ExtractFieldsOnly               = %"ISYM"\n", ExtractFieldsOnly);
   fprintf(fptr, "CubeDumpEnabled                 = %"ISYM"\n", CubeDumpEnabled);
- 
+  fprintf(fptr, "UserDefinedRootGridLayout       = %"ISYM" %"ISYM" %"ISYM"\n",
+          UserDefinedRootGridLayout[0],
+          UserDefinedRootGridLayout[1],
+          UserDefinedRootGridLayout[2]);
+
   fprintf(fptr, "Debug1                          = %"ISYM"\n", debug1);
   fprintf(fptr, "Debug2                          = %"ISYM"\n", debug2);
 
@@ -1108,8 +1112,6 @@ int WriteParameterFile(FILE *fptr, TopGridData &MetaData, char *name = NULL)
   fprintf(fptr,"FixedTimestep          =%"GSYM"\n",FixedTimestep);
   fprintf(fptr,"MHD_ProjectB                  =%"ISYM"\n",MHD_ProjectB);
   fprintf(fptr,"MHD_ProjectE                  =%"ISYM"\n",MHD_ProjectE);
-  fprintf(fptr,"ProcessorTopology             =%"ISYM" %"ISYM" %"ISYM"\n",
-          ProcessorTopology[0],ProcessorTopology[1],ProcessorTopology[2]);
   fprintf(fptr,"EquationOfState               =%"ISYM"\n",EquationOfState);
 
   fprintf(fptr, "CorrectParentBoundaryFlux          = %d\n", CorrectParentBoundaryFlux);
