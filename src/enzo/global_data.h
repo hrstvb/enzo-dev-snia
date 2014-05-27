@@ -487,6 +487,7 @@ EXTERN int First_Pass;
 EXTERN int UnigridTranspose;
 EXTERN int NumberOfRootGridTilesPerDimensionPerProcessor;
 EXTERN int CosmologySimulationNumberOfInitialGrids;
+EXTERN int UserDefinedRootGridLayout[3];
 
 /* Parameters that control density dex output */
 
@@ -1021,7 +1022,6 @@ EXTERN int WriteAcceleration;
 EXTERN int TracerParticlesAddToRestart;// forces addition of tracer particles to already initialized simulations
 EXTERN int MHD_ProjectThisFace[3]; //Used for determining face projection/communication needs for 
                                    //face centered fields
-EXTERN int ProcessorTopology[3]; //user define processor topology.
 EXTERN float CT_AthenaDissipation;
 EXTERN int MHD_WriteElectric;
 EXTERN float tiny_pressure;

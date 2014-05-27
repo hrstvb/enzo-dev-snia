@@ -660,7 +660,9 @@ int ReadParameterFile(FILE *fptr, TopGridData &MetaData, float *Initialdt)
     ret += sscanf(line, "Unigrid = %"ISYM, &Unigrid);
     ret += sscanf(line, "UnigridTranspose = %"ISYM, &UnigridTranspose);
     ret += sscanf(line, "NumberOfRootGridTilesPerDimensionPerProcessor = %"ISYM, &NumberOfRootGridTilesPerDimensionPerProcessor);
- 
+    ret += sscanf(line, "UserDefinedRootGridLayout = %"ISYM" %"ISYM" %"ISYM, &UserDefinedRootGridLayout[0],
+                  &UserDefinedRootGridLayout[1], &UserDefinedRootGridLayout[2]);
+
     ret += sscanf(line, "PartitionNestedGrids = %"ISYM, &PartitionNestedGrids);
  
     ret += sscanf(line, "ExtractFieldsOnly = %"ISYM, &ExtractFieldsOnly);
@@ -1134,8 +1136,6 @@ int ReadParameterFile(FILE *fptr, TopGridData &MetaData, float *Initialdt)
     ret += sscanf(line, "WriteBoundary          = %"ISYM, &WriteBoundary);
     ret += sscanf(line,"TracerParticlesAddToRestart = %"ISYM,&TracerParticlesAddToRestart);
     ret += sscanf(line,"RefineByJeansLengthUnits = %"ISYM,&RefineByJeansLengthUnits);
-    ret += sscanf(line, "ProcessorTopology      = %"ISYM" %"ISYM" %"ISYM,
-		  ProcessorTopology,ProcessorTopology+1,ProcessorTopology+2);
 
     ret += sscanf(line,"CT_AthenaDissipation = %"FSYM,&CT_AthenaDissipation);
     ret += sscanf(line,"MHD_WriteElectric = %"ISYM,&MHD_WriteElectric);
