@@ -36,7 +36,8 @@
 #endif
  
 #include <stdio.h>
- 
+
+#include "EnzoTiming.h" 
 #include "performance.h"
 #include "ErrorExceptions.h"
 #include "macros_and_parameters.h"
@@ -145,8 +146,8 @@ int CallPython(LevelHierarchyEntry *LevelArray[], TopGridData *MetaData,
  
 #define NO_REDUCE_FRAGMENTATION
  
- 
- 
+
+
  
 int EvolveHierarchy(HierarchyEntry &TopGrid, TopGridData &MetaData,
                     ExternalBoundary *Exterior,
@@ -159,6 +160,7 @@ int EvolveHierarchy(HierarchyEntry &TopGrid, TopGridData &MetaData,
   float dt;
  
   int i, dim, Stop = FALSE;
+  int StoppedByOutput = FALSE;
   int Restart = FALSE;
   double tlev0, tlev1, treb0, treb1, tloop0, tloop1, tentry, texit;
   LevelHierarchyEntry *Temp;
@@ -320,6 +322,8 @@ int EvolveHierarchy(HierarchyEntry &TopGrid, TopGridData &MetaData,
   bool FirstLoop = true;
   while (!Stop) {
 
+  TIMER_START("Total");
+
 #ifdef USE_LCAPERF
     lcaperf_iter = MetaData.CycleNumber;
     static bool isFirstCall = true;
@@ -368,7 +372,8 @@ int EvolveHierarchy(HierarchyEntry &TopGrid, TopGridData &MetaData,
     // Start skipping
     if(CheckpointRestart == FALSE) {
       while (Temp != NULL) {
-        dtProc = min(dtProc, Temp->GridData->ComputeTimeStep());
+        float dtProcTemp = Temp->GridData->ComputeTimeStep();
+        dtProc = min(dtProc, dtProcTemp);
         Temp = Temp->NextGridThisLevel;
       }
 
@@ -448,11 +453,10 @@ int EvolveHierarchy(HierarchyEntry &TopGrid, TopGridData &MetaData,
 
     /* If provided, set RefineRegion from evolving RefineRegion */
     if ((RefineRegionTimeType == 1) || (RefineRegionTimeType == 0)) {
-        if (SetEvolveRefineRegion(MetaData.Time) == FAIL) {
-          fprintf(stderr, "Error in SetEvolveRefineRegion.\n");
-          return FAIL;
-        }
+        if (SetEvolveRefineRegion(MetaData.Time) == FAIL) 
+	  ENZO_FAIL("Error in SetEvolveRefineRegion.");
     }
+
     /* Evolve the top grid (and hence the entire hierarchy). */
 
 #ifdef USE_MPI 
@@ -478,6 +482,7 @@ int EvolveHierarchy(HierarchyEntry &TopGrid, TopGridData &MetaData,
  
     if (HydroMethod == PPM_DirectEuler || HydroMethod == Zeus_Hydro || 
 	HydroMethod == PPM_LagrangeRemap || HydroMethod == HydroMethodUndefined ||
+	HydroMethod == MHD_Li || HydroMethod == NoHydro ||
 	HydroMethod < 0) {
       if (EvolveLevel(&MetaData, LevelArray, 0, dt, Exterior
 #ifdef TRANSFER
@@ -681,10 +686,28 @@ int EvolveHierarchy(HierarchyEntry &TopGrid, TopGridData &MetaData,
     }
 #endif
 
+    TIMER_STOP("Total");
+    if ((MetaData.CycleNumber-1) % TimingCycleSkip == 0)
+		  TIMER_WRITE(MetaData.CycleNumber);
+
     FirstLoop = false;
  
+    /* If simulation is set to stop after writing a set number of outputs, check that here. */
+
+    if (MetaData.NumberOfOutputsBeforeExit && MetaData.WroteData) {
+      MetaData.OutputsLeftBeforeExit--;
+      if (MetaData.OutputsLeftBeforeExit <= 0) {
+        if (MyProcessorNumber == ROOT_PROCESSOR) {
+          fprintf(stderr, "Exiting after writing %"ISYM" datadumps.\n",
+                  MetaData.NumberOfOutputsBeforeExit);
+        }      
+        Stop = TRUE;
+        StoppedByOutput = TRUE;
+      }
+    }
+
   } // ===== end of main loop ====
- 
+
 #ifdef USE_LCAPERF
   if (((lcaperf_iter+1) % LCAPERF_DUMP_FREQUENCY)!=0) lcaperf.end("EL");
   lcaperf.attribute ("timestep",0, LCAPERF_NULL);
@@ -734,7 +757,7 @@ int EvolveHierarchy(HierarchyEntry &TopGrid, TopGridData &MetaData,
   /* Write a file to indicate that we're finished. */
 
   FILE *Exit_fptr;
-  if (!Restart && MyProcessorNumber == ROOT_PROCESSOR) {
+  if (!Restart && !StoppedByOutput && MyProcessorNumber == ROOT_PROCESSOR) {
     if ((Exit_fptr = fopen("RunFinished", "w")) == NULL)
       ENZO_FAIL("Error opening RunFinished.");
     fprintf(Exit_fptr, "Finished on cycle %"ISYM"\n", MetaData.CycleNumber);

@@ -26,18 +26,32 @@
 void my_exit(int status);
  
 
+// from HDF5 1.8.7+  (H5_VERSION_GE, H5_VERSION_LE)
+/* macros for comparing the version */
+#define HDF5_VERSION_GE(Maj,Min,Rel) \
+       (((H5_VERS_MAJOR==Maj) && (H5_VERS_MINOR==Min) && (H5_VERS_RELEASE>=Rel)) || \
+        ((H5_VERS_MAJOR==Maj) && (H5_VERS_MINOR>Min)) || \
+        (H5_VERS_MAJOR>Maj))
+
+#define HDF5_VERSION_LE(Maj,Min,Rel) \
+       (((H5_VERS_MAJOR==Maj) && (H5_VERS_MINOR==Min) && (H5_VERS_RELEASE<=Rel)) || \
+        ((H5_VERS_MAJOR==Maj) && (H5_VERS_MINOR<Min)) || \
+        (H5_VERS_MAJOR<Maj))
+
+
+
 // set this if you want to soft links to the daughter and parent
 // grids, and external links to the data file
 #define WITH_HDF5_LINKS
 
-// set this if you're using HDF5 1.8+ (regardless of H5_USE_16_API)
-#define HAVE_HDF5_18
 
 //#define IO_LOG
 
-
-int HDF5_WriteAttribute(hid_t group_id, const char *AttributeName, int Attribute, FILE *log_fptr);
-int HDF5_WriteAttribute(hid_t group_id, const char *AttributeName, FLOAT Attribute, FILE *log_fptr);
+int HDF5_WriteAttribute(hid_t group_id, const char *AttributeName, Eint32 Attribute, FILE *log_fptr);
+int HDF5_WriteAttribute(hid_t group_id, const char *AttributeName, Eint64 Attribute, FILE *log_fptr);
+int HDF5_WriteAttribute(hid_t group_id, const char *AttributeName, Eflt32 Attribute, FILE *log_fptr);
+int HDF5_WriteAttribute(hid_t group_id, const char *AttributeName, Eflt64 Attribute, FILE *log_fptr);
+int HDF5_WriteAttribute(hid_t group_id, const char *AttributeName, Eflt128 Attribute, FILE *log_fptr);
 int HDF5_WriteAttribute(hid_t group_id, const char *AttributeName, int *Attribute, int NumberOfElements, FILE *log_fptr);
 int HDF5_WriteAttribute(hid_t group_id, const char *AttributeName, char *Attribute, FILE *log_fptr);
 
@@ -62,6 +76,7 @@ int grid::WriteHierarchyInformationHDF5(char *base_name, hid_t level_group_id, i
 #ifdef IO_LOG
   io_log = 1;
 #endif
+
 
   sprintf(BaryonFileName,"%s.cpu%"TASK_TAG_FORMAT""ISYM, base_name,ProcessorNumber);
 
@@ -174,7 +189,8 @@ int grid::WriteHierarchyInformationHDF5(char *base_name, hid_t level_group_id, i
   // (only supported under HDF5 1.8+)
 
 #ifdef WITH_HDF5_LINKS
-#ifdef HAVE_HDF5_18
+
+#if HDF5_VERSION_GE(1,8,0)
   sprintf(TargetName,"Grid%"GROUP_TAG_FORMAT""ISYM, ID);
   sprintf(LinkName,"GridData");
   if (io_log) fprintf(log_fptr,"H5Lcreate_external: %s:%s -> %s\n", BaryonFileName, TargetName, LinkName);
@@ -182,7 +198,8 @@ int grid::WriteHierarchyInformationHDF5(char *base_name, hid_t level_group_id, i
 
 
   if (io_log) fprintf(log_fptr, "H5Lcreate_external: status = %"ISYM"\n", (int) h5_status);
-#endif  
+#endif // HDF5_VERSION_GE(1,8,0)
+
 #endif
 
   // ***** Links to daughter grids *****
@@ -204,7 +221,7 @@ int grid::WriteHierarchyInformationHDF5(char *base_name, hid_t level_group_id, i
       sprintf(LinkName,"DaughterGrid%"GRID_TAG_FORMAT""ISYM,i);
       sprintf(TargetName,"/Level%"ISYM"/Grid%"GROUP_TAG_FORMAT""ISYM,level+1,DaughterGridIDs[i]);
 
-#ifdef HAVE_HDF5_18
+#if HDF5_VERSION_GE(1,8,0)
       if (io_log) fprintf(log_fptr,"H5Lcreate_soft: %s -> %s\n", TargetName, LinkName);
       h5_status = H5Lcreate_soft(TargetName, subgroup_id, LinkName, H5P_DEFAULT, H5P_DEFAULT);
       if (io_log) fprintf(log_fptr, "H5Lcreate_soft: status = %"ISYM"\n", (int) h5_status);
@@ -212,7 +229,7 @@ int grid::WriteHierarchyInformationHDF5(char *base_name, hid_t level_group_id, i
       if (io_log) fprintf(log_fptr,"H5Glink: %s -> %s\n", TargetName, LinkName);
       h5_status = H5Glink(subgroup_id, H5G_LINK_SOFT, TargetName, LinkName);
       if (io_log) fprintf(log_fptr, "H5Glink: status = %"ISYM"\n", (int) h5_status);
-#endif      
+#endif // HDF5_VERSION_GE(1,8,0)
 
     }
 #endif
@@ -237,7 +254,8 @@ int grid::WriteHierarchyInformationHDF5(char *base_name, hid_t level_group_id, i
       sprintf(LinkName,"ParentGrid_Level%"ISYM,i);
       sprintf(TargetName,"/Level%"ISYM"/Grid%"GROUP_TAG_FORMAT""ISYM,i,ParentGridIDs[level-1-i]);
 
-#ifdef HAVE_HDF5_18
+#if HDF5_VERSION_GE(1,8,0)
+
       if (io_log) fprintf(log_fptr,"H5Lcreate_soft: %s -> %s\n", TargetName, LinkName);
       h5_status = H5Lcreate_soft(TargetName, subgroup_id, LinkName, H5P_DEFAULT, H5P_DEFAULT);
       if (io_log) fprintf(log_fptr, "H5Lcreate_soft: status = %"ISYM"\n", (int) h5_status);
@@ -245,7 +263,7 @@ int grid::WriteHierarchyInformationHDF5(char *base_name, hid_t level_group_id, i
       if (io_log) fprintf(log_fptr,"H5Glink: %s -> %s\n", TargetName, LinkName);
       h5_status = H5Glink(subgroup_id, H5G_LINK_SOFT, TargetName, LinkName);
       if (io_log) fprintf(log_fptr, "H5Glink: status = %"ISYM"\n", (int) h5_status);
-#endif      
+#endif // HDF5_VERSION_GE(1,8,0)
 
     }
 
@@ -270,7 +288,7 @@ int grid::WriteHierarchyInformationHDF5(char *base_name, hid_t level_group_id, i
 // HDF5 utility routines (to write attributes and datasets)
 
 // int
-int HDF5_WriteAttribute(hid_t group_id, const char *AttributeName, int Attribute, FILE *log_fptr) {
+int HDF5_WriteAttribute(hid_t group_id, const char *AttributeName, Eint32 Attribute, FILE *log_fptr) {
 
   hid_t dspace_id, attr_id;
 
@@ -299,8 +317,6 @@ int HDF5_WriteAttribute(hid_t group_id, const char *AttributeName, int Attribute
   return SUCCESS;
 }
 
-// int
-#ifdef SMALL_INTS
 int HDF5_WriteAttribute(hid_t group_id, const char *AttributeName, Eint64 Attribute, FILE *log_fptr) {
 
   hid_t dspace_id, attr_id;
@@ -329,10 +345,10 @@ int HDF5_WriteAttribute(hid_t group_id, const char *AttributeName, Eint64 Attrib
 
   return SUCCESS;
 }
-#endif
 
-// FLOAT
-int HDF5_WriteAttribute(hid_t group_id, const char *AttributeName, FLOAT Attribute, FILE *log_fptr) {
+
+// 32-bit float (Eflt32)
+int HDF5_WriteAttribute(hid_t group_id, const char *AttributeName, Eflt32 Attribute, FILE *log_fptr) {
 
   hid_t dspace_id, attr_id;
 
@@ -346,10 +362,10 @@ int HDF5_WriteAttribute(hid_t group_id, const char *AttributeName, FLOAT Attribu
   dspace_id = H5Screate(H5S_SCALAR);
   if (io_log) fprintf(log_fptr, "H5Screate: dspace_id = %"ISYM"\n", (int) dspace_id);
 
-  attr_id = H5Acreate(group_id, AttributeName, HDF5_FILE_PREC, dspace_id, H5P_DEFAULT);
+  attr_id = H5Acreate(group_id, AttributeName, HDF5_R4, dspace_id, H5P_DEFAULT);
   if (io_log) fprintf(log_fptr, "H5Acreate: attr_id = %"ISYM"\n", (int) attr_id);
 
-  h5_status = H5Awrite(attr_id,  HDF5_PREC, &Attribute);
+  h5_status = H5Awrite(attr_id,  HDF5_R4, &Attribute);
   if (io_log) fprintf(log_fptr, "H5Awrite: status = %"ISYM"\n", (int) h5_status);
 
   h5_status = H5Aclose(attr_id);
@@ -360,6 +376,68 @@ int HDF5_WriteAttribute(hid_t group_id, const char *AttributeName, FLOAT Attribu
 
   return SUCCESS;
 }
+
+
+// 64-bit float (Eflt64)
+int HDF5_WriteAttribute(hid_t group_id, const char *AttributeName, Eflt64 Attribute, FILE *log_fptr) {
+
+  hid_t dspace_id, attr_id;
+
+  herr_t h5_status;
+
+  int io_log = 0;
+#ifdef IO_LOG
+  io_log = 1;
+#endif
+
+  dspace_id = H5Screate(H5S_SCALAR);
+  if (io_log) fprintf(log_fptr, "H5Screate: dspace_id = %"ISYM"\n", (int) dspace_id);
+
+  attr_id = H5Acreate(group_id, AttributeName, HDF5_R8, dspace_id, H5P_DEFAULT);
+  if (io_log) fprintf(log_fptr, "H5Acreate: attr_id = %"ISYM"\n", (int) attr_id);
+
+  h5_status = H5Awrite(attr_id,  HDF5_R8, &Attribute);
+  if (io_log) fprintf(log_fptr, "H5Awrite: status = %"ISYM"\n", (int) h5_status);
+
+  h5_status = H5Aclose(attr_id);
+  if (io_log) fprintf(log_fptr, "H5Aclose: status = %"ISYM"\n", (int) h5_status);
+  
+  h5_status = H5Sclose(dspace_id);
+  if (io_log) fprintf(log_fptr, "H5Sclose: status = %"ISYM"\n", (int) h5_status);
+
+  return SUCCESS;
+}
+
+// 128-bit float (Eflt128)
+int HDF5_WriteAttribute(hid_t group_id, const char *AttributeName, Eflt128 Attribute, FILE *log_fptr) {
+
+  hid_t dspace_id, attr_id;
+
+  herr_t h5_status;
+
+  int io_log = 0;
+#ifdef IO_LOG
+  io_log = 1;
+#endif
+
+  dspace_id = H5Screate(H5S_SCALAR);
+  if (io_log) fprintf(log_fptr, "H5Screate: dspace_id = %"ISYM"\n", (int) dspace_id);
+
+  attr_id = H5Acreate(group_id, AttributeName, HDF5_R16, dspace_id, H5P_DEFAULT);
+  if (io_log) fprintf(log_fptr, "H5Acreate: attr_id = %"ISYM"\n", (int) attr_id);
+
+  h5_status = H5Awrite(attr_id,  HDF5_R16, &Attribute);
+  if (io_log) fprintf(log_fptr, "H5Awrite: status = %"ISYM"\n", (int) h5_status);
+
+  h5_status = H5Aclose(attr_id);
+  if (io_log) fprintf(log_fptr, "H5Aclose: status = %"ISYM"\n", (int) h5_status);
+  
+  h5_status = H5Sclose(dspace_id);
+  if (io_log) fprintf(log_fptr, "H5Sclose: status = %"ISYM"\n", (int) h5_status);
+
+  return SUCCESS;
+}
+
 
 // int vector
 int HDF5_WriteAttribute(hid_t group_id, const char *AttributeName, int *Attribute, int NumberOfElements, FILE *log_fptr) {

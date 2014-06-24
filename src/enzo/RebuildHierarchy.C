@@ -21,7 +21,8 @@
 #include <stdio.h>
 #include <string.h>
 #include <time.h>
- 
+
+#include "EnzoTiming.h" 
 #include "ErrorExceptions.h"
 #include "performance.h"
 #include "macros_and_parameters.h"
@@ -91,8 +92,20 @@ int RebuildHierarchy(TopGridData *MetaData,
 		     LevelHierarchyEntry *LevelArray[], int level)
 {
 
-  if (LevelCycleCount[level] % RebuildHierarchyCycleSkip[level]) {
+  if (LevelSubCycleCount[level] % RebuildHierarchyCycleSkip[level]) {
     return SUCCESS;
+  }
+
+  if (ConductionDynamicRebuildHierarchy) {
+    if (TimeSinceRebuildHierarchy[level] < dtRebuildHierarchy[level]) {
+      return SUCCESS;
+    }
+    else {
+      for (int i = level;i <= MaximumRefinementLevel;i++) {
+        dtRebuildHierarchy[i] = -1.0;
+        TimeSinceRebuildHierarchy[i] = 0.0;
+      }
+    }
   }
 
   double tt0, tt1, tt2, tt3;
@@ -102,13 +115,14 @@ int RebuildHierarchy(TopGridData *MetaData,
   int dbx = 0;
  
   LCAPERF_START("RebuildHierarchy");
+  TIMER_START("RebuildHierarchy");
 
   if (debug) printf("RebuildHierarchy: level = %"ISYM"\n", level);
   ReportMemoryUsage("Rebuild pos 1");
  
   bool ParticlesAreLocal, SyncNumberOfParticles = true;
   bool MoveStars = true;
-  int i, j, k, grids, grids2, subgrids, MoveParticles;
+  int i, j, k, grids, grids2, subgrids, MoveParticles, ncells;
   int TotalFlaggedCells, FlaggedGrids;
   FLOAT ZeroVector[MAX_DIMENSION];
   LevelHierarchyEntry *Temp;
@@ -322,20 +336,11 @@ int RebuildHierarchy(TopGridData *MetaData,
  
 //    if (debug) ReportMemoryUsage("Memory usage report: Rebuild 3");
 
-      /* Find maximum level that exists right now. */
- 
-      for (i = level; i < MAX_DEPTH_OF_HIERARCHY-1; i++) 
-	if (TempLevelArray[i] == NULL) break;
-
-      int MaximumLevelNow = i;
- 
     /* 3) Rebuild all grids on this level and below.  Note: All the grids
           in LevelArray[level+] have been deleted. */
 
-      //      for (i = level; i < MAX_DEPTH_OF_HIERARCHY-1; i++) {
-      for (i = level; i < MaximumLevelNow; i++) {
+    for (i = level; i < MAX_DEPTH_OF_HIERARCHY-1; i++) {
  
-
       /* If there are no grids on this level, exit. */
  
       if (LevelArray[i] == NULL)
@@ -343,11 +348,20 @@ int RebuildHierarchy(TopGridData *MetaData,
 
 
       /* Determine the subgrid minimum and maximum sizes, if
-	 requested. */
+         requested.
 
-      DetermineSubgridSizeExtrema(NumberOfCells[i+1], i+1, 
-				  MaximumStaticSubgridLevel+1);
- 
+         If we are initializing and on our first trip through
+         the hierachy, use the number of cells on the parent
+         level to estimate the grid efficiency parameters
+      */
+
+      if (NumberOfCells[i+1] == 0)
+        ncells = NumberOfCells[i];
+      else
+        ncells = NumberOfCells[i+1];
+
+      DetermineSubgridSizeExtrema(ncells, i+1, MaximumStaticSubgridLevel+1);
+
       /* 3a) Generate an array of grids on this level. */
  
 //??      HierarchyEntry *GridHierarchyPointer[MAX_NUMBER_OF_SUBGRIDS];
@@ -395,6 +409,9 @@ int RebuildHierarchy(TopGridData *MetaData,
 
       HierarchyEntry *Temp2;
       HierarchyEntry *SubgridHierarchyPointer[MAX_NUMBER_OF_SUBGRIDS];
+      for (j = 0; j < MAX_NUMBER_OF_SUBGRIDS; j++){
+        SubgridHierarchyPointer[j] = NULL;
+      }
       subgrids = 0;
       for (j = 0; j < grids; j++) {
 	Temp2 = GridHierarchyPointer[j]->NextGridNextLevel;
@@ -447,6 +464,18 @@ int RebuildHierarchy(TopGridData *MetaData,
 	Temp                                = Temp->NextGridThisLevel;
       }
  
+      //Old fine grids are necessary during the interpolation for ensuring DivB = 0 with MHDCT
+      //Note that this is a loop the size of N_{new sub grids} * N_{old sub grids}.  Fast Sib locator 
+      //needs to be employed here.
+      if( UseMHDCT ){
+        for (j = 0; j < subgrids; j++) {
+           if(SubgridHierarchyPointer[j]->GridData->MHD_SendOldFineGrids(
+                  TempLevelArray[i+1],SubgridHierarchyPointer[j]->ParentGrid->GridData, MetaData) == FALSE ){
+             ENZO_FAIL("Error in SendOldFineGrids");
+              }
+        }
+      }
+
       /* 3e) For each new subgrid, interpolate from parent and then
 	 copy from old subgrids.  For each old subgrid, decrement the
 	 Overlap counter, deleting the grid which it reaches zero. */
@@ -463,7 +492,9 @@ int RebuildHierarchy(TopGridData *MetaData,
         }
 
 	SubgridHierarchyPointer[j]->GridData->InterpolateFieldValues
-	  (SubgridHierarchyPointer[j]->ParentGrid->GridData);
+	  (SubgridHierarchyPointer[j]->ParentGrid->GridData
+		,TempLevelArray[i+1],
+	   MetaData);
 
         if (RandomForcing) { //AK
           SubgridHierarchyPointer[j]->GridData->RemoveForcingFromBaryonFields();
@@ -675,6 +706,7 @@ int RebuildHierarchy(TopGridData *MetaData,
   if (debug) fpcol(RHperf, 16, 16, stdout);
 #endif /* RH_PERF */
   ReportMemoryUsage("Rebuild pos 4");
+  TIMER_STOP("RebuildHierarchy");
   LCAPERF_STOP("RebuildHierarchy");
   return SUCCESS;
  

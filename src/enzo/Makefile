@@ -139,10 +139,13 @@ MACHNOTES:
 	else \
 		$(LD) $(LDFLAGS) -o $*.exe $*.o $(OBJS_LIB) $(LIBS) >> $(OUTPUT) \
 		2>&1 ; \
-	fi)  
+	fi)	
 	@(if [ -e $@ ] ; then  \
 		echo "Success!" ; \
-                if [ ! -e $(TOP_DIR)/bin ]; then mkdir $(TOP_DIR)/bin; fi; \
+		echo "Compiled enzo from " ; \
+		echo "Mercurial Branch   `$(SVN) identify -b`" ; \
+		echo "Mercurial Revision `$(SVN) identify -i`" ; \
+		if [ ! -e $(TOP_DIR)/bin ]; then mkdir $(TOP_DIR)/bin; fi; \
 		if [ "$(CONFIG_OPT)" == "debug" ]; then \
 		echo "Compiled with opt-debug (OPT_FLAGS = $(ASSEMBLE_OPT_FLAGS))."; \
 		echo "May run much faster while still accurate with make opt-high (OPT_FLAGS = $(MACH_OPT_HIGH))"; \
@@ -173,6 +176,9 @@ lib%.$(MACH_SHARED_EXT): $(MODULES) autogen dep enzo.o $(OBJS_LIB)
 .pyx.C: 
 	@cython --cplus $*.pyx -o $*.C 
 ProblemType_Python.o: python_bridge/problemtype_handler.o
+InitializePythonInterface.C: $(PYTHON_INTERFACE_TARGETS)
+InitializePythonInterface_finderfunctions.inc: global_data.h
+	@python create_dictionary_mapping.py 
 
 #-----------------------------------------------------------------------
 # WRITE ALL COMPILER OUTPUT TO FILE
@@ -211,7 +217,7 @@ verbose: $(EXE).exe
              exit 1; \
           fi ; \
 	else \
-	  $(FC) -c -o $@ $(FFLAGS)  $(DEFINES) $*.f >> $(OUTPUT) 2>&1 ; \
+	  $(FC) -c -o $@ $(FFLAGS)  $(DEFINES) $*.F >> $(OUTPUT) 2>&1 ; \
 	  if [ ! -e $@ ]; then \
 	     echo "See $(OUTPUT) for error messages"; \
 	     exit 1; \
@@ -230,7 +236,7 @@ verbose: $(EXE).exe
              echo; \
              echo "$(F90) -c -o $@ $(DEFINES) $(F90FLAGS) $*.F90"; \
              echo; \
-             $(F90) -c -o $@ $(F90FLAGS) $*.F90; \
+             $(F90) -c -o $@ $(F90FLAGS) $(DEFINES) $*.F90; \
              echo; \
              exit 1; \
 	  fi ; \
@@ -316,7 +322,7 @@ verbose: $(EXE).exe
 #-----------------------------------------------------------------------
 
 .PHONY: autogen
-autogen: svn_version.def auto_show_config.C auto_show_flags.C auto_show_version.C
+autogen: auto_show_config.C auto_show_flags.C auto_show_version.C auto_show_compile_options.C
 
 # Force update of auto_show_config.C
 
@@ -339,20 +345,11 @@ auto_show_version.C:
 	-@$(MAKE) -s show-version  >& temp.show-version
 	-@awk 'BEGIN {print "#include <stdio.h>\nvoid auto_show_version(FILE *fp) {"}; {print "   fprintf (fp,\""$$0"\\n\");"}; END {print "}"}' < temp.show-version > auto_show_version.C
 
-#-----------------------------------------------------------------------
-# Generate SVN version source file 'svn_version.def'
-#-----------------------------------------------------------------------
+# Force update of auto_show_compile_options.C
 
-# Force update of svn_version.def
-.PHONY: svn_version.def
-svn_version.def:
-	-@$(SVN) identify -i | \
-           awk '{print "#define ENZO_SVN_REVISION","\""$$1"\""}' > svn_version.def
-	-@$(SVN) identify -b | awk '{print "#define ENZO_SVN_BRANCH","\""$$1"\""};' >> svn_version.def 
-	-@if [ ! -s svn_version.def ]; then \
-	printf "#define ENZO_SVN_REVISION 0\n" > svn_version.def; \
-	printf "#define ENZO_SVN_BRANCH \"\"\n" >> svn_version.def; \
-	fi
+.PHONY: auto_show_compile_options.C
+auto_show_compile_options.C:
+	-@python create_config_info.py
 
 #-----------------------------------------------------------------------
 # Generate dependency file
@@ -361,7 +358,13 @@ svn_version.def:
 .PHONY: dep
 dep:
 	@echo "Updating DEPEND"
-	-@(makedepend $(DEFINES) $(INCLUDES) -fDEPEND -o.o -m -- -- */*.C  *.C *.c *.F *.F90 */*.h *.h) >& out.make.DEPEND
+	-@(makedepend $(DEFINES) $(INCLUDES) -fDEPEND -o.o -m -- -- */*.C  ) >& out.make.DEPEND
+	-@(makedepend $(DEFINES) $(INCLUDES) -a -fDEPEND -o.o -m -- -- *.C) >> out.make.DEPEND 2>&1
+	-@(makedepend $(DEFINES) $(INCLUDES) -a -fDEPEND -o.o -m -- -- *.c) >> out.make.DEPEND 2>&1
+	-@(makedepend $(DEFINES) $(INCLUDES) -a -fDEPEND -o.o -m -- -- *.F) >> out.make.DEPEND 2>&1
+	-@(makedepend $(DEFINES) $(INCLUDES) -a -fDEPEND -o.o -m -- -- *.F90) >> out.make.DEPEND 2>&1
+	-@(makedepend $(DEFINES) $(INCLUDES) -a -fDEPEND -o.o -m -- -- */*.h) >> out.make.DEPEND 2>&1
+	-@(makedepend $(DEFINES) $(INCLUDES) -a -fDEPEND -o.o -m -- -- *.h) >> out.make.DEPEND 2>&1
 
 include DEPEND
 
@@ -406,7 +409,7 @@ help:
 
 clean:
 	-@rm -f *.so *.o uuid/*.o *.mod *.f *.f90 DEPEND.bak *~ $(OUTPUT) *.exe \
-          auto_show*.C svn_version.def hydro_rk/*.o *.oo hydro_rk/*.oo \
+          auto_show*.C hydro_rk/*.o *.oo hydro_rk/*.oo \
           uuid/*.oo DEPEND TAGS \
           libconfig/*.o \
           python_bridge/problemtype_handler.C \

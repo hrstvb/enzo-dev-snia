@@ -66,8 +66,18 @@ int grid::ComputeAccelerationFieldExternal()
     for (dim = 0; dim < GridRank; dim++) {
       AccelerationField[dim] = new float[size];
       for (i = 0; i < size; i++)
-	AccelerationField[dim][i] = 0;
+        AccelerationField[dim][i] = 0;
+
     }
+    if( SelfGravity == 0 ){
+      for (dim = 0; dim < GridRank; dim++) {
+        for (i = 0; i < size; i++){
+          AccelerationField[dim][i] = 0;
+        }
+      }
+    }
+
+
  
 
   /* BWO:  if we're using the NFW halo with ProblemType = 31 ("GalaxySimulation"),
@@ -169,11 +179,19 @@ int grid::ComputeAccelerationFieldExternal()
 
 	      // BWO, July 2009: MassUnitsDouble is CGS mass units if ProblemType == 31,
 	      // and 1.0 otherwise.
+              //Yuan, Aug 2011: Add BCG and SMBH potential if ProblemType == 108
+              if(ProblemType == 108){
+              accel = GravConst*PointSourceGravityConstant*SolarMass*
+                ((log(1.0+x  )-x  /(1.0+x  )) /
+                 (log(1.0+1.0)-1.0/(1.0+1.0))) /
+                POW(radius*LengthUnits, 2.0) / AccelUnits +
+                     POW((POW(POW(radius*LengthUnits/(1.0e-3*Mpc),0.5975)/3.206e-7,0.9) + POW(POW(radius*LengthUnits/(1.0e-3*Mpc), 1.849)/1.861e-6, 0.9)), -1.0/0.9) / AccelUnits +  GravConst*SolarMass*3.4e8 / POW(radius*LengthUnits, 2) / AccelUnits  ;  // + BCG + BH mass for Perseus;
+              } else {
 	      accel = GravConst*PointSourceGravityConstant*MassUnitsDouble*
 		((log(1.0+x  )-x  /(1.0+x  )) /
 		 (log(1.0+1.0)-1.0/(1.0+1.0))) / 
 		POW(radius*LengthUnits, 2.0) / AccelUnits;
-
+              }
 	      accel = accel/radius;  // this radius normalizes the multiplication by 
 	      // xpos,ypos,zpos done below
 

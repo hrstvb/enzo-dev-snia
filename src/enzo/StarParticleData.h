@@ -44,6 +44,7 @@ SPEXTERN int G_TotalNumberOfStars;
 SPEXTERN int StarFeedbackType;
 SPEXTERN int StarMakerTypeIaSNe;
 SPEXTERN int StarMakerPlanetaryNebulae;
+SPEXTERN int StarMakerTimeIndependentFormation;
 SPEXTERN float StarMakerOverDensityThreshold;
 SPEXTERN float StarMakerSHDensityThreshold;
 SPEXTERN float StarMakerMassEfficiency;
@@ -109,6 +110,18 @@ SPEXTERN float  MBHFeedbackMassEjectionFraction;
 SPEXTERN float  MBHFeedbackMetalYield;
 SPEXTERN float  MBHFeedbackThermalRadius;
 SPEXTERN float  MBHFeedbackJetsThresholdMass;
+
+SPEXTERN float  H2StarMakerEfficiency;
+SPEXTERN float  H2StarMakerNumberDensityThreshold;
+SPEXTERN float  H2StarMakerMinimumMass;
+SPEXTERN float  H2StarMakerMinimumH2FractionForStarFormation;
+SPEXTERN int    H2StarMakerStochastic;
+SPEXTERN int    H2StarMakerUseSobolevColumn;
+SPEXTERN float  H2StarMakerSigmaOverR;
+SPEXTERN int    H2StarMakerAssumeColdWarmPressureBalance;
+SPEXTERN float  H2StarMakerH2DissociationFlux_MW;
+SPEXTERN float  H2StarMakerH2FloorInColdGas;
+SPEXTERN float  H2StarMakerColdGasTemperature;
 
 SPEXTERN float minStarLifetime;
 SPEXTERN FLOAT LastSupernovaTime;

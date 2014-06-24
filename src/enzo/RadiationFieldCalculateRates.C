@@ -87,7 +87,6 @@ int RadiationFieldCalculateRates(FLOAT Time)
 
   if (ComovingCoordinates) {
     CosmologyComputeExpansionFactor(Time, &a, &dadt);
-
     aUnits = 1.0/(1.0 + InitialRedshift);
     Redshift = 1.0/(a*aUnits) - 1;
   } else {  
@@ -97,6 +96,7 @@ int RadiationFieldCalculateRates(FLOAT Time)
     CoolData.RadiationRedshiftFullOn = RadiationFieldRedshift+0.1;
     CoolData.RadiationRedshiftDropOff = 0.0;
   }
+
     
   double tbase1 = TimeUnits;
   double xbase1 = LengthUnits/(a*aUnits);
@@ -434,14 +434,50 @@ int RadiationFieldCalculateRates(FLOAT Time)
 	   (1.0 + 0.2625 * POW(Redshift+0.918, 2.0)) ) *
       TimeUnits * Ramp;
 
+    if (MultiSpecies > 1) {
+
+      RateData.k27 = 9.37e-10 * POW(1.0+Redshift, 2.526) *
+	exp( 12.7560 * POW(Redshift+2.707, 2.0) /
+	     (1.0 + -0.0301 * POW(Redshift+111.200, 2.0)) ) *
+	TimeUnits * Ramp;
+      
+      RateData.k28 = 9.84e-12 * POW(1.0+Redshift, 2.115) * 
+	exp( -1.9137 * POW(Redshift-1.748, 2.0) / 
+	     (1.0 + 0.3896 * POW(Redshift+3.679, 2.0)) ) * 
+	TimeUnits * Ramp;
+      
+      RateData.k29 = 6.87e-12 * POW(1.0+Redshift, -0.456) * 
+	exp( -0.7601 * POW(Redshift-2.234, 2.0) / 
+	     (1.0 + 0.1955 * POW(Redshift+0.655, 2.0)) ) * 
+	TimeUnits * Ramp;
+      
+      RateData.k30 = 2.61e-12 * POW(1.0+Redshift, -2.198) * 
+	exp( -0.5824 * POW(Redshift-3.811, 2.0) / 
+	     (1.0 + 0.3241 * POW(Redshift+0.838, 2.0)) ) * 
+	TimeUnits * Ramp;
+      
+      /* LymanSawtoothSuppressionFactor is supposed to account for the
+	 suppression of LW flux due to Lyman-series absorption (giving
+	 a sawtooth pattern), a la Haiman & Abel, & Rees (2000).  This
+	 is really only applicable when there is plenty of neutral
+	 hydrogen is around, so I'm scaling it with Ramp. */
+      float LymanSawtoothSuppressionFactor = 0.1 + 0.9 * Ramp;
+
+      RateData.k31 = 2.36e-12 * POW(1.0+Redshift, 1.185) * 
+	exp( -0.2173 * POW(Redshift-3.211, 2.0) / 
+	     (1.0 + 1.1852 * POW(Redshift+0.156, 2.0)) ) * 
+	TimeUnits * Ramp * LymanSawtoothSuppressionFactor;
+
+    }
+
     CoolData.piHI = 4.09e-23 * POW(1.0+Redshift, -0.746) * 
       exp( -0.7469 * POW(Redshift-2.419, 2.0) / 
 	   (1.0 + 0.2120 * POW(Redshift+0.686, 2.0)) )
       / CoolingUnits * Ramp;
 
-    CoolData.piHeII = 1.28e-24 * POW(1.0+Redshift, -0.504) * 
-      exp( -1.0742 * POW(Redshift-1.889, 2.0) / 
-	   (1.0 + 0.1919 * POW(Redshift-0.518,2.0)) ) 
+    CoolData.piHeII = 1.28e-24 * POW(1.0+Redshift, -0.504) *
+      exp( -1.0742 * POW(Redshift-1.889, 2.0) /
+	   (1.0 + 0.1919 * POW(Redshift-0.518, 2.0)) )
       / CoolingUnits * Ramp;
 
     CoolData.piHeI = 4.86e-22 * POW(1.0+Redshift, -2.302) * 
@@ -473,8 +509,88 @@ int RadiationFieldCalculateRates(FLOAT Time)
       RateData.k31 = 1.13e8 * CoolData.f3 * TimeUnits;
   }
 
+
+  /* ------------------------------------------------------------------ */
+  /* 15) tabulated photoionization and photoheating rates from 
+     Haardt and Madau 2012.  rates are read into memory in 
+     InitializeHM12Photorates.C and interpolated here. */
+
+  if (RadiationFieldType == 15) {
+
+    double zhi, delta, frac;
+    int ilo, ihi;
+
+
+    /* first find indices that bracket the input redshift */
+    if ( Redshift <= RateData.HM12RedshiftLo ) {
+      ilo = 0;
+      ihi = ilo + 1;
+      frac = 0.0;
+    }
+    else if ( Redshift >= RateData.HM12RedshiftHi ) {
+      ihi = RateData.HM12NumberOfRedshiftBins - 1;
+      ilo = ihi - 1;
+      frac = 1.0;
+    }
+    else {
+      ihi = 0;
+      zhi = RateData.HM12Redshifts[ihi];
+      while ( zhi < Redshift ) {
+	ihi = ihi + 1;
+	zhi = RateData.HM12Redshifts[ihi];	  
+      }
+      ilo = ihi-1;
+      delta = RateData.HM12Redshifts[ihi] - RateData.HM12Redshifts[ilo];
+      frac = ( Redshift - RateData.HM12Redshifts[ilo] ) / delta;
+    }
+    
+    /* now interpolate the rates */
+    delta = RateData.HM12GH1[ihi] - RateData.HM12GH1[ilo];
+    RateData.k24 = POW( 10.0, RateData.HM12GH1[ilo] + frac * delta );
+    RateData.k24 *= TimeUnits * Ramp;
+    
+    delta = RateData.HM12GHe2[ihi] - RateData.HM12GHe2[ilo];
+    RateData.k25 = POW( 10.0, RateData.HM12GHe2[ilo] + frac * delta );
+    RateData.k25 *= TimeUnits * Ramp;
+
+    delta = RateData.HM12GHe1[ihi] - RateData.HM12GHe1[ilo];
+    RateData.k26 = POW( 10.0, RateData.HM12GHe1[ilo] + frac * delta );
+    RateData.k26 *= TimeUnits * Ramp;
+
+    delta = RateData.HM12GhH1[ihi] - RateData.HM12GhH1[ilo];
+    CoolData.piHI = POW( 10.0, RateData.HM12GhH1[ilo] + frac * delta );
+    CoolData.piHI = CoolData.piHI / CoolingUnits * Ramp;
+
+    delta = RateData.HM12GhHe1[ihi] - RateData.HM12GhHe1[ilo];
+    CoolData.piHeI = POW( 10.0, RateData.HM12GhHe1[ilo] + frac * delta );
+    CoolData.piHeI = CoolData.piHeI / CoolingUnits * Ramp;
+                 
+    delta = RateData.HM12GhHe2[ihi] - RateData.HM12GhHe2[ilo];
+    CoolData.piHeII = POW( 10.0, RateData.HM12GhHe2[ilo] + frac * delta );
+    CoolData.piHeII = CoolData.piHeII / CoolingUnits * Ramp;
+
+    /*
+    if (MyProcessorNumber == ROOT_PROCESSOR) {
+      printf( "Altay: TimeUnits = %"ESYM"\n", TimeUnits);
+      printf( "Altay: CoolingUnits = %"ESYM"\n", CoolingUnits);
+      printf( "Altay: Redshift = %"ESYM"\n", Redshift);
+      printf( "Altay: RadiationRedshiftOn = %"ESYM"\n", CoolData.RadiationRedshiftOn);
+      printf( "Altay: RadiationRedshiftFullOn = %"ESYM"\n", CoolData.RadiationRedshiftFullOn);
+      printf( "Altay: Ramp = %"ESYM"\n", Ramp);
+      printf( "Altay: k24 = %"ESYM"\n",RateData.k24); 
+      printf( "Altay: k25 = %"ESYM"\n",RateData.k25); 
+      printf( "Altay: k26 = %"ESYM"\n",RateData.k26); 
+      printf( "Altay: piHI = %"ESYM"\n",CoolData.piHI);
+      printf( "Altay: piHeI = %"ESYM"\n",CoolData.piHeI);
+      printf( "Altay: piHeII = %"ESYM"\n",CoolData.piHeII);
+    }
+    */
+    
+  }
+
+
 /* ------------------------------------------------------------------ */
-  if (RadiationFieldType < 0 || RadiationFieldType > 14) {
+  if (RadiationFieldType < 0 || RadiationFieldType > 15) {
     ENZO_VFAIL("RadiationFieldType %"ISYM" not recognized.\n", 
 	    RadiationFieldType)
    }
@@ -561,6 +677,7 @@ int RadiationFieldCalculateRates(FLOAT Time)
 /*
   fclose(fp);
 */
+
 
   return SUCCESS;
 }
