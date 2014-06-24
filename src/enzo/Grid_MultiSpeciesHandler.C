@@ -31,22 +31,18 @@ int grid::MultiSpeciesHandler()
 
   LCAPERF_START("grid_MultiSpeciesHandler");
 
-  if (MultiSpecies && RadiativeCooling ) {
-    if((MultiSpecies == 3) && (PrimordialChemistrySolver > 0)) {
-      if (PrimordialChemistrySolver == 1) {
-	this->SolveHighDensityPrimordialChemistry();
-      } else if (PrimordialChemistrySolver == 2) {
-#ifdef USE_CVODE
-	this->SolvePrimordialChemistryCVODE();
-#else
-	ENZO_FAIL("You have asked for the CVODE solver but CVODE not enabled!");
-#endif
-      }
-    } // ENDIF PrimordialChemistrySolver
-    else {
-      int RTCoupledSolverIntermediateStep = FALSE;
-      this->SolveRateAndCoolEquations(RTCoupledSolverIntermediateStep);
+#ifdef USE_GRACKLE
+  if (grackle_chemistry.use_grackle) {
+    if (this->GrackleWrapper() == FAIL) {
+      ENZO_FAIL("Error in GrackleWrapper.\n");
     }
+    return SUCCESS;
+  }
+#endif
+
+  if (MultiSpecies && RadiativeCooling ) {
+    int RTCoupledSolverIntermediateStep = FALSE;
+    this->SolveRateAndCoolEquations(RTCoupledSolverIntermediateStep);
   } else {
     if (MultiSpecies)
       this->SolveRateEquations();

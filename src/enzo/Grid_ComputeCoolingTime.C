@@ -100,9 +100,6 @@ int grid::ComputeCoolingTime(float *cooling_time)
 
   if (RadiativeCooling == 0) return SUCCESS;
  
-  if (RadiativeCooling == 0) // would not know what a cooling time is
-    return SUCCESS;
-
   if (ProcessorNumber != MyProcessorNumber)
     return SUCCESS;
  
@@ -111,6 +108,7 @@ int grid::ComputeCoolingTime(float *cooling_time)
  
   /* Compute the size of the fields. */
  
+  int i;
   int size = 1;
   for (int dim = 0; dim < GridRank; dim++)
     size *= GridDimension[dim];
@@ -191,7 +189,7 @@ int grid::ComputeCoolingTime(float *cooling_time)
 
   if (MetalNum != -1 && SNColourNum != -1) {
     TotalMetals = new float[size];
-    for (int i = 0; i < size; i++)
+    for (i = 0; i < size; i++)
       TotalMetals[i] = BaryonField[MetalNum][i] + BaryonField[SNColourNum][i];
     MetalPointer = TotalMetals;
   } // ENDIF both metal types
@@ -202,6 +200,78 @@ int grid::ComputeCoolingTime(float *cooling_time)
       MetalPointer = BaryonField[SNColourNum];
   } // ENDELSE both metal types
  
+#ifdef USE_GRACKLE
+  if (grackle_chemistry.use_grackle) {
+
+    /* Update units. */
+
+    grackle_units.comoving_coordinates = ComovingCoordinates;
+    grackle_units.density_units        = DensityUnits;
+    grackle_units.length_units         = LengthUnits;
+    grackle_units.time_units           = TimeUnits;
+    grackle_units.velocity_units       = VelocityUnits;
+    grackle_units.a_units              = aUnits;
+
+    int temp_thermal = FALSE;
+    float *thermal_energy;
+    if (HydroMethod == MHD_RK){
+      iBx = FindField(Bfield1, FieldType, NumberOfBaryonFields);
+      iBy = FindField(Bfield2, FieldType, NumberOfBaryonFields);
+      iBz = FindField(Bfield3, FieldType, NumberOfBaryonFields);  
+    }
+
+    if (HydroMethod==Zeus_Hydro) {
+      thermal_energy = BaryonField[TENum];
+    }
+    else if (DualEnergyFormalism) {
+      thermal_energy = BaryonField[GENum];
+    }
+    else {
+      temp_thermal = TRUE;
+      thermal_energy = new float[size];
+      for (i = 0; i < size; i++) {
+        thermal_energy[i] = BaryonField[TENum][i] - 
+          0.5 * POW(BaryonField[Vel1Num][i], 2.0);
+        if(GridRank > 1)
+          thermal_energy[i] -= 0.5 * POW(BaryonField[Vel2Num][i], 2.0);
+        if(GridRank > 2)
+          thermal_energy[i] -= 0.5 * POW(BaryonField[Vel3Num][i], 2.0);
+
+        if(HydroMethod == MHD_RK) {
+          thermal_energy[i] -= 0.5 * (POW(BaryonField[iBx][i], 2.0) + 
+                                      POW(BaryonField[iBy][i], 2.0) + 
+                                      POW(BaryonField[iBz][i], 2.0)) / 
+            BaryonField[DensNum][i];
+        }
+      } // for (int i = 0; i < size; i++)
+    }
+
+    if (calculate_cooling_time(grackle_chemistry, grackle_units,
+                               afloat,
+                               GridRank, GridDimension,
+                               GridStartIndex, GridEndIndex,
+                               density, thermal_energy,
+                               velocity1, velocity2, velocity3,
+                               BaryonField[HINum],   BaryonField[HIINum], 
+                               BaryonField[HMNum],   BaryonField[HeINum], 
+                               BaryonField[HeIINum], BaryonField[HeIIINum],
+                               BaryonField[H2INum],  BaryonField[H2IINum],
+                               BaryonField[DINum],   BaryonField[DIINum], 
+                               BaryonField[HDINum],  BaryonField[DeNum], 
+                               MetalPointer, cooling_time) == FAIL) {
+      ENZO_FAIL("Error in Grackle calculate_cooling_time.\n");
+    }
+
+    if (temp_thermal == TRUE) {
+      delete [] thermal_energy;
+    }
+
+    delete [] TotalMetals;
+
+    return SUCCESS;
+  }
+#endif // USE_GRACKLE
+
   /* Calculate the rates due to the radiation field. */
  
   if (RadiationFieldCalculateRates(Time+0.5*dtFixed) == FAIL) {
@@ -221,6 +291,48 @@ int grid::ComputeCoolingTime(float *cooling_time)
   /* Call the appropriate FORTRAN routine to do the work. */
 
   if (MultiSpecies) {
+    // printf("Grid_ComputeCoolingTime.C, integer arguments to cool_multi_time:\n");
+    // printf("  in =%"ISYM"\n",GridDimension[0]);
+    // printf("  jn =%"ISYM"\n",GridDimension[1]);
+    // printf("  kn =%"ISYM"\n",GridDimension[2]);
+    // printf("  nratec =%"ISYM"\n",CoolData.NumberOfTemperatureBins);
+    // printf("  iexpand =%"ISYM"\n",ComovingCoordinates);
+    // printf("  imethod =%"ISYM"\n",HydroMethod);
+    // printf("  idual =%"ISYM"\n",DualEnergyFormalism);
+    // printf("  ispecies =%"ISYM"\n",MultiSpecies);
+    // printf("  imetal =%"ISYM"\n",MetalFieldPresent);
+    // printf("  imcool =%"ISYM"\n",MetalCooling);
+    // printf("  idust =%"ISYM"\n",H2FormationOnDust);
+    // printf("  idim =%"ISYM"\n",GridRank);
+    // printf("  is =%"ISYM"\n",GridStartIndex[0]);
+    // printf("  js =%"ISYM"\n",GridStartIndex[1]);
+    // printf("  ks =%"ISYM"\n",GridStartIndex[2]);
+    // printf("  ie =%"ISYM"\n",GridEndIndex[0]);
+    // printf("  je =%"ISYM"\n",GridEndIndex[1]);
+    // printf("  ke =%"ISYM"\n",GridEndIndex[2]);
+    // printf("  ih2co =%"ISYM"\n",CoolData.ih2co);
+    // printf("  ipiht =%"ISYM"\n",CoolData.ipiht);
+    // printf("  igammah =%"ISYM"\n",PhotoelectricHeating);
+    // printf("  n_xe =%"ISYM"\n",CoolData.NumberOfElectronFracBins);
+    // printf("  iradfield =%"ISYM"\n",RadiationFieldType);
+    // printf("  nfreq =%"ISYM"\n",RadiationData.NumberOfFrequencyBins);
+    // printf("  imetalregen =%"ISYM"\n",RadiationFieldRecomputeMetalRates);
+    // printf("  iradshield =%"ISYM"\n",RadiationData.RadiationShield);
+    // printf("  iradtrans =%"ISYM"\n",RadiativeTransfer);
+    // printf("  ih2optical =%"ISYM"\n",H2OpticalDepthApproximation);
+    // printf("  iciecool =%"ISYM"\n",CIECooling);
+    // printf("  icmbTfloor =%"ISYM"\n",CloudyCoolingData.CMBTemperatureFloor);
+    // printf("  iClHeat =%"ISYM"\n",CloudyCoolingData.IncludeCloudyHeating);
+    // printf("  clGridRank =%"ISYM"\n",CloudyCoolingData.CloudyCoolingGridRank);
+    // printf("  clGridDim =%"ISYM", %"ISYM", %"ISYM", %"ISYM", %"ISYM"\n",
+    // 	   CloudyCoolingData.CloudyCoolingGridDimension[0],
+    // 	   CloudyCoolingData.CloudyCoolingGridDimension[1],
+    // 	   CloudyCoolingData.CloudyCoolingGridDimension[2],
+    // 	   CloudyCoolingData.CloudyCoolingGridDimension[3],
+    // 	   CloudyCoolingData.CloudyCoolingGridDimension[4]);
+    // printf("  clDataSize =%"ISYM"\n\n",CloudyCoolingData.CloudyDataSize);
+    
+
     FORTRAN_NAME(cool_multi_time)(
        density, totalenergy, gasenergy, velocity1, velocity2, velocity3,
        BaryonField[DeNum], BaryonField[HINum], BaryonField[HIINum],

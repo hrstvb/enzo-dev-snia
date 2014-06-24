@@ -505,7 +505,7 @@ int CosmologySimulationInitialize(FILE *fptr, FILE *Outfptr,
  
       // Add ghost zones
  
-      CosmologySimulationGridDimension[gridnum][dim] += 2*DEFAULT_GHOST_ZONES;
+      CosmologySimulationGridDimension[gridnum][dim] += 2*NumberOfGhostZones;
     }
  
     // Create a new subgrid and initialize it
@@ -546,7 +546,7 @@ int CosmologySimulationInitialize(FILE *fptr, FILE *Outfptr,
  
     for (dim = 0; dim < MetaData.TopGridRank; dim++)
       CosmologySimulationGridDimension[gridnum][dim] -=
-	2*DEFAULT_GHOST_ZONES;
+	2*NumberOfGhostZones;
  
   } // end: loop over gridnums
  
@@ -776,6 +776,29 @@ int CosmologySimulationInitialize(FILE *fptr, FILE *Outfptr,
   for (j = 0; j < i; j++)
     DataUnits[j] = NULL;
  
+  if ( UseMHDCT ){
+      MHDcLabel[0] = "Bx";
+      MHDcLabel[1] = "By";
+      MHDcLabel[2] = "Bz";
+
+      MHDLabel[0] = "BxF";
+      MHDLabel[1] = "ByF";
+      MHDLabel[2] = "BzF";
+
+      MHDeLabel[0] = "Ex";
+      MHDeLabel[1] = "Ey";
+      MHDeLabel[2] = "Ez";
+
+      MHDUnits[0] = "None";
+      MHDUnits[1] = "None";
+      MHDUnits[2] = "None";
+
+      MHDeUnits[0] = "None";
+      MHDeUnits[1] = "None";
+      MHDeUnits[2] = "None";
+  }
+
+
   // Write parameters to parameter output file
  
   if (MyProcessorNumber == ROOT_PROCESSOR) {

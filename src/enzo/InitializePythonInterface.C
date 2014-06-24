@@ -66,16 +66,30 @@ static PyMethodDef _EnzoModuleMethods[] = {
   {NULL, NULL, 0, NULL}
 };
 
+int enzo_import_numpy()
+{
+    import_array1(FAIL);
+    return SUCCESS;
+}
+
 int InitializePythonInterface(int argc, char *argv[])
 {
 #undef int
   static int PythonInterpreterInitialized = 0;
+  PyObject *modstring, *mod;
   if(PythonInterpreterInitialized == 0){
     Py_SetProgramName("embed_enzo");
-    Py_Initialize();
+    Py_InitializeEx(0);
+    if (!Py_IsInitialized()) ENZO_FAIL("Couldn't initialize Python!");
     PySys_SetArgv(argc, argv);
-    import_array1(FAIL);
+    int rv = enzo_import_numpy();
+    if (rv == FAIL) {
+        _import_array();
+        PyErr_PrintEx(0);
+        ENZO_FAIL("Couldn't import numpy.  Dying!");
+    }
     PyRun_SimpleString("import sys\nsys.path.insert(0,'.')\nsys._parallel = True\n");
+    PyRun_SimpleString("import gc\n");
     PythonInterpreterInitialized = 1;
   }
   static int PythonEnzoModuleInitialized = 0;
@@ -248,6 +262,13 @@ void ExportParameterFile(TopGridData *MetaData, FLOAT CurrentTime, FLOAT OldTime
   tgd2 = PyLong_FromLong((long) MetaData->TopGridDims[2]);
   tgd_tuple = PyTuple_Pack(3, tgd0, tgd1, tgd2);
   PyDict_SetItemString(yt_parameter_file, "TopGridDimensions", tgd_tuple);
+  Py_XDECREF(tgd_tuple); Py_XDECREF(tgd0); Py_XDECREF(tgd1); Py_XDECREF(tgd2);
+
+  tgd0 = PyLong_FromLong((long) MetaData->LeftFaceBoundaryCondition[0]);
+  tgd1 = PyLong_FromLong((long) MetaData->LeftFaceBoundaryCondition[1]);
+  tgd2 = PyLong_FromLong((long) MetaData->LeftFaceBoundaryCondition[2]);
+  tgd_tuple = PyTuple_Pack(3, tgd0, tgd1, tgd2);
+  PyDict_SetItemString(yt_parameter_file, "LeftFaceBoundaryCondition", tgd_tuple);
   Py_XDECREF(tgd_tuple); Py_XDECREF(tgd0); Py_XDECREF(tgd1); Py_XDECREF(tgd2);
 
   /* Do the conversion factors */

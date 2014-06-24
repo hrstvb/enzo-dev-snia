@@ -27,8 +27,8 @@
 #include <unistd.h>
  
 #define DEFINE_STORAGE
+#include "EnzoTiming.h"
 #include "ErrorExceptions.h"
-#include "svn_version.def"
 #include "performance.h"
 #include "macros_and_parameters.h"
 #include "typedefs.h"
@@ -46,10 +46,14 @@
 #include "communication.h"
 #include "CommunicationUtilities.h"
 #include "EventHooks.h"
+#ifdef ECUDA
+#include "CUDAUtil.h"
+#endif
 #ifdef TRANSFER
 #include "PhotonCommunication.h"
 #include "ImplicitProblemABC.h"
 #endif
+#include "DebugTools.h"
 #undef DEFINE_STORAGE
 #ifdef USE_PYTHON
 int InitializePythonInterface(int argc, char **argv);
@@ -70,6 +74,8 @@ int ReadAllData(char *filename, HierarchyEntry *TopGrid, TopGridData &tgd,
 int Group_ReadAllData(char *filename, HierarchyEntry *TopGrid, TopGridData &tgd,
 		      ExternalBoundary *Exterior, float *Initialdt,
 		      bool ReadParticlesOnly=false);
+
+int  MHDCT_EnergyToggle(HierarchyEntry &TopGrid, TopGridData &MetaData, ExternalBoundary *Exterior, LevelHierarchyEntry *LevelArray[]);
 
 int EvolveHierarchy(HierarchyEntry &TopGrid, TopGridData &tgd,
 		    ExternalBoundary *Exterior, 
@@ -212,7 +218,7 @@ int OutputCoolingTimeOnly(char *ParameterFile,
 
 
 void CommunicationAbort(int);
-int ENZO_OptionsinEffect(void);
+void auto_show_compile_options(void);
 int FOF(TopGridData *MetaData, LevelHierarchyEntry *LevelArray[], 
 	int WroteData=1, int FOFOnly=FALSE);
 
@@ -249,7 +255,6 @@ void PrintMemoryUsage(char *str);
 Eint32 MAIN_NAME(Eint32 argc, char *argv[])
 {
 
-
   int i;
 
   // Initialize Communications
@@ -273,21 +278,14 @@ Eint32 MAIN_NAME(Eint32 argc, char *argv[])
   int int_argc;
   int_argc = argc;
  
- //  if (MyProcessorNumber == ROOT_PROCESSOR &&
-//       ENZO_SVN_REVISION != 0) {
-//     printf("=========================\n");
-//     printf("Enzo SVN Branch   %s\n",ENZO_SVN_BRANCH);
-//     printf("Enzo SVN Revision %s\n",ENZO_SVN_REVISION);
-//     printf("=========================\n");
-//     fflush(stdout);
-//   }
-  // Performance Monitoring
-
 #ifdef USE_MPI
   double t_init0, t_init1;
 
   t_init0 = MPI_Wtime();
 #endif /* USE_MPI */
+
+  // Create enzo timer
+  enzo_timer = new enzo_timing::enzo_timer();
 
 #ifdef USE_LCAPERF
 
@@ -338,8 +336,8 @@ Eint32 MAIN_NAME(Eint32 argc, char *argv[])
   ExternalBoundaryValueIO = FALSE;
 #endif
 
-  ENZO_OptionsinEffect();
-
+  if (MyProcessorNumber == ROOT_PROCESSOR)
+    auto_show_compile_options();
 
   // Main declarations
  
@@ -464,7 +462,7 @@ Eint32 MAIN_NAME(Eint32 argc, char *argv[])
  
   // If we need to read the parameter file as a restart file, do it now
  
-  if (restart || OutputAsParticleDataFlag || extract || InformationOutput || project  ||  velanyl) {
+  if (restart || OutputAsParticleDataFlag || extract || InformationOutput || project  ||  velanyl || WritePotentialOnly) {
  
     SetDefaultGlobalValues(MetaData);
  
@@ -720,6 +718,15 @@ Eint32 MAIN_NAME(Eint32 argc, char *argv[])
 
   }
 
+#ifdef ECUDA
+  if (UseCUDA) {
+    if (InitGPU(MyProcessorNumber) != SUCCESS) {
+      printf("InitGPU failed\n");
+      exit(1);
+    }
+  }
+#endif
+
   /* Initialize the radiative transfer */
 
 #ifdef TRANSFER
@@ -738,8 +745,9 @@ Eint32 MAIN_NAME(Eint32 argc, char *argv[])
   InitializePythonInterface(argc, argv);
 #endif 
 
+  MHDCT_EnergyToggle(TopGrid, MetaData, &Exterior, LevelArray);
+
   // Call the main evolution routine
- 
   if (debug) fprintf(stderr, "INITIALDT ::::::::::: %16.8e\n", Initialdt);
   try {
   if (EvolveHierarchy(TopGrid, MetaData, &Exterior, 

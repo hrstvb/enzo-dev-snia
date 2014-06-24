@@ -18,6 +18,10 @@
 #include "RadiationFieldData.h"
 #include "TestProblemData.h"
 
+#ifdef USE_GRACKLE
+#include <grackle.h>
+#endif
+
 /* These are the different types of baryon fields. */
 
 #ifdef SMALL_INTS
@@ -30,6 +34,7 @@ typedef int star_type;
 typedef int enum_type;
 typedef int staggering;
 typedef int fieldtype;
+typedef int mhd_ct_method;
 #endif
 
 #ifdef LARGE_INTS
@@ -42,6 +47,7 @@ typedef long_int star_type;
 typedef long_int enum_type;
 typedef long_int staggering;
 typedef long_int fieldtype;
+typedef int mhd_ct_method;
 #endif
 
 const field_type 
@@ -224,7 +230,9 @@ const hydro_method
   Zeus_Hydro           = 2,
   HD_RK                = 3,
   MHD_RK               = 4,
-  HydroMethodUndefined = 5;
+  NoHydro              = 5, 
+  MHD_Li             = 6,
+  HydroMethodUndefined = 7;
 
 // enum hydro_method {PPM_DirectEuler, PPM_LagrangeRemap, Zeus_Hydro};
 
@@ -243,6 +251,13 @@ const enum_type Isotropic = 1, Beamed = -2, Episodic = -3;
 
 /* These are the different types of poisson cleaining boundary conditions. */
 //enum{Neumann, Dirichlet};
+
+const mhd_ct_method 
+  CT_None = 0,
+  CT_BalsaraSpicer = 1,
+  CT_Athena_LF = 2,
+  CT_Athena_Switch = 3,
+  CT_Biermann = 4;
 
 /* Definitions for streaming format */
 

@@ -65,7 +65,6 @@ grid::~grid()
     delete [] OldBaryonField[i];
     delete [] InterpolatedField[i];
   }
-   delete [] YT_TemperatureField;
 
 #ifdef SAB
   for (i = 0; i < MAX_DIMENSION; i++) {
@@ -115,5 +114,38 @@ grid::~grid()
     WriteListOfInts(stdout, GridRank, GridDimension);
   }
 */
+
+  //MHD stuff 
  
+  if( UseMHDCT ){
+    for(i=0;i<3;i++){
+
+      if(MagneticField[i] != NULL ){
+	delete MagneticField[i];
+	MagneticField[i] = NULL;
+      }
+      if(OldMagneticField[i] != NULL ){
+	delete OldMagneticField[i];
+	OldMagneticField[i] = NULL;
+      }
+
+      if( CenteredB[i] != NULL ){
+	delete CenteredB[i];
+	CenteredB[i] = NULL;
+      }
+
+      if(ElectricField[i] != NULL){
+	delete ElectricField[i];
+	ElectricField[i] = NULL;
+      }
+
+      if(AvgElectricField[i] != NULL){
+	delete AvgElectricField[i];
+	AvgElectricField[i] = NULL;
+      }
+
+    }
+
+  }
+
 }
