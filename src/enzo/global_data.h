@@ -487,6 +487,7 @@ EXTERN int First_Pass;
 EXTERN int UnigridTranspose;
 EXTERN int NumberOfRootGridTilesPerDimensionPerProcessor;
 EXTERN int CosmologySimulationNumberOfInitialGrids;
+EXTERN int UserDefinedRootGridLayout[3];
 
 /* Parameters that control density dex output */
 
@@ -575,7 +576,7 @@ EXTERN float MinimumShearForRefinement;
 /* For CellFlaggingMethod = 9,   
    Whether to use the old method for calculating shear refinement.    */
 
-EXTERN float OldShearMethod;
+EXTERN int OldShearMethod;
 
 /* For CellFlaggingMethod = 11,
    The number of cells by which the Resistive length abs(B)/abs(curl(B)) 
@@ -953,6 +954,7 @@ EXTERN int MoveParticlesBetweenSiblings;
 
 EXTERN int ParticleSplitterIterations;
 EXTERN float ParticleSplitterChildrenParticleSeparation;
+EXTERN int ParticleSplitterRandomSeed;
 
 /* Magnetic Field Resetter */
 
@@ -1021,7 +1023,6 @@ EXTERN int WriteAcceleration;
 EXTERN int TracerParticlesAddToRestart;// forces addition of tracer particles to already initialized simulations
 EXTERN int MHD_ProjectThisFace[3]; //Used for determining face projection/communication needs for 
                                    //face centered fields
-EXTERN int ProcessorTopology[3]; //user define processor topology.
 EXTERN float CT_AthenaDissipation;
 EXTERN int MHD_WriteElectric;
 EXTERN float tiny_pressure;
