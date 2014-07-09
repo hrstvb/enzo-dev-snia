@@ -503,7 +503,8 @@ gradient force to gravitational force for one-zone collapse test. */
 
 /* Baryons: compute the pressure at the requested time. */
 
-   int ComputePressure(FLOAT time, float *pressure);
+   int ComputePressure(FLOAT time, float *pressure,
+                      float MinimumSupportEnergyCoefficient=0);
 
 /* Baryons: compute the pressure at the requested time using the dual energy
             formalism. */
@@ -1701,9 +1702,10 @@ int CreateParticleTypeGrouping(hid_t ptype_dset,
 /* PPM Direct Euler Solver. */
 
 int SolvePPM_DE(int CycleNumber, int NumberOfSubgrids, 
-		fluxes *SubgridFluxes[], float *CellWidthTemp[], 
-		Elong_int GridGlobalStart[], int GravityOn, 
-		int NumberOfColours, int colnum[]);
+                fluxes *SubgridFluxes[], float *CellWidthTemp[],
+                Elong_int GridGlobalStart[], int GravityOn,
+                int NumberOfColours, int colnum[],
+                float MinimumSupportEnergyCoefficient);
 
 int xEulerSweep(int k, int NumberOfSubgrids, fluxes *SubgridFluxes[], 
 		Elong_int GridGlobalStart[], float *CellWidthTemp[], 
@@ -2161,7 +2163,8 @@ int zEulerSweep(int j, int NumberOfSubgrids, fluxes *SubgridFluxes[],
 				      float V1Const, float V2Const,
 				      float IEConstIn, float IEConstOut, 
 				      float EgConst, float HMassFrac, 
-				      float InitFracHII, float ClumpCenterX0, 
+				      float InitFracHII, float InitFracHeII, 
+				      float InitFracHeIII, float ClumpCenterX0, 
 				      float ClumpCenterX1, float ClumpCenterX2, 
 				      float ClumpRadius, int local);
 
@@ -2171,13 +2174,17 @@ int zEulerSweep(int j, int NumberOfSubgrids, fluxes *SubgridFluxes[],
 				      float DensityCenter1, float DensityCenter2, 
 				      float V0Const, float V1Const, 
 				      float V2Const, float IEConst, 
-				      float EgConst, float InitFracHII, int local);
+				      float EgConst, float HMassFrac, 
+				      float InitFracHII, float InitFracHeII, 
+				      float InitFracHeIII, int local);
 
   /* FLD Radiation test problem: cosmological HII ioniztion (SUCCESS or FAIL) */
   int CosmoIonizationInitializeGrid(int NumChem, float VxConst, float VyConst, 
 				    float VzConst, float IEConst, 
-				    float EgConst, float InitFracHII, 
-				    float OmegaBaryonNow, int local);
+				    float EgConst, float HMassFrac, 
+				    float InitFracHII, float InitFracHeII, 
+				    float InitFracHeIII, float OmegaBaryonNow, 
+				    int local);
 
   /* FLD Radiation test problem: stream test (SUCCESS or FAIL) */
   int RadHydroStreamTestInitializeGrid(float DensityConst, float EgConst,
@@ -2300,6 +2307,12 @@ int zEulerSweep(int j, int NumberOfSubgrids, fluxes *SubgridFluxes[],
 /* Particle splitter routine. */
 
   int ParticleSplitter(int level);
+
+  int CreateChildParticles(float dx, int NumberOfParticles, float *ParticleMass,
+			   int *ParticleType, FLOAT *ParticlePosition[],
+			   float *ParticleVelocity[], float *ParticleAttribute[],
+			   FLOAT *CellLeftEdge[], int *GridDimension, 
+			   int MaximumNumberOfNewParticles, int *NumberOfNewParticles);
 
 /* Magnetic field resetting routine. */
 

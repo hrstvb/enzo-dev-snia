@@ -375,8 +375,6 @@ int ReadParameterFile(FILE *fptr, TopGridData &MetaData, float *Initialdt)
       {
 	if (dim > MAX_STATIC_REGIONS-1) 
 	  ENZO_VFAIL("MultiRefineRegion number %"ISYM" (MAX_STATIC_REGIONS) > MAX allowed\n", dim);
-	if (int_dummy > MaximumRefinementLevel)
-	  ENZO_VFAIL("MultiRefineRegionMaximumLevel %"ISYM"  > MaximumRefinementLevel\n", int_dummy);
 	ret++;
 	MultiRefineRegionMaximumLevel[dim] = int_dummy;
       }
@@ -660,7 +658,9 @@ int ReadParameterFile(FILE *fptr, TopGridData &MetaData, float *Initialdt)
     ret += sscanf(line, "Unigrid = %"ISYM, &Unigrid);
     ret += sscanf(line, "UnigridTranspose = %"ISYM, &UnigridTranspose);
     ret += sscanf(line, "NumberOfRootGridTilesPerDimensionPerProcessor = %"ISYM, &NumberOfRootGridTilesPerDimensionPerProcessor);
- 
+    ret += sscanf(line, "UserDefinedRootGridLayout = %"ISYM" %"ISYM" %"ISYM, &UserDefinedRootGridLayout[0],
+                  &UserDefinedRootGridLayout[1], &UserDefinedRootGridLayout[2]);
+
     ret += sscanf(line, "PartitionNestedGrids = %"ISYM, &PartitionNestedGrids);
  
     ret += sscanf(line, "ExtractFieldsOnly = %"ISYM, &ExtractFieldsOnly);
@@ -1134,8 +1134,6 @@ int ReadParameterFile(FILE *fptr, TopGridData &MetaData, float *Initialdt)
     ret += sscanf(line, "WriteBoundary          = %"ISYM, &WriteBoundary);
     ret += sscanf(line,"TracerParticlesAddToRestart = %"ISYM,&TracerParticlesAddToRestart);
     ret += sscanf(line,"RefineByJeansLengthUnits = %"ISYM,&RefineByJeansLengthUnits);
-    ret += sscanf(line, "ProcessorTopology      = %"ISYM" %"ISYM" %"ISYM,
-		  ProcessorTopology,ProcessorTopology+1,ProcessorTopology+2);
 
     ret += sscanf(line,"CT_AthenaDissipation = %"FSYM,&CT_AthenaDissipation);
     ret += sscanf(line,"MHD_WriteElectric = %"ISYM,&MHD_WriteElectric);
@@ -1163,6 +1161,8 @@ int ReadParameterFile(FILE *fptr, TopGridData &MetaData, float *Initialdt)
 		  &MoveParticlesBetweenSiblings);
     ret += sscanf(line, "ParticleSplitterIterations = %"ISYM,
 		  &ParticleSplitterIterations);
+    ret += sscanf(line, "ParticleSplitterRandomSeed = %"ISYM,
+		  &ParticleSplitterRandomSeed);
     ret += sscanf(line, "ParticleSplitterChildrenParticleSeparation = %"FSYM,
 		  &ParticleSplitterChildrenParticleSeparation);
     ret += sscanf(line, "ResetMagneticField = %"ISYM,
@@ -1261,6 +1261,13 @@ int ReadParameterFile(FILE *fptr, TopGridData &MetaData, float *Initialdt)
   if ((HierarchyFileOutputFormat < 0) || (HierarchyFileOutputFormat > 2))
     ENZO_FAIL("Invalid HierarchyFileOutputFormat. Must be 0 (HDF5), 1 (ASCII), or 2 (both).")
   
+  // While we're examining the hierarchy, check that the MultiRefinedRegion doesn't demand more refinement that we've got                                                                                     
+  for (int ireg = 0; ireg < MAX_STATIC_REGIONS; ireg++)
+    if (MultiRefineRegionGeometry[ireg] >= 0)
+      if (MultiRefineRegionMaximumLevel[ireg] > MaximumRefinementLevel)
+	ENZO_VFAIL("MultiRefineRegionMaximumLevel[%"ISYM"] = %"ISYM"  > MaximumRefinementLevel\n", ireg, MultiRefineRegionMaximumLevel[ireg]);
+
+
 
   /* clean up */
  
