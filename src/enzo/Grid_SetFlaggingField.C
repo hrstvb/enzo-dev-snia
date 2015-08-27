@@ -37,12 +37,30 @@ int grid::SetFlaggingField(int &NumberOfFlaggedCells, int level)
   /* declarations */
  
   NumberOfFlaggedCells = INT_UNDEFINED;
+
+  /* For must-refine particles, restrict refinement to where they
+     exist.  This is already done in Grid_SetParticleMassFlaggingField
+     for simulations with particle-only criteria, and we don't have to
+     consider this restriction here. */
+  
+  int method, pmethod = INT_UNDEFINED;
+  bool ParticleRefinementOnly, RestrictFlaggingToMustRefineParticles;
+  ParticleRefinementOnly = true;
+  for (method = 0; method < MAX_FLAGGING_METHODS; method++)
+    ParticleRefinementOnly &= (CellFlaggingMethod[method] == 4 ||
+			       CellFlaggingMethod[method] == 8 ||
+			       CellFlaggingMethod[method] == INT_UNDEFINED);
+  RestrictFlaggingToMustRefineParticles =
+    (level == MustRefineParticlesRefineToLevel) &&
+    (MustRefineParticlesCreateParticles > 0) && (!ParticleRefinementOnly);
  
   /***********************************************************************/
   /* beginning of Cell flagging criterion routine                        */
 
-  int method;
   for (method = 0; method < MAX_FLAGGING_METHODS; method++) {
+  if (level >= MustRefineParticlesRefineToLevel ||
+      CellFlaggingMethod[method] == 4 ||
+      MustRefineParticlesCreateParticles == 0) {
  
   switch (CellFlaggingMethod[method]) {
  
@@ -82,7 +100,7 @@ int grid::SetFlaggingField(int &NumberOfFlaggedCells, int level)
     /* flag all points that need extra resolution (FlagCellsToBeRefinedByMass
        return the number of flagged cells). */
  
-    NumberOfFlaggedCells = this->FlagCellsToBeRefinedByMass(level, method);
+    NumberOfFlaggedCells = this->FlagCellsToBeRefinedByMass(level, method, FALSE);
     if (NumberOfFlaggedCells < 0) {
       ENZO_FAIL("Error in grid->FlagCellsToBeRefinedByMass (2).");
     }
@@ -103,14 +121,20 @@ int grid::SetFlaggingField(int &NumberOfFlaggedCells, int level)
   case 4:
 
     /* All of the calculation of particle mass flagging fields are
-       done in grid::SetParticleMassFlaggingField now. */
+       done in grid::SetParticleMassFlaggingField now.
  
-    /* Flag all points that need extra resolution (FlagCellsToBeRefinedByMass
-       return the number of flagged cells). */
- 
-    NumberOfFlaggedCells = this->FlagCellsToBeRefinedByMass(level, method);
-    if (NumberOfFlaggedCells < 0) {
-      ENZO_FAIL("Error in grid->FlagCellsToBeRefinedByMass (4).");
+       Flag all points that need extra resolution (FlagCellsToBeRefinedByMass
+       return the number of flagged cells).
+
+       Special case: (MRPCreateParticles > 0) && (level == MRPRefineToLevel).  
+       See note below the case-statement. */
+
+    pmethod = method;
+    if (!RestrictFlaggingToMustRefineParticles) {
+      NumberOfFlaggedCells = this->FlagCellsToBeRefinedByMass(level, method, FALSE);
+      if (NumberOfFlaggedCells < 0) {
+	ENZO_FAIL("Error in grid->FlagCellsToBeRefinedByMass (4).");
+      }
     }
     break;
  
@@ -265,15 +289,31 @@ int grid::SetFlaggingField(int &NumberOfFlaggedCells, int level)
  
   default:
     ENZO_VFAIL("CellFlaggingMethod[%"ISYM"] = %"ISYM" unknown\n", method,
-	    CellFlaggingMethod[method])
+               CellFlaggingMethod[method])
  
-  }
+  } // ENDSWITCH
+  } // ENDIF must-refine
 
   } // ENDFOR methods
  
   /* End of Cell flagging criterion routine                              */
   /***********************************************************************/
  
+  /* NOTE (JHW 06/2014) If using MustRefineParticlesCreateParticles >
+     0, then we only flag cells for refinement if they are already
+     flagged by must-refine particles on level ==
+     MustRefineParticlesRefineToLevel. Thus, the must-refine (and
+     other) particle flagging must be done separate from the other
+     criterion in order to setup an AND-clause with the refinement and
+     must-refine particles. */
+  
+  if (RestrictFlaggingToMustRefineParticles && pmethod != INT_UNDEFINED) {
+    NumberOfFlaggedCells = this->FlagCellsToBeRefinedByMass(level, pmethod, TRUE);
+    if (NumberOfFlaggedCells < 0) {
+      ENZO_FAIL("Error in grid->FlagCellsToBeRefinedByMass (4).");
+    }
+  }
+    
   if (NumberOfFlaggedCells == INT_UNDEFINED) {
     ENZO_FAIL("No valid CellFlaggingMethod specified.");
   }
@@ -283,11 +323,10 @@ int grid::SetFlaggingField(int &NumberOfFlaggedCells, int level)
   timer[4] += NumberOfFlaggedCells;
 #endif /* MPI_INSTRUMENTATION */
  
-  if (debug1)
-
+  if (debug1 && NumberOfFlaggedCells > 0)
     printf("SetFlaggingField[method = %"ISYM"]: NumberOfFlaggedCells = %"ISYM".\n",
 	   method, NumberOfFlaggedCells);
  
   return SUCCESS;
  
-}
+    }

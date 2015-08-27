@@ -207,6 +207,8 @@ int SetDefaultGlobalValues(TopGridData &MetaData)
   MinimumEfficiency         = 0.2;               // between 0-1, usually ~0.1
   MinimumSubgridEdge        = 6;                 // min for acceptable subgrid
   MaximumSubgridSize        = 32768;             // max for acceptable subgrid
+  CriticalGridRatio         = 3.0;              // max grid ratio
+
   SubgridSizeAutoAdjust     = TRUE; // true for adjusting maxsize and minedge
   OptimalSubgridsPerProcessor = 16;    // Subgrids per processor
   NumberOfBufferZones       = 1;
@@ -237,6 +239,8 @@ int SetDefaultGlobalValues(TopGridData &MetaData)
     PointSourceGravityPosition[dim] = 0.0;
     MustRefineRegionLeftEdge[dim] = 0.0;
     MustRefineRegionRightEdge[dim] = 1.0;
+    MustRefineParticlesLeftEdge[dim] = 0.0;
+    MustRefineParticlesRightEdge[dim] = 0.0;
   }
 
   MultiRefineRegionMaximumOuterLevel = INT_UNDEFINED;
@@ -496,6 +500,7 @@ int SetDefaultGlobalValues(TopGridData &MetaData)
   ShockwaveRefinementMinVelocity = 1.0e7; //1000 km/s
   ShockwaveRefinementMaxLevel = 0; 
   MustRefineParticlesRefineToLevel = 0;
+  MustRefineParticlesCreateParticles = 0;
   MustRefineParticlesRefineToLevelAutoAdjust = FALSE;
   MustRefineParticlesMinimumMass   = 0.0;
   ComovingCoordinates              = FALSE;        // No comoving coordinates

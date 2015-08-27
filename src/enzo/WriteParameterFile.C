@@ -325,6 +325,8 @@ int WriteParameterFile(FILE *fptr, TopGridData &MetaData, char *name = NULL)
 	  OptimalSubgridsPerProcessor);
   fprintf(fptr, "MinimumSubgridEdge             = %"ISYM"\n", MinimumSubgridEdge);
   fprintf(fptr, "MaximumSubgridSize             = %"ISYM"\n", MaximumSubgridSize);
+  fprintf(fptr, "CriticalGridRatio              = %"GSYM"\n", CriticalGridRatio);
+
   fprintf(fptr, "NumberOfBufferZones            = %"ISYM"\n\n", NumberOfBufferZones);
 
   fprintf(fptr, "FastSiblingLocatorEntireDomain      = %"ISYM"\n", 
@@ -354,6 +356,11 @@ int WriteParameterFile(FILE *fptr, TopGridData &MetaData, char *name = NULL)
   fprintf(fptr, "MustRefineRegionRightEdge  = ");
   WriteListOfFloats(fptr, MetaData.TopGridRank, MustRefineRegionRightEdge);
   fprintf(fptr, "RefineRegionTimeType   = %d\n", RefineRegionTimeType);
+  fprintf(fptr, "MustRefineParticlesLeftEdge   = ");
+  WriteListOfFloats(fptr, MetaData.TopGridRank, MustRefineParticlesLeftEdge);
+  fprintf(fptr, "MustRefineParticlesRightEdge  = ");
+  WriteListOfFloats(fptr, MetaData.TopGridRank, MustRefineParticlesRightEdge);
+  fprintf(fptr, "\n");
   if (RefineRegionFile != NULL)
     fprintf(fptr, "RefineRegionFile       = %s\n", RefineRegionFile);
   fprintf(fptr, "\n");
@@ -548,6 +555,8 @@ int WriteParameterFile(FILE *fptr, TopGridData &MetaData, char *name = NULL)
 	  RefineByResistiveLengthSafetyFactor);
   fprintf(fptr, "MustRefineParticlesRefineToLevel = %"ISYM"\n",
           MustRefineParticlesRefineToLevel);
+  fprintf(fptr, "MustRefineParticlesCreateParticles = %"ISYM"\n",
+          MustRefineParticlesCreateParticles);
   fprintf(fptr, "MustRefineParticlesRefineToLevelAutoAdjust = %"ISYM"\n",
           MustRefineParticlesRefineToLevelAutoAdjust);
   fprintf(fptr, "MustRefineParticlesMinimumMass = %"FSYM"\n",
