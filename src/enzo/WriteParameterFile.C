@@ -374,7 +374,10 @@ int WriteParameterFile(FILE *fptr, TopGridData &MetaData, char *name = NULL)
     if (DataLabel[dim]) {
       if ((strstr(DataLabel[dim], "Density") != NULL) ||
 	  (strstr(DataLabel[dim], "Colour") != NULL))
-	fprintf(fptr, "#DataCGSConversionFactor[%"ISYM"] = %"GOUTSYM"\n", dim, DensityUnits);
+      if( strstr(DataLabel[dim], "CR" ) != NULL )
+          fprintf(fptr, "#DataCGSConversionFactor[%"ISYM"] = %"GSYM"\n", dim, VelocityUnits*VelocityUnits*DensityUnits);
+      else
+        fprintf(fptr, "#DataCGSConversionFactor[%"ISYM"] = %"GSYM"\n", dim, DensityUnits);
       if (strstr(DataLabel[dim], "velocity") != NULL)
 	fprintf(fptr, "#DataCGSConversionFactor[%"ISYM"] = %"GOUTSYM"\n", dim, VelocityUnits);
     }
@@ -394,6 +397,19 @@ int WriteParameterFile(FILE *fptr, TopGridData &MetaData, char *name = NULL)
 	  PointSourceGravityConstant);
   fprintf(fptr, "PointSourceGravityCoreRadius = %"GSYM"\n\n",
 	  PointSourceGravityCoreRadius);
+
+  fprintf(fptr, "DiskGravity                        = %"ISYM"\n",DiskGravity);
+  fprintf(fptr, "DiskGravityPosition                = ");
+  WriteListOfFloats(fptr, MetaData.TopGridRank, DiskGravityPosition);
+  fprintf(fptr, "DiskGravityAngularMomentum         = ");
+  WriteListOfFloats(fptr, MetaData.TopGridRank, DiskGravityAngularMomentum);
+  fprintf(fptr, "DiskGravityStellarDiskMass         = %"GSYM"\n",DiskGravityStellarDiskMass);
+  fprintf(fptr, "DiskGravityStellarDiskScaleHeightR = %"GSYM"\n",DiskGravityStellarDiskScaleHeightR);
+  fprintf(fptr, "DiskGravityStellarDiskScaleHeightz = %"GSYM"\n",DiskGravityStellarDiskScaleHeightz);
+  fprintf(fptr, "DiskGravityStellarBulgeMass        = %"GSYM"\n",DiskGravityStellarBulgeMass);
+  fprintf(fptr, "DiskGravityStellarBulgeR           = %"GSYM"\n",DiskGravityStellarBulgeR);
+  fprintf(fptr, "DiskGravityDarkMatterR             = %"GSYM"\n",DiskGravityDarkMatterR);
+  fprintf(fptr, "DiskGravityDarkMatterDensity       = %"GSYM"\n",DiskGravityDarkMatterDensity);
 
   fprintf(fptr, "ExternalGravity           = %"ISYM"\n",ExternalGravity); 
   fprintf(fptr, "ExternalGravityConstant     = %"FSYM"\n",ExternalGravityConstant);
@@ -434,6 +450,19 @@ int WriteParameterFile(FILE *fptr, TopGridData &MetaData, char *name = NULL)
 	  HaloFinderTimestep);
   fprintf(fptr, "HaloFinderLastTime             = %"PSYM"\n\n", 
 	  HaloFinderLastTime);
+
+  fprintf(fptr, "GalaxySimulationRPSWind            = %"ISYM"\n",GalaxySimulationRPSWind);
+  fprintf(fptr, "GalaxySimulationRPSWindShockSpeed  = %"GSYM"\n",GalaxySimulationRPSWindShockSpeed);
+  fprintf(fptr, "GalaxySimulationRPSWindDelay       = %"GSYM"\n",GalaxySimulationRPSWindDelay);
+  fprintf(fptr, "GalaxySimulationRPSWindDensity     = %"GSYM"\n",GalaxySimulationRPSWindDensity);
+  fprintf(fptr, "GalaxySimulationRPSWindTotalEnergy = %"GSYM"\n",GalaxySimulationRPSWindTotalEnergy);
+  fprintf(fptr, "GalaxySimulationRPSWindPressure    = %"GSYM"\n",GalaxySimulationRPSWindPressure);
+  fprintf(fptr, "GalaxySimulationRPSWindVelocity    = ");
+  WriteListOfFloats(fptr, MetaData.TopGridRank, GalaxySimulationRPSWindVelocity);
+  fprintf(fptr, "GalaxySimulationPreWindDensity     = %"GSYM"\n",GalaxySimulationPreWindDensity);
+  fprintf(fptr, "GalaxySimulationPreWindTotalEnergy = %"GSYM"\n",GalaxySimulationPreWindTotalEnergy);
+  fprintf(fptr, "GalaxySimulationPreWindVelocity    = ");
+  WriteListOfFloats(fptr, MetaData.TopGridRank, GalaxySimulationPreWindVelocity);
  
   fprintf(fptr, "GreensFunctionMaxNumber     = %"ISYM"\n", GreensFunctionMaxNumber);
   fprintf(fptr, "GreensFunctionMaxSize       = %"ISYM"\n", GreensFunctionMaxSize);
@@ -476,6 +505,15 @@ int WriteParameterFile(FILE *fptr, TopGridData &MetaData, char *name = NULL)
   fprintf(fptr, "RadiativeTransfer              = %"ISYM"\n", RadiativeTransfer);
   fprintf(fptr, "RadiationXRaySecondaryIon      = %"ISYM"\n", RadiationXRaySecondaryIon);
   fprintf(fptr, "RadiationXRayComptonHeating    = %"ISYM"\n", RadiationXRayComptonHeating);
+  fprintf(fptr, "CRModel                        = %"ISYM"\n", CRModel);
+  fprintf(fptr, "CRDiffusion                    = %"ISYM"\n", CRDiffusion);
+  fprintf(fptr, "CRkappa                        = %"FSYM"\n", CRkappa);
+  fprintf(fptr, "CRCourantSafetyNumber          = %"FSYM"\n", CRCourantSafetyNumber);
+  fprintf(fptr, "CRFeedback                     = %"FSYM"\n", CRFeedback);
+  fprintf(fptr, "CRdensFloor                    = %"FSYM"\n", CRdensFloor);
+  fprintf(fptr, "CRmaxSoundSpeed                = %"FSYM"\n", CRmaxSoundSpeed);
+  fprintf(fptr, "CRgamma                        = %"FSYM"\n", CRgamma);
+  fprintf(fptr, "CosmologySimulationUniformCR   = %"FSYM"\n", CosmologySimulationUniformCR); // FIXME
   fprintf(fptr, "ShockMethod                    = %"ISYM"\n", ShockMethod);
   fprintf(fptr, "ShockTemperatureFloor          = %"FSYM"\n", ShockTemperatureFloor);
   fprintf(fptr, "StorePreShockFields            = %"ISYM"\n", StorePreShockFields);
@@ -514,6 +552,7 @@ int WriteParameterFile(FILE *fptr, TopGridData &MetaData, char *name = NULL)
   
   fprintf(fptr, "VelAnyl                        = %"ISYM"\n", VelAnyl);
   fprintf(fptr, "BAnyl                          = %"ISYM"\n", BAnyl);
+  fprintf(fptr, "WriteExternalAccel             = %"ISYM"\n", WriteExternalAccel);
 
   // Negative number means that it was flagged from the command line.  Don't propagate.
   if (OutputCoolingTime < 0)
