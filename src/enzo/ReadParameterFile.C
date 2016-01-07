@@ -169,6 +169,12 @@ int ReadParameterFile(FILE *fptr, TopGridData &MetaData, float *Initialdt)
            &CurrentDensityOutput);
     ret += sscanf(line, "IncrementDensityOutput = %"FSYM,
            &IncrementDensityOutput);
+    ret += sscanf(line, "StopFirstTimeAtDensity = %"FSYM,
+           &StopFirstTimeAtDensity);
+    ret += sscanf(line, "StopFirstTimeAtMetalEnrichedDensity = %"FSYM,
+           &StopFirstTimeAtMetalEnrichedDensity);
+    ret += sscanf(line, "EnrichedMetalFraction = %"FSYM,
+           &EnrichedMetalFraction);
 
     /* Subcycle directed output */
     ret += sscanf(line, "SubcycleSkipDataDump = %"ISYM, 
@@ -335,6 +341,7 @@ int ReadParameterFile(FILE *fptr, TopGridData &MetaData, float *Initialdt)
 		  &OptimalSubgridsPerProcessor);
     ret += sscanf(line, "MinimumSubgridEdge     = %"ISYM, &MinimumSubgridEdge);
     ret += sscanf(line, "MaximumSubgridSize     = %"ISYM, &MaximumSubgridSize);
+    ret += sscanf(line, "CriticalGridRatio      = %"FSYM, &CriticalGridRatio);
     ret += sscanf(line, "NumberOfBufferZones    = %"ISYM, &NumberOfBufferZones);
     ret += sscanf(line, "FastSiblingLocatorEntireDomain = %"ISYM, &FastSiblingLocatorEntireDomain);
     ret += sscanf(line, "MustRefineRegionMinRefinementLevel = %"ISYM,
@@ -616,6 +623,14 @@ int ReadParameterFile(FILE *fptr, TopGridData &MetaData, float *Initialdt)
 		  &RefineByResistiveLengthSafetyFactor);
     ret += sscanf(line, "MustRefineParticlesRefineToLevel = %"ISYM,
                   &MustRefineParticlesRefineToLevel);
+    ret += sscanf(line, "MustRefineParticlesCreateParticles = %"ISYM,
+                  &MustRefineParticlesCreateParticles);
+    ret += sscanf(line, "MustRefineParticlesLeftEdge  = %"PSYM" %"PSYM" %"PSYM,
+                  MustRefineParticlesLeftEdge, MustRefineParticlesLeftEdge+1, 
+                  MustRefineParticlesLeftEdge+2);
+    ret += sscanf(line, "MustRefineParticlesRightEdge = %"PSYM" %"PSYM" %"PSYM,
+                  MustRefineParticlesRightEdge, MustRefineParticlesRightEdge+1,
+                  MustRefineParticlesRightEdge+2);
     ret += sscanf(line, "MustRefineParticlesRefineToLevelAutoAdjust = %"ISYM,
                   &MustRefineParticlesRefineToLevelAutoAdjust);
     ret += sscanf(line, "MustRefineParticlesMinimumMass = %"FSYM,
@@ -936,6 +951,12 @@ int ReadParameterFile(FILE *fptr, TopGridData &MetaData, float *Initialdt)
 		  &PopIIIColorDensityThreshold);
     ret += sscanf(line, "PopIIIColorMass = %"FSYM,
 		  &PopIIIColorMass);
+    ret += sscanf(line, "PopIIIUseHypernova = %"ISYM,
+		  &PopIIIUseHypernova);
+    ret += sscanf(line, "PopIIISupernovaExplosions = %"ISYM,
+		  &PopIIISupernovaExplosions);
+    ret += sscanf(line, "PopIIIOutputOnFeedback = %"ISYM,
+		  &PopIIIOutputOnFeedback);
 
     ret += sscanf(line, "MBHAccretion = %"ISYM, &MBHAccretion);
     ret += sscanf(line, "MBHAccretionRadius = %"FSYM, &MBHAccretionRadius);
@@ -1198,6 +1219,7 @@ int ReadParameterFile(FILE *fptr, TopGridData &MetaData, float *Initialdt)
  
     if (*dummy != 0) {
       dummy = new char[MAX_LINE_LENGTH];
+      dummy[0] = 0;
       ret++;
     }
  
@@ -1769,18 +1791,8 @@ int ReadParameterFile(FILE *fptr, TopGridData &MetaData, float *Initialdt)
        meantime, just double-check to make sure that if one tries to use the isolated boundary
        conditions when the unigrid transpose stuff is on, the code crashes loudly.
        -- BWO, 26 June 2008 */
-      if (MyProcessorNumber == ROOT_PROCESSOR){
-	fprintf(stderr, "\n\n");
-	fprintf(stderr, "  ************************************************************************\n");
-	fprintf(stderr, "  ****  D'oh!  At present, you cannot use isolated top grid boundary  ****\n");
-	fprintf(stderr, "  ****  conditions with the top grid unigrid bookkeeping scheme.      ****\n");
-	fprintf(stderr, "  ****  Consult Brian O'Shea for the details of this wackiness,       ****\n");
-	fprintf(stderr, "  ****  and in the meantime enzo DISABLED unigrid tranposition!       ****\n");
-	fprintf(stderr, "  ************************************************************************\n");      
-	fprintf(stderr, "\n\n");
-      }
-      UnigridTranspose = FALSE;
-    }
+    ENZO_FAIL("Parameter mismatch: TopGridGravityBoundary = 1 only works with UnigridTranspose = 0");
+  }
 
   /* If the restart dump parameters were set to the previous defaults
      (dtRestartDump = 5 hours), then set back to current default,

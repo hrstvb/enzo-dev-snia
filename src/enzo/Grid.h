@@ -797,7 +797,8 @@ gradient force to gravitational force for one-zone collapse test. */
    aren't local. */
 
    int SetParticleMassFlaggingField(int StartProc=0, int EndProc=0, int level=-1, 
-				    int ParticleMassMethod=-1, int *SendProcs=NULL, 
+				    int ParticleMassMethod=-1, int MustRefineMethod=-1,
+				    int *SendProcs=NULL, 
 				    int NumberOfSends=0);
    int CollectParticleMassFlaggingField(void);
    void ClearParticleMassFlaggingField(void);
@@ -834,7 +835,8 @@ gradient force to gravitational force for one-zone collapse test. */
 
 /* Particles: deposit particles to particle mass flagging field. */
 
-   int DepositMustRefineParticles(int pmethod, int level);
+   int DepositMustRefineParticles(int pmethod, int level,
+				  bool KeepFlaggingField);
 
 /* baryons: add baryon density to mass flaggin field (so the mass flagging
             field contains the mass in the cell (not the density) 
@@ -854,7 +856,7 @@ gradient force to gravitational force for one-zone collapse test. */
      Returns the number of flagged cells.  Returns the number of flagged cells
      (gg #4) */
 
-   int FlagCellsToBeRefinedByMass(int level, int method);
+   int FlagCellsToBeRefinedByMass(int level, int method, int RestrictFlag);
 
 /* Flag all points that require refining by their slope.
      Returns the number of flagged cells.  Returns the number of flagged cells
@@ -899,9 +901,12 @@ gradient force to gravitational force for one-zone collapse test. */
 
    int FlagCellsToBeRefinedByCoolingTime();
 
-/* Flag all cells which are near a must-refine particle. */
+/* Flag particles within the MustRefineParticles region as MustRefine Particles */
+   int MustRefineParticlesFlagInRegion();
 
-   int FlagCellsToBeRefinedByMustRefineParticles();
+/* Flag MustRefine Particles from list */
+
+   int MustRefineParticlesFlagFromList();
 
 /* Flag all cells which are within a user-specified refinement region. */
 
@@ -1340,7 +1345,8 @@ gradient force to gravitational force for one-zone collapse test. */
    int DepositParticlePositions(grid *TargetGrid, FLOAT DepositTime, 
 				int DepositField);
 
-   int DepositParticlePositionsLocal(FLOAT DepositTime, int DepositField);
+   int DepositParticlePositionsLocal(FLOAT DepositTime, int DepositField,
+				     bool BothFlags);
 
 /* Particles: add overlapping ParticleMassField to Target's 
    GravitatingMassField. */
@@ -2000,13 +2006,24 @@ int zEulerSweep(int j, int NumberOfSubgrids, fluxes *SubgridFluxes[],
 			     int   SphereConstantPressure[MAX_SPHERES],
 			     int   SphereSmoothSurface[MAX_SPHERES],
 			     float SphereSmoothRadius[MAX_SPHERES],
+			     float SphereHII[MAX_SPHERES],
+			     float SphereHeII[MAX_SPHERES],
+			     float SphereHeIII[MAX_SPHERES],
+			     float SphereH2I[MAX_SPHERES],
 			     int   SphereUseParticles,
 			     float ParticleMeanDensity,
 			     float UniformVelocity[MAX_DIMENSION],
 			     int   SphereUseColour,
 			     int   SphereUseMetals,
 			     float InitialTemperature, 
-			     float InitialDensity, int level);
+			     float InitialDensity, int level,
+			     float CollapseTestInitialFractionHII, 
+			     float CollapseTestInitialFractionHeII,
+			     float CollapseTestInitialFractionHeIII, 
+			     float CollapseTestInitialFractionHM,
+			     float CollapseTestInitialFractionH2I, 
+			     float CollapseTestInitialFractionH2II);
+
 
 /* Cluster: initialize grid. */
 
@@ -2514,7 +2531,7 @@ int zEulerSweep(int j, int NumberOfSubgrids, fluxes *SubgridFluxes[],
 			float LengthUnits, float VelocityUnits, 
 			float TemperatureUnits, float TimeUnits, double EjectaDensity, 
 			double EjectaMetalDensity, double EjectaThermalEnergy,
-			int &CellsModified);
+			double Q_HI, double sigma_HI, float deltaE, int &CellsModified);
 
   int SubtractAccretedMassFromSphere(Star *cstar, int level, float radius, float DensityUnits,
 				     float LengthUnits, float VelocityUnits, 
