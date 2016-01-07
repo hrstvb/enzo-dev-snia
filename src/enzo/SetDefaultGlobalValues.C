@@ -211,6 +211,8 @@ int SetDefaultGlobalValues(TopGridData &MetaData)
   MinimumEfficiency         = 0.2;               // between 0-1, usually ~0.1
   MinimumSubgridEdge        = 6;                 // min for acceptable subgrid
   MaximumSubgridSize        = 32768;             // max for acceptable subgrid
+  CriticalGridRatio         = 3.0;              // max grid ratio
+
   SubgridSizeAutoAdjust     = TRUE; // true for adjusting maxsize and minedge
   OptimalSubgridsPerProcessor = 16;    // Subgrids per processor
   NumberOfBufferZones       = 1;
@@ -241,6 +243,8 @@ int SetDefaultGlobalValues(TopGridData &MetaData)
     PointSourceGravityPosition[dim] = 0.0;
     MustRefineRegionLeftEdge[dim] = 0.0;
     MustRefineRegionRightEdge[dim] = 1.0;
+    MustRefineParticlesLeftEdge[dim] = 0.0;
+    MustRefineParticlesRightEdge[dim] = 0.0;
   }
 
   MultiRefineRegionMaximumOuterLevel = INT_UNDEFINED;
@@ -286,7 +290,7 @@ int SetDefaultGlobalValues(TopGridData &MetaData)
   ParallelRootGridIO          = FALSE;
   ParallelParticleIO          = FALSE;
   Unigrid                     = FALSE;
-  UnigridTranspose            = FALSE;
+  UnigridTranspose            = 2;
   NumberOfRootGridTilesPerDimensionPerProcessor = 1;
   PartitionNestedGrids        = FALSE;
   ExtractFieldsOnly           = TRUE;
@@ -310,7 +314,11 @@ int SetDefaultGlobalValues(TopGridData &MetaData)
   CurrentDensityOutput             = 999;
   IncrementDensityOutput           = 999;
   CurrentMaximumDensity            = -999;
- 
+  StopFirstTimeAtDensity              = 0.0;
+  StopFirstTimeAtMetalEnrichedDensity = 0.0;
+  CurrentMaximumMetalEnrichedDensity  = -999;
+  EnrichedMetalFraction               = 1.e-8;
+
   CubeDumpEnabled             = 0;
 
 #ifdef STAGE_INPUT
@@ -500,6 +508,7 @@ int SetDefaultGlobalValues(TopGridData &MetaData)
   ShockwaveRefinementMinVelocity = 1.0e7; //1000 km/s
   ShockwaveRefinementMaxLevel = 0; 
   MustRefineParticlesRefineToLevel = 0;
+  MustRefineParticlesCreateParticles = 0;
   MustRefineParticlesRefineToLevelAutoAdjust = FALSE;
   MustRefineParticlesMinimumMass   = 0.0;
   ComovingCoordinates              = FALSE;        // No comoving coordinates
@@ -618,6 +627,9 @@ int SetDefaultGlobalValues(TopGridData &MetaData)
   PopIIISupernovaMustRefineResolution = 32;
   PopIIIColorDensityThreshold      = 1e6;          // times mean total density
   PopIIIColorMass                  = 1e6;          // total mass to color
+  PopIIIUseHypernova               = TRUE;         // TRUE for HN yields, FALSE for CCSN
+  PopIIISupernovaExplosions        = TRUE;         // TRUE for supernova energy injection
+  PopIIIOutputOnFeedback           = FALSE;        // TRUE to output at creation and supernova
   IMFData                          = NULL;
 
   MBHAccretion                     = FALSE;        // 1: Bondi rate, 2: fix temperature, 3: fix rate, 4: Bondi with v_rel=0, 5: Bondi with v_rel=0 and vorticity
