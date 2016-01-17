@@ -104,9 +104,9 @@ int grid::ComputePressure(FLOAT time, float *pressure,
 	  total_energy  = BaryonField[TENum][i];
 	density       = BaryonField[DensNum][i];
 	velocity1     = BaryonField[Vel1Num][i];
-	if (GridRank > 1 || HydroMethod == MHD_Li)
+	if (MaxVelocityIndex > 1)
 	  velocity2   = BaryonField[Vel2Num][i];
-	if (GridRank > 2 || HydroMethod == MHD_Li)
+	if (MaxVelocityIndex > 2)
 	  velocity3   = BaryonField[Vel3Num][i];
 	
 	if (EOSType > 0){
@@ -136,7 +136,7 @@ int grid::ComputePressure(FLOAT time, float *pressure,
 						    velocity2*velocity2 +
 						    velocity3*velocity3);
 
-	    if (HydroMethod == MHD_RK || UseMHDCT) {
+	    if (UseMHD) {
 	      float B2 = pow(BaryonField[B1Num][i],2)
 	        + pow(BaryonField[B2Num][i],2)
 	        + pow(BaryonField[B3Num][i],2);
@@ -182,10 +182,10 @@ int grid::ComputePressure(FLOAT time, float *pressure,
                         coefold*OldBaryonField[DensNum][i];
 	velocity1     = coef   *   BaryonField[Vel1Num][i] +
                         coefold*OldBaryonField[Vel1Num][i];
-	if (GridRank > 1 || UseMHDCT)
+	if (MaxVelocityIndex > 1)
 	  velocity2   = coef   *   BaryonField[Vel2Num][i] +
 	                coefold*OldBaryonField[Vel2Num][i];
-	if (GridRank > 2 || UseMHDCT)
+	if (MaxVelocityIndex > 2)
 	  velocity3   = coef   *   BaryonField[Vel3Num][i] +
 	                coefold*OldBaryonField[Vel3Num][i];
  

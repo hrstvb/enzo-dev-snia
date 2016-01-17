@@ -497,7 +497,7 @@ int grid::SolveHydroEquations(int CycleNumber, int NumberOfSubgrids,
                         fprintf(stderr, "Warning: No CT method used with MHD_Li.\n");
                 break;
             }
-        MHD_Curl( CurlStart,CurlEnd, 1);
+        MHD_UpdateMagneticField(level, NULL, TRUE);
         CenterMagneticField();
 
         MHDCT_ConvertEnergyToSpecificS();
