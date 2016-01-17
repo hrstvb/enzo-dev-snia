@@ -38,7 +38,8 @@ int GetUnits(float *DensityUnits, float *LengthUnits,
 		      float *VelocityUnits, FLOAT Time);
 
 int CollapseMHD3DInitialize(FILE *fptr, FILE *Outfptr, 
-			    HierarchyEntry &TopGrid, TopGridData &MetaData, int SetBaryonFields)
+			    HierarchyEntry &TopGrid, TopGridData &MetaData,
+			    int SetBaryonFields)
 {
    const char *DensName = "Density";
    const char *TEName   = "TotalEnergy";
@@ -398,9 +399,6 @@ int CollapseMHD3DInitialize(FILE *fptr, FILE *Outfptr,
     DataLabel[count++] = (char*) PhiName;
   }
   if (UseMHDCT) {
-      MHDcLabel[0] = "Bx";
-      MHDcLabel[1] = "By";
-      MHDcLabel[2] = "Bz";
 
       MHDLabel[0] = "BxF";
       MHDLabel[1] = "ByF";

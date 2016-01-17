@@ -809,7 +809,7 @@ int grid::CorrectForRefinedFluxes(fluxes *InitialFluxes,
 		      0.5 * BaryonField[Vel3Num][i2] * BaryonField[Vel3Num][i2];
 		  }
 
-		  if (HydroMethod == MHD_RK) {
+		  if (UseMHD) {
 		    B2 = POW(BaryonField[B1Num][i1],2) + 
 		      POW(BaryonField[B2Num][i1],2) +
 		      POW(BaryonField[B3Num][i1],2);
@@ -820,16 +820,6 @@ int grid::CorrectForRefinedFluxes(fluxes *InitialFluxes,
 		    BaryonField[TENum][i2] += 0.5 * B2 / BaryonField[DensNum][i2];
 		  }
 
-		  if (HydroMethod == MHD_Li){
-		    B2 = POW(CenteredB[0][i1],2) + 
-		      POW(CenteredB[1][i1],2) +
-		      POW(CenteredB[2][i1],2);
-		    BaryonField[TENum][i1] += 0.5 * B2 / BaryonField[DensNum][i1];
-		    B2 = POW(CenteredB[0][i2],2) + 
-		      POW(CenteredB[1][i2],2) +
-		      POW(CenteredB[2][i2],2);
-		    BaryonField[TENum][i2] += 0.5 * B2 / BaryonField[DensNum][i2];
-		  }
 		
 		}		
 	      } // end: loop over faces
@@ -839,10 +829,12 @@ int grid::CorrectForRefinedFluxes(fluxes *InitialFluxes,
 	       density. (see comments above regarding species). */
 	
 	  for (field = 0; field < NumberOfBaryonFields; field++)
-	    if (FieldType[field] >= ElectronDensity &&
-		FieldType[field] <= Metallicity &&
-		FieldTypeNoInterpolate(FieldType[field]) == FALSE &&
-		FieldTypeIsRadiation(FieldType[field]) == FALSE)
+	    if ( ((FieldType[field] >= ElectronDensity &&
+		   FieldType[field] <= ExtraType1) ||
+		  FieldType[field] == MetalSNIaDensity ||
+		  FieldType[field] == MetalSNIIDensity) &&
+		 FieldTypeNoInterpolate(FieldType[field]) == FALSE &&
+		 FieldTypeIsRadiation(FieldType[field]) == FALSE)
 	      for (k = Start[2]; k <= End[2]; k++)
 		for (j = Start[1]; j <= End[1]; j++) {
 		  index = (k*GridDimension[1] + j)*GridDimension[0] + Start[0];
