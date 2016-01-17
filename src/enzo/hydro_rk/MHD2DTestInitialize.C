@@ -40,7 +40,8 @@ int GetUnits(float *DensityUnits, float *LengthUnits,
 	     float *VelocityUnits, FLOAT Time);
 
 int MHD2DTestInitialize(FILE *fptr, FILE *Outfptr, 
-			HierarchyEntry &TopGrid, TopGridData &MetaData) 
+			HierarchyEntry &TopGrid,
+			TopGridData &MetaData, int SetBaryonFields) 
 {
   char *DensName = "Density";
   char *PresName = "Pressure";
@@ -138,18 +139,26 @@ int MHD2DTestInitialize(FILE *fptr, FILE *Outfptr,
   }
 
   /* set up grid */
-
-  if (TopGrid.GridData->MHD2DTestInitializeGrid(MHD2DProblemType, UseColour,
+  HierarchyEntry *CurrentGrid; // all level 0 grids on this processor first
+  CurrentGrid = &TopGrid;
+  int count = 0;
+  while (CurrentGrid != NULL) {
+    printf("count %i %i\n", count++, MyProcessorNumber);
+    if (CurrentGrid->GridData->MHD2DTestInitializeGrid(MHD2DProblemType, UseColour,
 						RampWidth,
 						LowerDensity, UpperDensity,
 						LowerVelocityX,  UpperVelocityX,
 						LowerVelocityY,  UpperVelocityY,
 						LowerPressure,   UpperPressure,
 						LowerBx,  UpperBx,
-						LowerBy,  UpperBy)  == FAIL) {
+						LowerBy,  UpperBy,
+						SetBaryonFields)  == FAIL) {
     fprintf(stderr, "Error in MHD2DTestInitializeGrid.\n");
     return FAIL;
-  }
+    }
+    CurrentGrid = CurrentGrid->NextGridThisLevel;
+    
+  } // while CurrentGrid
 
   /* Convert minimum initial overdensity for refinement to mass
      (unless MinimumMass itself was actually set). */
@@ -163,7 +172,8 @@ int MHD2DTestInitialize(FILE *fptr, FILE *Outfptr,
 
   /* If requested, refine the grid to the desired level. */
 
-  if (RefineAtStart) {
+
+  if (SetBaryonFields && RefineAtStart) {
 
     /* Declare, initialize and fill out the LevelArray. */
 
@@ -192,7 +202,8 @@ int MHD2DTestInitialize(FILE *fptr, FILE *Outfptr,
 						    LowerVelocityY,  UpperVelocityY,
 						    LowerPressure,   UpperPressure,
 						    LowerBx,  UpperBx,
-						    LowerBy,  UpperBy) == FAIL) {
+						    LowerBy,  UpperBy,
+						    SetBaryonFields) == FAIL) {
 	  fprintf(stderr, "Error in MHD2DTestInitializeGrid.\n");
 	  return FAIL;
 	}
@@ -223,7 +234,7 @@ int MHD2DTestInitialize(FILE *fptr, FILE *Outfptr,
 
   /* set up field names and units */
 
-  int count = 0;
+  count = 0;
   DataLabel[count++] = DensName;
   DataLabel[count++] = Vel1Name;
   DataLabel[count++] = Vel2Name;
@@ -232,11 +243,13 @@ int MHD2DTestInitialize(FILE *fptr, FILE *Outfptr,
   if (DualEnergyFormalism) {
     DataLabel[count++] = GEName;
   }
-  if (HydroMethod == MHD_RK) {
+  if (UseMHD) {
     DataLabel[count++] = BxName;
     DataLabel[count++] = ByName;
     DataLabel[count++] = BzName;
-    DataLabel[count++] = PhiName;
+    if( HydroMethod == MHD_RK ){
+        DataLabel[count++] = PhiName;
+    }
     if(UseDivergenceCleaning){
       DataLabel[count++] = Phi_pName;
       DataLabel[count++] = DebugName;
@@ -246,10 +259,6 @@ int MHD2DTestInitialize(FILE *fptr, FILE *Outfptr,
     MHDLabel[0] = "BxF";
     MHDLabel[1] = "ByF";
     MHDLabel[2] = "BzF";
-    
-    MHDcLabel[0] = "Bx";
-    MHDcLabel[1] = "By";
-    MHDcLabel[2] = "Bz";
     
     MHDeLabel[0] = "Ex";
     MHDeLabel[1] = "Ey";

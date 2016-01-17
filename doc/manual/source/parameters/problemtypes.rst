@@ -743,6 +743,24 @@ Collapse Test (27)
 
 ``CollapseTestInitialTemperature`` (external)
     Initial gas temperature. Default: 1000 K. Units: degrees Kelvin
+``CollapseTestInitialFractionHII`` (external)
+    Initial HII fraction in the domain except for the spheres.
+    Default: 1.2e-5
+``CollapseTestInitialFractionHeII`` (external)
+    Initial HeII fraction in the domain except for the spheres.
+    Default: 1e-14
+``CollapseTestInitialFractionHeIII`` (external)
+    Initial HeIII fraction in the domain except for the spheres.
+    Default: 1e-17
+``CollapseTestInitialFractionHM`` (external)
+    Initial H- fraction in the domain except for the spheres.
+    Default: 2e-9
+``CollapseTestInitialFractionH2I`` (external)
+    Initial H2I fraction in the domain except for the spheres.
+    Default: 2e-20
+``CollapseTestInitialFractionH2II`` (external)
+    Initial H2II fraction in the domain except for the spheres.
+    Default: 3e-14
 ``CollapseTestNumberOfSpheres`` (external)
     Number of spheres to collapse; must be <= ``MAX_SPHERES=10`` (see
     ``Grid.h`` for definition). Default: 1
@@ -814,6 +832,18 @@ Collapse Test (27)
 ``CollapseTestSmoothRadius`` (external)
     The outer radius of the smoothed interface.  This parameter is in
     units of the sphere radius.  Default: 1.2
+``CollapseTestSphereHIIFraction`` (external)
+    Initial HII fraction of the sphere.  Default: 1.2e-5
+``CollapseTestSphereHeIIFraction`` (external)
+    Initial HeII fraction of the sphere.  Default: 1e-14
+``CollapseTestSphereHeIIIFraction`` (external)
+    Initial HeIII fraction of the sphere.  Default: 1e-17
+``CollapseTestSphereHMFraction`` (external)
+    Initial H- fraction of the sphere.  Default: 2e-9
+``CollapseTestSphereH2IFraction`` (external)
+    Initial H2I fraction of the sphere.  Default: 2e-20
+``CollapseTestSphereH2IIFraction`` (external)
+    Initial H2II fraction of the sphere.  Default: 3e-14
 ``CollapseTestSphereInitialLevel`` (external)
     Failed experiment to try to force refinement to a specified level.
     Not working. Default: 0.
@@ -1152,6 +1182,21 @@ Photon Test (50)
     Sets the initial ionized fraction of H2. Default: 3e-14
 ``PhotonTestOmegaBaryonNow`` (obsolete)
     Default: 0.05.
+``PhotonTestDensityFilename`` (external)
+    Filename of an external density field in HDF5 format.  The file
+    should only have one dataset. Default: (undefined)
+``PhotonTestHIIFractionFilename`` (external)
+    Filename of an external HII fraction field in its own HDF5 format.
+    The file should only have one dataset.  Default: (undefined)
+``PhotonTestHeIIFractionFilename`` (external)
+    Filename of an external HeII fraction field in its own HDF5 format.
+    The file should only have one dataset.  Default: (undefined)
+``PhotonTestHeIIIFractionFilename`` (external)
+    Filename of an external HeIII fraction field in its own HDF5 format.
+    The file should only have one dataset.  Default: (undefined)
+``PhotonTestTemperatureFilename`` (external)
+    Filename of an external temperature field in its own HDF5 format.
+    The file should only have one dataset.  Default: (undefined)
 
 .. _stochastic_forcing_param:
 
@@ -1482,6 +1527,10 @@ Cluster Cooling Flow (108)
 2D MHD Test (201)
 ~~~~~~~~~~~~~~~~~
 
+This problem type sets up many common 2D hydro and MHD problem types.
+Many of them can be run also without MHD despite the name. Which problem is done is controled by
+MHD2DProblemType which can vary from 0 to 16 so far.
+
 ``RefineAtStart`` (external)
     Boolean flag. Default: TRUE
 ``LowerVelocityX``, ``UpperVelocityX`` (external)
@@ -1498,6 +1547,7 @@ Cluster Cooling Flow (108)
     Initial magnetic field y-direction. Default: 0 (for both)
 ``MHD2DProblemType`` (external)
     Default: 0
+    0: Raleigh-Taylor, 1: MHD rotor (Toth 2000, JCompPhys 161, 605.), 2: MHD blast wave (Gardiner and Stone 2005, JCompPhys. 205, 509), 3: MHD Kelvin-Helmholtz (Gardiner & Stone 2005), 4: Another MHD Kelvin Helmholtz, 5: Shock-vortex interaction (Rault, Chiavassa & Donat, 2003, J. Scientific Computing, 19, 1.), 6: Sedov-Taylor Blast Wave (Fryxell et al. 2000, ApJS, 131, 273), 7: Cylindrical Sedov-Taylor Blast Wave (Fryxell et al. 2000), 8: Like MHD2DProblemType = 5 but with a small perturbation upstream of the shock to test odd even coupling of Reimann Solvers, 9: Smoothed Kelvin Helnholtz problem (Robertson, Kravtsov, Gnedin, Abel & Rudd 2010, MNRAS, 401), 10: A modified Raleigh-Taylor problem, 11: Uniform density with sinusoidal shear velocity (Compare to rpSPH tests in Abel 2012), 12: Experimental test, 13: Exploratory blob test, 14: Wengen 2 test to study colliding flows with very soft equations of state, 15: Another experiment with B-fields, 16: A validated non-linear Kelvin Helmholtz test (Lecoanet, McCourt, Quataert, Burns, Vasil, Oishi, Brown, Stone, & O’Leary 2015 preprint)
 ``RampWidth`` (external)
     Default: 0.05
 ``UserColour`` (external)
