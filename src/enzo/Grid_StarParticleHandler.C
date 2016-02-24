@@ -345,7 +345,7 @@ extern "C" void FORTRAN_NAME(star_feedback3)(int *nx, int *ny, int *nz,
 		       int *ibuff,
              FLOAT *xp, FLOAT *yp, FLOAT *zp, float *up, float *vp, float *wp,
              float *mp, float *tdp, float *tcp, float *metalf, int *type,
-			float *justburn);
+			float *justburn, int *crmodel, float *crfeedback, float *cr);
 
 extern "C" void FORTRAN_NAME(star_feedback5)(int *nx, int *ny, int *nz,
              float *d, float *dm, float *te, float *ge, float *u, float *v, 
@@ -546,6 +546,7 @@ int grid::StarParticleHandler(HierarchyEntry* SubgridPointer, int level,
  
   int dim, i, j, k, index, size, field, GhostZones = NumberOfGhostZones;
   int DensNum, GENum, TENum, Vel1Num, Vel2Num, Vel3Num, B1Num, B2Num, B3Num;
+  int CRNum;
   const double m_h = 1.673e-24;
 
   /* Find Multi-species fields. */
@@ -578,9 +579,12 @@ int grid::StarParticleHandler(HierarchyEntry* SubgridPointer, int level,
  
   this->DebugCheck("StarParticleHandler");
   if (this->IdentifyPhysicalQuantities(DensNum, GENum, Vel1Num, Vel2Num,
-				       Vel3Num, TENum, B1Num, B2Num, B3Num) == FAIL) {
-        ENZO_FAIL("Error in IdentifyPhysicalQuantities.");
+  				       Vel3Num, TENum, B1Num, B2Num, B3Num) == FAIL) {
+    ENZO_FAIL("Error in IdentifyPhysicalQuantities.");
   }
+  if (CRModel)
+    if ((CRNum = FindField(CRDensity, FieldType, NumberOfBaryonFields)) < 0)
+      ENZO_FAIL("Cannot Find Cosmic Rays");
  
   /* If using MHD, subtract magnetic energy from total energy because 
      density may be modified in star_maker8. */
@@ -1280,7 +1284,7 @@ int grid::StarParticleHandler(HierarchyEntry* SubgridPointer, int level,
 
     //    if (STARMAKE_METHOD(SINK_PARTICLE))     printf("   Sink Particle\n"); 
     //if (level == MaximumRefinementLevel)     printf("   Max Refinement\n"); 
-    if (STARMAKE_METHOD(SINK_PARTICLE) && level == MaximumRefinementLevel || BigStarFormation > 0) {
+    if ((STARMAKE_METHOD(SINK_PARTICLE) && level == MaximumRefinementLevel) || BigStarFormation > 0) {
       /* Set the density threshold by using the mass in a cell which
 	 would have caused another refinement. */
  
@@ -1301,11 +1305,13 @@ int grid::StarParticleHandler(HierarchyEntry* SubgridPointer, int level,
 
 	float *nx_jet = NULL, *ny_jet = NULL, *nz_jet = NULL;
 	/*printf("Grid_StarParticleHandler l479 - just made nx_jet etc.\n");*/
+#ifdef WINDS
 	if (StellarWindFeedback) {
 	  nx_jet = ParticleAttribute[3];
 	  ny_jet = ParticleAttribute[4];
 	  nz_jet = ParticleAttribute[5];
 	}
+#endif
 	//printf("      test line\n");
 	if (star_maker9(GridDimension, GridDimension+1, GridDimension+2, &size, 
 			BaryonField[DensNum], BaryonField[TENum], BaryonField[GENum],
@@ -1339,11 +1345,13 @@ int grid::StarParticleHandler(HierarchyEntry* SubgridPointer, int level,
 
 	float *nx_jet = NULL, *ny_jet = NULL, *nz_jet = NULL;
 	/*printf("Grid_StarParticleHandler l479 - just made nx_jet etc.\n");*/
+#ifdef WINDS
 	if (StellarWindFeedback) {
 	  nx_jet = ParticleAttribute[3];
 	  ny_jet = ParticleAttribute[4];
 	  nz_jet = ParticleAttribute[5];
 	}
+#endif
 	//printf("      test line\n");
 	if (star_maker8(GridDimension, GridDimension+1, GridDimension+2, &size, 
 			BaryonField[DensNum], BaryonField[TENum], BaryonField[GENum],
@@ -1632,7 +1640,8 @@ int grid::StarParticleHandler(HierarchyEntry* SubgridPointer, int level,
        ParticleVelocity[0], ParticleVelocity[1],
           ParticleVelocity[2],
        ParticleMass, ParticleAttribute[1], ParticleAttribute[0],
-       ParticleAttribute[2], ParticleType, &RadiationData.IntegratedStarFormation);
+       ParticleAttribute[2], ParticleType, &RadiationData.IntegratedStarFormation,
+       &CRModel, &CRFeedback, (CRModel?BaryonField[CRNum]:NULL));
  
   } // end: if UNIGRID_STAR
  
