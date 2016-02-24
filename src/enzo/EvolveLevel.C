@@ -581,6 +581,14 @@ int EvolveLevel(TopGridData *MetaData, LevelHierarchyEntry *LevelArray[],
 	}
       }
 
+      /* Compute and Apply Cosmic Ray Diffusion */
+      if(CRDiffusion){
+        if(Grids[grid1]->GridData->ComputeCRDiffusion() == FAIL){
+          fprintf(stderr, "Error in grid->ComputeCRDiffusion.\n");
+          return FAIL;
+        } // end ComputeCRDiffusion if
+      }// end CRDiffusion if
+
       /* Gravity: clean up AccelerationField. */
 
 #ifndef SAB
@@ -717,7 +725,7 @@ int EvolveLevel(TopGridData *MetaData, LevelHierarchyEntry *LevelArray[],
 
     if(UseMHDCT == TRUE && MHD_ProjectE == TRUE){
       for(grid1=0;grid1<NumberOfGrids; grid1++){
-        Grids[grid1]->GridData->MHD_UpdateMagneticField(level, LevelArray[level+1]);
+        Grids[grid1]->GridData->MHD_UpdateMagneticField(level, LevelArray[level+1], FALSE);
         }
     }//MHD True
 
