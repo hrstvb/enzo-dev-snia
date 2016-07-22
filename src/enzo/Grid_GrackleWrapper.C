@@ -103,6 +103,9 @@ int grid::GrackleWrapper()
     CosmologyComputeExpansionFactor(Time+0.5*dtFixed, &a, &dadt);
  
     aUnits = 1.0/(1.0 + InitialRedshift);
+  } else if (RadiationFieldRedshift > -1){
+    a        = 1.0 / (1.0 + RadiationFieldRedshift);
+    aUnits   = 1.0;
   }
   float afloat = float(a);
 
@@ -138,7 +141,7 @@ int grid::GrackleWrapper()
   /* If both metal fields (Pop I/II and III) exist, create a field
      that contains their sum */
 
-  float *MetalPointer;
+  float *MetalPointer = NULL;
   float *TotalMetals = NULL;
 
   if (MetalNum != -1 && SNColourNum != -1) {
