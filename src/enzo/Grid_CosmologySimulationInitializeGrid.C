@@ -130,7 +130,7 @@ int grid::CosmologySimulationInitializeGrid(
   int kphHINum, kphHeINum, kphHeIINum, kdissH2INum, PhotoGammaNum;
  
   int ExtraField[2];
-  int ForbidNum, iTE;
+  int ForbidNum, iTE, iCR;
  
   inits_type *tempbuffer = NULL;
   int *int_tempbuffer = NULL;
@@ -178,6 +178,7 @@ int grid::CosmologySimulationInitializeGrid(
      if ( (ParallelRootGridIO != TRUE) || 
 	  (ParallelParticleIO != TRUE && !CosmologySimulationCalculatePositions) )
      {
+				if( MyProcessorNumber == ROOT_PROCESSOR )
          fprintf(stderr, "WARNING: ParallelRootGridIO and ParallelParticleIO are recommended for > 64 cpus to shrink data read-in time.");
      }
   }
@@ -227,21 +228,29 @@ int grid::CosmologySimulationInitializeGrid(
     FieldType[NumberOfBaryonFields++] = Density;
     vel = NumberOfBaryonFields;
     FieldType[NumberOfBaryonFields++] = Velocity1;
-    if (GridRank > 1 || (HydroMethod == MHD_RK) || (HydroMethod == HD_RK))
+    if (MaxVelocityIndex > 1)
       FieldType[NumberOfBaryonFields++] = Velocity2;
-    if (GridRank > 2 || (HydroMethod == MHD_RK) || (HydroMethod == HD_RK))
+    if (MaxVelocityIndex > 2)
       FieldType[NumberOfBaryonFields++] = Velocity3;
     iTE = NumberOfBaryonFields;
     FieldType[NumberOfBaryonFields++] = TotalEnergy;
-
+    if(CRModel){
+        iCR = NumberOfBaryonFields;
+        FieldType[NumberOfBaryonFields++] = CRDensity;
+    }
     if (DualEnergyFormalism)
       FieldType[NumberOfBaryonFields++] = InternalEnergy;
     
-    if (HydroMethod == MHD_RK) {
+    if (UseMHD) {
       FieldType[NumberOfBaryonFields++] = Bfield1;
       FieldType[NumberOfBaryonFields++] = Bfield2;
       FieldType[NumberOfBaryonFields++] = Bfield3;
+    }
+    if( HydroMethod == MHD_RK ){
       FieldType[NumberOfBaryonFields++] = PhiField;
+      if (UseDivergenceCleaning) {
+	FieldType[NumberOfBaryonFields++] = Phi_pField;
+      }
     }
     
 #ifdef TRANSFER
@@ -374,6 +383,12 @@ int grid::CosmologySimulationInitializeGrid(
 		    BaryonField[iTE], &tempbuffer, 0, 1) == FAIL) {
             ENZO_FAIL("Error reading total energy field.");
     }
+
+  // set the CR energy density field to small fraction of density
+  if(CRModel){
+    for (i = 0; i < size; i++)
+      BaryonField[iCR][i] = CosmologySimulationUniformCR;
+	} // end CR if
  
   // Read the gas energy field
  
@@ -389,13 +404,15 @@ int grid::CosmologySimulationInitializeGrid(
   if (CosmologySimulationVelocityNames[0] != NULL && ReadData)
   {
     // Determine if we're reading different files for each component
-    if (GridRank > 1)
+    if (GridRank > 1) {
       if (strstr(CosmologySimulationVelocityNames[0], 
-		 CosmologySimulationVelocityNames[1]) == NULL)
-	OneComponentPerFile = TRUE;
-      else
-	OneComponentPerFile = FALSE;
-
+              CosmologySimulationVelocityNames[1]) == NULL) {
+        OneComponentPerFile = TRUE;
+      } else {
+        OneComponentPerFile = FALSE;
+      }
+    }
+    
     for (dim = 0; dim < GridRank; dim++) {
       if (OneComponentPerFile) {
 	ndim = 1;
@@ -562,28 +579,21 @@ int grid::CosmologySimulationInitializeGrid(
           BaryonField[iTE][i] +=
               0.5 * BaryonField[vel+dim][i] * BaryonField[vel+dim][i];
       }
-          if (HydroMethod == MHD_RK) {
+          if (UseMHD) {
             BaryonField[iBx  ][i] = CosmologySimulationInitialUniformBField[0];
             BaryonField[iBy  ][i] = CosmologySimulationInitialUniformBField[1];
             BaryonField[iBz  ][i] = CosmologySimulationInitialUniformBField[2];
-            BaryonField[iPhi ][i] = 0.0;
             BaryonField[iTE][i] += 0.5*(BaryonField[iBx][i] * BaryonField[iBx][i]+
                                         BaryonField[iBy][i] * BaryonField[iBy][i]+
                                         BaryonField[iBz][i] * BaryonField[iBz][i])/
                 BaryonField[iden][i];
           }
-          if(UseMHDCT == TRUE){      
-            CenteredB[0][i] = CosmologySimulationInitialUniformBField[0];
-            CenteredB[1][i] = CosmologySimulationInitialUniformBField[1];
-            CenteredB[2][i] = CosmologySimulationInitialUniformBField[2];
-            BaryonField[iTE][i] += 0.5*(CenteredB[0][i] * CenteredB[0][i]+
-                                        CenteredB[1][i] * CenteredB[1][i]+
-                                        CenteredB[2][i] * CenteredB[2][i])/
-                BaryonField[0][i];
+          if( HydroMethod == MHD_RK ){
+            BaryonField[iPhi ][i] = 0.0;
           }
       }
 
-      if(UseMHDCT == TRUE){
+      if(UseMHDCT){
         for(int field=0;field<3;field++)
           for(int k=0; k<MagneticDims[field][2]; k++)
             for(int j=0; j<MagneticDims[field][1]; j++)

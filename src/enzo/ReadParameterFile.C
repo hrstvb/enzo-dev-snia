@@ -169,6 +169,12 @@ int ReadParameterFile(FILE *fptr, TopGridData &MetaData, float *Initialdt)
            &CurrentDensityOutput);
     ret += sscanf(line, "IncrementDensityOutput = %"FSYM,
            &IncrementDensityOutput);
+    ret += sscanf(line, "StopFirstTimeAtDensity = %"FSYM,
+           &StopFirstTimeAtDensity);
+    ret += sscanf(line, "StopFirstTimeAtMetalEnrichedDensity = %"FSYM,
+           &StopFirstTimeAtMetalEnrichedDensity);
+    ret += sscanf(line, "EnrichedMetalFraction = %"FSYM,
+           &EnrichedMetalFraction);
 
     /* Subcycle directed output */
     ret += sscanf(line, "SubcycleSkipDataDump = %"ISYM, 
@@ -324,6 +330,8 @@ int ReadParameterFile(FILE *fptr, TopGridData &MetaData, float *Initialdt)
 	     CellFlaggingMethod+3, CellFlaggingMethod+4, CellFlaggingMethod+5,
 	     CellFlaggingMethod+6);
     ret += sscanf(line, "FluxCorrection         = %"ISYM, &FluxCorrection);
+    ret += sscanf(line, "UseCoolingTimestep     = %"ISYM, &UseCoolingTimestep);
+    ret += sscanf(line, "CoolingTimestepSafetyFactor = %"FSYM, &CoolingTimestepSafetyFactor);
     ret += sscanf(line, "InterpolationMethod    = %"ISYM, &InterpolationMethod);
     ret += sscanf(line, "ConservativeInterpolation = %"ISYM,
 		  &ConservativeInterpolation);
@@ -333,6 +341,7 @@ int ReadParameterFile(FILE *fptr, TopGridData &MetaData, float *Initialdt)
 		  &OptimalSubgridsPerProcessor);
     ret += sscanf(line, "MinimumSubgridEdge     = %"ISYM, &MinimumSubgridEdge);
     ret += sscanf(line, "MaximumSubgridSize     = %"ISYM, &MaximumSubgridSize);
+    ret += sscanf(line, "CriticalGridRatio      = %"FSYM, &CriticalGridRatio);
     ret += sscanf(line, "NumberOfBufferZones    = %"ISYM, &NumberOfBufferZones);
     ret += sscanf(line, "FastSiblingLocatorEntireDomain = %"ISYM, &FastSiblingLocatorEntireDomain);
     ret += sscanf(line, "MustRefineRegionMinRefinementLevel = %"ISYM,
@@ -453,6 +462,20 @@ int ReadParameterFile(FILE *fptr, TopGridData &MetaData, float *Initialdt)
     ret += sscanf(line, "PointSourceGravityCoreRadius = %"FSYM,
 		  &PointSourceGravityCoreRadius);
  
+    ret += sscanf(line, "DiskGravity                        = %"ISYM,&DiskGravity);
+    ret += sscanf(line, "DiskGravityPosition                = %"PSYM" %"PSYM" %"PSYM,
+      DiskGravityPosition, DiskGravityPosition+1, DiskGravityPosition+2);
+    ret += sscanf(line, "DiskGravityAngularMomentum         = %"PSYM" %"PSYM" %"PSYM,
+      DiskGravityAngularMomentum,DiskGravityAngularMomentum+1,
+      DiskGravityAngularMomentum+2);
+    ret += sscanf(line, "DiskGravityStellarDiskMass         = %"FSYM,&DiskGravityStellarDiskMass);
+    ret += sscanf(line, "DiskGravityStellarDiskScaleHeightR = %"FSYM,&DiskGravityStellarDiskScaleHeightR);
+    ret += sscanf(line, "DiskGravityStellarDiskScaleHeightz = %"FSYM,&DiskGravityStellarDiskScaleHeightz);
+    ret += sscanf(line, "DiskGravityStellarBulgeMass        = %"FSYM,&DiskGravityStellarBulgeMass);
+    ret += sscanf(line, "DiskGravityStellarBulgeR           = %"FSYM,&DiskGravityStellarBulgeR);
+    ret += sscanf(line, "DiskGravityDarkMatterR             = %"FSYM,&DiskGravityDarkMatterR);
+    ret += sscanf(line, "DiskGravityDarkMatterDensity       = %"FSYM,&DiskGravityDarkMatterDensity);
+
     ret += sscanf(line, "ExternalGravity         = %"ISYM,&ExternalGravity);
     ret += sscanf(line, "ExternalGravityConstant = %"FSYM, &ExternalGravityConstant);
     ret += sscanf(line, "ExternalGravityRadius   = %"FSYM,&ExternalGravityRadius);
@@ -496,22 +519,46 @@ int ReadParameterFile(FILE *fptr, TopGridData &MetaData, float *Initialdt)
     ret += sscanf(line, "RandomForcingEdot = %"FSYM, &RandomForcingEdot); //AK
     ret += sscanf(line, "RandomForcingMachNumber = %"FSYM, //AK
                   &RandomForcingMachNumber);
+
+    ret += sscanf(line, "DrivenFlowProfile = %"ISYM, &DrivenFlowProfile);
+    ret += sscanf(line, "DrivenFlowWeight = %"FSYM, &DrivenFlowWeight);
+    ret += sscanf(line, "DrivenFlowAlpha = %"ISYM" %"ISYM" %"ISYM,
+                  DrivenFlowAlpha, DrivenFlowAlpha+1, DrivenFlowAlpha+2);
+    ret += sscanf(line, "DrivenFlowSeed = %"ISYM, &DrivenFlowSeed);
+    ret += sscanf(line, "DrivenFlowBandWidth = %"FSYM"%"FSYM"%"FSYM,
+                  DrivenFlowBandWidth, DrivenFlowBandWidth+1, DrivenFlowBandWidth+2);
+    ret += sscanf(line, "DrivenFlowVelocity = %"FSYM"%"FSYM"%"FSYM,
+                  DrivenFlowVelocity, DrivenFlowVelocity+1, DrivenFlowVelocity+2);
+    ret += sscanf(line, "DrivenFlowAutoCorrl = %"FSYM"%"FSYM"%"FSYM,
+                     DrivenFlowAutoCorrl, DrivenFlowAutoCorrl+1, DrivenFlowAutoCorrl+2);
+
 #ifdef USE_GRACKLE
     /* Grackle chemistry parameters */
-    ret += sscanf(line, "use_grackle = %d", &grackle_data.use_grackle);
+    ret += sscanf(line, "use_grackle = %d", &grackle_data->use_grackle);
     ret += sscanf(line, "with_radiative_cooling = %d",
-                  &grackle_data.with_radiative_cooling);
+                  &grackle_data->with_radiative_cooling);
+    ret += sscanf(line, "use_volumetric_heating_rate = %d",
+                  &grackle_data->use_volumetric_heating_rate);
+    ret += sscanf(line, "use_specific_heating_rate = %d",
+                  &grackle_data->use_specific_heating_rate);
+    ret += sscanf(line, "self_shielding_method = %d",
+                  &grackle_data->self_shielding_method);
+    ret += sscanf(line, "H2_self_shielding = %d",
+                  &grackle_data->H2_self_shielding);
+    ret += sscanf(line, "radiative_transfer_intermediate_step = %d",
+                  &grackle_data->radiative_transfer_intermediate_step);
+
     if (sscanf(line, "grackle_data_file = %s", dummy) == 1) {
-      grackle_data.grackle_data_file = dummy;
+      grackle_data->grackle_data_file = dummy;
       ret++;
     }
-    ret += sscanf(line, "UVbackground = %d", &grackle_data.UVbackground);
+    ret += sscanf(line, "UVbackground = %d", &grackle_data->UVbackground);
     ret += sscanf(line, "Compton_xray_heating = %d", 
-                  &grackle_data.Compton_xray_heating);
+                  &grackle_data->Compton_xray_heating);
     ret += sscanf(line, "LWbackground_intensity = %lf", 
-                  &grackle_data.LWbackground_intensity);
+                  &grackle_data->LWbackground_intensity);
     ret += sscanf(line, "LWbackground_sawtooth_suppression = %d",
-                  &grackle_data.LWbackground_sawtooth_suppression);
+                  &grackle_data->LWbackground_sawtooth_suppression);
     /********************************/
 #endif
     ret += sscanf(line, "RadiativeCooling = %"ISYM, &RadiativeCooling);
@@ -534,6 +581,16 @@ int ReadParameterFile(FILE *fptr, TopGridData &MetaData, float *Initialdt)
       MetalCoolingTable = dummy;
       ret++;
     }
+
+    ret += sscanf(line, "CRModel = %"ISYM, &CRModel); 
+    ret += sscanf(line, "CRDiffusion = %"ISYM, &CRDiffusion);
+    ret += sscanf(line, "CRkappa = %"FSYM, &CRkappa);
+    ret += sscanf(line, "CRCourantSafetyNumber = %"FSYM, &CRCourantSafetyNumber);
+    ret += sscanf(line, "CRFeedback = %"FSYM, &CRFeedback);
+    ret += sscanf(line, "CRdensFloor = %"FSYM, &CRdensFloor);
+    ret += sscanf(line, "CRmaxSoundSpeed = %"FSYM, &CRmaxSoundSpeed);
+    ret += sscanf(line, "CRgamma = %"FSYM, &CRgamma);
+    ret += sscanf(line, "CosmologySimulationUniformCR = %"FSYM, &CosmologySimulationUniformCR); // FIXME
 
     ret += sscanf(line, "ShockMethod = %"ISYM, &ShockMethod);
     ret += sscanf(line, "ShockTemperatureFloor = %"FSYM, &ShockTemperatureFloor);
@@ -601,6 +658,14 @@ int ReadParameterFile(FILE *fptr, TopGridData &MetaData, float *Initialdt)
 		  &RefineByResistiveLengthSafetyFactor);
     ret += sscanf(line, "MustRefineParticlesRefineToLevel = %"ISYM,
                   &MustRefineParticlesRefineToLevel);
+    ret += sscanf(line, "MustRefineParticlesCreateParticles = %"ISYM,
+                  &MustRefineParticlesCreateParticles);
+    ret += sscanf(line, "MustRefineParticlesLeftEdge  = %"PSYM" %"PSYM" %"PSYM,
+                  MustRefineParticlesLeftEdge, MustRefineParticlesLeftEdge+1, 
+                  MustRefineParticlesLeftEdge+2);
+    ret += sscanf(line, "MustRefineParticlesRightEdge = %"PSYM" %"PSYM" %"PSYM,
+                  MustRefineParticlesRightEdge, MustRefineParticlesRightEdge+1,
+                  MustRefineParticlesRightEdge+2);
     ret += sscanf(line, "MustRefineParticlesRefineToLevelAutoAdjust = %"ISYM,
                   &MustRefineParticlesRefineToLevelAutoAdjust);
     ret += sscanf(line, "MustRefineParticlesMinimumMass = %"FSYM,
@@ -784,6 +849,7 @@ int ReadParameterFile(FILE *fptr, TopGridData &MetaData, float *Initialdt)
     ret += sscanf(line, "SimpleRampTime = %"FSYM, &SimpleRampTime);
     ret += sscanf(line, "StarFormationOncePerRootGridTimeStep = %"ISYM, &StarFormationOncePerRootGridTimeStep);
     ret += sscanf(line, "StarParticleFeedback = %"ISYM, &StarParticleFeedback);
+    ret += sscanf(line, "StarParticleRadiativeFeedback = %"ISYM, &StarParticleRadiativeFeedback);
     ret += sscanf(line, "NumberOfParticleAttributes = %"ISYM,
 		  &NumberOfParticleAttributes);
 
@@ -827,6 +893,21 @@ int ReadParameterFile(FILE *fptr, TopGridData &MetaData, float *Initialdt)
 	  MyProcessorNumber == ROOT_PROCESSOR)
 	fprintf(stderr, "Warning: Incorrect version number.\n");
     }
+
+    /* Read Galaxy Simulation Wind Boundary Variabels */
+
+     ret += sscanf(line, "GalaxySimulationRPSWind = %"ISYM,&GalaxySimulationRPSWind);
+     ret += sscanf(line, "GalaxySimulationRPSWindShockSpeed = %"FSYM,&GalaxySimulationRPSWindShockSpeed);
+     ret += sscanf(line, "GalaxySimulationRPSWindDelay = %"FSYM,&GalaxySimulationRPSWindDelay);
+     ret += sscanf(line, "GalaxySimulationRPSWindDensity = %"FSYM,&GalaxySimulationRPSWindDensity);
+     ret += sscanf(line, "GalaxySimulationRPSWindTotalEnergy = %"FSYM,&GalaxySimulationRPSWindTotalEnergy);
+     ret += sscanf(line, "GalaxySimulationRPSWindPressure = %"FSYM,&GalaxySimulationRPSWindPressure);
+     ret += sscanf(line, "GalaxySimulationRPSWindVelocity = %"PSYM" %"PSYM" %"PSYM,
+      GalaxySimulationRPSWindVelocity, GalaxySimulationRPSWindVelocity+1, GalaxySimulationRPSWindVelocity+2);
+     ret += sscanf(line, "GalaxySimulationPreWindDensity = %"FSYM,&GalaxySimulationPreWindDensity);
+     ret += sscanf(line, "GalaxySimulationPreWindTotalEnergy = %"FSYM,&GalaxySimulationPreWindTotalEnergy);
+     ret += sscanf(line, "GalaxySimulationPreWindVelocity = %"PSYM" %"PSYM" %"PSYM,
+         GalaxySimulationPreWindVelocity,GalaxySimulationPreWindVelocity+1,GalaxySimulationPreWindVelocity+2);
  
     /* Read star particle parameters. */
 
@@ -858,6 +939,10 @@ int ReadParameterFile(FILE *fptr, TopGridData &MetaData, float *Initialdt)
 		  &StarEnergyToThermalFeedback);
     ret += sscanf(line, "StarEnergyToStellarUV = %"FSYM, &StarEnergyToStellarUV);
     ret += sscanf(line, "StarEnergyToQuasarUV = %"FSYM, &StarEnergyToQuasarUV);
+    ret += sscanf(line, "StarFeedbackKineticFraction = %"FSYM, 
+    	&StarFeedbackKineticFraction);
+    ret += sscanf(line, "StarMakerExplosionDelayTime = %"FSYM, 
+    	&StarMakerExplosionDelayTime);
     ret += sscanf(line, "StarFeedbackDistRadius = %"ISYM, &StarFeedbackDistRadius);
     ret += sscanf(line, "StarFeedbackDistCellStep = %"ISYM, &StarFeedbackDistCellStep);
 
@@ -920,6 +1005,12 @@ int ReadParameterFile(FILE *fptr, TopGridData &MetaData, float *Initialdt)
 		  &PopIIIColorDensityThreshold);
     ret += sscanf(line, "PopIIIColorMass = %"FSYM,
 		  &PopIIIColorMass);
+    ret += sscanf(line, "PopIIIUseHypernova = %"ISYM,
+		  &PopIIIUseHypernova);
+    ret += sscanf(line, "PopIIISupernovaExplosions = %"ISYM,
+		  &PopIIISupernovaExplosions);
+    ret += sscanf(line, "PopIIIOutputOnFeedback = %"ISYM,
+		  &PopIIIOutputOnFeedback);
 
     ret += sscanf(line, "MBHAccretion = %"ISYM, &MBHAccretion);
     ret += sscanf(line, "MBHAccretionRadius = %"FSYM, &MBHAccretionRadius);
@@ -1050,6 +1141,7 @@ int ReadParameterFile(FILE *fptr, TopGridData &MetaData, float *Initialdt)
 
     ret += sscanf(line, "VelAnyl = %"ISYM, &VelAnyl);
     ret += sscanf(line, "BAnyl = %"ISYM, &BAnyl);
+    ret += sscanf(line, "WriteExternalAccel = %"ISYM, &WriteExternalAccel);
 
 
     /* Read MHD Paramters */
@@ -1075,10 +1167,10 @@ int ReadParameterFile(FILE *fptr, TopGridData &MetaData, float *Initialdt)
     ret += sscanf(line, "ViscosityCoefficient = %"FSYM, &ViscosityCoefficient);  
     ret += sscanf(line, "UseAmbipolarDiffusion = %"ISYM"", &UseAmbipolarDiffusion);
     ret += sscanf(line, "UseResistivity = %"ISYM"", &UseResistivity);
-    ret += sscanf(line, "SmallRho = %g", &SmallRho);
-    ret += sscanf(line, "SmallP = %g", &SmallP);
-    ret += sscanf(line, "SmallT = %g", &SmallT);
-    ret += sscanf(line, "MaximumAlvenSpeed = %g", &MaximumAlvenSpeed);
+    ret += sscanf(line, "SmallRho = %"FSYM, &SmallRho);
+    ret += sscanf(line, "SmallP = %"FSYM, &SmallP);
+    ret += sscanf(line, "SmallT = %"FSYM, &SmallT);
+    ret += sscanf(line, "MaximumAlvenSpeed = %"FSYM, &MaximumAlvenSpeed);
     ret += sscanf(line, "Coordinate = %"ISYM, &Coordinate);
     ret += sscanf(line, "RiemannSolver = %"ISYM, &RiemannSolver);
     ret += sscanf(line, "RiemannSolverFallback = %"ISYM, &RiemannSolverFallback);
@@ -1129,11 +1221,9 @@ int ReadParameterFile(FILE *fptr, TopGridData &MetaData, float *Initialdt)
 		  ExtraOutputs +7,ExtraOutputs +8,ExtraOutputs +9);
 
     //MHDCT variables
-    ret += sscanf(line, "MHDCT_debug_flag      = %"ISYM, &MHDCT_debug_flag);
     ret += sscanf(line, "MHDCTPowellSource             = %"ISYM, &MHDCTPowellSource);
     ret += sscanf(line, "MHDCTDualEnergyMethod             = %"ISYM, &MHDCTDualEnergyMethod);
     ret += sscanf(line, "MHDCTSlopeLimiter             = %"ISYM, &MHDCTSlopeLimiter);
-    ret += sscanf(line, "MHDCTUseSpecificEnergy             = %"ISYM, &MHDCTUseSpecificEnergy);
     ret += sscanf(line, "WriteBoundary          = %"ISYM, &WriteBoundary);
     ret += sscanf(line,"TracerParticlesAddToRestart = %"ISYM,&TracerParticlesAddToRestart);
     ret += sscanf(line,"RefineByJeansLengthUnits = %"ISYM,&RefineByJeansLengthUnits);
@@ -1152,8 +1242,9 @@ int ReadParameterFile(FILE *fptr, TopGridData &MetaData, float *Initialdt)
       MHDLabel[dim] = dummy;
     if(sscanf(line, "MHDUnits[%"ISYM"] = %s\n", &dim, dummy) == 2)
       MHDUnits[dim] = dummy;
-    if(sscanf(line, "MHDcLabel[%"ISYM"] = %s\n", &dim, dummy) == 2)
-      MHDcLabel[dim] = dummy;
+    if(sscanf(line, "MHDcLabel[%"ISYM"] = %s\n", &dim, dummy) == 2){
+        ENZO_FAIL("Looks like you're restarting an OLD MHDCT run. \n Run src/CenteredBremover.py on your dataset.\n");
+    }
     if(sscanf(line, "MHDeLabel[%"ISYM"] = %s\n", &dim, dummy) ==2)
       MHDeLabel[dim] = dummy;
     if(sscanf(line, "MHDeUnits[%"ISYM"] = %s\n", &dim, dummy) == 2)
@@ -1178,11 +1269,17 @@ int ReadParameterFile(FILE *fptr, TopGridData &MetaData, float *Initialdt)
     ret += sscanf(line, "UseGasDrag = %"ISYM, &UseGasDrag);
     ret += sscanf(line, "GasDragCoefficient = %"GSYM, &GasDragCoefficient);
 
+    // Parameters for magnetic feedback from supernovae
+    ret += sscanf(line, "UseSupernovaSeedFieldSourceTerms = %"ISYM, &UseSupernovaSeedFieldSourceTerms);
+    ret += sscanf(line,"SupernovaSeedFieldRadius = %"FSYM, &SupernovaSeedFieldRadius);
+    ret += sscanf(line,"SupernovaSeedFieldEnergy = %"FSYM, &SupernovaSeedFieldEnergy);
+    ret += sscanf(line,"SupernovaSeedFieldDuration = %"FSYM, &SupernovaSeedFieldDuration);
 
     /* If the dummy char space was used, then make another. */
  
     if (*dummy != 0) {
       dummy = new char[MAX_LINE_LENGTH];
+      dummy[0] = 0;
       ret++;
     }
  
@@ -1219,7 +1316,8 @@ int ReadParameterFile(FILE *fptr, TopGridData &MetaData, float *Initialdt)
     if (strstr(line, "TracerParticleCreation")) ret++;
     if (strstr(line, "TurbulenceSimulation")) ret++;
     if (strstr(line, "ProtostellarCollapse")) ret++;
-    if (strstr(line, "GalaxySimulation")) ret++;
+    if (strstr(line, "GalaxySimulation") 
+			&& !strstr(line,"RPSWind") && !strstr(line,"PreWind") ) ret++;
     if (strstr(line, "AgoraRestart")) ret++;
     if (strstr(line, "ConductionTest")) ret++;
     if (strstr(line, "ConductionBubble")) ret++;
@@ -1243,6 +1341,10 @@ int ReadParameterFile(FILE *fptr, TopGridData &MetaData, float *Initialdt)
     if (strstr(line, "PhotonTest")          ) ret++;
 #endif
     if (strstr(line, "MHDDRF")              ) ret++;
+    if (strstr(line, "DrivenFlowMach")      ) ret++;
+    if (strstr(line, "DrivenFlowMagField")  ) ret++;
+    if (strstr(line, "DrivenFlowDensity")      ) ret++;
+    if (strstr(line, "DrivenFlowPressure")      ) ret++;
 
     if (strstr(line, "\"\"\"")              ) comment_count++;
 
@@ -1278,6 +1380,25 @@ int ReadParameterFile(FILE *fptr, TopGridData &MetaData, float *Initialdt)
   delete [] dummy;
   rewind(fptr);
 
+
+/*  If stochastic forcing is used, initialize the object 
+ *  but only if it is not a fresh simulation*/
+  if (DrivenFlowProfile && MetaData.Time != 0.) {
+    for (dim = 0; dim < MetaData.TopGridRank; dim++)
+                 DrivenFlowDomainLength[dim] = DomainRightEdge[dim] - DomainLeftEdge[dim];
+
+    Forcing.Init(MetaData.TopGridRank,
+                 DrivenFlowProfile,
+                 DrivenFlowAlpha,
+                 DrivenFlowDomainLength,
+                 DrivenFlowBandWidth,
+                 DrivenFlowVelocity,
+                 DrivenFlowAutoCorrl,
+                 DrivenFlowWeight,
+                 DrivenFlowSeed);
+  }
+
+
   /* Now we know which hydro solver we're using, we can assign the
      default Riemann solver and flux reconstruction methods.  These
      parameters aren't used for PPM_LagrangeRemap and Zeus. */
@@ -1312,7 +1433,12 @@ int ReadParameterFile(FILE *fptr, TopGridData &MetaData, float *Initialdt)
         ReconstructionMethod = PLM;
 
   if (HydroMethod==MHD_RK) UseMHD = 1;
-  if (HydroMethod==MHD_Li) UseMHDCT = 1;
+  if (HydroMethod==MHD_Li) {UseMHDCT = 1; UseMHD = 1;}
+  if (HydroMethod==MHD_Li ||HydroMethod==MHD_RK || HydroMethod==HD_RK ){
+      MaxVelocityIndex = 3;
+  }else{
+      MaxVelocityIndex = MetaData.TopGridRank ;
+  }
   if (UseMHDCT) CorrectParentBoundaryFlux = TRUE;
 
     if (DualEnergyFormalism == FALSE)
@@ -1457,34 +1583,37 @@ int ReadParameterFile(FILE *fptr, TopGridData &MetaData, float *Initialdt)
 #ifdef USE_GRACKLE
   /* If using Grackle chemistry and cooling library, override all other 
      cooling machinery and do a translation of some of the parameters. */
-  if (grackle_data.use_grackle == TRUE) {
-    // grackle_data.use_grackle already set
-    // grackle_data.with_radiative_cooling already set
-    // grackle_data.grackle_data_file already set
-    // grackle_data.UVbackground already set
-    // grackle_data.Compton_xray_heating already set
-    // grackle_data.LWbackground_intensity already set
-    // grackle_data.LWbackground_sawtooth_suppression already set
-    grackle_data.Gamma                          = (double) Gamma;
-    grackle_data.primordial_chemistry           = (Eint32) MultiSpecies;
-    grackle_data.metal_cooling                  = (Eint32) MetalCooling;
-    grackle_data.h2_on_dust                     = (Eint32) H2FormationOnDust;
-    grackle_data.cmb_temperature_floor          = (Eint32) CloudyCoolingData.CMBTemperatureFloor;
-    grackle_data.three_body_rate                = (Eint32) ThreeBodyRate;
-    grackle_data.cie_cooling                    = (Eint32) CIECooling;
-    grackle_data.h2_optical_depth_approximation = (Eint32) H2OpticalDepthApproximation;
-    grackle_data.photoelectric_heating          = (Eint32) PhotoelectricHeating;
-    grackle_data.photoelectric_heating_rate     = (double) PhotoelectricHeatingRate;
-    grackle_data.NumberOfTemperatureBins        = (Eint32) CoolData.NumberOfTemperatureBins;
-    grackle_data.CaseBRecombination             = (Eint32) RateData.CaseBRecombination;
-    grackle_data.TemperatureStart               = (double) CoolData.TemperatureStart;
-    grackle_data.TemperatureEnd                 = (double) CoolData.TemperatureEnd;
-    grackle_data.NumberOfDustTemperatureBins    = (Eint32) RateData.NumberOfDustTemperatureBins;
-    grackle_data.DustTemperatureStart           = (double) RateData.DustTemperatureStart;
-    grackle_data.DustTemperatureEnd             = (double) RateData.DustTemperatureEnd;
-    grackle_data.HydrogenFractionByMass         = (double) CoolData.HydrogenFractionByMass;
-    grackle_data.DeuteriumToHydrogenRatio       = (double) CoolData.DeuteriumToHydrogenRatio;
-    grackle_data.SolarMetalFractionByMass       = (double) CoolData.SolarMetalFractionByMass;
+  if (grackle_data->use_grackle == TRUE) {
+    // grackle_data->use_grackle already set
+    // grackle_data->with_radiative_cooling already set
+    // grackle_data->grackle_data_file already set
+    // grackle_data->UVbackground already set
+    // grackle_data->Compton_xray_heating already set
+    // grackle_data->LWbackground_intensity already set
+    // grackle_data->LWbackground_sawtooth_suppression already set
+    grackle_data->Gamma                          = (double) Gamma;
+    grackle_data->primordial_chemistry           = (Eint32) MultiSpecies;
+    grackle_data->metal_cooling                  = (Eint32) MetalCooling;
+    grackle_data->h2_on_dust                     = (Eint32) H2FormationOnDust;
+    grackle_data->cmb_temperature_floor          = (Eint32) CloudyCoolingData.CMBTemperatureFloor;
+    grackle_data->three_body_rate                = (Eint32) ThreeBodyRate;
+    grackle_data->cie_cooling                    = (Eint32) CIECooling;
+    grackle_data->h2_optical_depth_approximation = (Eint32) H2OpticalDepthApproximation;
+    grackle_data->photoelectric_heating          = (Eint32) PhotoelectricHeating;
+    grackle_data->photoelectric_heating_rate     = (double) PhotoelectricHeatingRate;
+    grackle_data->NumberOfTemperatureBins        = (Eint32) CoolData.NumberOfTemperatureBins;
+    grackle_data->CaseBRecombination             = (Eint32) RateData.CaseBRecombination;
+    grackle_data->TemperatureStart               = (double) CoolData.TemperatureStart;
+    grackle_data->TemperatureEnd                 = (double) CoolData.TemperatureEnd;
+    grackle_data->NumberOfDustTemperatureBins    = (Eint32) RateData.NumberOfDustTemperatureBins;
+    grackle_data->DustTemperatureStart           = (double) RateData.DustTemperatureStart;
+    grackle_data->DustTemperatureEnd             = (double) RateData.DustTemperatureEnd;
+    grackle_data->HydrogenFractionByMass         = (double) CoolData.HydrogenFractionByMass;
+    grackle_data->DeuteriumToHydrogenRatio       = (double) CoolData.DeuteriumToHydrogenRatio;
+    grackle_data->SolarMetalFractionByMass       = (double) CoolData.SolarMetalFractionByMass;
+    grackle_data->use_radiative_transfer         = (Eint32) RadiativeTransfer;
+    grackle_data->radiative_transfer_coupled_rate_solver = (Eint32) RadiativeTransferCoupledRateSolver;
+    grackle_data->radiative_transfer_hydrogen_only       = (Eint32) RadiativeTransferHydrogenOnly;
 
     // Initialize units structure.
     FLOAT a_value, dadt;
@@ -1507,13 +1636,13 @@ int ReadParameterFile(FILE *fptr, TopGridData &MetaData, float *Initialdt)
     grackle_units.length_units         = (double) LengthUnits;
     grackle_units.time_units           = (double) TimeUnits;
     grackle_units.velocity_units       = (double) VelocityUnits;
+    grackle_units.a_value              = (double) a_value;
 
     // Initialize chemistry structure.
-    if (initialize_chemistry_data(&grackle_units,
-                                  (double) a_value) == FAIL) {
+    if (initialize_chemistry_data(&grackle_units) == FAIL) {
       ENZO_FAIL("Error in Grackle initialize_chemistry_data.\n");
     }
-  }  // if (grackle_data.use_grackle == TRUE)
+  }  // if (grackle_data->use_grackle == TRUE)
 
   else {
 #endif // USE_GRACKE
@@ -1606,7 +1735,7 @@ int ReadParameterFile(FILE *fptr, TopGridData &MetaData, float *Initialdt)
     for (k = -StarFeedbackDistRadius;k <= StarFeedbackDistRadius;k++) {
       for (j = -StarFeedbackDistRadius;j <= StarFeedbackDistRadius;j++) {
 	for (i = -StarFeedbackDistRadius;i <= StarFeedbackDistRadius;i++) {
-	  cell_step = fabs(k) + fabs(j) + fabs(i);
+	  cell_step = ABS(k) + ABS(j) + ABS(i);
 	  if (cell_step <= StarFeedbackDistCellStep) {
 	    StarFeedbackDistTotalCells++;
 	  }
@@ -1643,7 +1772,6 @@ int ReadParameterFile(FILE *fptr, TopGridData &MetaData, float *Initialdt)
 
   // Determine color fields (NColor) later inside a grid object.
   // ...
-
 #ifdef UNUSED
   if (MaximumGravityRefinementLevel == INT_UNDEFINED)
     MaximumGravityRefinementLevel = (RadiativeCooling && SelfGravity
@@ -1726,18 +1854,8 @@ int ReadParameterFile(FILE *fptr, TopGridData &MetaData, float *Initialdt)
        meantime, just double-check to make sure that if one tries to use the isolated boundary
        conditions when the unigrid transpose stuff is on, the code crashes loudly.
        -- BWO, 26 June 2008 */
-      if (MyProcessorNumber == ROOT_PROCESSOR){
-	fprintf(stderr, "\n\n");
-	fprintf(stderr, "  ************************************************************************\n");
-	fprintf(stderr, "  ****  D'oh!  At present, you cannot use isolated top grid boundary  ****\n");
-	fprintf(stderr, "  ****  conditions with the top grid unigrid bookkeeping scheme.      ****\n");
-	fprintf(stderr, "  ****  Consult Brian O'Shea for the details of this wackiness,       ****\n");
-	fprintf(stderr, "  ****  and in the meantime enzo DISABLED unigrid tranposition!       ****\n");
-	fprintf(stderr, "  ************************************************************************\n");      
-	fprintf(stderr, "\n\n");
-      }
-      UnigridTranspose = FALSE;
-    }
+    ENZO_FAIL("Parameter mismatch: TopGridGravityBoundary = 1 only works with UnigridTranspose = 0");
+  }
 
   /* If the restart dump parameters were set to the previous defaults
      (dtRestartDump = 5 hours), then set back to current default,
@@ -1882,6 +2000,10 @@ int ReadParameterFile(FILE *fptr, TopGridData &MetaData, float *Initialdt)
 #endif
   }
 
+  /* Cosmic ray diffusion should be off if Cosmic rays are off */
+  if(CRDiffusion > 0 && CRModel == 0){
+    ENZO_FAIL("CRDiffusion can only be used if CRModel is turned on!!\n");
+  }
 
   if (debug) printf("Initialdt in ReadParameterFile = %e\n", *Initialdt);
 

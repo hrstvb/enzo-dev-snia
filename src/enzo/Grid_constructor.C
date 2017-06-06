@@ -17,6 +17,7 @@
 #include <stdlib.h>
  
 #include "ErrorExceptions.h"
+#include "list.h"
 #include "macros_and_parameters.h"
 #include "typedefs.h"
 #include "global_data.h"
@@ -24,6 +25,7 @@
 #include "GridList.h"
 #include "ExternalBoundary.h"
 #include "Grid.h"
+#include "hydro_rk/SuperNova.h"
  
 grid::grid()
 {
@@ -61,7 +63,11 @@ grid::grid()
     AccelerationField[i]             = NULL;
     GravitatingMassFieldDimension[i] = 0;
     RandomForcingField[i]            = NULL;
+    PhaseFctMultEven[i]              = NULL; // WS
+    PhaseFctMultOdd[i]               = NULL; // WS
   }
+  PhaseFctInitEven = NULL; // WS
+  PhaseFctInitOdd  = NULL; // WS
  
   ParticleAcceleration[MAX_DIMENSION]      = NULL;
  
@@ -168,14 +174,11 @@ grid::grid()
 
   for(i=0;i<3;i++){
     MagneticField[i] = NULL;
-    CenteredB[i]     = NULL;
     ElectricField[i] = NULL;
     AvgElectricField[i] = NULL;
     OldMagneticField[i] = NULL;
     OldElectricField[i] = NULL;
-    OldCenteredB[i] = NULL;
     MHDParentTemp[i] = NULL;
-
   }
   dtParent = -1;
 
@@ -208,4 +211,6 @@ grid::grid()
      (April 2012) only implemented for H2REG_STAR and completely
      ignored for all other star makers. */
   MakeStars = 0;
+    if (UseSupernovaSeedFieldSourceTerms == 1)  List<SuperNova>  SuperNovaList;
+
 }

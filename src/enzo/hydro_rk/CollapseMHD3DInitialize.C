@@ -38,7 +38,8 @@ int GetUnits(float *DensityUnits, float *LengthUnits,
 		      float *VelocityUnits, FLOAT Time);
 
 int CollapseMHD3DInitialize(FILE *fptr, FILE *Outfptr, 
-			    HierarchyEntry &TopGrid, TopGridData &MetaData, int SetBaryonFields)
+			    HierarchyEntry &TopGrid, TopGridData &MetaData,
+			    int SetBaryonFields)
 {
    const char *DensName = "Density";
    const char *TEName   = "TotalEnergy";
@@ -62,7 +63,6 @@ int CollapseMHD3DInitialize(FILE *fptr, FILE *Outfptr,
    const char *ByName = "By";
    const char *BzName = "Bz";
    const char *PhiName = "Phi";
-   const char *DebugName = "Debug";
    const char *Phi_pName = "Phip";
    const char *GravPotenName = "PotentialField";
    const char *Acce1Name = "AccelerationField1";
@@ -398,9 +398,6 @@ int CollapseMHD3DInitialize(FILE *fptr, FILE *Outfptr,
     DataLabel[count++] = (char*) PhiName;
   }
   if (UseMHDCT) {
-      MHDcLabel[0] = "Bx";
-      MHDcLabel[1] = "By";
-      MHDcLabel[2] = "Bz";
 
       MHDLabel[0] = "BxF";
       MHDLabel[1] = "ByF";
@@ -441,7 +438,6 @@ int CollapseMHD3DInitialize(FILE *fptr, FILE *Outfptr,
   
   if(UseDivergenceCleaning){
     DataLabel[count++] = (char*) Phi_pName;
-    DataLabel[count++] = (char*) DebugName;
   }
   
   if (WritePotential) {
@@ -450,8 +446,6 @@ int CollapseMHD3DInitialize(FILE *fptr, FILE *Outfptr,
     //    DataLabel[count++] = (char*) Acce2Name;
     //    DataLabel[count++] = (char*) Acce3Name;
   }
-  
-  DataLabel[count++] = (char*) DebugName;
   
   for (i = 0; i < count; i++) {
     DataUnits[i] = NULL;

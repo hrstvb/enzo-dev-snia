@@ -29,9 +29,15 @@ int GetUnits(float *DensityUnits, float *LengthUnits,
 
 int Star::Accrete(void)
 {
-
-  if (this->CurrentGrid == NULL || this->naccretions == 0)
-    return SUCCESS;
+  if (UseSupernovaSeedFieldSourceTerms == 1){
+    if (this->CurrentGrid == NULL ||(this->naccretions == 0))
+      return SUCCESS;
+  }
+  else {
+      if (this->CurrentGrid == NULL || 
+          (this->naccretions == 0 && fabs(this->DeltaMass) < tiny_number))
+      return SUCCESS;
+  }
 
   const double Msun = 1.989e33, yr = 3.1557e7;
   int dim, i, n, count;
@@ -106,8 +112,11 @@ int Star::Accrete(void)
 
   if (n > 0)  last_accretion_rate = accretion_rate[n-1]; 
 
-  fprintf(stdout, "star::Accrete:  last_accretion_rate = %g Msun/yr, time = %g, accretion_time[0] = %g, this_dt = %e, DeltaMass = %g, Mass = %lf\n", 
-	  last_accretion_rate*yr, time, accretion_time[0], this_dt, DeltaMass, Mass); //#####
+  fprintf(stdout, "star::Accrete:  last_accretion_rate = %"GOUTSYM
+	  " Msun/yr, time = %"GOUTSYM", "
+	  "accretion_time[0] = %"GOUTSYM", this_dt = %"GOUTSYM
+	  ", DeltaMass = %"GOUTSYM", Mass = %lf\n",
+	  last_accretion_rate*yr, time, accretion_time[0], this_dt, DeltaMass, Mass);
 
   /* Remove these entries in the accretion table */
 

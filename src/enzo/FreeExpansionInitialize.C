@@ -51,7 +51,6 @@ int FreeExpansionInitialize(FILE *fptr, FILE *Outfptr, HierarchyEntry &TopGrid,
   char	*B2Name	   = "By";
   char	*B3Name	   = "Bz";
   char	*PhiName   = "Phi";
-  char	*DebugName = "Debug";
   char	*Phi_pName = "Phip";
 
   /* parameter declarations */
@@ -153,7 +152,7 @@ int FreeExpansionInitialize(FILE *fptr, FILE *Outfptr, HierarchyEntry &TopGrid,
     B2 = 0.0;
     for (dim = 0; dim < MetaData.TopGridRank; dim++)
       B2 += FreeExpansionBField[dim] * FreeExpansionBField[dim];
-    FreeExpansionTotalEnergy + 0.5 * B2 / FreeExpansionDensity;
+    FreeExpansionTotalEnergy += 0.5 * B2 / FreeExpansionDensity;
   }
 
   
@@ -284,7 +283,6 @@ int FreeExpansionInitialize(FILE *fptr, FILE *Outfptr, HierarchyEntry &TopGrid,
     DataLabel[i++] = PhiName;
     if (UseDivergenceCleaning) {
       DataLabel[i++] = Phi_pName;
-      DataLabel[i++] = DebugName;
     }
   }
 

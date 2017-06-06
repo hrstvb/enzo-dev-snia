@@ -19,6 +19,7 @@
 #include "macros_and_parameters.h"
 #include "typedefs.h"
 #include "global_data.h"
+#include "list.h"
 #include "Fluxes.h"
 #include "GridList.h"
 #include "ExternalBoundary.h"
@@ -99,7 +100,7 @@ int grid::MHDSourceTerms(float **dU)
 
   if (DualEnergyFormalism) {
     int igrid, ip1, im1, jp1, jm1, kp1, km1;
-    FLOAT coef = 1.;
+    FLOAT coef = 0.5;
     FLOAT dtdx = coef*dtFixed/CellWidth[0][0]/a,
       dtdy = (GridRank > 1) ? coef*dtFixed/CellWidth[1][0]/a : 0.0,
       dtdz = (GridRank > 2) ? coef*dtFixed/CellWidth[2][0]/a : 0.0;
@@ -264,7 +265,7 @@ int grid::MHDSourceTerms(float **dU)
   }
 
 
-  if ((ComovingCoordinates == 1)) { // add some B related cosmological expansion terms here
+  if (ComovingCoordinates == 1) { // add some B related cosmological expansion terms here
 
     int igrid;
     float rho, coef=0.;
@@ -298,9 +299,6 @@ int grid::MHDSourceTerms(float **dU)
 
   if (UseDrivingField) {
 
-    float rhou, lenu, tempu, tu, velu;
-    GetUnits(&rhou, &lenu, &tempu, &tu, &velu, Time);
-
     int Drive1Num, Drive2Num, Drive3Num;
     if (IdentifyDrivingFields(Drive1Num, Drive2Num, Drive3Num) == FAIL) {
       printf("grid::SourceTerms: canot identify driving fields.\n");
@@ -309,17 +307,11 @@ int grid::MHDSourceTerms(float **dU)
     int igrid;
     float drivex, drivey, drivez, vx, vy, vz, rho;
     int n = 0;
-    FLOAT x, y, z, r;
+    
     for (int k = GridStartIndex[2]; k <= GridEndIndex[2]; k++) {
       for (int j = GridStartIndex[1]; j <= GridEndIndex[1]; j++) {
 	for (int i = GridStartIndex[0]; i <= GridEndIndex[0]; i++, n++) {
 	  igrid = i+(j+k*GridDimension[1])*GridDimension[0];
-
-	  x = CellLeftEdge[0][i] + 0.5*CellWidth[0][i];
-	  y = CellLeftEdge[1][j] + 0.5*CellWidth[1][j];
-	  z = CellLeftEdge[2][k] + 0.5*CellWidth[2][k];
-	  r = sqrt(pow(x-0.5,2) + pow(y-0.5,2) + pow(z-0.5,2));
-	
 
 	  rho    = BaryonField[DensNum     ][igrid];
 	  drivex = BaryonField[Drive1Num][igrid];
@@ -329,31 +321,17 @@ int grid::MHDSourceTerms(float **dU)
 	  vy     = BaryonField[Vel2Num      ][igrid];
 	  vz     = BaryonField[Vel3Num      ][igrid];
 
-	  float eint = BaryonField[TENum][igrid] - 0.5*sqrt(vx*vx + vy*vy + vz*vz)
-	    -0.5*sqrt(pow(BaryonField[B1Num][igrid],2)+pow(BaryonField[B2Num][igrid],2)
-		      +pow(BaryonField[B3Num][igrid],2))/rho;
-
-	  float T = eint*Mu*(Gamma-1.0)*tempu;
-
-	  FLOAT R = sqrt(pow(x-0.5,2) + pow(y-0.5,2));
-
-	  //if (T > 90.0) {
-	  //if (z < 0.1 || z > 0.9) {
-	  //if (r > 0.3) {
-	  //if (R > 0.45) {
-	    dU[iS1  ][n] += dtFixed*rho*drivex*DrivingEfficiency;
-	    dU[iS2  ][n] += dtFixed*rho*drivey*DrivingEfficiency;
-	    dU[iS3  ][n] += dtFixed*rho*drivez*DrivingEfficiency;
-	    dU[iEtot][n] += dtFixed*rho*(drivex*vx + drivey*vy + drivez*vz)*DrivingEfficiency;
+	  dU[iS1  ][n] += dtFixed*rho*drivex*DrivingEfficiency;
+	  dU[iS2  ][n] += dtFixed*rho*drivey*DrivingEfficiency;
+	  dU[iS3  ][n] += dtFixed*rho*drivez*DrivingEfficiency;
+	  dU[iEtot][n] += dtFixed*rho*(drivex*vx + drivey*vy + drivez*vz +
+        0.5 * dtFixed * (drivex * drivex + drivey * drivey + drivez * drivez)) * DrivingEfficiency;
 
 
-	    //}
 	}
       }
     }
   }
-
-
   
   /* Add centrifugal force for the shearing box */
 
@@ -381,7 +359,7 @@ int grid::MHDSourceTerms(float **dU)
     float lengthy=DomainRightEdge[1]-DomainLeftEdge[1];
     float lengthz;
     if (GridRank==3) lengthz=DomainRightEdge[2]-DomainLeftEdge[2];
-    else lengthz-0.0;
+    else lengthz=0.0;
     
 
     for (int k = GridStartIndex[2]; k <= GridEndIndex[2]; k++) {
@@ -420,7 +398,52 @@ int grid::MHDSourceTerms(float **dU)
       }
     }
   }
+  
+if((UseSupernovaSeedFieldSourceTerms == 1)) {
 
+  int n = 0, igrid;
+  int iden=FindField(Density, FieldType, NumberOfBaryonFields);
+  snsf_source_terms S;
+  List<SuperNova>::Iterator *P = this->SuperNovaList.begin();
+  FLOAT cell_center[3];
+  FLOAT dx, dy, dz, dist_to_sn;
+  int temp =1;
+  int entered = 0;
+
+  for (int k = GridStartIndex[2]; k <= GridEndIndex[2]; k++) {
+    for (int j = GridStartIndex[1]; j <= GridEndIndex[1]; j++) {
+      for (int i = GridStartIndex[0]; i <= GridEndIndex[0]; i++, n++) {
+	igrid = i+(j+k*GridDimension[1])*GridDimension[0];
+
+	cell_center[0] = CellLeftEdge[0][i] + 0.5*CellWidth[0][i];
+	cell_center[1] = CellLeftEdge[1][j] + 0.5*CellWidth[1][j];
+	cell_center[2] = CellLeftEdge[2][k] + 0.5*CellWidth[2][k];
+
+	while(P != this->SuperNovaList.end()){
+	  dx = P->get()->getPosition()[0] - cell_center[0];
+	  dy = P->get()->getPosition()[1] - cell_center[1];
+	  dz = P->get()->getPosition()[2] - cell_center[2];
+
+	  dist_to_sn = sqrt(dx*dx + dy*dy + dz*dz);
+	  if (dist_to_sn < 1.1*SupernovaSeedFieldRadius){
+	    S = P->get()->getSourceTerms(dx, dy, dz, Time);
+   	    double rho = BaryonField[DensNum][igrid];
+
+	    dU[iBx][n] += S.dbx*dtFixed;
+	    dU[iBy][n] += S.dby*dtFixed;
+	    dU[iBz][n] += S.dbz*dtFixed;
+	    dU[iEtot][n] += S.dUtot*dtFixed;
+
+	  }
+	  P = P->next();
+	}// End of SuperNovaList iteration                                                                                           
+      } // End of k for-loop                                                                                                         
+    } // End of j for-loop                                                                                                           
+  } // End of i for-loop                                                                                                             
+
+} // End of UseSuperNovaSeedFieldSourceTerms scope                                                                                   
+
+  
 
   return SUCCESS;
 }
