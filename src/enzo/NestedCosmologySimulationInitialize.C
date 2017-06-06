@@ -96,7 +96,7 @@ static  int   CosmologySimulationGridLevel[MAX_INITIAL_GRIDS];
 static  FLOAT CosmologySimulationGridLeftEdge[MAX_INITIAL_GRIDS][MAX_DIMENSION];
 static  FLOAT CosmologySimulationGridRightEdge[MAX_INITIAL_GRIDS][MAX_DIMENSION];
  
-
+extern int MustCollectParticlesToLevelZero; 
  
 int NestedCosmologySimulationInitialize(FILE *fptr, FILE *Outfptr,
 			       		HierarchyEntry &TopGrid, TopGridData &MetaData)
@@ -130,7 +130,6 @@ int NestedCosmologySimulationInitialize(FILE *fptr, FILE *Outfptr,
   char *ByName = "By";
   char *BzName = "Bz";
   char *PhiName = "Phi";
-  char *DebugName = "Debug";
   char *Phi_pName = "Phip";
 
  
@@ -345,6 +344,9 @@ int NestedCosmologySimulationInitialize(FILE *fptr, FILE *Outfptr,
       fprintf(stderr, "warning: mu = 0.6 assumed in initialization; setting mu = 0.6 for consistency.\n");
     Mu = 0.6;
   }
+
+  // Copy Omega_DM to a global variable
+  OmegaDarkMatterNow = CosmologySimulationOmegaCDMNow;
 
   // If temperature is left unset, set it assuming that T=550 K at z=200
  
@@ -635,6 +637,22 @@ int NestedCosmologySimulationInitialize(FILE *fptr, FILE *Outfptr,
 						       ) == FAIL) {
       ENZO_FAIL("Error in grid->NestedCosmologySimulationInitializeGrid.\n");
     }
+
+    // Initialize MustRefine particles if MustRefineParticlesCreateParticles is set.
+
+    if (ParallelRootGridIO != TRUE && MustRefineParticlesCreateParticles == 1) {
+      if (MustRefineParticlesRefineToLevel != -1){
+	if (MustRefineParticlesRightEdge[0] != 0.0 ||
+	    MustRefineParticlesRightEdge[1] != 0.0 ||
+	    MustRefineParticlesRightEdge[2] != 0.0)
+	  GridsList[gridnum]->GridData->MustRefineParticlesFlagInRegion();
+	if (MustRefineParticlesRightEdge[0] == 0.0 &&
+	    MustRefineParticlesRightEdge[1] == 0.0 &&
+	    MustRefineParticlesRightEdge[2] == 0.0)
+	  GridsList[gridnum]->GridData->MustRefineParticlesFlagFromList();
+      }
+    }
+
  
     // Set boundary conditions if necessary
  
@@ -687,7 +705,6 @@ int NestedCosmologySimulationInitialize(FILE *fptr, FILE *Outfptr,
     DataLabel[i++] = PhiName;
     if(UseDivergenceCleaning){
       DataLabel[i++] = Phi_pName;
-      DataLabel[i++] = DebugName;
     }
   }
    if (MultiSpecies) {
@@ -783,7 +800,7 @@ int NestedCosmologySimulationInitialize(FILE *fptr, FILE *Outfptr,
 	    CosmologySimulationVelocityNames[1]);
     fprintf(Outfptr, "CosmologySimulationParticleVelocity3Name = %s\n",
 	    CosmologySimulationVelocityNames[2]);
-    if (CosmologySimulationParticleDisplacementNames) {	
+    if (CosmologySimulationParticleDisplacementNames[0]) {	
       fprintf(Outfptr, "CosmologySimulationParticleDisplacement1Name = %s\n",
 	      CosmologySimulationParticleDisplacementNames[0]);
       fprintf(Outfptr, "CosmologySimulationParticleDisplacement2Name = %s\n",
@@ -862,7 +879,7 @@ int NestedCosmologySimulationReInitialize(HierarchyEntry *TopGrid,
  
  
   int dim, gridnum = 0;
- 
+
   HierarchyEntry *CurrentGrid;
   HierarchyEntry *Temp;
  
@@ -884,7 +901,7 @@ int NestedCosmologySimulationReInitialize(HierarchyEntry *TopGrid,
 
   /* Loop over initial grids and reinitialize each one. */
 
-  PINT ParticleCount = 0, ParticleTempCount;
+  PINT ParticleCount = 0;
   for (gridnum = 0; gridnum < CosmologySimulationNumberOfInitialGrids; gridnum++) {
  
     if (MyProcessorNumber == ROOT_PROCESSOR)
@@ -970,7 +987,6 @@ int NestedCosmologySimulationReInitialize(HierarchyEntry *TopGrid,
  
     Temp = CurrentGrid;
     while (Temp != NULL) {
-      ParticleTempCount = ParticleCount; // set particle count to beginning of this level (not used for ring IO)
       if (Temp->GridData->NestedCosmologySimulationInitializeGrid
 	  (gridnum, CosmologySimulationOmegaBaryonNow,
 	   CosmologySimulationOmegaCDMNow,
@@ -991,7 +1007,7 @@ int NestedCosmologySimulationReInitialize(HierarchyEntry *TopGrid,
 	   CosmologySimulationInitialFractionMetal,
 	   CosmologySimulationInitialFractionMetalIa,
 	   CosmologySimulationUseMetallicityField,
-	   ParticleTempCount,
+	   ParticleCount,
 	   CosmologySimulationManuallySetParticleMassRatio,
 	   CosmologySimulationManualParticleMassRatio,
 	   CosmologySimulationCalculatePositions,
@@ -1001,15 +1017,25 @@ int NestedCosmologySimulationReInitialize(HierarchyEntry *TopGrid,
 	   ) == FAIL) {
 	ENZO_FAIL("Error in grid->NestedCosmologySimulationInitializeGrid.\n");
       }
+
+      //Initialize MustRefine particles if MustRefineParticlesCreateParticles is set.
+     
+      if (MustRefineParticlesCreateParticles == 1) {
+      if (MustRefineParticlesRefineToLevel != -1){
+	if (MustRefineParticlesRightEdge[0] != 0.0 ||
+	    MustRefineParticlesRightEdge[1] != 0.0 ||
+	    MustRefineParticlesRightEdge[2] != 0.0)
+	  Temp->GridData->MustRefineParticlesFlagInRegion();
+	if (MustRefineParticlesRightEdge[0] == 0.0 &&
+	    MustRefineParticlesRightEdge[1] == 0.0 &&
+	    MustRefineParticlesRightEdge[2] == 0.0)
+	  Temp->GridData->MustRefineParticlesFlagFromList();
+      }
+    }
+
  
       Temp = Temp->NextGridThisLevel;
     } // end: loop over grids on this level
-
-    /* Once we have read in all the grids, update the current particle count
-       by the number returned, which is the total number of particles on that level
-       (this only works for one initial sub-region per level). */
-
-    ParticleCount = ParticleTempCount; // set particle count (not used for ring IO)
 
     // Go down to the grid(s) on the next level
  
@@ -1081,6 +1107,14 @@ int NestedCosmologySimulationReInitialize(HierarchyEntry *TopGrid,
     ParticleCount = 0;
  
     NestedRecursivelySetParticleCount(Temp, &ParticleCount);
+
+  } else {
+
+    /* This forces RebuildHierarchy to collect the particles the first
+       time it is called. Otherwise, particles are not in their correct
+       processor and Rebuild fails. */
+
+    MustCollectParticlesToLevelZero = TRUE;
 
   }
  

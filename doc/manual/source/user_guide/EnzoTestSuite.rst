@@ -72,8 +72,10 @@ standard settings, complete these commands:
 
 ::
 
-    $ cd <enzo_root>/src/enzo
-    $ make default
+    $ cd <enzo_root>
+    $ ./configure
+    $ cd ./src/enzo
+    $ make load-config-allphysics
     $ make clean
     $ make
 
@@ -81,20 +83,41 @@ Note that you need not copy the resulting enzo executable to your path,
 since the enzo.exe will be symbolically linked from the src/enzo directory
 into each test problem directory before tests are run.
 
-2.  **Get the correct yt version** The enzo tests are generated and compared
-using the yt analysis suite.  You must be using yt 2.6.3 in order for the test
-suite to work.  The test suite has not yet been updated to work with yt 3.0 and
-newer releases. If you do not yet have yt, visit http://yt-project.org/#getyt
-for installation instructions.  If you already have yt and yt is in your path,
-make sure you're using yt 2.6.3 by running the following commands:
+This build configuration requires that the Hypre and Grackle libraries are
+installed and visible in your compiler's search paths. If you do not have these
+libraries available, then you can set:
+
+::
+
+    $ make grackle-no
+    $ make hypre-no
+
+.. note::
+
+  If Enzo is compiled without support for the grackle and hypre libraries, tests
+  of Enzo modules that depend on these libraries will likely fail.
+
+
+2.  **Install the necessary Python libraries**  The test suite works
+    with both Python 2.x and Python 3.x, but requires python-hglib
+    (https://pypi.python.org/pypi/python-hglib) to access Mercurial.
+    This should be installable via pip.
+    
+   
+3.  **Get the correct yt version** The enzo tests are generated and compared
+using the yt analysis suite.  You must be using yt 3.3.0 or newer in order for
+the test suite to work.  If you do not yet have yt, visit
+http://yt-project.org/#getyt for installation instructions.  If you already have
+yt and yt is in your path, make sure you are using the latest verion of yt by
+running the following commands:
 
 ::
 
     $ cd /path/to/yt_mercurial_repository
-    $ hg update yt-2.x
+    $ hg update yt
     $ python setup.py develop
 
-3. **Generate answers to test with.** Run the test suite with these flags within
+4. **Generate answers to test with.** Run the test suite with these flags within
 the ``run/`` subdirectory in the enzo source hierarchy:
 
 ::
@@ -131,7 +154,7 @@ reference standard.  Feel free to test against this reference standard or tar
 and gzip it up and send it to another machine for testing.
 
 
-4.  **Run the test suite using your local answers.** The testing suite operates
+5.  **Run the test suite using your local answers.** The testing suite operates
 by running a series of enzo test files throughout the ``run`` subdirectory.
 Note that if you want to test a specific enzo changeset, you must update to it
 and recompile enzo. You can initiate the quicksuite test simulations and their
@@ -315,6 +338,11 @@ thorough explanation of each.
     When a test fails a pdb session is triggered.  Allows interactive inspection
     of failed test data.
 
+``--changeset=str`` default: latest
+    Changeset to use in simulation repo.  If supplied,
+    make clean && make is also run
+
+    
 **Flags for storing, comparing against different standards**
 
 ``--answer-store`` default: False
@@ -328,26 +356,6 @@ thorough explanation of each.
 
 ``--local`` default: False
     Store/Compare the reference standard locally (i.e. not on the cloud)
-
-**Bisection flags**
-
-``-b, --bisect`` default: False
-    Run bisection on test. Requires revisions ``--good`` and
-    ``--bad``.  Best if ``--repo`` is different from location of
-    ``test_runner.py`` runs  ``--problematic`` suite.  
-
-``--good=str`` default: None
-    For bisection, most recent good revision
-
-``--bad=str`` default: None
-    For bisection, most recent bad revision
-
-``-j int, --jcompile=int`` default: 1
-    number of processors with which to compile when running bisect
-
-``--changeset=str`` default: latest
-    Changeset to use in simulation repo.  If supplied,
-    make clean && make is also run
 
 
 **Flags not used**

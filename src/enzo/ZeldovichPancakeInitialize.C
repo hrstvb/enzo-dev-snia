@@ -36,6 +36,7 @@ int GetUnits(float *DensityUnits, float *LengthUnits,
 	     float *TemperatureUnits, float *TimeUnits,
 	     float *VelocityUnits, FLOAT Time);
 
+int MHDCTSetupFieldLabels();
 int ZeldovichPancakeInitialize(FILE *fptr, FILE *Outfptr,
 			       HierarchyEntry &TopGrid, TopGridData &MetaData)
 {
@@ -49,7 +50,6 @@ int ZeldovichPancakeInitialize(FILE *fptr, FILE *Outfptr,
   char *ByName = "By";
   char *BzName = "Bz";
   char *PhiName = "Phi";
-  char *DebugName = "Debug";
   char *Phi_pName = "Phip";
 
 
@@ -128,6 +128,7 @@ int ZeldovichPancakeInitialize(FILE *fptr, FILE *Outfptr,
   PressureUnits = DensityUnits * (LengthUnits/TimeUnits)*(LengthUnits/TimeUnits);
   MagneticUnits = sqrt(PressureUnits*4.0*M_PI);
 
+ 
   for (int dim = 0; dim < MAX_DIMENSION; dim++) 
     ZeldovichPancakeInitialUniformBField[dim] /= MagneticUnits;
 
@@ -151,26 +152,28 @@ int ZeldovichPancakeInitialize(FILE *fptr, FILE *Outfptr,
   int i = 0;
   DataLabel[i++] = DensName;
   DataLabel[i++] = Vel1Name;
-  if (MetaData.TopGridRank > 1 || (HydroMethod == MHD_RK) || (HydroMethod == HD_RK))
+  if (MaxVelocityIndex > 1)
     DataLabel[i++] = Vel2Name;
-  if (MetaData.TopGridRank > 2 || (HydroMethod == MHD_RK) || (HydroMethod == HD_RK))
+  if (MaxVelocityIndex > 2)
     DataLabel[i++] = Vel3Name;
   DataLabel[i++] = TEName;
   if (DualEnergyFormalism)
     DataLabel[i++] = GEName;
-  if (HydroMethod == MHD_RK) {
+  if (UseMHD) {
     DataLabel[i++] = BxName;
     DataLabel[i++] = ByName;
     DataLabel[i++] = BzName;
+  }
+  if( HydroMethod == MHD_RK ){
     DataLabel[i++] = PhiName;
-    if(UseDivergenceCleaning){
-      DataLabel[i++] = Phi_pName;
-      DataLabel[i++] = DebugName;
-    }
+  }
+  if(UseDivergenceCleaning){
+    DataLabel[i++] = Phi_pName;
   }
  
   for (int count = 0; count < i; count++)
     DataUnits[count] = NULL;
+  MHDCTSetupFieldLabels();
  
   /* Write parameters to parameter output file */
  

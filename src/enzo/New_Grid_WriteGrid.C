@@ -409,6 +409,19 @@ int grid::Group_WriteGrid(FILE *fptr, char *base_name, int grid_id, HDF5_hid_t f
       }
     }
 
+		/* If requested, write the External Acceleration field */
+    if (WriteExternalAccel==1){
+				this->ComputeAccelerationFieldExternal();
+        this->write_dataset(GridRank, OutDims, "External_Acceleration_x",
+            group_id, file_type_id, (VOIDP) AccelerationField[0], TRUE, temp);
+        if (GridRank==3){
+          this->write_dataset(GridRank, OutDims, "External_Acceleration_y",
+              group_id, file_type_id, (VOIDP) AccelerationField[1], TRUE, temp);
+          this->write_dataset(GridRank, OutDims, "External_Acceleration_z",
+              group_id, file_type_id, (VOIDP) AccelerationField[2], TRUE, temp);
+        }
+    } // end if for write external acceleration field
+
    
 
     /* If requested, compute and output the temperature field 
@@ -446,17 +459,6 @@ int grid::Group_WriteGrid(FILE *fptr, char *base_name, int grid_id, HDF5_hid_t f
 
 
     if( UseMHDCT ){
-      for(field=0;field<nBfields;field++){
-        if(CopyOnlyActive == TRUE) {
-          this->write_dataset(GridRank, OutDims, MHDcLabel[field],
-                              group_id, file_type_id, (VOIDP) CenteredB[field],
-                              TRUE, temp);
-        } else {
-          this->write_dataset(GridRank, FullOutDims, MHDcLabel[field],
-                              group_id, file_type_id, (VOIDP) CenteredB[field],
-                              FALSE);
-        }
-      }
 
       hsize_t MHDOutDims[3];
       int MHDActive[3]; 
@@ -525,7 +527,7 @@ int grid::Group_WriteGrid(FILE *fptr, char *base_name, int grid_id, HDF5_hid_t f
     /* If requested, compute and output the dust temperature field 
        as well since its such a pain to compute after the fact. */
  
-    if (OutputDustTemperature) {
+    if (OutputDustTemperature != FALSE) {
  
       /* Get temperature field if we do not already have it. */
 
@@ -940,6 +942,8 @@ int grid::WriteAllFluxes(hid_t grid_node)
   H5Gclose(subgrid_group);
   H5Gclose(fluxes_node);
 
+  return SUCCESS;
+
 }
 
 int grid::WriteFluxGroup(hid_t top_group, fluxes *fluxgroup)
@@ -1005,4 +1009,7 @@ int grid::WriteFluxGroup(hid_t top_group, fluxes *fluxgroup)
 
     H5Gclose(axis_group);
   }
+
+  return SUCCESS;
+
 }

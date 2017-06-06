@@ -111,7 +111,6 @@ int grid::UpdateMHDPrim(float **dU, float c1, float c2)
           igrid = (k * GridDimension[1] + j) * GridDimension[0] + GridStartIndex[0];
           for (i = GridStartIndex[0]; i <= GridEndIndex[0]; i++, n++, igrid++) {
             Prim[field][igrid] = min(1.0, max((Prim[field][igrid]/D[n]), SmallX));
-            Prim[field][igrid] = Prim[field][igrid]/D[n];
             sum[n] += Prim[field][igrid];
           }
         }
@@ -172,7 +171,7 @@ int grid::UpdateMHDPrim(float **dU, float c1, float c2)
 	etot = BaryonField[TENum][igrid];
 	Tau  = rho*etot;
 	if (DualEnergyFormalism) {
-	  eint = BaryonField[ieint][igrid];
+	  eint = BaryonField[GENum][igrid];
 	}
 	Bx   = BaryonField[B1Num][igrid];
 	By   = BaryonField[B2Num][igrid];
@@ -244,9 +243,9 @@ int grid::UpdateMHDPrim(float **dU, float c1, float c2)
 	if (DualEnergyFormalism) {
 	  v2 = vx*vx + vy*vy + vz*vz;
 	  B2 = Bx_new*Bx_new + By_new*By_new + Bz_new*Bz_new;
+	  eint = Eint_new/D_new;
 	  float emin = SmallT/(Mu*(Gamma-1.0));
 
-	  eint = Eint_new/D_new;
 	  float eint1 = etot - 0.5*v2 - 0.5*B2/D_new;
 	  if (eint1 > 0) {
 	    EOS(p, D_new, eint1, h, cs, dpdrho, dpde, EOSType, 2);

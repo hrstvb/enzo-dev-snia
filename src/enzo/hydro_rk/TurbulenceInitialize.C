@@ -37,6 +37,7 @@ int RebuildHierarchy(TopGridData *MetaData,
 int GetUnits(float *DensityUnits, float *LengthUnits,
 		      float *TemperatureUnits, float *TimeUnits,
 		      float *VelocityUnits, FLOAT Time);
+void MHDCTSetupFieldLabels();
 
 int TurbulenceInitialize(FILE *fptr, FILE *Outfptr, 
 			 HierarchyEntry &TopGrid, TopGridData &MetaData, int SetBaryonFields)
@@ -82,7 +83,8 @@ int TurbulenceInitialize(FILE *fptr, FILE *Outfptr,
   char *Acce2Name = "AccelerationField2";
   char *Acce3Name = "AccelerationField3";
   char *MetalName = "Metal_Density";
-
+  char *Phi_pName = "Phip";
+  
   /* declarations */
 
   char  line[MAX_LINE_LENGTH];
@@ -271,11 +273,16 @@ printf("Plasma beta=%"GSYM"\n", CloudDensity*CloudSoundSpeed*CloudSoundSpeed/(In
   if (DualEnergyFormalism) {
     DataLabel[count++] = GEName;
   }
-  if (HydroMethod == MHD_RK) {
+  if (UseMHD) {
     DataLabel[count++] = BxName;
     DataLabel[count++] = ByName;
     DataLabel[count++] = BzName;
+  }
+  if( HydroMethod == MHD_RK){
     DataLabel[count++] = PhiName;
+    if(UseDivergenceCleaning){
+      DataLabel[count++] = Phi_pName;
+    }
   }
   if (MultiSpecies) {
     DataLabel[count++] = ElectronName;
@@ -328,6 +335,7 @@ printf("Plasma beta=%"GSYM"\n", CloudDensity*CloudSoundSpeed*CloudSoundSpeed/(In
     DataLabel[count++] = Acce2Name;
     DataLabel[count++] = Acce3Name;
   }
+  MHDCTSetupFieldLabels();
 
   for (i = 0; i < count; i++) {
     DataUnits[i] = NULL;
