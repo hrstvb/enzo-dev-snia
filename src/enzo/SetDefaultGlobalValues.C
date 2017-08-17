@@ -638,7 +638,9 @@ int SetDefaultGlobalValues(TopGridData &MetaData)
     StarClusterRegionLeftEdge[dim] = 0.0;
     StarClusterRegionRightEdge[dim] = 1.0;
   }
-
+ 
+  MixSpeciesAndColors           = 1;            //Enable SNColour field to be advected as species in MHD
+ 
   PopIIIStarMass                   = 100;
   PopIIIInitialMassFunction        = FALSE;
   PopIIIInitialMassFunctionSeed    = INT_UNDEFINED;
@@ -883,7 +885,6 @@ int SetDefaultGlobalValues(TopGridData &MetaData)
   LoadGridDataAtStart = TRUE;
 
   IsothermalSoundSpeed = 1.0;
-  RefineByJeansLengthUnits = 0;
 
   MetalCooling = FALSE;
   MetalCoolingTable = (char*) "metal_cool.dat";

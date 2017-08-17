@@ -383,6 +383,7 @@ EXTERN int NoMultiSpeciesButColors;
 EXTERN int ThreeBodyRate;
 EXTERN RateDataType RateData;
 EXTERN int H2FormationOnDust;
+EXTERN int MixSpeciesAndColors;
 
 /* Glover chemistry/cooling network flags */
 EXTERN int GloverChemistryModel;  // 0 is off, on is 1-7, excluding 6
@@ -977,7 +978,6 @@ EXTERN FLOAT TopGridDx[MAX_DIMENSION];
 EXTERN int ShearingBoxProblemType; // 0 = advecting sphere; 1 = shearing box; 2 = vortex wave ; 3 = stratified
 
 EXTERN float IsothermalSoundSpeed;
-EXTERN int RefineByJeansLengthUnits;
 
 
 
