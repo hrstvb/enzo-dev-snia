@@ -103,7 +103,7 @@ int grid::CollapseTestInitializeGrid(int NumberOfSpheres,
 {
   /* declarations */
 
-  int dim, i, j, k, m, field, sphere, size;
+  int dim, i, j, k, m, sphere;
   int DeNum, HINum, HIINum, HeINum, HeIINum, HeIIINum, HMNum, H2INum, H2IINum,
     DINum, DIINum, HDINum, MetalNum;
   float xdist,ydist,zdist;
@@ -272,20 +272,11 @@ int grid::CollapseTestInitializeGrid(int NumberOfSpheres,
 
     } // end: particle initialization
 
-    /* Set up the baryon field. */
-
-    /* compute size of fields */
-
-    size = 1;
-    for (dim = 0; dim < GridRank; dim++)
-      size *= GridDimension[dim];
 
     /* allocate fields */
 
     if (SetupLoopCount == 0)
-      for (field = 0; field < NumberOfBaryonFields; field++)
-	if (BaryonField[field] == NULL)
-	  BaryonField[field] = new float[size];
+        this->AllocateGrids();
 
     /* Loop over the mesh. */
 
@@ -756,6 +747,15 @@ int grid::CollapseTestInitializeGrid(int NumberOfSpheres,
 		} // end: loop over dims
 
 	      } // end: disk
+
+               /* 11) stellar wind, with r^-2 power law density*/
+              if (SphereType[sphere] == 11) {
+                radial_velocity = StellarWindSpeed/VelocityUnits;
+                dens1 = StellarWindDensity*pow(r/StellarWindRadius, -2);
+                Velocity[0] += radial_velocity * xpos / r;
+                Velocity[1] += radial_velocity * ypos / r;
+                Velocity[2] += radial_velocity * zpos / r;
+              } // end stellar wind
 	    
 	      /* If the density is larger than the background (or the previous
 		 sphere), then set the velocity. */

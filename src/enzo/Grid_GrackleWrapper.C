@@ -46,7 +46,12 @@ int grid::GrackleWrapper()
 
   int DeNum, HINum, HIINum, HeINum, HeIINum, HeIIINum, HMNum, H2INum, H2IINum,
       DINum, DIINum, HDINum, DensNum, GENum, Vel1Num, Vel2Num, Vel3Num, TENum;
- 
+
+  double dt_cool = dtFixed;
+#ifdef TRANSFER
+  dt_cool = (grackle_data->radiative_transfer_intermediate_step == TRUE) ? dtPhoton : dtFixed;
+#endif
+  
   /* Compute the size of the fields. */
  
   int i;
@@ -103,7 +108,7 @@ int grid::GrackleWrapper()
   GetUnits(&DensityUnits, &LengthUnits, &TemperatureUnits,
 	   &TimeUnits, &VelocityUnits, Time);
   if (ComovingCoordinates) {
-    CosmologyComputeExpansionFactor(Time+0.5*dtFixed, &a, &dadt);
+    CosmologyComputeExpansionFactor(Time+0.5*dt_cool, &a, &dadt);
  
     aUnits = 1.0/(1.0 + InitialRedshift);
   } else if (RadiationFieldRedshift > -1){
@@ -207,6 +212,7 @@ int grid::GrackleWrapper()
   my_fields.grid_dimension = g_grid_dimension;
   my_fields.grid_start     = g_grid_start;
   my_fields.grid_end       = g_grid_end;
+  my_fields.grid_dx        = this->CellWidth[0][0];
 
   /* now add in the baryon fields */
   my_fields.density         = density;
@@ -261,13 +267,14 @@ int grid::GrackleWrapper()
     for( i = 0; i < size; i++) BaryonField[gammaNum][i] *= rtunits;
 
     my_fields.RT_heating_rate = BaryonField[gammaNum];
+    
 
   }
 #endif // TRANSFER
 
   /* Call the chemistry solver. */
 
-  if (solve_chemistry(&grackle_units, &my_fields, (double) dtFixed) == FAIL){
+  if (solve_chemistry(&grackle_units, &my_fields, (double) dt_cool) == FAIL){
     fprintf(stderr, "Error in Grackle solve_chemistry.\n");
     return FAIL;
   }

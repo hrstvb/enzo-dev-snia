@@ -47,7 +47,7 @@ Problem Type Description and Parameter List
 40 	     :ref:`supernovarestart_param`
 50 	     :ref:`photontest_param`
 51	     Photon Test Restart
-59       :ref:`stochastic_forcing_param`
+59           :ref:`stochastic_forcing_param`
 60 	     :ref:`turbulence_param` 
 61 	     :ref:`protostellar_param` 
 62 	     :ref:`coolingtest_param`
@@ -847,7 +847,11 @@ Collapse Test (27)
     Initial H2II fraction of the sphere.  Default: 3e-14
 ``CollapseTestSphereInitialLevel`` (external)
     Failed experiment to try to force refinement to a specified level.
-    Not working. Default: 0.
+    Not working. Default: 0
+``CollapseTestWind`` (external)
+    Boolean flag. Type: integer. This parameter decides if there is wind (inflow boundary). Default: 0 (FALSE)
+``CollapseTestWindVelocity`` (external)
+    When using inflow boundary, this is the inflow velocity. Default: 0.
 
 .. _testgravitymotion_param:
 
@@ -1245,7 +1249,7 @@ Photon Test (50)
 .. _stochastic_forcing_param:
 
 Turbulence Simulation with Stochastic Forcing (59)
-~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     Typical quasi-isothermal "turbulence-in-a-box" problem with non-static driving field.
     For details on stochastic forcing, see Schmidt et al. 2009 A&A 494, 127-145 
     http://dx.doi.org/10.1051/0004-6361:200809967
@@ -1529,7 +1533,7 @@ Cluster Cooling Flow (108)
 ``ClusterSMBHJetPrecessionPeriod`` (external)
     Unit: Myr. Default: 0.0 (not precessing)
 ``ClusterSMBHCalculateGasMass`` (external)
-    Type: integer. 1--Calculate the amount of cold gas around the SMBH and remove it at the rate of 2*Mdot; 2--Calculate Mdot based on the amount of cold gas around the SMBH; 0--off (do not remove cold gas). Default: 1.
+    Type: integer. 1--Calculate the amount of cold gas around the SMBH and remove it at the rate of 2*Mdot; 2--Calculate Mdot based on the amount of cold gas around the SMBH; 3--Calculate Mdot similar to 2 but change ClusterSMBHJetDim periodically (period = ClusterSMBHJetPrecessionPeriod); 4--Calculate Mdot within Bondi radius (only use this when Bondi radius is resolved); 0--off (do not remove cold gas). Default: 1.
 ``ClusterSMBHFeedbackSwitch`` (external)
     Boolean flag. When ClusterSMBHCalculateGasMass=1, ClusterSMBHFeedbackSwitch is turned on when there is enough cold gas (ClusterSMBHEnoughColdGas) around the SMBH. Default: FALSE
 ``ClusterSMBHEnoughColdGas`` (external)
@@ -1540,7 +1544,18 @@ Cluster Cooling Flow (108)
     0--x; 1--y; 2--z. Default: 2
 ``ClusterSMBHAccretionEpsilon`` (external)
     Jet Edot = ClusterSMBHAccretionEpsilon * Mdot * c^2. Default: 0.001
-
+``ClusterSMBHDiskRadius`` (external)
+    The size of the accretion zone in kpc. Default: 0.5
+``ClusterSMBHBCG`` (external)
+    The stellar component of the Perseus BCG (in cluster simulations) or the elliptical galaxies (in simulations of isolated elliptical galaxies). Default: 1.0
+``ClusterSMBHMass`` (external)
+    The mass of the SMBH of the Perseus BCG (in cluster simulations) or the elliptical galaxies (in simulations of isolated elliptical galaxies). Default: 0
+``EllipticalGalaxyRe`` (external)
+    Re is the radius of the isophote enclosing half of the galaxy's light. In Herquist profile, a=Re/1.8153. Default: 0
+``OldStarFeedbackAlpha`` (external)
+    Mass ejection rate from evolved stars in the unit of 10^{-19} s^{-1}. It is typically within a factor of 2 of unity. Default: 0
+``SNIaFeedbackEnergy`` (external)
+    Energy feedback from evolved stars (Type Ia SN). Default: 1.0
 
 .. _mhd1d_param:
 
@@ -1713,27 +1728,29 @@ AGN Disk (207)
 ``DiskHeight`` (external)
     Initial height of the disk. Default: 1
 
-.. _poissonsolver_param:
-.. _shocktube_param:
+.. _cr_shocktube_param:
 
 CR Shock Tube (250: unigrid and AMR)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
     Very similar to normal shock tube (see problem 1) but includes CR
-    component.  See Salem, Bryan & Hummels (2014) for discussion.
+    component.  See `Salem, Bryan & Hummels (2014)
+    <http://adsabs.harvard.edu/abs/2014ApJ...797L..18S>`__ for discussion.
 
-    In addition the regular shock tube parameters, we add:
+    In addition to the regular shock tube parameters, we add:
 
 ``HydroShockTubesLeftCREnDensity``, ``HydroShockTubesRightCREnDensity`` (external)
     The initial CR energy density on the left and right sides.
     Default: 1.0 for each value.
+
 ``HydroShockTubesCenterDensity``, ``HydroShockTubesCenterPressure``,
 ``HydroShockTubesCenterVelocityX``,
 ``HydroShockTubesCenterVelocityY``,
 ``HydroShockTubesCenterVelocityZ``,
 ``HydroShockTubesCenterCREnDensity`` (external)
+
     In addition to setting a shock tube with two constant regions,
-    this version also allows for three constant region, 
+    this version also allows for three constant regions, 
     with a Center region in addition to the Left and Right regions.
     Finally, there are two special cases -- if
     HydroShockTubesCenterCREnDensity is set to 123.4, then the central
@@ -1742,6 +1759,7 @@ CR Shock Tube (250: unigrid and AMR)
     gaussian CR energy density is initialized (these problems were set
     up to test the CR diffusion).
 
+.. _poissonsolver_param:
 
 Poisson Solver Test (300)
 ~~~~~~~~~~~~~~~~~~~~~~~~~

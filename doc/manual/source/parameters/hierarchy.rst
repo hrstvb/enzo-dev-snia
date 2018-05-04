@@ -218,22 +218,20 @@ Hierarchy Control Parameters
     information on how to use dark matter ``MustRefineParticles`` in 
     cosmological simulations can be found here (link).  Default: 0
 
-::
-
-   1 - If the user specifies ``MustRefineParticlesLeftEdge`` and 
+    1. If the user specifies ``MustRefineParticlesLeftEdge`` and 
        ``MustRefineParticlesRightEdge``, dark matter particles within the 
        specified region are flagged.  Otherwise, the code looks for an ascii 
        input file called MustRefineParticlesFlaggingList.in that contains a list
        of particle ids to be flagged.  The ids in this list must be sorted in 
        acending order.
-   2 - For use with ellipsodial masking in MUSIC inititial conditions.  This 
-       setting uses traditional static grids for intermediate resolution levels.  
-       MUSIC will generate RefinementMask files and the ``ParticleTypeName`` 
+    2. For use with ellipsodial masking in MUSIC inititial conditions.  This
+       setting uses traditional static grids for intermediate resolution levels
+       MUSIC will generate RefinementMask files and the ``ParticleTypeName``
        parameter should be set to the name of these files.
-   3 - Same as setting 2, except refinement on intermediate levels is not 
-       constrained by static grids.  Instead, refinement around dark matter 
-       particles is allowed down to the level of a particle's generation level.  
-       Refinement beyond this level is allowed around particles within the MUSIC 
+    3. Same as setting 2, except refinement on intermediate levels is not
+       constrained by static grids.  Instead, refinement around dark matter
+       particles is allowed down to the level of a particle's generation level.
+       Refinement beyond this level is allowed around particles within the MUSIC
        ellipsoidal making region.
 
 ``MustRefineParticlesRefineToLevel`` (external)
@@ -250,7 +248,7 @@ Hierarchy Control Parameters
     ``MustRefineParticlesRefineToLevel`` using the boxsize and redshift
     information. Default: 0 (FALSE)
 ``MustRefineParticlesMinimumMass`` (external)
-    This was an experimental parameter to set a minimum for ``MustRefineParticles``.  Default: 0.0
+    This was an experimental parameter to set a minimum for ``MustRefineParticles``. Default: 0.0
 ``MustRefineParticlesRegionLeftEdge`` (external)
     Bottom-left corner of a region in which dark matter particles are flagged 
     as ``MustRefineParticles`` in nested cosmological simulations.  To be used with 
@@ -286,6 +284,7 @@ Hierarchy Control Parameters
 ``AvoidRefineRegionLevel[#]`` (external)
     This parameter is used to limit the refinement to this level in a
     rectangular region.  Up to MAX_STATIC_REGIONS regions can be used.
+    Default: IND_UNDEFINED
 ``AvoidRefineRegionLeftEdge[#]``, ``AvoidRefineRegionRightEdge[#]`` (external) 
     These two parameters specify the two corners of a region that
     limits refinement to a certain level (see the previous
