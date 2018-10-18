@@ -1008,5 +1008,16 @@ int SetDefaultGlobalValues(TopGridData &MetaData)
   BurnedFractionGrowthLimit		= -1; //Ignore condition
 
 
+  SphericalGravity             = 0;
+  SphericalGravityMassInterior = NULL;
+  SphericalGravityMassShell   = NULL;
+  SphericalGravityInnerRadius  = -1;
+  SphericalGravityOuterRadius  = -1;
+  SphericalGravityBinSize      = -1;
+  SphericalGravityBinNumber    = -1;
+   for( i=0; i<MAX_DIMENSION; i++){
+       SphericalGravityCenter[i] = 0.0;
+   }
+
   return SUCCESS;
 }

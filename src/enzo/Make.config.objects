@@ -17,6 +17,8 @@
 OBJS_CONFIG_LIB = \
   Grid_DiffuseBurningFraction.o \
   MHDLoopInit.o \
+  SphericalGravityComputePotential.o\
+  Grid_SphericalGravityAddMassToShell.o\
   Grid_MHDLoopInitGrid.o \
         acml_st1.o \
         AdiabaticExpansionInitialize.o \

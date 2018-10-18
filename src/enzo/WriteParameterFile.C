@@ -167,6 +167,13 @@ int WriteParameterFile(FILE *fptr, TopGridData &MetaData, char *name = NULL)
   fprintf(fptr, "CycleSkipHistoryDump = %"ISYM"\n\n",
 	  MetaData.CycleSkipHistoryDump);
 
+  fprintf(fptr, "SphericalGravity = %"ISYM"\n", SphericalGravity);
+  fprintf(fptr, "SphericalGravityInnerRadius = %"FSYM"\n", SphericalGravityInnerRadius);
+  fprintf(fptr, "SphericalGravityOuterRadius = %"FSYM"\n", SphericalGravityOuterRadius);
+  fprintf(fptr, "SphericalGravityBinSize = %"ISYM"\n", SphericalGravityBinSize);
+  fprintf(fptr, "SphericalGravityBinNumber = %"ISYM"\n", SphericalGravityBinNumber);
+  fprintf(fptr, "SphericalGravityCenter = %"PSYM" %"PSYM" %"PSYM"\n", SphericalGravityCenter[0],
+		  SphericalGravityCenter[1], SphericalGravityCenter[2]);
 
   fprintf(fptr, "PythonTopGridSkip       = %"ISYM"\n", PythonTopGridSkip);
   fprintf(fptr, "PythonSubcycleSkip      = %"ISYM"\n", PythonSubcycleSkip);

@@ -2428,6 +2428,7 @@ int zEulerSweep(int j, int NumberOfSubgrids, fluxes *SubgridFluxes[],
 			   FLOAT *CellLeftEdge[], int *GridDimension, 
 			   int MaximumNumberOfNewParticles, int *NumberOfNewParticles);
 
+  int SphericalGravityAddMassToShell();
 /* Magnetic field resetting routine. */
 
   int MagneticFieldResetter(int level);
