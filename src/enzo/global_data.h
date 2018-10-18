@@ -106,6 +106,16 @@ EXTERN char *ProblemTypeName;
 EXTERN EnzoProblemType *CurrentProblemType;
 #endif
 
+EXTERN int SphericalGravity;
+EXTERN float *SphericalGravityMassInterior;
+EXTERN float *SphericalGravityMassShell;
+EXTERN FLOAT SphericalGravityInnerRadius;
+EXTERN FLOAT SphericalGravityOuterRadius;
+EXTERN FLOAT SphericalGravityBinSize;
+EXTERN int SphericalGravityBinNumber;
+EXTERN FLOAT SphericalGravityCenter[MAX_DIMENSION];
+
+
 /* Hydrodynamics method:
        0 - PPM_DE      1 - PPM_LR (not working)    2 - ZEUS    3 - RK hydro   4 - RK MHD    */
 
