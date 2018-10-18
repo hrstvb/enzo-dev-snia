@@ -127,6 +127,7 @@ int MagneticFieldResetter(LevelHierarchyEntry *LevelArray[], int ThisLevel,
 			  TopGridData *MetaData); 
 void PrintMemoryUsage(char *str);
 int SetEvolveRefineRegion(FLOAT time);
+int SphericalGravityComputePotential(LevelHierarchyEntry *LevelArray[]);
 
 #ifdef MEM_TRACE
 Eint64 mused(void);
@@ -427,6 +428,8 @@ int EvolveHierarchy(HierarchyEntry &TopGrid, TopGridData &MetaData,
       Temp->GridData->SetTimeStep(dt);
       Temp = Temp->NextGridThisLevel;
     }
+
+    SphericalGravityComputePotential(LevelArray);
  
 #ifdef CONFIG_TESTING
     if (MyProcessorNumber == ROOT_PROCESSOR) {
