@@ -29,6 +29,8 @@
 #include "LevelHierarchy.h"
 #include "CommunicationUtilities.h"
 
+int CommunicationBroadcastValues(FLOAT *Values, int Number, int BroadcastProcessor);
+
 int SphericalGravityComputePotential(LevelHierarchyEntry *LevelArray[]){
     if ( SphericalGravity == 0 )
         return SUCCESS;
@@ -66,6 +68,8 @@ int SphericalGravityComputePotential(LevelHierarchyEntry *LevelArray[]){
     }
 
 
+    //It might be better to use MPI_Alltoallv; see CommunicationShareParticles.C
+    //That takes some more setup, so in the words of Mike, "make it work then make it work fast."
     CommunicationSumValues(SphericalGravityMassShell,SphericalGravityBinNumber);
     CommunicationBroadcastValues(SphericalGravityMassShell,SphericalGravityBinNumber,ROOT_PROCESSOR);
 
