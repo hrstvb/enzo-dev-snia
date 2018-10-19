@@ -113,6 +113,7 @@ EXTERN FLOAT SphericalGravityInnerRadius;
 EXTERN FLOAT SphericalGravityOuterRadius;
 EXTERN FLOAT SphericalGravityBinSize;
 EXTERN int SphericalGravityBinNumber;
+EXTERN FLOAT *SphericalGravityBinCenters;
 EXTERN FLOAT SphericalGravityCenter[MAX_DIMENSION];
 
 

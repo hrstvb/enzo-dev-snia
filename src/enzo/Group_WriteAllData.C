@@ -76,6 +76,7 @@ int WriteTaskMap(FILE *fptr, HierarchyEntry *TopGrid,
 int WriteParameterFile(FILE *fptr, TopGridData &MetaData, char *Filename);
 int WriteStarParticleData(FILE *fptr, TopGridData &MetaData);
 int WriteRadiationData(FILE *fptr);
+int SphericalGravityWritePotential(char * name);
  
 int CosmologyComputeExpansionFactor(FLOAT time, FLOAT *a, FLOAT *dadt);
 int CommunicationCombineGrids(HierarchyEntry *OldHierarchy,
@@ -936,6 +937,8 @@ int Group_WriteAllData(char *basename, int filenumber,
     fclose(MBHfptr);
     
   }
+
+  SphericalGravityWritePotential(name);
 
   // Create radiation name and write radiation data
  
