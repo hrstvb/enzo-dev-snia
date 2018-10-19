@@ -1,7 +1,7 @@
 /***********
  * ComputeSphericalGravityPotential
  * dcollins.  October 16 2018.  14:58.
- *
+ * Radially bins mass into shells and interior mass.
  * *********/
 #include "preincludes.h"
  
@@ -57,6 +57,14 @@ int SphericalGravityComputePotential(LevelHierarchyEntry *LevelArray[]){
     SphericalGravityMassInterior = new float[SphericalGravityBinNumber];
     SphericalGravityMassShell = new float[SphericalGravityBinNumber];
 
+    if ( SphericalGravityBinCenters == NULL ){
+        SphericalGravityBinCenters = new float[SphericalGravityBinNumber];
+        for ( int i=0; i<SphericalGravityBinNumber; i++){
+            SphericalGravityBinCenters[i] = -0.5;
+        }
+        fprintf(stderr,"ALSO NOW COMPUTE THE BINS\n");
+    }
+
     LevelHierarchyEntry *Temp;
     Temp = LevelArray[0];
     while (Temp != NULL) {
@@ -78,4 +86,46 @@ int SphericalGravityComputePotential(LevelHierarchyEntry *LevelArray[]){
     }
 
     return SUCCESS;
+}
+int SphericalGravityWritePotential(char * name ) {
+    if ( MyProcessorNumber != ROOT_PROCESSOR  || SphericalGravity == 0){
+        return SUCCESS;
+    }
+    fprintf(stderr,"CLOWN SphericalGravity Dump Name %s\n",name);
+  
+  hid_t       file_id, mass_dset,shell_dset, radius_dset, dataspace_id;
+  herr_t      status, h5_status, h5_error = -1;
+  
+  char filename[100];
+  sprintf(filename, "%s.SphericalGravity.h5",name);
+  
+  //file_id = H5Fcreate(filename, H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
+  file_id = H5Fcreate(filename, H5F_ACC_EXCL, H5P_DEFAULT, H5P_DEFAULT);
+  if( file_id == -1 ){
+      fprintf(stderr,"ERROR IN ERROR: ignore previous warning.  Opening hdf5 file.\n");
+      file_id = H5Fopen(filename, H5F_ACC_RDWR, H5P_DEFAULT);
+  }
+  
+  //Create Dataspace 
+  hsize_t number[1] = {SphericalGravityBinNumber};
+  dataspace_id=H5Screate_simple(1, number, NULL);
+  
+  //create set
+  //                       above, name,      datatype,  shape of data, Something I dont get
+  mass_dset = H5Dcreate(file_id, "SphericalGravityMassInterior", HDF5_PREC, dataspace_id, H5P_DEFAULT);
+  shell_dset = H5Dcreate(file_id, "SphericalGravityMassShell", HDF5_PREC, dataspace_id, H5P_DEFAULT);
+  radius_dset = H5Dcreate(file_id, "SphericalGravityRadius", HDF5_PREC, dataspace_id, H5P_DEFAULT);
+  
+  //Write the Data Set
+  //                (set, memory type, mem. space, file space, transfer details, actual data)
+   status = H5Dwrite(mass_dset, HDF5_PREC, H5S_ALL, H5S_ALL, H5P_DEFAULT, SphericalGravityMassInterior);
+   status = H5Dwrite(shell_dset, HDF5_PREC, H5S_ALL, H5S_ALL, H5P_DEFAULT, SphericalGravityMassShell);
+   status = H5Dwrite(radius_dset, HDF5_PREC, H5S_ALL, H5S_ALL, H5P_DEFAULT, SphericalGravityBinCenters);
+   
+   
+   status = H5Sclose(dataspace_id);
+   status = H5Dclose(mass_dset);
+   status = H5Dclose(shell_dset);
+   status = H5Dclose(radius_dset);
+   status = H5Fclose(file_id);
 }

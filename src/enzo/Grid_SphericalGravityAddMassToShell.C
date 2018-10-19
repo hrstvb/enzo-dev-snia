@@ -3,6 +3,7 @@
  * dcollins.  Oct. 16 2018. 15:15.
  */
 #include <stdio.h>
+#include "hdf5.h"
 #include "ErrorExceptions.h"
 #include "EnzoTiming.h"
 #include "performance.h"
@@ -23,8 +24,37 @@ int grid::SphericalGravityAddMassToShell(){
     if ( ProcessorNumber != MyProcessorNumber )
         return SUCCESS;
     fprintf(stderr,"CLOWN in the grid whatzit\n");
-    for ( int i=0; i<SphericalGravityBinNumber;i++){
-        SphericalGravityMassShell[i] = 0.1;
+
+    FLOAT x,y,z,r;
+    FLOAT CellVolume = CellWidth[0][0];
+    if( GridRank > 1 ) CellVolume *= CellWidth[1][0];
+    if( GridRank > 2 ) CellVolume *= CellWidth[2][0];
+
+    int rbin, index;
+
+    int DensNum, GENum, Vel1Num, Vel2Num, Vel3Num, TENum, B1Num, B2Num, B3Num;
+    this->IdentifyPhysicalQuantities(DensNum, GENum, Vel1Num, Vel2Num, Vel3Num, 
+                                   TENum, B1Num, B2Num, B3Num);
+
+    for( int k=GridStartIndex[2]; k<GridEndIndex[2];k++)
+    for( int j=GridStartIndex[1]; j<GridEndIndex[1];j++)
+    for( int i=GridStartIndex[0]; i<GridEndIndex[0];i++){
+        index = i + GridDimension[0]*( j + GridDimension[1]*k);
+        x = CellLeftEdge[0][i] + 0.5*CellWidth[0][i] - SphericalGravityCenter[0];
+        y = CellLeftEdge[1][i] + 0.5*CellWidth[1][i] - SphericalGravityCenter[1];
+        z = CellLeftEdge[2][i] + 0.5*CellWidth[2][i] - SphericalGravityCenter[2];
+        r=sqrt( x*x+y*y+z*z );
+        if ( r >= SphericalGravityInnerRadius && r <= SphericalGravityOuterRadius ){
+            rbin = int( r / SphericalGravityBinSize );
+            SphericalGravityMassShell[rbin] += BaryonField[DensNum][index] * CellVolume;
+        }
+
+    
+
     }
+    //for ( int i=0; i<SphericalGravityBinNumber;i++){
+    //    SphericalGravityMassShell[i] = 0.1;
+    //}
     return SUCCESS;
 }
+
