@@ -34,7 +34,6 @@ int CommunicationBroadcastValues(FLOAT *Values, int Number, int BroadcastProcess
 int SphericalGravityComputePotential(LevelHierarchyEntry *LevelArray[]){
     if ( SphericalGravity == 0 )
         return SUCCESS;
-    fprintf(stderr,"CLOWN calling spherical gravity.  Neat \n");
     if ( SphericalGravityBinNumber < 0 && SphericalGravityBinSize < 0 ){
         fprintf(stderr,"FAILURE  SphericalGravityBinNumber = %"ISYM" && SphericalGravityBinSize = %"FSYM"\n",
          SphericalGravityBinNumber, SphericalGravityBinSize );
@@ -47,7 +46,6 @@ int SphericalGravityComputePotential(LevelHierarchyEntry *LevelArray[]){
         SphericalGravityBinNumber = int( SphericalGravityOuterRadius - SphericalGravityInnerRadius )/SphericalGravityBinSize;
     }
 
-    fprintf(stderr,"CLOWN: SphericalGravity Nbins %d of size %0.2e\n",SphericalGravityBinNumber, SphericalGravityBinSize);
     if ( SphericalGravityMassInterior != NULL ){
         delete [] SphericalGravityMassInterior;
     }
@@ -60,9 +58,8 @@ int SphericalGravityComputePotential(LevelHierarchyEntry *LevelArray[]){
     if ( SphericalGravityBinCenters == NULL ){
         SphericalGravityBinCenters = new float[SphericalGravityBinNumber];
         for ( int i=0; i<SphericalGravityBinNumber; i++){
-            SphericalGravityBinCenters[i] = -0.5;
+            SphericalGravityBinCenters[i] = SphericalGravityInnerRadius + (i+0.5)*SphericalGravityBinSize;
         }
-        fprintf(stderr,"ALSO NOW COMPUTE THE BINS\n");
     }
 
     LevelHierarchyEntry *Temp;
@@ -71,9 +68,6 @@ int SphericalGravityComputePotential(LevelHierarchyEntry *LevelArray[]){
       Temp->GridData->SphericalGravityAddMassToShell();
       Temp = Temp->NextGridThisLevel;
     }
-    for(int i=0;i<SphericalGravityBinNumber;i++){
-        fprintf(stderr,"CLOWN shell pre NP%d %d %0.2e\n",MyProcessorNumber,i, SphericalGravityMassShell[i]);
-    }
 
 
     //It might be better to use MPI_Alltoallv; see CommunicationShareParticles.C
@@ -81,17 +75,22 @@ int SphericalGravityComputePotential(LevelHierarchyEntry *LevelArray[]){
     CommunicationSumValues(SphericalGravityMassShell,SphericalGravityBinNumber);
     CommunicationBroadcastValues(SphericalGravityMassShell,SphericalGravityBinNumber,ROOT_PROCESSOR);
 
-    for(int i=0;i<SphericalGravityBinNumber;i++){
-        fprintf(stderr,"CLOWN shell post NP%d %d %0.2e\n",MyProcessorNumber,i, SphericalGravityMassShell[i]);
-    }
+   SphericalGravityMassInterior[0]=SphericalGravityMassShell[0];
+   for(int i=1;i<SphericalGravityBinNumber;i++){
+       SphericalGravityMassInterior[i]= SphericalGravityMassInterior[i-1]+SphericalGravityMassShell[0];
+       
+   }
 
     return SUCCESS;
 }
 int SphericalGravityWritePotential(char * name ) {
-    if ( MyProcessorNumber != ROOT_PROCESSOR  || SphericalGravity == 0){
-        return SUCCESS;
-    }
-    fprintf(stderr,"CLOWN SphericalGravity Dump Name %s\n",name);
+  if ( MyProcessorNumber != ROOT_PROCESSOR  || SphericalGravity == 0){
+      return SUCCESS;
+  }
+  if( SphericalGravityMassInterior == NULL ){
+      fprintf(stderr,"SphericalGravityWritePotential: No Mass Defined, not writing.\n");
+      return SUCCESS;
+  }
   
   hid_t       file_id, mass_dset,shell_dset, radius_dset, dataspace_id;
   herr_t      status, h5_status, h5_error = -1;
