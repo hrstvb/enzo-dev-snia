@@ -52,14 +52,22 @@ int SphericalGravityComputePotential(LevelHierarchyEntry *LevelArray[]){
     if ( SphericalGravityMassShell != NULL ){
         delete [] SphericalGravityMassShell;
     }
+    if ( SphericalGravityBinCount != NULL ){
+        delete [] SphericalGravityBinCount;
+    }
+    if ( SphericalGravityBinCenters == NULL ){
+        delete [] SphericalGravityBinCenters;
+    }
     SphericalGravityMassInterior = new float[SphericalGravityBinNumber];
     SphericalGravityMassShell = new float[SphericalGravityBinNumber];
+    SphericalGravityBinCount  = new float[SphericalGravityBinNumber];
+    SphericalGravityBinCenters = new FLOAT[SphericalGravityBinNumber];
 
-    if ( SphericalGravityBinCenters == NULL ){
-        SphericalGravityBinCenters = new float[SphericalGravityBinNumber];
-        for ( int i=0; i<SphericalGravityBinNumber; i++){
-            SphericalGravityBinCenters[i] = SphericalGravityInnerRadius + (i+0.5)*SphericalGravityBinSize;
-        }
+    for ( int i=0; i<SphericalGravityBinNumber; i++){
+        SphericalGravityMassInterior[i] = 0.0;
+        SphericalGravityMassShell[i]    = 0.0;
+        SphericalGravityBinCount[i]     = 0;
+        SphericalGravityBinCenters[i] = SphericalGravityInnerRadius + (i+0.5)*SphericalGravityBinSize;
     }
 
     LevelHierarchyEntry *Temp;
@@ -74,11 +82,13 @@ int SphericalGravityComputePotential(LevelHierarchyEntry *LevelArray[]){
     //That takes some more setup, so in the words of Mike, "make it work then make it work fast."
     CommunicationSumValues(SphericalGravityMassShell,SphericalGravityBinNumber);
     CommunicationBroadcastValues(SphericalGravityMassShell,SphericalGravityBinNumber,ROOT_PROCESSOR);
+    //Bin Count is only used for debugging.
+    CommunicationSumValues(SphericalGravityBinCount,SphericalGravityBinNumber);
 
    SphericalGravityMassInterior[0]=SphericalGravityMassShell[0];
    for(int i=1;i<SphericalGravityBinNumber;i++){
-       SphericalGravityMassInterior[i]= SphericalGravityMassInterior[i-1]+SphericalGravityMassShell[0];
-       
+       SphericalGravityMassInterior[i]= SphericalGravityMassInterior[i-1]+
+                                        SphericalGravityMassShell[i];
    }
 
     return SUCCESS;
@@ -92,7 +102,7 @@ int SphericalGravityWritePotential(char * name ) {
       return SUCCESS;
   }
   
-  hid_t       file_id, mass_dset,shell_dset, radius_dset, dataspace_id;
+  hid_t       file_id, mass_dset,shell_dset, radius_dset, count_dset, dataspace_id;
   herr_t      status, h5_status, h5_error = -1;
   
   char filename[100];
@@ -114,17 +124,20 @@ int SphericalGravityWritePotential(char * name ) {
   mass_dset = H5Dcreate(file_id, "SphericalGravityMassInterior", HDF5_PREC, dataspace_id, H5P_DEFAULT);
   shell_dset = H5Dcreate(file_id, "SphericalGravityMassShell", HDF5_PREC, dataspace_id, H5P_DEFAULT);
   radius_dset = H5Dcreate(file_id, "SphericalGravityRadius", HDF5_PREC, dataspace_id, H5P_DEFAULT);
+  count_dset = H5Dcreate(file_id, "SphericalGravityBinCount", HDF5_PREC, dataspace_id, H5P_DEFAULT);
   
   //Write the Data Set
   //                (set, memory type, mem. space, file space, transfer details, actual data)
    status = H5Dwrite(mass_dset, HDF5_PREC, H5S_ALL, H5S_ALL, H5P_DEFAULT, SphericalGravityMassInterior);
    status = H5Dwrite(shell_dset, HDF5_PREC, H5S_ALL, H5S_ALL, H5P_DEFAULT, SphericalGravityMassShell);
    status = H5Dwrite(radius_dset, HDF5_PREC, H5S_ALL, H5S_ALL, H5P_DEFAULT, SphericalGravityBinCenters);
+   status = H5Dwrite(count_dset, HDF5_PREC, H5S_ALL, H5S_ALL, H5P_DEFAULT, SphericalGravityBinCount);
    
    
    status = H5Sclose(dataspace_id);
    status = H5Dclose(mass_dset);
    status = H5Dclose(shell_dset);
    status = H5Dclose(radius_dset);
+   status = H5Dclose(count_dset);
    status = H5Fclose(file_id);
 }

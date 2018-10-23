@@ -1009,9 +1009,11 @@ int SetDefaultGlobalValues(TopGridData &MetaData)
 
 
   SphericalGravity             = 0;
+  SphericalGravityConstant     = 1;
   SphericalGravityMassInterior = NULL;
   SphericalGravityMassShell   = NULL;
   SphericalGravityBinCenters   = NULL;
+  SphericalGravityBinCount     = NULL;
   SphericalGravityInnerRadius  = -1;
   SphericalGravityOuterRadius  = -1;
   SphericalGravityBinSize      = -1;

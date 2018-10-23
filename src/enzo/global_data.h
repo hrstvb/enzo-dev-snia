@@ -107,8 +107,10 @@ EXTERN EnzoProblemType *CurrentProblemType;
 #endif
 
 EXTERN int SphericalGravity;
+EXTERN float SphericalGravityConstant;
 EXTERN float *SphericalGravityMassInterior;
 EXTERN float *SphericalGravityMassShell;
+EXTERN float *SphericalGravityBinCount; //probably should be a long long int.
 EXTERN FLOAT SphericalGravityInnerRadius;
 EXTERN FLOAT SphericalGravityOuterRadius;
 EXTERN FLOAT SphericalGravityBinSize;

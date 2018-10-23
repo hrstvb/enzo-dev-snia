@@ -23,7 +23,6 @@ int FindField(int f, int farray[], int n);
 int grid::SphericalGravityAddMassToShell(){
     if ( ProcessorNumber != MyProcessorNumber )
         return SUCCESS;
-    fprintf(stderr,"CLOWN in the grid whatzit\n");
 
     FLOAT x,y,z,r;
     FLOAT CellVolume = CellWidth[0][0];
@@ -41,20 +40,15 @@ int grid::SphericalGravityAddMassToShell(){
     for( int i=GridStartIndex[0]; i<GridEndIndex[0];i++){
         index = i + GridDimension[0]*( j + GridDimension[1]*k);
         x = CellLeftEdge[0][i] + 0.5*CellWidth[0][i] - SphericalGravityCenter[0];
-        y = CellLeftEdge[1][i] + 0.5*CellWidth[1][i] - SphericalGravityCenter[1];
-        z = CellLeftEdge[2][i] + 0.5*CellWidth[2][i] - SphericalGravityCenter[2];
+        y = CellLeftEdge[1][j] + 0.5*CellWidth[1][j] - SphericalGravityCenter[1];
+        z = CellLeftEdge[2][k] + 0.5*CellWidth[2][k] - SphericalGravityCenter[2];
         r=sqrt( x*x+y*y+z*z );
         if ( r >= SphericalGravityInnerRadius && r <= SphericalGravityOuterRadius ){
-            rbin = int( r / SphericalGravityBinSize );
+            rbin = int( (r-SphericalGravityInnerRadius) / SphericalGravityBinSize );
             SphericalGravityMassShell[rbin] += BaryonField[DensNum][index] * CellVolume;
+            SphericalGravityBinCount[rbin] += 1;
         }
-
-    
-
     }
-    //for ( int i=0; i<SphericalGravityBinNumber;i++){
-    //    SphericalGravityMassShell[i] = 0.1;
-    //}
     return SUCCESS;
 }
 

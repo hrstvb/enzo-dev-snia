@@ -168,6 +168,7 @@ int WriteParameterFile(FILE *fptr, TopGridData &MetaData, char *name = NULL)
 	  MetaData.CycleSkipHistoryDump);
 
   fprintf(fptr, "SphericalGravity = %"ISYM"\n", SphericalGravity);
+  fprintf(fptr, "SphericalGravityConstnat = %"FSYM"\n", SphericalGravityConstant);
   fprintf(fptr, "SphericalGravityInnerRadius = %"FSYM"\n", SphericalGravityInnerRadius);
   fprintf(fptr, "SphericalGravityOuterRadius = %"FSYM"\n", SphericalGravityOuterRadius);
   fprintf(fptr, "SphericalGravityBinSize = %"ISYM"\n", SphericalGravityBinSize);

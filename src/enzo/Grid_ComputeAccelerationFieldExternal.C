@@ -44,7 +44,7 @@ int grid::ComputeAccelerationFieldExternal()
 {
  
   /* Return if this does not concern us */
-  if (!(UniformGravity || PointSourceGravity || DiskGravity || ExternalGravity)) return SUCCESS;
+  if (!(UniformGravity || PointSourceGravity || DiskGravity || ExternalGravity || SphericalGravity)) return SUCCESS;
 
   /* Return if this grid is not on this processor. */
  
@@ -763,6 +763,50 @@ int grid::ComputeAccelerationFieldExternal()
     } // loop over dims
  
   } // end: if (UniformGravity)
+
+  int n = 0, rbin;
+  FLOAT xyz[MAX_DIMENSION], rsquared, rcubed,r;
+  float my_mass, my_accel;
+  if (  SphericalGravity > 0 && SphericalGravityMassInterior != NULL ){
+      for (dim = 0; dim < GridRank; dim++) {
+          n=0;
+          for (k = 0; k < GridDimension[2]; k++) {
+              if (GridRank > 2)
+                  xyz[2] = CellLeftEdge[2][k] + 0.5*CellWidth[2][k] -
+                      SphericalGravityCenter[2];
+              if (dim == 2 && HydroMethod == Zeus_Hydro)
+                  xyz[2] -= 0.5*CellWidth[2][k];
+
+              for (j = 0; j < GridDimension[1]; j++) {
+                  if (GridRank > 1)
+                      xyz[1] = CellLeftEdge[1][j] + 0.5*CellWidth[1][j] -
+                          SphericalGravityCenter[1];
+                  if (dim == 1 && HydroMethod == Zeus_Hydro)
+                      xyz[1] -= 0.5*CellWidth[1][j];
+
+                  for (i = 0; i < GridDimension[0]; i++, n++) {
+                      xyz[0] = CellLeftEdge[0][i] + 0.5*CellWidth[0][i] -
+                          SphericalGravityCenter[0];
+                      if (dim == 0 && HydroMethod == Zeus_Hydro)
+                          xyz[0] -= 0.5*CellWidth[0][i];
+
+                      /* Compute distance from center. */
+
+                      rsquared = xyz[0]*xyz[0] + xyz[1]*xyz[1] + xyz[2]*xyz[2];
+                      r=sqrt(rsquared);
+                      rcubed = POW(rsquared, 1.5);
+                      rbin = int( (rsquared-SphericalGravityInnerRadius) / SphericalGravityBinSize );
+                      rbin = min(rbin,SphericalGravityBinNumber-1);
+                      my_mass = SphericalGravityMassInterior[rbin];
+                      my_accel = -xyz[dim]/rcubed * my_mass * SphericalGravityConstant;
+                      //fprintf(stderr,"KLOWN wtf %p dim %d n %d ijk %d, %d, %d\n",AccelerationField[dim],dim,n, i,j,k);
+                      AccelerationField[dim][n] += my_accel;
+                  }
+              }
+          }
+      }
+
+  }//Spherical gravity
  
   LCAPERF_STOP("grid_ComputeAccelerationFieldExternal");
   return SUCCESS;
