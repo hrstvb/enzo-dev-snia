@@ -150,6 +150,9 @@ int EvolveHierarchy(HierarchyEntry &TopGrid, TopGridData &MetaData,
 #endif
 		    LevelHierarchyEntry *LevelArray[], float Initialdt)
 {
+//printf("EvolveHierarchy\n"); //[BH] TODO 
+  if( ParallelRootGridIO_Force )	//[BH]
+	  ParallelRootGridIO = TRUE;	//[BH]
  
   float dt;
  

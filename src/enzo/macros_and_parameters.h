@@ -357,6 +357,7 @@ typedef long long int   HDF5_hid_t;
 #define GRIDINDEX(A,B,C) ((((C)+GridStartIndex[2])*GridDimension[1]+((B)+GridStartIndex[1]))*GridDimension[0]+GridStartIndex[0]+(A))
 #define GRIDINDEX_NOGHOST(A,B,C) (((C)*GridDimension[1]+(B))*GridDimension[0]+A)
 #define VCGRIDINDEX(A,B,C) (((C)*(GridEndIndex[1]-GridStartIndex[1]+2) + (B)) * (GridEndIndex[0]-GridStartIndex[0]+2) + A)
+#define CELLCENTER(dim, index) (0.5*(CellLeftEdge[dim][index]+CellLeftEdge[dim][index+1])) /*[BH]*/
 
 /* Definitions for FastFourierTransform and related routines */
 

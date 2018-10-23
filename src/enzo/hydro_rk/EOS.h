@@ -17,6 +17,11 @@ inline void EOS(float &p, float &rho, float &e, float &h, float &cs, float &dpdr
           http://adsabs.harvard.edu/abs/2004ApJ...606...32R
           equation 4
 
+       7: polytropic: p = EOSPolytropicFactor * rho^EOSGamma            		//[BH]
+       8: polytropic: p = EOSPolytropicFactor * rho^(4/3)				//[BH]
+       9: polytropic: p = EOSPolytropicFactor * rho^(5/3)				//[BH]
+       10:polytropic: p = EOSPolytropicFactor * rho^( 1 + 1/EOSPolytropicIndex )	//[BH]
+
      mode:  
        1: given p and rho, calculate others.
        2: given rho and e, calculate others.
@@ -24,6 +29,30 @@ inline void EOS(float &p, float &rho, float &e, float &h, float &cs, float &dpdr
 {
 
   float poverrho;
+
+  switch( eostype ) {					//[BH]
+  case  7:						//[BH]
+  case  8:						//[BH]
+  case  9:						//[BH]
+  case 10:						//[BH]
+    float gamma;					//[BH]
+
+    switch( eostype ) {					//[BH]
+    case  7: gamma = EOSGamma; break;			//[BH]
+    case  8: gamma = 4.0/3.0;  break;			//[BH]
+    case  9: gamma = 5.0/3.0;  break;			//[BH]
+    case 10: gamma = 1.0 + 1.0/EOSPolytropicIndex;	//[BH]
+    }							//[BH]
+
+    float x, lenu, denu, tu, velu, tempu;		//[BH]
+    GetUnits(&denu, &lenu, &tempu, &tu, &velu, 1);	//[BH]
+    x /= EOSCriticalDensity/denu;			//[BH]
+    p = EOSPolytropicFactor * pow( x, gamma );		//[BH]
+    //TODO: Finish the rest of return values:		//[BH]
+    e=h=cs=dpdrho=dpde=0;				//[BH]
+    return;						//[BH]
+  }							//[BH]
+
 
   if (eostype == 0) {
     

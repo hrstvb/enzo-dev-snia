@@ -407,6 +407,17 @@ public:
    int ComputeCRDiffusion(); // CR Diffusion Method 
    int ComputeCRDiffusionTimeStep(float &dt);
 
+/* Compute time step from energy growth limit */				//[BH]
+  float dtEnergyGrowth;								//[BH]
+  //float dEdt_min, dEdt_max;							//[BH]
+  int ComputeEnergyGrowthTimeStep( float dEdtParent );				//[BH]
+
+/* Member functions evolving the burning fraction */ 				//[BH]
+  //float dfdt_min, dfdt_max;							//[BH]
+  int DiffuseBurnedFraction(); 							//[BH]
+  float ComputeBurningFractionDiffusionTimeStep(float &dt); 			//[BH]
+  int ComputeLaplacian(float* sourceField, float* resultField, int mode); 	//[BH]
+
 /* Baryons: Copy current solution to Old solution (returns success/fail)
     (for step #16) */
 
