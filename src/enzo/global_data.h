@@ -503,6 +503,7 @@ EXTERN float CommunicationTime;
    (currently only works for ProblemType == 30). */
 
 EXTERN int ParallelRootGridIO;
+EXTERN int ParallelRootGridIO_Force;	// [BH] In the beginning of EvolveHierarchy: ParallelRootGridIO = ParallelRootGridIO_Force
 EXTERN int ParallelParticleIO;
 EXTERN int Unigrid;
 EXTERN int CubeDumpEnabled;
@@ -793,6 +794,8 @@ EXTERN int EOSType;
 EXTERN float EOSSoundSpeed;
 EXTERN float EOSCriticalDensity;
 EXTERN float EOSGamma;
+EXTERN float EOSPolytropicIndex;	//[BH]
+EXTERN float EOSPolytropicFactor;	//[BH]
 EXTERN float C_h;
 EXTERN float C_p;
 EXTERN float DivBDampingLength;
@@ -1088,6 +1091,24 @@ EXTERN int CorrectParentBoundaryFlux;
 
 /* For EnzoTiming Behavior */
 EXTERN int TimingCycleSkip; // Frequency of timing data dumps.
+
+/* Simple burning */                               //[BH]
+EXTERN int UseBurning;                             //[BH]
+EXTERN int SkipBurningOperator;			   //[BH] ..., only define the fields
+EXTERN int AllowUnburning;			   //[BH] dQ/dt=Q*fd/dt, when fd/dt>0 else =0 
+EXTERN int CallSetBoundaryConditionsAfterBurning;  //[BH]
+EXTERN float BurningDiffusionRate;                 //[BH]
+EXTERN float BurningDiffusionCourantSafetyFactor;  //[BH]
+EXTERN float BurningReactionRate;                  //[BH]
+EXTERN float BurningReactionBurnedFractionLimitLo; //[BH]
+EXTERN float BurningReactionBurnedFractionLimitHi; //[BH]
+EXTERN float BurningEnergyRelease;                 //[BH]
+EXTERN float Rho_56Ni_A;                           //[BH]
+EXTERN float Rho_56Ni_B;                           //[BH]
+EXTERN float InternalEnergy_A;                     //[BH]
+EXTERN float InternalEnergy_B;                     //[BH]
+EXTERN float EnergyRelativeGrowthLimit;		   //[BH]
+EXTERN float BurnedFractionGrowthLimit;		   //[BH]
 
 /* For the galaxy simulation boundary method */
 EXTERN int GalaxySimulationRPSWind;

@@ -697,6 +697,7 @@ int WriteParameterFile(FILE *fptr, TopGridData &MetaData, char *name = NULL)
   }
  
   fprintf(fptr, "ParallelRootGridIO              = %"ISYM"\n", ParallelRootGridIO);
+  fprintf(fptr, "ParallelRootGridIO_Force        = %"ISYM"\n", ParallelRootGridIO_Force); //[BH]
   fprintf(fptr, "ParallelParticleIO              = %"ISYM"\n", ParallelParticleIO);
   fprintf(fptr, "Unigrid                         = %"ISYM"\n", Unigrid);
   fprintf(fptr, "UnigridTranspose                = %"ISYM"\n", UnigridTranspose);
@@ -1072,6 +1073,8 @@ int WriteParameterFile(FILE *fptr, TopGridData &MetaData, char *name = NULL)
   fprintf(fptr, "EOSSoundSpeed              = %g\n", EOSSoundSpeed);
   fprintf(fptr, "EOSCriticalDensity         = %g\n", EOSCriticalDensity);
   fprintf(fptr, "EOSGamma                   = %g\n", EOSGamma); 
+  fprintf(fptr, "EOSPolytropicIndex         = %g\n", EOSPolytropicIndex);	//[BH]
+  fprintf(fptr, "EOSPolytropicFactor        = %g\n", EOSPolytropicFactor);	//[BH]
   fprintf(fptr, "Mu                         = %g\n", Mu);
   fprintf(fptr, "DivBDampingLength          = %g\n", DivBDampingLength);
   fprintf(fptr, "UseConstantAcceleration    = %d\n", UseConstantAcceleration);
@@ -1204,6 +1207,20 @@ int WriteParameterFile(FILE *fptr, TopGridData &MetaData, char *name = NULL)
   fprintf(fptr, "SupernovaSeedFieldRadius = %"GSYM"\n", SupernovaSeedFieldRadius);
   fprintf(fptr,"SupernovaSeedFieldEnergy = %"GSYM"\n",SupernovaSeedFieldEnergy);
   fprintf(fptr,"SupernovaSeedFieldDuration = %"GSYM"\n",SupernovaSeedFieldDuration);
+
+  //Burning parameters                                                                                     //[BH]
+  fprintf(fptr, "UseBurning                            = %"ISYM"\n", UseBurning                           ); //[BH]
+  fprintf(fptr, "SkipBurningOperator                   = %"ISYM"\n", SkipBurningOperator                  ); //[BH]
+  fprintf(fptr, "AllowUnburning                        = %"ISYM"\n", AllowUnburning                       ); //[BH]
+  fprintf(fptr, "CallSetBoundaryConditionsAfterBurning = %"ISYM"\n", CallSetBoundaryConditionsAfterBurning); //[BH]
+  fprintf(fptr, "BurningDiffusionRate                  = %"FSYM"\n", BurningDiffusionRate                 ); //[BH]
+  fprintf(fptr, "BurningDiffusionCourantSafetyFactor   = %"FSYM"\n", BurningDiffusionCourantSafetyFactor  ); //[BH]
+  fprintf(fptr, "BurningReactionRate                   = %"FSYM"\n", BurningReactionRate                  ); //[BH]
+  fprintf(fptr, "BurningReactionBurnedFractionLimitLo  = %"FSYM"\n", BurningReactionBurnedFractionLimitLo ); //[BH]
+  fprintf(fptr, "BurningReactionBurnedFractionLimitHi  = %"FSYM"\n", BurningReactionBurnedFractionLimitHi ); //[BH]
+  fprintf(fptr, "BurningEnergyRelease                  = %"FSYM"\n", BurningEnergyRelease                 ); //[BH]
+  fprintf(fptr, "EnergyRelativeGrowthLimit             = %"FSYM"\n", EnergyRelativeGrowthLimit            ); //[BH]
+  fprintf(fptr, "BurnedFractionGrowthLimit             = %"FSYM"\n", BurnedFractionGrowthLimit		  ); //[BH]
 
   /* Output current time */
   time_t ID;

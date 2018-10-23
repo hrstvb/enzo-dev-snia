@@ -747,6 +747,47 @@ int EvolveLevel(TopGridData *MetaData, LevelHierarchyEntry *LevelArray[],
 			  Exterior, LevelArray[level]);
 #endif
     EXTRA_OUTPUT_MACRO(27,"After SBC")
+    if ( UseBurning && !SkipBurningOperator )									//[BH]
+    {											//[BH]
+	if(debug1) printf("Grid::EvolveLevel: Calc burning in %d grids\n", NumberOfGrids);		//[BH]
+	for (grid1 = 0; grid1 < NumberOfGrids; grid1++) 				//[BH]
+	{										//[BH]
+//LevelArray[0]->GridData->ExtraFunction("[BH]:>>>>>>>> SolveMHDLi BEFORE diffuse", 0, NULL, NULL); //[BH]EF
+		if(debug1) printf("Grid::EvolveLevel: Before burning\n");		//[BH]
+		if ( Grids[grid1]->GridData->DiffuseBurnedFraction() == FAIL )		//[BH]
+			ENZO_VFAIL( "Grid::EvolveLevel: DiffuseBurningFraction failed"	//[BH]
+					" for grid id=%d, t=%g\n",			//[BH]
+					grid1 /*, Grids[grid1]->GridData->Time*/ );	//[BH]
+
+//LevelArray[0]->GridData->ExtraFunction("[BH]:>>>>>>>> SolveMHDLi AFTER diffuse", 0, NULL, NULL); //[BH]EF
+		if(debug1) printf("Grid::EvolveLevel: After DiffuseBurningFraction\n");//[BH]
+		// Repeat SetBoundaryConditions after burning.				//[BH]
+	}//end for gridr1								//[BH]
+
+    
+	if( CallSetBoundaryConditionsAfterBurning ) {				//[BH]
+		if(debug1) printf("Grid::EvolveLevel: Before 2nd SetBoundaryConditions\n");	//[BH]
+#ifdef FAST_SIB										//[BH]
+		SetBoundaryConditions(Grids, NumberOfGrids, SiblingList,	//[BH]
+			level, MetaData, Exterior, LevelArray[level]);		//[BH]
+#else											//[BH]
+		SetBoundaryConditions(Grids, NumberOfGrids, level, MetaData,	//[BH]
+			Exterior, LevelArray[level]);				//[BH]
+#endif											//[BH]
+		if(debug1) printf("Grid::EvolveLevel: After 2nd SetBoundaryConditions\n");	//[BH]
+		EXTRA_OUTPUT_MACRO(26,"After 2nd SBC")				//[BH]
+	} //end if call SBC							//[BH]
+	else										//[BH]
+	{										//[BH]
+		if(debug1) printf("Grid::EvolveLevel: Skip 2nd SetBoundaryConditions\n");	//[BH]
+	}//end else dont call SBC
+
+	if(debug1) printf("Grid::EvolveLevel: Burning done\n");			//[BH]
+    }// end if use burning								//[BH]
+    else										//[BH]
+    {											//[BH]
+	if(debug1) printf("Grid::EvolveLevel: Skip burning\n");				//[BH]
+    }//end else dont use burning							//[BH]
 
     /* If cosmology, then compute grav. potential for output if needed. */
 
@@ -915,6 +956,11 @@ int EvolveLevel(TopGridData *MetaData, LevelHierarchyEntry *LevelArray[],
     /* Rebuild the Grids on the next level down.
        Don't bother on the last cycle, as we'll rebuild this grid soon. */
  
+    // compute energy time step
+    for (grid1 = 0; grid1 < NumberOfGrids; grid1++) 
+	if( Grids[grid1]->GridData->ComputeEnergyGrowthTimeStep(/* TODO */ 0.0) == FAIL)
+		ENZO_FAIL("ComputeEnergyGrowthTimeStep failed.\n");
+
     if (dtThisLevelSoFar[level] < dtLevelAbove)
       RebuildHierarchy(MetaData, LevelArray, level);
 

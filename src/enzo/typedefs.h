@@ -173,7 +173,11 @@ const field_type
   /* IR photodetachment fields */
   kdissH2II = 98,
   kphHM     = 99,
-  FieldUndefined  = 100;
+  Density_56Ni   =100, // 56Ni density [BH]
+  QInstantaneous =101, // Instantaneous energy from burning [BH]
+  QCumulative    =102, // Accumulator for the energy from burning, i.e. dQdt integrated [BH]
+
+  FieldUndefined  = 103;
 
 /*
 enum field_type {Density, TotalEnergy, InternalEnergy, Pressure,
@@ -185,8 +189,7 @@ enum field_type {Density, TotalEnergy, InternalEnergy, Pressure,
 		 Acceleration0, Acceleration1,Acceleration2,
                  FieldUndefined};
 */
-
-#define FieldTypeIsDensity(A) ((((A) >= TotalEnergy && (A) <= Velocity3) || ((A) >= kphHI && (A) <= kdissH2I) || ((A) >= RadiationFreq0 && (A) <= RaySegments) || ((A) >= Bfield1 && (A) <= AccelerationField3)) ? FALSE : TRUE)
+#define FieldTypeIsDensity(A) ((((A) >= TotalEnergy && (A) <= Velocity3) || ((A) >= kphHI && (A) <= kdissH2I) || ((A) >= RadiationFreq0 && (A) <= RaySegments) || ((A) >= Bfield1 && (A) <= AccelerationField3) || (UseBurning && A==Density_56Ni)) ? FALSE : TRUE)
 #define FieldTypeIsRadiation(A) ((((A) >= kphHI && (A) <= kdissH2I) || ((A) >= RadiationFreq0 && (A) <= RadiationFreq9)) ? TRUE : FALSE)
 #define FieldTypeNoInterpolate(A) (((((A) >= Mach) && ((A) <= PreShockDensity)) || ((A) == GravPotential) || ((A) == RaySegments)) ? TRUE : FALSE)
 

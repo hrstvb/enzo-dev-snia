@@ -5,6 +5,7 @@
 /  written by: Greg Bryan
 /  date:       November, 1994
 /  modified1: 2010 Tom Abel, added MHD part 
+/  modified2: 2015 Boyan Hristov added energy growth and burning fraction growth.
 /
 /  PURPOSE:
 /
@@ -83,6 +84,8 @@ float grid::ComputeTimeStep()
   float dtCR           = huge_number;
   float dtGasDrag      = huge_number;
   float dtCooling      = huge_number;
+  //float dtEnergyGrowth    = huge_number; //[BH]
+  //float dtBurnedFractioin = huge_number; //[BH]
   int dim, i, j, k, index, result;
  
   /* Compute the field size. */
@@ -164,6 +167,67 @@ float grid::ComputeTimeStep()
 			     BaryonField[Vel1Num], BaryonField[Vel2Num],
 			     BaryonField[Vel3Num], &dtBaryons, &dtViscous);
  
+//[BH] TODO debug calculations and print:
+int ii, jj, kk, ll, imin, jmin, kmin, lmin, eqcount=0;
+float cs, tx, ty, tz, dttt, dtttmin = huge_number, eqthreshold=0.1;
+for(ii=GridStartIndex[0]; ii<=GridEndIndex[0]; ii++) {
+for(jj=GridStartIndex[1]; jj<=GridEndIndex[1]; jj++) {
+for(kk=GridStartIndex[2]; kk<=GridEndIndex[2]; kk++) {
+
+	ll = ELT(ii,jj,kk);
+
+	cs = sqrt(Gamma * pressure_field[ll] / BaryonField[DensNum][ll]);
+
+	tx = CellWidth[0][ii] / ( cs + abs( BaryonField[Vel1Num][ll] - GridVelocity[0] ) );
+	ty = CellWidth[1][jj] / ( cs + abs( BaryonField[Vel2Num][ll] - GridVelocity[1] ) );
+	tz = CellWidth[2][kk] / ( cs + abs( BaryonField[Vel3Num][ll] - GridVelocity[2] ) );
+
+	dttt = 1/ ( 1/tx + 1/ty + 1/tz );
+
+	if( dtttmin < dttt ) {
+		dtttmin = dttt;
+		imin = ii;
+		jmin = jj;
+		kmin = kk;
+	}
+}}}
+
+for(ii=GridStartIndex[0]; ii<=GridEndIndex[0]; ii++) {
+for(jj=GridStartIndex[1]; jj<=GridEndIndex[1]; jj++) {
+for(kk=GridStartIndex[2]; kk<=GridEndIndex[2]; kk++) {
+
+	ll = ELT(ii,jj,kk);
+
+	cs = sqrt(Gamma * pressure_field[ll] / BaryonField[DensNum][ll]);
+
+	tx = CellWidth[0][ii] / ( cs + abs( BaryonField[Vel1Num][ll] - GridVelocity[0] ) );
+	ty = CellWidth[1][jj] / ( cs + abs( BaryonField[Vel2Num][ll] - GridVelocity[1] ) );
+	tz = CellWidth[2][kk] / ( cs + abs( BaryonField[Vel3Num][ll] - GridVelocity[2] ) );
+
+	dttt = 1/ ( 1/tx + 1/ty + 1/tz );
+
+	if( dttt/dtttmin - 1 < eqthreshold ) {
+		eqcount++;
+	}
+}}}
+
+ll = ELT(ii,jj,kk);
+
+cs = sqrt(Gamma * pressure_field[ll] / BaryonField[DensNum][ll]);
+
+tx = CellWidth[0][ii] / ( cs + abs( BaryonField[Vel1Num][ll] - GridVelocity[0] ) );
+ty = CellWidth[1][jj] / ( cs + abs( BaryonField[Vel2Num][ll] - GridVelocity[1] ) );
+tz = CellWidth[2][kk] / ( cs + abs( BaryonField[Vel3Num][ll] - GridVelocity[2] ) );
+
+dttt = 1/ ( 1/tx + 1/ty + 1/tz );
+
+//printf("calc_dt: min at i,j,k = %d,%d,%d\n", ii,jj,kk);							//[BH]
+//printf("cs, gamma, p, rho, TE: %e %e %e %e %e\n", cs, Gamma, pressure_field[ll], BaryonField[DensNum][ll], BaryonField[TENum][ll]);	//[BH]
+//printf("CellWidth: %e %e %e\n", CellWidth[0][ii], CellWidth[1][jj], CellWidth[2][kk]);			//[BH]
+//printf("v: %e %e %e\n", BaryonField[Vel1Num][ll], BaryonField[Vel2Num][ll],BaryonField[Vel3Num][ll]);		//[BH]
+//printf("g: %e %e %e\n", GridVelocity[0],GridVelocity[1],GridVelocity[2]);					//[BH]
+//printf("dtmin, tx, ty, tz: %e %e %e %e\n", dtttmin, tx, ty, tz);						//[BH]
+//printf("%d elements (of %d) within %f from dtmin\n", eqcount, GetGridSize(), eqthreshold);			//[BH]
 
     if(HydroMethod == MHD_Li){
       /* 1.5) Calculate minimum dt due to MHD: Maximum Fast MagnetoSonic Shock Speed */
@@ -508,6 +572,21 @@ float grid::ComputeTimeStep()
   
 #endif /* TRANSFER */
  
+  /* 12) Compute time step from energy growth limits. */			//[BH]
+  //if( ComputeEnergyGrowthTimeStep( dEdtParent ) == FAIL )			//[BH]
+  //	ENZO_FAIL("Error in ComputeEnergyGrowthTimeStep.\n");			//[BH]
+  // dtEnergyGrowth is calculated somwhere else since				//[BH]
+  // OldBaryonField is not available at this point.				//[BH]
+  if(dtEnergyGrowth > tiny_number)						//[BH]
+	  dt = min(dt, dtEnergyGrowth);						//[BH]
+
+  /* 13) Compute time step from diffusion of burned fraction. */		//[BH]
+//  if( UseBurning ) {								//[BH]
+//  	if( ComputeBurnedFractionTimeStep( &dtBurnedFractioin ) == FAIL )	//[BH]
+//		ENZO_FAIL("Error in ComputeBurnedFractionTimeStep.\n");		//[BH]
+//  	dt = min(dt, dtBurnedFractioin);					//[BH]
+//  }										//[BH]
+
   /* Debugging info. */
   
   if (debug1) {
@@ -530,8 +609,61 @@ float grid::ComputeTimeStep()
       printf("Cond = %"ESYM" ",(dtConduction));
     if (UseGasDrag)
       printf("Drag = %"ESYM" ",(dtGasDrag));
+    if( dtEnergyGrowth < huge_number )			//[BH]
+      printf("dE/E = %"ESYM" ", dtEnergyGrowth );	//[BH]
+    //TODO burning					//[BH]
+    //if( UseBurning )					//[BH]
+    //  printf("df = %"ESYM" ", dtBurnedFraction);	//[BH]
     printf(")\n");
   }
  
   return dt;
 }
+
+int grid::ComputeEnergyGrowthTimeStep( float dEdtParent )				//[BH]
+{											//[BH]
+//printf("ComputeEnergyGrowthTimeStep\n"); //[BH] TODO
+	dtEnergyGrowth = huge_number;							//[BH]
+	if(dtFixed <= tiny_number) return SUCCESS;					//[BH]
+
+	int TENum = FindField( TotalEnergy, FieldType, NumberOfBaryonFields );		//[BH]
+
+	if ( TENum < 0 )								//[BH]
+		ENZO_FAIL("Grid::ComputeEnergyGrowthTimeStep: Cannot find total energy.");	//[BH]
+
+	float *oldTE  = OldBaryonField[ TENum ];					//[BH]
+	if( oldTE == NULL ) return SUCCESS;						//[BH]
+
+	float *TE  = BaryonField[ TENum  ];						//[BH]
+
+	float dE, dEMin = huge_number;							//[BH]
+
+	int gridSize = GetGridSize();							//[BH]
+	for(int i = 0; i<gridSize; i++)							//[BH]
+	{										//[BH]
+		if( (dE = abs( oldTE[i] - TE[i] )) < tiny_number )			//[BH]
+			continue;							//[BH]
+
+		dE = TE[i] / dE;						//[BH]
+		dEMin = min( dEMin, dE );						//[BH]
+	}										//[BH]
+
+//[BH] int zcounter = 0;
+//[BH] float oldmin, oldmax, oldave;
+//[BH] oldmin = oldmax = oldave = oldTE[0];
+//[BH] for(int i=1; i<gridSize; i++) {
+//[BH] 	if(oldTE[i] < 4e18) zcounter++;
+//[BH] 	if(oldmin > oldTE[i]) oldmin = oldTE[i];
+//[BH] 	if(oldmax < oldTE[i]) oldmax = oldTE[i];
+//[BH] 	oldave += oldTE[i];
+//[BH] }
+//[BH] oldave /= gridSize;
+//[BH] for(int i=1; i<gridSize; i++)
+//[BH] 	if(oldTE[i] < oldave) zcounter++;
+//[BH] 
+//[BH] printf("oldTE < oldave for %d elements of %d. min=%e, max=%e, ave=%e\n", zcounter, gridSize, oldmin, oldmax, oldave); 
+
+
+	dtEnergyGrowth = 2 * EnergyRelativeGrowthLimit * dtFixed * dEMin;		//[BH]
+//[BH] printf("ComputeEnergyGrowthTimeStep, dtEnergyGrowth=%E dEMin=%E limit=%E\n", dtEnergyGrowth, dEMin, EnergyRelativeGrowthLimit); //[BH] TODO
+} //end grid::ComputeEnergyGrowthTimeStep						//[BH]

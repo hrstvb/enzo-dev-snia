@@ -294,6 +294,7 @@ int SetDefaultGlobalValues(TopGridData &MetaData)
 
  
   ParallelRootGridIO          = FALSE;
+  ParallelRootGridIO_Force    = FALSE; //[BH]
   ParallelParticleIO          = FALSE;
   Unigrid                     = FALSE;
   UnigridTranspose            = 2;
@@ -338,6 +339,11 @@ int SetDefaultGlobalValues(TopGridData &MetaData)
   ExternalGravity             = FALSE;             // off
   ExternalGravityDensity      = 0.0;
   ExternalGravityRadius       = 0.0;
+
+  UseConstantAcceleration     = FALSE;	//[BH]
+  ConstantAcceleration[0]     = 0;	//[BH]
+  ConstantAcceleration[1]     = 0;	//[BH]
+  ConstantAcceleration[2]     = 0;	//[BH]
 
   UniformGravity              = FALSE;             // off
   UniformGravityDirection     = 0;                 // x-direction
@@ -761,6 +767,8 @@ int SetDefaultGlobalValues(TopGridData &MetaData)
   EOSSoundSpeed		     = 2.65e4;
   EOSCriticalDensity	     = 1e-13;
   EOSGamma		     = 1.667;
+  EOSPolytropicIndex         = 3;	//[BH]
+  EOSPolytropicFactor        = 1;       //[BH]
   Mu			     = 0.6;
   DivBDampingLength          = 1.;
   UseCUDA		     = 0;
@@ -984,6 +992,21 @@ int SetDefaultGlobalValues(TopGridData &MetaData)
   SupernovaSeedFieldRadius = 0.0;
   SupernovaSeedFieldDuration = 0.0;
   SupernovaSeedFieldEnergy = 0.0;
+
+  //Burning parameters                                                                                          //[BH]
+  UseBurning                           = 0;   // UseBurning=1 defines the burning fields and executes the burning//[BH]
+  SkipBurningOperator                  = 0;   // If true the nickel density advects as a color field.		//[BH]
+  AllowUnburning                       = 0;   // Allow negative  burning fraction to take away from the Energy  //[BH]
+  CallSetBoundaryConditionsAfterBurning= 1;                                                                     //[BH]
+  BurningDiffusionRate                 = 1;   //TODO: find meaningful values for diffusion and reaction rates.  //[BH]
+  BurningDiffusionCourantSafetyFactor  = 0.5; //Courant safety number = safety factor * dx^2 / BurningDiffusionRate //[BH]
+  BurningReactionRate                  = 1;   //This is the burning reaction rate value used when the burned    //[BH]
+  BurningReactionBurnedFractionLimitLo = 0.3; //  fraction is between 0 and 1 and inside the (Lo, Hi) limits    //[BH]
+  BurningReactionBurnedFractionLimitHi = 1;   //  set by the next two parameters. Otherwise a zero rate is used.//[BH]
+  BurningEnergyRelease                 = 0.0476929; //[keV] TODO: convert units, per barion etc.                //[BH]
+  EnergyRelativeGrowthLimit		= -1; //Ignore condition
+  BurnedFractionGrowthLimit		= -1; //Ignore condition
+
 
   return SUCCESS;
 }

@@ -283,6 +283,14 @@ int grid::SolveHydroEquations(int CycleNumber, int NumberOfSubgrids,
 	colnum[NumberOfColours++] = PSDenNum;
       }
     }
+
+    if(UseBurning) {                                                                           //[BH]
+//	int oldNumcol = NumberOfColours;			//[BH]
+      colnum[NumberOfColours++] = FindField(Density_56Ni   , FieldType, NumberOfBaryonFields); //[BH]
+//      colnum[NumberOfColours++] = FindField(QInstantaneous , FieldType, NumberOfBaryonFields); //[BH]
+//      colnum[NumberOfColours++] = FindField(QCumulative    , FieldType, NumberOfBaryonFields); //[BH]
+//printf("New numcols %d (+%d) \n", NumberOfColours, NumberOfColours-oldNumcol);	//[BH]
+    }                                                                                          //[BH]
     /* Determine if Gamma should be a scalar or a field. */
     
     int UseGammaField = FALSE;

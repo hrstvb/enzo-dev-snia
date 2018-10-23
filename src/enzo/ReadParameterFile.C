@@ -703,6 +703,7 @@ int ReadParameterFile(FILE *fptr, TopGridData &MetaData, float *Initialdt)
 		    StaticRefineRegionRightEdge[dim]+2);
  
     ret += sscanf(line, "ParallelRootGridIO = %"ISYM, &ParallelRootGridIO);
+    ret += sscanf(line, "ParallelRootGridIO_Force = %"ISYM, &ParallelRootGridIO_Force ); // [BH] In the beginning of EvolveHierarchy: ParallelRootGridIO = ParallelRootGridIO_Force
  
     ret += sscanf(line, "ParallelParticleIO = %"ISYM, &ParallelParticleIO);
  
@@ -1178,6 +1179,8 @@ int ReadParameterFile(FILE *fptr, TopGridData &MetaData, float *Initialdt)
     ret += sscanf(line, "EOSSoundSpeed = %"FSYM, &EOSSoundSpeed);
     ret += sscanf(line, "EOSCriticalDensity = %"FSYM, &EOSCriticalDensity);
     ret += sscanf(line, "EOSGamma = %"FSYM, &EOSGamma);
+    ret += sscanf(line, "EOSPolytropicIndex = %"FSYM, &EOSPolytropicIndex);		//[BH]
+    ret += sscanf(line, "EOSPolytropicFactor = %"FSYM, &EOSPolytropicFactor);		//[BH]
     ret += sscanf(line, "UseConstantAcceleration = %"ISYM, &UseConstantAcceleration);
     ret += sscanf(line, "ConstantAcceleration = %"GSYM" %"GSYM" %"GSYM, &ConstantAcceleration[0],
 		  &ConstantAcceleration[1], &ConstantAcceleration[2]);
@@ -1278,6 +1281,19 @@ int ReadParameterFile(FILE *fptr, TopGridData &MetaData, float *Initialdt)
     ret += sscanf(line,"SupernovaSeedFieldEnergy = %"FSYM, &SupernovaSeedFieldEnergy);
     ret += sscanf(line,"SupernovaSeedFieldDuration = %"FSYM, &SupernovaSeedFieldDuration);
 
+    //Burning parameters                                                                                         //[BH]
+    ret += sscanf(line, "UseBurning                            = %"ISYM, &UseBurning                           ); //[BH]
+    ret += sscanf(line, "SkipBurningOperator                   = %"ISYM, &SkipBurningOperator                  ); //[BH]
+    ret += sscanf(line, "AllowUnburning                        = %"ISYM, &AllowUnburning                       ); //[BH]
+    ret += sscanf(line, "CallSetBoundaryConditionsAfterBurning = %"ISYM, &CallSetBoundaryConditionsAfterBurning); //[BH]
+    ret += sscanf(line, "BurningDiffusionRate                  = %"FSYM, &BurningDiffusionRate                 ); //[BH]
+    ret += sscanf(line, "BurningDiffusionCourantSafetyFactor   = %"FSYM, &BurningDiffusionCourantSafetyFactor  ); //[BH]
+    ret += sscanf(line, "BurningReactionRate                   = %"FSYM, &BurningReactionRate                  ); //[BH]
+    ret += sscanf(line, "BurningReactionBurnedFractionLimitLo  = %"FSYM, &BurningReactionBurnedFractionLimitLo ); //[BH]
+    ret += sscanf(line, "BurningReactionBurnedFractionLimitHi  = %"FSYM, &BurningReactionBurnedFractionLimitHi ); //[BH]
+    ret += sscanf(line, "BurningEnergyRelease                  = %"FSYM, &BurningEnergyRelease                 ); //[BH]
+    ret += sscanf(line, "EnergyRelativeGrowthLimit             = %"FSYM, &EnergyRelativeGrowthLimit            ); //[BH]
+    ret += sscanf(line, "BurnedFractionGrowthLimit             = %"FSYM, &BurnedFractionGrowthLimit            ); //[BH]
     /* If the dummy char space was used, then make another. */
  
     if (*dummy != 0) {
