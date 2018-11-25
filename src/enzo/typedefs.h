@@ -12,6 +12,7 @@
 /
 ************************************************************************/
 
+#include "macros_and_parameters.h" //BH
 #include "CloudyCoolingData.h"
 #include "CoolData.h"
 #include "RateData.h"
@@ -48,7 +49,7 @@ typedef int mhd_ct_method;
 typedef long_int forcing_type;
 #endif
 
-const field_type 
+const field_type
   Density         = 0,
   TotalEnergy     = 1,
   InternalEnergy  = 2,
@@ -88,7 +89,7 @@ const field_type
   RadPressure2    = 36,
   Emissivity0     = 37,
 
-/* these pseudo-fields are used to access grid data 
+/* these pseudo-fields are used to access grid data
    the "g" prefix is to avoid namespace conflict */
 
   gParticlePosition     = 37,
@@ -109,14 +110,14 @@ const field_type
   Bfield3               = 51,
   PhiField              = 52,
   Phi_pField            = 53,
-  DebugField            = 54, 
+  DebugField            = 54,
 
-  DrivingField1         = 55, 
-  DrivingField2         = 56, 
+  DrivingField1         = 55,
+  DrivingField2         = 56,
   DrivingField3         = 57,
 
-  AccelerationField1    = 58, 
-  AccelerationField2    = 59, 
+  AccelerationField1    = 58,
+  AccelerationField2    = 59,
   AccelerationField3    = 60,
 
   Galaxy1Colour          = 61,
@@ -124,13 +125,13 @@ const field_type
 /* these are required for Sam Skillman's Shock/Cosmic ray models. */
   Mach            = 63,
   PreShockTemperature = 64,
-  PreShockDensity = 65,  
+  PreShockDensity = 65,
 
 /* these are required for Simon Glover's chemistry (which also needs some of the
    other fields, which are used for MultiSpecies) */
   CIDensity       = 66,
-  CIIDensity      = 67, 
-  OIDensity       = 68, 
+  CIIDensity      = 67,
+  OIDensity       = 68,
   OIIDensity      = 69,
   SiIDensity      = 70,
   SiIIDensity     = 71,
@@ -148,7 +149,7 @@ const field_type
   MBHColour       = 82,
   ForbiddenRefinement = 83,
 
-/* FLD radiation module stuff (D. Reynolds) */ 
+/* FLD radiation module stuff (D. Reynolds) */
   RadiationFreq0  = 84,
   RadiationFreq1  = 85,
   RadiationFreq2  = 86,
@@ -169,7 +170,7 @@ const field_type
 
   /* Cosmic Ray Energy Density */
   CRDensity = 97,
- 
+
   /* IR photodetachment fields */
   kdissH2II = 98,
   kphHM     = 99,
@@ -181,9 +182,9 @@ const field_type
 
 /*
 enum field_type {Density, TotalEnergy, InternalEnergy, Pressure,
-		 Velocity1, Velocity2, Velocity3, 
-		 ElectronDensity, HIDensity, HIIDensity,  HeIDensity, 
-		 HeIIDensity, HeIIIDensity, HMDensity, H2IDensity, 
+		 Velocity1, Velocity2, Velocity3,
+		 ElectronDensity, HIDensity, HIIDensity,  HeIDensity,
+		 HeIIDensity, HeIIIDensity, HMDensity, H2IDensity,
 		 H2IIDensity, DIDensity, DIIDensity, HDIDensity,
                  Metallicity, ExtraType0, ExtraType1, GravPotential,
 		 Acceleration0, Acceleration1,Acceleration2,
@@ -220,7 +221,7 @@ const gravity_boundary_type
   SubGridIsolated  = 2,
   GravityUndefined = 3;
 
-// enum gravity_boundary_type {TopGridPeriodic, TopGridIsolated, 
+// enum gravity_boundary_type {TopGridPeriodic, TopGridIsolated,
 // 				    SubGridIsolated, GravityUndefined};
 
 /* Interpolation types. */
@@ -245,13 +246,13 @@ const hydro_method
   Zeus_Hydro           = 2,
   HD_RK                = 3,
   MHD_RK               = 4,
-  NoHydro              = 5, 
+  NoHydro              = 5,
   MHD_Li             = 6,
   HydroMethodUndefined = 7;
 
 // enum hydro_method {PPM_DirectEuler, PPM_LagrangeRemap, Zeus_Hydro};
 
-const enum_type iHI = 0, iHeI = 1, iHeII = 2, LW = 3, IR = 4, XRAYS = 5, 
+const enum_type iHI = 0, iHeI = 1, iHeII = 2, LW = 3, IR = 4, XRAYS = 5,
 TRACINGSPECTRUM = 6, H2II = 7;
 const enum_type Cartesian = 0, Spherical = 1, Cylindrical = 2;
 const enum_type PLM = 0, PPM = 1, CENO = 2, WENO3 = 3, WENO5 = 4, ZERO = 5;
@@ -260,7 +261,7 @@ const enum_type FluxReconstruction = 0, HLL = 1, Marquina = 2,
 const enum_type Neumann = 0, Dirichlet = 1;
 const enum_type Isotropic = 1, Beamed = -2, Episodic = -3;
 
-/* Stanford RK MUSCL solvers support */ 
+/* Stanford RK MUSCL solvers support */
 //enum {Cartesian, Spherical, Cylindrical};
 //enum {PLM, PPM, CENO, WENO3, WENO5};
 //enum {FluxReconstruction, HLL, Marquina, LLF, HLLC};
@@ -268,7 +269,7 @@ const enum_type Isotropic = 1, Beamed = -2, Episodic = -3;
 /* These are the different types of poisson cleaining boundary conditions. */
 //enum{Neumann, Dirichlet};
 
-const mhd_ct_method 
+const mhd_ct_method
   CT_None = 0,
   CT_BalsaraSpicer = 1,
   CT_Athena_LF = 2,

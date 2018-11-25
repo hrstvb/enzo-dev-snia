@@ -9,18 +9,20 @@
  ****************************************************************************/
 /***********************************************************************
 /  Contains headers that must be included *prior* to inclusion
-/  of macros_and_parameters.h, since that so beautifully re-defines 
-/  'float', messing up any external library that actually uses 'float' 
-/  in its header files.  
+/  of macros_and_parameters.h, since that so beautifully re-defines
+/  'float', messing up any external library that actually uses 'float'
+/  in its header files.
 /
 /  written by: Daniel R. Reynolds
 /  date:       June, 2009
-/  modified1:  
+/  modified1:
 /
 ************************************************************************/
 
 #ifndef IMPLICIT_PROBLEM_PREINCLUDES_DEFINED__
 #define IMPLICIT_PROBLEM_PREINCLUDES_DEFINED__
+
+#include "IDE_defs.h"
 
 #ifdef USE_MPI
 #include "mpi.h"
