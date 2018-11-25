@@ -30,14 +30,14 @@
 /
 ************************************************************************/
 #include "preincludes.h"
- 
+
 #ifdef USE_MPI
 #include <mpi.h>
 #endif
- 
+
 #include <stdio.h>
 
-#include "EnzoTiming.h" 
+#include "EnzoTiming.h"
 #include "performance.h"
 #include "ErrorExceptions.h"
 #include "macros_and_parameters.h"
@@ -56,9 +56,9 @@
 #ifdef TRANSFER
 #include "ImplicitProblemABC.h"
 #endif
- 
+
 // function prototypes
- 
+
 int RebuildHierarchy(TopGridData *MetaData,
 		     LevelHierarchyEntry *LevelArray[], int level);
 
@@ -72,18 +72,18 @@ int EvolveLevel(TopGridData *MetaData, LevelHierarchyEntry *LevelArray[],
 
 int WriteAllData(char *basename, int filenumber,
 		 HierarchyEntry *TopGrid, TopGridData &MetaData,
-		 ExternalBoundary *Exterior, 
+		 ExternalBoundary *Exterior,
 #ifdef TRANSFER
 		 ImplicitProblemABC *ImplicitSolver,
-#endif		 
+#endif
 		 FLOAT WriteTime = -1);
 
 int Group_WriteAllData(char *basename, int filenumber,
 		 HierarchyEntry *TopGrid, TopGridData &MetaData,
-		 ExternalBoundary *Exterior, 
+		 ExternalBoundary *Exterior,
 #ifdef TRANSFER
 		 ImplicitProblemABC *ImplicitSolver,
-#endif		 
+#endif
 		 FLOAT WriteTime = -1,
 		 int RestartDump = FALSE);
 
@@ -92,10 +92,10 @@ int CopyOverlappingZones(grid* CurrentGrid, TopGridData *MetaData,
 int TestGravityCheckResults(LevelHierarchyEntry *LevelArray[]);
 int TestGravitySphereCheckResults(LevelHierarchyEntry *LevelArray[]);
 int CheckForOutput(HierarchyEntry *TopGrid, TopGridData &MetaData,
-		   ExternalBoundary *Exterior, 
+		   ExternalBoundary *Exterior,
 #ifdef TRANSFER
 		   ImplicitProblemABC *ImplicitSolver,
-#endif		 
+#endif
 		   int Restart = FALSE);
 int CheckForTimeAction(LevelHierarchyEntry *LevelArray[],
 		       TopGridData &MetaData);
@@ -114,20 +114,20 @@ int CommunicationReceiveHandler(fluxes **SubgridFluxesEstimate[] = NULL,
 				TopGridData* MetaData = NULL);
 double ReturnWallTime(void);
 int Enzo_Dims_create(int nnodes, int ndims, int *dims);
-int FOF(TopGridData *MetaData, LevelHierarchyEntry *LevelArray[], 
+int FOF(TopGridData *MetaData, LevelHierarchyEntry *LevelArray[],
 	int WroteData, int FOFOnly=FALSE);
 int StarParticleCountOnly(LevelHierarchyEntry *LevelArray[]);
-int CommunicationLoadBalanceRootGrids(LevelHierarchyEntry *LevelArray[], 
+int CommunicationLoadBalanceRootGrids(LevelHierarchyEntry *LevelArray[],
 				      int TopGridRank, int CycleNumber);
 int CommunicationBroadcastValue(Eint32 *Value, int BroadcastProcessor);
 int CommunicationBroadcastValue(Eint64 *Value, int BroadcastProcessor);
 int ParticleSplitter(LevelHierarchyEntry *LevelArray[], int ThisLevel,
-		     TopGridData *MetaData); 
+		     TopGridData *MetaData);
 int MagneticFieldResetter(LevelHierarchyEntry *LevelArray[], int ThisLevel,
-			  TopGridData *MetaData); 
+			  TopGridData *MetaData);
 void PrintMemoryUsage(char *str);
 int SetEvolveRefineRegion(FLOAT time);
-int SphericalGravityComputePotential(LevelHierarchyEntry *LevelArray[]);
+int SphericalGravityComputePotential(LevelHierarchyEntry *LevelArray[], TopGridData* MetaData);
 
 #ifdef MEM_TRACE
 Eint64 mused(void);
@@ -137,13 +137,13 @@ int CallPython(LevelHierarchyEntry *LevelArray[], TopGridData *MetaData,
                int level, int from_topgrid);
 #endif
 
- 
- 
+
+
 #define NO_REDUCE_FRAGMENTATION
- 
 
 
- 
+
+
 int EvolveHierarchy(HierarchyEntry &TopGrid, TopGridData &MetaData,
                     ExternalBoundary *Exterior,
 #ifdef TRANSFER
@@ -151,12 +151,12 @@ int EvolveHierarchy(HierarchyEntry &TopGrid, TopGridData &MetaData,
 #endif
 		    LevelHierarchyEntry *LevelArray[], float Initialdt)
 {
-//printf("EvolveHierarchy\n"); //[BH] TODO 
+//printf("EvolveHierarchy\n"); //[BH] TODO
   if( ParallelRootGridIO_Force )	//[BH]
 	  ParallelRootGridIO = TRUE;	//[BH]
- 
+
   float dt;
- 
+
   int i, dim, Stop = FALSE;
   int StoppedByOutput = FALSE;
   int Restart = FALSE;
@@ -170,7 +170,7 @@ int EvolveHierarchy(HierarchyEntry &TopGrid, TopGridData &MetaData,
 #ifdef USE_MPI
   tentry = MPI_Wtime();
 #endif
- 
+
   if (MetaData.Time        >= MetaData.StopTime ) Stop = TRUE;
   if (MetaData.CycleNumber >= MetaData.StopCycle) Stop = TRUE;
   MetaData.StartCPUTime = LastCPUTime = ReturnWallTime();
@@ -180,9 +180,9 @@ int EvolveHierarchy(HierarchyEntry &TopGrid, TopGridData &MetaData,
   // was the default from before.
   if (MetaData.CPUTime > 1e2*MetaData.StopCPUTime)
     MetaData.CPUTime = 0.0;
- 
+
   /* Attach RandomForcingFields to BaryonFields temporarily to apply BCs */
- 
+
   if (RandomForcing) { //AK
     Temp = LevelArray[0];
     while (Temp != NULL) {
@@ -191,7 +191,7 @@ int EvolveHierarchy(HierarchyEntry &TopGrid, TopGridData &MetaData,
     }
     Exterior->AppendForcingToBaryonFields();
   }
- 
+
   /* Set top grid boundary conditions. */
 
   Temp = LevelArray[0];
@@ -217,7 +217,7 @@ int EvolveHierarchy(HierarchyEntry &TopGrid, TopGridData &MetaData,
       ENZO_FAIL("Error in CopyOverlappingZones.");
     Temp = Temp->NextGridThisLevel;
   }
-  
+
   CommunicationDirection = COMMUNICATION_SEND;
 
   Temp = LevelArray[0];
@@ -228,7 +228,7 @@ int EvolveHierarchy(HierarchyEntry &TopGrid, TopGridData &MetaData,
     Temp = Temp->NextGridThisLevel;
   }
 
-#ifdef FORCE_MSG_PROGRESS 
+#ifdef FORCE_MSG_PROGRESS
   CommunicationBarrier();
 #endif
 
@@ -239,9 +239,9 @@ int EvolveHierarchy(HierarchyEntry &TopGrid, TopGridData &MetaData,
 #endif
 
   PrintMemoryUsage("Bdry set");
- 
+
   /* Remove RandomForcingFields from BaryonFields when BCs are set. */
- 
+
   if (RandomForcing) { //AK
     LevelHierarchyEntry *Temp = LevelArray[0];
     while (Temp != NULL) {
@@ -250,21 +250,21 @@ int EvolveHierarchy(HierarchyEntry &TopGrid, TopGridData &MetaData,
     }
     Exterior->DetachForcingFromBaryonFields();
   }
- 
+
   /* Check for output. */
- 
-  CheckForOutput(&TopGrid, MetaData, Exterior, 
+
+  CheckForOutput(&TopGrid, MetaData, Exterior,
 #ifdef TRANSFER
 		 ImplicitSolver,
-#endif		 
+#endif
 		 Restart);
 
   PrintMemoryUsage("Output");
- 
+
   /* Compute the acceleration field so ComputeTimeStep can find dtAccel.
      (Actually, this is a huge pain-in-the-ass, so only do it if the
       problem really requires it). */
- 
+
 /*
   if (ProblemType == 21) {
     PrepareGravitatingMassField(&TopGrid, &MetaData, LevelArray, 0);
@@ -275,29 +275,29 @@ int EvolveHierarchy(HierarchyEntry &TopGrid, TopGridData &MetaData,
 
 
   /* Do the first grid regeneration. */
- 
+
   if(CheckpointRestart == FALSE) {
     RebuildHierarchy(&MetaData, LevelArray, 0);
   }
 
   PrintMemoryUsage("1st rebuild");
- 
+
   /* Particle Splitter. Split particles into 13 (=1+12) child particles */
-  
+
   if (MetaData.FirstTimestepAfterRestart == TRUE &&
       ParticleSplitterIterations > 0)
     ParticleSplitter(LevelArray, 0, &MetaData);
 
   /* Reset magnetic fields if requested. */
-  
+
   if (MetaData.FirstTimestepAfterRestart == TRUE &&
       ResetMagneticField == TRUE)
     MagneticFieldResetter(LevelArray, 0, &MetaData);
 
   /* Open the OutputLevelInformation file. */
- 
+
   FILE *LevelInfofptr;
- 
+
   if (MyProcessorNumber == ROOT_PROCESSOR) {
     LevelInfofptr = fopen("OutputLevelInformation.out", "w");
     fclose(LevelInfofptr);
@@ -307,7 +307,7 @@ int EvolveHierarchy(HierarchyEntry &TopGrid, TopGridData &MetaData,
      to restrict the timesteps.  Collect info here. */
 
   StarParticleCountOnly(LevelArray);
- 
+
 #ifdef USE_LCAPERF
   Eint32 lcaperf_iter;
 #endif
@@ -343,17 +343,17 @@ int EvolveHierarchy(HierarchyEntry &TopGrid, TopGridData &MetaData,
 
 #ifdef MEM_TRACE
     fprintf(memtracePtr, "==== CYCLE %"ISYM" ====\n", MetaData.CycleNumber);
-#endif    
+#endif
     PrintMemoryUsage("Top");
 
     /* Load balance the root grids if this isn't the initial call */
 
     if ((CheckpointRestart == FALSE) && (!FirstLoop))
-      CommunicationLoadBalanceRootGrids(LevelArray, MetaData.TopGridRank, 
+      CommunicationLoadBalanceRootGrids(LevelArray, MetaData.TopGridRank,
 					MetaData.CycleNumber);
 
     /* Output level information to log file. */
- 
+
     if (MyProcessorNumber == ROOT_PROCESSOR) {
       LevelInfofptr = fopen("OutputLevelInformation.out", "a");
       if (LevelInfofptr == NULL)
@@ -367,12 +367,12 @@ int EvolveHierarchy(HierarchyEntry &TopGrid, TopGridData &MetaData,
 
     if (MyProcessorNumber == ROOT_PROCESSOR)
       fclose(LevelInfofptr);
- 
+
     /* Compute minimum timestep on the top level. */
- 
+
     float dtProc   = huge_number;
     Temp = LevelArray[0];
- 
+
     // Start skipping
     if(CheckpointRestart == FALSE) {
       while (Temp != NULL) {
@@ -386,7 +386,7 @@ int EvolveHierarchy(HierarchyEntry &TopGrid, TopGridData &MetaData,
 
       if (debug) fprintf(stderr, "dt, Initialdt: %g %g \n", dt, Initialdt);
       if (Initialdt != 0) {
-      
+
 	dt = min(dt, Initialdt);
 	if (debug) fprintf(stderr, "dt, Initialdt: %g %g \n", dt, Initialdt);
         Initialdt = 0;
@@ -412,13 +412,13 @@ int EvolveHierarchy(HierarchyEntry &TopGrid, TopGridData &MetaData,
          set dt = StopTime - Time */
 
       dt = min(MetaData.StopTime - MetaData.Time, dt);
-    } else { 
-      dt = dtThisLevel[0]; 
+    } else {
+      dt = dtThisLevel[0];
     }
 
     /* Set the time step.  If it will cause Time += dt > StopTime, then
        set dt = StopTime - Time */
- 
+
     dt = min(MetaData.StopTime - MetaData.Time, dt);
     Temp = LevelArray[0];
     // Stop skipping
@@ -429,8 +429,8 @@ int EvolveHierarchy(HierarchyEntry &TopGrid, TopGridData &MetaData,
       Temp = Temp->NextGridThisLevel;
     }
 
-    SphericalGravityComputePotential(LevelArray);
- 
+    SphericalGravityComputePotential(LevelArray, &MetaData);
+
 #ifdef CONFIG_TESTING
     if (MyProcessorNumber == ROOT_PROCESSOR) {
       printf("enzo-test: MetaData.CycleNumber %"ISYM"\n", MetaData.CycleNumber);
@@ -452,31 +452,31 @@ int EvolveHierarchy(HierarchyEntry &TopGrid, TopGridData &MetaData,
       fprintf(stderr, "\n");
     }
     //}
- 
+
     /* Inline halo finder */
 
     FOF(&MetaData, LevelArray, MetaData.WroteData);
 
     /* If provided, set RefineRegion from evolving RefineRegion */
     if ((RefineRegionTimeType == 1) || (RefineRegionTimeType == 0)) {
-        if (SetEvolveRefineRegion(MetaData.Time) == FAIL) 
+        if (SetEvolveRefineRegion(MetaData.Time) == FAIL)
 	  ENZO_FAIL("Error in SetEvolveRefineRegion.");
     }
 
     /* Evolve the stochastic forcing spectrum and add
      *  the force to the acceleration fields */
     if (DrivenFlowProfile)
-        Forcing.Evolve(dt); 
+        Forcing.Evolve(dt);
 
     /* Evolve the top grid (and hence the entire hierarchy). */
 
-#ifdef USE_MPI 
+#ifdef USE_MPI
     CommunicationBarrier();
     tlev0 = MPI_Wtime();
 #endif
 
-    /* Zeroing out the rootgrid Emissivity before EvolveLevel is called 
-       so when rootgrid emissivity values are calculated they are put in 
+    /* Zeroing out the rootgrid Emissivity before EvolveLevel is called
+       so when rootgrid emissivity values are calculated they are put in
        clean rootgrid array */
 #ifdef EMISSIVITY
 /*
@@ -490,7 +490,7 @@ int EvolveHierarchy(HierarchyEntry &TopGrid, TopGridData &MetaData,
     }
 */
 #endif
- 
+
     if (EvolveLevel(&MetaData, LevelArray, 0, dt, Exterior
 #ifdef TRANSFER
                 , ImplicitSolver
@@ -505,7 +505,7 @@ int EvolveHierarchy(HierarchyEntry &TopGrid, TopGridData &MetaData,
                     &TopGrid, MetaData, Exterior
 #ifdef TRANSFER
                     , ImplicitSolver
-#endif 
+#endif
                     );
         }
         return FAIL;
@@ -513,15 +513,15 @@ int EvolveHierarchy(HierarchyEntry &TopGrid, TopGridData &MetaData,
 
 
 
-#ifdef USE_MPI 
+#ifdef USE_MPI
     CommunicationBarrier();
     tlev1 = MPI_Wtime();
 #endif
-  
+
     /* Add time and check stopping criteria (steps #21 & #22)
        (note the topgrid is also keeping its own time but this statement will
        keep the two in synch). */
- 
+
     MetaData.Time += dt;
     MetaData.CycleNumber++;
     MetaData.LastCycleCPUTime = ReturnWallTime() - LastCPUTime;
@@ -529,7 +529,7 @@ int EvolveHierarchy(HierarchyEntry &TopGrid, TopGridData &MetaData,
     LastCPUTime = ReturnWallTime();
 
     if (MyProcessorNumber == ROOT_PROCESSOR) {
-	
+
     if (MetaData.Time >= MetaData.StopTime) {
       if (MyProcessorNumber == ROOT_PROCESSOR)
 	printf("Stopping on top grid time limit.\n");
@@ -547,7 +547,7 @@ int EvolveHierarchy(HierarchyEntry &TopGrid, TopGridData &MetaData,
     } else
     if ((ReturnWallTime() - MetaData.StartCPUTime >= MetaData.dtRestartDump &&
 	 MetaData.dtRestartDump > 0) ||
-	(MetaData.CycleNumber - MetaData.CycleLastRestartDump >= 
+	(MetaData.CycleNumber - MetaData.CycleLastRestartDump >=
 	 MetaData.CycleSkipRestartDump &&
 	 MetaData.CycleSkipRestartDump > 0)) {
       if (MyProcessorNumber == ROOT_PROCESSOR)
@@ -567,7 +567,7 @@ int EvolveHierarchy(HierarchyEntry &TopGrid, TopGridData &MetaData,
 #endif
 
     PrintMemoryUsage("Pre loop rebuild");
- 
+
     if (ProblemType != 25 && Restart == FALSE)
       RebuildHierarchy(&MetaData, LevelArray, 0);
 
@@ -576,17 +576,17 @@ int EvolveHierarchy(HierarchyEntry &TopGrid, TopGridData &MetaData,
 #ifdef USE_MPI
     treb1 = MPI_Wtime();
 #endif
- 
+
     /* Check for time-actions. */
- 
+
     CheckForTimeAction(LevelArray, MetaData);
- 
+
     /* Check for output. */
- 
-    CheckForOutput(&TopGrid, MetaData, Exterior, 
+
+    CheckForOutput(&TopGrid, MetaData, Exterior,
 #ifdef TRANSFER
 		   ImplicitSolver,
-#endif		 
+#endif
 		   Restart);
 
     /* Call inline analysis. */
@@ -598,7 +598,7 @@ int EvolveHierarchy(HierarchyEntry &TopGrid, TopGridData &MetaData,
 #endif
 
     /* Check for resubmission */
-    
+
     if (!Restart)
       CheckForResubmit(MetaData, Stop);
 
@@ -608,12 +608,12 @@ int EvolveHierarchy(HierarchyEntry &TopGrid, TopGridData &MetaData,
       FOF(&MetaData, LevelArray, TRUE);
 
     /* Try to cut down on memory fragmentation. */
- 
+
 #ifdef REDUCE_FRAGMENTATION
- 
+
     if (MetaData.WroteData && !Stop)
       ReduceFragmentation(TopGrid, MetaData, Exterior, LevelArray);
- 
+
 #endif /* REDUCE_FRAGMENTATION */
 
 #ifdef USE_LCAPERF
@@ -678,7 +678,7 @@ int EvolveHierarchy(HierarchyEntry &TopGrid, TopGridData &MetaData,
 		  TIMER_WRITE(MetaData.CycleNumber);
 
     FirstLoop = false;
- 
+
     /* If simulation is set to stop after writing a set number of outputs, check that here. */
 
     if (MetaData.NumberOfOutputsBeforeExit && MetaData.WroteData) {
@@ -687,7 +687,7 @@ int EvolveHierarchy(HierarchyEntry &TopGrid, TopGridData &MetaData,
         if (MyProcessorNumber == ROOT_PROCESSOR) {
           fprintf(stderr, "Exiting after writing %"ISYM" datadumps.\n",
                   MetaData.NumberOfOutputsBeforeExit);
-        }      
+        }
         Stop = TRUE;
         StoppedByOutput = TRUE;
       }
@@ -701,46 +701,46 @@ int EvolveHierarchy(HierarchyEntry &TopGrid, TopGridData &MetaData,
 #endif
 
   MetaData.CPUTime = ReturnWallTime() - MetaData.StartCPUTime;
- 
+
   /* Done, so report on current time, etc. */
- 
+
   if (MyProcessorNumber == ROOT_PROCESSOR) {
     printf("Time     = %9"FSYM"   CycleNumber = %6"ISYM"    Wallclock   = %9"FSYM"\n",
 	   MetaData.Time, MetaData.CycleNumber, MetaData.CPUTime);
     printf("StopTime = %9"FSYM"   StopCycle   = %6"ISYM"\n",
 	   MetaData.StopTime, MetaData.StopCycle);
   }
- 
+
   /* If we are running problem 23, TestGravity, then check the results. */
- 
+
   if (ProblemType == 23)
     TestGravityCheckResults(LevelArray);
   if (ProblemType == 25 && NumberOfProcessors == 0)
     TestGravitySphereCheckResults(LevelArray);
- 
+
   /* if we are doing data dumps, then do one last one */
- 
+
   if ((MetaData.dtDataDump != 0.0 || MetaData.CycleSkipDataDump != 0) &&
       !MetaData.WroteData)
     //#ifdef USE_HDF5_GROUPS
     if (Group_WriteAllData(MetaData.DataDumpName, MetaData.DataDumpNumber,
-			   &TopGrid, MetaData, Exterior, 
+			   &TopGrid, MetaData, Exterior,
 #ifdef TRANSFER
-			   ImplicitSolver, 
-#endif		 
+			   ImplicitSolver,
+#endif
 			   -666) == FAIL)
       ENZO_FAIL("Error in Group_WriteAllData.");
 // #else
 //     if (WriteAllData(MetaData.DataDumpName, MetaData.DataDumpNumber,
-// 		     &TopGrid, MetaData, Exterior, 
+// 		     &TopGrid, MetaData, Exterior,
 //#ifdef TRANSFER
-//		     ImplicitSolver, 
-//#endif		 
+//		     ImplicitSolver,
+//#endif
 //                   -666) == FAIL) {
 //       ENZO_FAIL("Error in WriteAllData.\n");
 //     }
 // #endif
- 
+
   /* Write a file to indicate that we're finished. */
 
   FILE *Exit_fptr;
@@ -755,12 +755,12 @@ int EvolveHierarchy(HierarchyEntry &TopGrid, TopGridData &MetaData,
 
     printf("Communication: processor %"ISYM" CommunicationTime = %"FSYM"\n",
 	   MyProcessorNumber, CommunicationTime);
- 
+
   /* done */
 
 #ifdef USE_MPI
   texit = MPI_Wtime();
 #endif
- 
+
   return SUCCESS;
 }

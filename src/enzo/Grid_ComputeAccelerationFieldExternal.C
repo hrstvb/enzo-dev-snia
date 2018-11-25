@@ -18,9 +18,11 @@
 /      2) A 3D point source field for grid cells only
 /
 ************************************************************************/
- 
+
 #include <stdio.h>
 #include <math.h>
+
+#include "myenzoutils.h"
 #include "ErrorExceptions.h"
 #include "performance.h"
 #include "macros_and_parameters.h"
@@ -31,37 +33,39 @@
 #include "ExternalBoundary.h"
 #include "Grid.h"
 #include "phys_constants.h"
- 
+
 /* function prototypes */
 
 int GetUnits(float *DensityUnits, float *LengthUnits,
        	      float *TemperatureUnits, float *TimeUnits,
        	      float *VelocityUnits, double *MassUnits, FLOAT Time);
- 
+
 int CosmologyComputeExpansionFactor(FLOAT time, FLOAT *a, FLOAT *dadt);
- 
+
+size_t SphericalGravityComputeBinIndex(FLOAT r);
+
 int grid::ComputeAccelerationFieldExternal()
 {
- 
+
   /* Return if this does not concern us */
-  if (!(UniformGravity || PointSourceGravity || DiskGravity || ExternalGravity || SphericalGravity)) return SUCCESS;
+  if (!(UniformGravity || PointSourceGravity || DiskGravity || ExternalGravity || UseSphericalGravity)) return SUCCESS;
 
   /* Return if this grid is not on this processor. */
- 
+
   if (MyProcessorNumber != ProcessorNumber)
     return SUCCESS;
- 
+
   int dim, i, j, k, size = 1;
- 
+
   LCAPERF_START("grid_ComputeAccelerationFieldExternal");
 
   /* Compute field size (in floats). */
- 
+
   for (dim = 0; dim < GridRank; dim++)
     size *= GridDimension[dim];
- 
+
   /* Check if acceleration field exists.  If not create it and zero it. */
- 
+
   if (AccelerationField[0] == NULL)
     for (dim = 0; dim < GridRank; dim++) {
       AccelerationField[dim] = new float[size];
@@ -78,10 +82,10 @@ int grid::ComputeAccelerationFieldExternal()
     }
 
 
- 
+
 
   /* BWO:  if we're using the NFW halo with ProblemType = 31 ("GalaxySimulation"),
-     the PointSourceGravitationalConstant is assumed to be the mass in 
+     the PointSourceGravitationalConstant is assumed to be the mass in
      actually a mass in code units (that needs to be converted to CGS).  If this
      problem type is used, make this conversion.  Otherwise, don't worry about it. */
   double MassUnitsDouble;
@@ -107,14 +111,14 @@ int grid::ComputeAccelerationFieldExternal()
   /* -----------------------------------------------------------------
      Point Source gravity
      ----------------------------------------------------------------- */
- 
+
   if (PointSourceGravity > 0) {
- 
-    FLOAT a = 1.0, accel, dadt, radius, rcubed, rsquared, 
+
+    FLOAT a = 1.0, accel, dadt, radius, rcubed, rsquared,
       xpos, ypos = 0.0, zpos = 0.0, rcore,x ;
- 
+
     /* Compute adot/a at time = t+1/2dt (time-centered). */
- 
+
     if (ComovingCoordinates)
       if (CosmologyComputeExpansionFactor(Time+0.5*dtFixed, &a, &dadt)
 	  == FAIL) {
@@ -125,21 +129,21 @@ int grid::ComputeAccelerationFieldExternal()
 
     for (dim = 0; dim < GridRank; dim++) {
       int n = 0;
-      
+
       for (k = 0; k < GridDimension[2]; k++) {
 	if (GridRank > 2)
 	  zpos = CellLeftEdge[2][k] + 0.5*CellWidth[2][k] -
 	    PointSourceGravityPosition[2];
 	if (dim == 2 && HydroMethod == Zeus_Hydro)
 	  zpos -= 0.5*CellWidth[2][k];
-	  
+
 	for (j = 0; j < GridDimension[1]; j++) {
 	  if (GridRank > 1)
 	    ypos = CellLeftEdge[1][j] + 0.5*CellWidth[1][j] -
 	      PointSourceGravityPosition[1];
 	  if (dim == 1 && HydroMethod == Zeus_Hydro)
 	    ypos -= 0.5*CellWidth[1][j];
-	    
+
 	  for (i = 0; i < GridDimension[0]; i++, n++) {
 	    xpos = CellLeftEdge[0][i] + 0.5*CellWidth[0][i] -
 	      PointSourceGravityPosition[0];
@@ -147,23 +151,23 @@ int grid::ComputeAccelerationFieldExternal()
 	      xpos -= 0.5*CellWidth[0][i];
 
 	    /* Compute distance from center. */
- 
+
 	    rsquared = xpos*xpos + ypos*ypos + zpos*zpos;
 	    rcubed = POW(rsquared, 1.5);
- 
+
 	    if (PointSourceGravity == 1) {
-		
+
 	      /* (1) Point Source:
-		 Multiply by a(t) to offset the 1/a(t) in ComovingAccelTerm(). 
+		 Multiply by a(t) to offset the 1/a(t) in ComovingAccelTerm().
 		 (i.e. 1/a^2 * a = 1/a). */
-		
+
 	      rcore = max(0.1*CellWidth[0][0], PointSourceGravityCoreRadius);
 	      accel = min(PointSourceGravityConstant/((rsquared)*POW(rsquared,0.5)*a),
 			  PointSourceGravityConstant/(rcore*rcore*POW(rsquared,0.5)*a));
-		
+
 	    } else if (PointSourceGravity == 2) {
-		  
-	      /* (2) NFW Profile: CoreRadius and Constant are both in code units 
+
+	      /* (2) NFW Profile: CoreRadius and Constant are both in code units
 		 if ProblemType == 31 (Galaxy simulation), otherwise they're in CGS.
 		 Need to convert the core radius to code units and the gravity constant to
 		 CGS.  (BWO, July 2009)  */
@@ -199,7 +203,7 @@ int grid::ComputeAccelerationFieldExternal()
                 GravConst*SolarMass*ClusterSMBHMass/POW(radius*LengthUnits - 2.0*GravConst*SolarMass/POW(clight,2), 2)/ AccelUnits;
                  }
                   /*Elliptical Galaxy Fixed Gravity*/
-                if(EllipticalGalaxyRe > 0.001){  
+                if(EllipticalGalaxyRe > 0.001){
                  accel = GravConst*PointSourceGravityConstant*SolarMass*
                 ((log(1.0+x  )-x  /(1.0+x  )) /
                  (log(1.0+1.0)-1.0/(1.0+1.0))) /
@@ -212,8 +216,8 @@ int grid::ComputeAccelerationFieldExternal()
 	      // xpos,ypos,zpos done below
 
 	    }  else if (PointSourceGravity == 3) {
-	      // (3) Isothermal sphere along a line at the cylindrical radius, a,  
-	      //    
+	      // (3) Isothermal sphere along a line at the cylindrical radius, a,
+	      //
 	      FLOAT a2 = PointSourceGravityCoreRadius*PointSourceGravityCoreRadius;
 	      /*	      if (GridRank > 1)
 		a2 = max(a2, ypos*ypos);
@@ -224,13 +228,13 @@ int grid::ComputeAccelerationFieldExternal()
 	      accel = PointSourceGravityConstant/(rsquared + a2);
 	      //	      fprintf(stderr, "%g %g %g\n", xpos, accel, AccelUnits);
 	    }  else {
-	      /* this is only reached if there are two types of point sources - 
+	      /* this is only reached if there are two types of point sources -
 		 when you add a new one, this changes */
 	      ENZO_FAIL("should never get here! in Grid::ComputeAccelFieldExternal");
 	    }
 
 	    /* Apply force. */
-	
+
 	    if (dim == 0)
 	      AccelerationField[0][n] -= accel*xpos;
 	    if (dim == 1)
@@ -242,36 +246,36 @@ int grid::ComputeAccelerationFieldExternal()
 	} // end: loop over j
       } // end: loop over k
     } // end: loop over dims
-   
+
     /* DO PARTICLES HERE! */
 
     if (NumberOfParticles > 0 && GridRank != 3) {
         ENZO_FAIL("PointSourceGravity assumes 3D");
     }
-      
+
     if (PointSourceGravity > 0)
       for (i = 0; i < NumberOfParticles; i++) {
-	
+
 	/* Compute vector between particle (advanced by 1/2 step) and
 	   gravity center. */
-      
-	xpos = ParticlePosition[0][i] + 0.5*dtFixed*ParticleVelocity[0][i]/a - 
+
+	xpos = ParticlePosition[0][i] + 0.5*dtFixed*ParticleVelocity[0][i]/a -
 	  PointSourceGravityPosition[0];
-	ypos = ParticlePosition[1][i] + 0.5*dtFixed*ParticleVelocity[1][i]/a - 
+	ypos = ParticlePosition[1][i] + 0.5*dtFixed*ParticleVelocity[1][i]/a -
 	  PointSourceGravityPosition[1];
-	zpos = ParticlePosition[2][i] + 0.5*dtFixed*ParticleVelocity[2][i]/a - 
+	zpos = ParticlePosition[2][i] + 0.5*dtFixed*ParticleVelocity[2][i]/a -
 	  PointSourceGravityPosition[2];
-	    
+
 	/* Compute distance from center. */
 
 	rsquared = xpos*xpos + ypos*ypos + zpos*zpos;
-      
+
 	/* (1) is a real (softened) point-source, (2) is NFW profile */
-	
+
 	if (PointSourceGravity == 1) {
 
 	  /* (1) Point Source:
-	     Multiply by a(t) to offset the 1/a(t) in ComovingAccelTerm(). 
+	     Multiply by a(t) to offset the 1/a(t) in ComovingAccelTerm().
 	     (i.e. 1/a^2 * a = 1/a). */
 
 	  rcore = max(0.1*CellWidth[0][0], PointSourceGravityCoreRadius);
@@ -285,18 +289,18 @@ int grid::ComputeAccelerationFieldExternal()
 	  /* (2) NFW Profile: assume CoreRadius is rs in cm and Constant
 	     is mass within rs in g. */
 
-	  
+
 	  radius = sqrt(rsquared);
-	  
+
 	  if(ProblemType == 31){
-	    rcore = PointSourceGravityCoreRadius;  // already in code units                                                      
+	    rcore = PointSourceGravityCoreRadius;  // already in code units
 	  } else {
-	    rcore = PointSourceGravityCoreRadius/LengthUnits;  // convert from CGS to code                                       
+	    rcore = PointSourceGravityCoreRadius/LengthUnits;  // convert from CGS to code
 	  }
 	  FLOAT x = radius/rcore;
 	  accel = GravConst*PointSourceGravityConstant*MassUnitsDouble*
 	    ((log(1.0+x  )-x  /(1.0+x  )) /
-	     (log(1.0+1.0)-1.0/(1.0+1.0))) / 
+	     (log(1.0+1.0)-1.0/(1.0+1.0))) /
 	    POW(radius*LengthUnits, 2) / AccelUnits;
               /*Yuan, Aug 2011: Add BCG and SMBH potential if ProblemType == 108*/
               if(ProblemType == 108){
@@ -331,16 +335,16 @@ int grid::ComputeAccelerationFieldExternal()
 
 
 	} // if (PointSourceGravity == 2)
-	
+
 
 	/* Apply force. */
-	
+
 	ParticleAcceleration[0][i] -= accel*xpos;
 	ParticleAcceleration[1][i] -= accel*ypos;
 	ParticleAcceleration[2][i] -= accel*zpos;
 
       } // end: loop over number of particles
-      
+
   } // end: if (PointSourceGravity)
 
 
@@ -410,7 +414,7 @@ int grid::ComputeAccelerationFieldExternal()
 
             double accelsph, accelcylR, accelcylz, zheight, xpos1, ypos1, zpos1;
 
-            /* Compute z and r_perp (AngularMomentum is angular momentum 
+            /* Compute z and r_perp (AngularMomentum is angular momentum
              * and must have unit length). */
 
             /* magnitude of z = r.L in L direction */
@@ -543,7 +547,7 @@ int grid::ComputeAccelerationFieldExternal()
 
     if (PointSourceGravity)
       ENZO_FAIL("Cannot have both PointSourceGravity and ExternalGravity");
-    /* Actually, you can, but it seems like a bad idea. 
+    /* Actually, you can, but it seems like a bad idea.
        Correct if there is an exception to this */
 
   /* -----------------------------------------------------------------
@@ -551,19 +555,19 @@ int grid::ComputeAccelerationFieldExternal()
      ----------------------------------------------------------------- */
 
   if (ExternalGravity == 1) {
-    
-    /* Specify NFW parameters by hand here 
+
+    /* Specify NFW parameters by hand here
        Should move to parameter file in the future */
-    
+
     double rhoc = HaloCentralDensity,
-      c = HaloConcentration, 
+      c = HaloConcentration,
       rvir = HaloVirialRadius;
     FLOAT xc = 0.5, yc = 0.5, zc = 0.5;
 
     double rs = rvir / c;
     double Mvir = 4.0*M_PI*rhoc*POW(rs,3)*(log(1.0+c)-c/(1.0+c));
-    
-    float DensityUnits = 1.0, LengthUnits = 1.0, TemperatureUnits = 1, 
+
+    float DensityUnits = 1.0, LengthUnits = 1.0, TemperatureUnits = 1,
       TimeUnits = 1.0, VelocityUnits = 1.0;
     GetUnits(&DensityUnits, &LengthUnits, &TemperatureUnits,
 	     &TimeUnits, &VelocityUnits, &MassUnits, Time);
@@ -571,7 +575,7 @@ int grid::ComputeAccelerationFieldExternal()
     double CGSGravConst = 6.672e-8;
 
     printf("rhoc=%g, rvir=%g, Mvir=%g\n", rhoc, rvir, Mvir/1.989e33);
-    
+
     FLOAT x, y, z, xpos, ypos, zpos, r;
     int n = 0;
     double x1, M, g;
@@ -581,26 +585,26 @@ int grid::ComputeAccelerationFieldExternal()
       z = CellLeftEdge[2][k] + 0.5*CellWidth[2][k];
       zpos = z - zc;
 
-      if (dim == 2 && HydroMethod == Zeus_Hydro) 
+      if (dim == 2 && HydroMethod == Zeus_Hydro)
 	zpos -= 0.5*CellWidth[2][k];
 
       for (int j = 0; j < GridDimension[1]; j++) {
 	y = CellLeftEdge[1][j] + 0.5*CellWidth[1][j];
 	ypos = y - yc;
 
-	if (dim == 1 && HydroMethod == Zeus_Hydro) 
+	if (dim == 1 && HydroMethod == Zeus_Hydro)
 	  ypos -= 0.5*CellWidth[1][j];
 
 	for (int i = 0; i < GridDimension[0]; i++, n++) {
 	  x = CellLeftEdge[0][i] + 0.5*CellWidth[0][i];
 	  xpos = x - xc;
 
-	  if (dim == 0 && HydroMethod == Zeus_Hydro) 
+	  if (dim == 0 && HydroMethod == Zeus_Hydro)
 	    xpos -= 0.5*CellWidth[0][i];
 
 	  r = sqrt(xpos*xpos+ypos*ypos+zpos*zpos);
 	  r = max(r, CellWidth[0][0]);
-	  
+
 	  if (r < rvir/LengthUnits) {
 	    x1 = r*LengthUnits/rs;
 	    M = 4.0*M_PI*rhoc*POW(rs,3)*(log(1.0+x1)-x1/(1.0+x1));
@@ -610,13 +614,13 @@ int grid::ComputeAccelerationFieldExternal()
 	  }
 	  g = CGSGravConst*M/POW(r*LengthUnits,2);
 	  g /= AccelerationUnits;
-	  if (dim == 0) { 
+	  if (dim == 0) {
 	    AccelerationField[0][n] += -g*xpos/r;
 	  }
 	  if (dim == 1) {
 	    AccelerationField[1][n] += -g*ypos/r;
 	  }
-	  if (dim == 2) { 
+	  if (dim == 2) {
 	    AccelerationField[2][n] += -g*zpos/r;
 	  }
 	}
@@ -648,7 +652,7 @@ int grid::ComputeAccelerationFieldExternal()
       ParticleAcceleration[1][i] += -g*ypos/r;
       ParticleAcceleration[2][i] += -g*zpos/r;
     }
-    
+
   } // end if (ExternalGravity == 1)
 
   /* -----------------------------------------------------------------
@@ -681,16 +685,16 @@ int grid::ComputeAccelerationFieldExternal()
       float *accel_field[MAX_DIMENSION];
 
       if (NumberOfBaryonFields > 0) {
-    
+
 	for (dim = 0; dim < GridRank; dim++)
-	  accel_field[dim] = new float[size];   
+	  accel_field[dim] = new float[size];
 
 	if (this->ComputeAccelerationsFromExternalPotential(
-		  (HydroMethod == Zeus_Hydro) ? ZEUS_GRIDS : GRIDS, 
+		  (HydroMethod == Zeus_Hydro) ? ZEUS_GRIDS : GRIDS,
 		  expotential, accel_field)  == FAIL) {
 	  fprintf(stderr, "Error in grid->ComputeAccelerationForExternalPotential.\n");
 	  return FAIL;
-	}   
+	}
 
 	for (dim = 0; dim < GridRank; dim++)
 	  for (i = 0; i < size; i++)
@@ -702,17 +706,17 @@ int grid::ComputeAccelerationFieldExternal()
 	}
 
       } // end if (NumberOfBaryonFields)
- 
+
       if (NumberOfParticles > 0) {
 
 	for (dim = 0; dim < GridRank; dim++)
           accel_field[dim] = new float[NumberOfParticles];
 
-	if (this->ComputeAccelerationsFromExternalPotential(PARTICLES, 
+	if (this->ComputeAccelerationsFromExternalPotential(PARTICLES,
 				  expotential, accel_field) == FAIL) {
 	  fprintf(stderr, "Error in grid->ComputeAccelerationForExternalPotential.\n");
 	  return FAIL;
-	}  
+	}
 
 	for (i = 0; i < NumberOfParticles; i++){
 	  ParticleAcceleration[0][i] += accel_field[0][i];
@@ -729,11 +733,11 @@ int grid::ComputeAccelerationFieldExternal()
 
       /* Cleanup */
       delete [] expotential;
-      
+
    } // end if (ExternalGravity > 9)
 
   else {
-      /* this is only reached if there are two types of external gravities - 
+      /* this is only reached if there are two types of external gravities -
 	 when you add a new one, this changes */
       ENZO_FAIL("should never get here! in Grid::ComputeAccelFieldExternal // ExternalGravity");
     }
@@ -744,71 +748,81 @@ int grid::ComputeAccelerationFieldExternal()
   /* -----------------------------------------------------------------
      Uniform gravity field
      ----------------------------------------------------------------- */
- 
+
   if (UniformGravity) {
- 
+
     for (dim = 0; dim < GridRank; dim++) {
- 
+
       /* Set constant for this dimension. */
- 
+
       float Constant = 0.0;
       if (dim == UniformGravityDirection)
 	Constant = UniformGravityConstant;
-	
+
       /* Set field. */
- 
+
       for (i = 0; i < size; i++)
 	AccelerationField[dim][i] = Constant;
- 
+
     } // loop over dims
- 
+
   } // end: if (UniformGravity)
 
-  int n = 0, rbin;
-  FLOAT xyz[MAX_DIMENSION], rsquared, rcubed,r;
-  float my_mass, my_accel;
-  if (  SphericalGravity > 0 && SphericalGravityMassInterior != NULL ){
-      for (dim = 0; dim < GridRank; dim++) {
-          n=0;
-          for (k = 0; k < GridDimension[2]; k++) {
-              if (GridRank > 2)
-                  xyz[2] = CellLeftEdge[2][k] + 0.5*CellWidth[2][k] -
-                      SphericalGravityCenter[2];
-              if (dim == 2 && HydroMethod == Zeus_Hydro)
-                  xyz[2] -= 0.5*CellWidth[2][k];
+	if (UseSphericalGravity > 0 && SphericalGravityInteriorMasses != NULL)
+	{
+		size_t gridSize = GetGridSize();
+		int index = 0, rbin, dimZeus;
+		FLOAT xyz[MAX_DIMENSION], zz, yy_zz, rsquared, rcubed, r;
+		float my_mass, my_accel;
 
-              for (j = 0; j < GridDimension[1]; j++) {
-                  if (GridRank > 1)
-                      xyz[1] = CellLeftEdge[1][j] + 0.5*CellWidth[1][j] -
-                          SphericalGravityCenter[1];
-                  if (dim == 1 && HydroMethod == Zeus_Hydro)
-                      xyz[1] -= 0.5*CellWidth[1][j];
+		for (dim = 0; dim < GridRank; dim++)
+		{
+			index = 0;
+			dimZeus = (HydroMethod == Zeus_Hydro) ? dim : -1;
 
-                  for (i = 0; i < GridDimension[0]; i++, n++) {
-                      xyz[0] = CellLeftEdge[0][i] + 0.5*CellWidth[0][i] -
-                          SphericalGravityCenter[0];
-                      if (dim == 0 && HydroMethod == Zeus_Hydro)
-                          xyz[0] -= 0.5*CellWidth[0][i];
+			for (k = 0; k < GridDimension[2]; k++)
+			{
+				if (GridRank > 2)
+				{
+					xyz[2] = (dimZeus == 2) ? CellLeftEdge[2][k] : CELLCENTER(2, k)
+							- SphericalGravityCenter[2];
+					zz = square(xyz[2]);
+				}
+				else xyz[2] = zz = 0;
 
-                      /* Compute distance from center. */
+				for (j = 0; j < GridDimension[1]; j++)
+				{
+					if (GridRank > 1)
+					{
+						xyz[1] = (dimZeus == 1) ? CellLeftEdge[1][j] : CELLCENTER(1, j)
+								- SphericalGravityCenter[1];
+						yy_zz = square(xyz[1]) + zz;
+					}
+					else xyz[1] = yy_zz = 0;
 
-                      rsquared = xyz[0]*xyz[0] + xyz[1]*xyz[1] + xyz[2]*xyz[2];
-                      r=sqrt(rsquared);
-                      rcubed = POW(rsquared, 1.5);
-                      rbin = int( (rsquared-SphericalGravityInnerRadius) / SphericalGravityBinSize );
-                      rbin = min(rbin,SphericalGravityBinNumber-1);
-                      my_mass = SphericalGravityMassInterior[rbin];
-                      my_accel = -xyz[dim]/rcubed * my_mass * SphericalGravityConstant;
-                      //fprintf(stderr,"KLOWN wtf %p dim %d n %d ijk %d, %d, %d\n",AccelerationField[dim],dim,n, i,j,k);
-                      AccelerationField[dim][n] += my_accel;
-                  }
-              }
-          }
-      }
+					for (i = 0; i < GridDimension[0]; i++)
+					{
+						xyz[0] = (dimZeus == 0) ? CellLeftEdge[0][i] : CELLCENTER(0, i)
+								- SphericalGravityCenter[0];
 
-  }//Spherical gravity
- 
+						/* Compute distance from center. */
+						rsquared = square(xyz[0]) + yy_zz;
+						r = sqrt(rsquared);
+						if(-1 == (rbin = SphericalGravityComputeBinIndex(r))) continue;
+
+						my_mass = SphericalGravityInteriorMasses[rbin];
+						my_accel = -xyz[dim] / POW(rsquared, 1.5) * my_mass; // * SphericalGravityConstant;
+						//fprintf(stderr,"KLOWN wtf %p dim %d n %d ijk %d, %d, %d\n",AccelerationField[dim],dim,index, i,j,k);
+						AccelerationField[dim][index++] += my_accel;
+					} // for i
+				} // for j
+				arr_ax(AccelerationField[dim], gridSize, SphericalGravityConstant);
+			} // for k
+
+		} // for dim
+	} //Spherical gravity
+
   LCAPERF_STOP("grid_ComputeAccelerationFieldExternal");
   return SUCCESS;
 }
- 
+
