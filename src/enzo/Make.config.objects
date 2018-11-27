@@ -15,10 +15,13 @@
 #-----------------------------------------------------------------------
 
 OBJS_CONFIG_LIB = \
-  Grid_DiffuseBurningFraction.o \
-  MHDLoopInit.o \
+  myenzoutils.o \
+  MHDProfileInitialize.o \
+  Grid_MHDProfileInitializeGrid.o \
   SphericalGravityComputePotential.o\
   Grid_SphericalGravityAddMassToShell.o\
+  Grid_DiffuseBurningFraction.o \
+  MHDLoopInit.o \
   Grid_MHDLoopInitGrid.o \
         acml_st1.o \
         AdiabaticExpansionInitialize.o \
