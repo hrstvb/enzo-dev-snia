@@ -185,7 +185,7 @@ InitializePythonInterface_finderfunctions.inc: global_data.h
 #-----------------------------------------------------------------------
 
 .PHONY: verbose
-verbose: VERBOSE = 1
+	verbose: VERBOSE = 1
 #verbose:
 #	@rm -fv $(OUTPUT)
 #	@echo "Writing all compiler output to $(OUTPUT)"
@@ -423,3 +423,14 @@ clean:
 
 include $(ENZO_DIR)/Make.config.targets
 # DO NOT DELETE
+
+#-----------------------------------------------------------------------
+# Make.check.sh runs an integrity check between the object file names
+# list and the exising source files.  Also searches for files, which are
+# possibly not being tracked by hg.
+#-----------------------------------------------------------------------
+check:
+	@pwd
+	@./Make.check.sh $(OBJS_LIB)
+
+

@@ -784,9 +784,8 @@ int grid::ComputeAccelerationFieldExternal()
 			{
 				if (GridRank > 2)
 				{
-					xyz[2] = (dimZeus == 2) ? CellLeftEdge[2][k] : CELLCENTER(2, k)
-							- SphericalGravityCenter[2];
-					zz = square(xyz[2]);
+					zz = square(xyz[2] = (dimZeus == 2) ? CellLeftEdge[2][k] : CELLCENTER(2, k)
+							- SphericalGravityCenter[2]);
 				}
 				else xyz[2] = zz = 0;
 
@@ -794,19 +793,16 @@ int grid::ComputeAccelerationFieldExternal()
 				{
 					if (GridRank > 1)
 					{
-						xyz[1] = (dimZeus == 1) ? CellLeftEdge[1][j] : CELLCENTER(1, j)
-								- SphericalGravityCenter[1];
-						yy_zz = square(xyz[1]) + zz;
+						yy_zz = square(xyz[1] = (dimZeus == 1) ? CellLeftEdge[1][j] : CELLCENTER(1, j)
+								- SphericalGravityCenter[1]) + zz;
 					}
 					else xyz[1] = yy_zz = 0;
 
 					for (i = 0; i < GridDimension[0]; i++)
 					{
-						xyz[0] = (dimZeus == 0) ? CellLeftEdge[0][i] : CELLCENTER(0, i)
-								- SphericalGravityCenter[0];
+						rsquared = square(xyz[0] = (dimZeus == 0) ? CellLeftEdge[0][i] : CELLCENTER(0, i)
+								- SphericalGravityCenter[0]) + yy_zz;
 
-						/* Compute distance from center. */
-						rsquared = square(xyz[0]) + yy_zz;
 						r = sqrt(rsquared);
 						if(-1 == (rbin = SphericalGravityComputeBinIndex(r))) continue;
 

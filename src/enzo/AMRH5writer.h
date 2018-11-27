@@ -7,7 +7,7 @@
  *  Company : Zuse Institute Berlin
  *            All rights reserved.
  *
- *  Author  : Ralf Kaehler                           
+ *  Author  : Ralf Kaehler
  *
  *  Date    : 26.01.2006
  *
@@ -16,7 +16,8 @@
 #ifndef  __AMRHDF5WRITER__
 #define  __AMRHDF5WRITER__
 
-// int ifdef screws around with hdf5.  Undefine it.
+#ifndef _HDF5_H
+//int ifdef screws around with hdf5.  Undefine it.
 #ifdef LARGE_INTS
 #undef int
 #endif
@@ -28,6 +29,8 @@
 #define int long_int
 #endif
 
+#endif /* _HDF5_H */
+
 #define _CHECK_CONSISTENCY_
 
 class AMRHDF5Writer
@@ -38,23 +41,23 @@ class AMRHDF5Writer
   AMRHDF5Writer ();
 
   void AMRHDF5Create(/* filename of the file that will store the data */
-		const char*      fileName, 
+		const char*      fileName,
 
 		/* relative refinement factor in x,y,z between two levels of refinement;
 		   up to now only a factor of 2,2,2 is supported by all vis routines */
 		const int*    relativeRefinementFactor,
-		
-		/* data type of the grid function, as classified by HDF5; 
+
+		/* data type of the grid function, as classified by HDF5;
 		   compare: http://hdf.ncsa.uiuc.edu/HDF5/doc/PredefDTypes.html */
 		hid_t   dataType,
-		
-		/* specifies the staggering of the data; currently only cell and 
+
+		/* specifies the staggering of the data; currently only cell and
 		   vertex-centered data are supported */
 		staggering stag,
-		       
+
 		/* type of field; currently only scalar data is supported */
 		fieldtype  field_type,
-		
+
 		const int        cycle,
 		const double     time,
 		const double     redshift,
@@ -68,42 +71,42 @@ class AMRHDF5Writer
 
 		/* return true if an error occured */
 		bool& error) ;
-  
+
   ~AMRHDF5Writer() ;
   void AMRHDF5Close();
   void AMRHDF5CloseSeparateParticles();
 
-  void AMRHDF5CreateSeparateParticles( const char*      fileName, 
+  void AMRHDF5CreateSeparateParticles( const char*      fileName,
 				       const int        ParticlesOn,
 				       const int        nParticleAttr,
 				       bool&            error) ;
-  
+
   herr_t WriteTextures(  const int    timeStep,
 			 const double physicalTime,
 			 const int    levelIndex,
 			 const double *delta,
-			 
+
 			 const double *physicalOrigin,
 			 const double *gridCenter,
 			 const Eint64    *integerOrigin,
-			 
+
 			 const int    *dims,
 			 const int    dim,
 			 const int    nFields,
 			 char   **names,
 			 void   **dataPtr);
-  
+
   herr_t WriteFlat(  const int    timeStep,
 		     const double physicalTime,
 		     const double redshift,
 		     const int    levelIndex,
 		     const double *delta,
-		     
+
 		     const double *physicalOrigin,
 		     const Eint64    *integerOrigin,
 		     const int    *bboxflags,
 		     const int    *nghostzones,
-		     
+
 		     const int    *dims,
 		     const int    fieldNum,
 		     const int    nFields,
@@ -134,18 +137,18 @@ class AMRHDF5Writer
 			  void **attr,
 			  int& alreadyopenedentry,
 			  int& NumberOfStarParticlesOnProcOnLvlEntry,
-			  
+
 			  const int    timeStep,
 			  const double physicalTime,
 			  const double redshift,
 			  const int    levelIndex,
 			  const double *delta,
-			  
+
 			  const double *physicalOrigin,
 			  const Eint64    *integerOrigin,
 			  const int    *bboxflags,
 			  const int    *nghostzones ) ;
-  
+
   herr_t writeSeparateParticles ( const int nPart,
 				  const int nAttributes,
 				  const int Rank,
@@ -176,7 +179,7 @@ class AMRHDF5Writer
   int    gridId, particlegridId, output_particle;
 
   double rootDelta[3];
-  
+
 };
 
 #endif
