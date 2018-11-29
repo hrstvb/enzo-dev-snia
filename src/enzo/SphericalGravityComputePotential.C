@@ -38,75 +38,91 @@ FLOAT** magneticEBins,
 									FLOAT** volumeBins, int domainRank)
 {
 	size_t &N = SphericalGravityActualNumberOfBins;
-	if (countBins)
+	if(countBins)
 		arr_delnewset(countBins, N, 0);
-	if (massBins)
-		for (int dim = 0; dim < domainRank; dim++)
-			arr_delnewset(massBins + dim, N, 0);
-	if (kineticEBins)
-		for (int dim = 0; dim < domainRank; dim++)
-			arr_delnewset(kineticEBins + dim, N, 0);
-	if (magneticEBins && (UseMHD || UseMHDCT))
-		for (int dim = 0; dim < 3; dim++)
-			arr_delnewset(magneticEBins + dim, N, 0);
-	if (massBins)
+	if(massBins)
+		arr_delbrnewset(massBins, N, 0);
+	if(kineticEBins)
+		arr_delbrnewset(kineticEBins, N, 0);
+	if(magneticEBins && (UseMHD || UseMHDCT))
+		arr_delbrnewset(magneticEBins, N, 0);
+	if(massBins)
 		arr_delnewset(massBins, N, 0);
-	if (volumeBins)
+	if(volumeBins)
 		arr_delnewset(volumeBins, N, 0);
 }
 
 int SphericalGravityDetermineUniformBins()
 {
+	if(SphericalGravityOuterRadius <= 0)
+	{
+//		FLOAT* C = SphericalGravityCenter;
+//		FLOAT* L = DomainLeftEdge;
+//		FLOAT* R = DomainRightEdge;
+//
+//		long double r;
+//		r = distancel(L[0], L[1], L[2], C[0], C[1], C[2]);
+//		r = max(r, distancel(L[0], L[1], R[2], C[0], C[1], C[2]));
+//		r = max(r, distancel(L[0], R[1], L[2], C[0], C[1], C[2]));
+//		r = max(r, distancel(L[0], R[1], R[2], C[0], C[1], C[2]));
+//		r = max(r, distancel(R[0], L[1], L[2], C[0], C[1], C[2]));
+//		r = max(r, distancel(R[0], L[1], R[2], C[0], C[1], C[2]));
+//		r = max(r, distancel(R[0], R[1], L[2], C[0], C[1], C[2]));
+//		r = max(r, distancel(R[0], R[1], R[2], C[0], C[1], C[2]));
+//
+//		SphericalGravityOuterRadius = r;
+	}
+
 	int nOk = SphericalGravityInnerRadius >= 0;
 	nOk += SphericalGravityNumberOfBins > 0;
 	nOk += SphericalGravityBinSize > 0;
-	nOk += SphericalGravityOuterRadius > 0;
-	if (nOk < 3)
+	nOk += SphericalGravityOuterRadius > max(0, SphericalGravityInnerRadius);
+	if(nOk < 3)
 	{
 		fprintf(stderr, "FAILURE: At least 3 of the following conditions need to be met for uniform bins:"
-				"SphericalGravityInnerRadius >= 0, SphericalGravityNumberOfBins > 0, "
-				"SphericalGravityBinSize > 0,SphericalGravityOuterRadius > 0,"
-				"but the values are %"ISYM", %"FSYM", %"FSYM", %"FSYM".\n",
-				SphericalGravityInnerRadius, SphericalGravityNumberOfBins, SphericalGravityBinSize,
+				"SphericalGravityBinSize > 0, SphericalGravityNumberOfBins > 0, "
+				"SphericalGravityInnerRadius >= 0, SphericalGravityOuterRadius > max(0, SphericalGravityInnerRadius),"
+				"but the values are %"FSYM", %"ISYM", %"FSYM", %"FSYM".\n",
+				SphericalGravityBinSize, SphericalGravityNumberOfBins, SphericalGravityInnerRadius,
 				SphericalGravityOuterRadius);
 		ENZO_FAIL("SphericalGravityInitializeUniformBins: "
-					"Improper parameters inner/outer radius, bin number, bin size.\n");
+					"Improper parameters inner/outer radius, bin number and/or bin size.\n");
 	}
 
-	if (nOk == 4)
+	if(nOk == 4)
 	{
-		printf("SphericalGravityInitializeUniformBins: Warning: "
-				"Ignored parameter SphericalGravityOuterRadius. "
-				"Uniform bis caalculated based on the inner radius, "
-				"the bin number and size.\n");
+//		printf("SphericalGravityInitializeUniformBins: Warning: "
+//				"Ignored parameter SphericalGravityOuterRadius. "
+//				"Uniform bis caalculated based on the inner radius, "
+//				"the bin number and size.\n");
 	}
 
-	if (nOk == 4 || SphericalGravityOuterRadius < 0)
+	if(nOk == 4 || SphericalGravityOuterRadius < 0)
 	{
 		//nothing to do.
 	}
-	else if (SphericalGravityInnerRadius < 0)
+	else if(SphericalGravityInnerRadius < 0)
 	{
 		SphericalGravityInnerRadius = SphericalGravityOuterRadius
 				- SphericalGravityNumberOfBins * SphericalGravityBinSize;
-		if (SphericalGravityInnerRadius < 0)
+		if(SphericalGravityInnerRadius < 0)
 			ENZO_FAIL("SphericalGravityInitializeUniformBins: "
 						"Improper values fo outer radius, bin number, bin size."
 						"The calculated inner radius is negative.\n");
 	}
 	else
 	{
-		if (SphericalGravityInnerRadius >= SphericalGravityOuterRadius)
+		if(SphericalGravityInnerRadius >= SphericalGravityOuterRadius)
 			ENZO_FAIL("SphericalGravityInitializeUniformBins: "
 						"Improper parameters inner and outer radii."
 						"The inner radius should be < the outer radius.\n");
 
-		if (SphericalGravityBinSize <= 0)
+		if(SphericalGravityBinSize <= 0)
 		{
 			SphericalGravityBinSize = (SphericalGravityOuterRadius - SphericalGravityInnerRadius)
 					/ SphericalGravityNumberOfBins;
 		}
-		if (SphericalGravityNumberOfBins <= 0)
+		if(SphericalGravityNumberOfBins <= 0)
 		{
 			SphericalGravityNumberOfBins = int(
 					(SphericalGravityOuterRadius - SphericalGravityInnerRadius) / SphericalGravityBinSize);
@@ -122,7 +138,7 @@ int SphericalGravityDetermineUniformBins()
 	arr_delnewset(&SphericalGravityBinLeftEdges, N, SphericalGravityBinSize);
 
 	SphericalGravityBinLeftEdges[0] = 0.0;
-	if (SphericalGravityHasCentralBin)
+	if(SphericalGravityHasCentralBin)
 		SphericalGravityBinLeftEdges[1] = SphericalGravityInnerRadius;
 	arr_cumsum(SphericalGravityBinLeftEdges, N, 0);
 
@@ -135,18 +151,18 @@ int SphericalGravityDetermineUniformBins()
 
 int SphericalGravityDetermineBins()
 {
-	if (SphericalGravityUniformBins)
+	if(SphericalGravityUniformBins)
 		return SphericalGravityDetermineUniformBins();
 //	Initialize non-uniform bins here. This may require communication.
-	ENZO_FAIL("Non-uniform spherical gravity bins are not implemented yet.\n");
+	ENZO_FAIL("Non-uniform bins for spherical gravity are not implemented.\n");
 	return FAIL; //Not implemented
 }
 
 size_t SphericalGravityComputeUniformBinIndex(FLOAT r)
 {
-	if (r < SphericalGravityInnerRadius)
+	if(r < SphericalGravityInnerRadius)
 		return 0;
-	if (r > SphericalGravityOuterRadius)
+	if(r > SphericalGravityOuterRadius)
 		return SphericalGravityActualNumberOfBins - 1;
 	size_t i = (r - SphericalGravityInnerRadius) / SphericalGravityBinSize + SphericalGravityHasCentralBin;
 	return i;
@@ -154,7 +170,7 @@ size_t SphericalGravityComputeUniformBinIndex(FLOAT r)
 
 size_t SphericalGravityComputeBinIndex(FLOAT r)
 {
-	if (SphericalGravityBinSize > 0)
+	if(SphericalGravityUniformBins)
 		return SphericalGravityComputeUniformBinIndex(r);
 	size_t i = findmaxlte(SphericalGravityBinLeftEdges, SphericalGravityActualNumberOfBins, r);
 	return i;
@@ -162,10 +178,10 @@ size_t SphericalGravityComputeBinIndex(FLOAT r)
 
 int SphericalGravityComputePotential(LevelHierarchyEntry *LevelArray[], TopGridData* MetaData)
 {
-	if (UseSphericalGravity == 0)
+	if(UseSphericalGravity == 0)
 		return SUCCESS;
 
-	if (SphericalGravityDetermineBins() == FAIL)
+	if(SphericalGravityDetermineBins() == FAIL)
 		ENZO_FAIL("Coudn't determine spherical gravity bins.\n");
 	SphericalGravityAllocateBins(&SphericalGravityShellCellCounts, SphericalGravityShellCentersOfMass,
 									SphericalGravityShellKineticEnergies, SphericalGravityShellMagneticEnergies,
@@ -173,7 +189,7 @@ int SphericalGravityComputePotential(LevelHierarchyEntry *LevelArray[], TopGridD
 
 	LevelHierarchyEntry *Temp;
 	Temp = LevelArray[0];
-	while (Temp != NULL)
+	while(Temp != NULL)
 	{
 		Temp->GridData->SphericalGravityAddMassToShell();
 		Temp = Temp->NextGridThisLevel;
@@ -236,12 +252,12 @@ int SphericalGravityComputePotential(LevelHierarchyEntry *LevelArray[], TopGridD
 
 int SphericalGravityWritePotential(char * name)
 {
-	if (MyProcessorNumber != ROOT_PROCESSOR || UseSphericalGravity == 0 || !SphericalGravityWritePotentialSwitch)
+	if(MyProcessorNumber != ROOT_PROCESSOR || UseSphericalGravity == 0 || !SphericalGravityWritePotentialSwitch)
 	{
 		return SUCCESS;
 	}
 
-	if (SphericalGravityInteriorMasses == NULL)
+	if(SphericalGravityInteriorMasses == NULL)
 	{
 		fprintf(stderr, "SphericalGravityWritePotential: No Mass Defined, not writing.\n");
 		return SUCCESS;
@@ -257,7 +273,7 @@ int SphericalGravityWritePotential(char * name)
 
 	//file_id = H5Fcreate(filename, H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
 	file_id = H5Fcreate(filename, H5F_ACC_EXCL, H5P_DEFAULT, H5P_DEFAULT);
-	if (file_id == -1)
+	if(file_id == -1)
 	{
 		fprintf(stderr, "ERROR IN ERROR: ignore previous warning.  Opening hdf5 file.\n");
 		file_id = H5Fopen(filename, H5F_ACC_RDWR, H5P_DEFAULT);

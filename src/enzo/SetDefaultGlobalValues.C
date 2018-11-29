@@ -1020,7 +1020,7 @@ int SetDefaultGlobalValues(TopGridData &MetaData)
   SphericalGravityCentralMass = 0;
   SphericalGravityConstant = GravConst;
   SphericalGravityHasCentralBin = 0;
-  SphericalGravityInnerRadius = -1;
+  SphericalGravityInnerRadius = 0;
   SphericalGravityInteriorMasses = NULL;
   SpericalGravityMaxHierarchyLevel = 0;
   SphericalGravityNumberOfBins = -1;

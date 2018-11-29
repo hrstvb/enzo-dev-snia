@@ -12,6 +12,7 @@
 #ifndef GRID_DEFINED__
 #define GRID_DEFINED__
 #include "macros_and_parameters.h"
+#include "typedefs.h"
 #include "ProtoSubgrid.h"
 #include "ListOfParticles.h"
 #include "region.h"
