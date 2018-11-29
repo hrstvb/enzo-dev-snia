@@ -28,7 +28,6 @@ declare -a i_names=( \
 declare -a i_paths=( \
 	'auto_show_*.C' \
 	'auto_show_*.o' \
-	'Enzo.C' \
 	'Make.config.machine' \
 	'Make.config.override' \
 )
@@ -248,16 +247,12 @@ unset c_paths
 unset o_paths
 
 # Get paths of the files in $PWD tracked by hg.
-# Paths are relative to the repo root directory.
+# ( Note: hg outputs a list of paths relative to the repo root
+#   directory.  Here it is converted to be relative to $PWD.  )
 read -a hg_paths <<< `hg locate -I $PWD`
-# Get the repo root directory:
 repo_root="`hg root`"
-# Remove the repo root prefix from $PWD:
-rel_dir="${PWD#${repo_root}/}"
-# The result is a path relative to the repo root dir.
-# All files in $PWD will be preffixed with it.
-# Remove that string from all hg_paths:
-hg_paths=(${hg_paths[@]#${rel_dir}/})
+pwd_rel_to_root="${PWD#${repo_root}/}"
+hg_paths=(${hg_paths[@]#${pwd_rel_to_root}/})
 echo ""
 echo "${#hg_paths[*]} files tracked by hg in '$rel_dir'."
 if (( verbose )); then
@@ -279,8 +274,7 @@ if (( $co )); then
 	echo "      hg update tip"
 	echo "      hg update -r <id>"
 	echo "  where <id> is the desired revision id if not tip.  Also some"
-	echo "  old files could had been excluded from the build wihtout being"
-	echo "  shelved."
+	echo "  old files could had been excluded from the build."
 else
 	echo "All exisiting source files for compilation have a matching name in"
 	echo "   the objct files list."

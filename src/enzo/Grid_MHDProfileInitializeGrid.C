@@ -23,11 +23,7 @@
 #include <string.h>
 #include <cctype> //isspace
 
-//#include <fstream>
-//#include <string>
-//#include <sstream>
-//#include <iostream>
-//#include <cstring> //memcpy
+#include "myenzoutils.h"
 
 #include "ErrorExceptions.h"
 #include "macros_and_parameters.h"
@@ -59,14 +55,16 @@
 
 int MakeFieldConservative(int field);
 int FindField(int field, int farray, int numfields);
+int MHDProfileInitExactB(float* Bx, float* By, float* Bz, FLOAT x, FLOAT y, FLOAT z);
 
 /**
  * Returns the position of the next whitespace character in s following start.
  */
 char* profileStrSkipSpace(char* s)
 {
-	for (; *s != '\0'; s++)
-		if (!isspace(*s)) break;
+	for(; *s != '\0'; s++)
+		if(!isspace(*s))
+			break;
 	return s;
 }
 /**
@@ -74,8 +72,9 @@ char* profileStrSkipSpace(char* s)
  */
 char* profileStrSkipNonSpace(char* s)
 {
-	for (; *s != '\0'; s++)
-		if (isspace(*s)) break;
+	for(; *s != '\0'; s++)
+		if(isspace(*s))
+			break;
 	return s;
 }
 
@@ -85,7 +84,7 @@ char* profileStrSkipNonSpace(char* s)
 int profileCountWords(char* s)
 {
 	int n = 0;
-	while (*(s = profileStrSkipSpace(s)) != '\0')
+	while(*(s = profileStrSkipSpace(s)) != '\0')
 	{
 		n++;
 		s = profileStrSkipNonSpace(s);
@@ -99,11 +98,14 @@ int profileCountWords(char* s)
  */
 int profileIndexOfStr(char* s, char** a, int n)
 {
-	if (s == NULL) return -1;
-	for (int i = 0; i < n; i++)
+	if(s == NULL)
+		return -1;
+	for(int i = 0; i < n; i++)
 	{
-		if (a[i] == NULL) continue;
-		if (!strcmp(s, a[i])) return i;
+		if(a[i] == NULL)
+			continue;
+		if(!strcmp(s, a[i]))
+			return i;
 	}
 	return -1;
 }
@@ -114,8 +116,9 @@ int profileIndexOfStr(char* s, char** a, int n)
  */
 int profileIndexOfInt(int i, int* a, int n)
 {
-	for (long j = 0; j < n; j++)
-		if (i == a[j]) return j;
+	for(long j = 0; j < n; j++)
+		if(i == a[j])
+			return j;
 	return -1;
 }
 
@@ -130,11 +133,13 @@ int profileNextSortingOrder(float nextElement, float* prevElements, int nPrevEle
 	// be an array with one element, nextElement.
 	// We say that an array with one
 	// element is sorted in ascending order.
-	if (nPrevElements == 0) return PROFILE_ASC_SORT;
+	if(nPrevElements == 0)
+		return PROFILE_ASC_SORT;
 
 	// If the array was previously UNSORTED,
 	// adding another element can't change that.
-	if (prevSortingOrder == PROFILE_UNSORTED) return PROFILE_UNSORTED;
+	if(prevSortingOrder == PROFILE_UNSORTED)
+		return PROFILE_UNSORTED;
 
 	// Find the sorting order of the last element and the nextElement.
 	int so = CMP_A_B(prevElements[nPrevElements - 1], nextElement);
@@ -144,7 +149,8 @@ int profileNextSortingOrder(float nextElement, float* prevElements, int nPrevEle
 	// The sorting order of the two elements will be also
 	// the sorting order of the new array, overwriting
 	// the fiducial ascending order for a one-element arrays.
-	if (nPrevElements == 1) return so;
+	if(nPrevElements == 1)
+		return so;
 
 	// We check if adding the nextElement will preserve the
 	// prevSortOrder or make the array UNSORTED.
@@ -168,18 +174,20 @@ int profileNextSortingOrder(float nextElement, float* prevElements, int nPrevEle
  */
 int profileFindGTEIndex(float x, float xData[], int nData, int xSortingOrder)
 {
-	switch (xSortingOrder)
+	switch(xSortingOrder)
 	{
 	case PROFILE_ASC_SORT:
-		for (int i = 0; i < nData; i++)
+		for(int i = 0; i < nData; i++)
 		{
-			if (x <= xData[i]) return i;
+			if(x <= xData[i])
+				return i;
 		}
 		return nData;
 	case PROFILE_DESC_SORT:
-		for (int i = nData - 1; i >= 0; i--)
+		for(int i = nData - 1; i >= 0; i--)
 		{
-			if (x >= xData[i]) return i;
+			if(x >= xData[i])
+				return i;
 		}
 		return nData;
 	default:
@@ -200,16 +208,17 @@ int profileFindGTEIndex(float x, float xData[], int nData, int xSortingOrder)
 int profileInterpolate(float* y, float yData[], float x, float xData[], int nData, int xSortingOrder)
 {
 	int i1 = profileFindGTEIndex(x, xData, nData, xSortingOrder);
-	if (i1 < 0) return i1;
+	if(i1 < 0)
+		return i1;
 
-	if (i1 == 0)
+	if(i1 == 0)
 	{
 		*y = yData[0];
 		return 0;
 	}
 
 	int i0 = i1 - 1;
-	if (i1 == nData)
+	if(i1 == nData)
 	{
 		*y = yData[i0];
 		return 0;
@@ -237,7 +246,7 @@ int profileParseColumnNames(char* line, char** colNames)
 	int nCols = 0;
 	char* wordend = line;
 
-	while (*(line = profileStrSkipSpace(wordend)) != '\0')
+	while(*(line = profileStrSkipSpace(wordend)) != '\0')
 	{
 		wordend = profileStrSkipNonSpace(line);
 		int len = wordend - line;
@@ -293,7 +302,7 @@ int profileAllocateCols(int nCols, profilestruct* p)
 	p->colNames = new char*[nCols];
 	p->colSortingOrders = new int[nCols];
 
-	for (int i = 0; i < nCols; i++)
+	for(int i = 0; i < nCols; i++)
 	{
 		p->colData[i] = NULL;
 		p->colNames[i] = NULL;
@@ -309,20 +318,22 @@ int profileAllocateCols(int nCols, profilestruct* p)
  */
 int profileAllocateMoreRows(int nMoreRows, profilestruct* p)
 {
-	if (nMoreRows <= 0)
+	if(nMoreRows <= 0)
 	{
 		nMoreRows = (p->nRowsAllocated > 0) ? (p->nRowsAllocateInc) : (p->nRowsAllocateFirst);
 	}
-	if (nMoreRows <= 0) nMoreRows = 1024;
+	if(nMoreRows <= 0)
+		nMoreRows = 1024;
 	int nNewRows = p->nRowsAllocated + nMoreRows;
 	printf("Increasing number of allocated rows from %d to %d.\n", p->nRowsAllocated, nNewRows);
-	for (int i = 0; i < p->nCols; i++)
+	for(int i = 0; i < p->nCols; i++)
 	{
-		if (p->colNames[i] == NULL) continue;
+		if(p->colNames[i] == NULL)
+			continue;
 
 		float* dest = new float[nNewRows];
 		float* src = p->colData[i];
-		if (src != NULL && p->nRows > 0)
+		if(src != NULL && p->nRows > 0)
 		{
 			memcpy((void*) dest, (const void*) src, sizeof(*src) * p->nRows);
 			delete[] src;
@@ -347,9 +358,12 @@ int profileFindColIndex(char* colName, profilestruct* p)
  */
 int profileInterpolate(float* y, int yColIndex, float x, int xColIndex, profilestruct* p)
 {
-	if (yColIndex < 0 || p->nCols <= yColIndex) return -1;
-	if (xColIndex < 0 || p->nCols <= xColIndex) return -2;
-	if (p->colSortingOrders[xColIndex] == PROFILE_UNSORTED) return -3;
+	if(yColIndex < 0 || p->nCols <= yColIndex)
+		return -1;
+	if(xColIndex < 0 || p->nCols <= xColIndex)
+		return -2;
+	if(p->colSortingOrders[xColIndex] == PROFILE_UNSORTED)
+		return -3;
 	return profileInterpolate(y, p->colData[yColIndex], x, p->colData[xColIndex], p->nRows,
 								p->colSortingOrders[xColIndex]);
 }
@@ -369,19 +383,21 @@ int profileInterpolate(float* y, char* yname, float x, char* xname, profilestruc
  */
 int profileRemoveCols(profilestruct* p)
 {
-	if (p->colNamesToKeep != NULL)
+	if(p->colNamesToKeep != NULL)
 	{
-		for (int i = 0; i < p->nCols; i++)
-			if (0 > profileIndexOfStr(p->colNames[i], p->colNamesToKeep, p->nColsToKeep)) p->colNames[i] = NULL;
+		for(int i = 0; i < p->nCols; i++)
+			if(0 > profileIndexOfStr(p->colNames[i], p->colNamesToKeep, p->nColsToKeep))
+				p->colNames[i] = NULL;
 	}
-	else if (p->colNumsToKeep != NULL)
+	else if(p->colNumsToKeep != NULL)
 	{
-		for (int i = 0; i < p->nCols; i++)
-			if (0 > profileIndexOfInt(i, p->colNumsToKeep, p->nColsToKeep)) p->colNames[i] = NULL;
+		for(int i = 0; i < p->nCols; i++)
+			if(0 > profileIndexOfInt(i, p->colNumsToKeep, p->nColsToKeep))
+				p->colNames[i] = NULL;
 	}
 
 	int nRemaining = 0;
-	for (int i = 0; i < p->nCols; i++)
+	for(int i = 0; i < p->nCols; i++)
 		nRemaining += p->colNames[i] != NULL;
 
 	return nRemaining;
@@ -395,23 +411,23 @@ int profileRemoveCols(profilestruct* p)
 int profileProcessColNamesLine(char* line, profilestruct* p)
 {
 	int n = 0;
-	if (0 >= (n = profileCountWords(line)))
+	if(0 >= (n = profileCountWords(line)))
 	{
 		printf("Error: %d words counted in '%s'.\n", n, line);
 		return n;
 	}
-	if (0 >= (n = profileAllocateCols(n, p)))
+	if(0 >= (n = profileAllocateCols(n, p)))
 	{
 		printf("Error: %d columns allocated in '%s'.\n", n, line);
 		return n;
 	}
-	if (0 >= (n = profileParseColumnNames(line, p->colNames)))
+	if(0 >= (n = profileParseColumnNames(line, p->colNames)))
 	{
 		printf("Error: %d column names parsed in '%s'.\n", n, line);
 		return n;
 	}
 	int m;
-	if (0 >= (m = profileRemoveCols(p)))
+	if(0 >= (m = profileRemoveCols(p)))
 	{
 		printf("Error: %d data columns retained to be read. '%s'\n", m, line);
 	}
@@ -427,25 +443,26 @@ int profileProcessColNamesLine(char* line, profilestruct* p)
 int profileProcessDataLine(char* line, profilestruct* p, int* nLinesWithExtraCols)
 {
 	int nWords = 0;
-	while (*(line = profileStrSkipSpace(line)) != '\0')
+	while(*(line = profileStrSkipSpace(line)) != '\0')
 	{
-		if (nWords >= p->nCols)
+		if(nWords >= p->nCols)
 		{
 			*nLinesWithExtraCols++;
 			break;
 		}
 
-		if (p->colNames[nWords] != NULL)
+		if(p->colNames[nWords] != NULL)
 		{
 			float x;
 			int nScanned = sscanf(line, "%lf", &x);
-			if (nScanned != 1)
+			if(nScanned != 1)
 			{
 				printf("Problem parsing line '%s'", line);
 				continue;
 			}
 
-			if (p->nRows + 1 > p->nRowsAllocated) profileAllocateMoreRows(0, p);
+			if(p->nRows + 1 > p->nRowsAllocated)
+				profileAllocateMoreRows(0, p);
 			float* data = p->colData[nWords];
 			data[p->nRows] = x;
 			p->colSortingOrders[nWords] = profileNextSortingOrder(x, data, p->nRows, p->colSortingOrders[nWords]);
@@ -472,7 +489,7 @@ int profileLineType(char* line)
 	int a = 0;
 	line = profileStrSkipSpace(line);
 
-	switch (*line)
+	switch(*line)
 	{
 	case '\0':
 		return PROFILE_EMPTY_LINE; // Reached the end of the string.
@@ -521,8 +538,9 @@ int profileLineType(char* line)
 int profileLineTypePAH01(char* line)
 {
 	int lt = profileLineType(line);
-	if (lt != PROFILE_DATA_LINE) return lt;
-	switch (profileCountWords(line))
+	if(lt != PROFILE_DATA_LINE)
+		return lt;
+	switch(profileCountWords(line))
 	{
 	case 4:
 		return PROFILE_TIME_LINE;
@@ -540,15 +558,18 @@ int profileReadPAH01(char* filename, profilestruct* p)
 {
 	FILE *file;
 	printf("Opening '%s'\n", filename);
-	if ((file = fopen(filename, "r")) == NULL) return -1;
+	if((file = fopen(filename, "r")) == NULL)
+		return -1;
 
 	char colNames[] = "mass dmass radius density temperature gamma col7 col8";
 	profileProcessColNamesLine(colNames, p);
 
-	for (int i = 0; i < p->nCols; i++)
+	for(int i = 0; i < p->nCols; i++)
 	{
-		if (p->colNames[i] == NULL) printf("Col %d will be ignored.\n", i);
-		else printf("Col %d, \"%s\" will be parsed\n", i, p->colNames[i]);
+		if(p->colNames[i] == NULL)
+			printf("Col %d will be ignored.\n", i);
+		else
+			printf("Col %d, \"%s\" will be parsed\n", i, p->colNames[i]);
 	}
 
 	int lineNum = 0;
@@ -557,11 +578,11 @@ int profileReadPAH01(char* filename, profilestruct* p)
 	int nColHeadersProcessed = 0;
 
 	char line[MAX_LINE_LENGTH];
-	while (fgets(line, MAX_LINE_LENGTH, file))
+	while(fgets(line, MAX_LINE_LENGTH, file))
 	{
 		lineNum++;
 
-		switch (profileLineTypePAH01(line))
+		switch(profileLineTypePAH01(line))
 		// Use 'continue' to read the next line.
 		// Use 'break' to exit the switch and quit reading.
 		{
@@ -575,18 +596,19 @@ int profileReadPAH01(char* filename, profilestruct* p)
 			continue;
 		case PROFILE_TIME_LINE:
 		{
-			if (!searchingTime) break; //This means we already found a time header with matching time
+			if(!searchingTime)
+				break; //This means we already found a time header with matching time
 			// and most likely read all the data below it and now we reached the next time header.
 
 			int nRows;
 			float t;
 			int nScanned = sscanf(line, "%lld %lf", &nRows, &t);
-			if (nScanned != 2)
+			if(nScanned != 2)
 			{
 				printf("problem parsing time header %s\n", line);
 			}
 			searchingTime = (p->time > t);
-			if (!searchingTime)
+			if(!searchingTime)
 			{
 				printf("Time header for %f found on line num %d. %d rows\n", p->time, lineNum, nRows);
 				p->nRowsAllocateFirst = nRows;
@@ -594,11 +616,12 @@ int profileReadPAH01(char* filename, profilestruct* p)
 			continue;
 		}
 		case PROFILE_DATA_LINE:
-			if (searchingTime) continue;
+			if(searchingTime)
+				continue;
 //			if (1 > nColHeadersProcessed) continue;
 //			if (1 < nColHeadersProcessed) break;
 			profileProcessDataLine(line, p, &nLinesWithExtraCols);
-			if (nLinesWithExtraCols > 0)
+			if(nLinesWithExtraCols > 0)
 			{
 				printf("Warning: More data columns than column names found on %d lines.\n", nLinesWithExtraCols);
 			}
@@ -612,7 +635,7 @@ int profileReadPAH01(char* filename, profilestruct* p)
 
 	fclose(file);
 	printf("Reading finished.\n");
-	if (searchingTime)
+	if(searchingTime)
 	{
 		printf("Time header for %f not found.\n", p->time);
 		return -1;
@@ -656,8 +679,9 @@ int profileReadPAH01(char* filename, profilestruct* p)
 int profileLineTypePAH02(char* line)
 {
 	int lt = profileLineType(line);
-	if (lt != PROFILE_DATA_LINE) return lt;
-	switch (profileCountWords(line))
+	if(lt != PROFILE_DATA_LINE)
+		return lt;
+	switch(profileCountWords(line))
 	{
 	case 3:
 		return PROFILE_TIME_LINE;
@@ -670,7 +694,7 @@ int profileReadPAH02(char* filename, profilestruct* p)
 {
 	FILE *file;
 	printf("Opening '%s'\n", filename);
-	if ((file = fopen(filename, "r")) == NULL)
+	if((file = fopen(filename, "r")) == NULL)
 	{
 		printf("cant open\n");
 		return -1;
@@ -689,11 +713,11 @@ int profileReadPAH02(char* filename, profilestruct* p)
 	int nColHeadersProcessed = 0;
 
 	char line[MAX_LINE_LENGTH];
-	while (fgets(line, MAX_LINE_LENGTH, file))
+	while(fgets(line, MAX_LINE_LENGTH, file))
 	{
 		lineNum++;
 
-		switch (profileLineTypePAH02(line))
+		switch(profileLineTypePAH02(line))
 		// Use 'continue' to read the next line.
 		// Use 'break' to exit the switch and quit reading.
 		{
@@ -701,34 +725,41 @@ int profileReadPAH02(char* filename, profilestruct* p)
 		case PROFILE_COMMENT_LINE:
 			continue;
 		case PROFILE_COL_NAMES_LINE:
-			if (searchingTime) continue;
-			if (nColHeadersProcessed) break;
-			if (0 < profileProcessColNamesLine(line, p)) nColHeadersProcessed++;
+			if(searchingTime)
+				continue;
+			if(nColHeadersProcessed)
+				break;
+			if(0 < profileProcessColNamesLine(line, p))
+				nColHeadersProcessed++;
 			continue;
 		case PROFILE_TIME_LINE:
 		{
-			if (!searchingTime) break; //This means we already found a time header with matching time
+			if(!searchingTime)
+				break; //This means we already found a time header with matching time
 			// and most likely read all the data below it and now we reached the next time header.
 
 			float t;
 			int nScanned = sscanf(line, "%lf", &t);
-			if (nScanned != 1)
+			if(nScanned != 1)
 			{
 				printf("problem parsing time header %s\n", line);
 			}
 			searchingTime = (p->time > t);
-			if (!searchingTime)
+			if(!searchingTime)
 			{
 				printf("Time header for t=%f found on line num %d. %d rows\n", p->time, lineNum);
 			}
 			continue;
 		}
 		case PROFILE_DATA_LINE:
-			if (searchingTime) continue;
-			if (1 > nColHeadersProcessed) continue;
-			if (1 < nColHeadersProcessed) break;
+			if(searchingTime)
+				continue;
+			if(1 > nColHeadersProcessed)
+				continue;
+			if(1 < nColHeadersProcessed)
+				break;
 			profileProcessDataLine(line, p, &nLinesWithExtraCols);
-			if (nLinesWithExtraCols > 0)
+			if(nLinesWithExtraCols > 0)
 			{
 				printf("Warning: More data columns than column names found on %d lines.\n", nLinesWithExtraCols);
 			}
@@ -742,7 +773,7 @@ int profileReadPAH02(char* filename, profilestruct* p)
 
 	fclose(file);
 	printf("Reading profile finished.\n");
-	if (searchingTime)
+	if(searchingTime)
 	{
 		printf("Time header for %f not found.\n", p->time);
 		return -1;
@@ -784,10 +815,12 @@ int grid::MHDProfileInitializeGrid(char* profileFileName, char* profileFormat, c
 									float burningTemperature,
 									float burnedRadius, float profileAtTime)
 {
-	if(GridRank!=3) ENZO_FAIL("MHDProfileInitializeGrid is implemented for 3D only.")
+	if(GridRank != 3)
+		ENZO_FAIL("MHDProfileInitializeGrid is implemented for 3D only.")
 
 	int useGE = DualEnergyFormalism && (HydroMethod != Zeus_Hydro); //[BH]
-	if (CellWidth[0][0] <= 0) PrepareGridDerivedQuantities();
+	if(CellWidth[0][0] <= 0)
+		PrepareGridDerivedQuantities();
 
 //  if ( PerturbMethod == 100 )
 //      srand( 3449653 ); //please don't change this number.
@@ -798,22 +831,28 @@ int grid::MHDProfileInitializeGrid(char* profileFileName, char* profileFormat, c
 	// as well as count the number of fields.
 	NumberOfBaryonFields = 0;
 	FieldType[NumberOfBaryonFields++] = Density;
-	if (EquationOfState == 0) FieldType[NumberOfBaryonFields++] = TotalEnergy;
-	if (useGE) FieldType[NumberOfBaryonFields++] = InternalEnergy;
+	if(EquationOfState == 0)
+		FieldType[NumberOfBaryonFields++] = TotalEnergy;
+	if(useGE)
+		FieldType[NumberOfBaryonFields++] = InternalEnergy;
 	FieldType[NumberOfBaryonFields++] = Velocity1;
 	FieldType[NumberOfBaryonFields++] = Velocity2;
 	FieldType[NumberOfBaryonFields++] = Velocity3;
-	if (WritePotential) FieldType[NumberOfBaryonFields++] = GravPotential;
-	if (UseBurning) FieldType[NumberOfBaryonFields++] = Density_56Ni;   //[BH]
-	if (UseMHD)
+	if(WritePotential)
+		FieldType[NumberOfBaryonFields++] = GravPotential;
+	if(UseBurning)
+		FieldType[NumberOfBaryonFields++] = Density_56Ni;   //[BH]
+	if(UseMHD)
 	{
 		FieldType[NumberOfBaryonFields++] = Bfield1;
 		FieldType[NumberOfBaryonFields++] = Bfield2;
 		FieldType[NumberOfBaryonFields++] = Bfield3;
-		FieldType[NumberOfBaryonFields++] = PhiField;
+		if(HydroMethod == MHD_RK)
+			FieldType[NumberOfBaryonFields++] = PhiField;
 	}
 
-	if (ProcessorNumber != MyProcessorNumber) return SUCCESS;
+	if(ProcessorNumber != MyProcessorNumber)
+		return SUCCESS;
 
 	profilestruct p;
 	profileInit(&p);
@@ -821,11 +860,11 @@ int grid::MHDProfileInitializeGrid(char* profileFileName, char* profileFormat, c
 	char* colNamesToKeep[] = { radiusColumnName, densityColumnName, temperatureColumnName };
 	p.colNamesToKeep = colNamesToKeep;
 	p.nColsToKeep = 3;
-	if (!strcmp(profileFormat, "PAH01"))
+	if(!strcmp(profileFormat, "PAH01"))
 	{
 		profileReadPAH01(profileFileName, &p);
 	}
-	else if (!strcmp(profileFormat, "PAH02"))
+	else if(!strcmp(profileFormat, "PAH02"))
 	{
 		profileReadPAH02(profileFileName, &p);
 	}
@@ -857,12 +896,12 @@ int grid::MHDProfileInitializeGrid(char* profileFileName, char* profileFormat, c
 	//
 	// Hack for tests of random forcing.
 	//
-	if (RandomForcing == TRUE)
+	if(RandomForcing == TRUE)
 	{
-		for (int dim = 0; dim < GridRank; dim++)
+		for(int dim = 0; dim < GridRank; dim++)
 		{
 			RandomForcingField[dim] = new float[size];
-			for (int i = 0; i < size; i++)
+			for(int i = 0; i < size; i++)
 				RandomForcingField[dim][i] = 1.0;
 		}
 	}
@@ -870,32 +909,23 @@ int grid::MHDProfileInitializeGrid(char* profileFileName, char* profileFormat, c
 	int totENum, rhoNum, vxNum, vyNum, vzNum;
 	int gasENum = -1, BxNum = -1, ByNum = -1, BzNum = -1, rhoNiNum = -1;
 	float *totEField, *rhoField, *vxField, *vyField, *vzField;
-	float *gasEField = NULL, *BxField = NULL, *ByField = NULL, *BzField = NULL, *rhoNiField = NULL;
+	float *gasEField = NULL, *rhoNiField = NULL;
+	float *BxField = NULL, *ByField = NULL, *BzField = NULL;
 
-	if (UseMHD)
-	{
-		if (IdentifyPhysicalQuantities(rhoNum, gasENum, vxNum, vyNum, vzNum, totENum, BxNum, ByNum, BzNum) == FAIL)
+	if(IdentifyPhysicalQuantities(rhoNum, gasENum, vxNum, vyNum, vzNum, totENum, BxNum, ByNum, BzNum) == FAIL)
 		ENZO_FAIL("MHDProfiileInitializeGrid: Error in IdentifyPhysicalQuantities for UseMHD==true.")
+	if(UseMHD)
+	{
 		BxField = BaryonField[BxNum];
 		ByField = BaryonField[ByNum];
 		BzField = BaryonField[BzNum];
 	}
-	else
-	{
-		if (IdentifyPhysicalQuantities(rhoNum, gasENum, vxNum, vyNum, vzNum, totENum) == FAIL)
-		ENZO_FAIL("MHDProfiileInitializeGrid: Error in IdentifyPhysicalQuantities for UseMHD==false.")
-		if (UseMHDCT)
-		{
-//			BxField = CenteredB[0];
-//			ByField = CenteredB[1];
-//			BzField = CenteredB[2];
-		}
-	}
 
-	if (UseBurning)
+	if(UseBurning)
 	{
-		int rhoNiNum = FindField((int) Density_56Ni, FieldType, NumberOfBaryonFields);
-		if (rhoNiNum < 0) ENZO_FAIL("MHDProfiileInitializeGrid: Error in FindField for Density_56Ni.")
+		int rhoNiNum = FindField(Density_56Ni, FieldType, NumberOfBaryonFields);
+		if(rhoNiNum < 0)
+			ENZO_FAIL("MHDProfiileInitializeGrid: Error in FindField for Density_56Ni.")
 		rhoNiField = BaryonField[rhoNiNum];
 	}
 
@@ -905,13 +935,16 @@ int grid::MHDProfileInitializeGrid(char* profileFileName, char* profileFormat, c
 	vyField = BaryonField[vyNum];
 	vzField = BaryonField[vzNum];
 	totEField = BaryonField[totENum];
-	if (useGE) gasEField = BaryonField[gasENum];
+	if(useGE)
+		gasEField = BaryonField[gasENum];
 
-	for (int f = 0; f < NumberOfBaryonFields; f++)
+	for(int f = 0; f < NumberOfBaryonFields; f++)
 	{
 		printf("MakeFieldConservative(%lld)==%lld", FieldType[f], MakeFieldConservative(FieldType[f]));
-		if (DataLabel[f] != NULL) printf(" // %s\n", DataLabel[f]);
-		else printf(" // DataLabel[%lld] not set.\n", f);
+		if(DataLabel[f] != NULL)
+			printf(" // %s\n", DataLabel[f]);
+		else
+			printf(" // DataLabel[%lld] not set.\n", f);
 	}
 
 	int debugnanflag = 0; //[BH]
@@ -921,15 +954,15 @@ int grid::MHDProfileInitializeGrid(char* profileFileName, char* profileFormat, c
 	float* densityData = p.colData[profileFindColIndex(densityColumnName, &p)];
 	float* temperatureData = p.colData[profileFindColIndex(temperatureColumnName, &p)];
 	float gammaMinusOne = Gamma - 1;
-	for (int k = 0; k < GridDimension[2]; k++)
+	for(int k = 0; k < GridDimension[2]; k++)
 	{
-		float zz = CELLCENTER(2, k) - SphericalGravityCenter[2];
-		zz *= zz;
-		for (int j = 0; j < GridDimension[1]; j++)
+		FLOAT z = CELLCENTER(2, k);
+		FLOAT zz = square(z - SphericalGravityCenter[2]);
+		for(int j = 0; j < GridDimension[1]; j++)
 		{
-			float y = CELLCENTER(1, j) - SphericalGravityCenter[1];
-			float yy_zz = y * y + zz;
-			for (int i = 0; i <= GridDimension[0]; i++)
+			FLOAT y = CELLCENTER(1, j);
+			FLOAT yy_zz = square(y - SphericalGravityCenter[1]) + zz;
+			for(int i = 0; i <= GridDimension[0]; i++)
 			{
 				int index = ELT(i, j, k);
 				float vx = vxField[index] = 0;
@@ -939,10 +972,10 @@ int grid::MHDProfileInitializeGrid(char* profileFileName, char* profileFormat, c
 				float By = ByField[index] = 0;
 				float Bz = BzField[index] = 0;
 
-				if (!strcmp(profileType, "RADIAL"))
+				if(!strcmp(profileType, "RADIAL"))
 				{
-					float x = CELLCENTER(0, i) - SphericalGravityCenter[0];
-					float r = sqrt(x * x + yy_zz);
+					FLOAT x = CELLCENTER(0, i);
+					FLOAT r = sqrt(square(x - SphericalGravityCenter[0]) + yy_zz);
 
 					float rho, T = 0;
 					int retcode = profileInterpolate(&rho, densityData, r, radiusData, p.nRows, radiusSO); //g/cm**3
@@ -953,12 +986,15 @@ int grid::MHDProfileInitializeGrid(char* profileFileName, char* profileFormat, c
 //					gasEDensity = pressure / (Gamma - 1);
 //					gasE = specificGasE = gasEDensity / rho = EOSPolytropicFactor * rho**(Gamma-1) / (Gamma-1);
 					float gasE = EOSPolytropicFactor * POW(rho, gammaMinusOne) / gammaMinusOne;
-					if (DualEnergyFormalism) gasEField[index] = gasE;
+					if(DualEnergyFormalism)
+						gasEField[index] = gasE;
+					MHDProfileInitExactB(&Bx, &By, &Bz, x, y, z);
 					rhoField[index] = rho;
 					totEField[index] = gasE + 0.5 * (vx * vx + vy * vy + vz * vz)
 							+ 0.5 * (Bx * Bx + By * By + Bz * Bz) / rho;
 
-					if (UseBurning) rhoNiField[index] = (isBurned) ? rho : 0;
+					if(UseBurning)
+						rhoNiField[index] = (isBurned) ? rho : 0;
 //					if (debug1 && j == (GridDimension[1] / 2) && k == (GridDimension[2] / 2)
 //							&& i <= GridDimension[0] / 2)
 //						printf("i,j,k=%03d,%04d,%04d, r=%4f, (%4f,%4f,%4f), rho=%1.3f, T=%1f, burned=%d\n", i, j, k,
@@ -981,8 +1017,10 @@ int grid::MHDProfileInitializeGrid(char* profileFileName, char* profileFormat, c
 //             BaryonField[ByNum][index]*BaryonField[ByNum][index] +
 //             BaryonField[BzNum][index]*BaryonField[BzNum][index])/BaryonField[ rhoNum ][index];
 
-	if (debugnanflag) printf("nans intialized."); //[BH]
-	else printf("Initialized.\n");
+	if(debugnanflag)
+		printf("nans intialized."); //[BH]
+	else
+		printf("Initialized.\n");
 
 	return SUCCESS;
 

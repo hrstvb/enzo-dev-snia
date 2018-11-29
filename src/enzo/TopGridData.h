@@ -7,6 +7,7 @@
 /  written by: Greg Bryan
 /  date:       November, 1994
 /  modified1:  Robert Harkness
+/  modified1:  B.Hristov
 /  date:       February 29th, 2008
 /
 /  PURPOSE:
@@ -146,7 +147,7 @@ struct TopGridData
   boundary_type ParticleBoundaryType;
   PINT          NumberOfParticles;
 
-  /* Hydro Parameters.  
+  /* Hydro Parameters.
      These are here out of convenience, the real ones are in the grids. */
 
   float  CourantSafetyNumber;                       // Hydro parameter
@@ -160,5 +161,7 @@ struct TopGridData
   float GlobalMaximumkphIfront;
 
 };
+
+//TopGridData gMetaData; //[BH] Global scope.
 
 #endif

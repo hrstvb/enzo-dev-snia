@@ -1,7 +1,8 @@
 #ifndef MY_ENZO_UTIILS_TPP
 #define MY_ENZO_UTIILS_TPP
 #include "stddef.h"
-#include "string.h"
+#include "math.h"
+//#include "string.h"
 #include <stdexcept>
 #include "IDE_defs.h"
 #include "myenzoutils.h"
@@ -58,7 +59,7 @@ T* arr_delbrnewcpy(T** a, U* xarr, size_t n)
 template<typename T, typename U>
 T* arr_delbrnewset(T** a, size_t n, U x)
 {
-	return arr_set(arr_delbrenew(a, n), n, (T) x);
+	return arr_set(arr_delbrnew(a, n), n, (T) x);
 }
 
 template<typename T>
@@ -160,7 +161,7 @@ T** arr_set(T** a, size_t n, void* x)
 }
 
 #if __cplusplus < STD_CPP11 /* C++11 */
-
+// This should work mostly but can be improved.
 #define INTPTR_T long long
 #define INTPTR_T_STR "long long"
 #define UINTPTR_T unsigned long long
@@ -270,14 +271,28 @@ size_t findmaxlte(T* a, size_t n, U x)
 }
 
 /*
- * BLAS-like and numpy-like
+ * Math
  */
+template<typename T, typename U>
+inline long double distancel(T* x[], U* y[], size_t n)
+{
+	long double r_squared = 0;
+	T* x_n = x + n;
+	while(x < x_n)
+		r_squared += square(*y++ - *x++);
+
+	return sqrtl(r_squared);
+}
+
 template<typename T>
 inline T square(T x)
 {
 	return x *= x;
 }
 
+/*
+ * BLAS-like and numpy-like
+ */
 // Returns x[0] + ... +, x[n-1]
 template<typename T>
 T arr_sum(T* x, const size_t n)
