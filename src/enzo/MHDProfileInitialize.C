@@ -62,6 +62,7 @@ class ExternalBoundary;
 //void RotateVector(float * Vector, float * Normal);
 //int SetupNormal(float Normal[], float MHDBlastCenter[3], TopGridData & MetaData);
 int MHDCTSetupFieldLabels();
+int SphericalGravityComputePotential(LevelHierarchyEntry *LevelArray[], TopGridData* MetaData);
 
 int MHDProfileInitExactB(float* Bx, float* By, float* Bz, FLOAT x, FLOAT y, FLOAT z)
 {
@@ -97,7 +98,7 @@ int MHDProfileInitialize(FILE *fptr, FILE *Outfptr, HierarchyEntry &TopGrid, Top
 	char densityColumnName[32]; //"density"
 	char temperatureColumnName[32]; //"temperature"
 	float burningTemperature = 0;
-	float burningRadius = 0;
+	float burnedRadius = 0;
 	float profileAtTime = -1;
 
 	*profileFileName = *profileFormat = *profileType = '\0';
@@ -119,7 +120,7 @@ int MHDProfileInitialize(FILE *fptr, FILE *Outfptr, HierarchyEntry &TopGrid, Top
 		ret += sscanf(line, "DensityColumnName = %s", &densityColumnName);
 		ret += sscanf(line, "TemperatureColumnName = %s", &temperatureColumnName);
 		ret += sscanf(line, "BurningTemperature = %"FSYM, &burningTemperature);
-		ret += sscanf(line, "BurningRadius = %"PSYM, &burningRadius);
+		ret += sscanf(line, "BurnedRadius = %"PSYM, &burnedRadius);
 		ret += sscanf(line, "ProfileAtTime = %"FSYM, &profileAtTime);
 
 		ret += sscanf(line, "InternalEnergy_InitialA = %"FSYM, &InternalEnergy_InitialA);	//[BH]
@@ -142,10 +143,17 @@ int MHDProfileInitialize(FILE *fptr, FILE *Outfptr, HierarchyEntry &TopGrid, Top
 //		}
 	}
 
+	if(BurningDiffusionRateReduced <= 0)
+		BurningDiffusionRateReduced = BurningDiffusionRate / (DomainRightEdge[0] - DomainLeftEdge[0])
+				* MetaData.TopGridDims[0];
+	if(BurningReactionRateReduced <= 0)
+		BurningReactionRateReduced = BurningReactionRate * (DomainRightEdge[0] - DomainLeftEdge[0])
+				/ MetaData.TopGridDims[0];
+
 	// Initialize the top grid.
 	if(TopGrid.GridData->MHDProfileInitializeGrid(profileFileName, profileFormat, profileType, radiusColumnName,
 													densityColumnName, temperatureColumnName, burningTemperature,
-													burningRadius, profileAtTime) == FAIL)
+													burnedRadius, profileAtTime) == FAIL)
 		ENZO_FAIL("MHDProfileInitialize: Error in MHDProfileInitializeGrid.");
 
 	if(RefineOnStartup && MaximumRefinementLevel > 0)
@@ -221,8 +229,8 @@ int MHDProfileInitialize(FILE *fptr, FILE *Outfptr, HierarchyEntry &TopGrid, Top
 
 			if(Subgrid[lev]->GridData->MHDProfileInitializeGrid(profileFileName, profileFormat, profileType,
 																radiusColumnName, densityColumnName,
-																temperatureColumnName, burningTemperature,
-																burningRadius, profileAtTime) == FAIL)
+																temperatureColumnName, burningTemperature, burnedRadius,
+																profileAtTime) == FAIL)
 				ENZO_FAIL("MHDBlastInitialize: Error in MHDBlastInitializeGrid.");
 		} // level
 
@@ -307,7 +315,15 @@ int MHDProfileInitialize(FILE *fptr, FILE *Outfptr, HierarchyEntry &TopGrid, Top
 
 	if(UseMHDCT)
 		MHDCTSetupFieldLabels();
+	// Done with labels and units.
 
+	if(UseSphericalGravity)
+	{
+		// Initialize the potential.
+		LevelHierarchyEntry tg = { NULL, TopGrid.GridData, &TopGrid };
+		LevelHierarchyEntry* topLevel[] = { &tg };
+		SphericalGravityComputePotential(topLevel, &MetaData);
+	}
 	return SUCCESS;
 }
 

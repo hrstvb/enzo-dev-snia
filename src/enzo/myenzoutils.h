@@ -94,10 +94,25 @@ template<typename T>
 T** arr_set(T** a, size_t n, void* x);
 
 template<typename T>
+T** arr_set(T** a, size_t n, signed char x);
+template<typename T>
+T** arr_set(T** a, size_t n, short x);
+template<typename T>
+T** arr_set(T** a, size_t n, int x);
+template<typename T>
 T** arr_set(T** a, size_t n, long x);
-
 template<typename T>
 T** arr_set(T** a, size_t n, long long x);
+template<typename T>
+T** arr_set(T** a, size_t n, unsigned char x);
+template<typename T>
+T** arr_set(T** a, size_t n, unsigned short x);
+template<typename T>
+T** arr_set(T** a, size_t n, unsigned int x);
+template<typename T>
+T** arr_set(T** a, size_t n, unsigned long x);
+template<typename T>
+T** arr_set(T** a, size_t n, unsigned long long x);
 
 //typedef int new_delop_t;
 //const new_delop_t new_no_del = 0;
@@ -128,6 +143,9 @@ inline long double distancel(T* x[], U* y[], size_t n);
 
 template<typename T>
 inline T square(T x);
+
+template<typename T>
+inline T cube(T x);
 
 // Returns x[0] + ... +, x[n-1]
 template<typename T>

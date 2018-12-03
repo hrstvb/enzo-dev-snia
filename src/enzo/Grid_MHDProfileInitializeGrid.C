@@ -818,7 +818,7 @@ int grid::MHDProfileInitializeGrid(char* profileFileName, char* profileFormat, c
 	if(GridRank != 3)
 		ENZO_FAIL("MHDProfileInitializeGrid is implemented for 3D only.")
 
-	int useGE = DualEnergyFormalism && (HydroMethod != Zeus_Hydro); //[BH]
+	int hasGesEField = DualEnergyFormalism && (HydroMethod != Zeus_Hydro); //[BH]
 	if(CellWidth[0][0] <= 0)
 		PrepareGridDerivedQuantities();
 
@@ -833,7 +833,7 @@ int grid::MHDProfileInitializeGrid(char* profileFileName, char* profileFormat, c
 	FieldType[NumberOfBaryonFields++] = Density;
 	if(EquationOfState == 0)
 		FieldType[NumberOfBaryonFields++] = TotalEnergy;
-	if(useGE)
+	if(hasGesEField)
 		FieldType[NumberOfBaryonFields++] = InternalEnergy;
 	FieldType[NumberOfBaryonFields++] = Velocity1;
 	FieldType[NumberOfBaryonFields++] = Velocity2;
@@ -935,7 +935,7 @@ int grid::MHDProfileInitializeGrid(char* profileFileName, char* profileFormat, c
 	vyField = BaryonField[vyNum];
 	vzField = BaryonField[vzNum];
 	totEField = BaryonField[totENum];
-	if(useGE)
+	if(hasGesEField)
 		gasEField = BaryonField[gasENum];
 
 	for(int f = 0; f < NumberOfBaryonFields; f++)
@@ -986,7 +986,7 @@ int grid::MHDProfileInitializeGrid(char* profileFileName, char* profileFormat, c
 //					gasEDensity = pressure / (Gamma - 1);
 //					gasE = specificGasE = gasEDensity / rho = EOSPolytropicFactor * rho**(Gamma-1) / (Gamma-1);
 					float gasE = EOSPolytropicFactor * POW(rho, gammaMinusOne) / gammaMinusOne;
-					if(DualEnergyFormalism)
+					if(hasGesEField)
 						gasEField[index] = gasE;
 					MHDProfileInitExactB(&Bx, &By, &Bz, x, y, z);
 					rhoField[index] = rho;
@@ -995,10 +995,9 @@ int grid::MHDProfileInitializeGrid(char* profileFileName, char* profileFormat, c
 
 					if(UseBurning)
 						rhoNiField[index] = (isBurned) ? rho : 0;
-//					if (debug1 && j == (GridDimension[1] / 2) && k == (GridDimension[2] / 2)
-//							&& i <= GridDimension[0] / 2)
-//						printf("i,j,k=%03d,%04d,%04d, r=%4f, (%4f,%4f,%4f), rho=%1.3f, T=%1f, burned=%d\n", i, j, k,
-//								r * 1e-5, x * 1e-5, y * 1e-5, z * 1e-5, rho * 1e-9, T * 1e-9, isBurned);
+					if(j == (GridDimension[1] / 2) && k == (GridDimension[2] / 2) && i <= GridDimension[0] / 2)
+						printf("i,j,k=%03d,%04d,%04d, r=%4f, (%4f,%4f,%4f), rho=%e, T=%1f, burned=%d\n", i, j, k,
+								r * 1e-5, x * 1e-5, y * 1e-5, z * 1e-5, rho * 1e-9, T * 1e-9, isBurned);
 				}
 			} //end baryonfield initialize
 		}
@@ -1018,7 +1017,7 @@ int grid::MHDProfileInitializeGrid(char* profileFileName, char* profileFormat, c
 //             BaryonField[BzNum][index]*BaryonField[BzNum][index])/BaryonField[ rhoNum ][index];
 
 	if(debugnanflag)
-		printf("nans intialized."); //[BH]
+		printf("nans intialized.\n"); //[BH]
 	else
 		printf("Initialized.\n");
 

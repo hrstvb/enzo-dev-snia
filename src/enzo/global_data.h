@@ -1115,8 +1115,10 @@ EXTERN int SkipBurningOperator;			   //[BH] ..., only define the fields
 EXTERN int AllowUnburning;			   //[BH] dQ/dt=Q*fd/dt, when fd/dt>0 else =0
 EXTERN int CallSetBoundaryConditionsAfterBurning;  //[BH]
 EXTERN float BurningDiffusionRate;                 //[BH]
+EXTERN float BurningDiffusionRateReduced;          //[BH]
 EXTERN float BurningDiffusionCourantSafetyFactor;  //[BH]
 EXTERN float BurningReactionRate;                  //[BH]
+EXTERN float BurningReactionRateReduced;           //[BH]
 EXTERN float BurningReactionBurnedFractionLimitLo; //[BH]
 EXTERN float BurningReactionBurnedFractionLimitHi; //[BH]
 EXTERN float BurningEnergyRelease;                 //[BH]
@@ -1152,6 +1154,9 @@ EXTERN float SupernovaSeedFieldRadius;
 EXTERN float SupernovaSeedFieldDuration;
 EXTERN float SupernovaSeedFieldEnergy;
 
+/*
+ * Spherical gravity
+ */
 EXTERN int UseSphericalGravity;
 EXTERN size_t SphericalGravityActualNumberOfBins; // Actual number of bins incl. the central and the outer.
 EXTERN FLOAT *SphericalGravityBinCenters;

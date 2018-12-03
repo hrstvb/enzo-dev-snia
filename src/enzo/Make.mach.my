@@ -71,7 +71,7 @@ MACH_LDFLAGS  = --verbose
 MACH_OPT_WARN        = -Wall -g
 MACH_OPT_DEBUG       = -g
 MACH_OPT_HIGH        = -O2
-MACH_OPT_AGGRESSIVE  = -O3 -g
+MACH_OPT_AGGRESSIVE  = -O3
 
 #-----------------------------------------------------------------------
 # Includes

@@ -50,14 +50,14 @@ typedef long_int forcing_type;
 #endif
 
 const field_type
-  Density         = 0,
+  Density         = (field_type)0,
   TotalEnergy     = 1,
   InternalEnergy  = 2,
   Pressure        = 3,
   Velocity1       = 4,
   Velocity2       = 5,
   Velocity3       = 6,
-  ElectronDensity = 7,
+  ElectronDensity = (field_type)7,
   HIDensity       = 8,
   HIIDensity      = 9,
   HeIDensity      = 10,

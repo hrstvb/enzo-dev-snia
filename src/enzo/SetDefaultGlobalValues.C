@@ -1000,16 +1000,18 @@ int SetDefaultGlobalValues(TopGridData &MetaData)
   SkipBurningOperator                  = 0;   // If true the nickel density advects as a color field.		//[BH]
   AllowUnburning                       = 0;   // Allow negative  burning fraction to take away from the Energy  //[BH]
   CallSetBoundaryConditionsAfterBurning= 1;                                                                     //[BH]
-  BurningDiffusionRate                 = 1;   //TODO: find meaningful values for diffusion and reaction rates.  //[BH]
+  BurningDiffusionRate                 = 1;   //[BH]
+  BurningDiffusionRateReduced          = 0;   //[BH]
   BurningDiffusionCourantSafetyFactor  = 0.5; //Courant safety number = safety factor * dx^2 / BurningDiffusionRate //[BH]
-  BurningReactionRate                  = 1;   //This is the burning reaction rate value used when the burned    //[BH]
-  BurningReactionBurnedFractionLimitLo = 0.3; //  fraction is between 0 and 1 and inside the (Lo, Hi) limits    //[BH]
-  BurningReactionBurnedFractionLimitHi = 1;   //  set by the next two parameters. Otherwise a zero rate is used.//[BH]
+  BurningReactionRate                  = 1;   // This is the burning reaction rate value used when the burned   //[BH]
+  BurningReactionRateReduced           = 0;   //  fraction is between 0 and 1 and inside the (Lo, Hi) limits    //[BH]
+  BurningReactionBurnedFractionLimitLo = 0.3; //  set by the corresponding BurningReactionBurnedFractionLimit*  //[BH]
+  BurningReactionBurnedFractionLimitHi = 1;   //  parameters. Otherwise a zero rate is used.                    //[BH]
   BurningEnergyRelease                 = 0.0476929; //[keV] TODO: convert units, per barion etc.                //[BH]
   EnergyRelativeGrowthLimit		= -1; //Ignore condition
   BurnedFractionGrowthLimit		= -1; //Ignore condition
 
-
+  //Spherical gravity parameters
   UseSphericalGravity = 0;
   SphericalGravityActualNumberOfBins = -1;
   SphericalGravityBinCenters = NULL;
