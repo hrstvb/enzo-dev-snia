@@ -42,14 +42,19 @@ FLOAT** magneticEBins,
 		arr_delnewset(countBins, N, 0);
 	if(massBins)
 		arr_delbrnewset(massBins, N, 0);
+	if(centersOfMassBins)
+		for(int dim = 0; dim < domainRank; dim++)
+			arr_delnewset(centersOfMassBins + dim, N, 0);
 	if(kineticEBins)
-		arr_delbrnewset(kineticEBins, N, 0);
+		for(int dim = 0; dim < domainRank; dim++)
+			arr_delbrnewset(kineticEBins + dim, N, 0);
 	if(magneticEBins && (UseMHD || UseMHDCT))
-		arr_delbrnewset(magneticEBins, N, 0);
-	if(massBins)
-		arr_delnewset(massBins, N, 0);
+		for(int dim = 0; dim < domainRank; dim++)
+			arr_delbrnewset(magneticEBins + dim, N, 0);
 	if(volumeBins)
 		arr_delnewset(volumeBins, N, 0);
+
+	return SUCCESS;
 }
 
 int SphericalGravityDetermineUniformBins()
@@ -141,21 +146,38 @@ int SphericalGravityDetermineUniformBins()
 	if(SphericalGravityHasCentralBin)
 		SphericalGravityBinLeftEdges[1] = SphericalGravityInnerRadius;
 	arr_cumsum(SphericalGravityBinLeftEdges, N, 0);
-
 //	for (int i = 1; i < SphericalGravityActualNumberOfBins - 1; i++)
 //		SphericalGravityBinRightEdges[i] = SphericalGravityBinLeftEdges[i + 1];
 //	for (int i = 0; i < SphericalGravityActualNumberOfBins - 1; i++)
 //		SphericalGravityBinCenters[i] = 0.5 * (SphericalGravityBinLeftEdges[i] + SphericalGravityBinRightEdges[i]);
+
 	return SUCCESS;
 }
 
 int SphericalGravityDetermineBins()
 {
 	if(SphericalGravityUniformBins)
-		return SphericalGravityDetermineUniformBins();
-//	Initialize non-uniform bins here. This may require communication.
-	ENZO_FAIL("Non-uniform bins for spherical gravity are not implemented.\n");
-	return FAIL; //Not implemented
+	{
+		if(FAIL == SphericalGravityDetermineUniformBins())
+			ENZO_FAIL("Non-uniform bins for spherical gravity are not implemented.\n");
+	}
+	else
+	{		//	Initialize non-uniform bins here. This may require communication.
+		ENZO_FAIL("Non-uniform bins for spherical gravity are not implemented.\n");
+	}
+
+	if(debug && MyProcessorNumber == ROOT_PROCESSOR)
+	{
+		size_t &N = SphericalGravityActualNumberOfBins;
+		char* buf = new char[19 * N];
+		char* s = buf;
+		for(int i = 0; i < N; i++)
+			s += sprintf(s, "  %d:%e", i, SphericalGravityBinLeftEdges[i]);
+		printf("SphericalGravityBinLeftEdges[%d]={%s  }\n", N, buf);
+		delete buf;
+	}
+
+	return SUCCESS;
 }
 
 size_t SphericalGravityComputeUniformBinIndex(FLOAT r)
@@ -183,9 +205,12 @@ int SphericalGravityComputePotential(LevelHierarchyEntry *LevelArray[], TopGridD
 
 	if(SphericalGravityDetermineBins() == FAIL)
 		ENZO_FAIL("Coudn't determine spherical gravity bins.\n");
-	SphericalGravityAllocateBins(&SphericalGravityShellCellCounts, SphericalGravityShellCentersOfMass,
-									SphericalGravityShellKineticEnergies, SphericalGravityShellMagneticEnergies,
-									&SphericalGravityShellMasses, &SphericalGravityShellVolumes, MetaData->TopGridRank);
+	SphericalGravityAllocateBins(&SphericalGravityShellCellCounts, &SphericalGravityShellMasses,
+									SphericalGravityShellCentersOfMass, SphericalGravityShellKineticEnergies,
+									SphericalGravityShellMagneticEnergies, &SphericalGravityShellVolumes,
+									MetaData->TopGridRank);
+
+	const size_t &N = SphericalGravityActualNumberOfBins;
 
 	LevelHierarchyEntry *Temp;
 	Temp = LevelArray[0];
@@ -194,11 +219,12 @@ int SphericalGravityComputePotential(LevelHierarchyEntry *LevelArray[], TopGridD
 		Temp->GridData->SphericalGravityAddMassToShell();
 		Temp = Temp->NextGridThisLevel;
 	}
+	if(MyProcessorNumber == ROOT_PROCESSOR)
+		for(int i = 0; i < N; i++)
+			printf("%e\n", SphericalGravityShellMasses);
 
-	const size_t &N = SphericalGravityActualNumberOfBins;
-
-	//It might be better to use MPI_Alltoallv; see CommunicationShareParticles.C
-	//That takes some more setup, so in the words of Mike, "make it work then make it work fast."
+//It might be better to use MPI_Alltoallv; see CommunicationShareParticles.C
+//That takes some more setup, so in the words of Mike, "make it work then make it work fast."
 	CommunicationSumValues(SphericalGravityShellMasses, N);
 //	for (int dim = 0; dim < MAX_DIMENSION; dim++)
 //		if (SphericalGravityShellCentersOfMass[dim])
@@ -218,7 +244,7 @@ int SphericalGravityComputePotential(LevelHierarchyEntry *LevelArray[], TopGridD
 //	CommunicationSumValues(SphericalGravityShellVolumes, N);
 
 	CommunicationBroadcastValues(SphericalGravityShellMasses, N, ROOT_PROCESSOR);
-	//Bin Count is only used for debugging.
+//Bin Count is only used for debugging.
 //	CommunicationSumValues(SphericalGravityShellCellCounts, N);
 
 //	 SphericalGravityMassInterior[0] = SphericalGravityMassShell[0]; //[0] is initialized above.
@@ -263,55 +289,84 @@ int SphericalGravityWritePotential(char * name)
 		return SUCCESS;
 	}
 
-	typedef short hid_t;
-	hid_t file_id, mass_dset, shell_dset, radius_dset, count_dset, dataspace_id;
-	hid_t ledges_dset, redges_dset, volumes_dset;
-	herr_t status, h5_status, h5_error = -1;
+//	typedef short hid_t;
+//	hid_t file_id, mass_dset, shell_dset, radius_dset, count_dset, dataspace_id;
+//	hid_t ledges_dset, redges_dset, volumes_dset;
+//	herr_t status, h5_status, h5_error = -1;
+//
+//	char filename[100];
+//	sprintf(filename, "%s.SphericalGravity.h5", name);
+//
+//	//file_id = H5Fcreate(filename, H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
+//	file_id = H5Fcreate(filename, H5F_ACC_EXCL, H5P_DEFAULT, H5P_DEFAULT);
+//	if(file_id == -1)
+//	{
+//		fprintf(stderr, "ERROR IN ERROR: ignore previous warning.  Opening hdf5 file.\n");
+//		file_id = H5Fopen(filename, H5F_ACC_RDWR, H5P_DEFAULT);
+//	}
+//
+//	//Create Dataspace
+//	hsize_t number[1] = { SphericalGravityActualNumberOfBins };
+//	dataspace_id = H5Screate_simple(1, number, NULL);
+//
+//	//create set
+//	//                       above, name,      datatype,  shape of data, Something I dont get
+//	mass_dset = H5Dcreate(file_id, "SphericalGravityMassInterior", HDF5_PREC, dataspace_id, H5P_DEFAULT);
+//	shell_dset = H5Dcreate(file_id, "SphericalGravityMassShell", HDF5_PREC, dataspace_id, H5P_DEFAULT);
+//	radius_dset = H5Dcreate(file_id, "SphericalGravityRadius", HDF5_PREC, dataspace_id, H5P_DEFAULT);
+//	ledges_dset = H5Dcreate(file_id, "SphericalGravityLeftEdges", HDF5_PREC, dataspace_id, H5P_DEFAULT);
+//	redges_dset = H5Dcreate(file_id, "SphericalGravityRightEdges", HDF5_PREC, dataspace_id, H5P_DEFAULT);
+//	volumes_dset = H5Dcreate(file_id, "SphericalGravityCellVolumes", HDF5_PREC, dataspace_id, H5P_DEFAULT);
+//	count_dset = H5Dcreate(file_id, "SphericalGravityBinCount", HDF5_I8, dataspace_id, H5P_DEFAULT);
+//
+//	//Write the Data Set
+//	//                (set, memory type, mem. space, file space, transfer details, actual data)
+//	status = H5Dwrite(mass_dset, HDF5_PREC, H5S_ALL, H5S_ALL, H5P_DEFAULT, SphericalGravityInteriorMasses);
+//	status = H5Dwrite(shell_dset, HDF5_PREC, H5S_ALL, H5S_ALL, H5P_DEFAULT, SphericalGravityShellMasses);
+//	status = H5Dwrite(radius_dset, HDF5_PREC, H5S_ALL, H5S_ALL, H5P_DEFAULT, SphericalGravityBinCenters);
+//	status = H5Dwrite(ledges_dset, HDF5_PREC, H5S_ALL, H5S_ALL, H5P_DEFAULT, SphericalGravityBinLeftEdges);
+//	status = H5Dwrite(redges_dset, HDF5_PREC, H5S_ALL, H5S_ALL, H5P_DEFAULT, SphericalGravityBinRightEdges);
+//	status = H5Dwrite(volumes_dset, HDF5_PREC, H5S_ALL, H5S_ALL, H5P_DEFAULT, SphericalGravityShellVolumes);
+//	status = H5Dwrite(count_dset, HDF5_PREC, H5S_ALL, H5S_ALL, H5P_DEFAULT, SphericalGravityShellCellCounts);
+//
+//	status = H5Sclose(dataspace_id);
+//	status = H5Dclose(mass_dset);
+//	status = H5Dclose(shell_dset);
+//	status = H5Dclose(radius_dset);
+//	status = H5Dclose(ledges_dset);
+//	status = H5Dclose(redges_dset);
+//	status = H5Dclose(volumes_dset);
+//	status = H5Dclose(count_dset);
 
-	char filename[100];
+//	typedef short hid_t;
+	hid_t file_id, dataset, dataspace_id;
+	hsize_t dims[1];
+	herr_t h5_status;
+
+	char filename[FILENAME_MAX];
 	sprintf(filename, "%s.SphericalGravity.h5", name);
 
-	//file_id = H5Fcreate(filename, H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
-	file_id = H5Fcreate(filename, H5F_ACC_EXCL, H5P_DEFAULT, H5P_DEFAULT);
-	if(file_id == -1)
-	{
-		fprintf(stderr, "ERROR IN ERROR: ignore previous warning.  Opening hdf5 file.\n");
-		file_id = H5Fopen(filename, H5F_ACC_RDWR, H5P_DEFAULT);
-	}
+	if((file_id = H5Fcreate(filename, H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT)) == -1)
+		ENZO_VFAIL("SphericalGravityWritePotential: Error opening hdf5 file `%s'\n", filename)
 
-	//Create Dataspace
-	hsize_t number[1] = { SphericalGravityActualNumberOfBins };
-	dataspace_id = H5Screate_simple(1, number, NULL);
+	dims[0] = SphericalGravityActualNumberOfBins;
+//                           rank, dims[],                                max_dims[]
+	dataspace_id = H5Screate_simple(1, dims, NULL);
+//                       above, name,      datatype,  shape of data, Something I dont get
+	dataset = H5Dcreate(file_id, "SphericalGravityMassInterior", HDF5_PREC, dataspace_id, H5P_DEFAULT);
+//                (dset, memory type, mem. space, file space, transfer details, actual data)
+	h5_status = H5Dwrite(dataset, HDF5_PREC, H5S_ALL, H5S_ALL, H5P_DEFAULT, SphericalGravityInteriorMasses);
+	h5_status = H5Dclose(dataset);
+	h5_status = H5Sclose(dataspace_id);
 
-	//create set
-	//                       above, name,      datatype,  shape of data, Something I dont get
-	mass_dset = H5Dcreate(file_id, "SphericalGravityMassInterior", HDF5_PREC, dataspace_id, H5P_DEFAULT);
-	shell_dset = H5Dcreate(file_id, "SphericalGravityMassShell", HDF5_PREC, dataspace_id, H5P_DEFAULT);
-	radius_dset = H5Dcreate(file_id, "SphericalGravityRadius", HDF5_PREC, dataspace_id, H5P_DEFAULT);
-	ledges_dset = H5Dcreate(file_id, "SphericalGravityLeftEdges", HDF5_PREC, dataspace_id, H5P_DEFAULT);
-	redges_dset = H5Dcreate(file_id, "SphericalGravityRightEdges", HDF5_PREC, dataspace_id, H5P_DEFAULT);
-	volumes_dset = H5Dcreate(file_id, "SphericalGravityCellVolumes", HDF5_PREC, dataspace_id, H5P_DEFAULT);
-	count_dset = H5Dcreate(file_id, "SphericalGravityBinCount", HDF5_I8, dataspace_id, H5P_DEFAULT);
+	dims[0] = SphericalGravityActualNumberOfBins + 1;
+	dataspace_id = H5Screate_simple(1, dims, NULL);
+	dataset = H5Dcreate(file_id, "SphericalGravityLeftEdges", HDF5_PREC, dataspace_id, H5P_DEFAULT);
+	h5_status = H5Dwrite(dataset, HDF5_PREC, H5S_ALL, H5S_ALL, H5P_DEFAULT, SphericalGravityBinLeftEdges);
+	h5_status = H5Dclose(dataset);
+	h5_status = H5Sclose(dataspace_id);
 
-	//Write the Data Set
-	//                (set, memory type, mem. space, file space, transfer details, actual data)
-	status = H5Dwrite(mass_dset, HDF5_PREC, H5S_ALL, H5S_ALL, H5P_DEFAULT, SphericalGravityInteriorMasses);
-	status = H5Dwrite(shell_dset, HDF5_PREC, H5S_ALL, H5S_ALL, H5P_DEFAULT, SphericalGravityShellMasses);
-	status = H5Dwrite(radius_dset, HDF5_PREC, H5S_ALL, H5S_ALL, H5P_DEFAULT, SphericalGravityBinCenters);
-	status = H5Dwrite(ledges_dset, HDF5_PREC, H5S_ALL, H5S_ALL, H5P_DEFAULT, SphericalGravityBinLeftEdges);
-	status = H5Dwrite(redges_dset, HDF5_PREC, H5S_ALL, H5S_ALL, H5P_DEFAULT, SphericalGravityBinRightEdges);
-	status = H5Dwrite(volumes_dset, HDF5_PREC, H5S_ALL, H5S_ALL, H5P_DEFAULT, SphericalGravityShellVolumes);
-	status = H5Dwrite(count_dset, HDF5_PREC, H5S_ALL, H5S_ALL, H5P_DEFAULT, SphericalGravityShellCellCounts);
-
-	status = H5Sclose(dataspace_id);
-	status = H5Dclose(mass_dset);
-	status = H5Dclose(shell_dset);
-	status = H5Dclose(radius_dset);
-	status = H5Dclose(ledges_dset);
-	status = H5Dclose(redges_dset);
-	status = H5Dclose(volumes_dset);
-	status = H5Dclose(count_dset);
-	status = H5Fclose(file_id);
+	h5_status = H5Fclose(file_id);
 
 	return SUCCESS;
 }

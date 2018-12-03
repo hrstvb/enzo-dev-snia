@@ -111,13 +111,13 @@ T* arr_cpy(T* dest, U* src, size_t n)
 {
 	T* src_n = src + n;
 
-	if (areOfSameType(dest, src))
-		if (src == dest)
+	if(areOfSameType(dest, src))
+		if(src == dest)
 			return dest;
 		else
 			return (T*) memmove(dest, src, n * sizeof(T));
 
-	while (src < src_n)
+	while(src < src_n)
 		*dest++ = (*src++);
 	return dest - n;
 }
@@ -128,26 +128,26 @@ T* arr_set(T* a, size_t n, U x)
 	static int firstZero = 1;
 	static unsigned char nonBytewiseZero;
 
-	if (sizeof(T) == 1)
+	if(sizeof(T) == 1)
 		return (T*) memset(a, (int) (long long) x, n);
 
-	if (x == (T) 0)
+	if(x == (T) 0)
 	{
-		if (firstZero)
+		if(firstZero)
 		{
 			firstZero = 0;
 
-			for (unsigned char* c = (unsigned char*) &x; c < (unsigned char*) (&x + 1); c++)
-				if (nonBytewiseZero = *c)
+			for(unsigned char* c = (unsigned char*) &x; c < (unsigned char*) (&x + 1); c++)
+				if(nonBytewiseZero = *c)
 					break;
 		}
 
-		if (!nonBytewiseZero)
+		if(!nonBytewiseZero)
 			return (T*) memset(a, 0, n * sizeof(T));
 	}
 
 	T* a_i = a + n;
-	while (a < a_i)
+	while(a < a_i)
 		*--a_i = (T) x;
 	return a;
 }
@@ -155,54 +155,89 @@ T* arr_set(T* a, size_t n, U x)
 template<typename T>
 T** arr_set(T** a, size_t n, void* x)
 {
-	if (x)
+	if(x)
 		throw invalid_argument("arr_set: Only null can be used as a void pointer value.");
 	return (T**) memset(a, 0, n * sizeof(T*));
 }
 
-#if __cplusplus < STD_CPP11 /* C++11 */
-// This should work mostly but can be improved.
-#define INTPTR_T long long
-#define INTPTR_T_STR "long long"
-#define UINTPTR_T unsigned long long
-#define UINTPTR_T_STR "unsigned long long"
+//#if __cplusplus < STD_CPP11 /* C++11 */
+//// long long should work most places but can be improved.
+//#define INTPTR_T long long
+//#define UINTPTR_T unsigned long long
+//
+//#else
+//
+//#define INTPTR_T intptr_t
+//#define UINTPTR_T uintptr_t
+//
+//#endif /* __cplusplus < 201103L /* C++11) */
 
-#else
+template<typename T>
+T** arr_set(T** a, size_t n, signed char x)
+{
+	return arr_set(a, n, (long long)x);
+}
 
-#define INTPTR_T intptr_t
-#define INTPTR_T_STR "intptr_t"
-#define UINTPTR_T uintptr_t
-#define UINTPTR_T_STR "uintptr_t"
+template<typename T>
+T** arr_set(T** a, size_t n, short x)
+{
+	return arr_set(a, n, (long long)x);
+}
 
-#endif /* __cplusplus < 201103L /* C++11) */
+template<typename T>
+T** arr_set(T** a, size_t n, int x)
+{
+	return arr_set(a, n, (long long)x);
+}
 
 template<typename T>
 T** arr_set(T** a, size_t n, long x)
 {
-	if (x)
-		throw invalid_argument("arr_set: Only (" INTPTR_T_STR ")0 can be used as an implicit integer pointer value.");
-	return (T**) memset(a, 0, n * sizeof(T*));
+	return arr_set(a, n, (long long)x);
 }
 
 template<typename T>
 T** arr_set(T** a, size_t n, long long x)
 {
-	if (x)
-		throw invalid_argument("arr_set: Only (" UINTPTR_T_STR ")0 can be used as an implicit integer pointer value.");
+	if(x)
+		throw invalid_argument("arr_set: Only 0 can be used as an implicit integer pointer value.");
 	return (T**) memset(a, 0, n * sizeof(T*));
 }
 
-#undef INTPTR_T intptr_t
-#undef INTPTR_T_STR "intptr_t"
-#undef UINTPTR_T uintptr_t
-#undef UINTPTR_T_STR "uintptr_t"
-//#endif /* __macros_and_parameters_h_ */
+template<typename T>
+T** arr_set(T** a, size_t n, unsigned char x)
+{
+	return arr_set(a, n, (unsigned long long)x);
+}
 
-//#ifdef LARGE_INTS
-//#define int long_int
-//#endif
+template<typename T>
+T** arr_set(T** a, size_t n, unsigned short x)
+{
+	return arr_set(a, n, (unsigned long long)x);
+}
 
-//#endif /* __cplusplus < 201103L /* C++11 */
+template<typename T>
+T** arr_set(T** a, size_t n, unsigned int x)
+{
+	return arr_set(a, n, (unsigned long long)x);
+}
+
+template<typename T>
+T** arr_set(T** a, size_t n, unsigned long x)
+{
+	return arr_set(a, n, (unsigned long long)x);
+}
+
+template<typename T>
+T** arr_set(T** a, size_t n, unsigned long long x)
+{
+	if(x)
+		throw invalid_argument("arr_set: Only 0 can be used as an implicit integer pointer value.");
+	return arr_set(a, n, 0LL);
+}
+
+//#undef INTPTR_T
+//#undef UINTPTR_T
 
 /*
  * New @new operators encapsulating the functionality of
@@ -251,21 +286,21 @@ size_t findmaxlte(T* a, size_t n, U x)
 	n--;
 	size_t l = 0, m = n / 2, r = n;
 	T z;
-	if (!areOfSameType(a, x))
+	if(!areOfSameType(a, x))
 		z = x;
 	T& y = (areOfSameType(a, x)) ? x : z;
-	while (l < m)
+	while(l < m)
 	{
-		if (a[m] <= y)
+		if(a[m] <= y)
 			l = m;
 		else
 			r = m;
 
 		m = (l + r) / 2;
 	}
-	if (l == 0)
+	if(l == 0)
 		return -(y < a[0]);
-	if (r == n)
+	if(r == n)
 		return r - (y < a[n]);
 	return l;
 }
@@ -287,7 +322,13 @@ inline long double distancel(T* x[], U* y[], size_t n)
 template<typename T>
 inline T square(T x)
 {
-	return x *= x;
+	return x * x;
+}
+
+template<typename T>
+inline T cube(T x)
+{
+	return x * x * x;
 }
 
 /*
@@ -299,7 +340,7 @@ T arr_sum(T* x, const size_t n)
 {
 	T sum = 0;
 	const T* const x_n = x + n;
-	while (x < x_n)
+	while(x < x_n)
 		sum += *x++;
 	return sum;
 }
@@ -310,14 +351,14 @@ T* arr_cumsum(T* x, size_t n, U initialSum)
 {
 	const T* x_n = x + n;
 
-	if (areOfSameType(x, initialSum) || initialSum)
+	if(areOfSameType(x, initialSum) || initialSum)
 	{
 		T sum = initialSum;
-		while (x < x_n)
+		while(x < x_n)
 			sum = (*x++ += sum);
 	}
 	else
-		while (x < x_n)
+		while(x < x_n)
 			initialSum = (*x++ += initialSum);
 
 	return x - n;
@@ -330,27 +371,27 @@ T* arr_cumsum(T* dest, U* x, size_t n, V initialSum)
 {
 	const T* x_n = x + n;
 
-	if (areOfSameType(dest, x))
+	if(areOfSameType(dest, x))
 	{
-		if (x == dest)
+		if(x == dest)
 			return arr_cumsum(dest, n, initialSum);
 
-		if (x < dest && dest < x_n)
+		if(x < dest && dest < x_n)
 		{
 			arr_cpy(dest, x, n);
 			return arr_cumsum(dest, n, initialSum);
 		}
 	}
 
-	if (areOfSameType(x, initialSum) || initialSum == 0)
+	if(areOfSameType(x, initialSum) || initialSum == 0)
 	{
 		U sum = initialSum;
-		while (x < x_n)
+		while(x < x_n)
 			*dest++ = (sum += *x++);
 		return dest - n;
 	}
 
-	while (x < x_n)
+	while(x < x_n)
 		*dest++ = (initialSum += *x++);
 	return dest - n;
 }
@@ -377,7 +418,7 @@ T* arr_cumsum(T* dest, U* x, size_t n, V initialSum)
 // y := x+y
 // no overlapping if T != U
 template<typename T, typename U>
-T* arr_xpy(T* dest, const U* x, const size_t n)
+T* arr_xpy(T* dest, U* x, const size_t n)
 {
 	ARR_LINOPBODY(arr_ax(dest, n, 2), *--dest += *--x_n, *dest++ += *x++)
 }
@@ -386,23 +427,23 @@ T* arr_xpy(T* dest, const U* x, const size_t n)
 template<typename T, typename U>
 T* arr_ax(T* x, const size_t n, const U a)
 {
-	if (a == 1)
+	if(a == 1)
 		return x;
-	if (a == 0)
+	if(a == 0)
 		return arr_set(x, n, (T) 0);
-	U* x_n = x + n;
-	while (x < x_n)
+	T* x_n = x + n;
+	while(x < x_n)
 		*--x_n *= a;
 	return x;
 }
 
 // dest := a*x
 template<typename T, typename U, typename V>
-T* arr_ax(T* dest, const U* x, const size_t n, const V a)
+T* arr_ax(T* dest, U* x, const size_t n, const V a)
 {
-	if (a == 0)
+	if(a == 0)
 		return arr_set(dest, n, 0);
-	if (a == 1)
+	if(a == 1)
 		return arr_cpy(dest, x, n);
 
 	ARR_LINOPBODY(arr_ax(x, n, a), *--dest = a * *--x, *dest++ = a * *x++)
@@ -411,11 +452,11 @@ T* arr_ax(T* dest, const U* x, const size_t n, const V a)
 // y := a*x + y
 //no overlapping if T != U
 template<typename T, typename U, typename V>
-T* arr_axpy(T* dest, const U* x, const size_t n, const V a)
+T* arr_axpy(T* dest, U* x, const size_t n, const V a)
 {
-	if (a == 0)
+	if(a == 0)
 		return dest;
-	if (a == 1)
+	if(a == 1)
 		return arr_xpy(dest, x, n);
 
 	ARR_LINOPBODY(arr_ax(dest, n, a + 1), *--dest += a * *--x_n, *dest++ += a * (*x++))
@@ -426,11 +467,11 @@ T* arr_axpy(T* dest, const U* x, const size_t n, const V a)
 template<typename T, typename U, typename V, typename W>
 T* arr_axpby(T* dest, U* x, const size_t n, const V a, const W b)
 {
-	if (b == 0)
+	if(b == 0)
 		return arr_axy(dest, x, n, a);
-	if (a == 0)
+	if(a == 0)
 		return arr_ax(dest, n, b);
-	if (b == 1)
+	if(b == 1)
 		return arr_axpy(dest, x, n, a);
 
 	ARR_LINOPBODY(arr_ax(x, n, a + b),
@@ -578,98 +619,98 @@ inline MPI_Datatype getMPI_Datatype()
 #endif
 
 #ifdef MPI_CHAR
-	if (areOfSameType((T) 0, (char) 0))
+	if(areOfSameType((T) 0, (char) 0))
 		return MPI_CHAR;
 #endif
 
 #ifdef MPI_DOUBLE
-	if (areOfSameType((T) 0, (double) 0))
+	if(areOfSameType((T) 0, (double) 0))
 		return MPI_DOUBLE;
 #endif
 
 #ifdef MPI_FLOAT
-	if (areOfSameType((T) 0, (float) 0))
+	if(areOfSameType((T) 0, (float) 0))
 		return MPI_FLOAT;
 #endif
 
 #ifdef MPI_INT
-	if (areOfSameType((T) 0, (int) 0))
+	if(areOfSameType((T) 0, (int) 0))
 		return MPI_INT;
 #endif
 
 #ifdef MPI_LONG
-	if (areOfSameType((T) 0, (long) 0))
+	if(areOfSameType((T) 0, (long) 0))
 		return MPI_LONG;
 #endif
 
 #ifdef MPI_LONG_DOUBLE
-	if (areOfSameType((T) 0, (long double) 0))
+	if(areOfSameType((T) 0, (long double) 0))
 		return MPI_LONG_DOUBLE;
 #endif
 
 #ifdef MPI_LONG_INT
-	if (areOfSameType((T) 0, (long int) 0))
+	if(areOfSameType((T) 0, (long int) 0))
 		return MPI_LONG_INT;
 #endif
 
 #ifdef MPI_LONG_LONG
-	if (areOfSameType((T) 0, (long long) 0))
+	if(areOfSameType((T) 0, (long long) 0))
 		return MPI_LONG_LONG;
 #endif
 
 #ifdef MPI_LONG_LONG_INT
-	if (areOfSameType((T) 0, (long long int) 0))
+	if(areOfSameType((T) 0, (long long int) 0))
 		return MPI_LONG_LONG_INT;
 #endif
 
 #ifdef MPI_SHORT
-	if (areOfSameType((T) 0, (short) 0))
+	if(areOfSameType((T) 0, (short) 0))
 		return MPI_SHORT;
 #endif
 
 #ifdef MPI_SHORT_INT
-	if (areOfSameType((T) 0, (short int) 0))
+	if(areOfSameType((T) 0, (short int) 0))
 		return MPI_SHORT_INT;
 #endif
 
 #ifdef MPI_SIGNED_CHAR
-	if (areOfSameType((T) 0, (signed char) 0))
+	if(areOfSameType((T) 0, (signed char) 0))
 		return MPI_SIGNED_CHAR;
 #endif
 
 #ifdef MPI_UNSIGNED
-	if (areOfSameType((T) 0, (unsigned) 0))
+	if(areOfSameType((T) 0, (unsigned) 0))
 		return MPI_UNSIGNED;
 #endif
 
 #ifdef MPI_UNSIGNED_CHAR
-	if (areOfSameType((T) 0, (unsigned char) 0))
+	if(areOfSameType((T) 0, (unsigned char) 0))
 		return MPI_UNSIGNED_CHAR;
 #endif
 
 #ifdef MPI_UNSIGNED_LONG
-	if (areOfSameType((T) 0, (unsigned long) 0))
+	if(areOfSameType((T) 0, (unsigned long) 0))
 		return MPI_UNSIGNED_LONG;
 #endif
 
 #ifdef MPI_UNSIGNED_LONG_LONG
-	if (areOfSameType((T) 0, (signed long long) 0))
+	if(areOfSameType((T) 0, (signed long long) 0))
 		return MPI_UNSIGNED_LONG_LONG;
 #endif
 
 #ifdef MPI_UNSIGNED_SHORT
-	if (areOfSameType((T) 0, (unsigned short) 0))
+	if(areOfSameType((T) 0, (unsigned short) 0))
 		return MPI_UNSIGNED_SHORT;
 #endif
 
 #ifdef MPI_WCHAR
-	if (areOfSameType((T) 0, (wchar_t) 0))
+	if(areOfSameType((T) 0, (wchar_t) 0))
 		return MPI_WCHAR;
 #endif
 
 #ifdef __cplusplus
 #ifdef MPI_CXX_BOOL
-	if (areOfSameType((T) 0, (bool) 0))
+	if(areOfSameType((T) 0, (bool) 0))
 		return MPI_CXX_BOOL;
 #endif
 //#ifdef MPI_CXX_DOUBLE_COMPLEX

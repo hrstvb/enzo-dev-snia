@@ -8,34 +8,34 @@
 /
 /  PURPOSE:  MHDBlast Test is a general purpose 2 state problem initializer
 /
-/  PARAMETERS:   
-/ 
+/  PARAMETERS:
+/
 /       MHDBlastInitStyle  Shape of discontinuity
-/                          0 = sphere: 
-/                          1,2,3=rectangular slice along x, y,z 
-/                          40,41,42=cylander along x,y,z:  
-/                          5,6,7,8 = Index Tests: 10*i + 100*j + 1000*k, i,j,k 
+/                          0 = sphere:
+/                          1,2,3=rectangular slice along x, y,z
+/                          40,41,42=cylander along x,y,z:
+/                          5,6,7,8 = Index Tests: 10*i + 100*j + 1000*k, i,j,k
 /
 /
-/       MHDBlastCenter     Center in spatial units. 
-/       MHDBlastRadius     in space units OF THE LONGEST AXIS, 
-/                          MHDBlastInitStyle = 1,2,3 the width of the slab 
+/       MHDBlastCenter     Center in spatial units.
+/       MHDBlastRadius     in space units OF THE LONGEST AXIS,
+/                          MHDBlastInitStyle = 1,2,3 the width of the slab
 /                          MHDBlastInitStyle = 40,41,42 the radius of the infinite cylander
 /                          MHDBlastInitStyle = 0, radius of sphere
 /
-/       Density, Pressure, Magnetic Field, Velocity can be set with the following.  
+/       Density, Pressure, Magnetic Field, Velocity can be set with the following.
 /       For all fields, one side of the discontinuity is denoted A, one is B.
-/       MHDBlastD[A,B] 
-/       MHDBlastVelocity[A,B] 
+/       MHDBlastD[A,B]
+/       MHDBlastVelocity[A,B]
 /       MHDBlastB[A,B]
 /       MHDBlastGasEnergy[A,B]
 /       MHDBlastP[A,B]   (Gas energy is checked first, then pressure)
-/       
+/
 /       Fields may be perturbed to seed instabilities or linear characteristic advection using
 /       the following:
-/       MHDBlastPerturbAmplitude  
-/       MHDBlastPerturbWavelength     
-/       MHDBlastPerturbMethod    
+/       MHDBlastPerturbAmplitude
+/       MHDBlastPerturbWavelength
+/       MHDBlastPerturbMethod
 /                               1:  white noise in the velocity
 /                               2:  plane symmetric noise in the velocity
 /                               7:  plane symmetric, energy preserving
@@ -84,7 +84,7 @@ Code flow:
 1.) Declare/Define Defaults for  parameters.
 2.) Read parameters from file.
 3.) Calculate TotalEnergy from quantity given (options are Total Energy, Gas Energy, Pressure.)
-4.) Set up data labels, units.  
+4.) Set up data labels, units.
 5.) Declare Hierarchy Object.
 6.) Define linked list
 7.) Call initializer on each level.
@@ -103,8 +103,8 @@ int MHDBlastInitialize(FILE *fptr, FILE *Outfptr, HierarchyEntry &TopGrid,
   //
   //
   // Labels and Units.  (For IO.)
-  // 
-  
+  //
+
   char *DensName = "Density";
   char *TEName = "TotalEnergy";
   char *Vel1Name = "x-velocity";
@@ -115,8 +115,8 @@ int MHDBlastInitialize(FILE *fptr, FILE *Outfptr, HierarchyEntry &TopGrid,
   char *ByName = "By";
   char *BzName = "Bz";
   char *PhiName = "Phi";
-  
-  
+
+
 
   // General control variable
   int dim;
@@ -151,12 +151,12 @@ int MHDBlastInitialize(FILE *fptr, FILE *Outfptr, HierarchyEntry &TopGrid,
 
   FLOAT MHDBlastSubgridLeft[3]  = {DomainLeftEdge[0] ,DomainLeftEdge[1] ,DomainLeftEdge[2]};
   FLOAT MHDBlastSubgridRight[3] = {DomainRightEdge[0],DomainRightEdge[1],DomainRightEdge[2]};
-  
+
   //Obsolete variable names.
   float Pressure0, Pressure1;
   float B0[3],B1[3],Energy0, Energy1;
   float Density0,Density1, GasEnergy0, GasEnergy1, TotalEnergy0,TotalEnergy1;
-    
+
   //
   // Read Parameter File.
   //
@@ -168,7 +168,7 @@ int MHDBlastInitialize(FILE *fptr, FILE *Outfptr, HierarchyEntry &TopGrid,
     //I changed some nomenclature, to make things easier on myself
     //This checks for old nominclature.
     ObsFlag = 0;
-    
+
     ret += sscanf(line, "MHDBlastDA = %"PSYM, &DensityA);
     ret += sscanf(line, "MHDBlastDB = %"PSYM, &DensityB);
 
@@ -179,7 +179,7 @@ int MHDBlastInitialize(FILE *fptr, FILE *Outfptr, HierarchyEntry &TopGrid,
 		  VelocityA, VelocityA+1,VelocityA+2);
     ret += sscanf(line, "MHDBlastVelocityB = %"PSYM" %"PSYM" %"PSYM,
 		  VelocityB, VelocityB+1,VelocityB+2);
-    
+
     Pflag += sscanf(line, "MHDBlastPA = %"PSYM, &Pressure0);
     Pflag += sscanf(line, "MHDBlastPB = %"PSYM, &Pressure1);
 
@@ -188,16 +188,16 @@ int MHDBlastInitialize(FILE *fptr, FILE *Outfptr, HierarchyEntry &TopGrid,
 
     TotalFlag += sscanf(line, "MHDBlastTotalEnergyA = %"PSYM, &TotalEnergyA);
     TotalFlag += sscanf(line, "MHDBlastTotalEnergyB = %"PSYM, &TotalEnergyB);
-    
+
     metal_ret += sscanf(line, "MHDBlastMetalDensityA = %"PSYM, &MetalDensityA);
     metal_ret += sscanf(line, "MHDBlastMetalDensityB = %"PSYM, &MetalDensityB);
-    ret += sscanf(line, "MHDBlastMetalOffsetInX = %"PSYM, &MetalOffsetInX); 
+    ret += sscanf(line, "MHDBlastMetalOffsetInX = %"PSYM, &MetalOffsetInX);
     //shift the metal density by this fraction of the box.
     if( metal_ret > 0){
         ret++;
         UseMetal = TRUE;
     }
-    
+
     ////
 
     ret += sscanf(line, "MHDBlastRadius = %"PSYM, &Radius);
@@ -225,22 +225,22 @@ int MHDBlastInitialize(FILE *fptr, FILE *Outfptr, HierarchyEntry &TopGrid,
   // nCellsL and nCellsR are the number of cells from the domain left edge.
 
   int nCellsL[3],nCellsR[3];
-  int nCells[3] = {0,0,0};  
+  int nCells[3] = {0,0,0};
   for( dim = 0; dim < 3; dim++){
     nCellsL[dim]= nint(( MHDBlastSubgridLeft[dim] - DomainLeftEdge[dim] )/
 		     (DomainRightEdge[dim]-DomainLeftEdge[dim])*MetaData.TopGridDims[dim]);
 
     MHDBlastSubgridLeft[dim]=max( nCellsL[dim]*(DomainRightEdge[dim]-DomainLeftEdge[dim])/MetaData.TopGridDims[dim],
 				  DomainLeftEdge[dim]);
-    
+
     nCellsR[dim] = nint(( MHDBlastSubgridRight[dim] - DomainLeftEdge[dim] )/
 			(DomainRightEdge[dim]-DomainLeftEdge[dim])*MetaData.TopGridDims[dim]);
-    
+
     MHDBlastSubgridRight[dim] = min( nCellsR[dim]*(DomainRightEdge[dim]-DomainLeftEdge[dim])/MetaData.TopGridDims[dim],
 				     DomainRightEdge[dim]);
     nCells[dim] =  nint( (MHDBlastSubgridRight[dim]-MHDBlastSubgridLeft[dim])/
       (DomainRightEdge[dim]-DomainLeftEdge[dim])*MetaData.TopGridDims[dim] );
-    
+
   }
 
   if( RefineOnStartup == 1 ){
@@ -250,7 +250,7 @@ int MHDBlastInitialize(FILE *fptr, FILE *Outfptr, HierarchyEntry &TopGrid,
   }
 
   // Long Dimension is used to convert the radius from Physical units to Grid Units;
-  // We want the axis, though, so figure out which is the longest edge (in Grid Units) 
+  // We want the axis, though, so figure out which is the longest edge (in Grid Units)
   // then figure out which one it is.  A more elegant solution would be welcomed.
 
   int LongDimension = 0;
@@ -269,17 +269,17 @@ int MHDBlastInitialize(FILE *fptr, FILE *Outfptr, HierarchyEntry &TopGrid,
 
 
   if( Pflag > 0 ) {
-      GasEnergyA = Pressure0/((Gamma-1)*DensityA); 
-      GasEnergyB = Pressure1/((Gamma-1)*DensityB); 
+      GasEnergyA = Pressure0/((Gamma-1)*DensityA);
+      GasEnergyB = Pressure1/((Gamma-1)*DensityB);
   }
-     
+
 
   //The variable stored is Gas+Kinetic+Magnetic Energy.
   if( GasFlag > 0 || Pflag > 0){
-      Energy0 = GasEnergyA + 
+      Energy0 = GasEnergyA +
 	0.5*(VelocityA[0]*VelocityA[0] + VelocityA[1]*VelocityA[1] + VelocityA[2]*VelocityA[2])
 	+0.5*(BA[0]*BA[0]+BA[1]*BA[1]+BA[2]*BA[2])/DensityA;
-      Energy1 = GasEnergyB + 
+      Energy1 = GasEnergyB +
 	0.5*(VelocityB[0]*VelocityB[0] + VelocityB[1]*VelocityB[1] + VelocityB[2]*VelocityB[2])
 	+0.5*(BB[0]*BB[0]+BB[1]*BB[1]+BB[2]*BB[2])/DensityB;
   }
@@ -289,7 +289,14 @@ int MHDBlastInitialize(FILE *fptr, FILE *Outfptr, HierarchyEntry &TopGrid,
     Energy1=TotalEnergyB;
   }
 
-
+  if(BurningDiffusionRateReduced<=0)
+	  BurningDiffusionRateReduced = BurningDiffusionRate
+	  	  / (DomainRightEdge[0] - DomainLeftEdge[0])
+	  	  * MetaData.TopGridDims[0];
+  if(BurningReactionRateReduced<=0)
+	  BurningReactionRateReduced = BurningReactionRate
+  	  	  * (DomainRightEdge[0] - DomainLeftEdge[0])
+		  / MetaData.TopGridDims[0];
   //
   // Initialize the top grid.  Cant' decide if I want a uniform grid here or MHDBlastInitialize.
   //
@@ -297,7 +304,7 @@ int MHDBlastInitialize(FILE *fptr, FILE *Outfptr, HierarchyEntry &TopGrid,
   if( TopGrid.GridData->MHDBlastInitializeGrid(DensityA, DensityB,
 					       Energy0,  Energy1,
 					       VelocityA, VelocityB,
-					       BA, BB, 
+					       BA, BB,
                            MetalDensityA, MetalDensityB, UseMetal,MetalOffsetInX,
 					       Radius, MHDBlastCenter, LongDimension,
 					       PerturbAmplitude, PerturbMethod,PerturbWavelength,
@@ -308,37 +315,37 @@ int MHDBlastInitialize(FILE *fptr, FILE *Outfptr, HierarchyEntry &TopGrid,
   // Generate Hierarchy.
   //
   if( RefineOnStartup == 1 ){
-    //Create as many subgrids as there are refinement levels 
-    //needed to resolve the initial explosion region upon the start-up. 
-    
+    //Create as many subgrids as there are refinement levels
+    //needed to resolve the initial explosion region upon the start-up.
+
     HierarchyEntry ** Subgrid;
-    if (MaximumRefinementLevel > 0) 
+    if (MaximumRefinementLevel > 0)
       Subgrid   = new HierarchyEntry*[MaximumRefinementLevel];
-    
+
     //
     //Create new HierarchyEntries.  Note that 'lev' loops are only for the SUBGRIDS.
     //
-    
+
     int lev;
     int NumberOfSubgridZones[3], SubgridDims[3];
-    
-    for (lev = 0; lev < MaximumRefinementLevel; lev++) 
+
+    for (lev = 0; lev < MaximumRefinementLevel; lev++)
       Subgrid[lev] = new HierarchyEntry;
-    
+
     for (lev = 0; lev < MaximumRefinementLevel; lev++) {
-      
+
       //Calculate number of cells on this level.
-      
+
       for (dim = 0; dim < MetaData.TopGridRank; dim++)
 	NumberOfSubgridZones[dim] = nCells[dim]*POW(RefineBy, lev + 1);
-      
-      fprintf(stderr,"uncle MHDBlast:: Level[%"ISYM"]: NumberOfSubgridZones[0] = %"ISYM"\n", lev+1, 
+
+      fprintf(stderr,"uncle MHDBlast:: Level[%"ISYM"]: NumberOfSubgridZones[0] = %"ISYM"\n", lev+1,
 	      NumberOfSubgridZones[0]);
-      
+
       if (NumberOfSubgridZones[0] > 0) {
-	
-	// fill them out 
-	
+
+	// fill them out
+
 	if (lev == 0)
 	  TopGrid.NextGridNextLevel  = Subgrid[0];
 	Subgrid[lev]->NextGridThisLevel = NULL;
@@ -350,65 +357,65 @@ int MHDBlastInitialize(FILE *fptr, FILE *Outfptr, HierarchyEntry &TopGrid,
 	  Subgrid[lev]->ParentGrid        = &TopGrid;
 	else
 	  Subgrid[lev]->ParentGrid        = Subgrid[lev-1];
-	
-	//  compute the dimensions and left/right edges for the subgrid 
-	
+
+	//  compute the dimensions and left/right edges for the subgrid
+
 	for (dim = 0; dim < MetaData.TopGridRank; dim++) {
 	  SubgridDims[dim] = NumberOfSubgridZones[dim] + 2*NumberOfGhostZones;
 	}
-	
-	// create a new subgrid and initialize it 
-	
+
+	// create a new subgrid and initialize it
+
 	Subgrid[lev]->GridData = new grid;
 	Subgrid[lev]->GridData->InheritProperties(TopGrid.GridData);
 	Subgrid[lev]->GridData->PrepareGrid(MetaData.TopGridRank, SubgridDims,
 					    MHDBlastSubgridLeft,MHDBlastSubgridRight, 0);
-	
+
 
 	if( Subgrid[lev]->GridData->MHDBlastInitializeGrid(DensityA, DensityB,
 							   Energy0,  Energy1,
 							   VelocityA, VelocityB,
-							   BA, BB, 
+							   BA, BB,
                                MetalDensityA, MetalDensityB, UseMetal,MetalOffsetInX,
 							   Radius, MHDBlastCenter, LongDimension,
 							   PerturbAmplitude, PerturbMethod,PerturbWavelength,
 							   InitStyle) == FAIL )
 	  ENZO_FAIL("MHDBlastInitialize: Error in MHDBlastInitializeGrid.");
-	
+
       }//NumberOfSubgridZones > 0
       else{
 	printf("SedovBlast: single grid start-up.\n");
       }
-      
+
     }//level
-    
+
     // Make sure each grid has the best data with respect to the finer grids.
     // This projection juggle is to ensure that, regardless of how the hierarchy is evolved, the field gets projected
     // properly here.
-    
+
     int MHD_ProjectEtmp = MHD_ProjectE;
     int MHD_ProjectBtmp = MHD_ProjectB;
     MHD_ProjectE=FALSE;
     MHD_ProjectB=TRUE;
-    
+
     for (lev = MaximumRefinementLevel - 1; lev > 0; lev--)
       if (Subgrid[lev]->GridData->ProjectSolutionToParentGrid(
 							      *(Subgrid[lev-1]->GridData))
-	  == FAIL) 
+	  == FAIL)
 	ENZO_FAIL("Error in ProjectSolutionToParentGrid.");
-    
-    // set up the root grid 
-    
+
+    // set up the root grid
+
     if (MaximumRefinementLevel > 0) {
       if (Subgrid[0]->GridData->ProjectSolutionToParentGrid(*(TopGrid.GridData))
-	  == FAIL) 
+	  == FAIL)
 	ENZO_FAIL("Error in ProjectSolutionToParentGrid.");
     }
-    
+
     // Put the projection options back to the inital.
     MHD_ProjectE = MHD_ProjectEtmp;
     MHD_ProjectB = MHD_ProjectBtmp;
-    
+
   }//RefineOnStartup
   int i=0, j=0;
 
@@ -441,7 +448,7 @@ int MHDBlastInitialize(FILE *fptr, FILE *Outfptr, HierarchyEntry &TopGrid,
   if(DualEnergyFormalism ){
     char *GEName = "GasEnergy";
     DataLabel[i++] = GEName;
-    DataUnits[j++] = NULL;   
+    DataUnits[j++] = NULL;
   }
 
   if (WritePotential){
@@ -452,20 +459,20 @@ int MHDBlastInitialize(FILE *fptr, FILE *Outfptr, HierarchyEntry &TopGrid,
       DataLabel[i++] = "Metal_Density";
       DataUnits[j++] = NULL;
   }
-  
+
   if ( UseMHDCT ){
   MHDLabel[0] = "BxF";
   MHDLabel[1] = "ByF";
   MHDLabel[2] = "BzF";
-  
+
   MHDeLabel[0] = "Ex";
   MHDeLabel[1] = "Ey";
   MHDeLabel[2] = "Ez";
-  
+
   MHDUnits[0] = "None";
   MHDUnits[1] = "None";
   MHDUnits[2] = "None";
-  
+
   MHDeUnits[0] = "None";
   MHDeUnits[1] = "None";
   MHDeUnits[2] = "None";

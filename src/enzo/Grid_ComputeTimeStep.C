@@ -4,9 +4,8 @@
 /
 /  written by: Greg Bryan
 /  date:       November, 1994
-/  modified1: 2010 Tom Abel, added MHD part
+/  modified1: 2010 Tom Abel, added MHD part 
 /  modified2: 2015 Boyan Hristov added energy growth and burning fraction growth.
-/  modified3: 2018 Boyan Hristov added dt limit by dtDataDump.
 /
 /  PURPOSE:
 /
@@ -14,12 +13,12 @@
 /    dt   - timestep
 /
 ************************************************************************/
-
+ 
 // Compute the timestep from all the constrains for this grid.
 //
 // Somebody fix the error handling in this routine! please.
 //
-
+ 
 #include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
@@ -35,9 +34,9 @@
 #include "hydro_rk/EOS.h"
 #include "hydro_rk/tools.h"
 #include "phys_constants.h"
-
+ 
 /* function prototypes */
-
+ 
 int CosmologyComputeExpansionTimestep(FLOAT time, float *dtExpansion);
 int CosmologyComputeExpansionFactor(FLOAT time, FLOAT *a, FLOAT *dadt);
 int GetUnits(float *DensityUnits, float *LengthUnits,
@@ -51,7 +50,7 @@ extern "C" void PFORTRAN_NAME(calc_dt)(
                              float *vgz, float *gamma, int *ipfree, float *aye,
                   float *d, float *p, float *u, float *v, float *w,
 			     float *dt, float *dtviscous);
-
+ 
 extern "C" void
 FORTRAN_NAME(mhd_dt)(float *bxc, float *byc, float *bzc,
                      float *vx, float *vy, float *vz,
@@ -61,19 +60,19 @@ FORTRAN_NAME(mhd_dt)(float *bxc, float *byc, float *bzc,
                      int *i1, int *i2,
                      int *j1, int *j2,
                      int *k1, int *k2, float* eng);
-
+ 
 float grid::ComputeTimeStep()
 {
-
+ 
   /* Return if this doesn't concern us. */
-
+ 
   if (ProcessorNumber != MyProcessorNumber)
     return huge_number;
-
+ 
   this->DebugCheck("ComputeTimeStep");
-
+ 
   /* initialize */
-
+ 
   float dt, dtTemp;
   float dtBaryons      = huge_number;
   float dtViscous      = huge_number;
@@ -88,31 +87,31 @@ float grid::ComputeTimeStep()
   //float dtEnergyGrowth    = huge_number; //[BH]
   //float dtBurnedFractioin = huge_number; //[BH]
   int dim, i, j, k, index, result;
-
+ 
   /* Compute the field size. */
-
+ 
   int size = 1;
   for (dim = 0; dim < GridRank; dim++)
     size *= GridDimension[dim];
-
+ 
   /* If using comoving coordinates, compute the expansion factor a.  Otherwise,
      set it to one. */
-
+ 
   FLOAT a = 1, dadt;
   if (ComovingCoordinates)
     CosmologyComputeExpansionFactor(Time, &a, &dadt);
   float afloat = float(a);
-
+ 
   /* 1) Compute Courant condition for baryons. */
-
+ 
   if (NumberOfBaryonFields > 0 && (HydroMethod != HD_RK) && (HydroMethod != MHD_RK)) {
-
+ 
     /* Find fields: density, total energy, velocity1-3. */
 
-    int DensNum, GENum, TENum, Vel1Num, Vel2Num, Vel3Num,
+    int DensNum, GENum, TENum, Vel1Num, Vel2Num, Vel3Num, 
         B1Num, B2Num, B3Num, PhiNum;
-    this->IdentifyPhysicalQuantities(DensNum, GENum, Vel1Num, Vel2Num, Vel3Num,
-                                     TENum, B1Num, B2Num, B3Num, PhiNum);
+    this->IdentifyPhysicalQuantities(DensNum, GENum, Vel1Num, Vel2Num, Vel3Num, 
+                                     TENum, B1Num, B2Num, B3Num, PhiNum); 
 
     /* For one-zone free-fall test, just compute free-fall time. */
     if (ProblemType == 63) {
@@ -128,8 +127,8 @@ float grid::ComputeTimeStep()
 
 	    index = i + j*GridDimension[0] + k*GridDimension[0]*GridDimension[1];
 
-	    dt = min(dt, POW(((3 * pi) /
-			      (32 * GravitationalConstant *
+	    dt = min(dt, POW(((3 * pi) / 
+			      (32 * GravitationalConstant * 
 			       BaryonField[DensNum][index] *
 			       (1 - force_factor[index]))), 0.5));
 	  }
@@ -140,20 +139,20 @@ float grid::ComputeTimeStep()
       dt *= TestProblemData.OneZoneFreefallTimestepFraction;
       return dt;
     }
-
+ 
     /* Compute the pressure. */
-
+ 
     float *pressure_field = new float[size];
     this->ComputePressure(Time, pressure_field,0,1); // Note: Force use of CRs to get sound speed correct
-
+ 
 #ifdef UNUSED
     int Zero[3] = {0,0,0}, TempInt[3] = {0,0,0};
     for (dim = 0; dim < GridRank; dim++)
       TempInt[dim] = GridDimension[dim]-1;
 #endif /* UNUSED */
-
+ 
     /* Call fortran routine to do calculation. */
-
+ 
     if( HydroMethod != MHD_Li)
       PFORTRAN_NAME(calc_dt)(&GridRank, GridDimension, GridDimension+1,
 			     GridDimension+2,
@@ -167,7 +166,7 @@ float grid::ComputeTimeStep()
 			     BaryonField[DensNum], pressure_field,
 			     BaryonField[Vel1Num], BaryonField[Vel2Num],
 			     BaryonField[Vel3Num], &dtBaryons, &dtViscous);
-
+ 
 //[BH] TODO debug calculations and print:
 int ii, jj, kk, ll, imin, jmin, kmin, lmin, eqcount=0;
 float cs, tx, ty, tz, dttt, dtttmin = huge_number, eqthreshold=0.1;
@@ -232,7 +231,7 @@ dttt = 1/ ( 1/tx + 1/ty + 1/tz );
 
     if(HydroMethod == MHD_Li){
       /* 1.5) Calculate minimum dt due to MHD: Maximum Fast MagnetoSonic Shock Speed */
-
+      
       //Cosmos nees this, for some reason.
       if(GridRank < 3 ){
 	if( CellWidth[2] == NULL ) CellWidth[2] = new FLOAT;
@@ -245,33 +244,33 @@ dttt = 1/ ( 1/tx + 1/ty + 1/tz );
       int Rank_Hack = 3; //MHD needs a 3d timestep always.
       FORTRAN_NAME(mhd_dt)(BaryonField[B1Num], BaryonField[B2Num], BaryonField[B3Num],
 			   BaryonField[Vel1Num], BaryonField[Vel2Num], BaryonField[Vel3Num],
-			   BaryonField[DensNum], pressure_field, &Gamma, &dtMHD,
+			   BaryonField[DensNum], pressure_field, &Gamma, &dtMHD, 
 			   CellWidth[0], CellWidth[1], CellWidth[2],
 			   GridDimension, GridDimension + 1, GridDimension +2, &Rank_Hack,
 			   GridStartIndex, GridEndIndex,
 			   GridStartIndex+1, GridEndIndex+1,
 			   GridStartIndex+2, GridEndIndex+2, BaryonField[TENum]);
-
+      
       dtMHD *= CourantSafetyNumber;
-      dtMHD *= afloat;
+      dtMHD *= afloat;  
     }//if HydroMethod== MHD_Li
 
     /* Clean up */
-
+ 
     delete [] pressure_field;
-
+ 
     /* Multiply resulting dt by CourantSafetyNumber (for extra safety!). */
-
+ 
     dtBaryons *= CourantSafetyNumber;
-
+ 
   }
 
 
-  if (NumberOfBaryonFields > 0 &&
+  if (NumberOfBaryonFields > 0 && 
       (HydroMethod == HD_RK)) {
 
     int DensNum, GENum, Vel1Num, Vel2Num, Vel3Num, TENum;
-    if (this->IdentifyPhysicalQuantities(DensNum, GENum, Vel1Num, Vel2Num,
+    if (this->IdentifyPhysicalQuantities(DensNum, GENum, Vel1Num, Vel2Num, 
 					 Vel3Num, TENum) == FAIL) {
       fprintf(stderr, "ComputeTimeStep: IdentifyPhysicalQuantities error.\n");
       exit(FAIL);
@@ -330,9 +329,9 @@ dttt = 1/ ( 1/tx + 1/ty + 1/tz );
   // MHD
   if (NumberOfBaryonFields > 0 && HydroMethod == MHD_RK) {
 
-    int DensNum, GENum, TENum, Vel1Num, Vel2Num, Vel3Num,
+    int DensNum, GENum, TENum, Vel1Num, Vel2Num, Vel3Num, 
       B1Num, B2Num, B3Num, PhiNum;
-    if (this->IdentifyPhysicalQuantities(DensNum, GENum, Vel1Num, Vel2Num,
+    if (this->IdentifyPhysicalQuantities(DensNum, GENum, Vel1Num, Vel2Num, 
 					 Vel3Num, TENum, B1Num, B2Num, B3Num, PhiNum) == FAIL)
       ENZO_FAIL("Error in IdentifyPhysicalQuantities.");
 
@@ -412,19 +411,19 @@ dttt = 1/ ( 1/tx + 1/ty + 1/tz );
     //    fprintf(stderr, "ok %g %g %g\n", dt_x,dt_y,dt_z);
     //    if (dtMHD*TimeUnits/yr < 5) {
     //float ca = B_dt/sqrt(rho_dt)*VelocityUnits;
-    //printf("dt=%g, rho=%g, B=%g\n, v=%g, ca=%g, dt=%g", dtMHD*TimeUnits/yr, rho_dt*DensityUnits, B_dt*MagneticUnits,
+    //printf("dt=%g, rho=%g, B=%g\n, v=%g, ca=%g, dt=%g", dtMHD*TimeUnits/yr, rho_dt*DensityUnits, B_dt*MagneticUnits, 
     //    v_dt*VelocityUnits/1e5, ca/1e5, LengthUnits/(dxinv*ca)/yr*CourantSafetyNumber);
     // }
 
   } // HydroMethod = MHD_RK
 
-
+ 
   /* 2) Calculate dt from particles. */
-
+ 
   if (NumberOfParticles > 0) {
-
+ 
     /* Compute dt constraint from particle velocities. */
-
+ 
     for (dim = 0; dim < GridRank; dim++) {
       float dCell = CellWidth[dim][0]*a;
       for (i = 0; i < NumberOfParticles; i++) {
@@ -432,24 +431,24 @@ dttt = 1/ ( 1/tx + 1/ty + 1/tz );
 	dtParticles = min(dtParticles, dtTemp);
       }
     }
-
+ 
     /* Multiply resulting dt by ParticleCourantSafetyNumber. */
-
+ 
     dtParticles *= ParticleCourantSafetyNumber;
-
+ 
   }
-
+ 
 
   /* 3) Find dt from expansion. */
-
+ 
   if (ComovingCoordinates)
     if (CosmologyComputeExpansionTimestep(Time, &dtExpansion) == FAIL) {
       fprintf(stderr, "nudt: Error in ComputeExpansionTimestep.\n");
       exit(FAIL);
     }
-
+ 
   /* 4) Calculate minimum dt due to acceleration field (if present). */
-
+ 
   if (SelfGravity) {
     for (dim = 0; dim < GridRank; dim++)
       if (AccelerationField[dim])
@@ -465,12 +464,12 @@ dttt = 1/ ( 1/tx + 1/ty + 1/tz );
   /* 5) Calculate minimum dt due to thermal conduction. */
 
   if(IsotropicConduction || AnisotropicConduction){
-    if (this->ComputeConductionTimeStep(dtConduction) == FAIL)
+    if (this->ComputeConductionTimeStep(dtConduction) == FAIL) 
       ENZO_FAIL("Error in ComputeConductionTimeStep.\n");
 
-    dtConduction *= float(NumberOfGhostZones);     // for subcycling
+    dtConduction *= float(NumberOfGhostZones);     // for subcycling 
   }
-
+  
   /* 6) Calculate minimum dt due to CR diffusion */
 
   if(CRModel && CRDiffusion ){
@@ -504,12 +503,12 @@ dttt = 1/ ( 1/tx + 1/ty + 1/tz );
       }
     }
     dtCooling *= CoolingTimestepSafetyFactor;
-
+ 
     delete [] cooling_time;
   }
 
   /* 8) calculate minimum timestep */
-
+ 
   dt = min(dtBaryons, dtParticles);
   dt = min(dt, dtMHD);
   dt = min(dt, dtViscous);
@@ -522,7 +521,7 @@ dttt = 1/ ( 1/tx + 1/ty + 1/tz );
 
 #ifdef TRANSFER
 
-  float TemperatureUnits, DensityUnits, LengthUnits,
+  float TemperatureUnits, DensityUnits, LengthUnits, 
     VelocityUnits, TimeUnits, aUnits = 1;
 
   if (GetUnits(&DensityUnits, &LengthUnits, &TemperatureUnits,
@@ -538,7 +537,7 @@ dttt = 1/ ( 1/tx + 1/ty + 1/tz );
   if (RadiationPressure && RadiativeTransfer) {
 
     int RPresNum1, RPresNum2, RPresNum3;
-    if (IdentifyRadiationPressureFields(RPresNum1, RPresNum2, RPresNum3)
+    if (IdentifyRadiationPressureFields(RPresNum1, RPresNum2, RPresNum3) 
 	== FAIL) {
       ENZO_FAIL("Error in IdentifyRadiationPressureFields.");
     }
@@ -549,7 +548,7 @@ dttt = 1/ ( 1/tx + 1/ty + 1/tz );
 					   tiny_number));
 	dtRadPressure = min(dtRadPressure, dtTemp);
       }
-
+    
     if (dtRadPressure < huge_number)
       dtRadPressure *= 0.5;
 
@@ -561,7 +560,7 @@ dttt = 1/ ( 1/tx + 1/ty + 1/tz );
 
   float dtSafetyVelocity = huge_number;
   if (TimestepSafetyVelocity > 0)
-    dtSafetyVelocity = a*CellWidth[0][0] /
+    dtSafetyVelocity = a*CellWidth[0][0] / 
       (TimestepSafetyVelocity*1e5 / VelocityUnits);    // parameter in km/s
 
   dt = min(dt, dtSafetyVelocity);
@@ -570,9 +569,9 @@ dttt = 1/ ( 1/tx + 1/ty + 1/tz );
   /* 10) FLD Radiative Transfer timestep limitation */
   if (RadiativeTransferFLD)
     dt = min(dt, MaxRadiationDt);
-
+  
 #endif /* TRANSFER */
-
+ 
   /* 12) Compute time step from energy growth limits. */			//[BH]
   //if( ComputeEnergyGrowthTimeStep( dEdtParent ) == FAIL )			//[BH]
   //	ENZO_FAIL("Error in ComputeEnergyGrowthTimeStep.\n");			//[BH]
@@ -589,7 +588,7 @@ dttt = 1/ ( 1/tx + 1/ty + 1/tz );
 //  }										//[BH]
 
   /* Debugging info. */
-
+  
   if (debug1) {
     printf("ComputeTimeStep = %"ESYM" (", dt);
     if (HydroMethod != MHD_RK && HydroMethod != MHD_Li && NumberOfBaryonFields > 0)
@@ -617,11 +616,7 @@ dttt = 1/ ( 1/tx + 1/ty + 1/tz );
     //  printf("df = %"ESYM" ", dtBurnedFraction);	//[BH]
     printf(")\n");
   }
-
-//  // The time step shouldn't exceed the dtDataDump or output will be missing.
-//  if(dt>gMetaData.dtDataDump) //[BH]
-//    dt = gMetaData.dtDataDump; //[BH]
-
+ 
   return dt;
 }
 
@@ -642,6 +637,7 @@ int grid::ComputeEnergyGrowthTimeStep( float dEdtParent )				//[BH]
 	float *TE  = BaryonField[ TENum  ];						//[BH]
 
 	float dE, dEMin = huge_number;							//[BH]
+
 	int gridSize = GetGridSize();							//[BH]
 	for(int i = 0; i<gridSize; i++)							//[BH]
 	{										//[BH]
@@ -652,5 +648,22 @@ int grid::ComputeEnergyGrowthTimeStep( float dEdtParent )				//[BH]
 		dEMin = min( dEMin, dE );						//[BH]
 	}										//[BH]
 
+//[BH] int zcounter = 0;
+//[BH] float oldmin, oldmax, oldave;
+//[BH] oldmin = oldmax = oldave = oldTE[0];
+//[BH] for(int i=1; i<gridSize; i++) {
+//[BH] 	if(oldTE[i] < 4e18) zcounter++;
+//[BH] 	if(oldmin > oldTE[i]) oldmin = oldTE[i];
+//[BH] 	if(oldmax < oldTE[i]) oldmax = oldTE[i];
+//[BH] 	oldave += oldTE[i];
+//[BH] }
+//[BH] oldave /= gridSize;
+//[BH] for(int i=1; i<gridSize; i++)
+//[BH] 	if(oldTE[i] < oldave) zcounter++;
+//[BH] 
+//[BH] printf("oldTE < oldave for %d elements of %d. min=%e, max=%e, ave=%e\n", zcounter, gridSize, oldmin, oldmax, oldave); 
+
+
 	dtEnergyGrowth = 2 * EnergyRelativeGrowthLimit * dtFixed * dEMin;		//[BH]
+//[BH] printf("ComputeEnergyGrowthTimeStep, dtEnergyGrowth=%E dEMin=%E limit=%E\n", dtEnergyGrowth, dEMin, EnergyRelativeGrowthLimit); //[BH] TODO
 } //end grid::ComputeEnergyGrowthTimeStep						//[BH]

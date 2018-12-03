@@ -8,8 +8,8 @@
 /  based on: ConductHeat and ComputeConductionTimeStep
 /  (by:  David A. Ventimiglia and Brian O'Sheai, Nov, Dec 2009)
 /
-/  PURPOSE:  Computes the new mass density (Rho_56Ni) due to burning 
-/  diffusion and constant burning rate and updates the total energy 
+/  PURPOSE:  Computes the new mass density (Rho_56Ni) due to burning
+/  diffusion and constant burning rate and updates the total energy
 /  density.
 /  Updates the gas energy if dual energy folrmalism is on.
 /
@@ -18,7 +18,7 @@
 /
 ************************************************************************/
 
-#include <math.h> 
+#include <math.h>
 #include <stdio.h>
 #include "ErrorExceptions.h"
 #include "macros_and_parameters.h"
@@ -35,11 +35,11 @@
 #define MEAN_M_12C_16O_MIX_cgs (( M_12C_cgs + M_16O_cgs ) / 2 )
 #define MEAN_M_12C_16O_MIX_amu (( M_12C_amu + M_16O_amu ) / 2 )
 
-int rangeCutLimiter(float x, float dx, float lowCutoff, float highCutoff, 
+int rangeCutLimiter(float x, float dx, float lowCutoff, float highCutoff,
 			float *xNew, float *dxNew );
-int lowCutLimiter(float x, float dx, float lowCutoff, 
+int lowCutLimiter(float x, float dx, float lowCutoff,
 			float *xNew, float *dxNew );
-int highCutLimiter(float x, float dx, float highCutoff, 
+int highCutLimiter(float x, float dx, float highCutoff,
 			float *xNew, float *dxNew );
 
 
@@ -56,7 +56,7 @@ int grid::DiffuseBurnedFraction(){
   int gridSize = GetGridSize();
 
   float* F    = new float[gridSize];  // Evolving fraction (during the subcycle)
-  float* dFdt = new float[gridSize]; 
+  float* dFdt = new float[gridSize];
 
   int useGE = DualEnergyFormalism && ( HydroMethod != Zeus_Hydro );
 
@@ -64,30 +64,26 @@ int grid::DiffuseBurnedFraction(){
   int TENum       =           FindField( TotalEnergy   , FieldType, NumberOfBaryonFields );
   int GENum       = (useGE) ? FindField( InternalEnergy, FieldType, NumberOfBaryonFields ) : 0;
   int Rho_56NiNum =           FindField( Density_56Ni  , FieldType, NumberOfBaryonFields );
-//  int dQdtNum     =           FindField( QInstantaneous, FieldType, NumberOfBaryonFields );
-//  int QCumulNum   =           FindField( QCumulative   , FieldType, NumberOfBaryonFields );
 
   if ( RhoNum < 0 )         ENZO_FAIL("Grid::DiffuseBurnedFraction: Cannot find density.");
   if ( TENum < 0 )          ENZO_FAIL("Grid::DiffuseBurnedFraction: Cannot find total energy.");
   if ( useGE && GENum < 0 ) ENZO_FAIL("Grid::DiffuseBurnedFraction: Cannot find gas energy.");
   if ( Rho_56NiNum < 0 )    ENZO_FAIL("Grid::DiffuseBurnedFraction: Cannot find Density_56Ni.");
-//  if ( dQdtNum < 0 )        ENZO_FAIL("Grid::DiffuseBurnedFraction: Cannot find QInstantaneous.");
-//  if ( QCumulNum < 0 )      ENZO_FAIL("Grid::DiffuseBurnedFraction: Cannot find QCumulative.");
 
   float *Rho      =           BaryonField[ RhoNum      ];
   float *TE       =           BaryonField[ TENum       ];
   float *GE       = (useGE) ? BaryonField[ GENum       ] : NULL;
   float *Rho_56Ni =           BaryonField[ Rho_56NiNum ];
-//  float *dQdt     =           BaryonField[ dQdtNum     ];
-//  float *QCumul   =           BaryonField[ QCumulNum   ];
 
-  int idx, i,j,k, Nsub, retcode; 
+  int idx, i,j,k, Nsub, retcode;
   int fractionMode;
   float dtSubcycle, dtSoFar;
   float f, df, fNew, dfNew;
   float rho, rho_Ni, rho_CO, n_Ni, n_CO, n_all, f_rho, f_mole;
   float X0, X1, Y0, Y1, X1_old, dX1;
   float Q, TE_new, Q_new_TE, GE_new, Q_new_GE;
+  float diffusionRate = BurningDiffusionRateReduced * CellWidth[0][0];
+  float reactionRate = BurningReactionRateReduced * CellWidth[0][0];
 
   // dtSubcycle = timestep of this subcycle
   // dtSoFar = overall timestep taken in heat equation
@@ -115,9 +111,6 @@ int grid::DiffuseBurnedFraction(){
 	F[i] = Y1 / (Y0 + Y1); // Mole fraction of 56Ni
   }
 
-  //for ( i = 0; i < gridSize; i++ )
-  //	dFdt[i] = 0.0;
-
   dtSoFar = 0.0;
 
   Nsub=0;  // number of subcycles
@@ -139,18 +132,18 @@ int grid::DiffuseBurnedFraction(){
 
     for ( i = 0; i < gridSize; i++ )
     {
-      dFdt[i] *= BurningDiffusionRate;
+      dFdt[i] *= diffusionRate;
 
       // Add reaction
-      dFdt[i] += ( BurningReactionBurnedFractionLimitLo < F[i] 
+      dFdt[i] += ( BurningReactionBurnedFractionLimitLo < F[i]
 	     && F[i] < BurningReactionBurnedFractionLimitHi )
-             ? BurningReactionRate : 0;
+             ? reactionRate : 0;
 
       // Evolve F
-      int retcode = rangeCutLimiter( F[i], dFdt[i] * dtSubcycle, 0, 1, &f, &df ); 
+      int retcode = rangeCutLimiter( F[i], dFdt[i] * dtSubcycle, 0, 1, &f, &df );
 //TODO: change error to warning
 //      if ( retcode ) {
-//	    ENZO_VFAIL("Grid::DiffuseBurnedFraction: bad burned fraction=%g dFdt=%g i=%d  dtFixed,dtSub: %e, %e\n", 
+//	    ENZO_VFAIL("Grid::DiffuseBurnedFraction: bad burned fraction=%g dFdt=%g i=%d  dtFixed,dtSub: %e, %e\n",
 //		       F[i], dFdt[i], i, dtFixed, dtSubcycle)
 //      }
       F[i] = f;
@@ -194,7 +187,7 @@ int grid::DiffuseBurnedFraction(){
 		retcode = lowCutLimiter( TE[i], Q, 0, &TE_new, &Q_new_TE );
 		//TODO: change error to warning
 		//      if ( retcode < 0 ) {
-		//        ENZO_VFAIL("Grid::DiffuseBurnedFraction: Bad total energy=%g dFdt=%g i=%d  dtFixed,dtSub: %e, %e\n", 
+		//        ENZO_VFAIL("Grid::DiffuseBurnedFraction: Bad total energy=%g dFdt=%g i=%d  dtFixed,dtSub: %e, %e\n",
 		//             dE[i], df, i, dtFixed, dtSubcycle)
 		//      }
 
@@ -203,10 +196,10 @@ int grid::DiffuseBurnedFraction(){
 			retcode = lowCutLimiter( GE[i], Q, 0, &GE_new, &Q_new_GE );
 			//TODO: change error to warning
 			//      if ( retcode < 0 ) {
-			//          ENZO_VFAIL("Grid::DiffuseBurnedFraction: Bad gas energy=%g dFdt=%g i=%d  dtFixed,dtSub: %e, %e\n", 
+			//          ENZO_VFAIL("Grid::DiffuseBurnedFraction: Bad gas energy=%g dFdt=%g i=%d  dtFixed,dtSub: %e, %e\n",
 			//                    GE[i], df, i, dtFixed, dtSubcycle)
 			//      }
-			
+
 			//Q = max( Q_new_TE, Q_new_GE ); replaced 11/19/2015 [BH]
 			Q_new_TE = max( Q_new_TE, Q_new_GE ); // max(...) because we worry only about negative values
 			//GE[i] += Q; replaced 11/19/2015 [BH]
@@ -215,14 +208,10 @@ int grid::DiffuseBurnedFraction(){
 
 		//TE[i] += Q_new_TE; replaced 11/19/2015 [BH]
 		TE[i] += Q_new_TE;
-		//QCumul[i] += ( dQdt[i] = Q ); replaced 11/19/2015 [BH]
-		//QCumul[i] += ( dQdt[i] = Q_new_TE );
 	  }
 	  else
 	  {
-//		dQdt[i] = 0;
 	  }
-//          QCumul[i] = dtFixed;
   }
 //*LevelArray[0]->GridData->*/ExtraFunction("[BH]:>>>>>>>> SolveMHDLi AFTER LAPL", 0, NULL, NULL); //[BH]EF
 
@@ -230,7 +219,7 @@ int grid::DiffuseBurnedFraction(){
   delete [] F;
 
   return SUCCESS;
-  
+
 }
 
 //#endif
@@ -244,7 +233,7 @@ int grid::DiffuseBurnedFraction(){
 /  based on: ConductHeat and ComputeConductionTimeStep
 /  (by:  David A. Ventimiglia and Brian O'Sheai, Nov, Dec 2009)
 /
-/  PURPOSE:  Calculates a safe time step for the subcycle evolving 
+/  PURPOSE:  Calculates a safe time step for the subcycle evolving
 /    the burned fraction diffusion equation.
 /
 /  RETURNS:
@@ -284,7 +273,7 @@ float grid::ComputeBurningFractionDiffusionTimeStep(float &dt) {
     ENZO_FAIL("Error in GetUnits.");
 
   //TODO verify use of units in the following few statements
-  dt1 = BurningDiffusionCourantSafetyFactor * POW( dx * LengthUnits , 2.0) 
+  dt1 = BurningDiffusionCourantSafetyFactor * POW( dx * LengthUnits , 2.0)
        / ( BurningDiffusionRate / TimeUnits );
 
 //printf("BurningDiffusionCourantSafetyFactor=%e\n", BurningDiffusionCourantSafetyFactor);
@@ -313,9 +302,9 @@ float grid::ComputeBurningFractionDiffusionTimeStep(float &dt) {
 /  written by:  Boyan Hristov
 /  date:        August, 2014
 /
-/  PURPOSE:  Computes the Laplacian of 'sourceField' and returns 
+/  PURPOSE:  Computes the Laplacian of 'sourceField' and returns
 /		the result in the 'resultField'.
-/	
+/
 /	'mode' determines the numerical alhorithm:
 /    		1 = finite difference method using a 3, 5 or 7 point stencil
 /		7 = finite difference method using a 27 point stencil in 3D
@@ -335,7 +324,7 @@ int grid::ComputeLaplacian(float* sourceField, float* resultField, int mode)
 	//if ( !isCartesian )
 	//	ENZO_FAIL("grid::ComputeLaplacian: grid is not cartesian.");
 
-	switch ( mode ) 
+	switch ( mode )
 	{
 	case 0:
 		switch ( GridRank )
@@ -349,12 +338,12 @@ int grid::ComputeLaplacian(float* sourceField, float* resultField, int mode)
 			for ( int i = GridStartIndex[0]; i <= GridEndIndex[0]; i++ )
 			{
 				*result = ( *(source + 1) + *(source - 1)
-					  - 2 * (*source) 
+					  - 2 * (*source)
 					  ) / dxdx;
 
 				source++;
 				result++;
-					
+
 			} // for i
 
 			break;
@@ -378,13 +367,13 @@ int grid::ComputeLaplacian(float* sourceField, float* resultField, int mode)
 
 					source++;
 					result++;
-					
+
 				} // for i
 			} // for j
 
 			break;
 
-		case 3: 
+		case 3:
 			di = ELT( 1, 0, 0 ); // - ELT( 0, 0, 0 );
 			dj = ELT( 0, 1, 0 ); // - ELT( 0, 0, 0 );
 			dk = ELT( 0, 0, 1 ); // - ELT( 0, 0, 0 );
@@ -407,7 +396,7 @@ int grid::ComputeLaplacian(float* sourceField, float* resultField, int mode)
 
 						source++;
 						result++;
-						
+
 					} // for i
 				} // for j
 			} // for k
@@ -431,12 +420,12 @@ int grid::ComputeLaplacian(float* sourceField, float* resultField, int mode)
 			for ( int i = GridStartIndex[0]; i <= GridEndIndex[0]; i++ )
 			{
 				*result = ( *(source + 1) + *(source - 1)
-					  - 2 * (*source) 
+					  - 2 * (*source)
 					  ) / dxdx;
 
 				source++;
 				result++;
-					
+
 			} // for i
 
 			break;
@@ -492,14 +481,14 @@ int grid::ComputeLaplacian(float* sourceField, float* resultField, int mode)
 
 						source++;
 						result++;
-						
+
 					} // for i
 				} // for j
 			} // for k
 
 			break;
 		}// end switch GridRank
-					
+
 		break;
 	}//end switch mode 1
 
@@ -514,8 +503,8 @@ int grid::ComputeLaplacian(float* sourceField, float* resultField, int mode)
 /  date:        August, 2014
 /
 /  PURPOSE:  Limits the growth 'dx' so that xNew=x+dx stays in
-/	the specified range [lowCutoff, highCutoff]. 
-/	
+/	the specified range [lowCutoff, highCutoff].
+/
 /  RETURNS:
 /    0 - no adjustment of 'dx'
 /	Output values: dxNew=dx and xNew=x+dx
@@ -525,7 +514,7 @@ int grid::ComputeLaplacian(float* sourceField, float* resultField, int mode)
 /	Output values: dxNew=highCutoff-x and xNew=highCutoff
 /
 ************************************************************************/
-int rangeCutLimiter(float x, float dx, float lowCutoff, float highCutoff, 
+int rangeCutLimiter(float x, float dx, float lowCutoff, float highCutoff,
 			float *xNew, float *dxNew )
 {
 	float y = x + dx;
@@ -555,8 +544,8 @@ int rangeCutLimiter(float x, float dx, float lowCutoff, float highCutoff,
 /  date:        August, 2014
 /
 /  PURPOSE:  Limits the growth 'dx' so that xNew=x+dx doesn't go
-/	below lowCutoff. 
-/	
+/	below lowCutoff.
+/
 /  RETURNS:
 /    0 - no adjustment of 'dx'
 /	Output values: dxNew=dx and xNew=x+dx
@@ -564,7 +553,7 @@ int rangeCutLimiter(float x, float dx, float lowCutoff, float highCutoff,
 /	Output values: dxNew=lowCutoff-x and xNew=lowCutoff
 /
 ************************************************************************/
-int lowCutLimiter(float x, float dx, float lowCutoff, 
+int lowCutLimiter(float x, float dx, float lowCutoff,
 			float *xNew, float *dxNew )
 {
 	float y = x + dx;
@@ -589,7 +578,7 @@ int lowCutLimiter(float x, float dx, float lowCutoff,
 /
 /  PURPOSE:  Limits the growth 'dx' so that xNew=x+dx doesn't go
 /	above highCutoff.
-/	
+/
 /  RETURNS:
 /    0 - no adjustment of 'dx'
 /	Output values: dxNew=dx and xNew=x+dx
@@ -597,7 +586,7 @@ int lowCutLimiter(float x, float dx, float lowCutoff,
 /	Output values: dxNew=highCutoff-x and xNew=highCutoff
 /
 ************************************************************************/
-int highCutLimiter(float x, float dx, float highCutoff, 
+int highCutLimiter(float x, float dx, float highCutoff,
 			float *xNew, float *dxNew )
 {
 	float y = x + dx;
