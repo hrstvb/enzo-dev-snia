@@ -32,15 +32,6 @@ using namespace std;
 #define STD_C17 201710L
 
 /*
- * Math, BLAS-like and numpy-like functions
- * (See below for function templates.)
- */
-inline long double distancel(long double x1, long double x2, long double y1, long double y2);
-
-inline long double distancel(long double x1, long double x2, long double x3, long double y1, long double y2,
-								long double y3);
-
-/*
  * Type utilities.
  */
 template<class T>
@@ -146,6 +137,22 @@ inline T square(T x);
 
 template<typename T>
 inline T cube(T x);
+
+inline long double distancel(long double x1, long double x2, long double y1, long double y2);
+
+inline long double distancel(long double x1, long double x2, long double x3, long double y1, long double y2,
+								long double y3);
+
+template<typename T, typename U>
+long double distancel(T* x, U* y, size_t n);
+
+inline long double distsqaredl(long double x1, long double x2, long double y1, long double y2);
+
+inline long double distsqaredl(long double x1, long double x2, long double x3, long double y1, long double y2,
+								long double y3);
+
+template<typename T, typename U>
+long double distsqaredl(T* x, U* y, size_t n);
 
 // Returns x[0] + ... +, x[n-1]
 template<typename T>

@@ -98,15 +98,11 @@ int profileCountWords(char* s)
  */
 int profileIndexOfStr(char* s, char** a, int n)
 {
-	if(s == NULL)
-		return -1;
-	for(int i = 0; i < n; i++)
-	{
-		if(a[i] == NULL)
-			continue;
-		if(!strcmp(s, a[i]))
-			return i;
-	}
+	if(s)
+		for(int i = 0; i < n; i++)
+			if(a[i] && !strcmp(s, a[i]))
+				return i;
+
 	return -1;
 }
 
@@ -387,7 +383,14 @@ int profileRemoveCols(profilestruct* p)
 	{
 		for(int i = 0; i < p->nCols; i++)
 			if(0 > profileIndexOfStr(p->colNames[i], p->colNamesToKeep, p->nColsToKeep))
+			{
+//				printf("Column '%s' found, ignored.\n", p->colNames[i]);
 				p->colNames[i] = NULL;
+			}
+			else
+			{
+//				printf("Column '%s' kept.\n", p->colNames[i]);
+			}
 	}
 	else if(p->colNumsToKeep != NULL)
 	{
@@ -445,7 +448,7 @@ int profileProcessDataLine(char* line, profilestruct* p, int* nLinesWithExtraCol
 	int nWords = 0;
 	while(*(line = profileStrSkipSpace(line)) != '\0')
 	{
-		if(nWords >= p->nCols)
+		if(nWords >= p->nCols - 1)
 		{
 			*nLinesWithExtraCols++;
 			break;
@@ -696,7 +699,7 @@ int profileReadPAH02(char* filename, profilestruct* p)
 	printf("Opening '%s'\n", filename);
 	if((file = fopen(filename, "r")) == NULL)
 	{
-		printf("cant open\n");
+		printf("Can't open '%s'.\n", filename);
 		return -1;
 	}
 	printf("PAH02 open\n");
@@ -996,8 +999,8 @@ int grid::MHDProfileInitializeGrid(char* profileFileName, char* profileFormat, c
 					if(UseBurning)
 						rhoNiField[index] = (isBurned) ? rho : 0;
 					if(j == (GridDimension[1] / 2) && k == (GridDimension[2] / 2) && i <= GridDimension[0] / 2)
-						printf("i,j,k=%03d,%04d,%04d, r=%4f, (%4f,%4f,%4f), rho=%e, T=%1f, burned=%d\n", i, j, k,
-								r * 1e-5, x * 1e-5, y * 1e-5, z * 1e-5, rho * 1e-9, T * 1e-9, isBurned);
+						printf("i,j,k=%03d,%04d,%04d, x,y,z=(%4f,%4f,%4f), r=%4f, rho=%e, T=%1f, burned=%d\n", i, j, k,
+								x * 1e-5, y * 1e-5, z * 1e-5, r * 1e-5, rho, T * 1e-9, isBurned);
 				}
 			} //end baryonfield initialize
 		}

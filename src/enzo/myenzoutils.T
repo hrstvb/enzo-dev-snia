@@ -175,25 +175,25 @@ T** arr_set(T** a, size_t n, void* x)
 template<typename T>
 T** arr_set(T** a, size_t n, signed char x)
 {
-	return arr_set(a, n, (long long)x);
+	return arr_set(a, n, (long long) x);
 }
 
 template<typename T>
 T** arr_set(T** a, size_t n, short x)
 {
-	return arr_set(a, n, (long long)x);
+	return arr_set(a, n, (long long) x);
 }
 
 template<typename T>
 T** arr_set(T** a, size_t n, int x)
 {
-	return arr_set(a, n, (long long)x);
+	return arr_set(a, n, (long long) x);
 }
 
 template<typename T>
 T** arr_set(T** a, size_t n, long x)
 {
-	return arr_set(a, n, (long long)x);
+	return arr_set(a, n, (long long) x);
 }
 
 template<typename T>
@@ -207,25 +207,25 @@ T** arr_set(T** a, size_t n, long long x)
 template<typename T>
 T** arr_set(T** a, size_t n, unsigned char x)
 {
-	return arr_set(a, n, (unsigned long long)x);
+	return arr_set(a, n, (unsigned long long) x);
 }
 
 template<typename T>
 T** arr_set(T** a, size_t n, unsigned short x)
 {
-	return arr_set(a, n, (unsigned long long)x);
+	return arr_set(a, n, (unsigned long long) x);
 }
 
 template<typename T>
 T** arr_set(T** a, size_t n, unsigned int x)
 {
-	return arr_set(a, n, (unsigned long long)x);
+	return arr_set(a, n, (unsigned long long) x);
 }
 
 template<typename T>
 T** arr_set(T** a, size_t n, unsigned long x)
 {
-	return arr_set(a, n, (unsigned long long)x);
+	return arr_set(a, n, (unsigned long long) x);
 }
 
 template<typename T>
@@ -329,6 +329,44 @@ template<typename T>
 inline T cube(T x)
 {
 	return x * x * x;
+}
+
+inline long double distancel(long double x1, long double x2, long double y1, long double y2)
+{
+	return sqrtl(distsqaredl(x1, x2, y1, y2));
+}
+
+inline long double distancel(long double x1, long double x2, long double x3, long double y1, long double y2,
+								long double y3)
+{
+	return sqrtl(distsqaredl(x1, x2, x3, y1, y2, y3));
+}
+
+inline long double distsqaredl(long double x1, long double x2, long double y1, long double y2)
+{
+	return square(y1 - x1) + square(y2 - x2);
+}
+
+inline long double distsqaredl(long double x1, long double x2, long double x3, long double y1, long double y2,
+								long double y3)
+{
+	return square(y1 - x1) + square(y2 - x2) + square(y3 - x3);
+}
+
+template<typename T, typename U>
+long double distsqaredl(T* x, U* y, size_t n)
+{
+	long double d = 0;
+	T* x_n = x + n;
+	while(x < x_n)
+		d += square(*x++ - *y++);
+	return d;
+}
+
+template<typename T, typename U>
+long double distancel(T* x, U* y, size_t n)
+{
+	return sqrt(distsqaredl(x, y, n));
 }
 
 /*

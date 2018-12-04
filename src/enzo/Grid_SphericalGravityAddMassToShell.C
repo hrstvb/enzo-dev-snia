@@ -66,6 +66,7 @@ FLOAT** magEBins)
 	// the corresponding densities and multiply by the cell
 	// volume after the loop.
 	//Loop variables
+
 	FLOAT dens, r, rVec[3], xx, yy_zz, zz;
 	size_t rbin, index;
 	switch(GridRank)
@@ -137,26 +138,32 @@ FLOAT** magEBins)
 					r = sqrt(xx + yy_zz);
 					if(-1 == (rbin = SphericalGravityComputeBinIndex(r)))
 						continue;
+//					if(j == (GridDimension[1] / 2) && k == (GridDimension[2] / 2) && i <= GridDimension[0] / 2)
+//						printf("i,j,k=%03d,%04d,%04d, (%4f,%4f,%4f), r=%4f, rho=%e, bin=%lld\n", i, j, k,
+//								rVec[0] * 1e-5, rVec[1] * 1e-5, rVec[2] * 1e-5, r * 1e-5, dens * 1e-9, rbin);
 
-					countBins[rbin]++;
 					densBins[rbin] = dens = densField[index]; // * cellVolume;
-					FLOAT **bins = cmBins;
-					for(int dim = 0; dim < GridRank; bins++, dim++)
-						bins[dim][rbin] += dens * rVec[dim];
-					bins = kinEBins;
-					for(int dim = 0; dim < GridRank; bins++, dim++)
-						*bins[rbin] += dens * square(vFields[dim][index]);
-					bins = magEBins;
-					for(int dim = 0; dim < 3; bins++, dim++)
-						if(*bins)
-							*bins[rbin] += square(BFields[dim][index]) / dens;
+
+					//The other bins are optional
+					if(countBins)
+						countBins[rbin]++;
+					if(cmBins && cmBins[0])
+						for(int dim = 0; dim < GridRank; dim++)
+							cmBins[dim][rbin] += dens * rVec[dim];
+					if(kinEBins && kinEBins[0])
+						for(int dim = 0; dim < GridRank; dim++)
+							kinEBins[dim][rbin] += dens * square(vFields[dim][index]);
+					if(magEBins && magEBins[0])
+						for(int dim = 0; dim < GridRank; dim++)
+							magEBins[dim][rbin] += square(BFields[dim][index]) / dens;
+
 					index++;
 				} // for i, x, dim0
 			} // for j, y, dim1
 		} // for k, z, dim2
 	} //switch(GridRank)
 
-	//Add the grid bins to the bins that are global on this processor.
+//Add the grid bins to the bins that are global on this processor.
 	FLOAT cellVolume = CellWidth[0][0];
 	for(int dim = 1; dim < GridRank; dim++)
 		cellVolume *= CellWidth[dim][0];
@@ -181,7 +188,7 @@ int grid::SphericalGravityAddMassToShell()
 	if(ProcessorNumber != MyProcessorNumber)
 		return SUCCESS;
 
-	// Allocate bins for this grid.
+// Allocate bins for this grid.
 	Eint64* countBins = NULL;
 	FLOAT* densBins = NULL;
 	FLOAT** cmBins = arr_newset<FLOAT*>(MAX_DIMENSION, NULL);
