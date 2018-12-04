@@ -1,19 +1,15 @@
 #include "stddef.h"
 
+#include "IDE_defs.h"
 #include "math.h"
 #include "myenzoutils.h"
 
-inline long double distancel(long double x1, long double x2, long double y1, long double y2)
-{
-	return sqrtl(square(y1 - x1) + square(y2 - x2));
-}
+#ifdef USE_MPI
 
-inline long double distancel(long double x1, long double x2, long double x3, long double y1, long double y2,
-								long double y3)
-{
-	return sqrtl(square(y1 - x1) + square(y2 - x2) + square(y3 - x3));
-}
-
+/*
+ * Returns the MPI error string if defined for this mpiError,
+ * otherwise returns the empty string.
+ */
 int mpiErrorString(char* s, int mpiError)
 {
 	int msglen;
@@ -23,6 +19,10 @@ int mpiErrorString(char* s, int mpiError)
 	return 0;
 }
 
+/*
+ * An MPI_Wait wrapper returning the error code
+ * from the received status.
+ */
 int mpiWait(MPI_Request* request)
 {
 	MPI_Status status;
@@ -34,3 +34,5 @@ int mpiWait(MPI_Request* request)
 
 	return (status.MPI_ERROR == NO_SUCH_MPI_ERROR) ? 0 : status.MPI_ERROR;
 }
+
+#endif /* USE_MPI */

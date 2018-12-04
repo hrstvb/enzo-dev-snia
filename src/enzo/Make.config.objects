@@ -15,12 +15,12 @@
 #-----------------------------------------------------------------------
 
 OBJS_CONFIG_LIB = \
-  myenzoutils.o \
   MHDProfileInitialize.o \
   Grid_MHDProfileInitializeGrid.o \
   SphericalGravityComputePotential.o\
   Grid_SphericalGravityAddMassToShell.o\
   Grid_DiffuseBurningFraction.o \
+  myenzoutils.o \
   MHDLoopInit.o \
   Grid_MHDLoopInitGrid.o \
         acml_st1.o \

@@ -31,6 +31,7 @@
 #include <stdio.h>
 #include <string.h>
 
+#include "myenzoutils.h"
 #include "ErrorExceptions.h"
 #include "macros_and_parameters.h"
 #include "typedefs.h"
@@ -149,6 +150,28 @@ int MHDProfileInitialize(FILE *fptr, FILE *Outfptr, HierarchyEntry &TopGrid, Top
 	if(BurningReactionRateReduced <= 0)
 		BurningReactionRateReduced = BurningReactionRate * (DomainRightEdge[0] - DomainLeftEdge[0])
 				/ MetaData.TopGridDims[0];
+
+	if(SphericalGravityOuterRadius <= 0)
+	{
+		// If outer radius is not specified, set it to the minimal
+		// radius to cover the entire domain, i.e. the distance
+		// from the gravity center to the farthest domain vertice.
+		FLOAT* C = SphericalGravityCenter;
+		FLOAT* L = DomainLeftEdge;
+		FLOAT* R = DomainRightEdge;
+
+		long double r = 0;
+		r = max(r, distancel(L[0], L[1], L[2], C[0], C[1], C[2]));
+		r = max(r, distancel(L[0], L[1], R[2], C[0], C[1], C[2]));
+		r = max(r, distancel(L[0], R[1], L[2], C[0], C[1], C[2]));
+		r = max(r, distancel(L[0], R[1], R[2], C[0], C[1], C[2]));
+		r = max(r, distancel(R[0], L[1], L[2], C[0], C[1], C[2]));
+		r = max(r, distancel(R[0], L[1], R[2], C[0], C[1], C[2]));
+		r = max(r, distancel(R[0], R[1], L[2], C[0], C[1], C[2]));
+		r = max(r, distancel(R[0], R[1], R[2], C[0], C[1], C[2]));
+
+		SphericalGravityOuterRadius = r;
+	}
 
 	// Initialize the top grid.
 	if(TopGrid.GridData->MHDProfileInitializeGrid(profileFileName, profileFormat, profileType, radiusColumnName,
