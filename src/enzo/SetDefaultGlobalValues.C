@@ -1008,8 +1008,10 @@ int SetDefaultGlobalValues(TopGridData &MetaData)
   BurningReactionBurnedFractionLimitLo = 0.3; //  set by the corresponding BurningReactionBurnedFractionLimit*  //[BH]
   BurningReactionBurnedFractionLimitHi = 1;   //  parameters. Otherwise a zero rate is used.                    //[BH]
   BurningEnergyRelease                 = 0.0476929; //[keV] TODO: convert units, per barion etc.                //[BH]
-  EnergyRelativeGrowthLimit		= -1; //Ignore condition
-  BurnedFractionGrowthLimit		= -1; //Ignore condition
+  BurningEnergyRelativeGrowthLimit     = -1;//Ignore condition [BH]
+  InternalEnergyRelativeGrowthLimit    = -1; //Ignore condition [BH]
+  TotalEnergyRelativeGrowthLimit		= -1; //Ignore condition [BH]
+  BurnedFractionGrowthLimit		= -1; //Ignore condition [BH]
 
   //Spherical gravity parameters
   UseSphericalGravity = 0;
