@@ -147,7 +147,6 @@ float dtLevelAbove)
 		//}
 		//else
 		//	*dtThisLevelSoFar += *dtThisLevel;
-
 		// The grids on this level must not time-step ahead of the
 		// grids on the upper level, which may require to truncate
 		// the calculated dt.  Even without truncation, we make
@@ -200,22 +199,23 @@ float dtLevelAbove)
 			else
 			{
 				fprintf(stderr, "Level[%" ISYM "](#%lld): dt = %" GSYM "    dtTillSync = %" GSYM
-						"    reason = %s\n",
+				"    reason = %s\n",
 						level, gridsInfo.ProcessorNumber, dt, dtSyncUpper, getReasonText(gridsInfo.reason));
 			}
-		} // end if level==0
+		}
+	} // end if level==0
 
-		//Set the output value.
-		*dtThisLevel = dt;
+	//Set the output value.
+	*dtThisLevel = dt;
 
-		/* Set all grid's timestep to this minimum dt. */
-		for(grid1 = 0; grid1 < NumberOfGrids; grid1++)
-			Grids[grid1]->GridData->SetTimeStep(dt);
+	/* Set all grid's timestep to this minimum dt. */
+	for(grid1 = 0; grid1 < NumberOfGrids; grid1++)
+		Grids[grid1]->GridData->SetTimeStep(dt);
 
-		if(debug)
-			printf("Level[%"ISYM"]: dt = %" GSYM "  %" GSYM " (%" GSYM "/%" GSYM ")\n", level, *dtThisLevel, dtGrids,
-					*dtThisLevelSoFar, dtLevelAbove);
+	if(debug)
+		printf("Level[%"ISYM"]: dt = %" GSYM "  %" GSYM " (%" GSYM "/%" GSYM ")\n", level, *dtThisLevel, dtGrids,
+				*dtThisLevelSoFar, dtLevelAbove);
 
-		LCAPERF_STOP("SetLevelTimeStep"); // SetTimeStep()
-		return SUCCESS;
-	}
+	LCAPERF_STOP("SetLevelTimeStep"); // SetTimeStep()
+	return SUCCESS;
+}
