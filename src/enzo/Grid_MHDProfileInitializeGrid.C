@@ -814,9 +814,9 @@ int profileReadPAH02(char* filename, profilestruct* p)
 }
 
 int grid::MHDProfileInitializeGrid(char* profileFileName, char* profileFormat, char* profileType,
-									char* radiusColumnName, char* densityColumnName, char* temperatureColumnName,
-									float burningTemperature,
-									float burnedRadius, float profileAtTime)
+	char* radiusColumnName, char* densityColumnName, char* temperatureColumnName,
+	float burningTemperature,
+	float burnedRadius, float profileAtTime)
 {
 	if(GridRank != 3)
 		ENZO_FAIL("MHDProfileInitializeGrid is implemented for 3D only.")
@@ -971,9 +971,7 @@ int grid::MHDProfileInitializeGrid(char* profileFileName, char* profileFormat, c
 				float vx = vxField[index] = 0;
 				float vy = vyField[index] = 0;
 				float vz = vzField[index] = 0;
-				float Bx = BxField[index] = 0;
-				float By = ByField[index] = 0;
-				float Bz = BzField[index] = 0;
+				float Bx, By, Bz;
 
 				if(!strcmp(profileType, "RADIAL"))
 				{
@@ -989,15 +987,27 @@ int grid::MHDProfileInitializeGrid(char* profileFileName, char* profileFormat, c
 //					gasEDensity = pressure / (Gamma - 1);
 //					gasE = specificGasE = gasEDensity / rho = EOSPolytropicFactor * rho**(Gamma-1) / (Gamma-1);
 					float gasE = EOSPolytropicFactor * POW(rho, gammaMinusOne) / gammaMinusOne;
+					float totE = gasE + 0.5 * (vx * vx + vy * vy + vz * vz);
+
+					if(BxField)
+					{
+						MHDProfileInitExactB(&Bx, &By, &Bz, x, y, z);
+						totE += 0.5 * (Bx * Bx + By * By + Bz * Bz) / rho;
+						BxField[index] = Bx;
+						ByField[index] = By;
+						BzField[index] = Bz;
+					}
+					rhoField[index] = rho;
 					if(hasGesEField)
 						gasEField[index] = gasE;
-					MHDProfileInitExactB(&Bx, &By, &Bz, x, y, z);
-					rhoField[index] = rho;
-					totEField[index] = gasE + 0.5 * (vx * vx + vy * vy + vz * vz)
-							+ 0.5 * (Bx * Bx + By * By + Bz * Bz) / rho;
+					totEField[index] = totE;
+					vxField[index] = vx;
+					vyField[index] = vy;
+					vzField[index] = vz;
 
 					if(UseBurning)
 						rhoNiField[index] = (isBurned) ? rho : 0;
+
 					if(j == (GridDimension[1] / 2) && k == (GridDimension[2] / 2) && i <= GridDimension[0] / 2)
 						printf("i,j,k=%03d,%04d,%04d, x,y,z=(%4f,%4f,%4f), r=%4f, rho=%e, T=%1f, burned=%d\n", i, j, k,
 								x * 1e-5, y * 1e-5, z * 1e-5, r * 1e-5, rho, T * 1e-9, isBurned);

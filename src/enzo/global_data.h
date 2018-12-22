@@ -1195,4 +1195,10 @@ EXTERN FLOAT *SphericalGravityShellVolumes;
 EXTERN int SphericalGravityUniformBins;
 EXTERN int SphericalGravityWritePotentialSwitch;
 
+EXTREN float* SphericalGravityBinAccels;
+EXTREN float* SphericalGravityBinAccelSlopes;
+EXTERN int SphericalGravityInterpAccel; // const, linear interp., etc.
+
+EXTERN float BA[3];
+
 #endif
