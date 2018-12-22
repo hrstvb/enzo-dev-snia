@@ -67,7 +67,9 @@ int SphericalGravityComputePotential(LevelHierarchyEntry *LevelArray[], TopGridD
 
 int MHDProfileInitExactB(float* Bx, float* By, float* Bz, FLOAT x, FLOAT y, FLOAT z)
 {
-	*Bx = *By = *Bz = 0;
+	*Bx = BA[0];
+	*By = BA[1];
+	*Bz = BA[2];
 	return SUCCESS;
 }
 
@@ -123,6 +125,8 @@ int MHDProfileInitialize(FILE *fptr, FILE *Outfptr, HierarchyEntry &TopGrid, Top
 		ret += sscanf(line, "BurningTemperature = %"FSYM, &burningTemperature);
 		ret += sscanf(line, "BurnedRadius = %"PSYM, &burnedRadius);
 		ret += sscanf(line, "ProfileAtTime = %"FSYM, &profileAtTime);
+
+		ret += sscanf(line, "BA = %"FSYM, BA, BA+1, BA+2);
 
 		ret += sscanf(line, "InternalEnergy_InitialA = %"FSYM, &InternalEnergy_InitialA);	//[BH]
 		ret += sscanf(line, "InternalEnergy_InitialB = %"FSYM, &InternalEnergy_InitialB);	//[BH]

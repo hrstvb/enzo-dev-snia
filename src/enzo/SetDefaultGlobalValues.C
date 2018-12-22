@@ -1049,5 +1049,11 @@ int SetDefaultGlobalValues(TopGridData &MetaData)
   SphericalGravityUniformBins = 1;
   SphericalGravityWritePotentialSwitch = 0;
 
+  SphericalGravityInterpAccel = 1;
+  SphericalGravityBinAccels = NULL;
+  SphericalGravityBinAccelSlopes = NULL;
+
+  BA[0] = BA[1] = BA[2] = 0;
+
   return SUCCESS;
 }

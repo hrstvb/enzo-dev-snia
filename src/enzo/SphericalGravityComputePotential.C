@@ -33,15 +33,18 @@
 
 int CommunicationBroadcastValues(FLOAT *Values, int Number, int BroadcastProcessor);
 
-int SphericalGravityAllocateBins(Eint64** countBins, FLOAT** massBins, FLOAT** centersOfMassBins, FLOAT** kineticEBins,
-FLOAT** magneticEBins,
-FLOAT** volumeBins, int domainRank)
+int SphericalGravityAllocateBins(Eint64** countBins, FLOAT** massBins, FLOAT** binAccels, FLOAT** binAccelDeltas,
+FLOAT** centersOfMassBins, FLOAT** kineticEBins, FLOAT** magneticEBins, FLOAT** volumeBins, int domainRank)
 {
 	size_t &N = SphericalGravityActualNumberOfBins;
 	if(countBins)
 		arr_delnewset(countBins, N, 0);
 	if(massBins)
 		arr_delbrnewset(massBins, N, 0);
+	if(binAccels)
+		arr_delbrnewset(binAccels, N, 0);
+	if(binAccelDeltas)
+		arr_delbrnewset(binAccelDeltas, N, 0);
 	if(centersOfMassBins)
 		for(int dim = 0; dim < domainRank; dim++)
 			arr_delnewset(centersOfMassBins + dim, N, 0);
@@ -176,6 +179,7 @@ int SphericalGravityComputePotential(LevelHierarchyEntry *LevelArray[], TopGridD
 	if(SphericalGravityDetermineBins() == FAIL)
 		ENZO_FAIL("Coudn't determine spherical gravity bins.\n");
 	SphericalGravityAllocateBins(&SphericalGravityShellCellCounts, &SphericalGravityShellMasses,
+									&SphericalGravityBinAccels, &SphericalGravityBinAccelSlopes,
 									SphericalGravityShellCentersOfMass, SphericalGravityShellKineticEnergies,
 									SphericalGravityShellMagneticEnergies, &SphericalGravityShellVolumes,
 									MetaData->TopGridRank);
@@ -223,15 +227,28 @@ int SphericalGravityComputePotential(LevelHierarchyEntry *LevelArray[], TopGridD
 	SphericalGravityInteriorMasses[0] = SphericalGravityCentralMass;
 	arr_cumsum(SphericalGravityInteriorMasses + 1, SphericalGravityShellMasses, N - 1, SphericalGravityCentralMass);
 
+	if(SphericalGravityInterpAccel)
+	{
+		// Calculate the gravity accelerations at the bin edges.
+		for(size_t i = 0; i < N; i++)
+			SphericalGravityBinAccels[i] = SphericalGravityConstant * SphericalGravityInteriorMasses[i]
+					/ square(SphericalGravityBinLeftEdges[i]);
+
+		// Calculate the slopes of the gravity accelerations between every two bin edges.
+		for(size_t i = N - 2; i >= 0; i--)
+			SphericalGravityBinAccelSlopes[i] = (SphericalGravityBinAccels[i + 1] - SphericalGravityBinAccels[i])
+					/ (SphericalGravityBinLeftEdges[i + 1] - SphericalGravityBinLeftEdges[i]);
+	}
+
 	if(MyProcessorNumber == ROOT_PROCESSOR)
 	{
 		char* sbuf = new char[64 * N];
 		char* s = sbuf;
 		s += sprintf(s, "SphericalGravityActualNumberOfBins = %lld\n", N);
-		s += sprintfvec(s, "SphericalGravityBinLeftEdges = {", "%lld:%e", ", ", "}\n", SphericalGravityBinLeftEdges,
+		s += sprintfvec(s, "SphericalGravityBinLeftEdges = {", "%lld:%e", ", ", "}\n", SphericalGravityBinLeftEdges, N,
+						true, true);
+		s += sprintfvec(s, "SphericalGravityInteriorMasses = {", "%lld:%e", ", ", "}\n", SphericalGravityInteriorMasses,
 						N, true, true);
-		s += sprintfvec(s, "SphericalGravityInteriorMasses = {", "%lld:%e", ", ", "}\n",
-						SphericalGravityInteriorMasses, N, true, true);
 		printf(sbuf);
 		delete sbuf;
 	}

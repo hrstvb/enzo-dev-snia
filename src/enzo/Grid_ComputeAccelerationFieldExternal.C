@@ -806,8 +806,24 @@ int grid::ComputeAccelerationFieldExternal()
 						r = sqrt(rsquared);
 						if(-1 == (rbin = SphericalGravityComputeBinIndex(r))) continue;
 
-						my_mass = SphericalGravityInteriorMasses[rbin];
-						my_accel = -xyz[dim] / (r * rsquared) * my_mass * SphericalGravityConstant;
+						// Calculate the SphericalGravity acceleration magnitude
+						if(SphericalGravityInterpAccel && rbin < SphericalGravityActualNumberOfBins - 1)
+						{
+							// Use linear interpolation between the bin left and right edge.
+							// Use the pre-calculated coefficients.
+							my_accel = SphericalGravityBinAccels
+									+ SphericalGravityBinAccelSlopes[i] * (r - SphericalGravityBinLeftEdges[i]);
+						}
+						else
+						{
+							//
+							my_mass = SphericalGravityInteriorMasses[rbin];
+							//my_accel = -xyz[dim] / (r * rsquared) * my_mass * SphericalGravityConstant;
+							my_accel = SphericalGravityConstant * my_mass / rsquared;
+						}
+
+						// Calculate the dim component of the SphericalGravity acceleration vector.
+						my_accel *= -xyz[dim] / r;
 						//fprintf(stderr,"KLOWN wtf %p dim %d n %d ijk %d, %d, %d\n",AccelerationField[dim],dim,index, i,j,k);
 						AccelerationField[dim][index++] += my_accel;
 					} // for i
