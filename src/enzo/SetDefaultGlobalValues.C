@@ -1026,7 +1026,7 @@ int SetDefaultGlobalValues(TopGridData &MetaData)
   SphericalGravityHasCentralBin = 0;
   SphericalGravityInnerRadius = 0;
   SphericalGravityInteriorMasses = NULL;
-  SpericalGravityMaxHierarchyLevel = 0;
+  SphericalGravityMaxHierarchyLevel = 0;
   SphericalGravityNumberOfBins = -1;
   SphericalGravityOuterRadius = -1;
   SphericalGravityShellCellCounts = NULL;
@@ -1049,9 +1049,45 @@ int SetDefaultGlobalValues(TopGridData &MetaData)
   SphericalGravityUniformBins = 1;
   SphericalGravityWritePotentialSwitch = 0;
 
-  SphericalGravityInterpAccel = 1;
+  SphericalGravityInterpAccelOrder = 1;
   SphericalGravityBinAccels = NULL;
   SphericalGravityBinAccelSlopes = NULL;
+
+  //Spherica gravity, multilevel
+  SphericalGravityBinsPerCell = 1.0;
+  SphericalGravityDebug = 0;
+
+  UseSpherGrav = UseSphericalGravity && SphericalGravityMaxHierarchyLevel > 0;
+  SpherGravActualNumberOfBins=NULL;
+  SpherGravBinLeftEdges=NULL;
+  SpherGravBinRightEdges=NULL;
+  SpherGravBinSize=NULL;
+  SpherGravHasCentralBin=NULL;
+  SpherGravInnerRadius=NULL;
+  SpherGravOuterRadius=NULL;
+
+  SpherGravInteriorMasses=NULL;
+  SpherGravShellCellCounts=NULL;
+
+  arr_set(SpherGravShellCentersOfMass, MAX_DIMENSION, NULL); //By r and dim
+  arr_set(SpherGravCenterOfMass, MAX_DIMENSION, 0); // By dim
+
+  arr_set(SpherGravShellKineticEnergies, MAX_DIMENSION, NULL); //By r and dim
+  SpherGravShellKineticEnergy=NULL; // By r
+  arr_set(SpherGravKineticEnergies, MAX_DIMENSION, 0); // By dim
+  SpherGravKineticEnergy=NULL; // Total
+
+  arr_set(SpherGravShellMagneticEnergies, MAX_DIMENSION, NULL); //By r and dim
+  SpherGravShellMagneticEnergy=NULL; // By r
+  arr_set(SpherGravMagneticEnergies, MAX_DIMENSION, 0); // By dim
+  SpherGravMagneticEnergy=NULL; // Total
+
+  SpherGravShellMasses=NULL;
+  SpherGravShellVolumes=NULL;
+  SpherGravUniformBins=NULL;
+
+  SpherGravBinAccels=NULL;
+  SpherGravBinAccelSlopes=NULL;
 
   BA[0] = BA[1] = BA[2] = 0;
 
