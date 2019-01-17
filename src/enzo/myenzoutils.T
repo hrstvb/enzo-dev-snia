@@ -2,7 +2,7 @@
 #define MY_ENZO_UTIILS_TPP
 #include "stddef.h"
 #include "math.h"
-//#include "string.h"
+#include "string.h"
 #include <stdexcept>
 #include "IDE_defs.h"
 #include "myenzoutils.h"
@@ -337,7 +337,7 @@ inline long double distancel(long double x1, long double x2, long double y1, lon
 }
 
 inline long double distancel(long double x1, long double x2, long double x3, long double y1, long double y2,
-								long double y3)
+	long double y3)
 {
 	return sqrtl(distsqaredl(x1, x2, x3, y1, y2, y3));
 }
@@ -348,7 +348,7 @@ inline long double distsqaredl(long double x1, long double x2, long double y1, l
 }
 
 inline long double distsqaredl(long double x1, long double x2, long double x3, long double y1, long double y2,
-								long double y3)
+	long double y3)
 {
 	return square(y1 - x1) + square(y2 - x2) + square(y3 - x3);
 }
@@ -367,6 +367,27 @@ template<typename T, typename U>
 long double distancel(T* x, U* y, size_t n)
 {
 	return sqrt(distsqaredl(x, y, n));
+}
+
+template<typename T, typename U, typename V>
+long double distMaxSquaredl(const T* x1, const U* x2, const V* y, const size_t n)
+{
+	long double d = 0;
+	long double d1, d2;
+	const V* y_n = y + n;
+	while(y < y_n)
+	{
+		d1 = square(*x1++ - *y);
+		d2 = square(*x2++ - *y++);
+		d += (d2 > d1) ? d2 : d1;
+	}
+	return d;
+}
+
+template<typename T, typename U, typename V>
+long double distMaxl(const T* x1, const U* x2, const V* y, const size_t n)
+{
+	return sqrt(distMaxSquaredl(x1, x2, y, n));
 }
 
 /*
@@ -552,7 +573,6 @@ size_t sprintfvec(char* const s, const char* const preffix, const char* const si
 	return s2 - s;
 }
 
-
 /*
  * Segmented array routines
  *
@@ -573,7 +593,7 @@ size_t sprintfvec(char* const s, const char* const preffix, const char* const si
 //	T* data2 = packedarr; // Write position in the data array.
 //	size_t* segs2 = seglens; // Wirte position in the segments array.
 //	size_t n1, nz; // Sizes of the data segment and default segment being packed.
-//	const size_t maxDefaultsToIgnore = sizeof(size_t) / sizeof(T);
+//	const size_t defaultsToIgnore = sizeof(size_t) / sizeof(T);
 //	const T* a_n = a + n;
 //	T *a1 = a, *az = a, *a2 = a;
 //	while (a2 < a_n)
@@ -829,5 +849,92 @@ inline MPI_Datatype getMPI_Datatype(T* a)
 	return getMPI_Datatype<T>();
 }
 #endif /* USE_MPI */
+/*
+template<typename T>
+void addDipoleField(T* fieldX, T* fieldY, T* fieldZ,
+	const long double x, const long double y, const long double z,
+	const double momentX, const double momentY, const double momentZ,
+	const long double centerX, const long double centerY, const long double centerZ,
+	const long double scaleFactor = 1.0)
+{
+	const long double ONE_OVER_4PI = 1 / (16 * atanl(1));
+	long double r, rsquared, rcube, rx, ry, rz, coeff, three_m_r_over_rsquared;
+	rx = x - centerX;
+	ry = y - centerY;
+	rz = z - centerZ;
+	rsquared = square(rx) + square(ry) + square(rz);
+	rcube = cube(sqrt(rsquared));
+	if(rcube)
+	{
+		three_m_r_over_rsquared = 3 * (momentX * rx + momentY * ry + momentZ * rz) / rsquared;
+		coeff = scaleFactor * ONE_OVER_4PI / rcube;
+		*fieldX += coeff * (three_m_r_over_rsquared * rx - momentX);
+		*fieldY += coeff * (three_m_r_over_rsquared * ry - momentY);
+		*fieldZ += coeff * (three_m_r_over_rsquared * rz - momentZ);
+	}
+	else
+	{
+//		*fieldX = *fieldY = *fieldZ = 0;
+	}
+}
 
+template<typename T>
+void addDipoleVectorPotential(T* vectorPotentialX, T* vectorPotentialY, T* vectorPotentialZ,
+	const long double x, const long double y, const long double z,
+	const double momentX, const double momentY, const double momentZ,
+	const long double centerX, const long double centerY, const long double centerZ,
+	const long double permeability = 1.0
+	)
+{
+	const long double FOUR_PI = 16 * atanl(1);
+	long double r, rx, ry, rz, rsquared, coeff;
+	rx = x - centerX;
+	ry = y - centerY;
+	rz = z - centerZ;
+	rsquared = square(rx) + square(ry) + square(rz);
+	if(rsquared)
+	{
+		coeff = permeability / FOUR_PI / rsquared
+		*vectorPotentialX += coeff * (momentY * rz - momentZ * ry);
+		*vectorPotentialY += coeff * (momentZ * rx - momentX * rz);
+		*vectorPotentialZ += coeff * (momentX * ry - momentY * rx);
+	}
+	else
+	{
+//		*vectorPotentialX = *vectorPotentialY = *vectorPotentialZ = 0;
+	}
+}
+
+long double dipoleScalarPotential(const long double x, const long double y, const long double z,
+	const double momentX, const double momentY, const double momentZ,
+	const long double centerX, const long double centerY, const long double centerZ,
+	const long double permitivity = 1.0)
+{
+	const long double ONE_OVER_4PI = 1 / (16 * atanl(1));
+	long double rx, ry, rz, rsquared;
+	rx = x - centerX;
+	ry = y - centerY;
+	rz = z - centerZ;
+	rsquared = square(rx) + square(ry) + square(rz);
+	if(rsquared)
+	{
+		return ONE_OVER_4PI / permitivity / rsquared * (momentX * rx + momentY * ry + momentZ * rz);
+	}
+	else
+	{
+		return 0;
+	}
+}
+
+template<typename T>
+void addConstFieldVectorPotential(T* vectorPotentialX, T* vectorPotentialY, T* vectorPotentialZ,
+	const long double x, const long double y, const long double z,
+	const double momentX, const double momentY, const double momentZ
+	)
+{
+	*vectorPotentialX += momentY * z;
+	*vectorPotentialY += momentZ * x;
+	*vectorPotentialZ += momentX * y;
+}
+*/
 #endif /* MY_ENZO_UTIILS_TPP */

@@ -54,7 +54,6 @@
 #define PROFILE_TIME_LINE (4)
 
 int MakeFieldConservative(int field);
-int FindField(int field, int farray, int numfields);
 int MHDProfileInitExactB(float* Bx, float* By, float* Bz, FLOAT x, FLOAT y, FLOAT z);
 
 /**
@@ -816,12 +815,18 @@ int profileReadPAH02(char* filename, profilestruct* p)
 int grid::MHDProfileInitializeGrid(char* profileFileName, char* profileFormat, char* profileType,
 	char* radiusColumnName, char* densityColumnName, char* temperatureColumnName,
 	float burningTemperature,
-	float burnedRadius, float profileAtTime)
+	float burnedRadius, float profileAtTime,
+	float dipoleMoment[3], float dipoleCenter[3])
 {
+	if(ProcessorNumber != MyProcessorNumber)
+		return SUCCESS;
+
 	if(GridRank != 3)
 		ENZO_FAIL("MHDProfileInitializeGrid is implemented for 3D only.")
 
-	int hasGesEField = DualEnergyFormalism && (HydroMethod != Zeus_Hydro); //[BH]
+	int initVectorPotential = dipoleMoment[0] || dipoleMoment[1] || dipoleMoment[2];
+	int hasGasEField = DualEnergyFormalism && (HydroMethod != Zeus_Hydro); //[BH]
+
 	if(CellWidth[0][0] <= 0)
 		PrepareGridDerivedQuantities();
 
@@ -836,7 +841,7 @@ int grid::MHDProfileInitializeGrid(char* profileFileName, char* profileFormat, c
 	FieldType[NumberOfBaryonFields++] = Density;
 	if(EquationOfState == 0)
 		FieldType[NumberOfBaryonFields++] = TotalEnergy;
-	if(hasGesEField)
+	if(hasGasEField)
 		FieldType[NumberOfBaryonFields++] = InternalEnergy;
 	FieldType[NumberOfBaryonFields++] = Velocity1;
 	FieldType[NumberOfBaryonFields++] = Velocity2;
@@ -853,9 +858,6 @@ int grid::MHDProfileInitializeGrid(char* profileFileName, char* profileFormat, c
 		if(HydroMethod == MHD_RK)
 			FieldType[NumberOfBaryonFields++] = PhiField;
 	}
-
-	if(ProcessorNumber != MyProcessorNumber)
-		return SUCCESS;
 
 	profilestruct p;
 	profileInit(&p);
@@ -895,6 +897,13 @@ int grid::MHDProfileInitializeGrid(char* profileFileName, char* profileFormat, c
 //         (GridLeftEdge[2]-CELLCENTER(2, 0))/CellWidth[2][0] //BH DEBUG
 //         ); //BH DEBUG
 
+	if(HydroMethod == MHD_RK && initVectorPotential)
+	{
+		// Allow the ElectricField and MagneticField to
+		// be created temporarily for the initialization.
+		UseMHDCT = TRUE;
+		MHD_SetupDims();
+	}
 	this->AllocateGrids();
 	//
 	// Hack for tests of random forcing.
@@ -938,7 +947,7 @@ int grid::MHDProfileInitializeGrid(char* profileFileName, char* profileFormat, c
 	vyField = BaryonField[vyNum];
 	vzField = BaryonField[vzNum];
 	totEField = BaryonField[totENum];
-	if(hasGesEField)
+	if(hasGasEField)
 		gasEField = BaryonField[gasENum];
 
 	for(int f = 0; f < NumberOfBaryonFields; f++)
@@ -951,19 +960,21 @@ int grid::MHDProfileInitializeGrid(char* profileFileName, char* profileFormat, c
 	}
 
 	int debugnanflag = 0; //[BH]
+	int hasConstField = BA[0] && BA[1] && BA[2];
 
 	int radiusSO = p.colSortingOrders[profileFindColIndex(radiusColumnName, &p)];
 	float* radiusData = p.colData[profileFindColIndex(radiusColumnName, &p)];
 	float* densityData = p.colData[profileFindColIndex(densityColumnName, &p)];
 	float* temperatureData = p.colData[profileFindColIndex(temperatureColumnName, &p)];
 	float gammaMinusOne = Gamma - 1;
+	FLOAT xyz[3];
 	for(int k = 0; k < GridDimension[2]; k++)
 	{
-		FLOAT z = CELLCENTER(2, k);
+		FLOAT z = xyz[2] = CELLCENTER(2, k);
 		FLOAT zz = square(z - SphericalGravityCenter[2]);
 		for(int j = 0; j < GridDimension[1]; j++)
 		{
-			FLOAT y = CELLCENTER(1, j);
+			FLOAT y = xyz[1] = CELLCENTER(1, j);
 			FLOAT yy_zz = square(y - SphericalGravityCenter[1]) + zz;
 			for(int i = 0; i <= GridDimension[0]; i++)
 			{
@@ -975,7 +986,7 @@ int grid::MHDProfileInitializeGrid(char* profileFileName, char* profileFormat, c
 
 				if(!strcmp(profileType, "RADIAL"))
 				{
-					FLOAT x = CELLCENTER(0, i);
+					FLOAT x = xyz[0] = CELLCENTER(0, i);
 					FLOAT r = sqrt(square(x - SphericalGravityCenter[0]) + yy_zz);
 
 					float rho, T = 0;
@@ -983,22 +994,23 @@ int grid::MHDProfileInitializeGrid(char* profileFileName, char* profileFormat, c
 					//retcode = profileInterpolate(&T, temperatureData, r, radiusData, p.nRows, radiusSO); //K
 					bool isBurned = (r < burnedRadius);					// || (T > 0 && T > burningTemperature));
 
-//					pressure = EOSPolytropicFactor * rho**Gamma;
-//					gasEDensity = pressure / (Gamma - 1);
-//					gasE = specificGasE = gasEDensity / rho = EOSPolytropicFactor * rho**(Gamma-1) / (Gamma-1);
-					float gasE = EOSPolytropicFactor * POW(rho, gammaMinusOne) / gammaMinusOne;
-					float totE = gasE + 0.5 * (vx * vx + vy * vy + vz * vz);
-
-					if(BxField)
+					// Initialize zero total energy, whether it depends on the magnetic field
+					// or not. Leave it for MHDProfileInitializeGrid2.  For this reason,
+					// calculate the gas energy only in case of dual energy formalism.
+					float gasE = (hasGasEField) ? (EOSPolytropicFactor * POW(rho, gammaMinusOne) / gammaMinusOne) : 0;
+					float totE = 0;
+//					totE += 0.5 * (vx * vx + vy * vy + vz * vz);
+					if(BxField && !initVectorPotential)
 					{
 						MHDProfileInitExactB(&Bx, &By, &Bz, x, y, z);
-						totE += 0.5 * (Bx * Bx + By * By + Bz * Bz) / rho;
+//						totE += 0.5 * (Bx * Bx + By * By + Bz * Bz) / rho;
 						BxField[index] = Bx;
 						ByField[index] = By;
 						BzField[index] = Bz;
 					}
+
 					rhoField[index] = rho;
-					if(hasGesEField)
+					if(hasGasEField)
 						gasEField[index] = gasE;
 					totEField[index] = totE;
 					vxField[index] = vx;
@@ -1017,6 +1029,12 @@ int grid::MHDProfileInitializeGrid(char* profileFileName, char* profileFormat, c
 	}
 	profileFree(&p);
 
+	if(initVectorPotential)
+	{
+		InitializeMagneticUniformFieldVectorPotential(BA, 0);
+		InitializeMagneticDipoleVectorPotential(dipoleMoment, dipoleCenter, 1);
+	}
+
 // Boiler plate code:
 //  if(DualEnergyFormalism )
 //    for(index=0;index<size;index++)
@@ -1032,8 +1050,123 @@ int grid::MHDProfileInitializeGrid(char* profileFileName, char* profileFormat, c
 	if(debugnanflag)
 		printf("nans intialized.\n"); //[BH]
 	else
-		printf("Initialized.\n");
+		printf("Initialized grid, phase 1.\n");
 
+	return SUCCESS;
+
+}
+
+/*
+ * This function completes the initialization of fields depending on the magnetic field,
+ * like total energy.
+ */
+int grid::MHDProfileInitializeGrid2(char* profileFileName, char* profileFormat, char* profileType,
+	char* radiusColumnName, char* densityColumnName, char* temperatureColumnName,
+	float burningTemperature,
+	float burnedRadius, float profileAtTime,
+	float dipoleMoment[3], float dipoleCenter[3])
+{
+	if(ProcessorNumber != MyProcessorNumber)
+		return SUCCESS;
+
+	int initVectorPotential = dipoleMoment[0] || dipoleMoment[1] || dipoleMoment[2];
+	int hasGasEField = DualEnergyFormalism && (HydroMethod != Zeus_Hydro); //[BH]
+
+	int totENum, rhoNum, vxNum, vyNum, vzNum;
+	int gasENum = -1, BxNum = -1, ByNum = -1, BzNum = -1, rhoNiNum = -1;
+	float *totEField, *rhoField, *vxField, *vyField, *vzField;
+	float *gasEField = NULL, *rhoNiField = NULL;
+	float *BxField = NULL, *ByField = NULL, *BzField = NULL;
+
+	if(IdentifyPhysicalQuantities(rhoNum, gasENum, vxNum, vyNum, vzNum, totENum, BxNum, ByNum, BzNum) == FAIL)
+		ENZO_FAIL("MHDProfiileInitializeGrid: Error in IdentifyPhysicalQuantities for UseMHD==true.");
+
+	rhoField = BaryonField[rhoNum];
+	vxField = BaryonField[vxNum];
+	vyField = BaryonField[vyNum];
+	vzField = BaryonField[vzNum];
+	if(hasGasEField)
+		gasEField = BaryonField[gasENum];
+	if(UseMHD)
+	{
+		BxField = BaryonField[BxNum];
+		ByField = BaryonField[ByNum];
+		BzField = BaryonField[BzNum];
+	}
+
+	float gammaMinusOne = Gamma - 1;
+	size_t gridSize = GetGridSize();
+	totEField = BaryonField[totENum];
+	const float* totEField_end = totEField + gridSize;
+
+	float* RHO = rhoField;
+	float* GE = gasEField;
+	float* VX = vxField;
+	float* VY = vyField;
+	float* VZ = vzField;
+	float* BX = BxField;
+	float* BY = ByField;
+	float* BZ = BzField;
+
+	// If using gas energy field, the gas energy had been calculated
+	// already, otherwise we need to calculate it here.
+	if(hasGasEField)
+	{
+		arr_cpy(totEField, gasEField, gridSize);
+	}
+	else
+	{
+		for(float* TE = totEField; TE < totEField_end; TE++)
+			*TE = EOSPolytropicFactor * POW(*RHO++, gammaMinusOne) / gammaMinusOne;
+	}
+
+	for(float* TE = totEField; TE < totEField_end; TE++)
+	{
+		*TE += 0.5 * (square(*VX++) + square(*VY++) + square(*VZ++));
+	}
+
+	if(BX)
+	{
+		RHO = rhoField;
+		float rho;
+		for(float* TE = totEField; TE < totEField_end; TE++)
+		{
+			if((rho = *RHO++) > tiny_number)
+				*TE += 0.5 * (square(*BX++) + square(*BY++) + square(*BZ++)) / rho;
+			else
+			{
+				BX++;
+				BY++;
+				BZ++;
+			}
+		}
+	}
+
+// Boiler plate code:
+//  if(DualEnergyFormalism )
+//    for(index=0;index<size;index++)
+//    BaryonField[ gesENum ][index] =
+//       BaryonField[ totENum ][index]
+//      - 0.5*(BaryonField[ vNum[0] ][index]*BaryonField[ vNum[0] ][index] +
+//	     BaryonField[ vNum[1] ][index]*BaryonField[ vNum[1] ][index] +
+//	     BaryonField[ vNum[2] ][index]*BaryonField[ vNum[2] ][index])
+//      - 0.5*(BaryonField[BxNum][index]*BaryonField[BxNum][index] +
+//             BaryonField[ByNum][index]*BaryonField[ByNum][index] +
+//             BaryonField[BzNum][index]*BaryonField[BzNum][index])/BaryonField[ rhoNum ][index];
+
+	if(HydroMethod == MHD_RK && initVectorPotential)
+	{
+		UseMHDCT = FALSE;
+		for(int dim = 0; dim < 3; dim++)
+		{
+			delete MagneticField[dim];
+			delete ElectricField[dim];
+			MagneticField[dim] = NULL;
+			ElectricField[dim] = NULL;
+		}
+	}
+
+	printf("Initialized grid, phase 2 (total energy.)\n");
 	return SUCCESS;
 
 }
