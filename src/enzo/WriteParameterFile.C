@@ -174,11 +174,13 @@ int WriteParameterFile(FILE *fptr, TopGridData &MetaData, char *name = NULL)
   fprintf(fptr, "SphericalGravityCentralMass = %"FSYM"\n", SphericalGravityCentralMass);
   fprintf(fptr, "SphericalGravityConstnat = %"FSYM"\n", SphericalGravityConstant);
   fprintf(fptr, "SphericalGravityInnerRadius = %"FSYM"\n", SphericalGravityInnerRadius);
-  fprintf(fptr, "SpericalGravityMaxHierarchyLevel = %"ISYM"\n", SpericalGravityMaxHierarchyLevel);
+  fprintf(fptr, "SpericalGravityMaxHierarchyLevel = %"ISYM"\n", SphericalGravityMaxHierarchyLevel);
   fprintf(fptr, "SphericalGravityNumberOfBins = %"ISYM"\n", SphericalGravityNumberOfBins);
   fprintf(fptr, "SphericalGravityOuterRadius = %"FSYM"\n", SphericalGravityOuterRadius);
   fprintf(fptr, "SphericalGravityUniformBins = %"ISYM"\n", SphericalGravityUniformBins);
   fprintf(fptr, "SphericalGravityWritePotentialSwitch = %"ISYM"\n", SphericalGravityWritePotentialSwitch);
+  fprintf(fptr, "SphericalGravityBinsPerCell = %"FSYM"\n", SphericalGravityBinsPerCell);
+  fprintf(fptr, "SphericalGravityDebug = %"ISYM"\n", SphericalGravityDebug);
 
   fprintf(fptr, "PythonTopGridSkip       = %"ISYM"\n", PythonTopGridSkip);
   fprintf(fptr, "PythonSubcycleSkip      = %"ISYM"\n", PythonSubcycleSkip);

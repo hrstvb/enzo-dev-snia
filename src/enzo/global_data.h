@@ -1172,10 +1172,10 @@ EXTERN float SphericalGravityConstant;
 EXTERN int SphericalGravityHasCentralBin;
 EXTERN FLOAT SphericalGravityInnerRadius;
 EXTERN FLOAT *SphericalGravityInteriorMasses;
-EXTERN int *SpericalGravityMaxHierarchyLevel;
+EXTERN int SphericalGravityMaxHierarchyLevel;
 EXTERN size_t SphericalGravityNumberOfBins; // Reuested number between inner and outer radius
 EXTERN FLOAT SphericalGravityOuterRadius;
-EXTERN Eint64 *SphericalGravityShellCellCounts; //probably should be a long long int.
+EXTERN size_t *SphericalGravityShellCellCounts; //probably should be a long long int.
 
 EXTERN FLOAT *SphericalGravityShellCentersOfMass[MAX_DIMENSION]; // By r and dim
 EXTERN FLOAT SphericalGravityCenterOfMass[MAX_DIMENSION]; // By dim
@@ -1195,9 +1195,51 @@ EXTERN FLOAT *SphericalGravityShellVolumes;
 EXTERN int SphericalGravityUniformBins;
 EXTERN int SphericalGravityWritePotentialSwitch;
 
-EXTREN float* SphericalGravityBinAccels;
-EXTREN float* SphericalGravityBinAccelSlopes;
-EXTERN int SphericalGravityInterpAccel; // const, linear interp., etc.
+EXTERN float* SphericalGravityBinAccels;
+EXTERN float* SphericalGravityBinAccelSlopes;
+EXTERN int SphericalGravityInterpAccelOrder; // const, linear interp., etc.
+
+/*
+ * Spherical gravity, multilevel
+ * Parameters have the SphericalGravity preffix
+ * Other variables -- SpherGrav
+ */
+//New parameter(s)
+EXTERN int SphericalGravityBinsPerCell;
+EXTERN int SphericalGravityDebug;
+
+//
+//EXTERN int UseSpherGrav;
+//EXTERN size_t* SpherGravActualNumberOfBins; // Actual number of bins incl. the central and the outer.
+//EXTERN FLOAT **SpherGravBinLeftEdges;
+//EXTERN FLOAT **SpherGravBinRightEdges;
+//EXTERN FLOAT  *SpherGravBinSize; // >0, if uniform betwen the inner and outer radius.
+//EXTERN int    *SpherGravHasCentralBin;
+//EXTERN FLOAT  *SpherGravInnerRadius;
+//EXTERN FLOAT  *SpherGravOuterRadius;
+//
+//EXTERN FLOAT  **SpherGravInteriorMasses;
+//EXTERN size_t **SpherGravShellCellCounts; //probably should be a long long int.
+//
+//EXTERN FLOAT **SpherGravShellCentersOfMass[MAX_DIMENSION]; // By r and dim
+//EXTERN FLOAT  *SpherGravCenterOfMass[MAX_DIMENSION]; // By dim
+//
+//EXTERN FLOAT **SpherGravShellKineticEnergies[MAX_DIMENSION]; // By r and dim
+//EXTERN FLOAT **SpherGravShellKineticEnergy; // By r
+//EXTERN FLOAT  *SpherGravKineticEnergies[MAX_DIMENSION]; // By dim
+//EXTERN FLOAT  *SpherGravKineticEnergy; // Total
+//
+//EXTERN FLOAT **SpherGravShellMagneticEnergies[MAX_DIMENSION]; // By r and dim
+//EXTERN FLOAT **SpherGravShellMagneticEnergy; // By r
+//EXTERN FLOAT  *SpherGravMagneticEnergies[MAX_DIMENSION]; // By dim
+//EXTERN FLOAT  *SpherGravMagneticEnergy; // Total
+//
+//EXTERN FLOAT **SpherGravShellMasses; // double float for adding too many cells with small mass
+//EXTERN FLOAT **SpherGravShellVolumes;
+//EXTERN int    *SpherGravUniformBins;
+//
+//EXTERN float **SpherGravBinAccels;
+//EXTERN float **SpherGravBinAccelSlopes;
 
 EXTERN float BA[3];
 

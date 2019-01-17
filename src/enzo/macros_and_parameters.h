@@ -584,5 +584,6 @@ typedef long long int   HDF5_hid_t;
 #define TIME_MSG(A) ;
 #endif
 
+#include "DebugMacros.h"
 
 #endif
