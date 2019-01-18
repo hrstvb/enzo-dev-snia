@@ -206,13 +206,13 @@ int EvolveHierarchy(HierarchyEntry &TopGrid, TopGridData &MetaData,
   CommunicationReceiveCurrentDependsOn = COMMUNICATION_NO_DEPENDENCE;
 
   while (Temp != NULL) {
-	  TRACEF("%lld", CommunicationReceiveIndex);
+//	  TRACEF("%lld", CommunicationReceiveIndex);
     if (Temp->GridData->SetExternalBoundaryValues(Exterior) == FAIL) {
       //      ENZO_FAIL("Error in grid->SetExternalBoundaryValues.\n");
       Exterior->Prepare(Temp->GridData);
 
     }
-    TRACEF("%lld", CommunicationReceiveIndex);
+//    TRACEF("%lld", CommunicationReceiveIndex);
     if (CopyOverlappingZones(Temp->GridData, &MetaData, LevelArray, 0)
 	== FAIL)
       ENZO_FAIL("Error in CopyOverlappingZones.");
@@ -221,7 +221,7 @@ int EvolveHierarchy(HierarchyEntry &TopGrid, TopGridData &MetaData,
 
   CommunicationDirection = COMMUNICATION_SEND;
 
-  TRACEF("%lld", CommunicationReceiveIndex);
+//  TRACEF("%lld", CommunicationReceiveIndex);
   Temp = LevelArray[0];
   while (Temp != NULL) {
     if (CopyOverlappingZones(Temp->GridData, &MetaData, LevelArray, 0)
