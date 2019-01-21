@@ -818,9 +818,6 @@ int grid::MHDProfileInitializeGrid(char* profileFileName, char* profileFormat, c
 	float burnedRadius, float profileAtTime,
 	float dipoleMoment[3], float dipoleCenter[3])
 {
-	if(ProcessorNumber != MyProcessorNumber)
-		return SUCCESS;
-
 	if(GridRank != 3)
 		ENZO_FAIL("MHDProfileInitializeGrid is implemented for 3D only.")
 
@@ -859,6 +856,9 @@ int grid::MHDProfileInitializeGrid(char* profileFileName, char* profileFormat, c
 			FieldType[NumberOfBaryonFields++] = PhiField;
 	}
 
+	if(ProcessorNumber != MyProcessorNumber)
+		return SUCCESS;
+
 	profilestruct p;
 	profileInit(&p);
 	p.time = profileAtTime;
@@ -884,7 +884,7 @@ int grid::MHDProfileInitializeGrid(char* profileFileName, char* profileFormat, c
 
 	int size = GetGridSize();
 //  printf("Proc #%d: %d..%d, %d..%d, %d..%d;" //BH DEBUG
-//          " %g..%g, %g..%g, %g..%g;" //BH DEBUG
+ //          " %g..%g, %g..%g, %g..%g;" //BH DEBUG
 //         " %g, %g, %g;" //BH DEBUG
 //         " %g, %g, %g;" //BH DEBUG
 //          "\n", MyProcessorNumber, //BH DEBUG

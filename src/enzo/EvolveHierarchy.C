@@ -201,18 +201,17 @@ int EvolveHierarchy(HierarchyEntry &TopGrid, TopGridData &MetaData,
 #ifdef FORCE_MSG_PROGRESS
   CommunicationBarrier();
 #endif
+
   CommunicationReceiveIndex = 0;
   CommunicationDirection = COMMUNICATION_POST_RECEIVE;
   CommunicationReceiveCurrentDependsOn = COMMUNICATION_NO_DEPENDENCE;
 
   while (Temp != NULL) {
-//	  TRACEF("%lld", CommunicationReceiveIndex);
     if (Temp->GridData->SetExternalBoundaryValues(Exterior) == FAIL) {
       //      ENZO_FAIL("Error in grid->SetExternalBoundaryValues.\n");
       Exterior->Prepare(Temp->GridData);
 
     }
-//    TRACEF("%lld", CommunicationReceiveIndex);
     if (CopyOverlappingZones(Temp->GridData, &MetaData, LevelArray, 0)
 	== FAIL)
       ENZO_FAIL("Error in CopyOverlappingZones.");
@@ -221,7 +220,6 @@ int EvolveHierarchy(HierarchyEntry &TopGrid, TopGridData &MetaData,
 
   CommunicationDirection = COMMUNICATION_SEND;
 
-//  TRACEF("%lld", CommunicationReceiveIndex);
   Temp = LevelArray[0];
   while (Temp != NULL) {
     if (CopyOverlappingZones(Temp->GridData, &MetaData, LevelArray, 0)
@@ -233,12 +231,13 @@ int EvolveHierarchy(HierarchyEntry &TopGrid, TopGridData &MetaData,
 #ifdef FORCE_MSG_PROGRESS
   CommunicationBarrier();
 #endif
-TRACEF("%lld", CommunicationReceiveIndex);
+
   CommunicationReceiveHandler();
-TRACE;
+
 #ifdef FORCE_MSG_PROGRESS
   CommunicationBarrier();
 #endif
+
   PrintMemoryUsage("Bdry set");
 
   /* Remove RandomForcingFields from BaryonFields when BCs are set. */
@@ -253,6 +252,7 @@ TRACE;
   }
 
   /* Check for output. */
+
   CheckForOutput(&TopGrid, MetaData, Exterior,
 #ifdef TRANSFER
 		 ImplicitSolver,
@@ -621,7 +621,7 @@ TRACE;
     CheckForTimeAction(LevelArray, MetaData);
 
     /* Check for output. */
-TRACE;
+
     CheckForOutput(&TopGrid, MetaData, Exterior,
 #ifdef TRANSFER
 		   ImplicitSolver,
