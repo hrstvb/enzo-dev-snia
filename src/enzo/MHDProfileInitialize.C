@@ -42,6 +42,7 @@
 #include "Grid.h"
 #include "Hierarchy.h"
 #include "TopGridData.h"
+#include "LevelArrayIterator.h"
 
 class ExternalBoundary;
 
@@ -105,9 +106,12 @@ int MHDProfileInitialize(FILE *fptr, FILE *Outfptr, HierarchyEntry &TopGrid, Top
 	char temperatureColumnName[32]; //"temperature"
 	float burningTemperature = 0;
 	float burnedRadius = 0;
+	int perturbMethod = 0;
+	int perturbBeltsCount = 0;
+	float perturbRaise = 1.0;
 	float profileAtTime = -1;
-	float dipoleMoment[3];
-	float dipoleCenter[3];
+	float dipoleMoment[3] = { 0, 0, 0 };
+	float dipoleCenter[3] = { 0, 0, 0 };
 
 	*profileFileName = *profileFormat = *profileType = '\0';
 	*radiusColumnName = *densityColumnName = *temperatureColumnName = '\0';
@@ -129,9 +133,12 @@ int MHDProfileInitialize(FILE *fptr, FILE *Outfptr, HierarchyEntry &TopGrid, Top
 		ret += sscanf(line, "TemperatureColumnName = %s", &temperatureColumnName);
 		ret += sscanf(line, "BurningTemperature = %"FSYM, &burningTemperature);
 		ret += sscanf(line, "BurnedRadius = %"PSYM, &burnedRadius);
+		ret += sscanf(line, "BurnedSpherePerturbationMethod = %"PSYM, &perturbMethod);
+		ret += sscanf(line, "BurnedPerturbationBeltsCount = %"PSYM, &perturbBeltsCount);
+		ret += sscanf(line, "BurnedPerturbationRaise = %"PSYM, &perturbRaise);
 		ret += sscanf(line, "ProfileAtTime = %"FSYM, &profileAtTime);
 
-		ret += sscanf(line, "BA = %"FSYM, BA, BA + 1, BA + 2);
+		ret += sscanf(line, "BA = %"FSYM" %"FSYM" %"FSYM, BA, BA + 1, BA + 2);
 
 		ret += sscanf(line, "InternalEnergy_InitialA = %"FSYM, &InternalEnergy_InitialA);	//[BH]
 		ret += sscanf(line, "InternalEnergy_InitialB = %"FSYM, &InternalEnergy_InitialB);	//[BH]
@@ -174,250 +181,93 @@ int MHDProfileInitialize(FILE *fptr, FILE *Outfptr, HierarchyEntry &TopGrid, Top
 												MetaData.TopGridRank);
 	}
 
-	// Initialize the top grid.
-//	if(TopGrid.GridData->MHDProfileInitializeGrid(profileFileName, profileFormat, profileType, radiusColumnName,
-//													densityColumnName, temperatureColumnName, burningTemperature,
-//													burnedRadius, profileAtTime, dipoleMoment, dipoleCenter) == FAIL)
-//		ENZO_FAIL("MHDProfileInitialize: Error in MHDProfileInitializeGrid.");
-
-#ifdef UNUSEDCODE
-	if(RefineOnStartup && MaximumRefinementLevel > 0)
-	{
-		// Create a new hierarchy stub with single entry at each level.
-		HierarchyEntry ** Subgrid = new HierarchyEntry*[MaximumRefinementLevel];
-		for(int lev = 0; lev < MaximumRefinementLevel; lev++)
-		Subgrid[lev] = new HierarchyEntry;
-
-		for(int lev = 0; lev < MaximumRefinementLevel; lev++)
-		Subgrid[lev]->NextGridThisLevel = NULL;
-
-		TopGrid.NextGridNextLevel = Subgrid[0];
-		Subgrid[0]->ParentGrid = &TopGrid;
-		for(int lev = 1; lev < MaximumRefinementLevel; lev++)
-		{
-			Subgrid[lev - 1]->NextGridNextLevel = Subgrid[lev];
-			Subgrid[lev]->ParentGrid = Subgrid[lev - 1];
-		}
-		Subgrid[MaximumRefinementLevel - 1]->NextGridNextLevel = NULL;
-
-		// Align the refinement region with the top grid cells and
-		// calculate the number of enclosed (active) zones.
-		int SubgridDims[3];
-		for(int dim = 0; dim < 3; dim++)
-		{
-			const FLOAT& L = DomainLeftEdge[dim];
-			const FLOAT& R = DomainRightEdge[dim];
-			const FLOAT DX = (R - L) / MetaData.TopGridDims[dim];
-			int n;
-
-			//nint = nearest int
-			n = nint((RefineRegionLeft[dim] - L) / DX);
-			RefineRegionLeft[dim] = max(n * DX + L, 0);
-			n = nint((RefineRegionRight[dim] - L) / DX);
-			RefineRegionRight[dim] = min(n * DX + L, R);
-			nSubgridActiveZones[dim] = nint((RefineRegionRight[dim] - RefineRegionLeft[dim]) / DX);
-		}
-
-		fprintf(stderr, "Subgrid Left %"GSYM" %"GSYM" %"GSYM"\n", RefineRegionLeft[0], RefineRegionLeft[1],
-				RefineRegionLeft[2]);
-		fprintf(stderr, "Subgrid Right %"GSYM" %"GSYM" %"GSYM"\n", RefineRegionRight[0], RefineRegionRight[1],
-				RefineRegionRight[2]);
-		fprintf(stderr, "nCells %"ISYM" %"ISYM" %"ISYM"\n", nSubgridActiveZones[0], nSubgridActiveZones[1],
-				nSubgridActiveZones[2]);
-
-		// Instantiate one child per parent
-		for(int lev = 0; lev < MaximumRefinementLevel; lev++)
-		{
-			//Calculate number of cells on this level.
-			for(int dim = 0; dim < MetaData.TopGridRank; dim++)
-			nSubgridActiveZones[dim] *= RefineBy;
-
-			fprintf(stderr, "MHDProfileInitialize: Refinement level=%"ISYM
-					", NumberOfSubgridZones[0] = %"ISYM"\n",
-					lev + 1, nSubgridActiveZones[0]);
-
-			if(nSubgridActiveZones[0] <= 0)
-			{
-				printf("SedovBlast: single grid start-up.\n");
-				continue;
-			}
-
-			//  Compute the full dimensions = active + ghost
-			for(int dim = 0; dim < MetaData.TopGridRank; dim++)
-			SubgridDims[dim] = nSubgridActiveZones[dim] + 2 * NumberOfGhostZones;
-
-			// Create a new subgrid and initialize it
-			Subgrid[lev]->GridData = new grid;
-			Subgrid[lev]->GridData->InheritProperties(TopGrid.GridData);
-			Subgrid[lev]->GridData->PrepareGrid(MetaData.TopGridRank, SubgridDims, RefineRegionLeft, RefineRegionRight,
-					0);
-
-			if(Subgrid[lev]->GridData->MHDProfileInitializeGrid(profileFileName, profileFormat, profileType,
-							radiusColumnName, densityColumnName,
-							temperatureColumnName, burningTemperature, burnedRadius,
-							profileAtTime) == FAIL)
-			ENZO_FAIL("MHDBlastInitialize: Error in MHDBlastInitializeGrid.");
-		} // level
-
-		// Make sure each grid has the best data with respect to the finer grids.
-		// This projection juggle is to ensure that, regardless of how the hierarchy is evolved,
-		// the field gets projected properly here.
-		int MHD_ProjectEtmp = MHD_ProjectE;
-		int MHD_ProjectBtmp = MHD_ProjectB;
-		MHD_ProjectE = FALSE;
-		MHD_ProjectB = TRUE;
-
-		for(int lev = MaximumRefinementLevel - 1; lev > 0; lev--)
-		if(Subgrid[lev]->GridData->ProjectSolutionToParentGrid(*(Subgrid[lev - 1]->GridData)) == FAIL)
-		ENZO_FAIL("Error in ProjectSolutionToParentGrid.");
-		// Project to the root grid
-		if(Subgrid[0]->GridData->ProjectSolutionToParentGrid(*(TopGrid.GridData)) == FAIL)
-		ENZO_FAIL("Error in ProjectSolutionToParentGrid.");
-
-		// Restore projection options to their initial.
-		MHD_ProjectE = MHD_ProjectEtmp;
-		MHD_ProjectB = MHD_ProjectBtmp;
-
-	} //RefineOnStartup
-#endif /* UNUSEDCODE */
-
-	bool initVectorPotential = dipoleMoment[0] || dipoleMoment[1] || dipoleMoment[2];
+	bool usingVectorPotential = dipoleMoment[0] || dipoleMoment[1] || dipoleMoment[2];
 	bool projectChildrenToParents = RefineOnStartup && MaximumRefinementLevel > 0;
 	ret = SUCCESS;
 
-TopGrid.GridData->MHDProfileInitializeGrid(profileFileName, profileFormat, profileType, radiusColumnName,
-												densityColumnName, temperatureColumnName, burningTemperature,
-												burnedRadius, profileAtTime, dipoleMoment, dipoleCenter);
-TopGrid.GridData->MHDProfileInitializeGrid2(profileFileName, profileFormat, profileType, radiusColumnName,
-													densityColumnName, temperatureColumnName, burningTemperature,
-													burnedRadius, profileAtTime, dipoleMoment, dipoleCenter);
-//	// Ceate a level array stub and initialize it with the TopGrid.
-//	LevelHierarchyEntry *levelArray[MAX_DEPTH_OF_HIERARCHY];
-//	arr_set(levelArray, MAX_DEPTH_OF_HIERARCHY, NULL);
-//	TRACEF("%p, %p, %p", TopGrid.ParentGrid, TopGrid.NextGridNextLevel, TopGrid.NextGridThisLevel);
-//	AddLevel(levelArray, &TopGrid, 0);
-//	TRACEF("%p , %p, %p", TopGrid.ParentGrid, TopGrid.NextGridNextLevel, TopGrid.NextGridThisLevel);
-//
-//	// The following loop initializes the TopGrid on the first pass and
-//	// continues if refinement is required at startupand if it is necessary.
-//	// After the loop numLeves has the number of actual levels created.
-//	int numLevels = 0;
-//	for(int level = 0; 1; level++)
-//	{
-//		numLevels++;
-//		LevelHierarchyEntry *lhe = levelArray[level];
-//		// A child level may not be created,
-//		// if no refinement is needed.
-//		// If a child level was not created, break off the loop,
-//		// otherwise initialize the grids on this level.
-//		if(lhe == NULL)
-//			break;
-//
-//		while(lhe)
-//		{
-//			if(lhe->GridData->MHDProfileInitializeGrid(profileFileName, profileFormat, profileType, radiusColumnName,
-//														densityColumnName, temperatureColumnName, burningTemperature,
-//														burnedRadius, profileAtTime, dipoleMoment, dipoleCenter) == FAIL)
-//			{
-//				ENZO_FAIL("Error in TestGravitySphereInitializeGrid.");
-//			}
-//
-//			lhe = lhe->NextGridThisLevel;
-//		}
-//
-//		if(!RefineOnStartup || level >= MAX_DEPTH_OF_HIERARCHY || level >= MaximumRefinementLevel)
-//			break;
-//
-//		// Create a child level of parentLevel:
-//		if(RebuildHierarchy(&MetaData, levelArray, level) == FAIL)
-//			ENZO_FAIL("Error in RebuildHierarchy.");
-//	} // End for(level)
-//
-//	if(projectChildrenToParents)
-//	{
-//		// Restore the consistency among levels by projecting each layer to its parent,
-//		// starting from the finest level.
-//		// We want to project the vector potential and take the curl afterwards.
-//		// Store the original project flags for the MHD fields and set them so
-//		// that the vector potential gets projected.
-//		int origMHD_ProjectB = MHD_ProjectB;
-//		int origMHD_ProjectE = MHD_ProjectE;
-//		MHD_ProjectB = !initVectorPotential;
-//		MHD_ProjectE = initVectorPotential;
-//
-//		// We start this loop from the level we ended the previous loop.
-//		// It will not execute if numLevel==0, i.e. if the top grid hasn't been refined.
-//		for(int level = numLevels - 1; level > 0; level--)
-//		{
-//			LevelHierarchyEntry *lhe = levelArray[level];
-//			while(lhe)
-//			{
-//				grid* child = lhe->GridData;
-//				grid* parent = lhe->GridHierarchyEntry->ParentGrid->GridData;
-//				if(child->ProjectSolutionToParentGrid(*parent) == FAIL)
-//				{
-//					ENZO_FAIL("MHDProfileRefineOnStartup: rror in grid->ProjectSolutionToParentGrid.");
-//				}
-//
-//				lhe = lhe->NextGridThisLevel;
-//			}
-//		}
-//		MHD_ProjectB = origMHD_ProjectB;
-//		MHD_ProjectE = origMHD_ProjectE;
-//	}
-//
-//	// Without reinement the following three loop will execute
-//	// once for level 0, where the TopGrid is.
-//	if(initVectorPotential)
-//	{
-//		for(int level = 0; level < numLevels; level++)
-//		{
-//			LevelHierarchyEntry *lhe = levelArray[level];
-//			while(lhe)
-//			{
-//				if(lhe->GridData->MHD_Curl() == FAIL)
-//				{
-//					fprintf(stderr, "MHDProfileRefineOnStartup: error in MHD_Curl\n");
-//					ret = FAIL;
-//				}
-//				lhe = lhe->NextGridThisLevel;
-//			}
-//		}
-//
-//		for(int level = 0; level < numLevels; level++)
-//		{
-//			LevelHierarchyEntry *lhe = levelArray[level];
-//			while(lhe)
-//			{
-//				if(lhe->GridData->CenterMagneticField() == FAIL)
-//				{
-//					fprintf(stderr, "MHDProfileRefineOnStartup: error in CenterMagneticField\n");
-//					ret = FAIL;
-//				}
-//				lhe = lhe->NextGridThisLevel;
-//			}
-//		}
-//	}
-//
-//	for(int level = 0; level < numLevels; level++)
-//	{
-//		LevelHierarchyEntry *lhe = levelArray[level];
-//		while(lhe)
-//		{
-//			if(lhe->GridData->MHDProfileInitializeGrid2(profileFileName, profileFormat, profileType, radiusColumnName,
-//														densityColumnName, temperatureColumnName, burningTemperature,
-//														burnedRadius, profileAtTime, dipoleMoment, dipoleCenter) == FAIL)
-//			{
-//				fprintf(stderr, "MHDProfileRefineOnStartup: error in MHDProfileInitializeGrid2\n");
-//				ret = FAIL;
-//			}
-//			lhe = lhe->NextGridThisLevel;
-//		}
-//	}
+	// Ceate a level array stub and initialize it with the TopGrid.
+	LevelHierarchyEntry *levelArray[MAX_DEPTH_OF_HIERARCHY];
+	arr_set(levelArray, MAX_DEPTH_OF_HIERARCHY, NULL);
+	AddLevel(levelArray, &TopGrid, 0);
+	LevelArrayIterator it = LevelArrayIterator(levelArray, 1);
 
-	//
-	// Labels and Units.  (For IO.)
-	//
+	// The following loop initializes the TopGrid on the first pass and
+	// continues if refinement is required at startup and if it is necessary.
+	// After the loop, numLeves has the number of actual levels created.
+	for(grid* g = it.firstFromTop(); g; g = it.next())
+	{
+		// A child level may not have been created during the
+		// previous loop.  If so, break off the loop,
+		// otherwise initialize the grids on this level.
+		if(g->MHDProfileInitializeGrid(profileFileName, profileFormat, profileType, radiusColumnName, densityColumnName,
+										temperatureColumnName, burningTemperature, burnedRadius, profileAtTime,
+										dipoleMoment, dipoleCenter, usingVectorPotential) == FAIL)
+		{
+			ENZO_FAIL("Error in TestGravitySphereInitializeGrid.");
+		}
+
+		if(!RefineOnStartup || it.currentLevel >= MAX_DEPTH_OF_HIERARCHY || it.currentLevel >= MaximumRefinementLevel)
+			break;
+
+		// Create a child level of parentLevel:
+		if(RebuildHierarchy(&MetaData, levelArray, it.currentLevel) == FAIL)
+			ENZO_FAIL("Error in RebuildHierarchy.");
+		it.nLevels++;
+	} // End for(level)
+
+	if(usingVectorPotential)
+	{
+		for(grid* g = it.firstFromTop(); g; g = it.next())
+			g->InitializeMagneticUniformFieldVectorPotential(BA, 0);
+
+		for(grid* g = it.firstFromTop(); g; g = it.next())
+			g->InitializeMagneticDipoleVectorPotential(dipoleMoment, dipoleCenter, 1);
+	}
+
+	if(projectChildrenToParents)
+	{
+		// Restore the consistency among levels by projecting each layer to its parent,
+		// starting from the finest level.
+		// We want to project the vector potential and take the curl afterwards.
+		// Store the original project flags for the MHD fields and set them so
+		// that the vector potential gets projected.
+		int origMHD_ProjectB = MHD_ProjectB;
+		int origMHD_ProjectE = MHD_ProjectE;
+		MHD_ProjectB = !usingVectorPotential;
+		MHD_ProjectE = usingVectorPotential;
+
+		// We start this loop from the level we ended the previous loop.
+		// It will not execute if numLevel==0, i.e. if the top grid hasn't been refined.
+		grid* parent;
+		for(grid* g = it.firstFromFinest(&parent); g = it.next(&parent);)
+			if(g->ProjectSolutionToParentGrid(*parent) == FAIL)
+				ENZO_FAIL("MHDProfileRefineOnStartup: error in grid->ProjectSolutionToParentGrid.");
+		MHD_ProjectB = origMHD_ProjectB;
+		MHD_ProjectE = origMHD_ProjectE;
+	}
+
+	// Without reinement the following three loop will execute
+	// once for level 0, where the TopGrid is.
+	if(usingVectorPotential)
+	{
+		for(grid* g = it.firstFromTop(); g; g = it.next())
+			if(g->MHD_Curl() == FAIL)
+				ENZO_FAIL("MHDProfileRefineOnStartup: error in MHD_Curl\n");
+
+		for(grid* g = it.firstFromTop(); g; g = it.next())
+			if(g->CenterMagneticField() == FAIL)
+				ENZO_FAIL("MHDProfileRefineOnStartup: error in CenterMagneticField\n");
+
+		for(grid* g = it.firstFromTop(); g; g = it.next())
+			if(g->MHDProfileInitializeGrid2(profileFileName, profileFormat, profileType, radiusColumnName,
+											densityColumnName, temperatureColumnName, burningTemperature, burnedRadius,
+											profileAtTime, dipoleMoment, dipoleCenter, usingVectorPotential) == FAIL)
+				ENZO_FAIL("MHDProfileRefineOnStartup: error in MHDProfileInitializeGrid2\n");
+	}
+
+//
+// Labels and Units.  (For IO.)
+//
 	char *DensName = "Density";
 	char *TEName = "TotalEnergy";
 	char *Vel1Name = "x-velocity";
@@ -438,7 +288,7 @@ TopGrid.GridData->MHDProfileInitializeGrid2(profileFileName, profileFormat, prof
 	char *MHDCT_EyName = "Ey";
 	char *MHDCT_EzName = "Ez";
 
-	// Ignore the unit strings.
+// Ignore the unit strings.
 	for(int i = 0; i < MAX_NUMBER_OF_BARYON_FIELDS; i++)
 		DataUnits[i] = NULL;
 
@@ -462,7 +312,7 @@ TopGrid.GridData->MHDProfileInitializeGrid2(profileFileName, profileFormat, prof
 		DataLabel[i++] = GPotName;
 
 	if(UseBurning)
-		DataLabel[i++] = Density_56NiName;    //[BH]
+		DataLabel[i++] = Density_56NiName; //[BH]
 
 	if(UseMHD)
 	{
@@ -474,7 +324,7 @@ TopGrid.GridData->MHDProfileInitializeGrid2(profileFileName, profileFormat, prof
 	}
 	if(UseMHDCT)
 		MHDCTSetupFieldLabels();
-	// Done with labels and units.
+// Done with labels and units.
 
 //	if(UseSphericalGravity)
 //	{
@@ -484,8 +334,6 @@ TopGrid.GridData->MHDProfileInitializeGrid2(profileFileName, profileFormat, prof
 //		//ret = SphericalGravityComputePotential(topLevel, &MetaData);
 //		ret = SphericalGravityComputePotential(levelArray, &MetaData);
 //	}
-
-//	printHierarchy(levelArray);
 
 	return ret;
 }

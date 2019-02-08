@@ -37,6 +37,8 @@
 #include "TopGridData.h"
 #include "phys_constants.h"
 
+#include "DebugMacros.h"
+
 //using namespace std;
 
 #define LINE_MAX_LENGTH (512)
@@ -816,12 +818,12 @@ int grid::MHDProfileInitializeGrid(char* profileFileName, char* profileFormat, c
 	char* radiusColumnName, char* densityColumnName, char* temperatureColumnName,
 	float burningTemperature,
 	float burnedRadius, float profileAtTime,
-	float dipoleMoment[3], float dipoleCenter[3])
+	float dipoleMoment[3], float dipoleCenter[3],
+	bool usingVectorPotential)
 {
 	if(GridRank != 3)
 		ENZO_FAIL("MHDProfileInitializeGrid is implemented for 3D only.")
 
-	int initVectorPotential = dipoleMoment[0] || dipoleMoment[1] || dipoleMoment[2];
 	int hasGasEField = DualEnergyFormalism && (HydroMethod != Zeus_Hydro); //[BH]
 
 	if(CellWidth[0][0] <= 0)
@@ -897,10 +899,11 @@ int grid::MHDProfileInitializeGrid(char* profileFileName, char* profileFormat, c
 //         (GridLeftEdge[2]-CELLCENTER(2, 0))/CellWidth[2][0] //BH DEBUG
 //         ); //BH DEBUG
 
-	if(HydroMethod == MHD_RK && initVectorPotential)
+	if(HydroMethod == MHD_RK && usingVectorPotential)
 	{
 		// Allow the ElectricField and MagneticField to
-		// be created temporarily for the initialization.
+		// be created temporarily for the purpose of
+		// initializing with vector potential.
 		UseMHDCT = TRUE;
 		MHD_SetupDims();
 	}
@@ -1000,7 +1003,7 @@ int grid::MHDProfileInitializeGrid(char* profileFileName, char* profileFormat, c
 					float gasE = (hasGasEField) ? (EOSPolytropicFactor * POW(rho, gammaMinusOne) / gammaMinusOne) : 0;
 					float totE = 0;
 //					totE += 0.5 * (vx * vx + vy * vy + vz * vz);
-					if(BxField && !initVectorPotential)
+					if(BxField)
 					{
 						MHDProfileInitExactB(&Bx, &By, &Bz, x, y, z);
 //						totE += 0.5 * (Bx * Bx + By * By + Bz * Bz) / rho;
@@ -1028,12 +1031,6 @@ int grid::MHDProfileInitializeGrid(char* profileFileName, char* profileFormat, c
 		}
 	}
 	profileFree(&p);
-
-	if(initVectorPotential)
-	{
-		InitializeMagneticUniformFieldVectorPotential(BA, 0);
-		InitializeMagneticDipoleVectorPotential(dipoleMoment, dipoleCenter, 1);
-	}
 
 // Boiler plate code:
 //  if(DualEnergyFormalism )
@@ -1064,12 +1061,12 @@ int grid::MHDProfileInitializeGrid2(char* profileFileName, char* profileFormat, 
 	char* radiusColumnName, char* densityColumnName, char* temperatureColumnName,
 	float burningTemperature,
 	float burnedRadius, float profileAtTime,
-	float dipoleMoment[3], float dipoleCenter[3])
+	float dipoleMoment[3], float dipoleCenter[3],
+	bool usingVectorPotential)
 {
 	if(ProcessorNumber != MyProcessorNumber)
 		return SUCCESS;
 
-	int initVectorPotential = dipoleMoment[0] || dipoleMoment[1] || dipoleMoment[2];
 	int hasGasEField = DualEnergyFormalism && (HydroMethod != Zeus_Hydro); //[BH]
 
 	int totENum, rhoNum, vxNum, vyNum, vzNum;
@@ -1154,7 +1151,7 @@ int grid::MHDProfileInitializeGrid2(char* profileFileName, char* profileFormat, 
 //             BaryonField[ByNum][index]*BaryonField[ByNum][index] +
 //             BaryonField[BzNum][index]*BaryonField[BzNum][index])/BaryonField[ rhoNum ][index];
 
-	if(HydroMethod == MHD_RK && initVectorPotential)
+	if(HydroMethod == MHD_RK && usingVectorPotential)
 	{
 		UseMHDCT = FALSE;
 		for(int dim = 0; dim < 3; dim++)

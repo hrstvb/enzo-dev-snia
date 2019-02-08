@@ -1227,6 +1227,7 @@ int WriteParameterFile(FILE *fptr, TopGridData &MetaData, char *name = NULL)
   fprintf(fptr, "SkipBurningOperator                   = %"ISYM"\n", SkipBurningOperator                  ); //[BH]
   fprintf(fptr, "AllowUnburning                        = %"ISYM"\n", AllowUnburning                       ); //[BH]
   fprintf(fptr, "CallSetBoundaryConditionsAfterBurning = %"ISYM"\n", CallSetBoundaryConditionsAfterBurning); //[BH]
+  fprintf(fptr, "BurningDiffusionMethod                = %"ISYM"\n", BurningDiffusionMethod               ); //[BH]
   fprintf(fptr, "BurningDiffusionRate                  = %"FSYM"\n", BurningDiffusionRate                 ); //[BH]
   fprintf(fptr, "BurningDiffusionRateReduced           = %"FSYM"\n", BurningDiffusionRateReduced          ); //[BH]
   fprintf(fptr, "BurningDiffusionCourantSafetyFactor   = %"FSYM"\n", BurningDiffusionCourantSafetyFactor  ); //[BH]

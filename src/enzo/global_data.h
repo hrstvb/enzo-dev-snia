@@ -1115,6 +1115,7 @@ EXTERN int UseBurning;                             //[BH]
 EXTERN int SkipBurningOperator;			   //[BH] ..., only define the fields
 EXTERN int AllowUnburning;			   //[BH] dQ/dt=Q*fd/dt, when fd/dt>0 else =0
 EXTERN int CallSetBoundaryConditionsAfterBurning;  //[BH]
+EXTERN float BurningDiffusionMethod;               //[BH]
 EXTERN float BurningDiffusionRate;                 //[BH]
 EXTERN float BurningDiffusionRateReduced;          //[BH]
 EXTERN float BurningDiffusionCourantSafetyFactor;  //[BH]

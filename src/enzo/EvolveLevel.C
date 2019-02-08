@@ -548,20 +548,20 @@ int EvolveLevel(TopGridData *MetaData, LevelHierarchyEntry *LevelArray[],
          */
 
 
-        if( HydroMethod != HD_RK && HydroMethod != MHD_RK ){
-            Grids[grid1]->GridData->SolveHydroEquations(LevelCycleCount[level],
-                    NumberOfSubgrids[grid1], SubgridFluxesEstimate[grid1], level);
-        }else{
-            if( UseHydro ) {
+        if( UseHydro ) {
+            if( HydroMethod != HD_RK && HydroMethod != MHD_RK ){
+                Grids[grid1]->GridData->SolveHydroEquations(LevelCycleCount[level],
+                        NumberOfSubgrids[grid1], SubgridFluxesEstimate[grid1], level);
+            }else{
                 if (HydroMethod == HD_RK)
                     Grids[grid1]->GridData->RungeKutta2_1stStep
                         (SubgridFluxesEstimate[grid1], NumberOfSubgrids[grid1], level, Exterior);
                 else if (HydroMethod == MHD_RK) {
                     Grids[grid1]->GridData->MHDRK2_1stStep
-                        (SubgridFluxesEstimate[grid1], NumberOfSubgrids[grid1], level, Exterior);
+                    (SubgridFluxesEstimate[grid1], NumberOfSubgrids[grid1], level, Exterior);
                 }
-            }//use hydro
-        }//hydro method
+            }//hydro method
+        }//use hydro
     }//grids
 
     if( HydroMethod == HD_RK || HydroMethod == MHD_RK ){
@@ -882,7 +882,7 @@ int EvolveLevel(TopGridData *MetaData, LevelHierarchyEntry *LevelArray[],
     EXTRA_OUTPUT_MACRO(4,"After UFG")
 
 
-    if(UseMHDCT == TRUE && MHD_ProjectE == TRUE){
+    if(UseHydro && UseMHDCT == TRUE && MHD_ProjectE == TRUE){
       for(grid1=0;grid1<NumberOfGrids; grid1++){
         Grids[grid1]->GridData->MHD_UpdateMagneticField(level, LevelArray[level+1], FALSE);
         }

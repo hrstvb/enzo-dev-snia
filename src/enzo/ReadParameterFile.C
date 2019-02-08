@@ -1285,6 +1285,7 @@ int ReadParameterFile(FILE *fptr, TopGridData &MetaData, float *Initialdt)
     ret += sscanf(line, "SkipBurningOperator                   = %"ISYM, &SkipBurningOperator                  ); //[BH]
     ret += sscanf(line, "AllowUnburning                        = %"ISYM, &AllowUnburning                       ); //[BH]
     ret += sscanf(line, "CallSetBoundaryConditionsAfterBurning = %"ISYM, &CallSetBoundaryConditionsAfterBurning); //[BH]
+    ret += sscanf(line, "BurningDiffusionMethod                = %"ISYM, &BurningDiffusionMethod               ); //[BH]
     ret += sscanf(line, "BurningDiffusionRate                  = %"FSYM, &BurningDiffusionRate                 ); //[BH]
     ret += sscanf(line, "BurningDiffusionRateReduced           = %"FSYM, &BurningDiffusionRateReduced          ); //[BH]
     ret += sscanf(line, "BurningDiffusionCourantSafetyFactor   = %"FSYM, &BurningDiffusionCourantSafetyFactor  ); //[BH]

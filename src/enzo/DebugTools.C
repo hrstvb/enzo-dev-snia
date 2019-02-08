@@ -1,4 +1,7 @@
 #include <string.h>
+#include <iostream>
+#include <ostream>
+#include <sstream>
 #include <stdio.h>
 #include <math.h>
 #include <assert.h>
@@ -18,51 +21,58 @@
 #include "Grid.h"
 
 #include "DebugTools.h"
+using namespace std;
 
 void RecursivelySetParticleCount(HierarchyEntry *GridPoint, PINT *Count);
 
-void printHierarchy(LevelHierarchyEntry** levelArray)
+size_t snprintHierarchy(char* s, size_t size, LevelHierarchyEntry** levelArray)
 {
-	char s0[4096];
-	char* s = s0;
-	*s = '\0';
-	s += sprintHierarchy(s, levelArray);
-	fprintf(stderr, "%s", s0);
-}
-
-size_t sprintHierarchy(char* s, LevelHierarchyEntry** levelArray)
-{
-	char* s0 = s;
-	s += sprintf(s, "BEGIN HIERARCHY ----------------\n");
+	char* t = s;
+	t += sprintf(t, "BEGIN HIERARCHY (on #%lld) ----------------\n", MyProcessorNumber);
 	for(int level = 0; level < MAX_DEPTH_OF_HIERARCHY; level++)
 	{
 		LevelHierarchyEntry* lhe = levelArray[level];
 		while(lhe)
 		{
 			grid* g = lhe->GridData;
+			int gProc = g->ReturnProcessorNumber();
 			grid* pg = NULL;
 			HierarchyEntry* he = lhe->GridHierarchyEntry->ParentGrid;
 			if(he)
 				pg = he->GridData;
 
-			char gProcStr[20];
-			int gProc = g->ReturnProcessorNumber();
+			t += sprintf(t, "HIERARCHY (on #%lld) level %" ISYM "    grid %" ISYM "", level, g->GetGridID());
 			if(gProc == MyProcessorNumber)
-				sprintf(gProcStr, "(local)");
+			{
+				t += sprintf(t, "(local)");
+			}
 			else
-				sprintf(gProcStr, "(on %lld)", gProc);
+			{
+				t += sprintf(t, "(on #%lld)", gProc);
+			}
 
 			if(pg)
-				s += sprintf(s, "HIERARCHY level %" ISYM "    grid %" ISYM "$s    parent %" ISYM "\n", level,
-								g->GetGridID(), gProcStr, pg->GetGridID());
-			else
-				s += sprintf(s, "HIERARCHY level %" ISYM "    grid %" ISYM "%s\n", level, g->GetGridID(), gProcStr);
+			{
+				t += sprintf(t, "    parent %" ISYM "", pg->GetGridID());
+			}
+
+			t += sprintf(t, "\n");
 
 			lhe = lhe->NextGridThisLevel;
 		}
 	}
-	s += sprintf(s, "END HIERARCHY ----------------\n");
-	return s - s0;
+
+	t += sprintf(t, "END HIERARCHY (on #%lld) ----------------\n", MyProcessorNumber);
+	return t - s;
+}
+
+void printHierarchy(LevelHierarchyEntry** levelArray)
+{
+	const size_t size = 4096;
+	char s[size];
+	*s = '\0';
+	snprintHierarchy(s, size, levelArray);
+	fprintf(stderr, s);
 }
 
 int TracerParticlesAddToRestart_DoIt(char * filename, HierarchyEntry *TopGrid, TopGridData *MetaData)

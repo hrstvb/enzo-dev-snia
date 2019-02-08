@@ -32,6 +32,15 @@ using namespace std;
 #define STD_C11 201112L
 #define STD_C17 201710L
 
+#ifndef M_PI
+# define M_PI		3.14159265358979323846
+#endif
+#ifndef M_PIl
+# define M_PIl		3.141592653589793238462643383279502884L
+#endif
+#ifndef M_GOLDEN_RATIO
+#define M_GOLDEN_RATIO      1.61803398874989
+#endif
 /*
  * Type utilities.
  */
@@ -154,6 +163,12 @@ inline long double distsqaredl(long double x1, long double x2, long double x3, l
 
 template<typename T, typename U>
 long double distsqaredl(T* x, U* y, size_t n);
+
+template<typename T>
+inline int sign(T x)
+{
+	return (x > 0) - (x < 0);
+}
 
 // Returns x[0] + ... +, x[n-1]
 template<typename T>

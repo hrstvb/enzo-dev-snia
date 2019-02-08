@@ -3150,12 +3150,12 @@ int zEulerSweep(int j, int NumberOfSubgrids, fluxes *SubgridFluxes[],
   									char* radiusColumnName, char* densityColumnName, char* temperatureColumnName,
   									float burningTemperature,
   									float burnedRadius, float profileAtTime,
-									float dipoleMoment[3], float dipoleCenter[3]);
+									float dipoleMoment[3], float dipoleCenter[3], bool usingVectorPotential);
   int MHDProfileInitializeGrid2(char* profileFileName, char* profileFormat, char* profileType,
   									char* radiusColumnName, char* densityColumnName, char* temperatureColumnName,
   									float burningTemperature,
   									float burnedRadius, float profileAtTime,
-									float dipoleMoment[3], float dipoleCenter[3]);
+									float dipoleMoment[3], float dipoleCenter[3], bool usingVectorPotential);
   int MHDOrszagTangInitGrid(float Density,float Pressure, float V0, float B0 );
   int MHDLoopInitGrid(float LoopDensity,float Pressure, float Vx, float Vy, float Vz, float B0, FLOAT R0,
                       FLOAT Center[], int CurrentAxis);
