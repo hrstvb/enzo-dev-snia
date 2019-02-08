@@ -15,6 +15,8 @@
 #-----------------------------------------------------------------------
 
 OBJS_CONFIG_LIB = \
+  Grid_ComputeLaplacian.o \
+  LevelArrayIterator.o \
   Grid_MHDVectorPotentialInitialize.o \
   LimitTimeStep.o \
   MHDProfileInitialize.o \

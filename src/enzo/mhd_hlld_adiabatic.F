@@ -133,7 +133,7 @@ c top
 	return
 
 	endif
-	print *,'hllds: WARNINIG: flux=0; sl,sm,sr,slz,srz: ',sl,sm,sr,slz,srz ![BH]
+c	print *,'hllds: WARNINIG: flux=0; sl,sm,sr,slz,srz: ',sl,sm,sr,slz,srz ![BH]
 	return
 	end
 

@@ -747,7 +747,7 @@ Eint32 MAIN_NAME(Eint32 argc, char *argv[])
       //      Exterior.Prepare(TopGrid.GridData);
       AddLevel(LevelArray, &TopGrid, 0);    // recursively add levels
     }
-    printHierarchy(LevelArray);
+//    printHierarchy(LevelArray);
 
 
 #ifdef USE_MPI

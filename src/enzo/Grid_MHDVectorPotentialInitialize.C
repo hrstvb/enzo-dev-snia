@@ -30,7 +30,6 @@
 //#include "TopGridData.h"
 //#include "phys_constants.h"
 
-
 int grid::InitializeMagneticUniformFieldVectorPotential(const float constMagneticField[3], const long float factor)
 {
 	const bool addToElectricField = factor;
@@ -69,6 +68,7 @@ int grid::InitializeMagneticUniformFieldVectorPotential(const float constMagneti
 	}
 	else
 	{
+		TRACEF("%p", EField);
 		if(!addToElectricField)
 			arr_set(EField, ni * nj * nk, 0);
 	}
@@ -136,9 +136,9 @@ int grid::InitializeMagneticDipoleVectorPotential(const float dipoleMoment[3], c
 {
 	const bool addToElectricField = factor;
 	const double factor_over_4pi = ((addToElectricField) ? factor : 1) / (16 * atanl(1));
-	const float mx = dipoleMoment[0];
-	const float my = dipoleMoment[1];
-	const float mz = dipoleMoment[2];
+	const float mx = factor_over_4pi * dipoleMoment[0];
+	const float my = factor_over_4pi * dipoleMoment[1];
+	const float mz = factor_over_4pi * dipoleMoment[2];
 
 	bool has_j = GridRank > 1;
 	bool has_k = GridRank > 2;
@@ -147,15 +147,20 @@ int grid::InitializeMagneticDipoleVectorPotential(const float dipoleMoment[3], c
 	float* EField = NULL;
 	FLOAT x, y, z;
 	long double r, rx, ry, rz, rsquared, coeff, rz2, ry2_rz2, mx_ry, mx_rz, my_rz, my_rz__mz_ry, vp;
+	long double minvp = 1e99, maxvp = 0;
 
 	for(int dim = 0; dim < 3; dim++)
 	{
+		switch(dim){
+
+		}
+
 		ni = ElectricDims[dim][0];
 		nj = (has_j) ? ElectricDims[dim][1] : 1;
 		nk = (has_k) ? ElectricDims[dim][2] : 1;
 		isCentered_i = ElectricDims[dim][0] == GridDimension[0];
-		isCentered_j = has_j && ElectricDims[dim][1] == GridDimension[1];
-		isCentered_k = has_k && ElectricDims[dim][2] == GridDimension[2];
+		isCentered_j = ElectricDims[dim][1] == GridDimension[1];
+		isCentered_k = ElectricDims[dim][2] == GridDimension[2];
 		for(size_t k = 0; k < nk; k++)
 		{
 			z = (has_k) ? ((isCentered_k) ? CELLCENTER(2, k) : CellLeftEdge[2][k]) : 0;
@@ -172,6 +177,7 @@ int grid::InitializeMagneticDipoleVectorPotential(const float dipoleMoment[3], c
 			case 2:
 				break;
 			}
+
 			for(size_t j = 0; j < nj; j++)
 			{
 				y = (has_j) ? ((isCentered_j) ? CELLCENTER(1, j) : CellLeftEdge[1][j]) : 0;
@@ -188,6 +194,7 @@ int grid::InitializeMagneticDipoleVectorPotential(const float dipoleMoment[3], c
 					mx_ry = mx * ry;
 					break;
 				}
+
 				gridIndex = ni * (j + nj * k);
 				EField = ElectricField[dim] + gridIndex;
 				for(size_t i = 0; i < ni; i++)
@@ -209,20 +216,21 @@ int grid::InitializeMagneticDipoleVectorPotential(const float dipoleMoment[3], c
 							vp = mx_ry - my * rx;
 							break;
 						}
-						vp *= factor_over_4pi / rsquared;
+						vp /= rsquared;
 					}
 					else
 					{
 						vp = 0;
 					}
+
+					if(addToElectricField)
+						*EField += vp;
+					else
+						*EField = vp;
+
+					EField++;
+
 				} //for i
-
-				if(!addToElectricField)
-					*EField += vp;
-				else
-					*EField = vp;
-
-				EField++;
 			} //for j
 		} //for k
 	} //for dim

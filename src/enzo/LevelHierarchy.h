@@ -15,6 +15,7 @@
 
 class Grid;
 struct HierarchyEntry;
+struct LevelHierarchyEntry;
 
 #include "Grid.h"
 #include "Hierarchy.h"

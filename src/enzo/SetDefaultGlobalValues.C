@@ -1000,6 +1000,7 @@ int SetDefaultGlobalValues(TopGridData &MetaData)
   SkipBurningOperator                  = 0;   // If true the nickel density advects as a color field.		//[BH]
   AllowUnburning                       = 0;   // Allow negative  burning fraction to take away from the Energy  //[BH]
   CallSetBoundaryConditionsAfterBurning= 1;                                                                     //[BH]
+  BurningDiffusionMethod			   = 1;   // 3D 27 point stencil
   BurningDiffusionRate                 = 1;   //[BH]
   BurningDiffusionRateReduced          = 0;   //[BH]
   BurningDiffusionCourantSafetyFactor  = 0.5; //Courant safety number = safety factor * dx^2 / BurningDiffusionRate //[BH]

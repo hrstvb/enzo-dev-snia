@@ -393,6 +393,74 @@ long double distMaxl(const T* x1, const U* x2, const V* y, const size_t n)
 /*
  * BLAS-like and numpy-like
  */
+template<typename T>
+T arr_min(const T* x, const size_t n)
+{
+	T minx = *x;
+	const T* const x_n = x + n;
+
+	while(++x < x_n)
+		if(minx > *x)
+			minx = *x;
+
+	return minx;
+}
+
+template<typename T>
+T arr_max(const T* x, const size_t n)
+{
+	T maxx = *x;
+	const T* const x_n = x + n;
+
+	while(++x < x_n)
+		if(maxx < *x)
+			maxx = *x;
+
+	return maxx;
+}
+
+template<typename T>
+void arr_minmax(T* min_x, size_t* min_i, T* max_x, size_t* max_i, const T* const x, const size_t n)
+{
+	T miny, maxy;
+	size_t j, minj, maxj;
+	if(n > 0)
+	{
+		const T* const x_n = x + n;
+		const T* y = x;
+		minj = maxj = j = 0;
+		miny = maxy = *y;
+
+		while(++y < x_n)
+		{
+			j++;
+			if(miny > *y)
+			{
+				minj = j;
+				miny = *y;
+			}
+			if(maxy < *y)
+			{
+				maxj = j;
+				maxy = *y;
+			}
+		}
+	}
+	else
+	{
+		minj = maxj = -1;
+	}
+
+	if(min_x)
+		*min_x = miny;
+	if(min_i)
+		*min_i = minj;
+	if(max_x)
+		*max_x = maxy;
+	if(max_i)
+		*max_i = maxj;
+}
+
 // Returns x[0] + ... +, x[n-1]
 template<typename T>
 T arr_sum(T* x, const size_t n)
@@ -850,91 +918,91 @@ inline MPI_Datatype getMPI_Datatype(T* a)
 }
 #endif /* USE_MPI */
 /*
-template<typename T>
-void addDipoleField(T* fieldX, T* fieldY, T* fieldZ,
-	const long double x, const long double y, const long double z,
-	const double momentX, const double momentY, const double momentZ,
-	const long double centerX, const long double centerY, const long double centerZ,
-	const long double scaleFactor = 1.0)
-{
-	const long double ONE_OVER_4PI = 1 / (16 * atanl(1));
-	long double r, rsquared, rcube, rx, ry, rz, coeff, three_m_r_over_rsquared;
-	rx = x - centerX;
-	ry = y - centerY;
-	rz = z - centerZ;
-	rsquared = square(rx) + square(ry) + square(rz);
-	rcube = cube(sqrt(rsquared));
-	if(rcube)
-	{
-		three_m_r_over_rsquared = 3 * (momentX * rx + momentY * ry + momentZ * rz) / rsquared;
-		coeff = scaleFactor * ONE_OVER_4PI / rcube;
-		*fieldX += coeff * (three_m_r_over_rsquared * rx - momentX);
-		*fieldY += coeff * (three_m_r_over_rsquared * ry - momentY);
-		*fieldZ += coeff * (three_m_r_over_rsquared * rz - momentZ);
-	}
-	else
-	{
-//		*fieldX = *fieldY = *fieldZ = 0;
-	}
-}
+ template<typename T>
+ void addDipoleField(T* fieldX, T* fieldY, T* fieldZ,
+ const long double x, const long double y, const long double z,
+ const double momentX, const double momentY, const double momentZ,
+ const long double centerX, const long double centerY, const long double centerZ,
+ const long double scaleFactor = 1.0)
+ {
+ const long double ONE_OVER_4PI = 1 / (16 * atanl(1));
+ long double r, rsquared, rcube, rx, ry, rz, coeff, three_m_r_over_rsquared;
+ rx = x - centerX;
+ ry = y - centerY;
+ rz = z - centerZ;
+ rsquared = square(rx) + square(ry) + square(rz);
+ rcube = cube(sqrt(rsquared));
+ if(rcube)
+ {
+ three_m_r_over_rsquared = 3 * (momentX * rx + momentY * ry + momentZ * rz) / rsquared;
+ coeff = scaleFactor * ONE_OVER_4PI / rcube;
+ *fieldX += coeff * (three_m_r_over_rsquared * rx - momentX);
+ *fieldY += coeff * (three_m_r_over_rsquared * ry - momentY);
+ *fieldZ += coeff * (three_m_r_over_rsquared * rz - momentZ);
+ }
+ else
+ {
+ //		*fieldX = *fieldY = *fieldZ = 0;
+ }
+ }
 
-template<typename T>
-void addDipoleVectorPotential(T* vectorPotentialX, T* vectorPotentialY, T* vectorPotentialZ,
-	const long double x, const long double y, const long double z,
-	const double momentX, const double momentY, const double momentZ,
-	const long double centerX, const long double centerY, const long double centerZ,
-	const long double permeability = 1.0
-	)
-{
-	const long double FOUR_PI = 16 * atanl(1);
-	long double r, rx, ry, rz, rsquared, coeff;
-	rx = x - centerX;
-	ry = y - centerY;
-	rz = z - centerZ;
-	rsquared = square(rx) + square(ry) + square(rz);
-	if(rsquared)
-	{
-		coeff = permeability / FOUR_PI / rsquared
-		*vectorPotentialX += coeff * (momentY * rz - momentZ * ry);
-		*vectorPotentialY += coeff * (momentZ * rx - momentX * rz);
-		*vectorPotentialZ += coeff * (momentX * ry - momentY * rx);
-	}
-	else
-	{
-//		*vectorPotentialX = *vectorPotentialY = *vectorPotentialZ = 0;
-	}
-}
+ template<typename T>
+ void addDipoleVectorPotential(T* vectorPotentialX, T* vectorPotentialY, T* vectorPotentialZ,
+ const long double x, const long double y, const long double z,
+ const double momentX, const double momentY, const double momentZ,
+ const long double centerX, const long double centerY, const long double centerZ,
+ const long double permeability = 1.0
+ )
+ {
+ const long double FOUR_PI = 16 * atanl(1);
+ long double r, rx, ry, rz, rsquared, coeff;
+ rx = x - centerX;
+ ry = y - centerY;
+ rz = z - centerZ;
+ rsquared = square(rx) + square(ry) + square(rz);
+ if(rsquared)
+ {
+ coeff = permeability / FOUR_PI / rsquared
+ *vectorPotentialX += coeff * (momentY * rz - momentZ * ry);
+ *vectorPotentialY += coeff * (momentZ * rx - momentX * rz);
+ *vectorPotentialZ += coeff * (momentX * ry - momentY * rx);
+ }
+ else
+ {
+ //		*vectorPotentialX = *vectorPotentialY = *vectorPotentialZ = 0;
+ }
+ }
 
-long double dipoleScalarPotential(const long double x, const long double y, const long double z,
-	const double momentX, const double momentY, const double momentZ,
-	const long double centerX, const long double centerY, const long double centerZ,
-	const long double permitivity = 1.0)
-{
-	const long double ONE_OVER_4PI = 1 / (16 * atanl(1));
-	long double rx, ry, rz, rsquared;
-	rx = x - centerX;
-	ry = y - centerY;
-	rz = z - centerZ;
-	rsquared = square(rx) + square(ry) + square(rz);
-	if(rsquared)
-	{
-		return ONE_OVER_4PI / permitivity / rsquared * (momentX * rx + momentY * ry + momentZ * rz);
-	}
-	else
-	{
-		return 0;
-	}
-}
+ long double dipoleScalarPotential(const long double x, const long double y, const long double z,
+ const double momentX, const double momentY, const double momentZ,
+ const long double centerX, const long double centerY, const long double centerZ,
+ const long double permitivity = 1.0)
+ {
+ const long double ONE_OVER_4PI = 1 / (16 * atanl(1));
+ long double rx, ry, rz, rsquared;
+ rx = x - centerX;
+ ry = y - centerY;
+ rz = z - centerZ;
+ rsquared = square(rx) + square(ry) + square(rz);
+ if(rsquared)
+ {
+ return ONE_OVER_4PI / permitivity / rsquared * (momentX * rx + momentY * ry + momentZ * rz);
+ }
+ else
+ {
+ return 0;
+ }
+ }
 
-template<typename T>
-void addConstFieldVectorPotential(T* vectorPotentialX, T* vectorPotentialY, T* vectorPotentialZ,
-	const long double x, const long double y, const long double z,
-	const double momentX, const double momentY, const double momentZ
-	)
-{
-	*vectorPotentialX += momentY * z;
-	*vectorPotentialY += momentZ * x;
-	*vectorPotentialZ += momentX * y;
-}
-*/
+ template<typename T>
+ void addConstFieldVectorPotential(T* vectorPotentialX, T* vectorPotentialY, T* vectorPotentialZ,
+ const long double x, const long double y, const long double z,
+ const double momentX, const double momentY, const double momentZ
+ )
+ {
+ *vectorPotentialX += momentY * z;
+ *vectorPotentialY += momentZ * x;
+ *vectorPotentialZ += momentX * y;
+ }
+ */
 #endif /* MY_ENZO_UTIILS_TPP */

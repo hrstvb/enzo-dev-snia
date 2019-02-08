@@ -435,7 +435,7 @@ int SphericalGravityComputePotential(LevelHierarchyEntry *LevelArray[], TopGridD
 					/ (SphericalGravityBinLeftEdges[i + 1] - SphericalGravityBinLeftEdges[i]);
 	}
 
-	if(MyProcessorNumber == ROOT_PROCESSOR)
+	if(MyProcessorNumber == ROOT_PROCESSOR && debug)
 	{
 		char* sbuf = new char[64 * N];
 		char* s = sbuf;
