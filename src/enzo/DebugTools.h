@@ -4,6 +4,7 @@
 class grid;
 #include "Hierarchy.h"
 #include "LevelHierarchy.h"
+#include "DebugMacros.h"
 
 void WriteSingleCube(float * array, int Dims[], char* string, int dNum, int gNum, char * label);
 

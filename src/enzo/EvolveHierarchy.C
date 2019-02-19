@@ -59,6 +59,8 @@
 #include "LimitTimeStep.h"
 
 // function prototypes
+int MHDProfileInitialize(FILE *fptr, FILE *Outfptr, HierarchyEntry &TopGrid, TopGridData &MetaData,
+	ExternalBoundary &Exterior);
 
 int RebuildHierarchy(TopGridData *MetaData,
 		     LevelHierarchyEntry *LevelArray[], int level);
@@ -322,9 +324,18 @@ int EvolveHierarchy(HierarchyEntry &TopGrid, TopGridData &MetaData,
 
 
   /* ====== MAIN LOOP ===== */
-
+//  int cyclesBeforeReinit = 1;
   bool FirstLoop = true;
   while (!Stop) {
+
+//	  if(ProblemType == 501 && 0<cyclesBeforeReinit && cyclesBeforeReinit < MetaData.CycleNumber)
+//	  {
+//		  fprintf(stderr, "REININITIALIZING grids at cycle %lld, t = %f\n", MetaData.CycleNumber, MetaData.Time);
+////		  FirstLoop = true;
+//		  cyclesBeforeReinit = -1;
+//		  ExternalBoundary dummy;
+//		  MHDProfileInitialize(NULL, NULL, TopGrid, MetaData, dummy);
+//	  }
 
   TIMER_START("Total");
 

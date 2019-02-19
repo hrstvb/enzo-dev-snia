@@ -252,8 +252,6 @@ int grid::ComputeLaplacian(float* resultField, float* sourceField, int method)
 						for(int JJ = -2; JJ <= 2; JJ++)
 							for(int II = -2; II <= 2; II++)
 							{
-
-//								TRACEF("%llu %llu %llu", II, JJ, KK);
 								source = sourceField + ELT(i1 + II, j + JJ, k + KK);
 								arr_axpy(result, source, n, *c++);
 							}

@@ -39,6 +39,7 @@
 
 #include "DebugMacros.h"
 
+
 //using namespace std;
 
 #define LINE_MAX_LENGTH (512)
@@ -818,8 +819,7 @@ int grid::MHDProfileInitializeGrid(char* profileFileName, char* profileFormat, c
 	char* radiusColumnName, char* densityColumnName, char* temperatureColumnName,
 	float burningTemperature,
 	float burnedRadius, float profileAtTime,
-	float dipoleMoment[3], float dipoleCenter[3],
-	bool usingVectorPotential)
+	float dipoleMoment[3], float dipoleCenter[3], bool usingVectorPotential)
 {
 	if(GridRank != 3)
 		ENZO_FAIL("MHDProfileInitializeGrid is implemented for 3D only.")
@@ -832,7 +832,7 @@ int grid::MHDProfileInitializeGrid(char* profileFileName, char* profileFormat, c
 //  if ( PerturbMethod == 100 )
 //      srand( 3449653 ); //please don't change this number.
 
-	fprintf(stderr, "GridDim---- %d %d %d\n", GridDimension[0], GridDimension[1], GridDimension[2]);
+//	fprintf(stderr, "GridDim---- %d %d %d\n", GridDimension[0], GridDimension[1], GridDimension[2]);
 
 	// Assign fieldType numbers using constants from typedefs.h,
 	// as well as count the number of fields.
@@ -861,6 +861,33 @@ int grid::MHDProfileInitializeGrid(char* profileFileName, char* profileFormat, c
 	if(ProcessorNumber != MyProcessorNumber)
 		return SUCCESS;
 
+	int size = GetGridSize();
+//  printf("Proc #%d: %d..%d, %d..%d, %d..%d;" //BH DEBUG
+	//          " %g..%g, %g..%g, %g..%g;" //BH DEBUG
+//         " %g, %g, %g;" //BH DEBUG
+//         " %g, %g, %g;" //BH DEBUG
+//          "\n", MyProcessorNumber, //BH DEBUG
+//         GridLeftEdge[0], GridRightEdge[0], //BH DEBUG
+//         GridLeftEdge[1], GridRightEdge[1], //BH DEBUG
+//         GridLeftEdge[2], GridRightEdge[2], //BH DEBUG
+//         CELLCENTER(0, 0), CELLCENTER(1, 0), CELLCENTER(2, 0), //BH DEBUG
+//         (GridLeftEdge[0]-CELLCENTER(0, 0))/CellWidth[0][0], //BH DEBUG
+//         (GridLeftEdge[1]-CELLCENTER(1, 0))/CellWidth[1][0], //BH DEBUG
+//         (GridLeftEdge[2]-CELLCENTER(2, 0))/CellWidth[2][0] //BH DEBUG
+//         ); //BH DEBUG
+
+	if(HydroMethod == MHD_RK && usingVectorPotential)
+	{
+		// Allow the ElectricField and MagneticField to
+		// be created temporarily for the purpose of
+		// initializing with vector potential.
+		// Free these fields in MHDProfileInitializeGrid2.
+		UseMHDCT = TRUE;
+		MHD_SetupDims();
+	}
+
+	this->AllocateGrids();
+
 	profilestruct p;
 	profileInit(&p);
 	p.time = profileAtTime;
@@ -882,32 +909,6 @@ int grid::MHDProfileInitializeGrid(char* profileFileName, char* profileFormat, c
 		ENZO_FAIL(s)
 	}
 
-	//Parameters
-
-	int size = GetGridSize();
-//  printf("Proc #%d: %d..%d, %d..%d, %d..%d;" //BH DEBUG
- //          " %g..%g, %g..%g, %g..%g;" //BH DEBUG
-//         " %g, %g, %g;" //BH DEBUG
-//         " %g, %g, %g;" //BH DEBUG
-//          "\n", MyProcessorNumber, //BH DEBUG
-//         GridLeftEdge[0], GridRightEdge[0], //BH DEBUG
-//         GridLeftEdge[1], GridRightEdge[1], //BH DEBUG
-//         GridLeftEdge[2], GridRightEdge[2], //BH DEBUG
-//         CELLCENTER(0, 0), CELLCENTER(1, 0), CELLCENTER(2, 0), //BH DEBUG
-//         (GridLeftEdge[0]-CELLCENTER(0, 0))/CellWidth[0][0], //BH DEBUG
-//         (GridLeftEdge[1]-CELLCENTER(1, 0))/CellWidth[1][0], //BH DEBUG
-//         (GridLeftEdge[2]-CELLCENTER(2, 0))/CellWidth[2][0] //BH DEBUG
-//         ); //BH DEBUG
-
-	if(HydroMethod == MHD_RK && usingVectorPotential)
-	{
-		// Allow the ElectricField and MagneticField to
-		// be created temporarily for the purpose of
-		// initializing with vector potential.
-		UseMHDCT = TRUE;
-		MHD_SetupDims();
-	}
-	this->AllocateGrids();
 	//
 	// Hack for tests of random forcing.
 	//
@@ -997,16 +998,13 @@ int grid::MHDProfileInitializeGrid(char* profileFileName, char* profileFormat, c
 					//retcode = profileInterpolate(&T, temperatureData, r, radiusData, p.nRows, radiusSO); //K
 					bool isBurned = (r < burnedRadius);					// || (T > 0 && T > burningTemperature));
 
-					// Initialize zero total energy, whether it depends on the magnetic field
-					// or not. Leave it for MHDProfileInitializeGrid2.  For this reason,
-					// calculate the gas energy only in case of dual energy formalism.
-					float gasE = (hasGasEField) ? (EOSPolytropicFactor * POW(rho, gammaMinusOne) / gammaMinusOne) : 0;
-					float totE = 0;
-//					totE += 0.5 * (vx * vx + vy * vy + vz * vz);
+					float gasE = EOSPolytropicFactor * POW(rho, gammaMinusOne) / gammaMinusOne;
+					float totE = gasE;
+					totE += 0.5 * (vx * vx + vy * vy + vz * vz);
 					if(BxField)
 					{
 						MHDProfileInitExactB(&Bx, &By, &Bz, x, y, z);
-//						totE += 0.5 * (Bx * Bx + By * By + Bz * Bz) / rho;
+						totE += 0.5 * (Bx * Bx + By * By + Bz * Bz) / rho;
 						BxField[index] = Bx;
 						ByField[index] = By;
 						BzField[index] = Bz;
@@ -1023,9 +1021,10 @@ int grid::MHDProfileInitializeGrid(char* profileFileName, char* profileFormat, c
 					if(UseBurning)
 						rhoNiField[index] = (isBurned) ? rho : 0;
 
-					if(j == (GridDimension[1] / 2) && k == (GridDimension[2] / 2) && i <= GridDimension[0] / 2)
-						printf("i,j,k=%03d,%04d,%04d, x,y,z=(%4f,%4f,%4f), r=%4f, rho=%e, T=%1f, burned=%d\n", i, j, k,
-								x * 1e-5, y * 1e-5, z * 1e-5, r * 1e-5, rho, T * 1e-9, isBurned);
+					if(debug)
+						if(j == (GridDimension[1] / 2) && k == (GridDimension[2] / 2) && i <= GridDimension[0] / 2)
+							printf("i,j,k=%03d,%04d,%04d, x,y,z=(%4f,%4f,%4f), r=%4f, rho=%e, T=%1f, burned=%d\n", i, j,
+									k, x * 1e-5, y * 1e-5, z * 1e-5, r * 1e-5, rho, T * 1e-9, isBurned);
 				}
 			} //end baryonfield initialize
 		}
@@ -1054,15 +1053,19 @@ int grid::MHDProfileInitializeGrid(char* profileFileName, char* profileFormat, c
 }
 
 /*
- * This function completes the initialization of fields depending on the magnetic field,
- * like total energy.
+ * It resets the total energy with the updated magnetic field.
+ * As a side effect it frees the E&M fields for hydro method MHD_RK.
+ * This function is to be used if and  after magnetic vector
+ * potential has been projected to parents and the curl taken.
+ * The first initializer still calculates the total energy,
+ * as well as possible, because it might influence the
+ * start up refinement.
  */
 int grid::MHDProfileInitializeGrid2(char* profileFileName, char* profileFormat, char* profileType,
 	char* radiusColumnName, char* densityColumnName, char* temperatureColumnName,
 	float burningTemperature,
 	float burnedRadius, float profileAtTime,
-	float dipoleMoment[3], float dipoleCenter[3],
-	bool usingVectorPotential)
+	float dipoleMoment[3], float dipoleCenter[3], bool usingVectorPotential)
 {
 	if(ProcessorNumber != MyProcessorNumber)
 		return SUCCESS;

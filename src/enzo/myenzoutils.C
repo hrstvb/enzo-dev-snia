@@ -35,4 +35,28 @@ int mpiWait(MPI_Request* request)
 	return (status.MPI_ERROR == NO_SUCH_MPI_ERROR) ? 0 : status.MPI_ERROR;
 }
 
+/*
+ * Similar to snprintf, but intended for successive printing, safely
+ * appending to the same buffer. If called only once, acts as snprintf.
+ */
+int snlprintf(char* const s, const size_t size, size_t* const length, const char* const format, ...)
+{
+	va_list varargs;
+	int n;
+	const size_t len = *length;
+
+	va_start(varargs, format);
+	if(size > len + 1)
+		n = vsnprintf(s + len, size - len, format, varargs);
+	else
+		n = vsnprintf(NULL, 0, format, varargs);
+	va_end(varargs);
+
+	if(n > 0)
+		*length += n;
+
+	return n;
+}
+
+
 #endif /* USE_MPI */

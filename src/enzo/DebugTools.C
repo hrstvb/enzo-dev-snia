@@ -9,6 +9,7 @@
 #include <sys/time.h>
 #include <stdlib.h>
 
+#include "myenzoutils.h"
 #include "ErrorExceptions.h"
 #include "CommunicationUtilities.h"
 #include "macros_and_parameters.h"
@@ -25,10 +26,54 @@ using namespace std;
 
 void RecursivelySetParticleCount(HierarchyEntry *GridPoint, PINT *Count);
 
-size_t snprintHierarchy(char* s, size_t size, LevelHierarchyEntry** levelArray)
+//size_t sprintHierarchy(char* s, LevelHierarchyEntry** levelArray)
+//{
+//	char* t = s;
+//	t += sprintf(t, "BEGIN HIERARCHY (on #%lld) ----------------\n", MyProcessorNumber);
+//	for(int level = 0; level < MAX_DEPTH_OF_HIERARCHY; level++)
+//	{
+//		LevelHierarchyEntry* lhe = levelArray[level];
+//		while(lhe)
+//		{
+//			grid* g = lhe->GridData;
+//			int gProc = g->ReturnProcessorNumber();
+//			grid* pg = NULL;
+//			HierarchyEntry* he = lhe->GridHierarchyEntry->ParentGrid;
+//			if(he)
+//				pg = he->GridData;
+//
+//			t += sprintf(t, "HIERARCHY (on #%lld) level %" ISYM "    grid %" ISYM "(%p)", MyProcessorNumber, level,
+//							g->GetGridID(), g);
+//			if(gProc == MyProcessorNumber)
+//			{
+//				t += sprintf(t, "(local)");
+//			}
+//			else
+//			{
+//				t += sprintf(t, "(on #%lld)", gProc);
+//			}
+//
+//			if(pg)
+//			{
+//				t += sprintf(t, "    parent %" ISYM "%p", pg->GetGridID(), pg);
+//			}
+//
+//			t += sprintf(t, "\n");
+//
+//			lhe = lhe->NextGridThisLevel;
+//		}
+//	}
+//
+//	t += sprintf(t, "END HIERARCHY (on #%lld) ----------------\n", MyProcessorNumber);
+//	return t - s;
+//}
+
+int sprintHierarchy(char* s, size_t size, LevelHierarchyEntry** levelArray)
 {
-	char* t = s;
-	t += sprintf(t, "BEGIN HIERARCHY (on #%lld) ----------------\n", MyProcessorNumber);
+	size_t total_length = 0;
+	int n;
+
+	snlprintf(s, size, &total_length, "BEGIN HIERARCHY (on #%lld) ----------------\n", MyProcessorNumber);
 	for(int level = 0; level < MAX_DEPTH_OF_HIERARCHY; level++)
 	{
 		LevelHierarchyEntry* lhe = levelArray[level];
@@ -41,38 +86,58 @@ size_t snprintHierarchy(char* s, size_t size, LevelHierarchyEntry** levelArray)
 			if(he)
 				pg = he->GridData;
 
-			t += sprintf(t, "HIERARCHY (on #%lld) level %" ISYM "    grid %" ISYM "", level, g->GetGridID());
+			n = snlprintf(s, size, &total_length, "HIERARCHY (on #%lld) level %" ISYM "    grid %" ISYM "(%p)",
+							MyProcessorNumber, level, g->GetGridID(), g);
+			if(n < 0) return n;
+
 			if(gProc == MyProcessorNumber)
 			{
-				t += sprintf(t, "(local)");
+				n = snlprintf(s, size, &total_length, "(local)");
+				if(n < 0) return n;
 			}
 			else
 			{
-				t += sprintf(t, "(on #%lld)", gProc);
+				n = snlprintf(s, size, &total_length, "(on #%lld)", gProc);
+				if(n < 0) return n;
 			}
 
 			if(pg)
 			{
-				t += sprintf(t, "    parent %" ISYM "", pg->GetGridID());
+				n = snlprintf(s, size, &total_length, "    parent %" ISYM "(%p)", pg->GetGridID(), pg);
+				if(n < 0) return n;
 			}
 
-			t += sprintf(t, "\n");
+			n = snlprintf(s, size, &total_length, "\n");
+			if(n < 0) return n;
 
 			lhe = lhe->NextGridThisLevel;
 		}
 	}
 
-	t += sprintf(t, "END HIERARCHY (on #%lld) ----------------\n", MyProcessorNumber);
-	return t - s;
+	n = snlprintf(s, size, &total_length, "END HIERARCHY (on #%lld) ----------------\n", MyProcessorNumber);
+	if(n < 0) return n;
+
+	return total_length;
 }
 
 void printHierarchy(LevelHierarchyEntry** levelArray)
 {
-	const size_t size = 4096;
-	char s[size];
-	*s = '\0';
-	snprintHierarchy(s, size, levelArray);
+	const size_t SIZE = 1024;
+	char buf[SIZE];
+	char* s = buf;
+	int n = sprintHierarchy(s, SIZE, levelArray);
+	if(n >= SIZE)
+	{
+		s = new char[n];
+		sprintHierarchy(s, n, levelArray);
+	}
 	fprintf(stderr, s);
+}
+
+void printHierarchy0(LevelHierarchyEntry** levelArray)
+{
+	if(MyProcessorNumber == ROOT_PROCESSOR)
+		printHierarchy(levelArray);
 }
 
 int TracerParticlesAddToRestart_DoIt(char * filename, HierarchyEntry *TopGrid, TopGridData *MetaData)
