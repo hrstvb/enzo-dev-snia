@@ -40,4 +40,13 @@
 #define TRACE fprintf(stderr, "TRACE:(#%lld)" FLN2STR "\n", MyProcessorNumber);
 #define TRACEF(format, ...) fprintf(stderr, "TRACE:(#%lld)" FLN2STR ":" format "\n", MyProcessorNumber, ##__VA_ARGS__);
 
+#define TRACEG fprintf(stderr, "TRACE:(#%lld)g%lld(%p)::" FLN2STR "\n", MyProcessorNumber, this->ID, this);
+#define TRACEGF(format, ...) fprintf(stderr, "TRACE:(#%lld)g%lld(%p)::" FLN2STR ":" format "\n", MyProcessorNumber, this->ID, this, ##__VA_ARGS__);
+
+#define TRACE0 if(MyProcessorNumber==ROOT_PROCESSOR){TRACE;}
+#define TRACEF0(format, ...) if(MyProcessorNumber==ROOT_PROCESSOR){TRACEF(format, ##__VA_ARGS__);}
+
+#define TRACEG0 if(MyProcessorNumber==ROOT_PROCESSOR){TRACEG;}
+#define TRACEGF0(format, ...) if(MyProcessorNumber==ROOT_PROCESSOR){TRACEGF(format, ##__VA_ARGS__);}
+
 #endif /* SRC_ENZO_DEBUGMACROS_H_ */

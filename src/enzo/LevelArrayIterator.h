@@ -21,6 +21,7 @@ struct LevelArrayIterator
 
 	LevelArrayIterator(LevelHierarchyEntry** levelArray);
 	LevelArrayIterator(LevelHierarchyEntry** levelArray, int numberOfLevels);int countLevels();
+	grid* currentParent();
 	void resetToTop();
 	void resetToFinest();
 	grid* firstFromTop();
@@ -35,6 +36,10 @@ struct LevelArrayIterator
 	grid* next(grid** parent);
 	grid* next(int* level);
 	grid* next(int* level, grid** parent);
+	grid* prev();
+	grid* prev(grid** parent);
+	grid* prev(int* level);
+	grid* prev(int* level, grid** parent);
 };
 
 #endif /* SRC_ENZO_LEVELARRAYITERATOR_H_ */

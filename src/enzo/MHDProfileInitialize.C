@@ -43,6 +43,7 @@
 #include "Hierarchy.h"
 #include "TopGridData.h"
 #include "LevelArrayIterator.h"
+#include "DebugTools.h"
 
 class ExternalBoundary;
 
@@ -64,10 +65,12 @@ class ExternalBoundary;
 //void RotateVector(float * Vector, float * Normal);
 //int SetupNormal(float Normal[], float MHDBlastCenter[3], TopGridData & MetaData);
 void AddLevel(LevelHierarchyEntry *Array[], HierarchyEntry *Grid, int level);
+int CommunicationBarrier();
 int RebuildHierarchy(TopGridData *MetaData, LevelHierarchyEntry *LevelArray[], int level);
 int MHDCTSetupFieldLabels();
 int SphericalGravityComputePotential(LevelHierarchyEntry *LevelArray[], TopGridData* MetaData);
 void printHierarchy(LevelHierarchyEntry** levelArray);
+void printHierarchy0(LevelHierarchyEntry** levelArray);
 
 int MHDProfileInitExactB(float* Bx, float* By, float* Bz, FLOAT x, FLOAT y, FLOAT z)
 {
@@ -112,6 +115,10 @@ int MHDProfileInitialize(FILE *fptr, FILE *Outfptr, HierarchyEntry &TopGrid, Top
 	float profileAtTime = -1;
 	float dipoleMoment[3] = { 0, 0, 0 };
 	float dipoleCenter[3] = { 0, 0, 0 };
+
+	bool reinit = fptr == NULL;
+	if(fptr == NULL)
+		fptr = fopen("params.enzo", "r");
 
 	*profileFileName = *profileFormat = *profileType = '\0';
 	*radiusColumnName = *densityColumnName = *temperatureColumnName = '\0';
@@ -185,35 +192,55 @@ int MHDProfileInitialize(FILE *fptr, FILE *Outfptr, HierarchyEntry &TopGrid, Top
 	bool projectChildrenToParents = RefineOnStartup && MaximumRefinementLevel > 0;
 	ret = SUCCESS;
 
+	if(reinit){
+		LevelHierarchyEntry** LevelArray = (LevelHierarchyEntry**) (Outfptr);
+		LevelArrayIterator lit = LevelArrayIterator(LevelArray);
+		for(grid* g = lit.firstFromTop(); g; g = lit.next())
+		{
+			g->MHDProfileInitializeGrid(profileFileName, profileFormat, profileType, radiusColumnName,
+										densityColumnName, temperatureColumnName, burningTemperature, burnedRadius,
+										profileAtTime, dipoleMoment, dipoleCenter, usingVectorPotential);
+		}
+
+		return SUCCESS;
+	}
+
 	// Ceate a level array stub and initialize it with the TopGrid.
 	LevelHierarchyEntry *levelArray[MAX_DEPTH_OF_HIERARCHY];
 	arr_set(levelArray, MAX_DEPTH_OF_HIERARCHY, NULL);
 	AddLevel(levelArray, &TopGrid, 0);
 	LevelArrayIterator it = LevelArrayIterator(levelArray, 1);
-
+	LevelHierarchyEntry* currentEntry = NULL;
+	int currentLevel = 0;
 	// The following loop initializes the TopGrid on the first pass and
 	// continues if refinement is required at startup and if it is necessary.
-	// After the loop, numLeves has the number of actual levels created.
+	// After the loop, nLeves has the number of actual levels created.
 	for(grid* g = it.firstFromTop(); g; g = it.next())
 	{
 		// A child level may not have been created during the
-		// previous loop.  If so, break off the loop,
+		// previous iteration.  If so, break out off the loop,
 		// otherwise initialize the grids on this level.
-		if(g->MHDProfileInitializeGrid(profileFileName, profileFormat, profileType, radiusColumnName, densityColumnName,
-										temperatureColumnName, burningTemperature, burnedRadius, profileAtTime,
-										dipoleMoment, dipoleCenter, usingVectorPotential) == FAIL)
+		for(; g; g = it.next())
 		{
-			ENZO_FAIL("Error in TestGravitySphereInitializeGrid.");
+			g->MHDProfileInitializeGrid(profileFileName, profileFormat, profileType, radiusColumnName,
+										densityColumnName, temperatureColumnName, burningTemperature, burnedRadius,
+										profileAtTime, dipoleMoment, dipoleCenter, usingVectorPotential);
 		}
 
-		if(!RefineOnStartup || it.currentLevel >= MAX_DEPTH_OF_HIERARCHY || it.currentLevel >= MaximumRefinementLevel)
+		if(!RefineOnStartup || it.currentLevel >= MaximumRefinementLevel || it.currentLevel >= MAX_DEPTH_OF_HIERARCHY)
 			break;
 
+		g = it.prev();
+		printHierarchy(levelArray);
 		// Create a child level of parentLevel:
 		if(RebuildHierarchy(&MetaData, levelArray, it.currentLevel) == FAIL)
+		{
 			ENZO_FAIL("Error in RebuildHierarchy.");
+		}
 		it.nLevels++;
-	} // End for(level)
+		printHierarchy0(levelArray);
+		CommunicationBarrier();
+	}
 
 	if(usingVectorPotential)
 	{
@@ -239,9 +266,11 @@ int MHDProfileInitialize(FILE *fptr, FILE *Outfptr, HierarchyEntry &TopGrid, Top
 		// We start this loop from the level we ended the previous loop.
 		// It will not execute if numLevel==0, i.e. if the top grid hasn't been refined.
 		grid* parent;
-		for(grid* g = it.firstFromFinest(&parent); g = it.next(&parent);)
+		for(grid* g = it.firstFromFinest(&parent); g; g = it.next(&parent))
+		{
 			if(g->ProjectSolutionToParentGrid(*parent) == FAIL)
 				ENZO_FAIL("MHDProfileRefineOnStartup: error in grid->ProjectSolutionToParentGrid.");
+		}
 		MHD_ProjectB = origMHD_ProjectB;
 		MHD_ProjectE = origMHD_ProjectE;
 	}

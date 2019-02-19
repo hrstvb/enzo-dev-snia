@@ -68,7 +68,6 @@ int grid::InitializeMagneticUniformFieldVectorPotential(const float constMagneti
 	}
 	else
 	{
-		TRACEF("%p", EField);
 		if(!addToElectricField)
 			arr_set(EField, ni * nj * nk, 0);
 	}

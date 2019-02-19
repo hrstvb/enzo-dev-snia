@@ -2,7 +2,6 @@
 #define MY_ENZO_UTIILS_TPP
 #include "stddef.h"
 #include "math.h"
-#include "string.h"
 #include <stdexcept>
 #include "IDE_defs.h"
 #include "myenzoutils.h"
@@ -93,16 +92,22 @@ T* arr_newcpy(T** a, U* xarr, size_t n)
 	return *a = arr_cpy(new T[n], n, xarr);
 }
 
-template<typename T, typename U>
-T* arr_newset(size_t n, U x)
+//template<typename T, typename U>
+//T* arr_newset(size_t n, U x)
+//{
+//	return arr_set(new T[n], n, (T) x);
+//}
+//
+template<typename T>
+T* arr_newset(size_t n, T x)
 {
-	return arr_set(new T[n], n, (T) x);
+	return arr_set(new T[n], n, x);
 }
 
 template<typename T, typename U>
 T* arr_newset(T** a, size_t n, U x)
 {
-	return *a = arr_set(new T[n], (T) x);
+	return *a = arr_set(new T[n], n, (T)x);
 }
 
 // Cannot overlap, if T != U.

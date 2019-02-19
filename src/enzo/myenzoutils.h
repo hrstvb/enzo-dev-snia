@@ -3,6 +3,7 @@
 
 #include "stddef.h"
 #include "math.h"
+#include "string.h"
 #include "IDE_defs.h"
 #ifdef USE_MPI
 #include "mpi.h"
@@ -78,8 +79,10 @@ T* arr_newcpy(U* xarr, size_t n);
 template<typename T, typename U>
 T* arr_newcpy(T** a, U* xarr, size_t n);
 
-template<typename T, typename U>
-T* arr_newset(size_t n, U x);
+//template<typename T, typename U>
+//T* arr_newset(size_t n, U x);
+template<typename T>
+T* arr_newset(size_t n, T x);
 
 template<typename T, typename U>
 T* arr_newset(T** a, size_t n, U x);
@@ -267,6 +270,8 @@ inline MPI_Datatype getMPI_Datatype(T a);
 template<typename T>
 inline MPI_Datatype getMPI_Datatype(T* a);
 #endif /* USE_MPI */
+
+int snlprintf(char* const s, const size_t size, size_t* const length, const char* const format, ...);
 
 #include "myenzoutils.T"
 
