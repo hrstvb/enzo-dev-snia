@@ -1298,6 +1298,12 @@ int ReadParameterFile(FILE *fptr, TopGridData &MetaData, float *Initialdt)
     ret += sscanf(line, "InternalEnergyRelativeGrowthLimit     = %"FSYM, &InternalEnergyRelativeGrowthLimit    ); //[BH]
     ret += sscanf(line, "TotalEnergyRelativeGrowthLimit        = %"FSYM, &TotalEnergyRelativeGrowthLimit       ); //[BH]
     ret += sscanf(line, "BurnedFractionGrowthLimit             = %"FSYM, &BurnedFractionGrowthLimit            ); //[BH]
+    ret += sscanf(line, "InitialBurnedRadius                   = %"FSYM, &InitialBurnedRadius                  ); //[BH]
+    ret += sscanf(line, "InitialBurnedRegionMaintain           = %"ISYM, &InitialBurnedRegionMaintain          ); //[BH]
+    ret += sscanf(line, "InitRadialPressureFromCentral         = %"FSYM, &InitRadialPressureFromCentral        ); //[BH]
+    ret += sscanf(line, "InitBWithVectorPotential              = %"ISYM, &InitBWithVectorPotential             ); //[BH]
+	ret += sscanf(line, "RefineOnStartup                       = %"ISYM, &RefineOnStartup                      );
+
 
     ret += sscanf(line, "UseSphericalGravity = %"ISYM, &UseSphericalGravity);
     ret += sscanf(line, "SphericalGravityBinSize = %"PSYM, &SphericalGravityBinSize);
@@ -1312,6 +1318,7 @@ int ReadParameterFile(FILE *fptr, TopGridData &MetaData, float *Initialdt)
     ret += sscanf(line, "SphericalGravityUniformBins = %"ISYM, &SphericalGravityUniformBins);
     ret += sscanf(line, "SphericalGravityWritePotentialSwitch = %"ISYM, &SphericalGravityWritePotentialSwitch);
     ret += sscanf(line, "SphericalGravityBinsPerCell = %"FSYM, &SphericalGravityBinsPerCell);
+    ret += sscanf(line, "SphericalGravityInterpAccelMethod = %"ISYM, &SphericalGravityInterpAccelMethod);
     ret += sscanf(line, "SphericalGravityDebug = %"ISYM, &SphericalGravityDebug);
 
 

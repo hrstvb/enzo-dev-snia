@@ -107,7 +107,7 @@ T* arr_newset(size_t n, T x)
 template<typename T, typename U>
 T* arr_newset(T** a, size_t n, U x)
 {
-	return *a = arr_set(new T[n], n, (T)x);
+	return *a = arr_set(new T[n], n, (T) x);
 }
 
 // Cannot overlap, if T != U.
@@ -555,6 +555,19 @@ T* arr_xpy(T* dest, U* x, const size_t n)
 	ARR_LINOPBODY(arr_ax(dest, n, 2), *--dest += *--x_n, *dest++ += *x++)
 }
 
+// x := x + a
+template<typename T, typename U>
+T* arr_xpa(T* x, const size_t n, const U a)
+{
+	if(a == 0)
+		return x;
+
+	T* x_n = x + n;
+	while(x < x_n)
+		*--x_n += a;
+	return x;
+}
+
 // x := a*x
 template<typename T, typename U>
 T* arr_ax(T* x, const size_t n, const U a)
@@ -623,27 +636,129 @@ T* arr_axpby(T* dest, U* x, const size_t n, const V a, const W b)
 }
 
 template<typename T>
-size_t sprintfvec(char* const s, const char* const preffix, const char* const singleElementFormat,
-	const char* const separator, const char* const suffix, const T* const vec, const size_t n,
-	const bool printWithIndices, const bool indexPrintsBeforeElement)
+int arr_snlprintf(char* const s, const size_t size, size_t* lengthSoFar, const char* const preffix1,
+	const char* const preffix2, const char* const singleElementFormat, const char* const separator,
+	const char* const suffix1, const char* const suffix2, const T* const arr, const size_t arr_size,
+	const int elementsPerLine, const bool printWithIndices, const bool indexPrintsBeforeElement)
 {
-	char* s2 = s;
-	if(preffix)
-		s2 += sprintf(s2, preffix);
-	for(size_t i = 0; i < n; i++)
+	const size_t l0 = *lengthSoFar;
+	int n;
+	if(preffix1)
+	{
+		n = snlprintf(s, size, lengthSoFar, preffix1);
+		if(n < 0) return n;
+	}
+
+	if(preffix2)
+	{
+		n = snlprintf(s, size, lengthSoFar, preffix2);
+		if(n < 0) return n;
+	}
+
+	for(size_t i = 0; i < arr_size; i++)
 	{
 		if(i && separator)
-			s2 += sprintf(s2, separator);
+		{
+			n = snlprintf(s, size, lengthSoFar, separator);
+			if(n < 0) return n;
+		}
+
+		if(i && elementsPerLine > 0)
+		{
+			if(i % elementsPerLine == 0)
+			{
+				n = snlprintf(s, size, lengthSoFar, "\n");
+				if(n < 0) return n;
+			}
+		}
+
 		if(!printWithIndices)
-			s2 += sprintf(s2, singleElementFormat, vec[i]);
+		{
+			n = snlprintf(s, size, lengthSoFar, singleElementFormat, arr[i]);
+			if(n < 0) return n;
+		}
 		else if(indexPrintsBeforeElement)
-			s2 += sprintf(s2, singleElementFormat, i, vec[i]);
+		{
+			n = snlprintf(s, size, lengthSoFar, singleElementFormat, i, arr[i]);
+			if(n < 0) return n;
+		}
 		else
-			s2 += sprintf(s2, singleElementFormat, vec[i], i);
+		{
+			n = snlprintf(s, size, lengthSoFar, singleElementFormat, arr[i], i);
+			if(n < 0) return n;
+		}
 	}
-	if(suffix)
-		s2 += sprintf(s2, suffix);
-	return s2 - s;
+
+	if(suffix1)
+	{
+		n = snlprintf(s, size, lengthSoFar, suffix1);
+		if(n < 0) return n;
+	}
+	if(suffix2)
+	{
+		n = snlprintf(s, size, lengthSoFar, suffix2);
+		if(n < 0) return n;
+	}
+
+	return *lengthSoFar - l0;
+}
+
+template<typename T>
+int arr_printf(const char* const preffix1, const char* const preffix2, const char* const singleElementFormat,
+	const char* const separator, const char* const suffix1, const char* const suffix2, const T* const arr,
+	const size_t arr_size, const int elementsPerLine, const bool printWithIndices, const bool indexPrintsBeforeElement)
+{
+	const size_t SIZE = 4096;
+	size_t len = 0;
+	char S[SIZE];
+	S[0] = '\0';
+	int n = arr_snlprintf(S, SIZE, &len, preffix1, preffix2, singleElementFormat, separator, suffix1, suffix2, arr,
+							arr_size, elementsPerLine, printWithIndices, indexPrintsBeforeElement);
+	if(n < 0) return n;
+
+	if(len + 1 <= SIZE)
+		return fprintf(stderr, S);
+
+	char* s = new char[n + 1];
+	n = arr_snlprintf(s, n, &len, preffix1, preffix2, singleElementFormat, separator, suffix1, suffix2, arr, arr_size,
+						elementsPerLine, printWithIndices, indexPrintsBeforeElement);
+
+	if(n > 0)
+		n = fprintf(stderr, s);
+
+	delete s;
+	return n;
+}
+
+template<typename T>
+int arr_printf_pylist(const char* const arr_name, const char* const singleElementFormat, const T* const arr,
+	const size_t arr_size)
+{
+	const char* const preffix2 = (arr_name) ? " = [" : "[";
+	arr_printf(arr_name, preffix2, singleElementFormat, ", ", "]\n", NULL, arr, arr_size, 10, false, false);
+}
+
+template<typename T>
+int arr_printf_pytuple(const char* const arr_name, const char* const singleElementFormat, const T* const arr,
+	const size_t arr_size)
+{
+	const char* const preffix2 = (arr_name) ? " = (" : "(";
+	arr_printf(arr_name, preffix2, singleElementFormat, ", ", ")\n", NULL, arr, arr_size, 10, false, false);
+}
+
+template<typename T>
+int arr_printf_pydict(const char* const arr_name, const char* const singleElementFormat, const T* const arr,
+	const size_t arr_size)
+{
+	const char* const preffix2 = (arr_name) ? " = {" : "{";
+	arr_printf(arr_name, preffix2, singleElementFormat, ", ", "}\n", NULL, arr, arr_size, 10, true, true);
+}
+
+template<typename T>
+int arr_printf_csv(const char* const preffix, const char* const singleElementFormat, const T* const arr,
+	const size_t arr_size, const char* const separator=", ", int elemtnsPerLine = 10)
+{
+	arr_printf(preffix, NULL, singleElementFormat, separator, NULL, "\n", arr, arr_size, elemtnsPerLine, false, false);
 }
 
 /*
@@ -896,19 +1011,19 @@ inline MPI_Datatype getMPI_Datatype()
 //#endif
 #endif /* __cplusplus */
 
-	//// The following C/C++ types are redundant:
-	////signed
-	////signed int
-	////signed long
-	////signed long int
-	////signed long long int
-	////signed short
-	////signed short int
-	////unsigned int
-	////unsigned long int
-	////unsigned long long
-	////unsigned long long int
-	////unsigned short int
+//// The following C/C++ types are redundant:
+////signed
+////signed int
+////signed long
+////signed long int
+////signed long long int
+////signed short
+////signed short int
+////unsigned int
+////unsigned long int
+////unsigned long long
+////unsigned long long int
+////unsigned short int
 }
 template<typename T>
 inline MPI_Datatype getMPI_Datatype(T a)

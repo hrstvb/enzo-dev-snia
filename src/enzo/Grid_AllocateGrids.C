@@ -1,19 +1,18 @@
 /***********************************************************************
-/
-/  GRID CLASS (ALLOCATE SPACE FOR GRIDS -- DIMS, ETC MUST BE SET)
-/
-/  written by: Greg Bryan
-/  date:       July, 1995
-/  modified1:
-/
-/  PURPOSE:
-/
-************************************************************************/
+ /
+ /  GRID CLASS (ALLOCATE SPACE FOR GRIDS -- DIMS, ETC MUST BE SET)
+ /
+ /  written by: Greg Bryan
+ /  date:       July, 1995
+ /  modified1:
+ /
+ /  PURPOSE:
+ /
+ ************************************************************************/
 
 //
 //  Allocate room for the grids.
 //
-
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -30,7 +29,7 @@
 void grid::AllocateGrids()
 {
 
-  /* Compute grid size. */
+	/* Compute grid size. */
 
 //  int size = 1,i,field;
 //  for (int dim = 0; dim < GridRank; dim++)
@@ -59,7 +58,6 @@ void grid::AllocateGrids()
 //    }
 //
 //  } // if(UseMHDCT)
-
 	size_t size = GetGridSize();
 	for(int field = 0; field < NumberOfBaryonFields; field++)
 		arr_newset(BaryonField + field, size, 0);
@@ -74,4 +72,8 @@ void grid::AllocateGrids()
 			MHDParentTemp[dim] = NULL;
 		}
 	}
+
+	if(RandomForcing == TRUE)
+		for(int dim = 0; dim < GridRank; dim++)
+			arr_newset(RandomForcingField + dim, size, 1.0);
 }

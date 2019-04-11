@@ -1,11 +1,11 @@
 #ifndef __phys_constants_h_
 #define __phys_constants_h_
 /***********************************************************************
-/  
+/
 / DEFINITION OF PHYSICAL CONSTANTS
-/  
+/
 / written by: Elizabeth Tasker (renamed by Daniel Reynolds)
-/ date:       May, 2005 
+/ date:       May, 2005
 /
 / Note: CGS units
 /
@@ -21,7 +21,7 @@
 
 /* Mass of hydrogen [g] */
 
-#define mh                              1.67262171e-24   
+#define mh                              1.67262171e-24
 
 /* Mass of an electron [g] */
 
@@ -42,7 +42,7 @@
 
 /************************************************/
 
-/* Speed of light [cms-1] */ 
+/* Speed of light [cms-1] */
 
 #define clight                          2.99792458e10
 

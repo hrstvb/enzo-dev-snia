@@ -39,7 +39,7 @@
 
 #define MAX_NUMBER_OF_SUBGRIDS               __max_subgrids
 
-#define MAX_DEPTH_OF_HIERARCHY             50
+#define MAX_DEPTH_OF_HIERARCHY              50
 
 #define MAX_LINE_LENGTH                   512
 

@@ -180,6 +180,7 @@ int WriteParameterFile(FILE *fptr, TopGridData &MetaData, char *name = NULL)
   fprintf(fptr, "SphericalGravityUniformBins = %"ISYM"\n", SphericalGravityUniformBins);
   fprintf(fptr, "SphericalGravityWritePotentialSwitch = %"ISYM"\n", SphericalGravityWritePotentialSwitch);
   fprintf(fptr, "SphericalGravityBinsPerCell = %"FSYM"\n", SphericalGravityBinsPerCell);
+  fprintf(fptr, "SphericalGravityInterpAccelMethod = %"ISYM"\n", SphericalGravityInterpAccelMethod);
   fprintf(fptr, "SphericalGravityDebug = %"ISYM"\n", SphericalGravityDebug);
 
   fprintf(fptr, "PythonTopGridSkip       = %"ISYM"\n", PythonTopGridSkip);
@@ -1239,7 +1240,12 @@ int WriteParameterFile(FILE *fptr, TopGridData &MetaData, char *name = NULL)
   fprintf(fptr, "BurningEnergyRelativeGrowthLimit      = %"FSYM"\n", BurningEnergyRelativeGrowthLimit     ); //[BH]
   fprintf(fptr, "InternalEnergyRelativeGrowthLimit     = %"FSYM"\n", InternalEnergyRelativeGrowthLimit    ); //[BH]
   fprintf(fptr, "TotalEnergyRelativeGrowthLimit        = %"FSYM"\n", TotalEnergyRelativeGrowthLimit       ); //[BH]
-  fprintf(fptr, "BurnedFractionGrowthLimit             = %"FSYM"\n", BurnedFractionGrowthLimit		  ); //[BH]
+  fprintf(fptr, "BurnedFractionGrowthLimit             = %"FSYM"\n", BurnedFractionGrowthLimit		      ); //[BH]
+  fprintf(fptr, "InitialBurnedRadius                   = %"FSYM"\n", InitialBurnedRadius		          ); //[BH]
+  fprintf(fptr, "InitialBurnedRegionMaintain           = %"ISYM"\n", InitialBurnedRegionMaintain		  ); //[BH]
+  fprintf(fptr, "InitRadialPressureFromCentral         = %"FSYM"\n", InitRadialPressureFromCentral        ); //[BH]
+  fprintf(fptr, "InitBWithVectorPotential              = %"ISYM"\n", InitBWithVectorPotential             ); //[BH]
+  fprintf(fptr, "RefineOnStartup                       = %"ISYM"\n", RefineOnStartup                      ); //[BH]
 
   /* Output current time */
   time_t ID;

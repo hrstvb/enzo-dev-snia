@@ -97,6 +97,6 @@ void LimitDt(float* const dtSoFar, const float dtNew, DtLimitInfo* const infoSoF
 
 const char* const getReasonText(const dt_limit_reason reason);
 
-size_t sprintInfo(char* const s, const DtLimitInfo* const info);
+int snlprintTimeStepLimitInfo(char* const s, const size_t size, size_t* const length, const DtLimitInfo* const info);
 
 #endif /* LIMIT_TIME_STEP_H */
