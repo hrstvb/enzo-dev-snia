@@ -13,12 +13,9 @@
 #ifndef LEVEL_HIERARCHY_ENTRY_DEFINED__
 #define LEVEL_HIERARCHY_ENTRY_DEFINED__
 
-class Grid;
-struct HierarchyEntry;
-struct LevelHierarchyEntry;
-
-#include "Grid.h"
 #include "Hierarchy.h"
+struct HierarchyEntry;
+class Grid;
 
 struct LevelHierarchyEntry
 {

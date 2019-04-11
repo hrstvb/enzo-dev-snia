@@ -1013,6 +1013,11 @@ int SetDefaultGlobalValues(TopGridData &MetaData)
   InternalEnergyRelativeGrowthLimit    = -1; //Ignore condition [BH]
   TotalEnergyRelativeGrowthLimit		= -1; //Ignore condition [BH]
   BurnedFractionGrowthLimit		= -1; //Ignore condition [BH]
+  InitialBurnedRadius           = 0;
+  InitialBurnedRegionMaintain	= 0;
+  InitRadialPressureFromCentral = 0;
+  InitBWithVectorPotential 		= 0;
+  RefineOnStartup               = 0;
 
   //Spherical gravity parameters
   UseSphericalGravity = 0;
@@ -1050,7 +1055,7 @@ int SetDefaultGlobalValues(TopGridData &MetaData)
   SphericalGravityUniformBins = 1;
   SphericalGravityWritePotentialSwitch = 0;
 
-  SphericalGravityInterpAccelOrder = 1;
+  SphericalGravityInterpAccelMethod = 1;
   SphericalGravityBinAccels = NULL;
   SphericalGravityBinAccelSlopes = NULL;
 

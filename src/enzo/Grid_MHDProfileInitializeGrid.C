@@ -38,789 +38,117 @@
 #include "phys_constants.h"
 
 #include "DebugMacros.h"
+#include "MHDInitialProfile.h"
 
+//#ifndef SRC_ENZO_INITIALPROFILE_H_
+//#define SRC_ENZO_INITIALPROFILE_H_
+//
+//#define LINE_MAX_LENGTH (512)
+//#define CMP_A_B(a, b) ((b>a)-(b<a))
+//#define SIGN_A(a) (CMP_A_B(0,a))
+//
+//#define PROFILE_ASC_SORT (1)
+//#define PROFILE_DESC_SORT (-1)
+//#define PROFILE_UNSORTED (0)
+//
+//#define PROFILE_EMPTY_LINE (0)
+//#define PROFILE_COMMENT_LINE (1)
+//#define PROFILE_COL_NAMES_LINE (2)
+//#define PROFILE_DATA_LINE (3)
+//#define PROFILE_TIME_LINE (4)
 
 //using namespace std;
 
-#define LINE_MAX_LENGTH (512)
-#define CMP_A_B(a, b) ((b>a)-(b<a))
-#define SIGN_A(a) (CMP_A_B(0,a))
-
-#define PROFILE_ASC_SORT (1)
-#define PROFILE_DESC_SORT (-1)
-#define PROFILE_UNSORTED (0)
-
-#define PROFILE_EMPTY_LINE (0)
-#define PROFILE_COMMENT_LINE (1)
-#define PROFILE_COL_NAMES_LINE (2)
-#define PROFILE_DATA_LINE (3)
-#define PROFILE_TIME_LINE (4)
-
 int MakeFieldConservative(int field);
 int MHDProfileInitExactB(float* Bx, float* By, float* Bz, FLOAT x, FLOAT y, FLOAT z);
+float SphericalGravityGetAt(FLOAT r);
+size_t SphericalGravityComputeBinIndex(FLOAT r);
+void WriteInitialProfile(char* name, FLOAT* RR, FLOAT* RHO, FLOAT* GG, FLOAT* PP, FLOAT* UU, size_t n, FLOAT K,
+FLOAT gamma);
 
-/**
- * Returns the position of the next whitespace character in s following start.
- */
-char* profileStrSkipSpace(char* s)
+int grid::MHD_SNIA_GetFields(float** densityField, float** totalEnergyField, float** internalEnergyField,
+float** vxField, float** vyField, float** vzField, float** vFields,
+float** BxField, float** ByField, float** BzField, float** BFields,
+float** burnedDensityField,
+float** phiField,
+float** gravPotentialField)
 {
-	for(; *s != '\0'; s++)
-		if(!isspace(*s))
-			break;
-	return s;
-}
-/**
- * Returns the position of the next non-whitespace character following start.
- */
-char* profileStrSkipNonSpace(char* s)
-{
-	for(; *s != '\0'; s++)
-		if(isspace(*s))
-			break;
-	return s;
-}
+	bool hasGasEField = DualEnergyFormalism && (HydroMethod != Zeus_Hydro); //[BH]
 
-/**
- * Returns the count of non-empty words in a string separated by whitespace.
- */
-int profileCountWords(char* s)
-{
-	int n = 0;
-	while(*(s = profileStrSkipSpace(s)) != '\0')
+	int totENum, rhoNum, vxNum, vyNum, vzNum;
+	int gasENum = -1, BxNum = -1, ByNum = -1, BzNum = -1, rhoNiNum = -1;
+	int phiNum = -1, gravPotentialNum = -1;
+
+	if(IdentifyPhysicalQuantities(rhoNum, gasENum, vxNum, vyNum, vzNum, totENum, BxNum, ByNum, BzNum, phiNum) == FAIL)
+		ENZO_FAIL("MHDProfiileInitializeGrid: Error in IdentifyPhysicalQuantities for UseMHD==true.")
+
+	if(densityField)
+		*densityField = BaryonField[rhoNum];
+
+	if(totalEnergyField)
+		*totalEnergyField = BaryonField[totENum];
+
+	if(internalEnergyField)
+		*internalEnergyField = (hasGasEField) ? BaryonField[gasENum] : NULL;
+
+	if(vxField)
+		*vxField = BaryonField[vxNum];
+	if(vyField)
+		*vyField = (MaxVelocityIndex > 1) ? BaryonField[vyNum] : NULL;
+	if(vzField)
+		*vzField = (MaxVelocityIndex > 2) ? BaryonField[vzNum] : NULL;
+	if(vFields)
 	{
-		n++;
-		s = profileStrSkipNonSpace(s);
+		vFields[0] = BaryonField[vxNum];
+		vFields[1] = (MaxVelocityIndex > 1) ? BaryonField[vyNum] : NULL;
+		vFields[2] = (MaxVelocityIndex > 2) ? BaryonField[vzNum] : NULL;
 	}
-	return n;
-}
 
-/**
- * Returns the index of a string in an array of strings with n elements
- * or -1 if not found. NULLs in a are ignored.
- */
-int profileIndexOfStr(char* s, char** a, int n)
-{
-	if(s)
-		for(int i = 0; i < n; i++)
-			if(a[i] && !strcmp(s, a[i]))
-				return i;
-
-	return -1;
-}
-
-/**
- * Returns the index of the first occurrence of an integer
- * in an array of integers or -1 if not found.
- */
-int profileIndexOfInt(int i, int* a, int n)
-{
-	for(long j = 0; j < n; j++)
-		if(i == a[j])
-			return j;
-	return -1;
-}
-
-/**
- * Returns the would-be sorting order if nextElement was appended
- * to the array prevElements with nPrevElements number of elements,
- * which are already in prevSortingOrder.
- */
-int profileNextSortingOrder(float nextElement, float* prevElements, int nPrevElements, int prevSortingOrder)
-{
-	// With no previous elements this will
-	// be an array with one element, nextElement.
-	// We say that an array with one
-	// element is sorted in ascending order.
-	if(nPrevElements == 0)
-		return PROFILE_ASC_SORT;
-
-	// If the array was previously UNSORTED,
-	// adding another element can't change that.
-	if(prevSortingOrder == PROFILE_UNSORTED)
-		return PROFILE_UNSORTED;
-
-	// Find the sorting order of the last element and the nextElement.
-	int so = CMP_A_B(prevElements[nPrevElements - 1], nextElement);
-
-	// If there was a single element before,
-	// then we are going to have an array with two elements.
-	// The sorting order of the two elements will be also
-	// the sorting order of the new array, overwriting
-	// the fiducial ascending order for a one-element arrays.
-	if(nPrevElements == 1)
-		return so;
-
-	// We check if adding the nextElement will preserve the
-	// prevSortOrder or make the array UNSORTED.
-	return (prevSortingOrder == so) ? prevSortingOrder : PROFILE_UNSORTED;
-}
-
-/**
- * Returns the index of the first number in the xData array
- * with nData elements, that is greater (smaller) or equal to x,
- * in case xData is sorted in ascending (descending) order.
- *
- *  * Returns -1 if not found, i.e. x is greater (smaller) than
- * all elements of xData.
- *
- * The sorting order is determined by xSortingOrder.
- *
- * For this application xData is assumed to be sorted without
- * repetitions, i.e. strictly monotonic, even though this function
- * may find a valid index in an non-monotonic or unsorted array
- * for some search algorithms.
- */
-int profileFindGTEIndex(float x, float xData[], int nData, int xSortingOrder)
-{
-	switch(xSortingOrder)
+	if(UseMHD)
 	{
-	case PROFILE_ASC_SORT:
-		for(int i = 0; i < nData; i++)
+		if(BxField)
+			*BxField = BaryonField[BxNum];
+		if(ByField)
+			*ByField = BaryonField[ByNum];
+		if(BzField)
+			*BzField = BaryonField[BzNum];
+
+		if(BFields)
 		{
-			if(x <= xData[i])
-				return i;
+			BFields[0] = BaryonField[BxNum];
+			BFields[1] = BaryonField[ByNum];
+			BFields[2] = BaryonField[BzNum];
 		}
-		return nData;
-	case PROFILE_DESC_SORT:
-		for(int i = nData - 1; i >= 0; i--)
-		{
-			if(x >= xData[i])
-				return i;
-		}
-		return nData;
-	default:
-		return -1;
 	}
+
+	if(burnedDensityField && UseBurning)
+	{
+		rhoNiNum = FindField(Density_56Ni, FieldType, NumberOfBaryonFields);
+		if(rhoNiNum < 0)
+			ENZO_FAIL("MHDProfiileInitializeGrid: Error in FindField for Density_56Ni.")
+		*burnedDensityField = BaryonField[rhoNiNum];
+	}
+
+	if(phiField)
+		*phiField = (phiNum >= 0) ? BaryonField[phiNum] : NULL;
+
+	if(gravPotentialField && WritePotential)
+	{
+		gravPotentialNum = FindField(GravPotential, FieldType, NumberOfBaryonFields);
+		if(gravPotentialNum < 0)
+			ENZO_FAIL("MHDProfiileInitializeGrid: Error in FindField for GravPotential.")
+		*gravPotentialField = BaryonField[gravPotentialNum];
+	}
+
+	return SUCCESS;
 }
 
-/**
- * Interpolates y(x) using the data arrays xData and yData.
- * If x is outside the range of xData, the value of
- * the corresponding end element of yData is used
- * as extrapolation.
- *
- * Uses findGTEIndex to find the right index of the bracket for x.
- * Returns a non-zero error code if findGTEIndex fails,
- * otherwise returns 0.
- */
-int profileInterpolate(float* y, float yData[], float x, float xData[], int nData, int xSortingOrder)
+int grid::MHDProfileInitializeGrid(MHDInitialProfile* p,
+float burningTemperature,
+float burnedRadius,
+float dipoleMoment[3], float dipoleCenter[3], bool usingVectorPotential)
 {
-	int i1 = profileFindGTEIndex(x, xData, nData, xSortingOrder);
-	if(i1 < 0)
-		return i1;
-
-	if(i1 == 0)
-	{
-		*y = yData[0];
-		return 0;
-	}
-
-	int i0 = i1 - 1;
-	if(i1 == nData)
-	{
-		*y = yData[i0];
-		return 0;
-	}
-
-	float x0 = xData[i0];
-	float x1 = xData[i1];
-	float d = x1 - x0; // is d tiny?
-	float c0 = (x1 - x) / d; // is c0 tiny?
-	float c1 = (x - x0) / d; // is c1 tiny?
-	*y = c0 * yData[i0] + c1 * yData[i1];
-	return 0;
-}
-/**
- * Returns the type of the line being processed.
- */
-/**
- * Parses a string of whitespace-separated words.
- * colNames is used to store pointers to the words.
- * Each word is allocated space dynamically and terminated by '\0'.
- * Returns the count.
- */
-int profileParseColumnNames(char* line, char** colNames)
-{
-	int nCols = 0;
-	char* wordend = line;
-
-	while(*(line = profileStrSkipSpace(wordend)) != '\0')
-	{
-		wordend = profileStrSkipNonSpace(line);
-		int len = wordend - line;
-		colNames[nCols] = new char[len + 1];
-		strncpy(colNames[nCols], line, len);
-		nCols++;
-	}
-
-	return nCols;
-}
-
-typedef struct
-{
-	int nCols, nRows, nColsToKeep, nRowsAllocated, nRowsAllocateFirst, nRowsAllocateInc;
-	char **colNames, **colNamesToKeep;int *colSortingOrders, *colNumsToKeep;float time;float **colData;
-} profilestruct;
-
-/**
- * The destructor.
- */
-void profileFree(profilestruct* p)
-{
-	delete[] p->colData;
-	delete[] p->colNames;
-	delete[] p->colSortingOrders;
-}
-
-/**
- * Profile::init()
- *
- * Initializes field members to reflect an empty profile state with no data
- * nor columns. Used by constructors and destructor.
- */
-void profileInit(profilestruct* p)
-{
-	p->nRows = p->nRowsAllocated = p->nCols = p->nColsToKeep = 0;
-	p->nRowsAllocateFirst = p->nRowsAllocateInc = 1024;
-	p->colData = NULL;
-	p->colNames = p->colNamesToKeep = NULL;
-	p->colSortingOrders = p->colNumsToKeep = NULL;
-	p->time = 0;
-}
-
-/**
- * Allocates new colDolata, colNames and colSortingOrders
- * initialized with NULLs.
- * Doesn't allocate any data rows. See also: allocateMoreRows(...).
- */
-int profileAllocateCols(int nCols, profilestruct* p)
-{
-	p->nCols = nCols;
-	p->colData = new float*[nCols];
-	p->colNames = new char*[nCols];
-	p->colSortingOrders = new int[nCols];
-
-	for(int i = 0; i < nCols; i++)
-	{
-		p->colData[i] = NULL;
-		p->colNames[i] = NULL;
-		p->colSortingOrders[i] = 0;
-	}
-
-	return nCols;
-}
-
-/**
- * Increases the allocation of the data rows arrays by a given number,
- * preserving the data that is already in the arrays.
- */
-int profileAllocateMoreRows(int nMoreRows, profilestruct* p)
-{
-	if(nMoreRows <= 0)
-	{
-		nMoreRows = (p->nRowsAllocated > 0) ? (p->nRowsAllocateInc) : (p->nRowsAllocateFirst);
-	}
-	if(nMoreRows <= 0)
-		nMoreRows = 1024;
-	int nNewRows = p->nRowsAllocated + nMoreRows;
-	printf("Increasing number of allocated rows from %d to %d.\n", p->nRowsAllocated, nNewRows);
-	for(int i = 0; i < p->nCols; i++)
-	{
-		if(p->colNames[i] == NULL)
-			continue;
-
-		float* dest = new float[nNewRows];
-		float* src = p->colData[i];
-		if(src != NULL && p->nRows > 0)
-		{
-			memcpy((void*) dest, (const void*) src, sizeof(*src) * p->nRows);
-			delete[] src;
-		}
-		p->colData[i] = dest;
-	}
-
-	printf("%d rows allocated.\n", nNewRows);
-	return p->nRowsAllocated = nNewRows;
-}
-
-/**
- * Returns the index of a column name if existing or -1.
- */
-int profileFindColIndex(char* colName, profilestruct* p)
-{
-	return profileIndexOfStr(colName, p->colNames, p->nCols);
-}
-
-/**
- * Interpolates y(x) bsaed on the column indices.
- */
-int profileInterpolate(float* y, int yColIndex, float x, int xColIndex, profilestruct* p)
-{
-	if(yColIndex < 0 || p->nCols <= yColIndex)
-		return -1;
-	if(xColIndex < 0 || p->nCols <= xColIndex)
-		return -2;
-	if(p->colSortingOrders[xColIndex] == PROFILE_UNSORTED)
-		return -3;
-	return profileInterpolate(y, p->colData[yColIndex], x, p->colData[xColIndex], p->nRows,
-								p->colSortingOrders[xColIndex]);
-}
-
-/**
- * Interpolates y(x) based on column names.
- */
-int profileInterpolate(float* y, char* yname, float x, char* xname, profilestruct* p)
-{
-	return profileInterpolate(y, profileFindColIndex(yname, p), x, profileFindColIndex(xname, p), p);
-}
-
-/**
- * Turns column names in colNames into NULL,
- * if not present in the colNamesToKepp or
- * the colNumsToKeep lists.
- */
-int profileRemoveCols(profilestruct* p)
-{
-	if(p->colNamesToKeep != NULL)
-	{
-		for(int i = 0; i < p->nCols; i++)
-			if(0 > profileIndexOfStr(p->colNames[i], p->colNamesToKeep, p->nColsToKeep))
-			{
-//				printf("Column '%s' found, ignored.\n", p->colNames[i]);
-				p->colNames[i] = NULL;
-			}
-			else
-			{
-//				printf("Column '%s' kept.\n", p->colNames[i]);
-			}
-	}
-	else if(p->colNumsToKeep != NULL)
-	{
-		for(int i = 0; i < p->nCols; i++)
-			if(0 > profileIndexOfInt(i, p->colNumsToKeep, p->nColsToKeep))
-				p->colNames[i] = NULL;
-	}
-
-	int nRemaining = 0;
-	for(int i = 0; i < p->nCols; i++)
-		nRemaining += p->colNames[i] != NULL;
-
-	return nRemaining;
-}
-
-/**
- * Parses a columns header line to allocate the correct number of columns
- * and save the column names. Returns the number of columns retained,
- * which should be equal to nColsToKeep.
- */
-int profileProcessColNamesLine(char* line, profilestruct* p)
-{
-	int n = 0;
-	if(0 >= (n = profileCountWords(line)))
-	{
-		printf("Error: %d words counted in '%s'.\n", n, line);
-		return n;
-	}
-	if(0 >= (n = profileAllocateCols(n, p)))
-	{
-		printf("Error: %d columns allocated in '%s'.\n", n, line);
-		return n;
-	}
-	if(0 >= (n = profileParseColumnNames(line, p->colNames)))
-	{
-		printf("Error: %d column names parsed in '%s'.\n", n, line);
-		return n;
-	}
-	int m;
-	if(0 >= (m = profileRemoveCols(p)))
-	{
-		printf("Error: %d data columns retained to be read. '%s'\n", m, line);
-	}
-	return p->nCols = n;
-}
-
-/**
- * Parses a data line as a whitespace-separated list of floats.
- * Stores the data in the data rows arrays and increments nDataRows.
- * Increases the allocation for data rows if necessary.
- * Columns with NULL names are skipped.
- */
-int profileProcessDataLine(char* line, profilestruct* p, int* nLinesWithExtraCols)
-{
-	int nWords = 0;
-	while(*(line = profileStrSkipSpace(line)) != '\0')
-	{
-		if(nWords >= p->nCols - 1)
-		{
-			*nLinesWithExtraCols++;
-			break;
-		}
-
-		if(p->colNames[nWords] != NULL)
-		{
-			float x;
-			int nScanned = sscanf(line, "%lf", &x);
-			if(nScanned != 1)
-			{
-				printf("Problem parsing line '%s'", line);
-				continue;
-			}
-
-			if(p->nRows + 1 > p->nRowsAllocated)
-				profileAllocateMoreRows(0, p);
-			float* data = p->colData[nWords];
-			data[p->nRows] = x;
-			p->colSortingOrders[nWords] = profileNextSortingOrder(x, data, p->nRows, p->colSortingOrders[nWords]);
-		}
-		nWords++;
-		line = profileStrSkipNonSpace(line);
-	}
-	p->nRows++;
-	return nWords;
-}
-
-/**
- * Sets to NULL column names in varNames if they are not in the colNamesToKeep
- * list. If colNamesToKeep is not NULL the colNumsToKeep is ignored. Otherwise
- * sets to NULL col names
- * @param colNamesToKeep
- * @param colNumsToKeep
- * @param nColsToKeep
- * @return
- */
-int profileLineType(char* line)
-{
-	// Skip over leading spaces and tabs.
-	int a = 0;
-	line = profileStrSkipSpace(line);
-
-	switch(*line)
-	{
-	case '\0':
-		return PROFILE_EMPTY_LINE; // Reached the end of the string.
-	case '#':
-		return PROFILE_COMMENT_LINE; // The first non-whitespace is a hash.
-		// If the line begins with a number, i.e. starts with a
-		// plus, '+', minus, '-', a period, '.', or a digit ('0'..'9')
-		// treat it as a data row.
-	case '+':
-	case '-':
-	case '.':
-	case '0':
-	case '1':
-	case '2':
-	case '3':
-	case '4':
-	case '5':
-	case '6':
-	case '7':
-	case '8':
-	case '9':
-		return PROFILE_DATA_LINE;
-
-		// Any other is a columns header:
-	default:
-		return PROFILE_COL_NAMES_LINE;
-	}
-}
-
-/**
- * class Profile_PAH01 : public Profile
- * This is a format allowing for profiles at different times.
- * A profile snapshot in time starts with a TIME_LINE
- * having three (3) floats, the first being the time.
- * It is followed by a column header line and then multiple
- * data rows which are the actual PROFILE_LINEs.
- * There is a second column header for the same time and then
- * more PROFILE_LINEs. The second group of profile lines
- * is ignored.
- */
-
-/**
- * Overridden to distinguish between a TIME_LINE and a PROFILE_LINE,
- * both of which look like DATA_LINEs to the base method.
- */
-int profileLineTypePAH01(char* line)
-{
-	int lt = profileLineType(line);
-	if(lt != PROFILE_DATA_LINE)
-		return lt;
-	switch(profileCountWords(line))
-	{
-	case 4:
-		return PROFILE_TIME_LINE;
-	default:
-		return PROFILE_DATA_LINE;
-	}
-}
-
-/**
- * A factory method for the PAH01 format. Creates a ProfilePAH01
- * from the data in a given file, taking the profiles at the first
- * time that exceeds or is equal to the requested *time*.
- */
-int profileReadPAH01(char* filename, profilestruct* p)
-{
-	FILE *file;
-	printf("Opening '%s'\n", filename);
-	if((file = fopen(filename, "r")) == NULL)
-		return -1;
-
-	char colNames[] = "mass dmass radius density temperature gamma col7 col8";
-	profileProcessColNamesLine(colNames, p);
-
-	for(int i = 0; i < p->nCols; i++)
-	{
-		if(p->colNames[i] == NULL)
-			printf("Col %d will be ignored.\n", i);
-		else
-			printf("Col %d, \"%s\" will be parsed\n", i, p->colNames[i]);
-	}
-
-	int lineNum = 0;
-	int nLinesWithExtraCols = 0;
-	bool searchingTime = true;
-	int nColHeadersProcessed = 0;
-
-	char line[MAX_LINE_LENGTH];
-	while(fgets(line, MAX_LINE_LENGTH, file))
-	{
-		lineNum++;
-
-		switch(profileLineTypePAH01(line))
-		// Use 'continue' to read the next line.
-		// Use 'break' to exit the switch and quit reading.
-		{
-		case PROFILE_EMPTY_LINE:
-		case PROFILE_COMMENT_LINE:
-			continue;
-		case PROFILE_COL_NAMES_LINE:
-//			if (searchingTime) continue;
-//			if (nColHeadersProcessed) break;
-//			if (0 < profileProcessColNamesLine(line, p)) nColHeadersProcessed++;
-			continue;
-		case PROFILE_TIME_LINE:
-		{
-			if(!searchingTime)
-				break; //This means we already found a time header with matching time
-			// and most likely read all the data below it and now we reached the next time header.
-
-			int nRows;
-			float t;
-			int nScanned = sscanf(line, "%lld %lf", &nRows, &t);
-			if(nScanned != 2)
-			{
-				printf("problem parsing time header %s\n", line);
-			}
-			searchingTime = (p->time > t);
-			if(!searchingTime)
-			{
-				printf("Time header for %f found on line num %d. %d rows\n", p->time, lineNum, nRows);
-				p->nRowsAllocateFirst = nRows;
-			}
-			continue;
-		}
-		case PROFILE_DATA_LINE:
-			if(searchingTime)
-				continue;
-//			if (1 > nColHeadersProcessed) continue;
-//			if (1 < nColHeadersProcessed) break;
-			profileProcessDataLine(line, p, &nLinesWithExtraCols);
-			if(nLinesWithExtraCols > 0)
-			{
-				printf("Warning: More data columns than column names found on %d lines.\n", nLinesWithExtraCols);
-			}
-			continue;
-		default:
-			continue;
-		}
-
-		break;
-	}
-
-	fclose(file);
-	printf("Reading finished.\n");
-	if(searchingTime)
-	{
-		printf("Time header for %f not found.\n", p->time);
-		return -1;
-	}
-
-//	printf("%d data lines in %d cols.\n", p->nRows, p->nCols);
-//	for (int j = 0; j < p->nCols; j++)
-//	{
-//		printf("%p ", p->colData[j]);
-//	}
-//	printf("\n");
-//	for (int j = 0; j < p->nCols; j++)
-//	{
-//		printf("%p ", p->colNames[j]);
-//	}
-//	printf("\n");
-//	for (int i = 0; i < 10; i++)
-//	{
-//		printf("%3d: ", i);
-//		for (int j = 0; j < p->nCols; j++)
-//		{
-//			if (p->colNames[j] != NULL)
-//			{
-//				printf("(%d,%d)%f ", i,j,p->colData[j][i]);
-//			}
-//			else
-//			{
-//				printf("[%d,%d]%f ", i,j,0.0);
-//			}
-//		}
-//		printf("\n");
-//	}
-//	ENZO_FAIL("after profile dump");
-	return 0;
-}
-
-/**
- * Overridden to distinguish between a TIME_LINE and a PROFILE_LINE,
- * both of which look like DATA_LINEs to the base method.
- */
-int profileLineTypePAH02(char* line)
-{
-	int lt = profileLineType(line);
-	if(lt != PROFILE_DATA_LINE)
-		return lt;
-	switch(profileCountWords(line))
-	{
-	case 3:
-		return PROFILE_TIME_LINE;
-	default:
-		return PROFILE_DATA_LINE;
-	}
-}
-
-int profileReadPAH02(char* filename, profilestruct* p)
-{
-	FILE *file;
-	printf("Opening '%s'\n", filename);
-	if((file = fopen(filename, "r")) == NULL)
-	{
-		printf("Can't open '%s'.\n", filename);
-		return -1;
-	}
-	printf("PAH02 open\n");
-
-//	for (int i = 0; i < p->nCols; i++)
-//	{
-//		if (p->colNames[i] == NULL) printf("Col %d will be ignored.\n", i);
-//		else printf("Col %d, \"%s\" will be parsed\n", i, p->colNames[i]);
-//	}
-
-	int lineNum = 0;
-	int nLinesWithExtraCols = 0;
-	bool searchingTime = true;
-	int nColHeadersProcessed = 0;
-
-	char line[MAX_LINE_LENGTH];
-	while(fgets(line, MAX_LINE_LENGTH, file))
-	{
-		lineNum++;
-
-		switch(profileLineTypePAH02(line))
-		// Use 'continue' to read the next line.
-		// Use 'break' to exit the switch and quit reading.
-		{
-		case PROFILE_EMPTY_LINE:
-		case PROFILE_COMMENT_LINE:
-			continue;
-		case PROFILE_COL_NAMES_LINE:
-			if(searchingTime)
-				continue;
-			if(nColHeadersProcessed)
-				break;
-			if(0 < profileProcessColNamesLine(line, p))
-				nColHeadersProcessed++;
-			continue;
-		case PROFILE_TIME_LINE:
-		{
-			if(!searchingTime)
-				break; //This means we already found a time header with matching time
-			// and most likely read all the data below it and now we reached the next time header.
-
-			float t;
-			int nScanned = sscanf(line, "%lf", &t);
-			if(nScanned != 1)
-			{
-				printf("problem parsing time header %s\n", line);
-			}
-			searchingTime = (p->time > t);
-			if(!searchingTime)
-			{
-				printf("Time header for t=%f found on line num %d. %d rows\n", p->time, lineNum);
-			}
-			continue;
-		}
-		case PROFILE_DATA_LINE:
-			if(searchingTime)
-				continue;
-			if(1 > nColHeadersProcessed)
-				continue;
-			if(1 < nColHeadersProcessed)
-				break;
-			profileProcessDataLine(line, p, &nLinesWithExtraCols);
-			if(nLinesWithExtraCols > 0)
-			{
-				printf("Warning: More data columns than column names found on %d lines.\n", nLinesWithExtraCols);
-			}
-			continue;
-		default:
-			continue;
-		}
-
-		break;
-	}
-
-	fclose(file);
-	printf("Reading profile finished.\n");
-	if(searchingTime)
-	{
-		printf("Time header for %f not found.\n", p->time);
-		return -1;
-	}
-
-//	printf("%d data lines in %d cols.\n", p->nRows, p->nCols);
-//	for (int j = 0; j < p->nCols; j++)
-//	{
-//		printf("%p ", p->colData[j]);
-//	}
-//	printf("\n");
-//	for (int j = 0; j < p->nCols; j++)
-//	{
-//		printf("%p ", p->colNames[j]);
-//	}
-//	printf("\n");
-//	for (int i = 0; i < 10; i++)
-//	{
-//		printf("%3d: ", i);
-//		for (int j = 0; j < p->nCols; j++)
-//		{
-//			if (p->colNames[j] != NULL)
-//			{
-//				printf("(%d,%d)%f ", i,j,p->colData[j][i]);
-//			}
-//			else
-//			{
-//				printf("[%d,%d]%f ", i,j,0.0);
-//			}
-//		}
-//		printf("\n");
-//	}
-//	ENZO_FAIL("after profile dump");
-	return 0;
-}
-
-int grid::MHDProfileInitializeGrid(char* profileFileName, char* profileFormat, char* profileType,
-	char* radiusColumnName, char* densityColumnName, char* temperatureColumnName,
-	float burningTemperature,
-	float burnedRadius, float profileAtTime,
-	float dipoleMoment[3], float dipoleCenter[3], bool usingVectorPotential)
-{
+//	TRACEGF("INITIALIZING GRID PHASE 1 ...")
 	if(GridRank != 3)
 		ENZO_FAIL("MHDProfileInitializeGrid is implemented for 3D only.")
 
@@ -829,13 +157,8 @@ int grid::MHDProfileInitializeGrid(char* profileFileName, char* profileFormat, c
 	if(CellWidth[0][0] <= 0)
 		PrepareGridDerivedQuantities();
 
-//  if ( PerturbMethod == 100 )
-//      srand( 3449653 ); //please don't change this number.
-
-//	fprintf(stderr, "GridDim---- %d %d %d\n", GridDimension[0], GridDimension[1], GridDimension[2]);
-
-	// Assign fieldType numbers using constants from typedefs.h,
-	// as well as count the number of fields.
+// Assign fieldType numbers using constants from typedefs.h,
+// as well as count the number of fields.
 	NumberOfBaryonFields = 0;
 	FieldType[NumberOfBaryonFields++] = Density;
 	if(EquationOfState == 0)
@@ -858,25 +181,7 @@ int grid::MHDProfileInitializeGrid(char* profileFileName, char* profileFormat, c
 			FieldType[NumberOfBaryonFields++] = PhiField;
 	}
 
-	if(ProcessorNumber != MyProcessorNumber)
-		return SUCCESS;
-
-	int size = GetGridSize();
-//  printf("Proc #%d: %d..%d, %d..%d, %d..%d;" //BH DEBUG
-	//          " %g..%g, %g..%g, %g..%g;" //BH DEBUG
-//         " %g, %g, %g;" //BH DEBUG
-//         " %g, %g, %g;" //BH DEBUG
-//          "\n", MyProcessorNumber, //BH DEBUG
-//         GridLeftEdge[0], GridRightEdge[0], //BH DEBUG
-//         GridLeftEdge[1], GridRightEdge[1], //BH DEBUG
-//         GridLeftEdge[2], GridRightEdge[2], //BH DEBUG
-//         CELLCENTER(0, 0), CELLCENTER(1, 0), CELLCENTER(2, 0), //BH DEBUG
-//         (GridLeftEdge[0]-CELLCENTER(0, 0))/CellWidth[0][0], //BH DEBUG
-//         (GridLeftEdge[1]-CELLCENTER(1, 0))/CellWidth[1][0], //BH DEBUG
-//         (GridLeftEdge[2]-CELLCENTER(2, 0))/CellWidth[2][0] //BH DEBUG
-//         ); //BH DEBUG
-
-	if(HydroMethod == MHD_RK && usingVectorPotential)
+	if(HydroMethod == MHD_RK || usingVectorPotential)
 	{
 		// Allow the ElectricField and MagneticField to
 		// be created temporarily for the purpose of
@@ -886,125 +191,78 @@ int grid::MHDProfileInitializeGrid(char* profileFileName, char* profileFormat, c
 		MHD_SetupDims();
 	}
 
+	if(ProcessorNumber != MyProcessorNumber || p == NULL)
+	{
+		//p==NULL is used with ParallelGridIO.
+//		TRACEGF("... DONE INITIALIZING GRID W/O FIELDS PHASE 1.")
+		return SUCCESS;
+	}
+
+	TRACEGF("INITIALIZING GRID PHASE 1, FIELDS.")
+
 	this->AllocateGrids();
 
-	profilestruct p;
-	profileInit(&p);
-	p.time = profileAtTime;
-	char* colNamesToKeep[] = { radiusColumnName, densityColumnName, temperatureColumnName };
-	p.colNamesToKeep = colNamesToKeep;
-	p.nColsToKeep = 3;
-	if(!strcmp(profileFormat, "PAH01"))
-	{
-		profileReadPAH01(profileFileName, &p);
-	}
-	else if(!strcmp(profileFormat, "PAH02"))
-	{
-		profileReadPAH02(profileFileName, &p);
-	}
-	else
-	{
-		char s[1024];
-		sprintf(s, "Invalid profile format '%s'", profileFormat);
-		ENZO_FAIL(s)
-	}
-
-	//
-	// Hack for tests of random forcing.
-	//
-	if(RandomForcing == TRUE)
-	{
-		for(int dim = 0; dim < GridRank; dim++)
-		{
-			RandomForcingField[dim] = new float[size];
-			for(int i = 0; i < size; i++)
-				RandomForcingField[dim][i] = 1.0;
-		}
-	}
-
-	int totENum, rhoNum, vxNum, vyNum, vzNum;
-	int gasENum = -1, BxNum = -1, ByNum = -1, BzNum = -1, rhoNiNum = -1;
-	float *totEField, *rhoField, *vxField, *vyField, *vzField;
+//	int totENum, rhoNum, vxNum, vyNum, vzNum;
+//	int gasENum = -1, BxNum = -1, ByNum = -1, BzNum = -1, rhoNiNum = -1;
+	float *rhoField, *totEField, *vxField, *vyField, *vzField;
 	float *gasEField = NULL, *rhoNiField = NULL;
 	float *BxField = NULL, *ByField = NULL, *BzField = NULL;
 
-	if(IdentifyPhysicalQuantities(rhoNum, gasENum, vxNum, vyNum, vzNum, totENum, BxNum, ByNum, BzNum) == FAIL)
-		ENZO_FAIL("MHDProfiileInitializeGrid: Error in IdentifyPhysicalQuantities for UseMHD==true.")
-	if(UseMHD)
-	{
-		BxField = BaryonField[BxNum];
-		ByField = BaryonField[ByNum];
-		BzField = BaryonField[BzNum];
-	}
-
-	if(UseBurning)
-	{
-		int rhoNiNum = FindField(Density_56Ni, FieldType, NumberOfBaryonFields);
-		if(rhoNiNum < 0)
-			ENZO_FAIL("MHDProfiileInitializeGrid: Error in FindField for Density_56Ni.")
-		rhoNiField = BaryonField[rhoNiNum];
-	}
-
-	printf("UseMHD=%lld, UseMHDCT=%lld, GridRank=%lld, size=%lld\n", UseMHD, UseMHDCT, GridRank, size);	//[BH]
-	rhoField = BaryonField[rhoNum];
-	vxField = BaryonField[vxNum];
-	vyField = BaryonField[vyNum];
-	vzField = BaryonField[vzNum];
-	totEField = BaryonField[totENum];
-	if(hasGasEField)
-		gasEField = BaryonField[gasENum];
-
-	for(int f = 0; f < NumberOfBaryonFields; f++)
-	{
-		printf("MakeFieldConservative(%lld)==%lld", FieldType[f], MakeFieldConservative(FieldType[f]));
-		if(DataLabel[f] != NULL)
-			printf(" // %s\n", DataLabel[f]);
-		else
-			printf(" // DataLabel[%lld] not set.\n", f);
-	}
+	MHD_SNIA_GetFields(&rhoField, &totEField, &gasEField, &vxField, &vyField, &vzField, NULL, &BxField, &ByField,
+						&BzField, NULL, &rhoNiField, NULL, NULL);
 
 	int debugnanflag = 0; //[BH]
-	int hasConstField = BA[0] && BA[1] && BA[2];
-
-	int radiusSO = p.colSortingOrders[profileFindColIndex(radiusColumnName, &p)];
-	float* radiusData = p.colData[profileFindColIndex(radiusColumnName, &p)];
-	float* densityData = p.colData[profileFindColIndex(densityColumnName, &p)];
-	float* temperatureData = p.colData[profileFindColIndex(temperatureColumnName, &p)];
 	float gammaMinusOne = Gamma - 1;
-	FLOAT xyz[3];
+
 	for(int k = 0; k < GridDimension[2]; k++)
 	{
-		FLOAT z = xyz[2] = CELLCENTER(2, k);
+		FLOAT z = CELLCENTER(2, k);
 		FLOAT zz = square(z - SphericalGravityCenter[2]);
 		for(int j = 0; j < GridDimension[1]; j++)
 		{
-			FLOAT y = xyz[1] = CELLCENTER(1, j);
+			FLOAT y = CELLCENTER(1, j);
 			FLOAT yy_zz = square(y - SphericalGravityCenter[1]) + zz;
 			for(int i = 0; i <= GridDimension[0]; i++)
 			{
 				int index = ELT(i, j, k);
-				float vx = vxField[index] = 0;
-				float vy = vyField[index] = 0;
-				float vz = vzField[index] = 0;
+				float vx = vxField[index] = 0 + GridVelocity[0];
+				float vy = vyField[index] = 0 + GridVelocity[1];
+				float vz = vzField[index] = 0 + GridVelocity[2];
 				float Bx, By, Bz;
 
-				if(!strcmp(profileType, "RADIAL"))
+				if(1) //!strcmp(p->profileType, "RADIAL"))
 				{
-					FLOAT x = xyz[0] = CELLCENTER(0, i);
+					FLOAT x = CELLCENTER(0, i);
 					FLOAT r = sqrt(square(x - SphericalGravityCenter[0]) + yy_zz);
 
 					float rho, T = 0;
-					int retcode = profileInterpolate(&rho, densityData, r, radiusData, p.nRows, radiusSO); //g/cm**3
-					//retcode = profileInterpolate(&T, temperatureData, r, radiusData, p.nRows, radiusSO); //K
-					bool isBurned = (r < burnedRadius);					// || (T > 0 && T > burningTemperature));
+					int retcode = p->interpolateDensity(&rho, r); //g/cm**3
 
-					float gasE = EOSPolytropicFactor * POW(rho, gammaMinusOne) / gammaMinusOne;
+					//retcode = profileInterpolate(&T, temperatureData, r, radiusData, p.nRows, radiusSO); //K
+					bool isBurned = (r < burnedRadius);				// || (T > 0 && T > burningTemperature));
+
+					float gasE = 0;
+					if(p->internalEnergyData)
+					{
+						retcode = p->interpolateInternalEnergy(&gasE, r); //g/cm**3
+					}
+					else
+					{
+						gasE = EOSPolytropicFactor * POW(rho, gammaMinusOne) / gammaMinusOne;
+					}
+
+//					if(UseBurning && isBurned && burnedRadiusPE)
+//					{
+//						rho *= gasE / (gasE + BurningEnergyRelease);
+//						gasE += BurningEnergyRelease;
+//					}
+
 					float totE = gasE;
-					totE += 0.5 * (vx * vx + vy * vy + vz * vz);
+					totE += 0.5 * (square(vx) * square(vy) + square(vz));
 					if(BxField)
 					{
 						MHDProfileInitExactB(&Bx, &By, &Bz, x, y, z);
-						totE += 0.5 * (Bx * Bx + By * By + Bz * Bz) / rho;
+						totE += 0.5 * (square(Bx) + square(By) + square(Bz)) / rho;
 						BxField[index] = Bx;
 						ByField[index] = By;
 						BzField[index] = Bz;
@@ -1021,15 +279,15 @@ int grid::MHDProfileInitializeGrid(char* profileFileName, char* profileFormat, c
 					if(UseBurning)
 						rhoNiField[index] = (isBurned) ? rho : 0;
 
-					if(debug)
-						if(j == (GridDimension[1] / 2) && k == (GridDimension[2] / 2) && i <= GridDimension[0] / 2)
-							printf("i,j,k=%03d,%04d,%04d, x,y,z=(%4f,%4f,%4f), r=%4f, rho=%e, T=%1f, burned=%d\n", i, j,
-									k, x * 1e-5, y * 1e-5, z * 1e-5, r * 1e-5, rho, T * 1e-9, isBurned);
+					if(debug + 1 && MyProcessorNumber == ROOT_PROCESSOR)
+						if(j == (GridDimension[1] / 2) && k == (GridDimension[2] / 2) && i >= GridDimension[0] / 2)
+							TRACEF("i,j,k=%03d,%04d,%04d, x,y,z=(%4f,%4f,%4f), r=%4f, rho=%e, U=%e, T=%1f, burned=%d, K=%e, gamma-1=%f",
+									i, j, k, x * 1e-5, y * 1e-5, z * 1e-5, r * 1e-5, rho, gasE, T * 1e-9, isBurned,
+									EOSPolytropicFactor, gammaMinusOne);
 				}
 			} //end baryonfield initialize
 		}
 	}
-	profileFree(&p);
 
 // Boiler plate code:
 //  if(DualEnergyFormalism )
@@ -1045,11 +303,121 @@ int grid::MHDProfileInitializeGrid(char* profileFileName, char* profileFormat, c
 
 	if(debugnanflag)
 		printf("nans intialized.\n"); //[BH]
-	else
-		printf("Initialized grid, phase 1.\n");
+//	else
+//		printf("Initialized grid, phase 1.\n");
+	TRACEGF("... DONE INITIALIZING GRID FULL PHASE 1.")
 
 	return SUCCESS;
+}
 
+/*
+ * Keeps the burned fraction equal to 1 for the initial burned raadius.
+ */
+int grid::MHDMaintaindInitialBurnedRegionGrid()
+{
+	if(GridRank != 3)
+		ENZO_FAIL("MHDProfileInitializeGridBurnedFraction is implemented for 3D only.")
+
+	if(ProcessorNumber != MyProcessorNumber)
+		return SUCCESS;
+
+	if(!UseBurning)
+		return SUCCESS;
+
+	int rhoNum = FindField(Density, FieldType, NumberOfBaryonFields);
+	if(rhoNum < 0)
+		ENZO_FAIL("MHDProfiileInitializeGrid: Error in FindField for Density_56Ni.")
+	int rhoNiNum = FindField(Density_56Ni, FieldType, NumberOfBaryonFields);
+	if(rhoNiNum < 0)
+		ENZO_FAIL("MHDProfiileInitializeGrid: Error in FindField for Density_56Ni.")
+
+	float* rhoField = BaryonField[rhoNum];
+	float* rhoNiField = BaryonField[rhoNiNum];
+
+	FLOAT xyz[MAX_DIMENSION];
+	size_t lindex[MAX_DIMENSION];
+	arr_set(xyz, MAX_DIMENSION, 0);
+	arr_set(xyz, GridRank, InitialBurnedRadius);
+	arr_xpy(xyz, SphericalGravityCenter, GridRank);
+	get_ijk_index(lindex, xyz);
+	for(int dim = 0; dim < GridRank; dim++)
+	{
+		if(lindex[dim] < 0)
+			lindex[dim] = 0;
+		else if(lindex[dim] >= GridDimension[dim])
+			lindex[dim] >= GridDimension[dim] - 1;
+	}
+
+	size_t rindex[MAX_DIMENSION];
+	arr_set(xyz, MAX_DIMENSION, 0);
+	arr_set(xyz, GridRank, -InitialBurnedRadius);
+	arr_xpy(xyz, SphericalGravityCenter, GridRank);
+	get_ijk_index(rindex, xyz);
+	arr_xpa(rindex, MAX_DIMENSION, 1);
+	for(int dim = 0; dim < GridRank; dim++)
+	{
+		if(rindex[dim] < 0)
+			rindex[dim] = 0;
+		else if(rindex[dim] >= GridDimension[dim])
+			rindex[dim] >= GridDimension[dim] - 1;
+	}
+
+	switch(GridRank)
+	{
+	case 1:
+		for(int i = lindex[0]; i <= rindex[0]; i++)
+		{
+			FLOAT r = sqrt(square(CELLCENTER(0, i) - SphericalGravityCenter[0]));
+
+			if(r < InitialBurnedRadius)
+			{
+				int index = i;
+				rhoNiField[index] = rhoField[index];
+			}
+		}
+		break;
+	case 2:
+		for(int j = lindex[1]; j < rindex[1]; j++)
+		{
+			FLOAT yy = square(CELLCENTER(1, j) - SphericalGravityCenter[1]);
+			for(int i = lindex[0]; i <= rindex[0]; i++)
+			{
+				FLOAT r = sqrt(square(CELLCENTER(0, i) - SphericalGravityCenter[0]) + yy);
+
+				if(r < InitialBurnedRadius)
+				{
+					int index = ELT(i, j, 0);
+					rhoNiField[index] = rhoField[index];
+				}
+			}
+		}
+		break;
+	case 3:
+		for(int k = lindex[2]; k <= rindex[2]; k++)
+		{
+			FLOAT zz = square(CELLCENTER(2, k) - SphericalGravityCenter[2]);
+			for(int j = lindex[1]; j < rindex[1]; j++)
+			{
+				FLOAT yy_zz = square(CELLCENTER(1, j) - SphericalGravityCenter[1]) + zz;
+				for(int i = lindex[0]; i <= rindex[0]; i++)
+				{
+					FLOAT r = sqrt(square(CELLCENTER(0, i) - SphericalGravityCenter[0]) + yy_zz);
+
+					if(r < InitialBurnedRadius)
+					{
+						int index = ELT(i, j, k);
+						rhoNiField[index] = rhoField[index];
+					}
+				}
+			}
+		}
+		break;
+	default:
+		ENZO_VFAIL("Bad grid rank: %lld", GridRank)
+		;
+	}
+
+	return SUCCESS;
 }
 
 /*
@@ -1061,42 +429,35 @@ int grid::MHDProfileInitializeGrid(char* profileFileName, char* profileFormat, c
  * as well as possible, because it might influence the
  * start up refinement.
  */
-int grid::MHDProfileInitializeGrid2(char* profileFileName, char* profileFormat, char* profileType,
-	char* radiusColumnName, char* densityColumnName, char* temperatureColumnName,
-	float burningTemperature,
-	float burnedRadius, float profileAtTime,
-	float dipoleMoment[3], float dipoleCenter[3], bool usingVectorPotential)
+int grid::MHDProfileInitializeGrid2(MHDInitialProfile* p,
+float burningTemperature,
+float burnedRadius,
+float dipoleMoment[3], float dipoleCenter[3], bool usingVectorPotential)
 {
-	if(ProcessorNumber != MyProcessorNumber)
+
+	if(ProcessorNumber != MyProcessorNumber || p == NULL)
 		return SUCCESS;
 
 	int hasGasEField = DualEnergyFormalism && (HydroMethod != Zeus_Hydro); //[BH]
 
-	int totENum, rhoNum, vxNum, vyNum, vzNum;
-	int gasENum = -1, BxNum = -1, ByNum = -1, BzNum = -1, rhoNiNum = -1;
+//	int radiusSO = p->colSortingOrders[profileFindColIndex(radiusColumnName, p)];
+//	float* radiusData = profileFindCol(radiusColumnName, p);
+//	float* densityData = profileFindCol(densityColumnName, p);
+//	float* gasEData = profileFindCol(InternalEnergyColumnName, p);
+
+	double rho, rho_c;
+	int retcode; // = profileInterpolate(&rho, densityData, r, radiusData, p->nRows, 1); //g/cm**3
+
+//	int totENum, rhoNum, vxNum, vyNum, vzNum;
+//	int gasENum = -1, BxNum = -1, ByNum = -1, BzNum = -1, rhoNiNum = -1;
 	float *totEField, *rhoField, *vxField, *vyField, *vzField;
 	float *gasEField = NULL, *rhoNiField = NULL;
 	float *BxField = NULL, *ByField = NULL, *BzField = NULL;
-
-	if(IdentifyPhysicalQuantities(rhoNum, gasENum, vxNum, vyNum, vzNum, totENum, BxNum, ByNum, BzNum) == FAIL)
-		ENZO_FAIL("MHDProfiileInitializeGrid: Error in IdentifyPhysicalQuantities for UseMHD==true.");
-
-	rhoField = BaryonField[rhoNum];
-	vxField = BaryonField[vxNum];
-	vyField = BaryonField[vyNum];
-	vzField = BaryonField[vzNum];
-	if(hasGasEField)
-		gasEField = BaryonField[gasENum];
-	if(UseMHD)
-	{
-		BxField = BaryonField[BxNum];
-		ByField = BaryonField[ByNum];
-		BzField = BaryonField[BzNum];
-	}
+	MHD_SNIA_GetFields(&rhoField, &totEField, &gasEField, &vxField, &vyField, &vzField, NULL, &BxField, &ByField,
+						&BzField, NULL, &rhoNiField, NULL, NULL);
 
 	float gammaMinusOne = Gamma - 1;
 	size_t gridSize = GetGridSize();
-	totEField = BaryonField[totENum];
 	const float* totEField_end = totEField + gridSize;
 
 	float* RHO = rhoField;
@@ -1108,23 +469,221 @@ int grid::MHDProfileInitializeGrid2(char* profileFileName, char* profileFormat, 
 	float* BY = ByField;
 	float* BZ = BzField;
 
-	// If using gas energy field, the gas energy had been calculated
-	// already, otherwise we need to calculate it here.
-	if(hasGasEField)
+	if(InitRadialPressureFromCentral)
 	{
-		arr_cpy(totEField, gasEField, gridSize);
+		// Calculate the pressure for hydrostatic equilibrium with the exisiting gravity.
+//		float P_c = 0;
+//		float rho_c = 0;
+//		FLOAT xyz[MAX_DIMENSION];
+//		arr_cpy(xyz, SphericalGravityCenter, MAX_DIMENSION);
+//
+//		if(InitRadialPressureFromCentral > 0)
+//		{
+//			P_c = InitRadialPressureFromCentral;
+//			if(MyProcessorNumber == ROOT_PROCESSOR)
+//				printf("P_c = %e (parameter)", P_c);
+//		}
+//		else
+//		{
+////			size_t i_c = getCellIndex(xyz);
+////			float rho_c = rhoField[i_c];
+//			FLOAT rho_c;
+//			retcode = p->interpolateDensity(&rho_c, 0); //g/cm**3
+//			P_c = EOSPolytropicFactor * POW(rho_c, Gamma);
+//			if(MyProcessorNumber == ROOT_PROCESSOR)
+//				printf("P_c = %e (polytropic, = K*rho**gamma, K=%e, rho=%e, gamma=%5.3f)", P_c, EOSPolytropicFactor,
+//						rho_c, gamma);
+//		}
+//
+		FLOAT* P_r = new float[SphericalGravityActualNumberOfBins];
+		FLOAT* U_r = new float[SphericalGravityActualNumberOfBins];
+		FLOAT* rr = NULL;
+		FLOAT* dd = NULL;
+		FLOAT* gg = NULL;
+//		if(ProcessorNumber == ROOT_PROCESSOR && ID == 0 && CellWidth[0][0] == TopGridDx[0])
+//		{
+//			rr = new FLOAT[SphericalGravityActualNumberOfBins];
+//			gg = new FLOAT[SphericalGravityActualNumberOfBins];
+//			dd = new FLOAT[SphericalGravityActualNumberOfBins];
+//		}
+//
+		FLOAT P2, P1, P, r2, r1, r, U2, U1, U; // r2 < r1 < r
+		FLOAT b, a, bb, aa, g, rho, g_rho; // b:=r-r2 > a:=r-r1
+//
+//		r2 = 0; // Start from the center.
+//		P_r[0] = P2 = 0; // Offfset the pressure later.
+//
+//		//xyz[0] = r2 + SphericalGravityCenter[0];
+//		//size_t index = getCellIndex(xyz);
+//		retcode = p->interpolateDensity(&rho, r2); //g/cm**3
+//		g_rho = g = SphericalGravityGetAt(r2);
+////		TRACEF("r[0], P[0], g[0]rho[0], g[0], rho[0] = %e, %e, %e = %e * %e", r2, P2, g_rho, g, rho);
+//		if(rr)
+//		{
+//			rr[0] = r2;
+//			gg[0] = g;
+//			dd[0] = rho;
+//		}
+//
+//		r1 = SphericalGravityBinLeftEdges[1];
+////		xyz[0] = r1 + SphericalGravityCenter[0];
+////		index = getCellIndex(xyz);
+////		rho1 = rhoField[index];
+//		retcode = p->interpolateDensity(&rho, r1); //g/cm**3
+//		g = SphericalGravityGetAt(r1);
+//		g_rho = g * rho;
+//		if(rr)
+//		{
+//			rr[1] = r1;
+//			gg[1] = g;
+//			dd[1] = rho;
+//		}
+//
+//		a = r1 - r;
+//		P1 = P2 - 0.5 * a * g * g_rho;
+//		P1 -= 2. / 3. * M_PI * SphericalGravityConstant * a * a * rho * rho;
+//
+//		P_r[1] = P1;
+////		TRACEF("r[1], P[1], dP[1], g, rho = %e, %e, %e = %e * %e", r1, P1, P1 - P2, g, rho);
+//
+//		for(size_t i = 2; i < SphericalGravityActualNumberOfBins; i++)
+//		{
+//			r = SphericalGravityBinLeftEdges[i];
+//			b = r - r2;
+//			a = r - r1;
+//			bb = square(b);
+//			aa = square(a);
+//
+////			xyz[0] = r0 + SphericalGravityCenter[0];
+////			index = getCellIndex(xyz);
+////			rho = rhoField[index];
+//			retcode = p->interpolateDensity(&rho, r); //g/cm**3
+//			g = -SphericalGravityGetAt(r);
+//			g_rho = g * rho;
+//			P = (bb * (P1 + a * g_rho) - aa * (P2 + b * g_rho)) / (bb - aa);
+////			TRACEF("%lld: P2 P1 P = %e %e %e ; r2 r1 r = %e %e %e ; g rho = %e %e", i, P2, P1, P, r2, r1, r, g, rho);
+//
+//			if(rr)
+//			{
+//				rr[i] = r;
+//				gg[i] = g;
+//				dd[i] = rho;
+//			}
+//
+//			P_r[i] = P;
+//			r2 = r1;
+//			r1 = r;
+//			P2 = P1;
+//			P1 = P;
+//		}
+//
+//		// P and rho have the outermost values from the P integration loop.
+//		// Caclculate correction as if intergrating from the surface inwards.
+//		const double K53 = 3.161128e+12;
+//		const double K43 = 4.881986e+14;
+//		double K = 3.828648955e+14;
+//		P1 = K * POW(rho, Gamma);
+//		P = P1 - P2; // add to P_r to get the right boundary conditions.
+//		P = K * POW(2e9, Gamma);
+////		TRACEF("Pressure shift: %e = %e - %e", P2, P1, P);
+//		// Shift pressure and replace it with the gas energy.
+//		for(size_t i = 0; i < SphericalGravityActualNumberOfBins; i++)
+//		{
+//			a = P_r[i] + P;
+//			r = SphericalGravityBinLeftEdges[i];
+//			retcode = p->interpolateDensity(&rho, r); //g/cm**3
+//			b = a / rho / gammaMinusOne;
+//			P_r[i] = a;
+//			U_r[i] = b;
+//		}
+//
+//		if(rr)
+//		{
+//			WriteInitialProfile("initialProfile", rr, dd, gg, P_r, U_r, SphericalGravityActualNumberOfBins, K,
+//								(double)Gamma);
+//		}
+		for(int k = 0; k < GridDimension[2]; k++)
+		{
+			FLOAT z = CELLCENTER(2, k);
+			FLOAT zz = square(z - SphericalGravityCenter[2]);
+			for(int j = 0; j < GridDimension[1]; j++)
+			{
+				FLOAT y = CELLCENTER(1, j);
+				FLOAT yy_zz = square(y - SphericalGravityCenter[1]) + zz;
+				for(int i = 0; i <= GridDimension[0]; i++)
+				{
+					FLOAT x = CELLCENTER(0, i);
+					FLOAT r = sqrt(square(x - SphericalGravityCenter[0]) + yy_zz);
+					int index = ELT(i, j, k);
+
+					float rho = rhoField[index];
+					int retval;
+					if(p->internalEnergyData)
+					{
+						retval = p->interpolateInternalEnergy(&U, r);
+					}
+					else
+					{
+						U = 0;
+//						size_t rbin = SphericalGravityComputeBinIndex(r);
+//						r1 = SphericalGravityBinLeftEdges[rbin];
+//						r2 = SphericalGravityBinLeftEdges[rbin + 1];
+//						// P_r[] has the specific gas energy now.
+//						U1 = U_r[rbin];
+//						U2 = U_r[rbin + 1];
+//						U = ((r2 - r) * U1 + (r - r1) * U2) / (r2 - r1);
+					}
+					float gasE = U; // / rho / gammaMinusOne;
+					if((1 + debug) && MyProcessorNumber == ROOT_PROCESSOR)
+						if(j == (GridDimension[1] / 2) && k == (GridDimension[2] / 2) && i >= GridDimension[0] / 2)
+							TRACEGF("i,j,k=%04d,%04d,%04d, x,y,z=(%4f,%4f,%4f), r[km]=%4f, rho=%e, U=%e", i, j, k,
+									x * 1e-5, y * 1e-5, z * 1e-5, r * 1e-5, rho, gasE);
+
+					totEField[index] = U; // add kinetic and magnetic energy below
+				}
+			}
+		}
+//
+//		if(debug)
+//		{
+//			for(size_t i = 0; i < SphericalGravityActualNumberOfBins; i++)
+//			{
+//				r = SphericalGravityBinLeftEdges[i];
+//				retcode = p->interpolateDensity(&rho, r); //g/cm**3
+//				P = P_r[i];
+//				U = U_r[i];
+//				TRACEGF0("Intergrated ressure: %lld: r=%e P=%e U=%e rho=%e gamma-1=%f", i, r, P, U, rho, gammaMinusOne);
+//			}
+//		}
+//
+//		delete P_r;
+//		delete U_r;
+//		delete rr;
+//		delete gg;
+//		delete dd;
 	}
 	else
 	{
-		for(float* TE = totEField; TE < totEField_end; TE++)
-			*TE = EOSPolytropicFactor * POW(*RHO++, gammaMinusOne) / gammaMinusOne;
+		// If using gas energy field, the gas energy had been calculated
+		// already, otherwise we need to calculate it here.
+		if(hasGasEField)
+		{
+			arr_cpy(totEField, gasEField, gridSize);
+		}
+		else
+		{
+			for(float* TE = totEField; TE < totEField_end; TE++)
+				*TE = EOSPolytropicFactor * POW(*RHO++, gammaMinusOne) / gammaMinusOne;
+		}
 	}
 
+//Add kinetic energy
 	for(float* TE = totEField; TE < totEField_end; TE++)
 	{
 		*TE += 0.5 * (square(*VX++) + square(*VY++) + square(*VZ++));
 	}
 
+//Add magnetic energy
 	if(BX)
 	{
 		RHO = rhoField;
@@ -1154,7 +713,7 @@ int grid::MHDProfileInitializeGrid2(char* profileFileName, char* profileFormat, 
 //             BaryonField[ByNum][index]*BaryonField[ByNum][index] +
 //             BaryonField[BzNum][index]*BaryonField[BzNum][index])/BaryonField[ rhoNum ][index];
 
-	if(HydroMethod == MHD_RK && usingVectorPotential)
+	if(HydroMethod == MHD_RK || usingVectorPotential)
 	{
 		UseMHDCT = FALSE;
 		for(int dim = 0; dim < 3; dim++)
@@ -1168,5 +727,244 @@ int grid::MHDProfileInitializeGrid2(char* profileFileName, char* profileFormat, 
 
 	printf("Initialized grid, phase 2 (total energy.)\n");
 	return SUCCESS;
+}
 
+int grid::WriteRadialProfile(char* name)
+{
+	if(MyProcessorNumber != ProcessorNumber)
+		return FAIL;
+
+	size_t num, ijk[3];
+	FLOAT x, y, z, r;
+	float rho, E, U, vx, vy, vz;
+	float Bx = 0, By = 0, Bz = 0, rho_Ni = 0, g = 0, gamma = 0, P = 0;
+	char filename[FILENAME_MAX];
+	FLOAT xyz1[MAX_DIMENSION], xyz2[MAX_DIMENSION];
+	FLOAT dx = CellWidth[0][0];
+	size_t i1 = 0, i2 = 0;
+
+	const int SAMPLE_OX = 0;
+	const int SAMPLE_DIAG = 1;
+	int sampleWhere = SAMPLE_DIAG;
+	switch(sampleWhere)
+	{
+	case SAMPLE_OX:
+		// Sample a row of cells along x,
+		// (0,0,0)..(DomainRightEdge[0], 0, 0)
+		arr_set(xyz1, MAX_DIMENSION, dx * 1e-6);
+		arr_set(xyz2, MAX_DIMENSION, dx * 1e-6);
+		xyz2[0] = DomainRightEdge[0] - dx * 1e-6;
+		break;
+	case SAMPLE_DIAG:
+	default:
+		// Sample cells from the center along the diagonal,
+		// (0,0,0)..(DomainRightEdge[0], DomainRightEdge[1], DomainRightEdge[2]):
+		arr_set(xyz1, MAX_DIMENSION, dx * 1e-6);
+		arr_set(xyz2, MAX_DIMENSION, -dx * 1e-6);
+		arr_xpy(xyz2, DomainRightEdge, MAX_DIMENSION);
+	}
+
+//Check if the segment xyz1..xyz2 is inside the grid.
+	for(int dim = 0; dim < GridRank; dim++)
+	{
+		if(xyz1[dim] < GridLeftEdge[dim] || (GridRightEdge[dim] < xyz2[dim]))
+			return FAIL;
+	}
+
+	switch(sampleWhere)
+	{
+	case SAMPLE_OX:
+	case SAMPLE_DIAG:
+	default:
+		get_ijk_index(ijk, xyz1);
+		i1 = ijk[0];
+		get_ijk_index(ijk, xyz2);
+		i2 = ijk[0];
+	}
+
+	int hasGasEField = DualEnergyFormalism && (HydroMethod != Zeus_Hydro); //[BH]
+
+	int totENum, rhoNum, vxNum, vyNum, vzNum;
+	int gasENum = -1, BxNum = -1, ByNum = -1, BzNum = -1, rhoNiNum = -1;
+	float *totEField, *rhoField, *vxField, *vyField, *vzField;
+	float *gasEField = NULL, *rhoNiField = NULL;
+	float *BxField = NULL, *ByField = NULL, *BzField = NULL;
+
+	if(IdentifyPhysicalQuantities(rhoNum, gasENum, vxNum, vyNum, vzNum, totENum, BxNum, ByNum, BzNum) == FAIL)
+	{
+		ENZO_FAIL("grid::WriteRadialProfile: Error in IdentifyPhysicalQuantities for UseMHD==true.");
+	}
+
+	if(UseMHD)
+	{
+		BxField = BaryonField[BxNum];
+		ByField = BaryonField[ByNum];
+		BzField = BaryonField[BzNum];
+	}
+
+	if(UseBurning)
+	{
+		int rhoNiNum = FindField(Density_56Ni, FieldType, NumberOfBaryonFields);
+		if(rhoNiNum < 0)
+			ENZO_FAIL("MHDProfiileInitializeGrid: Error in FindField for Density_56Ni.")
+		rhoNiField = BaryonField[rhoNiNum];
+	}
+
+	rhoField = BaryonField[rhoNum];
+	vxField = BaryonField[vxNum];
+	vyField = BaryonField[vyNum];
+	vzField = BaryonField[vzNum];
+	totEField = BaryonField[totENum];
+	if(hasGasEField)
+		gasEField = BaryonField[gasENum];
+
+	for(int format = 0; format < 2; format++)
+	{
+		switch(format)
+		{
+		case 0:
+			sprintf(filename, "%s.radialProfile", name);
+
+			break;
+		case 1:
+			sprintf(filename, "%s.radialProfile.py", name);
+			break;
+		}
+
+		FILE* file = fopen(filename, "w");
+		if(file == NULL)
+		{
+			ENZO_VFAIL("WriteRadialProfile: Error creating file '%s'\n", filename);
+		}
+
+		switch(format)
+		{
+		case 0:
+			fprintf(file, "%f seconds\n", Time);
+			break;
+		case 1:
+			break;
+		}
+
+		switch(format)
+		{
+		case 0:
+			fprintf(file, "# rownum   x y z   rho rho_Ni   E U   vx vy vz   Bx By Bz   g   gamma P\n");
+			break;
+		case 1:
+			fprintf(file, "type('', (), dict(\n");
+			fprintf(file, "time = %f,\n", Time);
+			fprintf(file, "cols = 'rownum x y z rho rho_Ni E U vx vy vz Bx By Bz g gamma P'.split(),\n");
+//			fprintf(file, "radialProfile.dtype = np.dtype([\n"
+//				"  ('rownum',  int),\n"
+//				"  ('x'    , float),\n"
+//				"  ('y'    , float),\n"
+//				"  ('z'    , float),\n"
+//				"  ('rho'  , float),\n"
+//				"  ('rhoNi', float),\n"
+//				"  ('Ni'   , float),\n"
+//				"  ('E'    , float),\n"
+//				"  ('U'    , float),\n"
+//				"  ('vx'   , float),\n"
+//				"  ('vy'   , float),\n"
+//				"  ('vz'   , float),\n"
+//				"  ('Bx'   , float),\n"
+//				"  ('By'   , float),\n"
+//				"  ('Bz'   , float),\n"
+//				"  ('g'    , float),\n"
+//				"  ('gamma', float),\n"
+//				"  ('P'    , float),\n"
+//				"])\n");
+			fprintf(file, "data = np.array([\n");
+			break;
+		}
+
+		arr_set(ijk, MAX_DIMENSION, 0);
+		for(size_t i = i1; i <= i2; i++)
+		{
+			num = i - i1 + 1;
+
+			switch(sampleWhere)
+			{
+			case SAMPLE_OX:
+				ijk[0] = i;
+				break;
+			case SAMPLE_DIAG:
+			default:
+				arr_set(ijk, GridRank, i);
+			}
+
+			size_t index = getCellIndex(ijk);
+
+			get_xyz(xyz1, ijk);
+			x = xyz1[0];
+			y = xyz1[1];
+			z = xyz1[2];
+			r = distancel(xyz1, SphericalGravityCenter, GridRank);
+			E = totEField[index];
+			rho = rhoField[index];
+			vx = vxField[index];
+			vy = vyField[index];
+			vz = vzField[index];
+			gamma = Gamma;
+
+			if(BxField)
+			{
+				Bx = BxField[index];
+				By = ByField[index];
+				Bz = BzField[index];
+			}
+
+			if(gasEField)
+				U = gasEField[index];
+			else
+			{
+				U = square(Bx) + square(By) + square(Bz);
+				U /= rho;
+				U += square(vx) + square(vy) + square(vz);
+				U *= -0.5;
+				U += E;
+			}
+			P = (gamma - 1) * U * rho;
+
+			if(UseBurning)
+				rho_Ni = rhoNiField[index];
+
+			if(UseSphericalGravity)
+			{
+				g = SphericalGravityGetAt(r);
+			}
+
+//		fprintf(file, "num   x   y   z   rho   E   U   vx   vy   vz   Bx   By   Bz   g   gamma P\n");
+			switch(format)
+			{
+			case 0:
+				fprintf(file, "%lld   %e %e %e   %e %e   %e %e   %e %e %e   %e %e %e   %e   %f %e\n", /**/
+						num, x, y, z, rho, rho_Ni, E, U, vx, vy, vz, Bx, By, Bz, g, gamma, P);
+				break;
+			case 1:
+				fprintf(file, "[ %lld ,   %e , %e , %e ,   %e , %e ,   %e , %e ,   %e , %e , %e ,   %e , %e , %e"
+						" ,   %e ,   %f , %e ],\n",
+						num, x, y, z, rho, rho_Ni, E, U, vx, vy, vz, Bx, By, Bz, g, gamma, P);
+				break;
+			}
+		}
+
+		switch(format)
+		{
+		case 0:
+			break;
+		case 1:
+			fprintf(file, "])))\n");
+			break;
+		} // end for data
+
+		if(file != stderr && file != stdout)
+		{
+			fclose(file);
+			fprintf(stderr, "'%s' written.\n", filename);
+		}
+	} // end for format
+
+	return SUCCESS;
 }

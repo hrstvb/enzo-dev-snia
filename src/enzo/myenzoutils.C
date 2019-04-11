@@ -36,8 +36,25 @@ int mpiWait(MPI_Request* request)
 }
 
 /*
- * Similar to snprintf, but intended for successive printing, safely
- * appending to the same buffer. If called only once, acts as snprintf.
+ * Similar to snprintf, but intended for successive appendd to
+ * the same buffer.  The first call should be with length=0;
+ *   const size_t N = 4;
+ *   char s[N];
+ *   int n, len = 0;
+ *   n = snlprintf(s, N, &len, "abc");
+ *   // n <- 3, len <- 3
+ *
+ * Subsequent call attempt to write at position s+length
+ * and increase length with the number of number of characters
+ * that were attempted to be written not including the
+ * terminating null character.  The increment is returned
+ * as the function result.  A negative value indicates an error.
+ *
+ *   n = snlprintf(s, N, &len, "def");
+ *   // n <- 3, len <-6
+ *   n = snlprintf(s, N, &len, "ghih");
+ *   // n <- 3, len <-10
+ *
  */
 int snlprintf(char* const s, const size_t size, size_t* const length, const char* const format, ...)
 {

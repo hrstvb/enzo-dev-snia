@@ -1130,8 +1130,13 @@ EXTERN float InternalEnergy_A;                     //[BH]
 EXTERN float InternalEnergy_B;                     //[BH]
 EXTERN float BurningEnergyRelativeGrowthLimit;     //[BH]
 EXTERN float InternalEnergyRelativeGrowthLimit;    //[BH]
-EXTERN float TotalEnergyRelativeGrowthLimit;		   //[BH]
-EXTERN float BurnedFractionGrowthLimit;		   //[BH]
+EXTERN float TotalEnergyRelativeGrowthLimit;	   //[BH]
+EXTERN float BurnedFractionGrowthLimit;		   		//[BH]
+EXTERN float InitialBurnedRadius; 					//[BH]
+EXTERN int InitialBurnedRegionMaintain;				//[BH]
+EXTERN float InitRadialPressureFromCentral;			//[BH]
+EXTERN int InitBWithVectorPotential;				//[BH]
+EXTERN int RefineOnStartup;                         //[BH]
 
 /* For the galaxy simulation boundary method */
 EXTERN int GalaxySimulationRPSWind;
@@ -1198,7 +1203,7 @@ EXTERN int SphericalGravityWritePotentialSwitch;
 
 EXTERN float* SphericalGravityBinAccels;
 EXTERN float* SphericalGravityBinAccelSlopes;
-EXTERN int SphericalGravityInterpAccelOrder; // const, linear interp., etc.
+EXTERN int SphericalGravityInterpAccelMethod; // const, linear interp., etc.
 
 /*
  * Spherical gravity, multilevel

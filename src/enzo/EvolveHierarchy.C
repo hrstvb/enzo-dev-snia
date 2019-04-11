@@ -37,6 +37,8 @@
 
 #include <stdio.h>
 
+#include "myenzoutils.h"
+#include "DebugMacros.h"
 #include "EnzoTiming.h"
 #include "performance.h"
 #include "ErrorExceptions.h"
@@ -59,9 +61,6 @@
 #include "LimitTimeStep.h"
 
 // function prototypes
-int MHDProfileInitialize(FILE *fptr, FILE *Outfptr, HierarchyEntry &TopGrid, TopGridData &MetaData,
-	ExternalBoundary &Exterior);
-
 int RebuildHierarchy(TopGridData *MetaData,
 		     LevelHierarchyEntry *LevelArray[], int level);
 
@@ -324,18 +323,8 @@ int EvolveHierarchy(HierarchyEntry &TopGrid, TopGridData &MetaData,
 
 
   /* ====== MAIN LOOP ===== */
-//  int cyclesBeforeReinit = 1;
   bool FirstLoop = true;
   while (!Stop) {
-
-//	  if(ProblemType == 501 && 0<cyclesBeforeReinit && cyclesBeforeReinit < MetaData.CycleNumber)
-//	  {
-//		  fprintf(stderr, "REININITIALIZING grids at cycle %lld, t = %f\n", MetaData.CycleNumber, MetaData.Time);
-////		  FirstLoop = true;
-//		  cyclesBeforeReinit = -1;
-//		  ExternalBoundary dummy;
-//		  MHDProfileInitialize(NULL, NULL, TopGrid, MetaData, dummy);
-//	  }
 
   TIMER_START("Total");
 
@@ -477,29 +466,63 @@ int EvolveHierarchy(HierarchyEntry &TopGrid, TopGridData &MetaData,
 //			fprintf(stderr, "    z = %"GOUTSYM, (1 + InitialRedshift) / a - 1);
 //		}
 //		fprintf(stderr, "\n");
-		char sbuf[1024];
-		char* s = sbuf;
-		s += sprintf(s, "TopGrid dt = %"ESYM"     time = %" GOUTSYM"    cycle = %"ISYM, dt, MetaData.Time,
-				MetaData.CycleNumber);
-
-		if(ComovingCoordinates)
+		const size_t SIZE = 1024;
+		char S[SIZE];
+		char* s = S;
+		size_t size = SIZE;
+		size_t len = 0;
+		int n = 0;
+		for(int pass = 0; pass < 2; pass++)
 		{
-			FLOAT a, dadt, z;
-			CosmologyComputeExpansionFactor(MetaData.Time, &a, &dadt);
+			s[0] = '\0';
+			len = 0;
+
+			n = snlprintf(s, size, &len, "TopGrid dt = %"ESYM"     time = %" GOUTSYM"    cycle = %"ISYM, dt,
+							MetaData.Time, MetaData.CycleNumber);
+			if(n < 0)
+				break;
+			if(ComovingCoordinates)
+			{
+				FLOAT a, dadt, z;
+				CosmologyComputeExpansionFactor(MetaData.Time, &a, &dadt);
 				if(a)
 				{
 					z = (1 + InitialRedshift) / a - 1;
-					s += sprintf(s, "    z = %" GOUTSYM " a = %" GOUTSYM, z, a);
+					n = snlprintf(s, size, &len, "    z = %" GOUTSYM " a = %" GOUTSYM, z, a);
+					if(n < 0)
+						break;
 				}
 				else
 				{
-					s += sprintf(s, "    z = inf a = 0");
+					n = snlprintf(s, size, &len, "    z = inf a = 0");
+					if(n < 0)
+						break;
 				}
+			}
+			n = snlprintf(s, size, &len, "    info: ");
+			if(n < 0)
+				break;
+			n = snlprintTimeStepLimitInfo(s, size, &len, &dtLimitInfo);
+			if(n < 0)
+				break;
+			n = snlprintf(s, size, &len, "\n");
+			if(n < 0)
+				break;
+
+			if(len < SIZE)
+				break;
+
+			s = new char[size = len + 1];
 		}
-		s += sprintf(s, "    info: ");
-		s += sprintInfo(s, &dtLimitInfo);
-		s += sprintf(s, "\n");
-		fprintf(stderr, sbuf);
+
+		if(n <= 0)
+			fprintf(stderr, "Error(#%lld) printing time step limit info: %lld\n", MyProcessorNumber, n);
+		else
+		{
+			fprintf(stderr, s);
+			if(s != S)
+				delete s;
+		}
 	}
 //}
 
