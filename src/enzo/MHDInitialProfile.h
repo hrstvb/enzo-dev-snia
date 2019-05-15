@@ -27,15 +27,21 @@ struct MHDInitialProfile
 	long long nCols, nRows, nColsToKeep, nRowsAllocated, nRowsAllocateFirst, nRowsAllocateInc;
 	char **colNames, **colNamesToKeep;
 	long long *colSortingOrders, *colNumsToKeep;
-	double time;
+	double requestedTime, frameTimeFound;
 	double **colData;
 	char* radiusColumnName;
+	char* radialVelocityColumnName;
 	char* densityColumnName;
 	char* internalEnergyColumnName;
 	double* radiusData;
+	double* radialVelocityData;
 	double* densityData;
 	double* internalEnergyData;
+	double* internalEnergyRadiusData;
+	long long nRowsInternalEnergy;
+	double* pressureData;
 	long long radiusIndex;
+	long long radialVelocityIndex;
 	long long densityIndex;
 	long long internalEnergyIndex;
 	long long radiusSortingOrder;
@@ -95,7 +101,7 @@ struct MHDInitialProfile
 	 * Returns a non-zero error code if findGTEIndex fails,
 	 * otherwise returns 0.
 	 */
-	long long interpolate(double* y, double yData[], double x, double xData[],
+	long long interpolate(double* y, double yData[], double x, double xData[], long long nData,
 		long long xSortingOrder);
 	/**
 	 * Returns the type of the line being processed.
@@ -113,6 +119,8 @@ struct MHDInitialProfile
 	 */
 	void free();
 
+	void addColToKeep(char* colName, char** thisColName);
+
 	/**
 	 * Profile::init()
 	 *
@@ -120,7 +128,8 @@ struct MHDInitialProfile
 	 * nor columns. Used by constructors and destructor.
 	 */
 	void init();
-	void init(char* radiusColumnName, char* densityColumnName, char* InternalEnergyColumnName);
+	void init(char* radiusColumnName, char* densityColumnName, char* InternalEnergyColumnName,
+		char* RadialVelocityColumnName);
 	/**
 	 * Allocates new colDolata, colNames and colSortingOrders
 	 * initialized with NULLs.
@@ -157,6 +166,7 @@ struct MHDInitialProfile
 	long long interpolate(double* y, char* yname, double x, char* xname);
 	long long interpolateDensity(double* y, double x);
 	long long interpolateInternalEnergy(double* y, double x);
+	long long interpolateRadialVelocity(double* y, double x);
 
 	/**
 	 * Turns column names in colNames into NULL,

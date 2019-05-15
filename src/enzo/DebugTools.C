@@ -75,11 +75,42 @@ int snlprintHierarchy(char* s, size_t size, size_t* length, LevelHierarchyEntry*
 				return n;
 		}
 
+		n = snlprintf(s, size, length, "[%lldx%lldx%lld=%lld]",
+						g->GetGridDimension(0), g->GetGridDimension(1), g->GetGridDimension(2), g->GetGridSize());
+		if(n < 0)
+			return n;
+
+//		n = snlprintf(s, size, length, "(%e,%e,%e)..(%e,%e,%e)",
+//						g->GetGridLeftEdge(0), g->GetGridLeftEdge(1), g->GetGridLeftEdge(2), g->GetGridRightEdge(0),
+//						g->GetGridRightEdge(1), g->GetGridRightEdge(2));
+//		if(n < 0)
+//			return n;
+
 		if(pg)
 		{
 			n = snlprintf(s, size, length, "   x%lld    parent %" ISYM "(%p)", dx2pdx[0], pg->GetGridID(), pg);
 			if(n < 0)
 				return n;
+
+			n = snlprintf(s, size, length, "[%lldx%lldx%lld=%lld]",
+							g->GetGridDimension(0), g->GetGridDimension(1), g->GetGridDimension(2), g->GetGridSize());
+			if(n < 0)
+				return n;
+
+//			n = snlprintf(s, size, length, "(%e, %e, %e)..(%e, %e, %e)", pg->GetGridLeftEdge(0), pg->GetGridLeftEdge(1),
+//						  pg->GetGridLeftEdge(2), pg->GetGridRightEdge(0), pg->GetGridRightEdge(1),
+//						  g->GetGridRightEdge(2));
+//			if(n < 0)
+//				return n;
+
+			int dim;
+			for(dim = 0; dim < pg->GetGridRank(); dim++)
+			{
+				if(pg->GetGridLeftEdge(dim) > g->GetGridRightEdge(dim))
+					break;
+				if(pg->GetGridRightEdge(dim) < g->GetGridLeftEdge(dim))
+					break;
+			}
 		}
 
 		n = snlprintf(s, size, length, "\n");

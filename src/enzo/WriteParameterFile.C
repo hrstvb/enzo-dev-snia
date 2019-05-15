@@ -172,7 +172,7 @@ int WriteParameterFile(FILE *fptr, TopGridData &MetaData, char *name = NULL)
   fprintf(fptr, "SphericalGravityCenter = %"PSYM" %"PSYM" %"PSYM"\n", SphericalGravityCenter[0],
 		  SphericalGravityCenter[1], SphericalGravityCenter[2]);
   fprintf(fptr, "SphericalGravityCentralMass = %"FSYM"\n", SphericalGravityCentralMass);
-  fprintf(fptr, "SphericalGravityConstnat = %"FSYM"\n", SphericalGravityConstant);
+  fprintf(fptr, "SphericalGravityConstant = %"FSYM"\n", SphericalGravityConstant);
   fprintf(fptr, "SphericalGravityInnerRadius = %"FSYM"\n", SphericalGravityInnerRadius);
   fprintf(fptr, "SpericalGravityMaxHierarchyLevel = %"ISYM"\n", SphericalGravityMaxHierarchyLevel);
   fprintf(fptr, "SphericalGravityNumberOfBins = %"ISYM"\n", SphericalGravityNumberOfBins);
@@ -1242,7 +1242,7 @@ int WriteParameterFile(FILE *fptr, TopGridData &MetaData, char *name = NULL)
   fprintf(fptr, "TotalEnergyRelativeGrowthLimit        = %"FSYM"\n", TotalEnergyRelativeGrowthLimit       ); //[BH]
   fprintf(fptr, "BurnedFractionGrowthLimit             = %"FSYM"\n", BurnedFractionGrowthLimit		      ); //[BH]
   fprintf(fptr, "InitialBurnedRadius                   = %"FSYM"\n", InitialBurnedRadius		          ); //[BH]
-  fprintf(fptr, "InitialBurnedRegionMaintain           = %"ISYM"\n", InitialBurnedRegionMaintain		  ); //[BH]
+  fprintf(fptr, "InitialBurnedRegionSustain            = %"ISYM"\n", InitialBurnedRegionSustain		  ); //[BH]
   fprintf(fptr, "InitRadialPressureFromCentral         = %"FSYM"\n", InitRadialPressureFromCentral        ); //[BH]
   fprintf(fptr, "InitBWithVectorPotential              = %"ISYM"\n", InitBWithVectorPotential             ); //[BH]
   fprintf(fptr, "RefineOnStartup                       = %"ISYM"\n", RefineOnStartup                      ); //[BH]

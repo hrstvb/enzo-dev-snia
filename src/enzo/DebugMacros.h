@@ -37,6 +37,13 @@
  *		prints with the current file/line and MPI task number.
  *		TRACEF can print additional text or data.
  */
+
+#ifndef ROOT_PROCESSOR
+#define ROOT_PROCESSOR 0
+#endif
+
+extern long long MyProcessorNumber;
+
 #define TRACE fprintf(stderr, "TRACE:(#%lld)" FLN2STR "\n", MyProcessorNumber);
 #define TRACEF(format, ...) fprintf(stderr, "TRACE:(#%lld)" FLN2STR ":" format "\n", MyProcessorNumber, ##__VA_ARGS__);
 

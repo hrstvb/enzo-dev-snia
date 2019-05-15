@@ -1298,7 +1298,12 @@ public:
    size_t get_ijk_index(size_t ijk[], FLOAT xyz[])
    {
       for(int dim = 0; dim < GridRank; dim++)
-         ijk[dim] = findmaxlte(CellLeftEdge[dim], GridDimension[dim] + 1, xyz[dim]);
+      {
+    	 const size_t N = GridDimension[dim];
+         ijk[dim] = findmaxlte(CellLeftEdge[dim], N + 1, xyz[dim]);
+         if(ijk[dim] == N && CellLeftEdge[dim][N] == xyz[dim])
+        	 ijk[dim]--;
+      }
       for(int dim = GridRank; dim<MAX_DIMENSION; dim++)
          ijk[dim] = sign(xyz[dim]);
 
@@ -1331,8 +1336,10 @@ public:
 	  size_t ijk_temp[MAX_DIMENSION];
       return get_ijk_index(ijk_temp, xyz);
    }
+   bool intersectDomain(FLOAT ledge[], FLOAT redge[]);
+   void getDomainEdges(FLOAT ledge[], FLOAT redge[]);
 
-   	   void getParticlePosition(FLOAT xyz[], size_t index)
+   void getParticlePosition(FLOAT xyz[], size_t index)
    {
 		for(int dim = 0; dim < GridRank; dim++)
 			xyz[dim] = ParticlePosition[dim][index];
@@ -3201,7 +3208,7 @@ int zEulerSweep(int j, int NumberOfSubgrids, fluxes *SubgridFluxes[],
 			float burnedRadius,
 			float dipoleMoment[3], float dipoleCenter[3], bool usingVectorPotential
 	);
-  int MHDMaintaindInitialBurnedRegionGrid();
+  int MHDSustainInitialBurnedRegionGrid();
   int WriteRadialProfile(char* filename);
 
   int MHDOrszagTangInitGrid(float Density,float Pressure, float V0, float B0 );

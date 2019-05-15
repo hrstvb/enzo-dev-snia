@@ -44,22 +44,10 @@ struct LevelArrayIterator
 	grid* prev(grid** parent);
 };
 
-//struct TopLevelIterator
-//{
-//	HierarchyEntry* topGrid;
-//	HierarchyEntry* currentHEntry;
-//
-//	TopLevelIterator(LevelHierarchyEntry** levelArray);
-//	TopLevelIterator(HierarchyEntry* topGrid);
-//	grid* first();
-//	grid* next();
-//};
-//
 struct HierarchyIterator
 {
 	const HierarchyEntry* const topGrid;
-	const HierarchyEntry* currentHEntry;
-	int currentLevel;
+	const HierarchyEntry* currentHEntry;int currentLevel;
 	bool backing = false;
 	bool parentsAfterChildren = true;
 	bool parentsBeforeChildren = true;
@@ -71,21 +59,34 @@ struct HierarchyIterator
 	grid* firstAtFinest();
 	grid* next();
 	grid* getCurrentParent();
-	grid* setCurrent(const HierarchyEntry* const newCurrentEntry, const int newCurrentLevel,
-		grid** const parent);
+	grid* setCurrent(const HierarchyEntry* const newCurrentEntry, const int newCurrentLevel, grid** const parent);
 };
 
 struct RebuildHierarchyIterator
 {
 	int maxRefLevel;
 	HierarchyEntry* topGrid;
-	TopGridData* metaData;//
+	TopGridData* metaData; //
 	int currentLevel;
 	LevelHierarchyEntry* currentEntry; //
 	LevelHierarchyEntry* levelArray[MAX_DEPTH_OF_HIERARCHY];
 	bool startingNewLevel;
 
 	RebuildHierarchyIterator(int maxRefineLevel, HierarchyEntry* topGrid, TopGridData* metaData);
+	grid* first();
+	grid* next();
+};
+
+struct SiblingIterator
+{
+	const HierarchyEntry* const firstSibling;
+	const HierarchyEntry* currentSibling;
+
+	SiblingIterator(const HierarchyEntry* const firstSibling);
+	SiblingIterator(const LevelHierarchyEntry* const firstSibling);
+	static SiblingIterator NewFromParent(const HierarchyEntry* const parent);
+	static SiblingIterator NewFromParent(const LevelHierarchyEntry* const parent);
+
 	grid* first();
 	grid* next();
 };
