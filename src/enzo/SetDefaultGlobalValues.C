@@ -1014,7 +1014,7 @@ int SetDefaultGlobalValues(TopGridData &MetaData)
   TotalEnergyRelativeGrowthLimit		= -1; //Ignore condition [BH]
   BurnedFractionGrowthLimit		= -1; //Ignore condition [BH]
   InitialBurnedRadius           = 0;
-  InitialBurnedRegionMaintain	= 0;
+  InitialBurnedRegionSustain	= 0;
   InitRadialPressureFromCentral = 0;
   InitBWithVectorPotential 		= 0;
   RefineOnStartup               = 0;

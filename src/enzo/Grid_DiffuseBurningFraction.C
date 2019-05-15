@@ -234,8 +234,8 @@ int grid::DiffuseBurnedFraction()
 	delete[] dFdt;
 	delete[] F;
 
-	if(InitialBurnedRegionMaintain)
-		MHDMaintaindInitialBurnedRegionGrid();
+	if(InitialBurnedRegionSustain)
+		MHDSustainInitialBurnedRegionGrid();
 
 	return SUCCESS;
 

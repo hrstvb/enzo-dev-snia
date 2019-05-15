@@ -110,20 +110,41 @@ T* arr_newset(T** a, size_t n, U x)
 	return *a = arr_set(new T[n], n, (T) x);
 }
 
-// Cannot overlap, if T != U.
 template<typename T, typename U>
 T* arr_cpy(T* dest, U* src, size_t n)
 {
-	T* src_n = src + n;
-
 	if(areOfSameType(dest, src))
-		if(src == dest)
+		if((void*) src == (void*) dest)
 			return dest;
 		else
 			return (T*) memmove(dest, src, n * sizeof(T));
 
+	U* src_n = src + n;
 	while(src < src_n)
 		*dest++ = (*src++);
+	return dest - n;
+}
+
+template<typename T, typename U, typename V>
+T* arr_cpya(T* dest, U* src, size_t n, V a)
+{
+	if(a == 0)
+		return arr_set(dest, n, 0);
+
+	if(areOfSameType(dest, src))
+		if((void*) src == (void*) dest)
+			return dest;
+		else
+		{
+			memmove(dest, src, n * sizeof(T));
+			if(a == 1)
+				return dest;
+			return arr_ax(dest, n, a);
+		}
+
+	U* src_n = src + n;
+	while(src < src_n)
+		*dest++ = a * (*src++);
 	return dest - n;
 }
 
@@ -310,6 +331,16 @@ size_t findmaxlte(T* a, size_t n, U x)
 	return l;
 }
 
+template<class T, class U>
+long long indexof(const T* const a, size_t n, U x)
+{
+	T* b = a + n;
+	while(a < b)
+		if(*--b == x)
+			return b - a;
+	return -1;
+}
+
 /*
  * Math
  */
@@ -393,6 +424,24 @@ template<typename T, typename U, typename V>
 long double distMaxl(const T* x1, const U* x2, const V* y, const size_t n)
 {
 	return sqrt(distMaxSquaredl(x1, x2, y, n));
+}
+
+template<typename T, typename U>
+bool intersectRectangles(T* ldest, T* rdest, U* lother, U* rother, size_t n)
+{
+	for(size_t dim = 0; dim < n; dim++)
+		if(ldest[dim] > rother[dim])
+			return true;
+	for(size_t dim = 0; dim < n; dim++)
+		if(rdest[dim] < lother[dim])
+			return true;
+	for(size_t dim = 0; dim < n; dim++)
+		if(ldest[dim] < lother[dim])
+			ldest[dim] = lother[dim];
+	for(size_t dim = 0; dim < n; dim++)
+		if(rdest[dim] > rother[dim])
+			rdest[dim] = rother[dim];
+	return false;
 }
 
 /*
@@ -608,12 +657,14 @@ T* arr_axpy(T* dest, U* x, const size_t n, const V a)
 }
 
 // y := a*x + b*y
-//no overlapping
 template<typename T, typename U, typename V, typename W>
 T* arr_axpby(T* dest, U* x, const size_t n, const V a, const W b)
 {
 	if(b == 0)
-		return arr_axy(dest, x, n, a);
+	{
+		arr_cpy(dest, x, n);
+		return arr_ax(dest, n, a);
+	}
 	if(a == 0)
 		return arr_ax(dest, n, b);
 	if(b == 1)
@@ -646,13 +697,15 @@ int arr_snlprintf(char* const s, const size_t size, size_t* lengthSoFar, const c
 	if(preffix1)
 	{
 		n = snlprintf(s, size, lengthSoFar, preffix1);
-		if(n < 0) return n;
+		if(n < 0)
+			return n;
 	}
 
 	if(preffix2)
 	{
 		n = snlprintf(s, size, lengthSoFar, preffix2);
-		if(n < 0) return n;
+		if(n < 0)
+			return n;
 	}
 
 	for(size_t i = 0; i < arr_size; i++)
@@ -660,7 +713,8 @@ int arr_snlprintf(char* const s, const size_t size, size_t* lengthSoFar, const c
 		if(i && separator)
 		{
 			n = snlprintf(s, size, lengthSoFar, separator);
-			if(n < 0) return n;
+			if(n < 0)
+				return n;
 		}
 
 		if(i && elementsPerLine > 0)
@@ -668,36 +722,42 @@ int arr_snlprintf(char* const s, const size_t size, size_t* lengthSoFar, const c
 			if(i % elementsPerLine == 0)
 			{
 				n = snlprintf(s, size, lengthSoFar, "\n");
-				if(n < 0) return n;
+				if(n < 0)
+					return n;
 			}
 		}
 
 		if(!printWithIndices)
 		{
 			n = snlprintf(s, size, lengthSoFar, singleElementFormat, arr[i]);
-			if(n < 0) return n;
+			if(n < 0)
+				return n;
 		}
 		else if(indexPrintsBeforeElement)
 		{
 			n = snlprintf(s, size, lengthSoFar, singleElementFormat, i, arr[i]);
-			if(n < 0) return n;
+			if(n < 0)
+				return n;
 		}
 		else
 		{
 			n = snlprintf(s, size, lengthSoFar, singleElementFormat, arr[i], i);
-			if(n < 0) return n;
+			if(n < 0)
+				return n;
 		}
 	}
 
 	if(suffix1)
 	{
 		n = snlprintf(s, size, lengthSoFar, suffix1);
-		if(n < 0) return n;
+		if(n < 0)
+			return n;
 	}
 	if(suffix2)
 	{
 		n = snlprintf(s, size, lengthSoFar, suffix2);
-		if(n < 0) return n;
+		if(n < 0)
+			return n;
 	}
 
 	return *lengthSoFar - l0;
@@ -714,7 +774,8 @@ int arr_printf(const char* const preffix1, const char* const preffix2, const cha
 	S[0] = '\0';
 	int n = arr_snlprintf(S, SIZE, &len, preffix1, preffix2, singleElementFormat, separator, suffix1, suffix2, arr,
 							arr_size, elementsPerLine, printWithIndices, indexPrintsBeforeElement);
-	if(n < 0) return n;
+	if(n < 0)
+		return n;
 
 	if(len + 1 <= SIZE)
 		return fprintf(stderr, S);
@@ -756,7 +817,7 @@ int arr_printf_pydict(const char* const arr_name, const char* const singleElemen
 
 template<typename T>
 int arr_printf_csv(const char* const preffix, const char* const singleElementFormat, const T* const arr,
-	const size_t arr_size, const char* const separator=", ", int elemtnsPerLine = 10)
+	const size_t arr_size, const char* const separator = ", ", int elemtnsPerLine = 10)
 {
 	arr_printf(preffix, NULL, singleElementFormat, separator, NULL, "\n", arr, arr_size, elemtnsPerLine, false, false);
 }

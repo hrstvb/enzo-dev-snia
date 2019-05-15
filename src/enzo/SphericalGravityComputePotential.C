@@ -159,6 +159,8 @@ int SphericalGravityDetermineUniformBins()
 	SphericalGravityHasCentralBin = SphericalGravityInnerRadius > 0;
 	size_t &N = SphericalGravityActualNumberOfBins;
 	N = SphericalGravityNumberOfBins + SphericalGravityHasCentralBin + 1;
+	TRACEF("%lld x %e = %e .. %e", N, SphericalGravityActualNumberOfBins, SphericalGravityBinSize,
+			SphericalGravityInnerRadius, SphericalGravityOuterRadius);
 
 	arr_delnewset(&SphericalGravityBinLeftEdges, N, SphericalGravityBinSize);
 
@@ -245,7 +247,8 @@ size_t SphericalGravityComputeBinIndex(FLOAT r)
 //	return SUCCESS;
 //}
 
-int SphericalGravityComputePotential(LevelHierarchyEntry *LevelArray[], TopGridData* MetaData)
+int SphericalGravityComputePotential(LevelHierarchyEntry *LevelArray[], TopGridData* MetaData,
+	bool interpolateMissingShells)
 {
 	if(UseSphericalGravity == 0)
 		return SUCCESS;
@@ -289,6 +292,11 @@ int SphericalGravityComputePotential(LevelHierarchyEntry *LevelArray[], TopGridD
 	delete[] kinEBins;
 	delete[] magEBins;
 
+//	TRACEF("Total count per MPI process: #%lld  %lld ", MyProcessorNumber, arr_sum(SphericalGravityShellCellCounts, N));
+//	CommunicationSumValues(SphericalGravityShellCellCounts, N);
+//	if(MyProcessorNumber==ROOT_PROCESSOR)
+//		TRACEF("Total count for the domain: #%lld  %lld ", MyProcessorNumber, arr_sum(SphericalGravityShellCellCounts, N));
+
 #else
 	//	if(Top level gravity only
 	LevelHierarchyEntry* lhe = LevelArray[0];
@@ -329,6 +337,7 @@ int SphericalGravityComputePotential(LevelHierarchyEntry *LevelArray[], TopGridD
 ////		SphericalGravityMassInterior[i] = SphericalGravityMassInterior[i - 1] + SphericalGravityMassShell[i];
 //		SphericalGravityInteriorMasses[i] = SphericalGravityInteriorMasses[i - 1] + SphericalGravityShellMasses[i - 1];
 //	}
+
 	arr_delnewset(&SphericalGravityInteriorMasses, N, 0);
 	SphericalGravityInteriorMasses[0] = SphericalGravityCentralMass;
 	arr_cumsum(SphericalGravityInteriorMasses + 1, SphericalGravityShellMasses, N - 1, SphericalGravityCentralMass);
@@ -342,6 +351,52 @@ int SphericalGravityComputePotential(LevelHierarchyEntry *LevelArray[], TopGridD
 			SphericalGravityBinAccels[i] = SphericalGravityConstant * SphericalGravityInteriorMasses[i]
 					/ square(SphericalGravityBinLeftEdges[i]);
 
+		break;
+	}
+
+	if(interpolateMissingShells || 1)
+	{
+		// For shells with no zones we want to distribute the
+		// mass so we get a smoothly growing interior mass.
+		size_t i, k;
+		FLOAT r1, r, r2, g1, g, g2, dgdr;
+		for(size_t j = 0; j < N; j++)
+		{
+			// Find the next zero shell mass:
+			if(SphericalGravityShellMasses[j])
+				continue;
+			i = j;
+
+			// Find the non-zero shell mass that follows:
+			for(j = i + 1; j < N; j++)
+				if(SphericalGravityShellMasses[j])
+					break;
+
+			// Make sure we found one.
+			if(j + 2 >= N)
+				break;
+
+			// Now shells from i..j-1, incl. have zero masses,
+			// shell j has mass > 0.
+			// Interpolate g between i+1 and j
+
+			g1 = SphericalGravityBinAccels[i];
+			g2 = SphericalGravityBinAccels[j + 1];
+			r1 = SphericalGravityBinLeftEdges[i];
+			r2 = SphericalGravityBinLeftEdges[j + 1];
+			dgdr = (g2 - g1) / (r2 - r1);
+			for(k = i; k <= j; k++)
+			{
+				r = SphericalGravityBinLeftEdges[k];
+				g = g1 + (r - r1) * dgdr;
+				SphericalGravityBinAccels[k] = g;
+			}
+		}
+	}
+
+	switch(SphericalGravityInterpAccelMethod)
+	{
+	case 1:
 		// Calculate the slopes of the gravity accelerations between every two bin edges.
 		for(size_t i = 0; i < N - 1; i++)
 			SphericalGravityBinAccelSlopes[i] = (SphericalGravityBinAccels[i + 1] - SphericalGravityBinAccels[i])
@@ -377,6 +432,11 @@ int SphericalGravityComputePotential(LevelHierarchyEntry *LevelArray[], TopGridD
 //		}
 
 	return SUCCESS;
+}
+
+int SphericalGravityComputePotential(LevelHierarchyEntry *LevelArray[], TopGridData* MetaData)
+{
+	return SphericalGravityComputePotential(LevelArray, MetaData, false);
 }
 
 /*

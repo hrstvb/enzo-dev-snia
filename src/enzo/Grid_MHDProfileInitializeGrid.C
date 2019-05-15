@@ -217,26 +217,37 @@ float dipoleMoment[3], float dipoleCenter[3], bool usingVectorPotential)
 	for(int k = 0; k < GridDimension[2]; k++)
 	{
 		FLOAT z = CELLCENTER(2, k);
-		FLOAT zz = square(z - SphericalGravityCenter[2]);
+		FLOAT rz = z - SphericalGravityCenter[2];
+		FLOAT zz = square(rz);
 		for(int j = 0; j < GridDimension[1]; j++)
 		{
 			FLOAT y = CELLCENTER(1, j);
-			FLOAT yy_zz = square(y - SphericalGravityCenter[1]) + zz;
+			FLOAT ry = y - SphericalGravityCenter[1];
+			FLOAT yy_zz = square(ry) + zz;
 			for(int i = 0; i <= GridDimension[0]; i++)
 			{
 				int index = ELT(i, j, k);
-				float vx = vxField[index] = 0 + GridVelocity[0];
-				float vy = vyField[index] = 0 + GridVelocity[1];
-				float vz = vzField[index] = 0 + GridVelocity[2];
-				float Bx, By, Bz;
+				float vr, vx, vy, vz, vv, Bx, By, Bz, BB;
 
-				if(1) //!strcmp(p->profileType, "RADIAL"))
+				//!strcmp(p->profileType, "RADIAL"))
 				{
 					FLOAT x = CELLCENTER(0, i);
-					FLOAT r = sqrt(square(x - SphericalGravityCenter[0]) + yy_zz);
+					FLOAT rx = x - SphericalGravityCenter[0];
+					FLOAT r = sqrt(square(rx) + yy_zz);
 
 					float rho, T = 0;
 					int retcode = p->interpolateDensity(&rho, r); //g/cm**3
+
+					vx = GridVelocity[0];
+					vy = GridVelocity[1];
+					vz = GridVelocity[2];
+					if(p->radialVelocityData)
+					{
+						retcode = p->interpolateRadialVelocity(&vr, r);
+						vx += vr * rx / r;
+						vy += vr * ry / r;
+						vz += vr * rz / r;
+					}
 
 					//retcode = profileInterpolate(&T, temperatureData, r, radiusData, p.nRows, radiusSO); //K
 					bool isBurned = (r < burnedRadius);				// || (T > 0 && T > burningTemperature));
@@ -258,11 +269,14 @@ float dipoleMoment[3], float dipoleCenter[3], bool usingVectorPotential)
 //					}
 
 					float totE = gasE;
-					totE += 0.5 * (square(vx) * square(vy) + square(vz));
+//					vv = square(vx) * square(vy) + square(vz);
+					vv = vx * vx + vy * vy + vz * vz;
+					totE += 0.5 * vv;
 					if(BxField)
 					{
 						MHDProfileInitExactB(&Bx, &By, &Bz, x, y, z);
-						totE += 0.5 * (square(Bx) + square(By) + square(Bz)) / rho;
+						BB = square(Bx) + square(By) + square(Bz);
+						totE += 0.5 * BB / rho;
 						BxField[index] = Bx;
 						ByField[index] = By;
 						BzField[index] = Bz;
@@ -281,9 +295,12 @@ float dipoleMoment[3], float dipoleCenter[3], bool usingVectorPotential)
 
 					if(debug + 1 && MyProcessorNumber == ROOT_PROCESSOR)
 						if(j == (GridDimension[1] / 2) && k == (GridDimension[2] / 2) && i >= GridDimension[0] / 2)
-							TRACEF("i,j,k=%03d,%04d,%04d, x,y,z=(%4f,%4f,%4f), r=%4f, rho=%e, U=%e, T=%1f, burned=%d, K=%e, gamma-1=%f",
-									i, j, k, x * 1e-5, y * 1e-5, z * 1e-5, r * 1e-5, rho, gasE, T * 1e-9, isBurned,
-									EOSPolytropicFactor, gammaMinusOne);
+							TRACEF("i,j,k=%03d,%04d,%04d, x,y,z=(%4f,%4f,%4f), rx,ry,rz=(%4f,%4f,%4f), r=%4f, " //
+							"rho=%e, U=%e, E=%e, v_r=%e, v^2=%e, B^2=%e, "//
+							"burned=%d, K=%e, gamma-1=%f",//
+									i, j, k, x * 1e-5, y * 1e-5, z * 1e-5, rx * 1e-5, ry * 1e-5, rz * 1e-5, r * 1e-5, //
+									rho, gasE, totE, vr, vv, BB, //
+									isBurned, EOSPolytropicFactor, gammaMinusOne);
 				}
 			} //end baryonfield initialize
 		}
@@ -313,7 +330,7 @@ float dipoleMoment[3], float dipoleCenter[3], bool usingVectorPotential)
 /*
  * Keeps the burned fraction equal to 1 for the initial burned raadius.
  */
-int grid::MHDMaintaindInitialBurnedRegionGrid()
+int grid::MHDSustainInitialBurnedRegionGrid()
 {
 	if(GridRank != 3)
 		ENZO_FAIL("MHDProfileInitializeGridBurnedFraction is implemented for 3D only.")
@@ -333,81 +350,76 @@ int grid::MHDMaintaindInitialBurnedRegionGrid()
 
 	float* rhoField = BaryonField[rhoNum];
 	float* rhoNiField = BaryonField[rhoNiNum];
-
-	FLOAT xyz[MAX_DIMENSION];
+	FLOAT lxyz[MAX_DIMENSION];
+	FLOAT rxyz[MAX_DIMENSION];
 	size_t lindex[MAX_DIMENSION];
-	arr_set(xyz, MAX_DIMENSION, 0);
-	arr_set(xyz, GridRank, InitialBurnedRadius);
-	arr_xpy(xyz, SphericalGravityCenter, GridRank);
-	get_ijk_index(lindex, xyz);
-	for(int dim = 0; dim < GridRank; dim++)
-	{
-		if(lindex[dim] < 0)
-			lindex[dim] = 0;
-		else if(lindex[dim] >= GridDimension[dim])
-			lindex[dim] >= GridDimension[dim] - 1;
-	}
-
 	size_t rindex[MAX_DIMENSION];
-	arr_set(xyz, MAX_DIMENSION, 0);
-	arr_set(xyz, GridRank, -InitialBurnedRadius);
-	arr_xpy(xyz, SphericalGravityCenter, GridRank);
-	get_ijk_index(rindex, xyz);
-	arr_xpa(rindex, MAX_DIMENSION, 1);
+
+	arr_set(lxyz, MAX_DIMENSION, 0);
+	arr_set(rxyz, MAX_DIMENSION, 0);
 	for(int dim = 0; dim < GridRank; dim++)
 	{
-		if(rindex[dim] < 0)
-			rindex[dim] = 0;
-		else if(rindex[dim] >= GridDimension[dim])
-			rindex[dim] >= GridDimension[dim] - 1;
+		lxyz[dim] = SphericalGravityCenter[dim] - InitialBurnedRadius;
+		rxyz[dim] = SphericalGravityCenter[dim] + InitialBurnedRadius;
 	}
 
+	if(intersectDomain(lxyz, rxyz))
+		return SUCCESS;
+
+	get_ijk_index(lindex, lxyz);
+	get_ijk_index(rindex, rxyz);
+
+	const FLOAT RR = square(InitialBurnedRadius);
+	const FLOAT X0 = SphericalGravityCenter[0];
 	switch(GridRank)
 	{
 	case 1:
+	{
+		FLOAT xmin = X0 - RR;
+		FLOAT xmax = X0 + RR;
 		for(int i = lindex[0]; i <= rindex[0]; i++)
 		{
-			FLOAT r = sqrt(square(CELLCENTER(0, i) - SphericalGravityCenter[0]));
-
-			if(r < InitialBurnedRadius)
-			{
-				int index = i;
-				rhoNiField[index] = rhoField[index];
-			}
+			FLOAT x = CELLCENTER(0, i);
+			if(xmin <= x && x <= xmax)
+				rhoNiField[i] = rhoField[i];
 		}
 		break;
+	}
 	case 2:
 		for(int j = lindex[1]; j < rindex[1]; j++)
 		{
-			FLOAT yy = square(CELLCENTER(1, j) - SphericalGravityCenter[1]);
+			FLOAT xxmax = RR - square(CELLCENTER(1, j) - SphericalGravityCenter[1]);
+			if(xxmax < 0)
+				continue;
+			size_t index = ELT(lindex[0], j, 0);
 			for(int i = lindex[0]; i <= rindex[0]; i++)
 			{
-				FLOAT r = sqrt(square(CELLCENTER(0, i) - SphericalGravityCenter[0]) + yy);
-
-				if(r < InitialBurnedRadius)
-				{
-					int index = ELT(i, j, 0);
+				FLOAT xx = square(CELLCENTER(0, i) - X0);
+				if(xx <= xxmax)
 					rhoNiField[index] = rhoField[index];
-				}
+				index++;
 			}
 		}
 		break;
+
 	case 3:
 		for(int k = lindex[2]; k <= rindex[2]; k++)
 		{
 			FLOAT zz = square(CELLCENTER(2, k) - SphericalGravityCenter[2]);
 			for(int j = lindex[1]; j < rindex[1]; j++)
 			{
-				FLOAT yy_zz = square(CELLCENTER(1, j) - SphericalGravityCenter[1]) + zz;
+				FLOAT xxmax = RR - square(CELLCENTER(1, j) - SphericalGravityCenter[1]) - zz;
+				if(xxmax < 0)
+					continue;
+				size_t index = ELT(lindex[0], j, k);
 				for(int i = lindex[0]; i <= rindex[0]; i++)
 				{
-					FLOAT r = sqrt(square(CELLCENTER(0, i) - SphericalGravityCenter[0]) + yy_zz);
-
-					if(r < InitialBurnedRadius)
-					{
-						int index = ELT(i, j, k);
+					FLOAT xx = square(CELLCENTER(0, i) - X0);
+					if(xx <= xxmax)
 						rhoNiField[index] = rhoField[index];
-					}
+					// Debug code:
+					// rhoNiField[index] = (xx <= xxmax) ? 0 : rhoField[index];
+					index++;
 				}
 			}
 		}
@@ -469,198 +481,38 @@ float dipoleMoment[3], float dipoleCenter[3], bool usingVectorPotential)
 	float* BY = ByField;
 	float* BZ = BzField;
 
-	if(InitRadialPressureFromCentral)
+	FLOAT z, zz, y, yy_zz, x, r;
+	float gasE;
+	size_t index;
+	if(InitRadialPressureFromCentral && p->internalEnergyData)
 	{
-		// Calculate the pressure for hydrostatic equilibrium with the exisiting gravity.
-//		float P_c = 0;
-//		float rho_c = 0;
-//		FLOAT xyz[MAX_DIMENSION];
-//		arr_cpy(xyz, SphericalGravityCenter, MAX_DIMENSION);
-//
-//		if(InitRadialPressureFromCentral > 0)
-//		{
-//			P_c = InitRadialPressureFromCentral;
-//			if(MyProcessorNumber == ROOT_PROCESSOR)
-//				printf("P_c = %e (parameter)", P_c);
-//		}
-//		else
-//		{
-////			size_t i_c = getCellIndex(xyz);
-////			float rho_c = rhoField[i_c];
-//			FLOAT rho_c;
-//			retcode = p->interpolateDensity(&rho_c, 0); //g/cm**3
-//			P_c = EOSPolytropicFactor * POW(rho_c, Gamma);
-//			if(MyProcessorNumber == ROOT_PROCESSOR)
-//				printf("P_c = %e (polytropic, = K*rho**gamma, K=%e, rho=%e, gamma=%5.3f)", P_c, EOSPolytropicFactor,
-//						rho_c, gamma);
-//		}
-//
-		FLOAT* P_r = new float[SphericalGravityActualNumberOfBins];
-		FLOAT* U_r = new float[SphericalGravityActualNumberOfBins];
-		FLOAT* rr = NULL;
-		FLOAT* dd = NULL;
-		FLOAT* gg = NULL;
-//		if(ProcessorNumber == ROOT_PROCESSOR && ID == 0 && CellWidth[0][0] == TopGridDx[0])
-//		{
-//			rr = new FLOAT[SphericalGravityActualNumberOfBins];
-//			gg = new FLOAT[SphericalGravityActualNumberOfBins];
-//			dd = new FLOAT[SphericalGravityActualNumberOfBins];
-//		}
-//
-		FLOAT P2, P1, P, r2, r1, r, U2, U1, U; // r2 < r1 < r
-		FLOAT b, a, bb, aa, g, rho, g_rho; // b:=r-r2 > a:=r-r1
-//
-//		r2 = 0; // Start from the center.
-//		P_r[0] = P2 = 0; // Offfset the pressure later.
-//
-//		//xyz[0] = r2 + SphericalGravityCenter[0];
-//		//size_t index = getCellIndex(xyz);
-//		retcode = p->interpolateDensity(&rho, r2); //g/cm**3
-//		g_rho = g = SphericalGravityGetAt(r2);
-////		TRACEF("r[0], P[0], g[0]rho[0], g[0], rho[0] = %e, %e, %e = %e * %e", r2, P2, g_rho, g, rho);
-//		if(rr)
-//		{
-//			rr[0] = r2;
-//			gg[0] = g;
-//			dd[0] = rho;
-//		}
-//
-//		r1 = SphericalGravityBinLeftEdges[1];
-////		xyz[0] = r1 + SphericalGravityCenter[0];
-////		index = getCellIndex(xyz);
-////		rho1 = rhoField[index];
-//		retcode = p->interpolateDensity(&rho, r1); //g/cm**3
-//		g = SphericalGravityGetAt(r1);
-//		g_rho = g * rho;
-//		if(rr)
-//		{
-//			rr[1] = r1;
-//			gg[1] = g;
-//			dd[1] = rho;
-//		}
-//
-//		a = r1 - r;
-//		P1 = P2 - 0.5 * a * g * g_rho;
-//		P1 -= 2. / 3. * M_PI * SphericalGravityConstant * a * a * rho * rho;
-//
-//		P_r[1] = P1;
-////		TRACEF("r[1], P[1], dP[1], g, rho = %e, %e, %e = %e * %e", r1, P1, P1 - P2, g, rho);
-//
-//		for(size_t i = 2; i < SphericalGravityActualNumberOfBins; i++)
-//		{
-//			r = SphericalGravityBinLeftEdges[i];
-//			b = r - r2;
-//			a = r - r1;
-//			bb = square(b);
-//			aa = square(a);
-//
-////			xyz[0] = r0 + SphericalGravityCenter[0];
-////			index = getCellIndex(xyz);
-////			rho = rhoField[index];
-//			retcode = p->interpolateDensity(&rho, r); //g/cm**3
-//			g = -SphericalGravityGetAt(r);
-//			g_rho = g * rho;
-//			P = (bb * (P1 + a * g_rho) - aa * (P2 + b * g_rho)) / (bb - aa);
-////			TRACEF("%lld: P2 P1 P = %e %e %e ; r2 r1 r = %e %e %e ; g rho = %e %e", i, P2, P1, P, r2, r1, r, g, rho);
-//
-//			if(rr)
-//			{
-//				rr[i] = r;
-//				gg[i] = g;
-//				dd[i] = rho;
-//			}
-//
-//			P_r[i] = P;
-//			r2 = r1;
-//			r1 = r;
-//			P2 = P1;
-//			P1 = P;
-//		}
-//
-//		// P and rho have the outermost values from the P integration loop.
-//		// Caclculate correction as if intergrating from the surface inwards.
-//		const double K53 = 3.161128e+12;
-//		const double K43 = 4.881986e+14;
-//		double K = 3.828648955e+14;
-//		P1 = K * POW(rho, Gamma);
-//		P = P1 - P2; // add to P_r to get the right boundary conditions.
-//		P = K * POW(2e9, Gamma);
-////		TRACEF("Pressure shift: %e = %e - %e", P2, P1, P);
-//		// Shift pressure and replace it with the gas energy.
-//		for(size_t i = 0; i < SphericalGravityActualNumberOfBins; i++)
-//		{
-//			a = P_r[i] + P;
-//			r = SphericalGravityBinLeftEdges[i];
-//			retcode = p->interpolateDensity(&rho, r); //g/cm**3
-//			b = a / rho / gammaMinusOne;
-//			P_r[i] = a;
-//			U_r[i] = b;
-//		}
-//
-//		if(rr)
-//		{
-//			WriteInitialProfile("initialProfile", rr, dd, gg, P_r, U_r, SphericalGravityActualNumberOfBins, K,
-//								(double)Gamma);
-//		}
 		for(int k = 0; k < GridDimension[2]; k++)
 		{
-			FLOAT z = CELLCENTER(2, k);
-			FLOAT zz = square(z - SphericalGravityCenter[2]);
+			z = CELLCENTER(2, k);
+			zz = square(z - SphericalGravityCenter[2]);
 			for(int j = 0; j < GridDimension[1]; j++)
 			{
-				FLOAT y = CELLCENTER(1, j);
-				FLOAT yy_zz = square(y - SphericalGravityCenter[1]) + zz;
+				y = CELLCENTER(1, j);
+				yy_zz = square(y - SphericalGravityCenter[1]) + zz;
+				index = ELT(0, j, k);
+
 				for(int i = 0; i <= GridDimension[0]; i++)
 				{
-					FLOAT x = CELLCENTER(0, i);
-					FLOAT r = sqrt(square(x - SphericalGravityCenter[0]) + yy_zz);
-					int index = ELT(i, j, k);
+					x = CELLCENTER(0, i);
+					r = sqrt(square(x - SphericalGravityCenter[0]) + yy_zz);
 
-					float rho = rhoField[index];
-					int retval;
-					if(p->internalEnergyData)
-					{
-						retval = p->interpolateInternalEnergy(&U, r);
-					}
-					else
-					{
-						U = 0;
-//						size_t rbin = SphericalGravityComputeBinIndex(r);
-//						r1 = SphericalGravityBinLeftEdges[rbin];
-//						r2 = SphericalGravityBinLeftEdges[rbin + 1];
-//						// P_r[] has the specific gas energy now.
-//						U1 = U_r[rbin];
-//						U2 = U_r[rbin + 1];
-//						U = ((r2 - r) * U1 + (r - r1) * U2) / (r2 - r1);
-					}
-					float gasE = U; // / rho / gammaMinusOne;
+					p->interpolateInternalEnergy(&gasE + index, r);
+					totEField[index] = gasE;
+
 					if((1 + debug) && MyProcessorNumber == ROOT_PROCESSOR)
 						if(j == (GridDimension[1] / 2) && k == (GridDimension[2] / 2) && i >= GridDimension[0] / 2)
 							TRACEGF("i,j,k=%04d,%04d,%04d, x,y,z=(%4f,%4f,%4f), r[km]=%4f, rho=%e, U=%e", i, j, k,
 									x * 1e-5, y * 1e-5, z * 1e-5, r * 1e-5, rho, gasE);
 
-					totEField[index] = U; // add kinetic and magnetic energy below
+					index++;
 				}
 			}
 		}
-//
-//		if(debug)
-//		{
-//			for(size_t i = 0; i < SphericalGravityActualNumberOfBins; i++)
-//			{
-//				r = SphericalGravityBinLeftEdges[i];
-//				retcode = p->interpolateDensity(&rho, r); //g/cm**3
-//				P = P_r[i];
-//				U = U_r[i];
-//				TRACEGF0("Intergrated ressure: %lld: r=%e P=%e U=%e rho=%e gamma-1=%f", i, r, P, U, rho, gammaMinusOne);
-//			}
-//		}
-//
-//		delete P_r;
-//		delete U_r;
-//		delete rr;
-//		delete gg;
-//		delete dd;
 	}
 	else
 	{
@@ -784,39 +636,12 @@ int grid::WriteRadialProfile(char* name)
 
 	int hasGasEField = DualEnergyFormalism && (HydroMethod != Zeus_Hydro); //[BH]
 
-	int totENum, rhoNum, vxNum, vyNum, vzNum;
-	int gasENum = -1, BxNum = -1, ByNum = -1, BzNum = -1, rhoNiNum = -1;
-	float *totEField, *rhoField, *vxField, *vyField, *vzField;
+	float *rhoField, *totEField, *vxField, *vyField, *vzField;
 	float *gasEField = NULL, *rhoNiField = NULL;
 	float *BxField = NULL, *ByField = NULL, *BzField = NULL;
 
-	if(IdentifyPhysicalQuantities(rhoNum, gasENum, vxNum, vyNum, vzNum, totENum, BxNum, ByNum, BzNum) == FAIL)
-	{
-		ENZO_FAIL("grid::WriteRadialProfile: Error in IdentifyPhysicalQuantities for UseMHD==true.");
-	}
-
-	if(UseMHD)
-	{
-		BxField = BaryonField[BxNum];
-		ByField = BaryonField[ByNum];
-		BzField = BaryonField[BzNum];
-	}
-
-	if(UseBurning)
-	{
-		int rhoNiNum = FindField(Density_56Ni, FieldType, NumberOfBaryonFields);
-		if(rhoNiNum < 0)
-			ENZO_FAIL("MHDProfiileInitializeGrid: Error in FindField for Density_56Ni.")
-		rhoNiField = BaryonField[rhoNiNum];
-	}
-
-	rhoField = BaryonField[rhoNum];
-	vxField = BaryonField[vxNum];
-	vyField = BaryonField[vyNum];
-	vzField = BaryonField[vzNum];
-	totEField = BaryonField[totENum];
-	if(hasGasEField)
-		gasEField = BaryonField[gasENum];
+	MHD_SNIA_GetFields(&rhoField, &totEField, &gasEField, &vxField, &vyField, &vzField, NULL, &BxField, &ByField,
+						&BzField, NULL, &rhoNiField, NULL, NULL);
 
 	for(int format = 0; format < 2; format++)
 	{
@@ -855,26 +680,6 @@ int grid::WriteRadialProfile(char* name)
 			fprintf(file, "type('', (), dict(\n");
 			fprintf(file, "time = %f,\n", Time);
 			fprintf(file, "cols = 'rownum x y z rho rho_Ni E U vx vy vz Bx By Bz g gamma P'.split(),\n");
-//			fprintf(file, "radialProfile.dtype = np.dtype([\n"
-//				"  ('rownum',  int),\n"
-//				"  ('x'    , float),\n"
-//				"  ('y'    , float),\n"
-//				"  ('z'    , float),\n"
-//				"  ('rho'  , float),\n"
-//				"  ('rhoNi', float),\n"
-//				"  ('Ni'   , float),\n"
-//				"  ('E'    , float),\n"
-//				"  ('U'    , float),\n"
-//				"  ('vx'   , float),\n"
-//				"  ('vy'   , float),\n"
-//				"  ('vz'   , float),\n"
-//				"  ('Bx'   , float),\n"
-//				"  ('By'   , float),\n"
-//				"  ('Bz'   , float),\n"
-//				"  ('g'    , float),\n"
-//				"  ('gamma', float),\n"
-//				"  ('P'    , float),\n"
-//				"])\n");
 			fprintf(file, "data = np.array([\n");
 			break;
 		}

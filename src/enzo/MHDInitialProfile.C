@@ -1,6 +1,7 @@
 #include <string.h>
 #include <stdio.h>
 #include "myenzoutils.h"
+#include "DebugMacros.h"
 #include "DebugTools.h"
 #include "MHDInitialProfile.h"
 #include "ErrorExceptions.h"
@@ -170,7 +171,7 @@ long long MHDInitialProfile::findGTEIndex(double x, double xData[], long long nD
  * Returns a non-zero error code if findGTEIndex fails,
  * otherwise returns 0.
  */
-long long MHDInitialProfile::interpolate(double* y, double yData[], double x, double xData[],
+long long MHDInitialProfile::interpolate(double* y, double yData[], double x, double xData[], long long nData,
 	long long xSortingOrder)
 {
 	if(yData == NULL)
@@ -180,7 +181,7 @@ long long MHDInitialProfile::interpolate(double* y, double yData[], double x, do
 	if(xSortingOrder == PROFILE_UNSORTED)
 		return -3;
 
-	long long i0 = findGTEIndex(x, xData, nRows, xSortingOrder);
+	long long i0 = findGTEIndex(x, xData, nData, xSortingOrder);
 	if(i0 < 0)
 	{
 		*y = yData[0];
@@ -205,12 +206,18 @@ long long MHDInitialProfile::interpolate(double* y, double yData[], double x, do
 
 long long MHDInitialProfile::interpolateDensity(double* y, double x)
 {
-	return interpolate(y, densityData, x, radiusData, radiusSortingOrder);
+	return interpolate(y, densityData, x, radiusData, nRows, radiusSortingOrder);
 }
 
 long long MHDInitialProfile::interpolateInternalEnergy(double* y, double x)
 {
-	return interpolate(y, internalEnergyData, x, radiusData, radiusSortingOrder);
+	int radiusSO = CMP_A_B(internalEnergyRadiusData[0], internalEnergyRadiusData[1]);
+	return interpolate(y, internalEnergyData, x, internalEnergyRadiusData, nRowsInternalEnergy, radiusSO);
+}
+
+long long MHDInitialProfile::interpolateRadialVelocity(double* y, double x)
+{
+	return interpolate(y, radialVelocityData, x, radiusData, nRows, radiusSortingOrder);
 }
 
 /**
@@ -259,26 +266,49 @@ void MHDInitialProfile::init()
 	colData = NULL;
 	colNames = colNamesToKeep = NULL;
 	colSortingOrders = colNumsToKeep = NULL;
-	radiusColumnName = densityColumnName = internalEnergyColumnName = NULL;
-	radiusData = densityData = internalEnergyData = NULL;
-	radiusIndex = densityIndex = internalEnergyIndex = -1;
+	radiusColumnName = densityColumnName = internalEnergyColumnName = radialVelocityColumnName = NULL;
+	radiusData = densityData = internalEnergyData = radialVelocityData = NULL;
+	radiusIndex = densityIndex = internalEnergyIndex = radialVelocityIndex = -1;
 	radiusSortingOrder = PROFILE_UNSORTED;
-	time = 0;
+	requestedTime = frameTimeFound = 0;
 }
 
-void MHDInitialProfile::init(char* radiusColumnName, char* densityColumnName, char* internalEnergyColumnName)
+void MHDInitialProfile::addColToKeep(char* colName, char** thisColName)
 {
-	arr_newset(&colNamesToKeep, 3, NULL);
-	nColsToKeep = 0;
-	this->radiusColumnName = radiusColumnName;
-	this->densityColumnName = densityColumnName;
-	this->internalEnergyColumnName = internalEnergyColumnName;
-	if(radiusColumnName)
-		colNamesToKeep[nColsToKeep++] = radiusColumnName;
-	if(densityColumnName)
-		colNamesToKeep[nColsToKeep++] = densityColumnName;
-	if(internalEnergyColumnName)
-		colNamesToKeep[nColsToKeep++] = internalEnergyColumnName;
+	if(colName && *colName == '\0')
+		colName = NULL;
+	if(thisColName)
+		*thisColName = colName;
+	if(colName == NULL)
+		return;
+
+	if(colNamesToKeep)
+		colNamesToKeep[nColsToKeep] = colName;
+
+	nColsToKeep++;
+}
+
+void MHDInitialProfile::init(char* radiusColumnName, char* densityColumnName, char* internalEnergyColumnName,
+	char* radialVelocityColumnName)
+{
+	init();
+
+	for(int pass = 0; pass < 2; pass++)
+	{
+		/*
+		 * addColsToKeep increases nColtoKeep and assigns thisColName as necessary.
+		 * The first pass counts the column names to keep and allocates colNamesToKeep.
+		 * The second pass populates the elements of colNamesToKeep.
+		 */
+		nColsToKeep = 0;
+		addColToKeep(radiusColumnName, &this->radiusColumnName);
+		addColToKeep(radialVelocityColumnName, &this->radialVelocityColumnName);
+		addColToKeep(densityColumnName, &this->densityColumnName);
+		addColToKeep(internalEnergyColumnName, &this->internalEnergyColumnName);
+
+		if(pass == 0)
+			arr_newset(&colNamesToKeep, nColsToKeep, NULL);
+	}
 }
 
 /**
@@ -289,17 +319,9 @@ void MHDInitialProfile::init(char* radiusColumnName, char* densityColumnName, ch
 long long MHDInitialProfile::allocateCols(long long nCols)
 {
 	this->nCols = nCols;
-	colData = new double*[nCols];
-	colNames = new char*[nCols];
-	colSortingOrders = new long long[nCols];
-
-	for(long long i = 0; i < nCols; i++)
-	{
-		colData[i] = NULL;
-		colNames[i] = NULL;
-		colSortingOrders[i] = 0;
-	}
-
+	arr_newset(&colData, nCols, NULL);
+	arr_newset(&colNames, nCols, NULL);
+	arr_newset(&colSortingOrders, nCols, PROFILE_UNSORTED);
 	return nCols;
 }
 
@@ -371,7 +393,7 @@ long long MHDInitialProfile::interpolate(double* y, long long yColIndex, double 
 		return -2;
 	if(colSortingOrders[xColIndex] == PROFILE_UNSORTED)
 		return -3;
-	return interpolate(y, colData[yColIndex], x, colData[xColIndex], colSortingOrders[xColIndex]);
+	return interpolate(y, colData[yColIndex], x, colData[xColIndex], nRows, colSortingOrders[xColIndex]);
 }
 
 /**
@@ -422,10 +444,14 @@ void MHDInitialProfile::identifyNamedCols()
 		radiusData = colData[radiusIndex];
 		radiusSortingOrder = colSortingOrders[radiusIndex];
 	}
+	if(0 <= (radialVelocityIndex = findColIndex(radialVelocityColumnName)))
+		radialVelocityData = colData[radialVelocityIndex];
 	if(0 <= (densityIndex = findColIndex(densityColumnName)))
 		densityData = colData[densityIndex];
 	if(0 <= (internalEnergyIndex = findColIndex(internalEnergyColumnName)))
 		internalEnergyData = colData[internalEnergyIndex];
+	if(internalEnergyData)
+		internalEnergyRadiusData = radiusData;
 }
 
 /**
@@ -604,7 +630,7 @@ long long MHDInitialProfile::read(char* filename, char* format, double atTime)
  */
 long long MHDInitialProfile::readPAH01(char* filename, double atTime)
 {
-	this->time = atTime;
+	this->requestedTime = atTime;
 	FILE *file;
 	printf("Opening '%s'\n", filename);
 	if((file = fopen(filename, "r")) == NULL)
@@ -630,7 +656,7 @@ long long MHDInitialProfile::readPAH01(char* filename, double atTime)
 	while(fgets(line, LINE_MAX_LENGTH, file))
 	{
 		lineNum++;
-
+		TRACEF("%p", line);
 		switch(lineTypePAH01(line))
 		// Use 'continue' to read the next line.
 		// Use 'break' to exit the switch and quit reading.
@@ -656,10 +682,11 @@ long long MHDInitialProfile::readPAH01(char* filename, double atTime)
 			{
 				printf("problem parsing time header %s\n", line);
 			}
-			searchingTime = (time > t);
+			searchingTime = (requestedTime > t);
 			if(!searchingTime)
 			{
-				printf("Time header for %f found on line num %d. %d rows\n", time, lineNum, nRows);
+				frameTimeFound = requestedTime;
+				printf("Time header for %f found on line num %d. %d rows\n", requestedTime, lineNum, nRows);
 				nRowsAllocateFirst = nRows;
 			}
 			continue;
@@ -686,7 +713,7 @@ long long MHDInitialProfile::readPAH01(char* filename, double atTime)
 	printf("Reading finished.\n");
 	if(searchingTime)
 	{
-		printf("Time header for %f not found.\n", time);
+		printf("Time header for %f not found.\n", requestedTime);
 		return -1;
 	}
 
@@ -741,7 +768,7 @@ long long MHDInitialProfile::lineTypePAH02(char* line)
 
 long long MHDInitialProfile::readPAH02(char* filename, double atTime)
 {
-	this->time = atTime;
+	this->requestedTime = atTime;
 
 	FILE *file;
 	printf("Opening '%s'\n", filename);
@@ -795,10 +822,10 @@ long long MHDInitialProfile::readPAH02(char* filename, double atTime)
 			{
 				printf("problem parsing time header %s\n", line);
 			}
-			searchingTime = (time > t);
+			searchingTime = (requestedTime > t);
 			if(!searchingTime)
 			{
-				printf("Time header for t=%f found on line num %d. %d rows\n", time, lineNum);
+				printf("Time header for t=%f found on line num %d. %d rows\n", requestedTime, lineNum);
 			}
 			continue;
 		}
@@ -826,7 +853,7 @@ long long MHDInitialProfile::readPAH02(char* filename, double atTime)
 	printf("Reading profile finished (%s).\n", filename);
 	if(searchingTime)
 	{
-		printf("Time header for %f not found.\n", time);
+		printf("Time header for %f not found.\n", requestedTime);
 		return -1;
 	}
 

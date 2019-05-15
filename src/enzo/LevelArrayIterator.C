@@ -362,3 +362,43 @@ grid* RebuildHierarchyIterator::next()
 	startingNewLevel = true;
 	return (currentEntry) ? currentEntry->GridData : NULL;
 }
+
+SiblingIterator::SiblingIterator(const HierarchyEntry* const firstSibling) :
+		firstSibling { firstSibling }, currentSibling { NULL }
+{
+}
+
+SiblingIterator::SiblingIterator(const LevelHierarchyEntry* const firstSibling) :
+		firstSibling { (firstSibling) ? firstSibling->GridHierarchyEntry : NULL }, currentSibling { NULL }
+{
+}
+
+SiblingIterator SiblingIterator::NewFromParent(const HierarchyEntry* const parent)
+{
+	return SiblingIterator((parent) ? parent->NextGridNextLevel : NULL);
+}
+
+SiblingIterator SiblingIterator::NewFromParent(const LevelHierarchyEntry* const parent)
+{
+	return NewFromParent((parent) ? parent->GridHierarchyEntry : NULL);
+}
+
+grid* SiblingIterator::first()
+{
+	if((currentSibling = firstSibling) == NULL)
+		return NULL;
+	grid* g = currentSibling->GridData;
+	return (g) ? g : next();
+}
+
+grid* SiblingIterator::next()
+{
+	while(currentSibling)
+	{
+		currentSibling = currentSibling->NextGridThisLevel;
+		grid* g = currentSibling->GridData;
+		if(g)
+			return g;
+	}
+	return NULL;
+}
