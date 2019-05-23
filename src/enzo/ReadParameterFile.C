@@ -1289,6 +1289,7 @@ int ReadParameterFile(FILE *fptr, TopGridData &MetaData, float *Initialdt)
     ret += sscanf(line, "BurningDiffusionRate                  = %"FSYM, &BurningDiffusionRate                 ); //[BH]
     ret += sscanf(line, "BurningDiffusionRateReduced           = %"FSYM, &BurningDiffusionRateReduced          ); //[BH]
     ret += sscanf(line, "BurningDiffusionCourantSafetyFactor   = %"FSYM, &BurningDiffusionCourantSafetyFactor  ); //[BH]
+    ret += sscanf(line, "BurningNonDistributedMinDensity       = %"FSYM, &BurningNonDistributedMinDensity      ); //[BH]
     ret += sscanf(line, "BurningReactionRate                   = %"FSYM, &BurningReactionRate                  ); //[BH]
     ret += sscanf(line, "BurningReactionRateReduced            = %"FSYM, &BurningReactionRateReduced           ); //[BH]
     ret += sscanf(line, "BurningReactionBurnedFractionLimitLo  = %"FSYM, &BurningReactionBurnedFractionLimitLo ); //[BH]

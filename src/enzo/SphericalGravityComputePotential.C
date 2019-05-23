@@ -159,8 +159,8 @@ int SphericalGravityDetermineUniformBins()
 	SphericalGravityHasCentralBin = SphericalGravityInnerRadius > 0;
 	size_t &N = SphericalGravityActualNumberOfBins;
 	N = SphericalGravityNumberOfBins + SphericalGravityHasCentralBin + 1;
-	TRACEF("%lld x %e = %e .. %e", N, SphericalGravityActualNumberOfBins, SphericalGravityBinSize,
-			SphericalGravityInnerRadius, SphericalGravityOuterRadius);
+//	TRACEF("%lld x %e = %e .. %e", N, SphericalGravityActualNumberOfBins, SphericalGravityBinSize,
+//			SphericalGravityInnerRadius, SphericalGravityOuterRadius);
 
 	arr_delnewset(&SphericalGravityBinLeftEdges, N, SphericalGravityBinSize);
 
@@ -430,6 +430,11 @@ int SphericalGravityComputePotential(LevelHierarchyEntry *LevelArray[], TopGridD
 //			SphericalGravityMagneticEnergy +=
 //			SphericalGravityMagneticEnergies[dim] = arr_sum(SphericalGravityShellMagneticEnergies[dim], N);
 //		}
+
+//	FLOAT burnedR = estimateBurnedRadius();
+//	if(burnedR)
+//		CommunicationBroadcastValues(&burnedR, 1, MyProcessorNumber);
+//	CommunicationR
 
 	return SUCCESS;
 }

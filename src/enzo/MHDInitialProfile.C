@@ -215,6 +215,11 @@ long long MHDInitialProfile::interpolateInternalEnergy(double* y, double x)
 	return interpolate(y, internalEnergyData, x, internalEnergyRadiusData, nRowsInternalEnergy, radiusSO);
 }
 
+long long MHDInitialProfile::interpolateTemperature(double* y, double x)
+{
+	return interpolate(y, temperatureData, x, radiusData, nRows, radiusSortingOrder);
+}
+
 long long MHDInitialProfile::interpolateRadialVelocity(double* y, double x)
 {
 	return interpolate(y, radialVelocityData, x, radiusData, nRows, radiusSortingOrder);
@@ -266,9 +271,9 @@ void MHDInitialProfile::init()
 	colData = NULL;
 	colNames = colNamesToKeep = NULL;
 	colSortingOrders = colNumsToKeep = NULL;
-	radiusColumnName = densityColumnName = internalEnergyColumnName = radialVelocityColumnName = NULL;
-	radiusData = densityData = internalEnergyData = radialVelocityData = NULL;
-	radiusIndex = densityIndex = internalEnergyIndex = radialVelocityIndex = -1;
+	radiusColumnName = densityColumnName = internalEnergyColumnName = temperatureColumnName = radialVelocityColumnName = NULL;
+	radiusData = densityData = internalEnergyData = temperatureData = radialVelocityData = NULL;
+	radiusIndex = densityIndex = internalEnergyIndex = temperatureIndex = radialVelocityIndex = -1;
 	radiusSortingOrder = PROFILE_UNSORTED;
 	requestedTime = frameTimeFound = 0;
 }
@@ -289,7 +294,7 @@ void MHDInitialProfile::addColToKeep(char* colName, char** thisColName)
 }
 
 void MHDInitialProfile::init(char* radiusColumnName, char* densityColumnName, char* internalEnergyColumnName,
-	char* radialVelocityColumnName)
+	char* temperatureColumnName, char* radialVelocityColumnName)
 {
 	init();
 
@@ -304,6 +309,7 @@ void MHDInitialProfile::init(char* radiusColumnName, char* densityColumnName, ch
 		addColToKeep(radiusColumnName, &this->radiusColumnName);
 		addColToKeep(radialVelocityColumnName, &this->radialVelocityColumnName);
 		addColToKeep(densityColumnName, &this->densityColumnName);
+		addColToKeep(temperatureColumnName, &this->temperatureColumnName);
 		addColToKeep(internalEnergyColumnName, &this->internalEnergyColumnName);
 
 		if(pass == 0)
@@ -448,6 +454,8 @@ void MHDInitialProfile::identifyNamedCols()
 		radialVelocityData = colData[radialVelocityIndex];
 	if(0 <= (densityIndex = findColIndex(densityColumnName)))
 		densityData = colData[densityIndex];
+	if(0 <= (temperatureIndex = findColIndex(temperatureColumnName)))
+		temperatureData = colData[temperatureIndex];
 	if(0 <= (internalEnergyIndex = findColIndex(internalEnergyColumnName)))
 		internalEnergyData = colData[internalEnergyIndex];
 	if(internalEnergyData)

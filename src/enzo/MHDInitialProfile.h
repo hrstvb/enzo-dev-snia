@@ -33,9 +33,11 @@ struct MHDInitialProfile
 	char* radialVelocityColumnName;
 	char* densityColumnName;
 	char* internalEnergyColumnName;
+	char* temperatureColumnName;
 	double* radiusData;
 	double* radialVelocityData;
 	double* densityData;
+	double* temperatureData;
 	double* internalEnergyData;
 	double* internalEnergyRadiusData;
 	long long nRowsInternalEnergy;
@@ -43,6 +45,7 @@ struct MHDInitialProfile
 	long long radiusIndex;
 	long long radialVelocityIndex;
 	long long densityIndex;
+	long long temperatureIndex;
 	long long internalEnergyIndex;
 	long long radiusSortingOrder;
 
@@ -129,7 +132,7 @@ struct MHDInitialProfile
 	 */
 	void init();
 	void init(char* radiusColumnName, char* densityColumnName, char* InternalEnergyColumnName,
-		char* RadialVelocityColumnName);
+		char* temperatureColumnName, char* RadialVelocityColumnName);
 	/**
 	 * Allocates new colDolata, colNames and colSortingOrders
 	 * initialized with NULLs.
@@ -166,6 +169,7 @@ struct MHDInitialProfile
 	long long interpolate(double* y, char* yname, double x, char* xname);
 	long long interpolateDensity(double* y, double x);
 	long long interpolateInternalEnergy(double* y, double x);
+	long long interpolateTemperature(double* y, double x);
 	long long interpolateRadialVelocity(double* y, double x);
 
 	/**

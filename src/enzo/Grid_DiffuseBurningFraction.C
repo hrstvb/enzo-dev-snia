@@ -89,6 +89,7 @@ int grid::DiffuseBurnedFraction()
 	float Q, TE_new, Q_new_TE, GE_new, Q_new_GE;
 	float diffusionRate = BurningDiffusionRateReduced * CellWidth[0][0];
 	float reactionRate = BurningReactionRateReduced / CellWidth[0][0];
+	float minRhoForBurning = BurningNonDistributedMinDensity;
 
 	// dtSubcycle = timestep of this subcycle
 	// dtSoFar = overall timestep taken in heat equation
@@ -122,6 +123,36 @@ int grid::DiffuseBurnedFraction()
 
 	Nsub = 0;  // number of subcycles
 
+//	//see also: Grid_ProjectSolutionToParent, usage of nint
+//	//Clean small waves
+//	for(size_t jndex = 0; jndex < gridSize; jndex++)
+//	{
+//		if(F[jndex] > 0.001)
+//			continue;
+//		const long long RR = 5;
+//		bool gotonext = false;
+//
+//		for(size_t kk = -RR; kk <= RR; kk++)
+//		{
+//			for(size_t jj = -RR; jj <= RR; jj++)
+//			{
+//				for(size_t ii = -RR; ii <= RR; ii++)
+//				{
+//					size_t JNDEX2 = jndex + ELT(ii, jj, kk);
+//					if(gotonext = (F[JNDEX2] > 0.1))
+//						break;
+//				}
+//				if(gotonext)
+//					break;
+//			}
+//			if(gotonext)
+//				break;
+//		}
+//
+//		if(!gotonext)
+//			F[jndex] = 0;
+//	}
+
 	//subcycle begins
 	while(dtSoFar < dtFixed)
 	{
@@ -142,28 +173,59 @@ int grid::DiffuseBurnedFraction()
 
 		if(reactionRate)
 		{
+			// Add reaction
 			for(i = 0; i < gridSize; i++)
-			{
-//			dFdt[i] *= diffusionRate;
-
-				// Add reaction
-//			dFdt[i] +=
-//					(BurningReactionBurnedFractionLimitLo < F[i] && F[i] < BurningReactionBurnedFractionLimitHi) ?
-//							reactionRate : 0;
+				//dFdt[i] *= diffusionRate;
 				if(BurningReactionBurnedFractionLimitLo < F[i] && F[i] < BurningReactionBurnedFractionLimitHi)
 					dFdt[i] += reactionRate;
-
-				// Evolve F
-				int retcode = rangeCutLimiter(F[i], dFdt[i] * dtSubcycle, 0, 1, &f, &df);
-//TODO: change error to warning
-//      if ( retcode ) {
-//	    ENZO_VFAIL("Grid::DiffuseBurnedFraction: bad burned fraction=%g dFdt=%g i=%d  dtFixed,dtSub: %e, %e\n",
-//		       F[i], dFdt[i], i, dtFixed, dtSubcycle)
-//      }
-				F[i] = f;
-
-			} // end for i
 		}
+
+		if(minRhoForBurning)
+		{
+			for(i = 0; i < gridSize; i++)
+				if(Rho[i] < minRhoForBurning)
+					dFdt[i] = 0;
+		}
+
+		for(i = 0; i < gridSize; i++)
+		{
+			// Evolve F
+			int retcode = rangeCutLimiter(F[i], dFdt[i] * dtSubcycle, 0, 1, &f, &df);
+			F[i] = f;
+		} // end for i
+
+//		if(0)
+//		{
+//			//Clean small waves
+//			for(size_t jndex = 0; jndex < gridSize; jndex++)
+//			{
+//				if(F[jndex] > 0.001)
+//					continue;
+//				const long long RR = 5;
+//				bool gotonext = false;
+//
+//				for(size_t kk = -RR; kk <= RR; kk++)
+//				{
+//					for(size_t jj = -RR; jj <= RR; jj++)
+//					{
+//						for(size_t ii = -RR; ii <= RR; ii++)
+//						{
+//							size_t JNDEX2 = jndex + ELT(ii, jj, kk);
+//							if(gotonext = (F[JNDEX2] > 0.1))
+//								break;
+//						}
+//						if(gotonext)
+//							break;
+//					}
+//					if(gotonext)
+//						break;
+//				}
+//
+//				if(!gotonext)
+//					F[jndex] = 0;
+//			}
+//		}
+
 		dtSoFar += dtSubcycle;
 		Nsub++;
 
@@ -181,7 +243,6 @@ int grid::DiffuseBurnedFraction()
 		if(rho < tiny_number)
 		{
 			//This is an empty cell (rho=0).
-			//TODO: Decide betweeni: (a) Set TE=GE=0; and (b) Do nothing, i.e. leave TE and GE unchanged.
 			continue;
 		}
 
@@ -196,10 +257,8 @@ int grid::DiffuseBurnedFraction()
 		Rho_56Ni[i] = X1 * rho; //Update the 56Ni mass density field with the new value.
 		Q = dX1 * BurningEnergyRelease; //enrgy release per gram product
 
-		if(Q > 0 || Q < 0 && AllowUnburning) // added 11/19/2015 [BH]
-		{
-
-			// In case Q is negative make sure energy doesn't get negative:
+		if(Q > 0 || (Q < 0 && AllowUnburning)) // added 11/19/2015 [BH]
+		{			// In case Q is negative make sure energy doesn't get negative:
 			retcode = lowCutLimiter(TE[i], Q, 0, &TE_new, &Q_new_TE);
 			//TODO: change error to warning
 			//      if ( retcode < 0 ) {
@@ -282,7 +341,7 @@ float grid::ComputeBurningFractionDiffusionTimeStep(float* dt)
 	float light_cross_time;
 	double all_units;
 
-	FLOAT dx = CellWidth[0][0]; // For some reason dx==0 here. [BH]
+	FLOAT dx = CellWidth[0][0];					// For some reason dx==0 here. [BH]
 	for(int dim = 1; dim < GridRank; dim++)
 		dx = min(dx, CellWidth[dim][0]);
 
@@ -418,4 +477,10 @@ float *xNew, float *dxNew)
 	*xNew = y;
 	return 0;
 }
+
+struct CleanupContext
+{
+	long long vicinitySize;
+	long long initialIJK[3];
+};
 
