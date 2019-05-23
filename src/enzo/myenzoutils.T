@@ -262,6 +262,35 @@ T** arr_set(T** a, size_t n, unsigned long long x)
 	return arr_set(a, n, 0LL);
 }
 
+template<typename T, typename U>
+T* arr_xy(T* dest, const U* y, const size_t n)
+{
+	T* x_n = dest + n;
+	while(dest < x_n)
+		*dest++ *= *y++;
+	return dest;
+}
+
+template<typename T, typename U>
+T* bits2arr01(T* const dest, size_t n, U i)
+{
+	arr_set(dest, n, 0);
+	for(T* a = dest; a < dest + n && i; a++, i <<= 1)
+		*a = i & 1;
+}
+
+template<typename T>
+T* bits2arrMasks(T* const dest, const size_t n, const T i)
+{
+	arr_set(dest, n, 0);
+	unsigned long long mask = 1;
+	for(T* a = dest; a < dest + n; a++)
+	{
+		*a = i & mask;
+		mask >>= 1;
+	}
+}
+
 //#undef INTPTR_T
 //#undef UINTPTR_T
 
@@ -334,7 +363,7 @@ size_t findmaxlte(T* a, size_t n, U x)
 template<class T, class U>
 long long indexof(const T* const a, size_t n, U x)
 {
-	T* b = a + n;
+	const T* b = a + n;
 	while(a < b)
 		if(*--b == x)
 			return b - a;
@@ -345,7 +374,7 @@ long long indexof(const T* const a, size_t n, U x)
  * Math
  */
 template<typename T, typename U>
-inline long double distancel(T* x[], U* y[], size_t n)
+inline long double lenl(T* x[], U* y[], size_t n)
 {
 	long double r_squared = 0;
 	T* x_n = x + n;
@@ -367,30 +396,40 @@ inline T cube(T x)
 	return x * x * x;
 }
 
-inline long double distancel(long double x1, long double x2, long double y1, long double y2)
+inline long double lenl(long double x1, long double x2, long double y1, long double y2)
 {
-	return sqrtl(distsqaredl(x1, x2, y1, y2));
+	return sqrtl(lensqaredl(x1, x2, y1, y2));
 }
 
-inline long double distancel(long double x1, long double x2, long double x3, long double y1, long double y2,
+inline long double lenl(long double x1, long double x2, long double x3, long double y1, long double y2,
 	long double y3)
 {
-	return sqrtl(distsqaredl(x1, x2, x3, y1, y2, y3));
+	return sqrtl(lensqaredl(x1, x2, x3, y1, y2, y3));
 }
 
-inline long double distsqaredl(long double x1, long double x2, long double y1, long double y2)
+inline long double lenl(long double x1, long double x2, long double x3)
+{
+	return sqrtl(lensqaredl(x1, x2, x3));
+}
+
+inline long double lensqaredl(long double x1, long double x2, long double y1, long double y2)
 {
 	return square(y1 - x1) + square(y2 - x2);
 }
 
-inline long double distsqaredl(long double x1, long double x2, long double x3, long double y1, long double y2,
+inline long double lensqaredl(long double x1, long double x2, long double x3, long double y1, long double y2,
 	long double y3)
 {
 	return square(y1 - x1) + square(y2 - x2) + square(y3 - x3);
 }
 
+inline long double lensqaredl(long double x1, long double x2, long double x3)
+{
+	return square(x1) + square(x2) + square(x3);
+}
+
 template<typename T, typename U>
-long double distsqaredl(T* x, U* y, size_t n)
+long double lensqaredl(T* x, U* y, size_t n)
 {
 	long double d = 0;
 	T* x_n = x + n;
@@ -400,9 +439,21 @@ long double distsqaredl(T* x, U* y, size_t n)
 }
 
 template<typename T, typename U>
-long double distancel(T* x, U* y, size_t n)
+long double lenl(T* x, U* y, size_t n)
 {
-	return sqrt(distsqaredl(x, y, n));
+	return sqrt(lenl(x, y, n));
+}
+
+template<typename T, typename U>
+int normalizel(T* x, size_t n)
+{
+	long double L = lensqaredl(x, n);
+	if(L)
+	{
+		arr_ax(x, n, 1/L);
+		return 1;
+	}
+	return 0;
 }
 
 template<typename T, typename U, typename V>
@@ -625,6 +676,31 @@ T* arr_ax(T* x, const size_t n, const U a)
 		return x;
 	if(a == 0)
 		return arr_set(x, n, (T) 0);
+	T* x_n = x + n;
+	while(x < x_n)
+		*--x_n *= a;
+	return x;
+}
+
+// x := a*x
+template<typename T, typename U, typename V>
+T* arr_axpb(T* x, const size_t n, const U a, const V b)
+{
+	if(a == 1)
+		if(b==0)
+			return x;
+		else
+			return arr_xpa(x, n, b);
+
+	if(a == 0)
+		if(b == 0)
+			return arr_set(x, n, (T) 0);
+		else
+			return arr_set(x, n, (T) b);
+
+	if(b==0)
+		return arr_ax(x, n, a);
+
 	T* x_n = x + n;
 	while(x < x_n)
 		*--x_n *= a;

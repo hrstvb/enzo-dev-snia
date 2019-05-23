@@ -215,9 +215,11 @@ int grid::ComputeLaplacian(float* resultField, float* sourceField, int method)
 //			1   3   0   12
 //			/24
 
-			// ones                  0  1  2  3   0  1  2  -   0   1  -  -  0
-			// twos                  0  1  2  3   1  1  1  -   2   2  -  -  3
-			// ones^2 + twos^2       0  1  2  3   4  5  6  -   8   9  -  - 12
+			// Stencil coeffsicients are a function of the square of the
+			// indices, R^2 = II^2 + JJ ^2 + KK^2; II, JJ, KK in [-2, 2].
+			// ones               0  1  2  3   0  1  2  -   0   1  -  -  0
+			// twos               0  1  2  3   1  1  1  -   2   2  -  -  3
+			// R^2=ones^2+twos^2  0  1  2  3   4  5  6  -   8   9  -  - 12
 			const int cR[13] = {-88, 4, 4, 1, -2, 1, 1, 0, -1, -1, 0, 0, 1};
 			const double cD = 24;
 
@@ -229,8 +231,8 @@ int grid::ComputeLaplacian(float* resultField, float* sourceField, int method)
 			const size_t k2 = GridEndIndex[2];
 			const size_t n = i2 - i1 + 1;
 
-			int cIJK[125];
-			int* c = cIJK;
+			double cIJK[125];
+			double* c = cIJK;
 			int ci = 0, RR;
 
 			for(int KK = -2; KK <= 2; KK++)
@@ -238,7 +240,7 @@ int grid::ComputeLaplacian(float* resultField, float* sourceField, int method)
 					for(int II = -2; II <= 2; II++)
 					{
 						RR = II * II + JJ * JJ + KK * KK;
-						cIJK[ci++] = cR[RR];
+						cIJK[ci++] = (double)cR[RR]/(double)cD;
 					}
 
 			arr_set(resultField, GetGridSize(), 0);

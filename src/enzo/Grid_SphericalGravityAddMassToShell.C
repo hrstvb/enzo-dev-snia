@@ -159,9 +159,9 @@ FLOAT** magEBins, LevelHierarchyEntry* myLevelHierarchyEntry)
 					}
 					else if(printdebuginfo && firstChild && MyProcessorNumber == ROOT_PROCESSOR)
 					{
-						TRACEGF("%lld %lld %lld    %e %e %e", i, j, k, xVec[0], xVec[1], xVec[2]);
-						TRACEGF("%e %e %e    %e %e %e", GetGridLeftEdge(0), GetGridLeftEdge(1), GetGridLeftEdge(2),
-								GetGridRightEdge(0), GetGridRightEdge(1), GetGridRightEdge(2));
+//						TRACEGF("%lld %lld %lld    %e %e %e", i, j, k, xVec[0], xVec[1], xVec[2]);
+//						TRACEGF("%e %e %e    %e %e %e", GetGridLeftEdge(0), GetGridLeftEdge(1), GetGridLeftEdge(2),
+//								GetGridRightEdge(0), GetGridRightEdge(1), GetGridRightEdge(2));
 						double overdx = 1 / CellWidth[0][0];
 						HierarchyEntry* he = firstChild;
 						while(he)
@@ -180,9 +180,9 @@ FLOAT** magEBins, LevelHierarchyEntry* myLevelHierarchyEntry)
 							arr_axpy(lmn, ijk2, 3, -1);
 							arr_xpa(lmn, 3, 1);
 
-							TRACEGF("%lld %lld %lld    %lld %lld %lld   [%lld]   g%lld(on #%lld)    parent g%lld(on #%lld)",
-									ijk1[0], ijk1[1], ijk1[2], ijk2[0], ijk2[1], ijk2[2], lmn[0] * lmn[1] * lmn[2],
-									g->GetGridID(), g->ProcessorNumber, pg->GetGridID(), pg->ProcessorNumber);
+//							TRACEGF("%lld %lld %lld    %lld %lld %lld   [%lld]   g%lld(on #%lld)    parent g%lld(on #%lld)",
+//									ijk1[0], ijk1[1], ijk1[2], ijk2[0], ijk2[1], ijk2[2], lmn[0] * lmn[1] * lmn[2],
+//									g->GetGridID(), g->ProcessorNumber, pg->GetGridID(), pg->ProcessorNumber);
 
 //							TRACEGF("%e %e %e    %e %e %e   g%lld(on #%lld)    parent g%lld(on #%lld)",
 //										g->GetGridLeftEdge(0), g->GetGridLeftEdge(1), g->GetGridLeftEdge(2),

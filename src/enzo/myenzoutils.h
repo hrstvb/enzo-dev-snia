@@ -143,7 +143,7 @@ size_t findmaxlte(T* a, size_t n, T x);
  */
 
 template<typename T, typename U>
-inline long double distancel(T* x[], U* y[], size_t n);
+inline long double lenl(T* x[], U* y[], size_t n);
 
 template<typename T>
 inline T square(T x);
@@ -151,21 +151,33 @@ inline T square(T x);
 template<typename T>
 inline T cube(T x);
 
-inline long double distancel(long double x1, long double x2, long double y1, long double y2);
+inline long double lenl(long double x1, long double x2, long double y1, long double y2);
 
-inline long double distancel(long double x1, long double x2, long double x3, long double y1, long double y2,
+inline long double lenl(long double x1, long double x2, long double x3, long double y1, long double y2,
 								long double y3);
 
+inline long double lenl(long double x1, long double x2, long double x3);
+
 template<typename T, typename U>
-long double distancel(T* x, U* y, size_t n);
+long double lenl(T* x, U* y, size_t n);
 
-inline long double distsqaredl(long double x1, long double x2, long double y1, long double y2);
+template<typename T, typename U>
+long double lenl(T* x, size_t n);
 
-inline long double distsqaredl(long double x1, long double x2, long double x3, long double y1, long double y2,
+inline long double lensqaredl(long double x1, long double x2, long double y1, long double y2);
+
+inline long double lensqaredl(long double x1, long double x2, long double x3, long double y1, long double y2,
 								long double y3);
+inline long double lensqaredl(long double x1, long double x2, long double x3);
 
 template<typename T, typename U>
-long double distsqaredl(T* x, U* y, size_t n);
+long double lensqaredl(T* x, U* y, size_t n);
+
+template<typename T, typename U>
+long double lensqaredl(T* x, size_t n);
+
+template<typename T, typename U>
+int normalizel(T* x, size_t n);
 
 template<typename T>
 inline int sign(T x)

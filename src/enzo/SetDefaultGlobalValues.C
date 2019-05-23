@@ -1004,6 +1004,7 @@ int SetDefaultGlobalValues(TopGridData &MetaData)
   BurningDiffusionRate                 = 1;   //[BH]
   BurningDiffusionRateReduced          = 0;   //[BH]
   BurningDiffusionCourantSafetyFactor  = 0.5; //Courant safety number = safety factor * dx^2 / BurningDiffusionRate //[BH]
+  BurningNonDistributedMinDensity      = 0.0;
   BurningReactionRate                  = 1;   // This is the burning reaction rate value used when the burned   //[BH]
   BurningReactionRateReduced           = 0;   //  fraction is between 0 and 1 and inside the (Lo, Hi) limits    //[BH]
   BurningReactionBurnedFractionLimitLo = 0.3; //  set by the corresponding BurningReactionBurnedFractionLimit*  //[BH]
@@ -1062,6 +1063,7 @@ int SetDefaultGlobalValues(TopGridData &MetaData)
   //Spherica gravity, multilevel
   SphericalGravityBinsPerCell = 1.0;
   SphericalGravityDebug = 0;
+  TopBurnedRadiusEstimate = -1;
 
 //  UseSpherGrav = UseSphericalGravity && SphericalGravityMaxHierarchyLevel > 0;
 //  SpherGravActualNumberOfBins=NULL;

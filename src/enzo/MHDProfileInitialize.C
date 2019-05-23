@@ -496,7 +496,7 @@ int MHDProfileInitialize(FILE *fptr, FILE *Outfptr, HierarchyEntry &TopGrid, Top
 	bool projectChildrenToParents = RefineOnStartup && MaximumRefinementLevel > 0;
 
 	MHDInitialProfile p = MHDInitialProfile();
-	p.init(RadiusColumnName, DensityColumnName, InternalEnergyColumnName, RadialVelocityColumnName);
+	p.init(RadiusColumnName, DensityColumnName, InternalEnergyColumnName, TemperatureColumnName, RadialVelocityColumnName);
 	p.read(ProfileFileName, ProfileFormat, ProfileAtTime);
 	printf("Profile: %lld data rows in %lld columns.\n", p.nRows, p.nCols);
 

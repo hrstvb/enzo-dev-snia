@@ -23,6 +23,7 @@
 #include <string.h>
 #include <cctype> //isspace
 
+#include <cmath>
 #include "myenzoutils.h"
 
 #include "ErrorExceptions.h"
@@ -65,6 +66,20 @@ float SphericalGravityGetAt(FLOAT r);
 size_t SphericalGravityComputeBinIndex(FLOAT r);
 void WriteInitialProfile(char* name, FLOAT* RR, FLOAT* RHO, FLOAT* GG, FLOAT* PP, FLOAT* UU, size_t n, FLOAT K,
 FLOAT gamma);
+
+inline float internalEnergy(float rho, float rhoNi, MHDInitialProfile* profile, FLOAT radius)
+{
+	double T;
+	profile->interpolateTemperature(&T, radius);
+	double E = EOSPolytropicFactor * pow(rho, Gamma - 1) / (Gamma -1);
+	E += 1.5 * (1 - 0.75 * rhoNi / rho) * R_gas * T / 14;
+	return E;
+}
+
+inline float internalEnergy(float* rhoField, float* rhoNiField, long long index, MHDInitialProfile* profile, FLOAT radius)
+{
+	return internalEnergy(rhoField[index], rhoNiField[index], profile, radius);
+}
 
 int grid::MHD_SNIA_GetFields(float** densityField, float** totalEnergyField, float** internalEnergyField,
 float** vxField, float** vyField, float** vzField, float** vFields,
@@ -235,8 +250,12 @@ float dipoleMoment[3], float dipoleCenter[3], bool usingVectorPotential)
 					FLOAT rx = x - SphericalGravityCenter[0];
 					FLOAT r = sqrt(square(rx) + yy_zz);
 
-					float rho, T = 0;
+					float rho, rhoNi, T = 0;
 					int retcode = p->interpolateDensity(&rho, r); //g/cm**3
+					//retcode = profileInterpolate(&T, temperatureData, r, radiusData, p.nRows, radiusSO); //K
+					bool isBurned = (r < burnedRadius);				// || (T > 0 && T > burningTemperature));
+					if(UseBurning)
+						rhoNi = (isBurned) ? rho : 0;
 
 					vx = GridVelocity[0];
 					vy = GridVelocity[1];
@@ -249,8 +268,6 @@ float dipoleMoment[3], float dipoleCenter[3], bool usingVectorPotential)
 						vz += vr * rz / r;
 					}
 
-					//retcode = profileInterpolate(&T, temperatureData, r, radiusData, p.nRows, radiusSO); //K
-					bool isBurned = (r < burnedRadius);				// || (T > 0 && T > burningTemperature));
 
 					float gasE = 0;
 					if(p->internalEnergyData)
@@ -259,7 +276,8 @@ float dipoleMoment[3], float dipoleCenter[3], bool usingVectorPotential)
 					}
 					else
 					{
-						gasE = EOSPolytropicFactor * POW(rho, gammaMinusOne) / gammaMinusOne;
+//						gasE = EOSPolytropicFactor * POW(rho, gammaMinusOne) / gammaMinusOne;
+						gasE = internalEnergy(rho, rhoNi, p, r);
 					}
 
 //					if(UseBurning && isBurned && burnedRadiusPE)
@@ -289,9 +307,8 @@ float dipoleMoment[3], float dipoleCenter[3], bool usingVectorPotential)
 					vxField[index] = vx;
 					vyField[index] = vy;
 					vzField[index] = vz;
-
 					if(UseBurning)
-						rhoNiField[index] = (isBurned) ? rho : 0;
+						rhoNiField[index] = rhoNi;
 
 					if(debug + 1 && MyProcessorNumber == ROOT_PROCESSOR)
 						if(j == (GridDimension[1] / 2) && k == (GridDimension[2] / 2) && i >= GridDimension[0] / 2)
@@ -473,6 +490,7 @@ float dipoleMoment[3], float dipoleCenter[3], bool usingVectorPotential)
 	const float* totEField_end = totEField + gridSize;
 
 	float* RHO = rhoField;
+	float* NI = rhoNiField;
 	float* GE = gasEField;
 	float* VX = vxField;
 	float* VY = vyField;
@@ -484,8 +502,15 @@ float dipoleMoment[3], float dipoleCenter[3], bool usingVectorPotential)
 	FLOAT z, zz, y, yy_zz, x, r;
 	float gasE;
 	size_t index;
-	if(InitRadialPressureFromCentral && p->internalEnergyData)
+	if(hasGasEField)
 	{
+		// If using gas energy field, the gas energy had been calculated
+		// already, otherwise we need to calculate it here.
+		arr_cpy(totEField, gasEField, gridSize);
+	}
+	else
+	{
+		bool hasInternalEnergyProfile = InitRadialPressureFromCentral && p->internalEnergyData;
 		for(int k = 0; k < GridDimension[2]; k++)
 		{
 			z = CELLCENTER(2, k);
@@ -501,7 +526,11 @@ float dipoleMoment[3], float dipoleCenter[3], bool usingVectorPotential)
 					x = CELLCENTER(0, i);
 					r = sqrt(square(x - SphericalGravityCenter[0]) + yy_zz);
 
-					p->interpolateInternalEnergy(&gasE + index, r);
+					if(hasInternalEnergyProfile)
+						p->interpolateInternalEnergy(&gasE, r);
+					else
+						gasE = internalEnergy(RHO, NI, index, p, r);
+
 					totEField[index] = gasE;
 
 					if((1 + debug) && MyProcessorNumber == ROOT_PROCESSOR)
@@ -512,20 +541,6 @@ float dipoleMoment[3], float dipoleCenter[3], bool usingVectorPotential)
 					index++;
 				}
 			}
-		}
-	}
-	else
-	{
-		// If using gas energy field, the gas energy had been calculated
-		// already, otherwise we need to calculate it here.
-		if(hasGasEField)
-		{
-			arr_cpy(totEField, gasEField, gridSize);
-		}
-		else
-		{
-			for(float* TE = totEField; TE < totEField_end; TE++)
-				*TE = EOSPolytropicFactor * POW(*RHO++, gammaMinusOne) / gammaMinusOne;
 		}
 	}
 
@@ -705,7 +720,7 @@ int grid::WriteRadialProfile(char* name)
 			x = xyz1[0];
 			y = xyz1[1];
 			z = xyz1[2];
-			r = distancel(xyz1, SphericalGravityCenter, GridRank);
+			r = lenl(xyz1, SphericalGravityCenter, GridRank);
 			E = totEField[index];
 			rho = rhoField[index];
 			vx = vxField[index];

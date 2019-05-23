@@ -1115,10 +1115,11 @@ EXTERN int UseBurning;                             //[BH]
 EXTERN int SkipBurningOperator;			   //[BH] ..., only define the fields
 EXTERN int AllowUnburning;			   //[BH] dQ/dt=Q*fd/dt, when fd/dt>0 else =0
 EXTERN int CallSetBoundaryConditionsAfterBurning;  //[BH]
-EXTERN float BurningDiffusionMethod;               //[BH]
+EXTERN int BurningDiffusionMethod;                 //[BH]
 EXTERN float BurningDiffusionRate;                 //[BH]
 EXTERN float BurningDiffusionRateReduced;          //[BH]
 EXTERN float BurningDiffusionCourantSafetyFactor;  //[BH]
+EXTERN float BurningNonDistributedMinDensity;      //[BH]
 EXTERN float BurningReactionRate;                  //[BH]
 EXTERN float BurningReactionRateReduced;           //[BH]
 EXTERN float BurningReactionBurnedFractionLimitLo; //[BH]
@@ -1213,39 +1214,7 @@ EXTERN int SphericalGravityInterpAccelMethod; // const, linear interp., etc.
 //New parameter(s)
 EXTERN int SphericalGravityBinsPerCell;
 EXTERN int SphericalGravityDebug;
-
-//
-//EXTERN int UseSpherGrav;
-//EXTERN size_t* SpherGravActualNumberOfBins; // Actual number of bins incl. the central and the outer.
-//EXTERN FLOAT **SpherGravBinLeftEdges;
-//EXTERN FLOAT **SpherGravBinRightEdges;
-//EXTERN FLOAT  *SpherGravBinSize; // >0, if uniform betwen the inner and outer radius.
-//EXTERN int    *SpherGravHasCentralBin;
-//EXTERN FLOAT  *SpherGravInnerRadius;
-//EXTERN FLOAT  *SpherGravOuterRadius;
-//
-//EXTERN FLOAT  **SpherGravInteriorMasses;
-//EXTERN size_t **SpherGravShellCellCounts; //probably should be a long long int.
-//
-//EXTERN FLOAT **SpherGravShellCentersOfMass[MAX_DIMENSION]; // By r and dim
-//EXTERN FLOAT  *SpherGravCenterOfMass[MAX_DIMENSION]; // By dim
-//
-//EXTERN FLOAT **SpherGravShellKineticEnergies[MAX_DIMENSION]; // By r and dim
-//EXTERN FLOAT **SpherGravShellKineticEnergy; // By r
-//EXTERN FLOAT  *SpherGravKineticEnergies[MAX_DIMENSION]; // By dim
-//EXTERN FLOAT  *SpherGravKineticEnergy; // Total
-//
-//EXTERN FLOAT **SpherGravShellMagneticEnergies[MAX_DIMENSION]; // By r and dim
-//EXTERN FLOAT **SpherGravShellMagneticEnergy; // By r
-//EXTERN FLOAT  *SpherGravMagneticEnergies[MAX_DIMENSION]; // By dim
-//EXTERN FLOAT  *SpherGravMagneticEnergy; // Total
-//
-//EXTERN FLOAT **SpherGravShellMasses; // double float for adding too many cells with small mass
-//EXTERN FLOAT **SpherGravShellVolumes;
-//EXTERN int    *SpherGravUniformBins;
-//
-//EXTERN float **SpherGravBinAccels;
-//EXTERN float **SpherGravBinAccelSlopes;
+EXTERN FLOAT TopBurnedRadiusEstimate ;
 
 EXTERN float BA[3];
 

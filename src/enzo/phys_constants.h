@@ -16,23 +16,27 @@
 /************************************************/
 
 /* Boltzmann's constant [cm2gs-2K-1] or [ergK-1] */
-
 #define kboltz                          1.3806504e-16
 
-/* Mass of hydrogen [g] */
+/* Avogadro's number [1/mole] */
+#define N_Avog (6.022141e+23)
 
+/* Atomic mass unit, amu [g * mole] */
+#define amu (1/N_A)
+
+/* Gas constant, R = kB * NA */
+#define R_gas (kboltz * N_Avog)
+
+/* Mass of hydrogen [g] */
 #define mh                              1.67262171e-24
 
 /* Mass of an electron [g] */
-
 #define me                              9.10938215e-28
 
 /* Pi */
-
 #define pi                              3.14159265358979323846
 
 /* ergs per eV */
-
 #define erg_eV                          1.602176e-12
 
 

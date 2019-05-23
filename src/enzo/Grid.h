@@ -428,7 +428,8 @@ public:
 
 /* Member functions evolving the burning fraction */ 				//[BH]
   //float dfdt_min, dfdt_max;							//[BH]
-  int DiffuseBurnedFraction(); 							//[BH]
+   int DiffuseBurnedFraction(); 							//[BH]
+   double EstimateBurnedRadius(double rays0[][MAX_DIMENSION], double rayvecs[][MAX_DIMENSION], size_t n);	//[BH]
   float ComputeBurningFractionDiffusionTimeStep(float* dt); 			//[BH]
   int ComputeLaplacian(float* sourceField, float* resultField, int mode); 	//[BH]
 
@@ -1295,7 +1296,7 @@ public:
 	   get_ijk(ijk, index);
 	   get_xyz(xyz, ijk);
    }
-   size_t get_ijk_index(size_t ijk[], FLOAT xyz[])
+   size_t get_ijk_index(int ijk[], FLOAT xyz[])
    {
       for(int dim = 0; dim < GridRank; dim++)
       {
