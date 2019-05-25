@@ -396,40 +396,24 @@ inline T cube(T x)
 	return x * x * x;
 }
 
-inline long double lenl(long double x1, long double x2, long double y1, long double y2)
-{
-	return sqrtl(lensqaredl(x1, x2, y1, y2));
-}
-
-inline long double lenl(long double x1, long double x2, long double x3, long double y1, long double y2,
-	long double y3)
-{
-	return sqrtl(lensqaredl(x1, x2, x3, y1, y2, y3));
-}
-
-inline long double lenl(long double x1, long double x2, long double x3)
-{
-	return sqrtl(lensqaredl(x1, x2, x3));
-}
-
-inline long double lensqaredl(long double x1, long double x2, long double y1, long double y2)
+inline long double lensquaredl(long double x1, long double x2, long double y1, long double y2)
 {
 	return square(y1 - x1) + square(y2 - x2);
 }
 
-inline long double lensqaredl(long double x1, long double x2, long double x3, long double y1, long double y2,
+inline long double lensquaredl(long double x1, long double x2, long double x3, long double y1, long double y2,
 	long double y3)
 {
 	return square(y1 - x1) + square(y2 - x2) + square(y3 - x3);
 }
 
-inline long double lensqaredl(long double x1, long double x2, long double x3)
+inline long double lensquaredl(long double x1, long double x2, long double x3)
 {
 	return square(x1) + square(x2) + square(x3);
 }
 
 template<typename T, typename U>
-long double lensqaredl(T* x, U* y, size_t n)
+long double lensquaredl(T* x, U* y, size_t n)
 {
 	long double d = 0;
 	T* x_n = x + n;
@@ -438,10 +422,45 @@ long double lensqaredl(T* x, U* y, size_t n)
 	return d;
 }
 
+template<typename T>
+long double lensquaredl(T* x, size_t n)
+{
+	long double d = 0;
+	T* x_n = x + n;
+	while(x < x_n)
+	{
+		d += square(*x);
+		x++;
+	}
+	return d;
+}
+
 template<typename T, typename U>
 long double lenl(T* x, U* y, size_t n)
 {
-	return sqrt(lenl(x, y, n));
+	return sqrt(lensquaredl(x, y, n));
+}
+
+template<typename T>
+long double lenl(T* x, size_t n)
+{
+	return sqrt(lensquaredl(x, n));
+}
+
+inline long double lenl(long double x1, long double x2, long double y1, long double y2)
+{
+	return sqrtl(lensquaredl(x1, x2, y1, y2));
+}
+
+inline long double lenl(long double x1, long double x2, long double x3, long double y1, long double y2,
+	long double y3)
+{
+	return sqrtl(lensquaredl(x1, x2, x3, y1, y2, y3));
+}
+
+inline long double lenl(long double x1, long double x2, long double x3)
+{
+	return sqrtl(lensquaredl(x1, x2, x3));
 }
 
 template<typename T, typename U>
