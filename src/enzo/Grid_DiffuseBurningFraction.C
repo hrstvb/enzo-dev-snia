@@ -20,6 +20,7 @@
 
 #include <math.h>
 #include <stdio.h>
+#include "DebugMacros.h"
 #include "myenzoutils.h"
 #include "ErrorExceptions.h"
 #include "macros_and_parameters.h"
@@ -36,12 +37,12 @@
 #define MEAN_M_12C_16O_MIX_cgs (( M_12C_cgs + M_16O_cgs ) / 2 )
 #define MEAN_M_12C_16O_MIX_amu (( M_12C_amu + M_16O_amu ) / 2 )
 
-int rangeCutLimiter(float x, float dx, float lowCutoff, float highCutoff,
-float *xNew, float *dxNew);
-int lowCutLimiter(float x, float dx, float lowCutoff,
-float *xNew, float *dxNew);
-int highCutLimiter(float x, float dx, float highCutoff,
-float *xNew, float *dxNew);
+int rangeLimitInc(float x, float dx, float lowerLimit, float upperLimit,
+float *xNew, float *dxUsed);
+int lowerLimitInc(float x, float dx, float lowerLimit,
+float *xNew, float *dxUsed);
+int upperLimitInc(float x, float dx, float upperLimit,
+float *xNew, float *dxUsed);
 
 int grid::DiffuseBurnedFraction()
 {
@@ -54,48 +55,25 @@ int grid::DiffuseBurnedFraction()
 
 	this->DebugCheck("DiffuseBurnedFraction");
 
-	int gridSize = GetGridSize();
+	size_t gridSize = GetGridSize();
 
 	float* F = new float[gridSize];  // Evolving fraction (during the subcycle)
 	float* dFdt = new float[gridSize];
 
-	int useGE = DualEnergyFormalism && (HydroMethod != Zeus_Hydro);
+	float *Rho, *TE, *GE, *Rho_56Ni;
+	MHD_SNIA_GetFields(&Rho, &TE, &GE, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, &Rho_56Ni, NULL, NULL);
 
-	int RhoNum = FindField(Density, FieldType, NumberOfBaryonFields);
-	int TENum = FindField(TotalEnergy, FieldType, NumberOfBaryonFields);
-	int GENum = (useGE) ? FindField(InternalEnergy, FieldType, NumberOfBaryonFields) : 0;
-	int Rho_56NiNum = FindField(Density_56Ni, FieldType, NumberOfBaryonFields);
-
-	if(RhoNum < 0)
-		ENZO_FAIL("Grid::DiffuseBurnedFraction: Cannot find density.");
-	if(TENum < 0)
-		ENZO_FAIL("Grid::DiffuseBurnedFraction: Cannot find total energy.");
-	if(useGE && GENum < 0)
-		ENZO_FAIL("Grid::DiffuseBurnedFraction: Cannot find gas energy.");
-	if(Rho_56NiNum < 0)
-		ENZO_FAIL("Grid::DiffuseBurnedFraction: Cannot find Density_56Ni.");
-
-	float *Rho = BaryonField[RhoNum];
-	float *TE = BaryonField[TENum];
-	float *GE = (useGE) ? BaryonField[GENum] : NULL;
-	float *Rho_56Ni = BaryonField[Rho_56NiNum];
-
-	int idx, i, j, k, Nsub, retcode;
-	int fractionMode;
+	int Nsub, retcode;
 	float dtSubcycle, dtSoFar;
 	float f, df, fNew, dfNew;
 	float rho, rho_Ni, rho_CO, n_Ni, n_CO, n_all, f_rho, f_mole;
 	float X0, X1, Y0, Y1, X1_old, dX1;
-	float Q, TE_new, Q_new_TE, GE_new, Q_new_GE;
+	float Q, TE_new, GE_new, Q_for_GE;
 	float diffusionRate = BurningDiffusionRateReduced * CellWidth[0][0];
 	float reactionRate = BurningReactionRateReduced / CellWidth[0][0];
 	float minRhoForBurning = BurningNonDistributedMinDensity;
 
-	// dtSubcycle = timestep of this subcycle
-	// dtSoFar = overall timestep taken in heat equation
-	// this->dtFixed = the current timestep for the entire level.
-
-	for(i = 0; i < gridSize; i++)
+	for(size_t i = 0; i < gridSize; i++)
 	{
 		rho = Rho[i];
 
@@ -119,52 +97,22 @@ int grid::DiffuseBurnedFraction()
 		F[i] = Y1 / (Y0 + Y1); // Mole fraction of 56Ni
 	}
 
-	dtSoFar = 0.0;
-
+	dtSoFar = 0.0; // cumulative subcycles time, 0 <= dtSoFar <= dtFixed
 	Nsub = 0;  // number of subcycles
-
-//	//see also: Grid_ProjectSolutionToParent, usage of nint
-//	//Clean small waves
-//	for(size_t jndex = 0; jndex < gridSize; jndex++)
-//	{
-//		if(F[jndex] > 0.001)
-//			continue;
-//		const long long RR = 5;
-//		bool gotonext = false;
-//
-//		for(size_t kk = -RR; kk <= RR; kk++)
-//		{
-//			for(size_t jj = -RR; jj <= RR; jj++)
-//			{
-//				for(size_t ii = -RR; ii <= RR; ii++)
-//				{
-//					size_t JNDEX2 = jndex + ELT(ii, jj, kk);
-//					if(gotonext = (F[JNDEX2] > 0.1))
-//						break;
-//				}
-//				if(gotonext)
-//					break;
-//			}
-//			if(gotonext)
-//				break;
-//		}
-//
-//		if(!gotonext)
-//			F[jndex] = 0;
-//	}
-
+	// dtSubcycle = timestep of this subcycle
+	// dtSoFar = overall timestep taken in heat equation
+	// this->dtFixed = the current timestep for the entire level.
 	//subcycle begins
 	while(dtSoFar < dtFixed)
 	{
-
 		if(this->ComputeBurningFractionDiffusionTimeStep(&dtSubcycle) == FAIL)
 		{
 			ENZO_VFAIL("Grid::DiffuseBurnedFraction: Error in ComputeBurningTimeStep. %e %e\n", dtFixed, dtSubcycle);
 		}
-
-		// make sure we don't extend past dtFixed
+		// Make sure we don't extend past dtFixed
 		dtSubcycle = min(dtSubcycle, dtFixed - dtSoFar);
 
+		//Compute the diffusion term
 		if(this->ComputeLaplacian(dFdt, F, BurningDiffusionMethod) == FAIL)
 			ENZO_VFAIL("Grid::DiffuseBurnedFraction: Error in ComputeLaplacian. dtSub,dtFixed: %e %e\n", dtFixed,
 						dtSubcycle);
@@ -173,76 +121,46 @@ int grid::DiffuseBurnedFraction()
 
 		if(reactionRate)
 		{
-			// Add reaction
-			for(i = 0; i < gridSize; i++)
-				//dFdt[i] *= diffusionRate;
+			// Add the source term
+			for(size_t i = 0; i < gridSize; i++)
 				if(BurningReactionBurnedFractionLimitLo < F[i] && F[i] < BurningReactionBurnedFractionLimitHi)
 					dFdt[i] += reactionRate;
 		}
 
-		if(minRhoForBurning)
+		// Evolve F
+		for(size_t i = 0; i < gridSize; i++)
 		{
-			for(i = 0; i < gridSize; i++)
-				if(Rho[i] < minRhoForBurning)
-					dFdt[i] = 0;
+			int retcode = rangeLimitInc(F[i], dFdt[i] * dtSubcycle, 0, 1, &f, &df);
+			F[i] = f;
 		}
 
-		for(i = 0; i < gridSize; i++)
 		{
-			// Evolve F
-			int retcode = rangeCutLimiter(F[i], dFdt[i] * dtSubcycle, 0, 1, &f, &df);
-			F[i] = f;
-		} // end for i
-
-//		if(0)
-//		{
-//			//Clean small waves
-//			for(size_t jndex = 0; jndex < gridSize; jndex++)
-//			{
-//				if(F[jndex] > 0.001)
-//					continue;
-//				const long long RR = 5;
-//				bool gotonext = false;
-//
-//				for(size_t kk = -RR; kk <= RR; kk++)
-//				{
-//					for(size_t jj = -RR; jj <= RR; jj++)
-//					{
-//						for(size_t ii = -RR; ii <= RR; ii++)
-//						{
-//							size_t JNDEX2 = jndex + ELT(ii, jj, kk);
-//							if(gotonext = (F[JNDEX2] > 0.1))
-//								break;
-//						}
-//						if(gotonext)
-//							break;
-//					}
-//					if(gotonext)
-//						break;
-//				}
-//
-//				if(!gotonext)
-//					F[jndex] = 0;
-//			}
-//		}
+			double minFractionForDiffusion = .01;
+			minFractionForDiffusion *= BurningDiffusionRateReduced / CellWidth[0][0];
+			minFractionForDiffusion = powl(minFractionForDiffusion, max(NumberOfBufferZones, NumberOfGhostZones));
+			if(minFractionForDiffusion)
+			{
+				for(size_t i = 0; i < gridSize; i++)
+					if(F[i] < minFractionForDiffusion)
+						dFdt[i] = F[i] = 0;
+			}
+		}
 
 		dtSoFar += dtSubcycle;
 		Nsub++;
-
 	} // while(dtSoFar < dtFixed)
-// end of subcycle
+	  // end of subcycle
 
+	// Update the burned density and internal energy using the new burned fraction, F.
 	if(debug1)
 		printf("Grid::DiffuseBurnedFraction: Nsubcycles = %"ISYM"\n", Nsub);
 
-//*LevelArray[0]->GridData->*/ExtraFunction("[BH]:>>>>>>>> SolveMHDLi BEFORE LAPL", 0, NULL, NULL); //[BH]EF
-	for(i = 0; i < gridSize; i++)
+	for(size_t i = 0; i < gridSize; i++)
 	{
 		rho = Rho[i];
-
 		if(rho < tiny_number)
 		{
-			//This is an empty cell (rho=0).
+			Rho_56Ni[i] = 0;
 			continue;
 		}
 
@@ -252,43 +170,37 @@ int grid::DiffuseBurnedFraction()
 		X1 = f_mole * M_56Ni_amu; // intermediate result
 		X1 /= ( MEAN_M_12C_16O_MIX_amu * (1 - f_mole) + X1); // New mass fraction of 56Ni
 		// Calculate the new mass fraction of 56Ni making sure it stays between 0 and 1.
-		retcode = rangeCutLimiter(X1_old, X1 - X1_old, 0, 1, &X1, &dX1);
+		retcode = rangeLimitInc(X1_old, X1 - X1_old, 0, 1, &X1, &dX1);
 
-		Rho_56Ni[i] = X1 * rho; //Update the 56Ni mass density field with the new value.
-		Q = dX1 * BurningEnergyRelease; //enrgy release per gram product
+		Rho_56Ni[i] = X1 * rho; // Update the 56Ni mass density.
 
-		if(Q > 0 || (Q < 0 && AllowUnburning)) // added 11/19/2015 [BH]
-		{			// In case Q is negative make sure energy doesn't get negative:
-			retcode = lowCutLimiter(TE[i], Q, 0, &TE_new, &Q_new_TE);
-			//TODO: change error to warning
-			//      if ( retcode < 0 ) {
-			//        ENZO_VFAIL("Grid::DiffuseBurnedFraction: Bad total energy=%g dFdt=%g i=%d  dtFixed,dtSub: %e, %e\n",
-			//             dE[i], df, i, dtFixed, dtSubcycle)
-			//      }
+		if(rho < minRhoForBurning)
+			continue;
 
-			if(useGE)
-			{
-				retcode = lowCutLimiter(GE[i], Q, 0, &GE_new, &Q_new_GE);
-				//TODO: change error to warning
-				//      if ( retcode < 0 ) {
-				//          ENZO_VFAIL("Grid::DiffuseBurnedFraction: Bad gas energy=%g dFdt=%g i=%d  dtFixed,dtSub: %e, %e\n",
-				//                    GE[i], df, i, dtFixed, dtSubcycle)
-				//      }
+		if(dX1 == 0 || (dX1 < 0 && !AllowUnburning))
+			continue;
 
-				//Q = max( Q_new_TE, Q_new_GE ); replaced 11/19/2015 [BH]
-				Q_new_TE = max(Q_new_TE, Q_new_GE); // max(...) because we worry only about negative values
-				//GE[i] += Q; replaced 11/19/2015 [BH]
-				GE[i] += Q_new_TE;
-			}
+		Q = dX1 * BurningEnergyRelease; // Enrgy release per gram product
+		TE[i] += Q;
+		if(GE)
+			GE[i] = Q;
+	}
 
-			//TE[i] += Q_new_TE; replaced 11/19/2015 [BH]
-			TE[i] += Q_new_TE;
-		}
-		else
+	{
+		int i;
+		if(GE)
 		{
+			if(0 <= (i = findmaxlte(GE, gridSize, 0)))
+			{
+				TRACEGF("Non-positive internal energy, %e, at index %lld", GE[i]);
+			}
+		}
+
+		if(0 <= (i = findmaxlte(TE, gridSize, 0)))
+		{
+			TRACEGF("Non-positive total energy, %e, at index %lld", TE[i]);
 		}
 	}
-//*LevelArray[0]->GridData->*/ExtraFunction("[BH]:>>>>>>>> SolveMHDLi AFTER LAPL", 0, NULL, NULL); //[BH]EF
 
 	delete[] dFdt;
 	delete[] F;
@@ -373,114 +285,108 @@ float grid::ComputeBurningFractionDiffusionTimeStep(float* dt)
 
 /***********************************************************************
  /
- /  Range-cut limiter
+ /  Range limit increment
  /
  /  written by:  Boyan Hristov
  /  date:        August, 2014
  /
  /  PURPOSE:  Limits the growth 'dx' so that xNew=x+dx stays in
- /	the specified range [lowCutoff, highCutoff].
+ /	the specified range [lowerLimit, upperLimit].
  /
  /  RETURNS:
  /    0 - no adjustment of 'dx'
- /	Output values: dxNew=dx and xNew=x+dx
+ /	Output values: dxUsed=dx and xNew=x+dx
  /   -1 - 'dx' was too big (too negative) causing 'x' to undeshoot
- /	Output values: dxNew=lowCutoff-x and xNew=lowCutoff
+ /	Output values: dxUsed=lowerLimit-x and xNew=lowerLimit
  /    1 - 'dx' was too big (too positive) causing 'x' to overshot
- /	Output values: dxNew=highCutoff-x and xNew=highCutoff
+ /	Output values: dxUsed=upperLimit-x and xNew=upperLimit
  /
  ************************************************************************/
-int rangeCutLimiter(float x, float dx, float lowCutoff, float highCutoff,
-float *xNew, float *dxNew)
+int rangeLimitInc(float x, float dx, float lowerLimit, float upperLimit,
+float *xNew, float *dxUsed)
 {
 	float y = x + dx;
 
-	if(y < lowCutoff)
+	if(y < lowerLimit)
 	{
-		*dxNew = (*xNew = lowCutoff) - x;
+		*dxUsed = (*xNew = lowerLimit) - x;
 		return -1;
 	}
 
-	if(y > highCutoff)
+	if(y > upperLimit)
 	{
-		*dxNew = (*xNew = highCutoff) - x;
+		*dxUsed = (*xNew = upperLimit) - x;
 		return 1;
 	}
 
-	*dxNew = dx;
+	*dxUsed = dx;
 	*xNew = y;
 	return 0;
 }
 
 /***********************************************************************
  /
- /  Low-cut limiter
+ /  Lower limit increment
  /
  /  written by:  Boyan Hristov
  /  date:        August, 2014
  /
  /  PURPOSE:  Limits the growth 'dx' so that xNew=x+dx doesn't go
- /	below lowCutoff.
+ /	below lowerLimit.
  /
  /  RETURNS:
  /    0 - no adjustment of 'dx'
- /	Output values: dxNew=dx and xNew=x+dx
+ /	Output values: dxUsed=dx and xNew=x+dx
  /   -1 - 'dx' was too big (too negative) causing 'x' to undeshoot
- /	Output values: dxNew=lowCutoff-x and xNew=lowCutoff
+ /	Output values: dxUsed=lowerLimit-x and xNew=lowerLimit
  /
  ************************************************************************/
-int lowCutLimiter(float x, float dx, float lowCutoff,
-float *xNew, float *dxNew)
+int lowerLimitInc(float x, float dx, float lowerLimit,
+float *xNew, float *dxUsed)
 {
 	float y = x + dx;
 
-	if(y < lowCutoff)
+	if(y < lowerLimit)
 	{
-		*dxNew = (*xNew = lowCutoff) - x;
+		*dxUsed = (*xNew = lowerLimit) - x;
 		return -1;
 	}
 
-	*dxNew = dx;
+	*dxUsed = dx;
 	*xNew = y;
 	return 0;
 }
 
 /***********************************************************************
  /
- /  High-cut limiter
+ /  Upper limit increment
  /
  /  written by:  Boyan Hristov
  /  date:        August, 2014
  /
  /  PURPOSE:  Limits the growth 'dx' so that xNew=x+dx doesn't go
- /	above highCutoff.
+ /	above upperLimit.
  /
  /  RETURNS:
  /    0 - no adjustment of 'dx'
- /	Output values: dxNew=dx and xNew=x+dx
- /    1 - 'dx' was too big (too positive) causing 'x' to overshot
- /	Output values: dxNew=highCutoff-x and xNew=highCutoff
+ /	Output values: dxUsed=dx and xNew=x+dx
+ /    1 - 'dx' was too big (too positive) causing 'x' to overshoot
+ /	Output values: dxUsed=upperLimit-x and xNew=upperLimit
  /
  ************************************************************************/
-int highCutLimiter(float x, float dx, float highCutoff,
-float *xNew, float *dxNew)
+int upperLimitInc(float x, float dx, float upperLimit,
+float *xNew, float *dxUsed)
 {
 	float y = x + dx;
 
-	if(y < highCutoff)
+	if(y > upperLimit)
 	{
-		*dxNew = (*xNew = highCutoff) - x;
+		*dxUsed = (*xNew = upperLimit) - x;
 		return 1;
 	}
 
-	*dxNew = dx;
+	*dxUsed = dx;
 	*xNew = y;
 	return 0;
 }
-
-struct CleanupContext
-{
-	long long vicinitySize;
-	long long initialIJK[3];
-};
 

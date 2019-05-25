@@ -71,12 +71,13 @@ inline float internalEnergy(float rho, float rhoNi, MHDInitialProfile* profile, 
 {
 	double T;
 	profile->interpolateTemperature(&T, radius);
-	double E = EOSPolytropicFactor * pow(rho, Gamma - 1) / (Gamma -1);
+	double E = EOSPolytropicFactor * pow(rho, Gamma - 1) / (Gamma - 1);
 	E += 1.5 * (1 - 0.75 * rhoNi / rho) * R_gas * T / 14;
 	return E;
 }
 
-inline float internalEnergy(float* rhoField, float* rhoNiField, long long index, MHDInitialProfile* profile, FLOAT radius)
+inline float internalEnergy(float* rhoField, float* rhoNiField, long long index, MHDInitialProfile* profile,
+FLOAT radius)
 {
 	return internalEnergy(rhoField[index], rhoNiField[index], profile, radius);
 }
@@ -88,12 +89,14 @@ float** burnedDensityField,
 float** phiField,
 float** gravPotentialField)
 {
-	bool hasGasEField = DualEnergyFormalism && (HydroMethod != Zeus_Hydro); //[BH]
+	int rhoNum, gasENum, vxNum, vyNum, vzNum, totENum;
+	int BxNum, ByNum, BzNum, phiNum;
+	int rhoNiNum;
+	int gravPotentialNum;
 
-	int totENum, rhoNum, vxNum, vyNum, vzNum;
-	int gasENum = -1, BxNum = -1, ByNum = -1, BzNum = -1, rhoNiNum = -1;
-	int phiNum = -1, gravPotentialNum = -1;
-
+	// IdentifyPhysicalQuantities set gasENum=0 if not having Gas Energy field.
+	bool hasGasEField = DualEnergyFormalism; // && (HydroMethod != Zeus_Hydro); //[BH]
+	BxNum = ByNum = BzNum = phiNum = -1; // IdentifyPhysicalQuantities doesn't change these args if (not UseMHD).
 	if(IdentifyPhysicalQuantities(rhoNum, gasENum, vxNum, vyNum, vzNum, totENum, BxNum, ByNum, BzNum, phiNum) == FAIL)
 		ENZO_FAIL("MHDProfiileInitializeGrid: Error in IdentifyPhysicalQuantities for UseMHD==true.")
 
@@ -135,24 +138,49 @@ float** gravPotentialField)
 			BFields[2] = BaryonField[BzNum];
 		}
 	}
-
-	if(burnedDensityField && UseBurning)
+	else
 	{
-		rhoNiNum = FindField(Density_56Ni, FieldType, NumberOfBaryonFields);
-		if(rhoNiNum < 0)
-			ENZO_FAIL("MHDProfiileInitializeGrid: Error in FindField for Density_56Ni.")
-		*burnedDensityField = BaryonField[rhoNiNum];
+		if(BxField)
+			*BxField = NULL;
+		if(ByField)
+			*ByField = NULL;
+		if(BzField)
+			*BzField = NULL;
+		if(BFields)
+			BFields[0] = BFields[1] = BFields[2] = NULL;
+	}
+
+	if(burnedDensityField)
+	{
+		if(UseBurning)
+		{
+			rhoNiNum = FindField(Density_56Ni, FieldType, NumberOfBaryonFields);
+			if(rhoNiNum < 0)
+				ENZO_FAIL("MHDProfiileInitializeGrid: Error in FindField for Density_56Ni.")
+			*burnedDensityField = BaryonField[rhoNiNum];
+		}
+		else
+		{
+			*burnedDensityField = NULL;
+		}
 	}
 
 	if(phiField)
 		*phiField = (phiNum >= 0) ? BaryonField[phiNum] : NULL;
 
-	if(gravPotentialField && WritePotential)
+	if(gravPotentialField)
 	{
-		gravPotentialNum = FindField(GravPotential, FieldType, NumberOfBaryonFields);
-		if(gravPotentialNum < 0)
-			ENZO_FAIL("MHDProfiileInitializeGrid: Error in FindField for GravPotential.")
-		*gravPotentialField = BaryonField[gravPotentialNum];
+		if(WritePotential)
+		{
+			gravPotentialNum = FindField(GravPotential, FieldType, NumberOfBaryonFields);
+			if(gravPotentialNum < 0)
+				ENZO_FAIL("MHDProfiileInitializeGrid: Error in FindField for GravPotential.")
+			*gravPotentialField = BaryonField[gravPotentialNum];
+		}
+		else
+		{
+			*gravPotentialField = NULL;
+		}
 	}
 
 	return SUCCESS;
@@ -198,17 +226,17 @@ float dipoleMoment[3], float dipoleCenter[3], bool usingVectorPotential)
 
 	if(HydroMethod == MHD_RK || usingVectorPotential)
 	{
-		// Allow the ElectricField and MagneticField to
-		// be created temporarily for the purpose of
-		// initializing with vector potential.
-		// Free these fields in MHDProfileInitializeGrid2.
+// Allow the ElectricField and MagneticField to
+// be created temporarily for the purpose of
+// initializing with vector potential.
+// Free these fields in MHDProfileInitializeGrid2.
 		UseMHDCT = TRUE;
 		MHD_SetupDims();
 	}
 
 	if(ProcessorNumber != MyProcessorNumber || p == NULL)
 	{
-		//p==NULL is used with ParallelGridIO.
+//p==NULL is used with ParallelGridIO.
 //		TRACEGF("... DONE INITIALIZING GRID W/O FIELDS PHASE 1.")
 		return SUCCESS;
 	}
@@ -224,7 +252,10 @@ float dipoleMoment[3], float dipoleCenter[3], bool usingVectorPotential)
 	float *BxField = NULL, *ByField = NULL, *BzField = NULL;
 
 	MHD_SNIA_GetFields(&rhoField, &totEField, &gasEField, &vxField, &vyField, &vzField, NULL, &BxField, &ByField,
-						&BzField, NULL, &rhoNiField, NULL, NULL);
+						&BzField,
+						NULL,
+						&rhoNiField, NULL, NULL);
+	TRACE;
 
 	int debugnanflag = 0; //[BH]
 	float gammaMinusOne = Gamma - 1;
@@ -268,7 +299,6 @@ float dipoleMoment[3], float dipoleCenter[3], bool usingVectorPotential)
 						vz += vr * rz / r;
 					}
 
-
 					float gasE = 0;
 					if(p->internalEnergyData)
 					{
@@ -311,7 +341,11 @@ float dipoleMoment[3], float dipoleCenter[3], bool usingVectorPotential)
 						rhoNiField[index] = rhoNi;
 
 					if(debug + 1 && MyProcessorNumber == ROOT_PROCESSOR)
-						if(j == (GridDimension[1] / 2) && k == (GridDimension[2] / 2) && i >= GridDimension[0] / 2)
+						if((j==0||j == (GridDimension[1]-1) )&& (k==0||k == (GridDimension[2]-1))
+								&& fabs(y)<fabs(GridRightEdge[1] - GridLeftEdge[0])/4
+								&& fabs(z)<fabs(GridRightEdge[2] - GridLeftEdge[2])/4
+								)
+//							if(j == (GridDimension[1]) && k == (GridDimension[2]) && i >= GridDimension[0])
 							TRACEF("i,j,k=%03d,%04d,%04d, x,y,z=(%4f,%4f,%4f), rx,ry,rz=(%4f,%4f,%4f), r=%4f, " //
 							"rho=%e, U=%e, E=%e, v_r=%e, v^2=%e, B^2=%e, "//
 							"burned=%d, K=%e, gamma-1=%f",//
@@ -483,7 +517,10 @@ float dipoleMoment[3], float dipoleCenter[3], bool usingVectorPotential)
 	float *gasEField = NULL, *rhoNiField = NULL;
 	float *BxField = NULL, *ByField = NULL, *BzField = NULL;
 	MHD_SNIA_GetFields(&rhoField, &totEField, &gasEField, &vxField, &vyField, &vzField, NULL, &BxField, &ByField,
-						&BzField, NULL, &rhoNiField, NULL, NULL);
+						&BzField,
+						NULL,
+						&rhoNiField, NULL, NULL);
+	TRACE;
 
 	float gammaMinusOne = Gamma - 1;
 	size_t gridSize = GetGridSize();
@@ -504,8 +541,8 @@ float dipoleMoment[3], float dipoleCenter[3], bool usingVectorPotential)
 	size_t index;
 	if(hasGasEField)
 	{
-		// If using gas energy field, the gas energy had been calculated
-		// already, otherwise we need to calculate it here.
+// If using gas energy field, the gas energy had been calculated
+// already, otherwise we need to calculate it here.
 		arr_cpy(totEField, gasEField, gridSize);
 	}
 	else
@@ -616,16 +653,16 @@ int grid::WriteRadialProfile(char* name)
 	switch(sampleWhere)
 	{
 	case SAMPLE_OX:
-		// Sample a row of cells along x,
-		// (0,0,0)..(DomainRightEdge[0], 0, 0)
+// Sample a row of cells along x,
+// (0,0,0)..(DomainRightEdge[0], 0, 0)
 		arr_set(xyz1, MAX_DIMENSION, dx * 1e-6);
 		arr_set(xyz2, MAX_DIMENSION, dx * 1e-6);
 		xyz2[0] = DomainRightEdge[0] - dx * 1e-6;
 		break;
 	case SAMPLE_DIAG:
 	default:
-		// Sample cells from the center along the diagonal,
-		// (0,0,0)..(DomainRightEdge[0], DomainRightEdge[1], DomainRightEdge[2]):
+// Sample cells from the center along the diagonal,
+// (0,0,0)..(DomainRightEdge[0], DomainRightEdge[1], DomainRightEdge[2]):
 		arr_set(xyz1, MAX_DIMENSION, dx * 1e-6);
 		arr_set(xyz2, MAX_DIMENSION, -dx * 1e-6);
 		arr_xpy(xyz2, DomainRightEdge, MAX_DIMENSION);
@@ -656,7 +693,9 @@ int grid::WriteRadialProfile(char* name)
 	float *BxField = NULL, *ByField = NULL, *BzField = NULL;
 
 	MHD_SNIA_GetFields(&rhoField, &totEField, &gasEField, &vxField, &vyField, &vzField, NULL, &BxField, &ByField,
-						&BzField, NULL, &rhoNiField, NULL, NULL);
+						&BzField,
+						NULL,
+						&rhoNiField, NULL, NULL);
 
 	for(int format = 0; format < 2; format++)
 	{
@@ -664,7 +703,6 @@ int grid::WriteRadialProfile(char* name)
 		{
 		case 0:
 			sprintf(filename, "%s.radialProfile", name);
-
 			break;
 		case 1:
 			sprintf(filename, "%s.radialProfile.py", name);
