@@ -452,7 +452,7 @@ float SphericalGravityGetAt(FLOAT r)
 {
 	size_t rbin = SphericalGravityComputeBinIndex(r);
 	if(-1 == rbin)
-		return -1.0;
+		return 0;
 
 	// SphericalGravityInterpAccelMethod:
 	// 0 -- Take the enclosed mass, M_encl, for that bin and return
@@ -468,17 +468,12 @@ float SphericalGravityGetAt(FLOAT r)
 	{
 	case 0:
 		g_accel = SphericalGravityConstant * SphericalGravityInteriorMasses[rbin] / square(r);
-		TRACEF("g, G, M, r = %e %e %e %e", g_accel, SphericalGravityConstant, SphericalGravityInteriorMasses[rbin], r)
-		;
 		break;
 	case 1:
 		// Use linear interpolation between the bin left and right edge.
 		// Use the pre-calculated coefficients.
 		g_accel = SphericalGravityBinAccels[rbin]
 				+ SphericalGravityBinAccelSlopes[rbin] * (r - SphericalGravityBinLeftEdges[rbin]);
-//		TRACEF("g, g1, dg, dr, r, r2 = %e %e %e %e %e %e", g_accel, SphericalGravityBinAccels[rbin],
-//				SphericalGravityBinAccelSlopes[rbin], r - SphericalGravityBinLeftEdges[rbin], r,
-//				SphericalGravityBinLeftEdges[rbin]);
 		break;
 	}
 

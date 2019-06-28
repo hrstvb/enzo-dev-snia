@@ -278,7 +278,12 @@ int SetDefaultGlobalValues(TopGridData &MetaData)
     for (dim = 0; dim < MAX_DIMENSION; dim++) {
       AvoidRefineRegionLeftEdge[i][dim] = FLOAT_UNDEFINED;
       AvoidRefineRegionRightEdge[i][dim] = FLOAT_UNDEFINED;
+      StaticRefineShellCenter[i][dim] = 0;
     }
+    StaticRefineShellInnerRadius[i] = 0;
+    StaticRefineShellOuterRadius[i] = 0;
+    StaticRefineShellLevel      [i] = MAX_DEPTH_OF_HIERARCHY;
+    StaticRefineShellWithBuffer [i] = 1;
   }
 
   /* For evolving refinement regions. */
@@ -1004,6 +1009,7 @@ int SetDefaultGlobalValues(TopGridData &MetaData)
   BurningDiffusionRate                 = 1;   //[BH]
   BurningDiffusionRateReduced          = 0;   //[BH]
   BurningDiffusionCourantSafetyFactor  = 0.5; //Courant safety number = safety factor * dx^2 / BurningDiffusionRate //[BH]
+  BurningMinFractionForDiffusion       = 0.0;
   BurningNonDistributedMinDensity      = 0.0;
   BurningReactionRate                  = 1;   // This is the burning reaction rate value used when the burned   //[BH]
   BurningReactionRateReduced           = 0;   //  fraction is between 0 and 1 and inside the (Lo, Hi) limits    //[BH]
@@ -1015,6 +1021,14 @@ int SetDefaultGlobalValues(TopGridData &MetaData)
   TotalEnergyRelativeGrowthLimit		= -1; //Ignore condition [BH]
   BurnedFractionGrowthLimit		= -1; //Ignore condition [BH]
   InitialBurnedRadius           = 0;
+  PerturbationAmplitude = 0; 			//[BH]
+  PerturbationWavelength = 0;
+  PerturbationMethod = 0;
+  PertrubationBottomSize = 1.0;
+  PertrubationTopSize    = 0.0;
+  PertrubationBottomDensity = 0;
+  PertrubationTopDensity = 0;
+  triSphere = NULL;
   InitialBurnedRegionSustain	= 0;
   InitRadialPressureFromCentral = 0;
   InitBWithVectorPotential 		= 0;
@@ -1098,6 +1112,7 @@ int SetDefaultGlobalValues(TopGridData &MetaData)
 //  SpherGravBinAccelSlopes=NULL;
 
   BA[0] = BA[1] = BA[2] = 0;
+  MHD_LI_GRAVITY_AFTER_PLMPRED = 0;
 
   return SUCCESS;
 }

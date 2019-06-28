@@ -271,7 +271,8 @@ void MHDInitialProfile::init()
 	colData = NULL;
 	colNames = colNamesToKeep = NULL;
 	colSortingOrders = colNumsToKeep = NULL;
-	radiusColumnName = densityColumnName = internalEnergyColumnName = temperatureColumnName = radialVelocityColumnName = NULL;
+	radiusColumnName = densityColumnName = internalEnergyColumnName = temperatureColumnName = radialVelocityColumnName =
+			NULL;
 	radiusData = densityData = internalEnergyData = temperatureData = radialVelocityData = NULL;
 	radiusIndex = densityIndex = internalEnergyIndex = temperatureIndex = radialVelocityIndex = -1;
 	radiusSortingOrder = PROFILE_UNSORTED;
@@ -660,11 +661,18 @@ long long MHDInitialProfile::readPAH01(char* filename, double atTime)
 	bool searchingTime = true;
 	long long nColHeadersProcessed = 0;
 
-	char line[LINE_MAX_LENGTH];
-	while(fgets(line, LINE_MAX_LENGTH, file))
+	const size_t MAX_LINE_LENGTH = 4096;
+	char line[MAX_LINE_LENGTH];
+	while(fgets(line, MAX_LINE_LENGTH, file))
 	{
 		lineNum++;
-		TRACEF("%p", line);
+		if(strlen(line) == MAX_LINE_LENGTH - 1)
+		{
+			char s[256];
+			snprintf(s, 256, "Line %lld in '%s' possibly exceeds the maximum line length, %lld. Aborting...",
+				lineNum, filename, MAX_LINE_LENGTH);
+			EnzoFatalException(s, "MHDInitialProfile::readPAH01", 0);
+		}
 		switch(lineTypePAH01(line))
 		// Use 'continue' to read the next line.
 		// Use 'break' to exit the switch and quit reading.
@@ -798,10 +806,18 @@ long long MHDInitialProfile::readPAH02(char* filename, double atTime)
 	bool searchingTime = true;
 	long long nColHeadersProcessed = 0;
 
-	char line[LINE_MAX_LENGTH];
-	while(fgets(line, LINE_MAX_LENGTH, file))
+	const size_t MAX_LINE_LENGTH = 4096;
+	char line[MAX_LINE_LENGTH];
+	while(fgets(line, MAX_LINE_LENGTH, file))
 	{
 		lineNum++;
+		if(strlen(line) == MAX_LINE_LENGTH - 1)
+		{
+			char s[256];
+			snprintf(s, 256, "Line %lld in '%s' possibly exceeds the maximum line length, %lld. Aborting...",
+				lineNum, filename, MAX_LINE_LENGTH);
+			EnzoFatalException(s, "MHDInitialProfile::readPAH01", 0);
+		}
 
 		switch(lineTypePAH02(line))
 		// Use 'continue' to read the next line.

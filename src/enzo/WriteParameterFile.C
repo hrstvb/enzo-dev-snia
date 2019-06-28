@@ -172,7 +172,7 @@ int WriteParameterFile(FILE *fptr, TopGridData &MetaData, char *name = NULL)
   fprintf(fptr, "SphericalGravityCenter = %"PSYM" %"PSYM" %"PSYM"\n", SphericalGravityCenter[0],
 		  SphericalGravityCenter[1], SphericalGravityCenter[2]);
   fprintf(fptr, "SphericalGravityCentralMass = %"FSYM"\n", SphericalGravityCentralMass);
-  fprintf(fptr, "SphericalGravityConstant = %"FSYM"\n", SphericalGravityConstant);
+  fprintf(fptr, "SphericalGravityConstant = %" ESYM "\n", SphericalGravityConstant);
   fprintf(fptr, "SphericalGravityInnerRadius = %"FSYM"\n", SphericalGravityInnerRadius);
   fprintf(fptr, "SpericalGravityMaxHierarchyLevel = %"ISYM"\n", SphericalGravityMaxHierarchyLevel);
   fprintf(fptr, "SphericalGravityNumberOfBins = %"ISYM"\n", SphericalGravityNumberOfBins);
@@ -182,6 +182,7 @@ int WriteParameterFile(FILE *fptr, TopGridData &MetaData, char *name = NULL)
   fprintf(fptr, "SphericalGravityBinsPerCell = %"FSYM"\n", SphericalGravityBinsPerCell);
   fprintf(fptr, "SphericalGravityInterpAccelMethod = %"ISYM"\n", SphericalGravityInterpAccelMethod);
   fprintf(fptr, "SphericalGravityDebug = %"ISYM"\n", SphericalGravityDebug);
+  fprintf(fptr, "MHD_LI_GRAVITY_AFTER_PLMPRED = %"ISYM"\n", MHD_LI_GRAVITY_AFTER_PLMPRED);
 
   fprintf(fptr, "PythonTopGridSkip       = %"ISYM"\n", PythonTopGridSkip);
   fprintf(fptr, "PythonSubcycleSkip      = %"ISYM"\n", PythonSubcycleSkip);
@@ -711,6 +712,19 @@ int WriteParameterFile(FILE *fptr, TopGridData &MetaData, char *name = NULL)
     }
   }
 
+  for (int ireg = 0; ireg < MAX_STATIC_REGIONS; ireg++){
+    if (StaticRefineShellInnerRadius[ireg] < 0
+            || StaticRefineShellOuterRadius[ireg] < StaticRefineShellInnerRadius[ireg])
+      continue;
+    fprintf(fptr, "StaticRefineShellCenter[%" ISYM "] = ", ireg);
+    WriteListOfFloats(fptr, MAX_DIMENSION, StaticRefineShellCenter[ireg]);
+    fprintf(fptr, "StaticRefineShellInnerRadius[%" ISYM "] = %" FSYM "\n", ireg, StaticRefineShellInnerRadius[ireg]);
+    fprintf(fptr, "StaticRefineShellLevel[%" ISYM "] = %" ISYM "\n", ireg, StaticRefineShellLevel[ireg]);
+    fprintf(fptr, "StaticRefineShellOuterRadius[%" ISYM "] = %" FSYM "\n", ireg, StaticRefineShellOuterRadius[ireg]);
+    fprintf(fptr, "StaticRefineShellWithBuffer[%" ISYM "] = %" ISYM "\n", ireg, StaticRefineShellWithBuffer[ireg]);
+    fprintf(fptr, "\n");
+  }
+
   fprintf(fptr, "ParallelRootGridIO              = %"ISYM"\n", ParallelRootGridIO);
   fprintf(fptr, "ParallelRootGridIO_Force        = %"ISYM"\n", ParallelRootGridIO_Force); //[BH]
   fprintf(fptr, "ParallelParticleIO              = %"ISYM"\n", ParallelParticleIO);
@@ -1232,6 +1246,7 @@ int WriteParameterFile(FILE *fptr, TopGridData &MetaData, char *name = NULL)
   fprintf(fptr, "BurningDiffusionRate                  = %"FSYM"\n", BurningDiffusionRate                 ); //[BH]
   fprintf(fptr, "BurningDiffusionRateReduced           = %"FSYM"\n", BurningDiffusionRateReduced          ); //[BH]
   fprintf(fptr, "BurningDiffusionCourantSafetyFactor   = %"FSYM"\n", BurningDiffusionCourantSafetyFactor  ); //[BH]
+  fprintf(fptr, "BurningMinFractionForDiffusion        = %"FSYM"\n", BurningMinFractionForDiffusion       ); //[BH]
   fprintf(fptr, "BurningNonDistributedMinDensity       = %"FSYM"\n", BurningNonDistributedMinDensity      ); //[BH]
   fprintf(fptr, "BurningReactionRate                   = %"FSYM"\n", BurningReactionRate                  ); //[BH]
   fprintf(fptr, "BurningReactionRateReduced            = %"FSYM"\n", BurningReactionRateReduced           ); //[BH]
@@ -1243,6 +1258,13 @@ int WriteParameterFile(FILE *fptr, TopGridData &MetaData, char *name = NULL)
   fprintf(fptr, "TotalEnergyRelativeGrowthLimit        = %"FSYM"\n", TotalEnergyRelativeGrowthLimit       ); //[BH]
   fprintf(fptr, "BurnedFractionGrowthLimit             = %"FSYM"\n", BurnedFractionGrowthLimit		      ); //[BH]
   fprintf(fptr, "InitialBurnedRadius                   = %"FSYM"\n", InitialBurnedRadius		          ); //[BH]
+  fprintf(fptr, "PerturbationAmplitude                 = %"FSYM"\n", PerturbationAmplitude                ); //[BH]
+  fprintf(fptr, "PerturbationWavelength                = %"FSYM"\n", PerturbationWavelength               ); //[BH]
+  fprintf(fptr, "PerturbationMethod                    = %"ISYM"\n", PerturbationMethod                   ); //[BH]
+  fprintf(fptr, "PertrubationBottomSize                = %"FSYM"\n", PertrubationBottomSize               ); //[BH]
+  fprintf(fptr, "PertrubationTopSize                   = %"FSYM"\n", PertrubationTopSize                  ); //[BH]
+  fprintf(fptr, "PertrubationBottomDensity             = %"FSYM"\n", PertrubationBottomDensity            ); //[BH]
+  fprintf(fptr, "PertrubationTopDensity                = %"FSYM"\n", PertrubationTopDensity               ); //[BH]
   fprintf(fptr, "InitialBurnedRegionSustain            = %"ISYM"\n", InitialBurnedRegionSustain		      ); //[BH]
   fprintf(fptr, "InitRadialPressureFromCentral         = %"FSYM"\n", InitRadialPressureFromCentral        ); //[BH]
   fprintf(fptr, "InitBWithVectorPotential              = %"ISYM"\n", InitBWithVectorPotential             ); //[BH]

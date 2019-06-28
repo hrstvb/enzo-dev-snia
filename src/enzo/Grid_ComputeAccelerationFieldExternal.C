@@ -43,6 +43,7 @@ float *VelocityUnits, double *MassUnits, FLOAT Time);
 int CosmologyComputeExpansionFactor(FLOAT time, FLOAT *a, FLOAT *dadt);
 
 size_t SphericalGravityComputeBinIndex(FLOAT r);
+float SphericalGravityGetAt(FLOAT r);
 
 int grid::ComputeAccelerationFieldExternal()
 {
@@ -70,12 +71,13 @@ int grid::ComputeAccelerationFieldExternal()
 	if(AccelerationField[0] == NULL)
 		for(dim = 0; dim < GridRank; dim++)
 		{
-			AccelerationField[dim] = new float[size];
-			for(i = 0; i < size; i++)
-				AccelerationField[dim][i] = 0;
+			arr_newset(AccelerationField+dim, size, 0);
+//			AccelerationField[dim] = new float[size];
+//			for(i = 0; i < size; i++)
+//				AccelerationField[dim][i] = 0;
 
 		}
-	if(SelfGravity == 0)
+	else if(SelfGravity == 0)
 	{
 		for(dim = 0; dim < GridRank; dim++)
 		{
@@ -868,26 +870,30 @@ int grid::ComputeAccelerationFieldExternal()
 						rsquared = square(xyz[0] - SphericalGravityCenter[0]) + yy_zz;
 
 						r = sqrt(rsquared);
-						if(-1 == (rbin = SphericalGravityComputeBinIndex(r)))
-							continue;
 
-						// Calculate the SphericalGravity acceleration magnitude
-						int choice =
-								(SphericalGravityInterpAccelMethod && rbin < SphericalGravityActualNumberOfBins - 1) ?
-										choice : 0;
+						if(0==(my_accel=SphericalGravityGetAt(r)))
+								continue;
 
-						switch(choice)
-						{
-						case 0:
-							my_accel = SphericalGravityConstant * SphericalGravityInteriorMasses[rbin] / rsquared;
-							break;
-						case 1:
-							// Use linear interpolation between the bin left and right edge.
-							// Use the pre-calculated coefficients.
-							my_accel = SphericalGravityBinAccels[i]
-									+ SphericalGravityBinAccelSlopes[i] * (r - SphericalGravityBinLeftEdges[i]);
-							break;
-						}
+//						if(-1 == (rbin = SphericalGravityComputeBinIndex(r)))
+//							continue;
+//
+//						// Calculate the SphericalGravity acceleration magnitude
+//						int choice =
+//								(SphericalGravityInterpAccelMethod && rbin < SphericalGravityActualNumberOfBins - 1) ?
+//										choice : 0;
+//
+//						switch(choice)
+//						{
+//						case 0:
+//							my_accel = SphericalGravityConstant * SphericalGravityInteriorMasses[rbin] / rsquared;
+//							break;
+//						case 1:
+//							// Use linear interpolation between the bin left and right edge.
+//							// Use the pre-calculated coefficients.
+//							my_accel = SphericalGravityBinAccels[i]
+//									+ SphericalGravityBinAccelSlopes[i] * (r - SphericalGravityBinLeftEdges[i]);
+//							break;
+//						}
 
 						// Calculate the dim component of the SphericalGravity acceleration vector.
 						my_accel *= -xyz[dim] / r;

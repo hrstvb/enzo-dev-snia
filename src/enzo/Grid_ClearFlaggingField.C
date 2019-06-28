@@ -9,10 +9,11 @@
 /  PURPOSE:
 /
 ************************************************************************/
- 
+
 // Allocate and clear the flagging field.
- 
+
 #include <stdio.h>
+#include "myenzoutils.h"
 #include "ErrorExceptions.h"
 #include "macros_and_parameters.h"
 #include "typedefs.h"
@@ -21,33 +22,35 @@
 #include "GridList.h"
 #include "ExternalBoundary.h"
 #include "Grid.h"
- 
+
 void grid::ClearFlaggingField()
 {
- 
+
   /* Return if this grid is not on this processor. */
- 
+
   if (MyProcessorNumber != ProcessorNumber)
     return;
- 
+
   /* error check */
- 
+
   if (FlaggingField != NULL) {
     fprintf(stderr, "ClearFlaggingField: Warning, field already present.\n");
     delete [] FlaggingField;
   }
- 
+
+  arr_newset(&FlaggingField, GetGridSize(), 0);
+  return;
   /* compute size and allocate */
- 
+
   int size = 1;
   for (int dim = 0; dim < GridRank; dim++)
     size *= GridDimension[dim];
- 
+
   FlaggingField = new int[size];
- 
+
   /* Clear it */
- 
+
   for (int i = 0; i < size; i++)
     FlaggingField[i] = 0;
- 
+
 }

@@ -35,7 +35,7 @@ bool grid::PointInChildrenActiveNB(FLOAT* point, LevelHierarchyEntry* myLevelHie
 	return PointInChildrenActiveNB(point, (he) ? he->NextGridNextLevel : NULL);
 }
 
-void grid::getDomainEdges(FLOAT ledge[], FLOAT redge[])
+void grid::getGhostEdges(FLOAT ledge[], FLOAT redge[])
 {
 	arr_set(ledge, MAX_DIMENSION, 0);
 	arr_set(redge, MAX_DIMENSION, 0);
@@ -46,10 +46,31 @@ void grid::getDomainEdges(FLOAT ledge[], FLOAT redge[])
 	}
 }
 
-bool grid::intersectDomain(FLOAT ledge[], FLOAT redge[])
+int grid::intersect(FLOAT ledge[], FLOAT redge[])
 {
 	FLOAT ldomain[MAX_DIMENSION];
 	FLOAT rdomain[MAX_DIMENSION];
-	getDomainEdges(ldomain, rdomain);
-	return intersectRectangles(ledge, redge, ldomain, rdomain, GridRank);
+	getGhostEdges(ldomain, rdomain);
+	int retval = intersectRectangles(ledge, redge, ldomain, rdomain, GridRank);
+	return retval;
+}
+
+int grid::intersectActive(FLOAT ledge[], FLOAT redge[])
+{
+	int retval = intersectRectangles(ledge, redge, GridLeftEdge, GridRightEdge, GridRank);
+	return retval;
+}
+
+int grid::intersect(long lijk[], long rijk[])
+{
+	long long LR[2][MAX_DIMENSION];
+	arr_set(LR[0], 2 * MAX_DIMENSION, 0);
+	arr_set(LR[1], GridRank, -1);
+	arr_xpy(LR[1], GridDimension, GridRank);
+	return intersectRectangles(lijk, rijk, LR[0], LR[1], GridRank);
+}
+
+int grid::intersectActive(long lijk[], long rijk[])
+{
+	return intersectRectangles(lijk, rijk, GridStartIndex, GridEndIndex, GridRank);
 }

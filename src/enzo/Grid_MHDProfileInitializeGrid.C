@@ -22,7 +22,7 @@
 //#include <stdlib.h>
 #include <string.h>
 #include <cctype> //isspace
-
+#include <stdlib.h>
 #include <cmath>
 #include "myenzoutils.h"
 
@@ -40,6 +40,7 @@
 
 #include "DebugMacros.h"
 #include "MHDInitialProfile.h"
+#include "TriSpherePerturb.C"
 
 //#ifndef SRC_ENZO_INITIALPROFILE_H_
 //#define SRC_ENZO_INITIALPROFILE_H_
@@ -69,10 +70,11 @@ FLOAT gamma);
 
 inline float internalEnergy(float rho, float rhoNi, MHDInitialProfile* profile, FLOAT radius)
 {
-	double T;
-	profile->interpolateTemperature(&T, radius);
-	double E = EOSPolytropicFactor * pow(rho, Gamma - 1) / (Gamma - 1);
+	double T = 0, E = 0;
+	if(profile->interpolateTemperature(&T, radius))
+		T = (rhoNi / rho > 0.5) ? 5e9 : 1e6;
 	E += 1.5 * (1 - 0.75 * rhoNi / rho) * R_gas * T / 14;
+	E += EOSPolytropicFactor * pow(rho, Gamma - 1) / (Gamma - 1);
 	return E;
 }
 
@@ -255,11 +257,224 @@ float dipoleMoment[3], float dipoleCenter[3], bool usingVectorPotential)
 						&BzField,
 						NULL,
 						&rhoNiField, NULL, NULL);
-	TRACE;
 
 	int debugnanflag = 0; //[BH]
 	float gammaMinusOne = Gamma - 1;
 
+	// Initialize density and a sphere of Nickel density.
+	for(int k = 0; k < GridDimension[2]; k++)
+	{
+		FLOAT z = CELLCENTER(2, k);
+		FLOAT rz = z - SphericalGravityCenter[2];
+		FLOAT zz = square(rz);
+		for(int j = 0; j < GridDimension[1]; j++)
+		{
+			FLOAT y = CELLCENTER(1, j);
+			FLOAT ry = y - SphericalGravityCenter[1];
+			FLOAT yy_zz = square(ry) + zz;
+			for(int i = 0; i <= GridDimension[0]; i++)
+			{
+				int index = ELT(i, j, k);
+				float vr, vx, vy, vz, vv, Bx, By, Bz, BB;
+
+				FLOAT x = CELLCENTER(0, i);
+				FLOAT rx = x - SphericalGravityCenter[0];
+				FLOAT r = sqrt(square(rx) + yy_zz);
+
+				float rho, rhoNi = 0, T = 0;
+				int retcode = p->interpolateDensity(&rho, r); //g/cm**3
+				//retcode = profileInterpolate(&T, temperatureData, r, radiusData, p.nRows, radiusSO); //K
+				bool isBurned = false;
+				double r1, r2;
+
+				switch(PerturbationMethod)
+				{
+				case 0:
+					isBurned = r <= InitialBurnedRadius;
+					break;
+				case 1: // Burned sphere, smooth perturb zone.
+					r1 = InitialBurnedRadius;
+					r2 = r1 + PerturbationAmplitude;
+					if(r <= r1)
+						isBurned = true;
+					else if(r > r2)
+						isBurned = false;
+					else
+					{
+						rhoNi = (r - r1) / PerturbationAmplitude;
+						rhoNi *= 4 / (1 + 3 * rhoNi);
+						rhoNi *= rho;
+					}
+					break;
+				case 2: // Burned sphere, randomly burned perturb zone
+					r1 = InitialBurnedRadius;
+					r2 = r1 + PerturbationAmplitude;
+					if(r <= r1)
+						isBurned = true;
+					else if(r > r2)
+						isBurned = false;
+					else
+						isBurned = rand() % 2;
+					break;
+				case 3: // Burned sphere, randomly burned perturb zone
+						// Probability decreasing with radius.
+					r1 = InitialBurnedRadius;
+					r2 = r1 + PerturbationAmplitude;
+					if(r <= r1)
+						isBurned = true;
+					else if(r > r2)
+						isBurned = false;
+					else
+					{
+						isBurned = drand48() >= (r - r1) / PerturbationAmplitude;
+					}
+					break;
+				case 4:
+					isBurned = r <= InitialBurnedRadius;
+//					if(PertrubationTopDensity > 0 && InitialBurnedRadius < r
+//							&& r < InitialBurnedRadius + PerturbationAmplitude)
+//						rho = PertrubationTopDensity;
+					break;
+				}
+
+				if(isBurned)
+					rhoNi = rho;
+				rhoField[index] = rho;
+				if(UseBurning)
+					rhoNiField[index] = rhoNi;
+
+//					if(debug + 1 && MyProcessorNumber == ROOT_PROCESSOR)
+//						if((j == 0 || j == (GridDimension[1] - 1)) && (k == 0 || k == (GridDimension[2] - 1))
+//								&& fabs(y) < fabs(GridRightEdge[1] - GridLeftEdge[0]) / 4
+//								&& fabs(z) < fabs(GridRightEdge[2] - GridLeftEdge[2]) / 4)
+////							if(j == (GridDimension[1]) && k == (GridDimension[2]) && i >= GridDimension[0])
+//							TRACEF("i,j,k=%03d,%04d,%04d, x,y,z=(%4f,%4f,%4f), rx,ry,rz=(%4f,%4f,%4f), r=%4f, " //
+//							"rho=%e, U=%e, E=%e, v_r=%e, v^2=%e, B^2=%e, "//
+//							"burned=%d, K=%e, gamma-1=%f",//
+//									i, j, k, x * 1e-5, y * 1e-5, z * 1e-5, rx * 1e-5, ry * 1e-5, rz * 1e-5, r * 1e-5, //
+//									rho, gasE, totE, vr, vv, BB, //
+//									isBurned, EOSPolytropicFactor, gammaMinusOne);
+			} //end baryonfield initialize
+		}
+	}
+
+	if(PerturbationMethod == 4 && burnedRadius > 0)
+	{
+		FILE* fptr = NULL;
+		if(MyProcessorNumber == ROOT_PROCESSOR && isTopGrid())
+			fptr = fopen("trisphere-data.py", "w");
+
+		if(fptr)
+		{
+			fprintf(fptr, "type('', (), dict(\n");
+
+			fprintf(fptr, ""
+					"## Unperturbed sphere (primary surface) triangulation parameters:\n"
+					"R = %e , # Primary radius\n"
+					"nV = %lld , # Number of vertices\n"
+					"nE = %lld , # Number of edges\n"
+					"nF = %lld , # Number of faucets \n"
+					"## Perturbations parameters:\n"
+					"A = %e , # Approx. perturbation height\n"
+					"bottomBaseSize = %4.2f , # relative to the primary facet (linear)\n"
+					"topBaseSize = %4.2f , # relative to the primary facet (linear)\n",
+					triSphere->R, triSphere->nV, triSphere->nE, triSphere->nF, triSphere->A, triSphere->bottomBaseSize,
+					triSphere->topBaseSize);
+			fprintf(fptr, "## Grid parameters:\n"
+					"gridLevel = %lld , # Hierarchy level\n"
+					"gridID = %lld , # grid ID in level\n"
+					"grid_dx = %e , # Grid spatial step\n"
+					"numGhostZones = %lld , \n"
+					"gridEdges = [\n"
+					"  [ %e , %e , %e ], # grid left edges\n"
+					"  [ %e , %e , %e ]], #grid right edges\n",
+					0, ID, TopGridDx[0], NumberOfGhostZones, GridLeftEdge[0], GridLeftEdge[1], GridLeftEdge[2],
+					GridRightEdge[0], GridRightEdge[1], GridRightEdge[2]);
+
+			fprintf(fptr, "\n# Perturbation data for the grid:\ndata=[\n\n");
+		}
+
+		//Perturb in the shell between r1 < r <r2.
+		// Calculate position with respect to each side.
+		for(size_t k_face = 0; k_face < triSphere->nF; k_face++)
+//		for(size_t k_face = 9; k_face < 10; k_face++)
+		{
+			long lijk[3], rijk[3];
+			double *ledge, *redge;
+			FLOAT xyz[3], xyz2[3];
+			size_t numInside = 0;
+
+			triSphere->getSpikeEnclosingRectangle(k_face, &ledge, &redge);
+			if(fptr)
+			{
+				fprintf(fptr, "[ %lld ,\n", k_face);
+				triSphere->fprint_cache(fptr);
+				fprintf(fptr, "],\n[");
+			}
+
+			if(0 > intersect(ledge, redge))
+			{
+				if(fptr)
+					fprintf(fptr, "]],\n");
+				continue;
+			}
+
+			get_ijk_index(lijk, ledge);
+			get_ijk_index(rijk, redge);
+
+			for(size_t k = lijk[2]; k < rijk[2]; k++)
+			{
+				xyz[2] = CELLCENTER(2, k);
+				//xyz2[2] = CELLCENTER(2, k);
+				for(size_t j = lijk[1]; j < rijk[1]; j++)
+				{
+					xyz[1] = CELLCENTER(1, j);
+					//xyz2[1] = CELLCENTER(1, j);
+					bool wasInside = false;
+					for(size_t i = lijk[0]; i < rijk[0]; i++)
+					{
+						xyz[0] = CELLCENTER(0, i);
+						//xyz2[0] = CELLCENTER(0, i);
+
+						bool isInsideSpike = triSphere->isInSpike(k_face, xyz);
+						if(!isInsideSpike)
+							continue;
+
+						if(fptr)
+							fprintf(fptr, "[ %e , %e , %e ],\n", xyz[0], xyz[1], xyz[2]);
+
+						size_t index = ELT(i, j, k);
+						double DX = TopGridDx[0] / CellWidth[0][0];
+						double massfrac = (DX > .75) ? 1 : (DX > .4) ? .2 : .01;
+						massfrac = 4 * massfrac / (1 + 3 * massfrac);
+						massfrac = 1;
+						float rho;
+						if(PertrubationBottomDensity > 0)
+							rhoField[index] = rho = PertrubationBottomDensity;
+						else
+							rho = rhoField[index];
+						rhoNiField[index] = massfrac * rho;
+						wasInside = true;
+						numInside++;
+					}
+				}
+			} // end i,j,k loops
+
+			if(fptr)
+				fprintf(fptr, "]],\n");
+		} // end k_face loop
+
+		if(fptr)
+		{
+			fprintf(fptr, "\n] #end data\n");
+			fprintf(fptr, ") #end dict\n");
+			fprintf(fptr, ") #end type\n\n");
+			fclose(fptr);
+			fptr == NULL;
+		}
+	}
+
+	//Initialize all other fields.
 	for(int k = 0; k < GridDimension[2]; k++)
 	{
 		FLOAT z = CELLCENTER(2, k);
@@ -281,28 +496,34 @@ float dipoleMoment[3], float dipoleCenter[3], bool usingVectorPotential)
 					FLOAT rx = x - SphericalGravityCenter[0];
 					FLOAT r = sqrt(square(rx) + yy_zz);
 
-					float rho, rhoNi, T = 0;
-					int retcode = p->interpolateDensity(&rho, r); //g/cm**3
-					//retcode = profileInterpolate(&T, temperatureData, r, radiusData, p.nRows, radiusSO); //K
-					bool isBurned = (r < burnedRadius);				// || (T > 0 && T > burningTemperature));
-					if(UseBurning)
-						rhoNi = (isBurned) ? rho : 0;
+					float rho = rhoField[index];
+					float rhoNi = rhoNiField[index];
+					float T = 0;
 
 					vx = GridVelocity[0];
 					vy = GridVelocity[1];
 					vz = GridVelocity[2];
 					if(p->radialVelocityData)
 					{
-						retcode = p->interpolateRadialVelocity(&vr, r);
+						p->interpolateRadialVelocity(&vr, r);
 						vx += vr * rx / r;
 						vy += vr * ry / r;
 						vz += vr * rz / r;
 					}
+					vx = vy = vz = 0;
+//					vz=1e5;
+//					if((i==30 || i==29) && j == 10 && k == 11)
+//						vy = 1000e5;
 
+//					{
+//						for(int i = 0; i<p->nRowsInternalEnergy; i++)
+//							printf(" %e, ", p->internalEnergyData[i]);
+//						printf("\n");
+//					}
 					float gasE = 0;
 					if(p->internalEnergyData)
 					{
-						retcode = p->interpolateInternalEnergy(&gasE, r); //g/cm**3
+						p->interpolateInternalEnergy(&gasE, r); //g/cm**3
 					}
 					else
 					{
@@ -330,28 +551,28 @@ float dipoleMoment[3], float dipoleCenter[3], bool usingVectorPotential)
 						BzField[index] = Bz;
 					}
 
-					rhoField[index] = rho;
+//					rhoField[index] = rho;
 					if(hasGasEField)
 						gasEField[index] = gasE;
 					totEField[index] = totE;
 					vxField[index] = vx;
 					vyField[index] = vy;
 					vzField[index] = vz;
-					if(UseBurning)
-						rhoNiField[index] = rhoNi;
+//					if(UseBurning)
+//						rhoNiField[index] = rhoNi;
 
-					if(debug + 1 && MyProcessorNumber == ROOT_PROCESSOR)
-						if((j==0||j == (GridDimension[1]-1) )&& (k==0||k == (GridDimension[2]-1))
-								&& fabs(y)<fabs(GridRightEdge[1] - GridLeftEdge[0])/4
-								&& fabs(z)<fabs(GridRightEdge[2] - GridLeftEdge[2])/4
-								)
-//							if(j == (GridDimension[1]) && k == (GridDimension[2]) && i >= GridDimension[0])
-							TRACEF("i,j,k=%03d,%04d,%04d, x,y,z=(%4f,%4f,%4f), rx,ry,rz=(%4f,%4f,%4f), r=%4f, " //
-							"rho=%e, U=%e, E=%e, v_r=%e, v^2=%e, B^2=%e, "//
-							"burned=%d, K=%e, gamma-1=%f",//
-									i, j, k, x * 1e-5, y * 1e-5, z * 1e-5, rx * 1e-5, ry * 1e-5, rz * 1e-5, r * 1e-5, //
-									rho, gasE, totE, vr, vv, BB, //
-									isBurned, EOSPolytropicFactor, gammaMinusOne);
+//						if(debug + 1 && MyProcessorNumber == ROOT_PROCESSOR)
+//							if((j == 0 || j == (GridDimension[1] - 1)) && (k == 0 || k == (GridDimension[2] - 1))
+//									&& fabs(y) < fabs(GridRightEdge[1] - GridLeftEdge[0]) / 4
+//									&& fabs(z) < fabs(GridRightEdge[2] - GridLeftEdge[2]) / 4)
+////							if(j == (GridDimension[1]) && k == (GridDimension[2]) && i >= GridDimension[0])
+//								TRACEF("i,j,k=%03d,%04d,%04d, x,y,z=(%4f,%4f,%4f), rx,ry,rz=(%4f,%4f,%4f), r=%4f, " //
+//								"rho=%e, U=%e, E=%e, v_r=%e, v^2=%e, B^2=%e, "//
+//								"burned=%d, K=%e, gamma-1=%f",//
+//										i, j, k, x * 1e-5, y * 1e-5, z * 1e-5, rx * 1e-5, ry * 1e-5, rz * 1e-5,
+//										r * 1e-5, //
+//										rho, gasE, totE, vr, vv, BB, //
+//										isBurned, EOSPolytropicFactor, gammaMinusOne);
 				}
 			} //end baryonfield initialize
 		}
@@ -383,9 +604,6 @@ float dipoleMoment[3], float dipoleCenter[3], bool usingVectorPotential)
  */
 int grid::MHDSustainInitialBurnedRegionGrid()
 {
-	if(GridRank != 3)
-		ENZO_FAIL("MHDProfileInitializeGridBurnedFraction is implemented for 3D only.")
-
 	if(ProcessorNumber != MyProcessorNumber)
 		return SUCCESS;
 
@@ -401,10 +619,8 @@ int grid::MHDSustainInitialBurnedRegionGrid()
 
 	float* rhoField = BaryonField[rhoNum];
 	float* rhoNiField = BaryonField[rhoNiNum];
-	FLOAT lxyz[MAX_DIMENSION];
-	FLOAT rxyz[MAX_DIMENSION];
-	size_t lindex[MAX_DIMENSION];
-	size_t rindex[MAX_DIMENSION];
+	FLOAT lxyz[MAX_DIMENSION], rxyz[MAX_DIMENSION];
+	long lindex[MAX_DIMENSION], rindex[MAX_DIMENSION];
 
 	arr_set(lxyz, MAX_DIMENSION, 0);
 	arr_set(rxyz, MAX_DIMENSION, 0);
@@ -414,7 +630,7 @@ int grid::MHDSustainInitialBurnedRegionGrid()
 		rxyz[dim] = SphericalGravityCenter[dim] + InitialBurnedRadius;
 	}
 
-	if(intersectDomain(lxyz, rxyz))
+	if(intersect(lxyz, rxyz))
 		return SUCCESS;
 
 	get_ijk_index(lindex, lxyz);
@@ -483,6 +699,27 @@ int grid::MHDSustainInitialBurnedRegionGrid()
 	return SUCCESS;
 }
 
+double minmod(double a, double b)
+{
+	// return 0.25 * ( sign(a) + sign(b) ) * min( 2*abs(a), 2*abs(b), abs(a+b)/2 )
+	if(a * b <= 0)
+		return 0;
+
+	double c1, c2 = (a + b) / 4;
+	if(a < 0)
+	{
+		//both negative
+		// return the smallest abs value
+		c1 = (a > b) ? a : b;
+		return (c1 > c2) ? c1 : c2;
+	}
+
+	// both positive
+	// return the smallest abs value
+	c1 = (a > b) ? a : b;
+	return (c1 < c2) ? c1 : c2;
+}
+
 /*
  * It resets the total energy with the updated magnetic field.
  * As a side effect it frees the E&M fields for hydro method MHD_RK.
@@ -520,7 +757,6 @@ float dipoleMoment[3], float dipoleCenter[3], bool usingVectorPotential)
 						&BzField,
 						NULL,
 						&rhoNiField, NULL, NULL);
-	TRACE;
 
 	float gammaMinusOne = Gamma - 1;
 	size_t gridSize = GetGridSize();
@@ -638,7 +874,7 @@ int grid::WriteRadialProfile(char* name)
 	if(MyProcessorNumber != ProcessorNumber)
 		return FAIL;
 
-	size_t num, ijk[3];
+	long num, ijk[3];
 	FLOAT x, y, z, r;
 	float rho, E, U, vx, vy, vz;
 	float Bx = 0, By = 0, Bz = 0, rho_Ni = 0, g = 0, gamma = 0, P = 0;

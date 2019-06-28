@@ -182,6 +182,12 @@ inline int sign(T x)
 	return (x > 0) - (x < 0);
 }
 
+template<typename T, typename U>
+inline int cmp(T x, U y)
+{
+	return (x > y) - (x < y);
+}
+
 // Returns x[0] + ... +, x[n-1]
 template<typename T>
 T arr_sum(T* x, const size_t n);
@@ -217,11 +223,6 @@ T* arr_axpy(T* dest, const U* x, const size_t n, const V a);
 //no overlapping
 template<typename T, typename U, typename V, typename W>
 T* arr_axpby(T* dest, U* x, const size_t n, const V a, const W b);
-
-template<typename T>
-size_t sprintfvec(char* const s, const char* const preffix, const char* const singleElementFormat,
-	const char* const separator, const char* const suffix, const T* const vec, const size_t n,
-	const bool printWithIndices, const bool indexPrintsBeforeElement);
 
 /*
  * Segmented array routines
