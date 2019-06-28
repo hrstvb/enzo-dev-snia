@@ -429,7 +429,6 @@ public:
 /* Member functions evolving the burning fraction */ 				//[BH]
   //float dfdt_min, dfdt_max;							//[BH]
    int DiffuseBurnedFraction(); 							//[BH]
-   int EstimateBurnedRadius(double rays0[][MAX_DIMENSION], double rayvecs[][MAX_DIMENSION], double stopFalgs[], size_t n);	//[BH]
   float ComputeBurningFractionDiffusionTimeStep(float* dt); 			//[BH]
   int ComputeLaplacian(float* sourceField, float* resultField, int mode); 	//[BH]
 
