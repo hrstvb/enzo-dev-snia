@@ -5,6 +5,7 @@
 #include <stdexcept>
 #include "IDE_defs.h"
 #include "myenzoutils.h"
+#include "DebugMacros.h"
 #ifdef USE_MPI
 #include "mpi.h"
 #endif /* USE_MPI */
@@ -452,8 +453,7 @@ inline long double lenl(long double x1, long double x2, long double y1, long dou
 	return sqrtl(lensquaredl(x1, x2, y1, y2));
 }
 
-inline long double lenl(long double x1, long double x2, long double x3, long double y1, long double y2,
-	long double y3)
+inline long double lenl(long double x1, long double x2, long double x3, long double y1, long double y2, long double y3)
 {
 	return sqrtl(lensquaredl(x1, x2, x3, y1, y2, y3));
 }
@@ -463,13 +463,29 @@ inline long double lenl(long double x1, long double x2, long double x3)
 	return sqrtl(lensquaredl(x1, x2, x3));
 }
 
+template<typename T>
+inline void normalize(T* x, size_t n)
+{
+	long double L = lenl(x, n);
+	if(L)
+		arr_ax(x, 1 / L);
+}
+
 template<typename T, typename U>
+inline void scaleto(T* x, size_t n, U newlength)
+{
+	long double L = lenl(x, n);
+	if(L)
+		arr_ax(x, n, newlength / L);
+}
+
+template<typename T>
 int normalizel(T* x, size_t n)
 {
 	long double L = lensqaredl(x, n);
 	if(L)
 	{
-		arr_ax(x, n, 1/L);
+		arr_ax(x, n, 1 / L);
 		return 1;
 	}
 	return 0;
@@ -497,21 +513,45 @@ long double distMaxl(const T* x1, const U* x2, const V* y, const size_t n)
 }
 
 template<typename T, typename U>
-bool intersectRectangles(T* ldest, T* rdest, U* lother, U* rother, size_t n)
+int intersectRectangles(T* ldest, T* rdest, U* lother, U* rother, size_t n)
 {
+//	TRACEF("[%e, %e, %e], [%e, %e, %e],   [%e, %e, %e], [%e, %e, %e], %s",
+//		   ldest[0],ldest[1],ldest[2],
+//		   rdest[0],rdest[1],rdest[2],
+//		   lother[0],lother[1],lother[2],
+//		   rother[0],rother[1],rother[2],
+//		   "");
 	for(size_t dim = 0; dim < n; dim++)
 		if(ldest[dim] > rother[dim])
-			return true;
+			return -1;
 	for(size_t dim = 0; dim < n; dim++)
 		if(rdest[dim] < lother[dim])
-			return true;
+			return -1;
 	for(size_t dim = 0; dim < n; dim++)
 		if(ldest[dim] < lother[dim])
 			ldest[dim] = lother[dim];
 	for(size_t dim = 0; dim < n; dim++)
 		if(rdest[dim] > rother[dim])
 			rdest[dim] = rother[dim];
-	return false;
+//	TRACEF("[%e, %e, %e], [%e, %e, %e],   [%e, %e, %e], [%e, %e, %e], %s",
+//		   ldest[0],ldest[1],ldest[2],
+//		   rdest[0],rdest[1],rdest[2],
+//		   lother[0],lother[1],lother[2],
+//		   rother[0],rother[1],rother[2],
+//		   "");
+	return 0;
+}
+
+template<typename T, typename U>
+void rectUnion(T* rectLeft, T* rectRight, U* point, size_t n)
+{
+	for(size_t dim = 0; dim < n; dim++)
+		if(rectLeft[dim] > point[dim])
+			rectLeft[dim] = point[dim];
+
+	for(size_t dim = 0; dim < n; dim++)
+		if(rectRight[dim] < point[dim])
+			rectRight[dim] = point[dim];
 }
 
 /*
@@ -647,6 +687,16 @@ T* arr_cumsum(T* dest, U* x, size_t n, V initialSum)
 	return dest - n;
 }
 
+template<typename T, typename U>
+double arr_dotprod(T* x, U* y, size_t n)
+{
+	double sum = 0;
+	const double* x_n = x + n;
+	while(x < x_n)
+		sum += (*x++) * (*y++);
+	return sum;
+}
+
 #define ARR_LINOPBODY(DEST_EQ_SRC, DEST_IN_SRC, ASC_LOOP) \
 	U* x_n = x + n; \
 	if (areOfSameType(dest, x)) \
@@ -706,7 +756,7 @@ template<typename T, typename U, typename V>
 T* arr_axpb(T* x, const size_t n, const U a, const V b)
 {
 	if(a == 1)
-		if(b==0)
+		if(b == 0)
 			return x;
 		else
 			return arr_xpa(x, n, b);
@@ -717,7 +767,7 @@ T* arr_axpb(T* x, const size_t n, const U a, const V b)
 		else
 			return arr_set(x, n, (T) b);
 
-	if(b==0)
+	if(b == 0)
 		return arr_ax(x, n, a);
 
 	T* x_n = x + n;
@@ -824,6 +874,7 @@ int arr_snlprintf(char* const s, const size_t size, size_t* lengthSoFar, const c
 
 		if(!printWithIndices)
 		{
+//			TRACEF("%p %lld %lld %p %lld %lld", s, size, lengthSoFar, singleElementFormat, arr_size, i);
 			n = snlprintf(s, size, lengthSoFar, singleElementFormat, arr[i]);
 			if(n < 0)
 				return n;
@@ -856,6 +907,35 @@ int arr_snlprintf(char* const s, const size_t size, size_t* lengthSoFar, const c
 	}
 
 	return *lengthSoFar - l0;
+}
+
+template<typename T>
+int arr_fprintpylist(FILE *fptr, T *arr, size_t arr_size, char *preffix = NULL, char *singleElementFormat = "%e",
+	int elementPerLine = 0)
+{
+	const size_t SIZE = 4096;
+	char s0[SIZE];
+	size_t size = SIZE, len;
+	char *p0 = s0;
+	for(int i = 0; i < 2; i++)
+	{
+		size_t size = (i) ? (len + 1) : SIZE;
+		p0 = (i) ? (new char[size]) : s0;
+		*p0 = '\0';
+		char *p1 = p0;
+		len = 0;
+		int n = arr_snlprintf(p1, size, &len, preffix, "[\n", singleElementFormat, ", ", "]", NULL, arr, arr_size,
+								elementPerLine, false, false);
+		if(n < 0)
+			return n;
+
+		if(len < SIZE)
+			break;
+
+		size = len + 1;
+	}
+	fprintf(fptr, "%s\n", p0);
+	return len;
 }
 
 template<typename T>
@@ -1282,3 +1362,4 @@ inline MPI_Datatype getMPI_Datatype(T* a)
  }
  */
 #endif /* MY_ENZO_UTIILS_TPP */
+

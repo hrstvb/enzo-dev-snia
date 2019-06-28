@@ -166,7 +166,6 @@ int grid::FlagCellsToBeRefinedBySlope()
 		float* rhoData = NULL;
 		float* niData = NULL;
 		MHD_SNIA_GetFields(&rhoData, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, &niData, NULL, NULL);
-		TRACE;
 		if(rhoData != NULL && niData != NULL)
 		{
 			for(int dim = 0; dim < GridRank; dim++)

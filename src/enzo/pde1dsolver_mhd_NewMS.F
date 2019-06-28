@@ -12,7 +12,7 @@
      $     gravityon, acc,
      $     a, EquationOfState,SoundSpeed,hack)
       implicit none
-#include "fortran_types.def"  
+#include "fortran_types.def"
       INTG_PREC ndx,nu,nxb,nxe,I1,I2,ie
       INTG_PREC npu, numberofcolours
       parameter (npu=8)
@@ -34,7 +34,7 @@ c
      $     , dp, dv
 c-----------------------------------------------------------
       R_PREC gamma,gm1, prelow,rhomin,csmin
-      INTG_PREC MHDCTDualEnergyMethod, MHDCTSlopeLimiter, RiemannSolver 
+      INTG_PREC MHDCTDualEnergyMethod, MHDCTSlopeLimiter, RiemannSolver
       INTG_PREC idiffusion,ReconstructionMethod,MHDCTPowellSource
       INTG_PREC ix, ixp1, iu, nuu,nxbe(4), isweep, ibn
       R_PREC ww(npu), we(npu), flux(npu)
@@ -48,18 +48,18 @@ c     Note that for the most part things are treated identically as adiabatic.
 
       INTG_PREC EquationOfState ! 0=adiabatic 1=isothermal
       R_PREC SoundSpeed, dummy(8)
-      R_PREC wc(ndx,numberofcolours), ucx(ndx,numberofcolours) 
-      R_PREC wcr(ndx,numberofcolours), wcl(ndx,numberofcolours) 
-      R_PREC wcw(numberofcolours), wce(numberofcolours) 
-      R_PREC fluxc(numberofcolours) 
+      R_PREC wc(ndx,numberofcolours), ucx(ndx,numberofcolours)
+      R_PREC wcr(ndx,numberofcolours), wcl(ndx,numberofcolours)
+      R_PREC wcw(numberofcolours), wce(numberofcolours)
+      R_PREC fluxc(numberofcolours)
       INTG_PREC uchoice(ndx,npu)
       R_PREC total
       common /printff/printflag
 
       data alpha1/0.008_RKIND/, cdiff/0.1_RKIND/,prelow/1.0e-16_RKIND/
-      
+
       tdum0 = 1e-13_RKIND
-    
+
       gm1 = gamma - 1._RKIND
 c     theta = 1.5_RKIND
 c     if (idiffusion.eq.0) theta = 1.1_RKIND
@@ -101,18 +101,20 @@ c
 
 c xh preprossor
       do ix= nxb-2,nxe+2
-       w(ix,2)= w(ix,2)- dt*a(1)*w(ix,2)/(2.0_RKIND*a(0))
-       if(gravityon .eq. 1) w(ix,2)=w(ix,2)+dt*acc(ix)/2.0_RKIND
-       w(ix,3)= w(ix,3)- dt*a(1)*w(ix,3)/(2.0_RKIND*a(0))
-       w(ix,4)= w(ix,4)- dt*a(1)*w(ix,4)/(2.0_RKIND*a(0))
-       w(ix,8)= w(ix,8)- dt*a(1)*w(ix,8)/a(0)
-       pre(ix)= pre(ix)- dt*a(1)*3.0_RKIND*gm1*pre(ix)/(2.0_RKIND*a(0))
-       if( EquationOfState .eq. 0 ) then
-       u0(6,ix)= u0(6,ix)-
-     $   dt*a(1)*3.0_RKIND*gm1*u0(6,ix)/(2.0_RKIND*a(0))
-       endif
-      enddo
-      
+        w(ix,2)= w(ix,2)- dt*a(1)*w(ix,2)/(2.0_RKIND*a(0))
+        if(gravityon.eq.1.and.hack.eq.0) then
+          w(ix,2) = w(ix,2) + dt*acc(ix)/2.0_RKIND
+        endif
+        w(ix,3)= w(ix,3) - dt*a(1)*w(ix,3)/(2.0_RKIND*a(0))
+        w(ix,4)= w(ix,4) - dt*a(1)*w(ix,4)/(2.0_RKIND*a(0))
+        w(ix,8)= w(ix,8) - dt*a(1)*w(ix,8)/a(0)
+        pre(ix)= pre(ix)-dt*a(1)*3.0_RKIND*gm1*pre(ix)/(2.0_RKIND*a(0))
+        if( EquationOfState .eq. 0 ) then
+          u0(6,ix)= u0(6,ix)-
+     $             dt*a(1)*3.0_RKIND*gm1*u0(6,ix)/(2.0_RKIND*a(0))
+        endif
+      end do
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!1
       isweep = 1
       iun = isweep + 1
       ibn = iun + 3
@@ -139,7 +141,7 @@ c xh preprossor
             endif
          end do
       end if
-           
+
       if (MHDCTDualEnergyMethod.gt.0) then
          if (MHDCTDualEnergyMethod.eq.1) then
 c
@@ -165,21 +167,21 @@ c...  charateristic limiting
 c...  component limiting
 
          call limiter1(w,ndx,npu,nxbe,theta,ux,MHDCTSlopeLimiter,
-     $      wc,ucx,numberofcolours ) 
+     $      wc,ucx,numberofcolours )
 
       end if
-      
+
       if (ReconstructionMethod.eq.0) then
 c
 c...  piece-wise linear method (PLM) predictor for primitive variables
          call plmpred_mhd(w,ux,ndx,npu,nxb,nxe,dt,dx,gamma,
      $        isweep,ur,ul,prelow,rhomin,csmin,
-     $        numberofcolours,wc,ucx,wcl,wcr) 
+     $        numberofcolours,wc,ucx,wcl,wcr)
       else if (ReconstructionMethod.eq.6) then
 c
 c...  Hancock predictor for primitive variables
          call hncokpred_mhd(w,ux,ndx,npu,nxb,nxe,dt,dx,gamma,
-     $        isweep,ur,ul,prelow,rhomin,csmin, 
+     $        isweep,ur,ul,prelow,rhomin,csmin,
      $        wc,ucx,numberofcolours, wcl, wcr )
 
       else if (ReconstructionMethod .eq. 7 ) then
@@ -195,7 +197,14 @@ c
          enddo
 
       end if
-
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+      if( hack.ne.0 ) then
+        do ix= nxb-2,nxe+2
+          w(ix,2) = w(ix,2) + dt*acc(ix)/2.0_RKIND
+        enddo
+      endif
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 
 c
@@ -209,7 +218,7 @@ c...  calculate the flux at interface in x-direction
             ww(iu) = ur(ixp1,iu) ! right
             we(iu) = ul(ixp1,iu) ! left
          end do
-         
+
          do iu = 1, numberofcolours !		[BH]
             wcw(iu) = wcr(ixp1,iu) ! right	[BH]
             wce(iu) = wcl(ixp1,iu) ! left	[BH]
@@ -218,7 +227,7 @@ c...  calculate the flux at interface in x-direction
          if( EquationOfState .eq. 0 ) then
             if ( RiemannSolver .eq. 6 ) then
                 call hllds(we,ww,flux,gamma
-     $                     ,numberofcolours,wce,wcw,fluxc  
+     $                     ,numberofcolours,wce,wcw,fluxc
      $                    )
             else
          call calc_fluxai_mhd(gamma,we,ww,flux,cmax,1_IKIND,
@@ -226,13 +235,13 @@ c...  calculate the flux at interface in x-direction
            endif
          else
             if( RiemannSolver .eq. 6 ) then
-               do extraCounter = 2,4 
+               do extraCounter = 2,4
                   ww(extraCounter) = ww(extraCounter)*ww(1)
                   we(extraCounter) = we(extraCounter)*we(1)
                enddo
 
                call hlld_iso(we,ww,flux,dummy,SoundSpeed,ix)
-               do extraCounter = 2,4 
+               do extraCounter = 2,4
                   ww(extraCounter) = ww(extraCounter)/ww(1)
                   we(extraCounter) = we(extraCounter)/we(1)
                enddo
@@ -252,8 +261,8 @@ c$$$         flux(7) = 0.0
 c$$$         we(5)   = ur(ixp1,5)
 c$$$         ww(5)   = ul(ixp1,5)
 c------------------------------------------------------------
-         
-         if (em_x .lt. cmax) em_x = cmax         
+
+         if (em_x .lt. cmax) em_x = cmax
          if (idiffusion.eq.1) then
             do iu = 1, npu
                flux(iu) = flux(iu) + diffu(ix,iu)
@@ -262,9 +271,9 @@ c------------------------------------------------------------
          do iu = 1, npu
             fluxph(ix,iu) = flux(iu)
          end do
-         do iu = 1, numberofcolours 
-            fluxColour(ix,iu) = fluxc(iu) 
-         enddo 
+         do iu = 1, numberofcolours
+            fluxColour(ix,iu) = fluxc(iu)
+         enddo
 
          if (MHDCTDualEnergyMethod.gt.0)then
             if (MHDCTDualEnergyMethod.eq.1) then
@@ -273,11 +282,11 @@ c... S-code
          call calc_fluxAIN1_mhd(gamma,we,ww,flux1,1_IKIND,RiemannSolver,
      $                          csmin)
             else
-c     
+c
 c...  internal energy version -- rho*e_in*u(iun)
         call calc_fluxAIN2_mhd(gamma,we,ww,flux1,1_IKIND,RiemannSolver,
      $                          csmin)
-            end if            
+            end if
             fluxE(ix) = flux1
          end if
       end do
@@ -314,7 +323,7 @@ c...  den and shear-velocity field, magnetic field
             u(ix,7) = u(ix,7) - dtdx*(fluxph(ix,7)-fluxph(ix-1,7))
          enddo
 
-         
+
 c...  normal velocity and total energy
          do ix = nxb, nxe
             u(ix,2) = u0(2,ix)-dtdx*(fluxph(ix,2)-fluxph(ix-1,2))
@@ -336,7 +345,7 @@ c
           if( EquationOfState .eq. 0 ) then
              u(ix,8) = u(ix,8) + 0.5_RKIND*u(ix,2)**2/u(ix,1)
           endif
-       enddo  
+       enddo
       endif
 
 c...  calculate kinetic energy + magnetic energy
@@ -366,7 +375,7 @@ c     dcc All further changes are modifications to the energy equation.
          return
       endif
 
-     
+
       if (MHDCTDualEnergyMethod.eq.0) then
          do ix = nxb, nxe
             ein(ix) = u(ix,npu) - ekin(ix)
@@ -383,9 +392,9 @@ c xh entropy was modified by the preprocessor
             ein(ix) = u(ix,npu) - ekin(ix)
             if (ein(ix).lt.alpha1*ekin(ix)) then
 c...  new ein
-               ein(ix) = max(entropy(ix)*u(ix,1)**gm1, prelow)/gm1      
+               ein(ix) = max(entropy(ix)*u(ix,1)**gm1, prelow)/gm1
                u(ix,npu) = ein(ix) + ekin(ix)
-            end if            
+            end if
 c...  the switch is described below
          end do
       else if (MHDCTDualEnergyMethod.eq.2) then
@@ -411,14 +420,14 @@ c...  copy solution to u0(*)--------------------------------------
                u0(iu,ix) = u(ix,iu)
             end do
             u0(5,ix) = u(ix,8)
-            u0(6,ix) = ein(ix)*gm1     
+            u0(6,ix) = ein(ix)*gm1
          else
              eth = w(ix,8)*(rhomin)/u0(1,ix)/gm1
              u0(1,ix) = rhomin
             u0(2,ix) = 0.5_RKIND*u0(1,ix)*w(ix,2)
             u0(3,ix) = 0.5_RKIND*u0(1,ix)*w(ix,3)
             u0(4,ix) = 0.5_RKIND*u0(1,ix)*w(ix,4)
-            entr = 
+            entr =
      $  0.5_RKIND*(u0(2,ix)**2+u0(3,ix)**2+u0(4,ix)**2)/u0(1,ix)
             u(ix,5)  = w(ix,5)
             u(ix,6)  = w(ix,6)
@@ -427,10 +436,10 @@ c...  copy solution to u0(*)--------------------------------------
             ein(ix) = eth
             if (MHDCTDualEnergyMethod.eq.1) ekin(ix) = entr + eb
             u0(5,ix) = eth + entr + eb
-            u0(6,ix) = eth*gm1          
+            u0(6,ix) = eth*gm1
          end if
       end do
-       
+
       if (MHDCTDualEnergyMethod.eq.2.or.MHDCTDualEnergyMethod.eq.0
      +    .or.MHDCTDualEnergyMethod.eq.1) then
 c
@@ -440,7 +449,7 @@ c...  transform the pressure to entropy variables
          end do
 c         return
       end if
-    
+
 c----------------------------------------------------------------------
 c...D. Ryu's switch detection
       if (MHDCTDualEnergyMethod.eq.1) then
@@ -448,7 +457,7 @@ c...D. Ryu's switch detection
             rgam1(ix) = u0(1,ix)**gm1
             eth = max(ein(ix),u0(1,ix)*tdum0/gm1)
             u0(5,ix) = eth + ekin(ix)
-            u0(6,ix) = eth*gm1/rgam1(ix)   ! entropy from total energy 
+            u0(6,ix) = eth*gm1/rgam1(ix)   ! entropy from total energy
             entropy(ix) = max(entropy(ix),tdum0*u0(1,ix)/rgam1(ix))
          enddo
 
@@ -471,30 +480,30 @@ c ------- shock detection
 c
          do ix = nxb,nxe
             shock(ix) = 0.
-            dv= u0(2,ix+1)/u0(1,ix+1)-u0(2,ix-1)/u0(1,ix-1) 
+            dv= u0(2,ix+1)/u0(1,ix+1)-u0(2,ix-1)/u0(1,ix-1)
 c     +           +2.0*dx*boxL0*HUBB/(1.0+zr)
             dp= abs(pre(ix+1)-pre(ix-1))
      +           /(pre(ix+1)+pre(ix-1)+2*pre(ix))*4.0
             if( (dp.gt.0.3).and.(dv.lt.0.0) ) shock(ix)=1.
             if(min(rt(ix),rt(ix-1),rt(ix+1)).ge.0.001) shock(ix)=1.
             if(shock(ix) .lt. 0.5) then
-               u0(6,ix) = entropy(ix) 
+               u0(6,ix) = entropy(ix)
                eth= u0(6,ix)*rgam1(ix)/gm1
                u0(5,ix) = eth + ekin(ix)
             endif
-         enddo  
+         enddo
       end if
-      
+
       if(MHDCTDualEnergyMethod .eq. 1) then
        do ix =nxb,nxe
-        u(ix,1) = u0(1,ix) 
-        u(ix,2) = u0(2,ix) 
+        u(ix,1) = u0(1,ix)
+        u(ix,2) = u0(2,ix)
         u(ix,3) = u0(3,ix)
-        u(ix,4) = u0(4,ix) 
+        u(ix,4) = u0(4,ix)
         u(ix,9) = u0(6,ix)
         u(ix,8) = u0(5,ix)
        enddo
-      else 
+      else
         do ix= nxb, nxe
             rgam1(ix) = u0(1,ix)**gm1
             eth = max(ein(ix),u0(1,ix)*tdum0/gm1)
@@ -506,9 +515,6 @@ c     +           +2.0*dx*boxL0*HUBB/(1.0+zr)
             u(ix,4) = u0(4,ix)
          enddo
       endif
-      
+
       return
-      end           
-
-
-
+      end

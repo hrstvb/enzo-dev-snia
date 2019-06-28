@@ -1275,35 +1275,35 @@ public:
 		   GetGridSize();
 	   return gridStrides[dim];
    }
-   void get_ijk(size_t ijk[], size_t index) {
+   void get_ijk(long ijk[], size_t index) {
 	   for(int dim = 0; dim < GridRank; dim++) {
 		   ijk[dim] = index % GridDimension[dim];
 		   index /= GridDimension[dim];
 	   }
    }
-   void get_xyz(FLOAT xyz[], size_t ijk[]) {
+   void get_xyz(FLOAT xyz[], long ijk[]) {
 	   for(int dim = 0; dim < GridRank; dim++) {
-		   size_t i = ijk[dim];
+		   long i = ijk[dim];
 		   xyz[dim] = 0.5 * (CellLeftEdge[dim][i] + CellLeftEdge[dim][i + 1]);
 	   }
    }
    void get_xyz(FLOAT xyz[], size_t index) {
-	   size_t ijk[MAX_DIMENSION];
+	   long ijk[MAX_DIMENSION];
 	   get_ijk(ijk, index);
 	   get_xyz(xyz, ijk);
    }
-   void get_ijk_xyz(size_t ijk[], FLOAT xyz[], size_t index) {
+   void get_ijk_xyz(long ijk[], FLOAT xyz[], size_t index) {
 	   get_ijk(ijk, index);
 	   get_xyz(xyz, ijk);
    }
-   size_t get_ijk_index(size_t ijk[], FLOAT xyz[])
+   size_t get_ijk_index(long ijk[], FLOAT xyz[])
    {
       for(int dim = 0; dim < GridRank; dim++)
       {
     	 const size_t N = GridDimension[dim];
          ijk[dim] = findmaxlte(CellLeftEdge[dim], N + 1, xyz[dim]);
          if(ijk[dim] == N && CellLeftEdge[dim][N] == xyz[dim])
-        	 ijk[dim]--;
+           ijk[dim]--;
       }
       for(int dim = GridRank; dim<MAX_DIMENSION; dim++)
          ijk[dim] = sign(xyz[dim]);
@@ -1311,7 +1311,7 @@ public:
       return getCellIndex(ijk);
    }
 
-	size_t getCellIndex(size_t ijk[])
+	size_t getCellIndex(long ijk[])
 	{
 		switch(GridRank)
 		{
@@ -1334,11 +1334,14 @@ public:
 	}
    size_t getCellIndex(FLOAT xyz[])
    {
-	  size_t ijk_temp[MAX_DIMENSION];
+	  long ijk_temp[MAX_DIMENSION];
       return get_ijk_index(ijk_temp, xyz);
    }
-   bool intersectDomain(FLOAT ledge[], FLOAT redge[]);
-   void getDomainEdges(FLOAT ledge[], FLOAT redge[]);
+   void getGhostEdges(FLOAT ledge[], FLOAT redge[]);
+   int intersect(FLOAT ledge[], FLOAT redge[]);
+   int intersectActive(FLOAT ledge[], FLOAT redge[]);
+   int intersect(long lijk[], long rijk[]);
+   int intersectActive(long lijk[], long rijk[]);
 
    void getParticlePosition(FLOAT xyz[], size_t index)
    {

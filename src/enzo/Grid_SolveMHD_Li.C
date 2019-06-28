@@ -4,10 +4,10 @@
 /
 /
 /  written by: dcollins
-/  date:       March 19, 2013, 3:54 pm.  
+/  date:       March 19, 2013, 3:54 pm.
 /  modified1:
 /
-/  PURPOSE:  
+/  PURPOSE:
 /
 /  RETURNS:
 /    SUCCESS or FAIL
@@ -30,15 +30,15 @@ extern "C" void FORTRAN_NAME(pde1dsolver_mhd_new)(float * wx, float* colours, in
            int * startindex, int * endindex, int * numberofcolours,
            float * dx, float * dtstrang,
            float * fluxBx, //remove
-           float * fluxx, 
+           float * fluxx,
            float * fluxEx, //remove
            float * fluxcolour,
-           float * diffcoefx, 
-           float * gamma, float * csmin, float * rhomin, 
-           int * MHDCTDualEnergyMethod, int * MHDCTSlopeLimiter,int * RiemannSolver, 
+           float * diffcoefx,
+           float * gamma, float * csmin, float * rhomin,
+           int * MHDCTDualEnergyMethod, int * MHDCTSlopeLimiter,int * RiemannSolver,
            int * ReconstructionMethod, int * idiffusion, int * MHDCTPowellSource,
            float * Theta,
-           int * nhy, int * gravityon, float * gravityx, 
+           int * nhy, int * gravityon, float * gravityx,
            FLOAT * a, int * EquationOfState, float * SoundSpeed, int * hack2);
 
 int CosmologyComputeExpansionFactor(FLOAT time, FLOAT *a, FLOAT *dadt);
@@ -61,22 +61,22 @@ void TransverseMagneticFlux(float *Vx, float * Vy , float * Vz,
       }
 }
 
-int grid::SolveMHD_Li(int CycleNumber, int NumberOfSubgrids, 
-		      fluxes *SubgridFluxes[], float *CellWidthTemp[], 
-		      Elong_int GridGlobalStart[], int GravityOn, 
+int grid::SolveMHD_Li(int CycleNumber, int NumberOfSubgrids,
+		      fluxes *SubgridFluxes[], float *CellWidthTemp[],
+		      Elong_int GridGlobalStart[], int GravityOn,
 		      int NumberOfColours, int colnum[],
           float ** Fluxes)
 {
-    
 
-  //Big questions: 
+
+  //Big questions:
   //1.) Strang?  Do I want to do the full pairwise strang, or the simpler style?
   //2.) What is needed for rank < 3?
   //DO clean up arrays.  Check all news in code.
   //DO check UseSpecificEnergy
   //DO strang
   //DO 2d
-  
+
   FLOAT a[4];
    a[0] = 1.0;
    a[1] = 0.0;
@@ -92,7 +92,8 @@ int grid::SolveMHD_Li(int CycleNumber, int NumberOfSubgrids,
   nyz = GridEndIndex[1] - GridStartIndex[1] + 1;
   nzz = GridEndIndex[2] - GridStartIndex[2] + 1;
   int n, ii, jj, kk, index_bf,  dim, subgrid;
-  int hack = 0; //a flag for testing the solver.
+//  int hack = 0; //a flag for testing the solver.
+  int hack = MHD_LI_GRAVITY_AFTER_PLMPRED; // Control where in the solver to add the gravity.
   float dtdx;
 
   int nu = 6;
@@ -110,11 +111,11 @@ int grid::SolveMHD_Li(int CycleNumber, int NumberOfSubgrids,
   float * flux_magnetic_line = new float[ line_size ]; //for Powell fluxes
   float * flux_def_line = new float[ line_size ]; //For dual energy.  Get rid of this.
   int DensNum, GENum, Vel1Num, Vel2Num, Vel3Num, TENum, B1Num, B2Num, B3Num;
-  this->IdentifyPhysicalQuantities(DensNum, GENum, Vel1Num, Vel2Num, Vel3Num, 
+  this->IdentifyPhysicalQuantities(DensNum, GENum, Vel1Num, Vel2Num, Vel3Num,
                                    TENum, B1Num, B2Num, B3Num);
 
 
- 
+
 
   float * pressure;
   if( DualEnergyFormalism ){
@@ -133,12 +134,12 @@ int grid::SolveMHD_Li(int CycleNumber, int NumberOfSubgrids,
                  BaryonField[Vel3Num][ii]*BaryonField[Vel3Num][ii])*BaryonField[DensNum][ii]
             -0.5*(BaryonField[B1Num][ii]*BaryonField[B1Num][ii]+
                   BaryonField[B2Num][ii]*BaryonField[B2Num][ii]+
-                  BaryonField[B3Num][ii]*BaryonField[B3Num][ii])); 
+                  BaryonField[B3Num][ii]*BaryonField[B3Num][ii]));
       }
     }
   }
 
-  //Pointers to magnetic fluxes for simplicity below.  
+  //Pointers to magnetic fluxes for simplicity below.
   float * MagFluxX1 = Fluxes[0],
         * MagFluxX2 = Fluxes[0]+MagneticSize[0],
         * MagFluxY1 = Fluxes[1],
@@ -177,14 +178,14 @@ int grid::SolveMHD_Li(int CycleNumber, int NumberOfSubgrids,
   }//index allocation
 
   //strang loop.
-  
+
   int startindex, endindex;
   for (n = ixyz; n < ixyz+3; n++) {
     startindex = 3;
     endindex = GridDimension[0] - 2;
     dtdx = dtFixed/CellWidthTemp[0][0];
     //x loope
-    if ( (n % 3 == 0) && nxz > 1){ 
+    if ( (n % 3 == 0) && nxz > 1){
       for( kk = 0; kk< GridDimension[2]; kk++){
         for( jj = 0; jj<GridDimension[1]; jj++){
           for(ii = 0; ii<GridDimension[0]; ii++ ){
@@ -212,19 +213,19 @@ int grid::SolveMHD_Li(int CycleNumber, int NumberOfSubgrids,
           for( ii=1; ii<GridDimension[0]; ii++){
             diffusion_line[ii] = 0.0;
           }
-          FORTRAN_NAME(pde1dsolver_mhd_new)(field_line, colour_line, &line_size, &nu, 
+          FORTRAN_NAME(pde1dsolver_mhd_new)(field_line, colour_line, &line_size, &nu,
             &startindex, &endindex, &NumberOfColours,
-            CellWidthTemp[0],  &dtFixed, 
+            CellWidthTemp[0],  &dtFixed,
             flux_magnetic_line, //kill this
-            flux_line, 
+            flux_line,
             flux_def_line, //kill this too
             flux_colour,
             diffusion_line,
             &Gamma, &csmin, &rhomin,
-            &MHDCTDualEnergyMethod, &MHDCTSlopeLimiter, &RiemannSolver, 
+            &MHDCTDualEnergyMethod, &MHDCTSlopeLimiter, &RiemannSolver,
             &ReconstructionMethod, &PPMDiffusionParameter, &MHDCTPowellSource,
             &Theta_Limiter,
-            &CycleNumber, &GravityOn, gravity_line, 
+            &CycleNumber, &GravityOn, gravity_line,
             a, &EquationOfState, &IsothermalSoundSpeed, &hack);
 
           for(ii = 0; ii<GridDimension[0]; ii++ ){
@@ -288,7 +289,7 @@ int grid::SolveMHD_Li(int CycleNumber, int NumberOfSubgrids,
                 }
               }
                 //end color fluxes
-              
+
             }//subgrid ok.
           }//subgrid loop
           for(ii = 3; ii<GridDimension[0]-1; ii++ ){
@@ -299,7 +300,7 @@ int grid::SolveMHD_Li(int CycleNumber, int NumberOfSubgrids,
         }//x sweep jj loop
       }//x sweep kk loop
     }//x sweep conditional
-    
+
     startindex = 3;
     endindex = GridDimension[1] - 2;
     dtdx = dtFixed/CellWidthTemp[1][0];
@@ -307,7 +308,7 @@ int grid::SolveMHD_Li(int CycleNumber, int NumberOfSubgrids,
     if ( (n % 3 == 1) ) {
       if ( nyz == 1 ){
         TransverseMagneticFlux(BaryonField[Vel2Num], BaryonField[Vel3Num], BaryonField[Vel1Num],
-                               BaryonField[B2Num], BaryonField[B3Num], BaryonField[B1Num], 
+                               BaryonField[B2Num], BaryonField[B3Num], BaryonField[B1Num],
                                MagFluxY2, MagFluxY1, GridDimension, MagneticDims[1]);
 
       }else if ( nyz > 1) {
@@ -329,26 +330,26 @@ int grid::SolveMHD_Li(int CycleNumber, int NumberOfSubgrids,
             for( nColour=0; nColour<NumberOfColours; nColour++){
               colour_line[ jj + line_size*nColour ] = BaryonField[ colnum[nColour] ][index_bf];
             }
-   
+
             if( GravityOn )
               gravity_line[ jj ] = AccelerationField[1][index_bf];
           }
           for( jj=1; jj<GridDimension[1]; jj++){
              diffusion_line[jj] = 0.0;
           }
-          FORTRAN_NAME(pde1dsolver_mhd_new)(field_line, colour_line, &line_size, &nu, 
+          FORTRAN_NAME(pde1dsolver_mhd_new)(field_line, colour_line, &line_size, &nu,
             &startindex, &endindex, &NumberOfColours,
-            CellWidthTemp[1],  &dtFixed, 
+            CellWidthTemp[1],  &dtFixed,
             flux_magnetic_line, //kill this
-            flux_line, 
+            flux_line,
             flux_def_line, //kill this too
             flux_colour,
             diffusion_line,
             &Gamma, &csmin, &rhomin,
-            &MHDCTDualEnergyMethod, &MHDCTSlopeLimiter, &RiemannSolver, 
+            &MHDCTDualEnergyMethod, &MHDCTSlopeLimiter, &RiemannSolver,
             &ReconstructionMethod, &PPMDiffusionParameter, &MHDCTPowellSource,
             &Theta_Limiter,
-            &CycleNumber, &GravityOn, gravity_line, 
+            &CycleNumber, &GravityOn, gravity_line,
             a, &EquationOfState, &IsothermalSoundSpeed, &hack);
 
 
@@ -409,7 +410,7 @@ int grid::SolveMHD_Li(int CycleNumber, int NumberOfSubgrids,
                   SubgridFluxes[subgrid]->RightFluxes[colnum[nColour]][dim][offset]= dtdx*flux_colour[jj +line_size*nColour];
                 }
               }
-              
+
             }//subgrid ok.
           }//subgrid loop
           for(jj = 3; jj<GridDimension[1]-1; jj++ ){
@@ -454,7 +455,7 @@ int grid::SolveMHD_Li(int CycleNumber, int NumberOfSubgrids,
                 colour_line[ kk + line_size*nColour ] = BaryonField[ colnum[nColour] ][index_bf];
               }
             }//colours?
-   
+
             if( GravityOn )
               gravity_line[ kk ] = AccelerationField[2][index_bf];
           }
@@ -462,22 +463,22 @@ int grid::SolveMHD_Li(int CycleNumber, int NumberOfSubgrids,
           for( kk=1; kk<GridDimension[1]; kk++){
             diffusion_line[kk] = 0.0;
           }
-          
-          FORTRAN_NAME(pde1dsolver_mhd_new)(field_line, colour_line, &line_size, &nu, 
+
+          FORTRAN_NAME(pde1dsolver_mhd_new)(field_line, colour_line, &line_size, &nu,
             &startindex, &endindex, &NumberOfColours,
-            CellWidthTemp[2],  &dtFixed, 
+            CellWidthTemp[2],  &dtFixed,
             flux_magnetic_line, //kill this
-            flux_line, 
+            flux_line,
             flux_def_line, //kill this too
             flux_colour,
             diffusion_line,
             &Gamma, &csmin, &rhomin,
-            &MHDCTDualEnergyMethod, &MHDCTSlopeLimiter, &RiemannSolver, 
+            &MHDCTDualEnergyMethod, &MHDCTSlopeLimiter, &RiemannSolver,
             &ReconstructionMethod, &PPMDiffusionParameter, &MHDCTPowellSource,
             &Theta_Limiter,
-            &CycleNumber, &GravityOn, gravity_line, 
+            &CycleNumber, &GravityOn, gravity_line,
             a, &EquationOfState, &IsothermalSoundSpeed, &hack);
-            
+
 
 
           for(kk = 0; kk<GridDimension[2]; kk++ ){
@@ -529,7 +530,7 @@ int grid::SolveMHD_Li(int CycleNumber, int NumberOfSubgrids,
               if( EquationOfState == 0 ){
                 SubgridFluxes[subgrid]->RightFluxes[TENum][dim][offset]  = dtdx*flux_line[kk + line_size*7];
               }//TE flux
-              
+
               if( DualEnergyFormalism ){
                 SubgridFluxes[subgrid]->RightFluxes[GENum][dim][offset]= dtdx*flux_def_line[kk];
               }//GE flux
@@ -584,6 +585,6 @@ int grid::SolveMHD_Li(int CycleNumber, int NumberOfSubgrids,
 
 
 
-  
+
   return SUCCESS;
 }

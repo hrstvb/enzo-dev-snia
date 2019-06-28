@@ -1,0 +1,284 @@
+ProblemType                = 501
+TopGridRank                = 3
+UserDefinedRootGridLayout  = 2 2 2
+TopGridDimensions          = 50 50 50
+DomainLeftEdge  = -2500e5 -2500e5 -2500e5
+DomainRightEdge = 2500e5 2500e5 2500e5
+#0 - reflecting, 1 - outflow, 2 - inflow, 3 - periodic, 4 - shearing
+LeftFaceBoundaryCondition  = 1 1 1
+RightFaceBoundaryCondition = 1 1 1
+ParallelRootGridIO        = 1
+ParallelRootGridIO_Force  = 1
+
+#
+#  set I/O and stop/start parameters
+#
+StopTime               = 1
+dtDataDump             = 0.0001
+DataDumpDir           = datasets/EE
+StopCycle               = 1000000
+#CycleSkipDataDump      = 1
+DataDumpName           = data
+Initialdt                   = 0.0001
+
+#################################################
+#
+#  set grid refinement parameters
+#
+MaximumRefinementLevel    = 0
+RefineBy                  = 2
+RefineOnStartup           = 0
+NumberOfBufferZones=8
+StaticHierarchy           = 0 # 0=AMR, 1=no AMR
+
+#*** CellFlaggingMethod ****
+#       Possible values:
+#       1       Refine by slope
+#       2       Refine by baryon mass
+#       3       Refine by shocks
+#       4       Refine by particle mass
+#       5       Refine by baryon overdensity
+#       6       Refine by Jeans length
+#       7       Refine if (cooling time < cell width/sound speed)
+#       8       Refine by must-refine particles
+#       9       Refine by shear
+#       10      Refine by optical depth (in RT calculation)
+#       11      Refine by resistive length (in MHD calculation)
+#       12      Refine by defined region “MustRefineRegion”
+#       13      Refine by metallicity
+#       14      Refine by shockwaves (found w/shock finder)
+#       15      Refine by normalized second derivative
+CellFlaggingMethod        = 1 #1 # 15
+
+#*** SlopeFlaggingFields *****
+#       If CellFlaggingMethod is 1, and you only want to refine on the slopes of 
+#       certain fields then you can enter the Field Type IDs of the fields you want,
+#       separating the IDs with a space. Up to 7 Field Type IDs can be specified.
+#       Default: Refine on slopes of all fields.
+SlopeFlaggingFields = 103 # 100=Density_Ni, 103=burned fraction
+
+#*** MinimumSlopeForRefinement *****
+#       If CellFlaggingMethod is 1, then local gradients are used as the refinement 
+#       criteria. All variables are examined and the relative slope is computed: 
+#       abs(q(i+1)-q(i-1))/q(i). Where this value exceeds this parameter, the cell 
+#       is marked for refinement. This causes problems if q(i) is near zero.
+#       This is a single integer (as opposed to the list of five for the above 
+#       parameters).  Entering multiple numbers here correspond to the fields 
+#       listed in SlopeFlaggingFields. Default: 0.3
+MinimumSlopeForRefinement = 0.02
+
+#*** SecondDerivativeFlaggingFields ****
+#       The field indices (list of up to 7) that are used for the normalized 
+#       second derivative refinement criteria. Default: INT_UNDEFINED
+#       For field numbers see .../src/enzo/typedefs.h or Grid_CreateFieldArray.C
+#SecondDerivativeFlaggingFields = 0
+SecondDerivativeFlaggingFields = 1 # Denisty
+
+#*** MinimumSecondDerivativeForRefinement ****
+#       The value of the second derivative above which a cell will be flagged 
+#       for refinement. Each value in this list (of up to 7 values) should be 
+#       between 0.0 and 1.0. Values between 0.3-0.8 are recommended. Default: 0.3
+#	Use a large value 1e15 to keep AMR on but to make it never happen.
+MinimumSecondDerivativeForRefinement = 0.3
+
+#*** SecondDerivativeEpsilon ****
+#       Used to avoid refining around oscillations/fluctuations in the normalized 
+#       second derivative refinement method. The higher the value, the more it 
+#       will filter out. For fluid instability simulations, a value of ~0.01 is 
+#       good. For full-physics simulations, values around ~0.2 are recommended. 
+#       Be aware that fluctuations on this scale in initial conditions may cause 
+#       immediate refinement to the maximum level. Default: 1.0e-2
+SecondDerivativeEpsilon = 1.0e-2
+
+#16     #Refine by Jeans length from the inertial tensor
+
+#*** RefineRegionLeftEdge, RefineRegionRightEdge ****
+#       These two parameters control the region in which refinement is permitted. 
+#       Each is a vector of floats (of length given by the problem rank) and they 
+#       specify the two corners of a volume. 
+#       Default: set equal to DomainLeftEdge and DomainRightEdge.
+
+#*** RefineRegionAutoAdjust ****
+#       This is useful for multiresolution simulations with particles in which 
+#       the particles have varying mass. Set to 1 to automatically adjust the 
+#       refine region at root grid timesteps to only contain high-resolution 
+#       particles. This makes sure that the fine regions do not contain more 
+#       massive particles which may lead to small particles orbiting them or 
+#       other undesired outcomes. Setting to any integer (for example, 3) will 
+#       make AdjustRefineRegion to work at (RefineRegionAutoAdjust-1)th level 
+#       timesteps because sometimes the heavy particles are coming into the fine 
+#       regions too fast that you need more frequent protection. 
+#       Default: 0.
+
+#*** RefineRegionTimeType ****
+#       If set, this controls how the first column of a refinement region evolution 
+#       file (see below) is interpreted, 0 for code time, 1 for redshift. 
+#       Default: -1, which is equivalent to ‘off’.
+
+#*** RefineRegionFile ****
+#       The name of a text file containing the corners of the time-evolving refinement 
+#       region. The lines in the file change the values of RefineRegionLeft/RightEdge 
+#       during the course of the simulation, and the lines are ordered in the file 
+#       from early times to late times. The first column of data is the time index 
+#       (in code units or redshift, see the parameter above) for the next six columns, 
+#       which are the values of RefineRegionLeft/RightEdge. For example, this might be 
+#       two lines from the text file when time is indexed by redshift:
+#
+#           0.60 0.530 0.612 0.185 0.591 0.667 0.208
+#           0.55 0.520 0.607 0.181 0.584 0.653 0.201
+#
+#       In this case, the refinement region stays at the z=0.60 value until z=0.55, 
+#       when the box moves slightly closer to the (0,0,0) corner. There is a maximum 
+#       of 300 lines in the file and there is no comment header line. 
+#       Default: None.
+
+#*** StaticRefineRegionLevel[#] ****
+#*** StaticRefineRegionLeftEdge[#] ****
+#*** StaticRefineRegionRightEdge[#] ****
+#       The *StaticRefineRegionLevel* parameter is used to specify regions of the 
+#       problem that are to be statically refined, regardless of other parameters. 
+#       This is mostly used as an internal mechanism to keep the initial grid hierarchy 
+#       in place, but can be specified by the user. Up to 20 static regions may be 
+#       defined (this number set in macros_and_parameters.h), and each static region is 
+#       labeled starting from zero. For each static refined region, two pieces of 
+#       information are required: (1) the region (see the next two parameters), 
+#       and (2) the level at which the refinement is to occurs (0 implies a level 1 
+#       region will always exist). 
+#       Default: none
+#
+#       The *StaticRefineRegionLeftEdge* and *StaticRefineRegionRightEdge* parameters 
+#       specify the two corners of a statically refined region 
+#       Defaults: none
+#
+#       Note: Specify [index] and StaticRefineRegionLevel[index] one less than the 
+#             desired refinement level, i.e. StaticRefineRegionLevel[0]=0 refers
+#             to refinement level 1.
+StaticRefineRegionLevel[1]=1
+StaticRefineRegionLeftEdge[1]=  -400e5 -400e5 -400e5
+StaticRefineRegionRightEdge[1]=  400e5  400e5  400e5
+StaticRefineRegionLevel[2]=2
+StaticRefineRegionLeftEdge[2]=  -300e5 -300e5 -300e5
+StaticRefineRegionRightEdge[2]=  300e5  300e5  300e5
+StaticRefineRegionLevel[3]=3
+StaticRefineRegionLeftEdge[3]=  -200e5 -200e5 -200e5
+StaticRefineRegionRightEdge[3]=  200e5  200e5  200e5
+StaticRefineRegionLevel[4]=4
+StaticRefineRegionLeftEdge[4]= -100e5 -100e5 -100e5
+StaticRefineRegionRightEdge[4]= 100e5  100e5  100e5
+#StaticRefineRegionLevel[1]=1
+#StaticRefineRegionLeftEdge[1]=-0.25 -0.15
+#StaticRefineRegionRightEdge[1]=0.25 0.15
+# StaticRefineShellCenter[0] = 0 0 0
+# StaticRefineShellInnerRadius[0] = 0
+# StaticRefineShellOuterRadius[0] = 1000e5
+# StaticRefineShellLevel[0] = MAX
+# StaticRefineShellWithBuffer[0] = 1
+
+#################################################
+#
+#  set MHD solver parameters, etc.
+#
+Gamma                       = 1.35
+EOSPolytropicFactor         = 4.64e14
+CourantSafetyNumber         = 0.4
+HydroMethod                 = 6
+NumberOfGhostZones          = 5 # must be 5 for HydroMethod=6; 3 for the rest
+FluxCorrection              = 1 # Always 1 with CT MHD
+RKOrder                     = 2
+DualEnergyFormalism         = 0
+Theta_Limiter               = 2.0
+SelfGravity                 = 0
+ConservativeInterpolation   = 0
+#RiemannSolver              = 4
+
+GridVelocity = 0 0 0
+
+UseConstantAcceleration     = 0
+ConstantAcceleration        = 0 0 0 #-1.9e9
+UniformGravity              = 0 # turn uniform gravity on/off
+UniformGravityDirection     = 3 # does the same as ConstantAcceleration
+UniformGravityConstant      = 0 # -1.9e9
+
+###############################################################
+#
+# Parameters for problem type 501
+#
+ProfileFileName = wd.hydrostatic
+ProfileFormat = PAH02
+ProfileType = RADIAL
+ProfileAtTime = 0
+DensityColumnName     = rho[g/ccm]
+RadiusColumnName      = r[cm]
+#InternalEnergyColumnName = U[erg]
+#TemperatureColumnName = T[K]
+
+#ProfileFileName = snia2-0005.plt
+#ProfileFileName = snia2-0005-Veq0.plt
+#ProfileFormat = PAH02
+#ProfileType = RADIAL
+#ProfileAtTime = 0
+#ProfileUseFrameTime = 0
+#DensityColumnName     = density  
+#RadiusColumnName      = radius
+##RadialVelocityColumnName      = velx
+##TemperatureColumnName = temp
+
+BurningTemperature = 5e9
+BurnedRadiusPressureEquillibrium = 0
+InitRadialPressureFromCentral = 0 # 0:off, -1:P_c:=K*rho_c**gamma, >0:P_c itself
+
+IsotropicConduction = 0
+AnisotropicConduction = 0
+
+UseBurning                            = 1 #[BH]
+AllowUnburning                        = 1   #[BH]
+CallSetBoundaryConditionsAfterBurning = 1     #[BH]
+BurningDiffusionCourantSafetyFactor   = 0.03125   #[BH]
+BurningDiffusionMethod                = 1 # // 0=7-point(+); 1=27-point; 2=125-point
+BurningDiffusionRateReduced           = 8.2e5 #[BH]
+BurningMinFractionForDiffusion        = 0.001
+BurningNonDistributedMinDensity       = 0 #5e6 #[BH]
+BurningReactionRateReduced            = 3.65e5 #[BH]
+BurningReactionBurnedFractionLimitLo  = 0.3   #[BH]
+BurningReactionBurnedFractionLimitHi  = 2     #[BH]
+BurningEnergyRelease                  = 0 #7.655730630E+17 # Q := erg/g = 0.0476929 amu * Ni count [BH]
+EnergyRelativeGrowthLimit             = 0.1 #[BH]
+InitialBurnedRegionSustain            = 0
+
+#InitialBurnedRadius = 314e5 # Applies to all perturbation methods, incl. no preturbation.
+InitialBurnedRadius                   =  50e5
+PerturbationAmplitude                 = 300e5 # Applies to methods 1..4
+PerturbationMethod                    = 0 # 0-no perturbtion
+#PerturbationMethod                    = 1 # 1-Burned sphere with a shell, in which the burned fraction decreases linearly from 1 to 0.
+#PerturbationMethod                    = 2 # 2-Burned sphere with a shell, randomly burned with 50% probability.
+#PerturbationMethod                    = 3 # 3-Burned sphere with a shell, randomly burned with probability decreasing with radius from 1 to 0.
+#PerturbationMethod                    = 4 # 4-Burned sphere with finger preturbations.
+PerturbationWavelength                = -1 # >0, approx size of a refined facet; <0 - number of refinements
+PertrubationBottomSize                = 1 # The size of the fingers bottom relative to the facet.
+PertrubationTopSize                   = 4 # The size of the fingers top relative to the facet.
+PertrubationBottomDensity             = 4.7397E+08 # >0 - density inside the fingers; <=0 - leave as already initialized
+PertrubationTopDensity                = 5.9318E+08 # >0 - density outside the findgers; <0 - leave as already initialized
+
+UseSphericalGravity = 1
+SphericalGravityCenter = 0 0 0
+# SphericalGravityCentralMass = # default: 0
+
+## SphericalGravityConstant = # default: Newton's gravitational constant, 6.67428e-8
+##SphericalGravityConstant = 1.43069e-05
+#SphericalGravityConstant = 1.57376e-05
+##SphericalGravityConstant = 1.90425e-05
+WriteExternalAccel = 1
+
+## SphericalGravityInnerRadius = # default: 0
+## SpericalGravityMaxHierarchyLevel = # default: 0
+SphericalGravityNumberOfBins = 400 #512 # 173
+SphericalGravityInterpAccelMethod = 1
+#SphericalGravityOuterRadius = 1.42e7 # default: the min value to cover the entire domain.
+SphericalGravityUniformBins = 1 # default: 0
+SphericalGravityWritePotentialSwitch = 1 # default: 0
+
+BA = 0.0 0.0 0.0 #1.0e12
+MHD_LI_GRAVITY_AFTER_PLMPRED = 0
+
+#Debug1 = 1
+

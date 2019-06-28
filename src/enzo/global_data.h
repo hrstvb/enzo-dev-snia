@@ -502,6 +502,11 @@ EXTERN float MinimumPressureSupportParameter;
 EXTERN FLOAT StaticRefineRegionLeftEdge[MAX_STATIC_REGIONS][MAX_DIMENSION];
 EXTERN FLOAT StaticRefineRegionRightEdge[MAX_STATIC_REGIONS][MAX_DIMENSION];
 EXTERN int   StaticRefineRegionLevel[MAX_STATIC_REGIONS];
+EXTERN FLOAT StaticRefineShellCenter[MAX_STATIC_REGIONS][MAX_DIMENSION];
+EXTERN FLOAT StaticRefineShellInnerRadius[MAX_STATIC_REGIONS];
+EXTERN FLOAT StaticRefineShellOuterRadius[MAX_STATIC_REGIONS];
+EXTERN int   StaticRefineShellLevel[MAX_STATIC_REGIONS];
+EXTERN int   StaticRefineShellWithBuffer[MAX_STATIC_REGIONS];
 
 /* Evolving refinement region. */
 EXTERN char *RefineRegionFile;
@@ -1119,6 +1124,7 @@ EXTERN int BurningDiffusionMethod;                 //[BH]
 EXTERN float BurningDiffusionRate;                 //[BH]
 EXTERN float BurningDiffusionRateReduced;          //[BH]
 EXTERN float BurningDiffusionCourantSafetyFactor;  //[BH]
+EXTERN float BurningMinFractionForDiffusion;       //[BH]
 EXTERN float BurningNonDistributedMinDensity;      //[BH]
 EXTERN float BurningReactionRate;                  //[BH]
 EXTERN float BurningReactionRateReduced;           //[BH]
@@ -1134,6 +1140,15 @@ EXTERN float InternalEnergyRelativeGrowthLimit;    //[BH]
 EXTERN float TotalEnergyRelativeGrowthLimit;	   //[BH]
 EXTERN float BurnedFractionGrowthLimit;		   		//[BH]
 EXTERN float InitialBurnedRadius; 					//[BH]
+EXTERN float PerturbationAmplitude; 			//[BH]
+EXTERN float PerturbationWavelength; 			//[BH]
+EXTERN int PerturbationMethod;						//[BH]
+EXTERN float PertrubationBottomSize;               //[BH]
+EXTERN float PertrubationTopSize;                  //[BH]
+EXTERN float PertrubationBottomDensity;            //[BH]
+EXTERN float PertrubationTopDensity;               //[BH]
+struct TriSphere;
+EXTERN TriSphere* triSphere;								//[BH]
 EXTERN int InitialBurnedRegionSustain;				//[BH]
 EXTERN float InitRadialPressureFromCentral;			//[BH]
 EXTERN int InitBWithVectorPotential;				//[BH]
@@ -1217,5 +1232,7 @@ EXTERN int SphericalGravityDebug;
 EXTERN FLOAT TopBurnedRadiusEstimate ;
 
 EXTERN float BA[3];
+
+EXTERN int MHD_LI_GRAVITY_AFTER_PLMPRED;
 
 #endif

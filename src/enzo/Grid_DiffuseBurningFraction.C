@@ -72,6 +72,14 @@ int grid::DiffuseBurnedFraction()
 	float diffusionRate = BurningDiffusionRateReduced * CellWidth[0][0];
 	float reactionRate = BurningReactionRateReduced / CellWidth[0][0];
 	float minRhoForBurning = BurningNonDistributedMinDensity;
+	double minFractionForDiffusion = BurningMinFractionForDiffusion;
+
+	if(minFractionForDiffusion > 0)
+	{
+		minFractionForDiffusion *= BurningDiffusionRateReduced / CellWidth[0][0];
+		if(minFractionForDiffusion > 0)
+			minFractionForDiffusion = powl(minFractionForDiffusion, max(NumberOfBufferZones, NumberOfGhostZones));
+	}
 
 	for(size_t i = 0; i < gridSize; i++)
 	{
@@ -95,6 +103,13 @@ int grid::DiffuseBurnedFraction()
 		Y1 = X1 / M_56Ni_amu; // 56Ni abundance
 
 		F[i] = Y1 / (Y0 + Y1); // Mole fraction of 56Ni
+	}
+
+	if(minFractionForDiffusion > 0)
+	{
+		for(size_t i = 0; i < gridSize; i++)
+			if(F[i] < minFractionForDiffusion)
+				dFdt[i] = F[i] = 0;
 	}
 
 	dtSoFar = 0.0; // cumulative subcycles time, 0 <= dtSoFar <= dtFixed
@@ -134,16 +149,11 @@ int grid::DiffuseBurnedFraction()
 			F[i] = f;
 		}
 
+		if(minFractionForDiffusion > 0)
 		{
-			double minFractionForDiffusion = .01;
-			minFractionForDiffusion *= BurningDiffusionRateReduced / CellWidth[0][0];
-			minFractionForDiffusion = powl(minFractionForDiffusion, max(NumberOfBufferZones, NumberOfGhostZones));
-			if(minFractionForDiffusion)
-			{
-				for(size_t i = 0; i < gridSize; i++)
-					if(F[i] < minFractionForDiffusion)
-						dFdt[i] = F[i] = 0;
-			}
+			for(size_t i = 0; i < gridSize; i++)
+				if(F[i] < minFractionForDiffusion)
+					dFdt[i] = F[i] = 0;
 		}
 
 		dtSoFar += dtSubcycle;
@@ -296,9 +306,9 @@ float grid::ComputeBurningFractionDiffusionTimeStep(float* dt)
  /  RETURNS:
  /    0 - no adjustment of 'dx'
  /	Output values: dxUsed=dx and xNew=x+dx
- /   -1 - 'dx' was too big (too negative) causing 'x' to undeshoot
+ /   -1 - 'dx' was too negative causing 'x' to undeshoot
  /	Output values: dxUsed=lowerLimit-x and xNew=lowerLimit
- /    1 - 'dx' was too big (too positive) causing 'x' to overshot
+ /    1 - 'dx' was too positiv) causing 'x' to overshot
  /	Output values: dxUsed=upperLimit-x and xNew=upperLimit
  /
  ************************************************************************/
@@ -337,7 +347,7 @@ float *xNew, float *dxUsed)
  /  RETURNS:
  /    0 - no adjustment of 'dx'
  /	Output values: dxUsed=dx and xNew=x+dx
- /   -1 - 'dx' was too big (too negative) causing 'x' to undeshoot
+ /   -1 - 'dx' was too negative causing 'x' to undeshoot
  /	Output values: dxUsed=lowerLimit-x and xNew=lowerLimit
  /
  ************************************************************************/
@@ -370,7 +380,7 @@ float *xNew, float *dxUsed)
  /  RETURNS:
  /    0 - no adjustment of 'dx'
  /	Output values: dxUsed=dx and xNew=x+dx
- /    1 - 'dx' was too big (too positive) causing 'x' to overshoot
+ /    1 - 'dx' was too positive causing 'x' to overshoot
  /	Output values: dxUsed=upperLimit-x and xNew=upperLimit
  /
  ************************************************************************/

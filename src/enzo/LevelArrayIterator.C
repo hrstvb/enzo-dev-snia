@@ -2,6 +2,12 @@
 #include "DebugMacros.h"
 #include "ErrorExceptions.h"
 #include "LevelArrayIterator.h"
+class grid
+{
+public:
+	int ProjectSolutionToParentGrid(grid& parent);
+};
+
 void AddLevel(LevelHierarchyEntry *Array[], HierarchyEntry *Grid, int level);
 int RebuildHierarchy(TopGridData *MetaData, LevelHierarchyEntry *LevelArray[], int level);
 
@@ -38,7 +44,7 @@ grid* LevelArrayIterator::getCurrentParent()
 	{
 		HierarchyEntry* he = currentEntry->GridHierarchyEntry;
 		if(he)
-			if(he = he->ParentGrid)
+			if((he = he->ParentGrid))
 				return he->GridData;
 	}
 	return NULL;
@@ -121,7 +127,7 @@ grid* LevelArrayIterator::nextThisLevel(grid** parent)
 	if(!endOfLevel && currentEntry != NULL)
 		lhe = currentEntry->NextGridThisLevel;
 
-	if(endOfLevel = (lhe == NULL))
+	if((endOfLevel = (lhe == NULL)))
 	{
 		if(parent)
 			*parent == NULL;
@@ -162,6 +168,33 @@ grid* LevelArrayIterator::prev(grid** parent)
 	currentEntry = lhe;
 
 	return getCurrentGrid(parent);
+}
+
+int LevelArrayIterator::projectChildrenToParents(bool projectB, bool projectE)
+{
+// Restore the consistency among levels by projecting each layer to its parent,
+// starting from the finest level.
+// We want to project the vector potential and take the curl afterwards.
+// Store the original project flags for the MHD fields and set them so
+// that the vector potential gets projected.
+	int origMHD_ProjectB = MHD_ProjectB;
+	int origMHD_ProjectE = MHD_ProjectE;
+	MHD_ProjectB = projectB;
+	MHD_ProjectE = projectE;
+
+// We start this loop from the level we ended the previous loop.
+// It will not execute if numLevel==0, i.e. if the top grid hasn't been refined.
+	grid* parent;
+	for(grid* g = this->firstFromFinest(&parent); g; g = this->next(&parent))
+	{
+		if(parent)
+			if(g->ProjectSolutionToParentGrid(*parent) == FAIL)
+				ENZO_FAIL("Error in grid->ProjectSolutionToParentGrid.");
+	}
+	MHD_ProjectB = origMHD_ProjectB;
+	MHD_ProjectE = origMHD_ProjectE;
+
+	return SUCCESS;
 }
 
 HierarchyIterator::HierarchyIterator(const HierarchyEntry* const topGrid) :

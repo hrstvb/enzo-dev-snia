@@ -701,6 +701,34 @@ int ReadParameterFile(FILE *fptr, TopGridData &MetaData, float *Initialdt)
 		    StaticRefineRegionRightEdge[dim]+1,
 		    StaticRefineRegionRightEdge[dim]+2);
 
+    if (sscanf(line, "StaticRefineShellCenter[%" ISYM "] = ", &dim) == 1)
+      ret += sscanf(line,
+		    "StaticRefineShellCenter[%" ISYM "] = %" FSYM " %" FSYM " %" FSYM,
+		    &dim,
+			StaticRefineShellCenter[dim],
+		    StaticRefineShellCenter[dim]+1,
+		    StaticRefineShellCenter[dim]+2);
+    if (sscanf(line, "StaticRefineShellInnerRadius[%" ISYM "] = %" FSYM, &dim, &float_dummy) == 2)
+    {
+    	ret ++;
+    	StaticRefineShellInnerRadius[dim] = float_dummy;
+    }
+    if (sscanf(line, "StaticRefineShellOuterRadius[%" ISYM "] = %" FSYM, &dim, &float_dummy) == 2)
+    {
+    	ret ++;
+    	StaticRefineShellOuterRadius[dim] = float_dummy;
+    }
+    if (sscanf(line, "StaticRefineShellLevel[%" ISYM "] = %" ISYM, &dim, &int_dummy) == 2)
+    {
+    	ret ++;
+    	StaticRefineShellLevel[dim] = float_dummy;
+    }
+    if (sscanf(line, "StaticRefineShellWithBuffer[%" ISYM "] = %" ISYM, &dim, &int_dummy) == 2)
+    {
+    	ret ++;
+    	StaticRefineShellWithBuffer[dim] = int_dummy;
+    }
+
     ret += sscanf(line, "ParallelRootGridIO = %"ISYM, &ParallelRootGridIO);
     ret += sscanf(line, "ParallelRootGridIO_Force = %"ISYM, &ParallelRootGridIO_Force ); // [BH] In the beginning of EvolveHierarchy: ParallelRootGridIO = ParallelRootGridIO_Force
 
@@ -1289,6 +1317,7 @@ int ReadParameterFile(FILE *fptr, TopGridData &MetaData, float *Initialdt)
     ret += sscanf(line, "BurningDiffusionRate                  = %"FSYM, &BurningDiffusionRate                 ); //[BH]
     ret += sscanf(line, "BurningDiffusionRateReduced           = %"FSYM, &BurningDiffusionRateReduced          ); //[BH]
     ret += sscanf(line, "BurningDiffusionCourantSafetyFactor   = %"FSYM, &BurningDiffusionCourantSafetyFactor  ); //[BH]
+    ret += sscanf(line, "BurningMinFractionForDiffusion        = %"FSYM, &BurningMinFractionForDiffusion       ); //[BH]
     ret += sscanf(line, "BurningNonDistributedMinDensity       = %"FSYM, &BurningNonDistributedMinDensity      ); //[BH]
     ret += sscanf(line, "BurningReactionRate                   = %"FSYM, &BurningReactionRate                  ); //[BH]
     ret += sscanf(line, "BurningReactionRateReduced            = %"FSYM, &BurningReactionRateReduced           ); //[BH]
@@ -1300,7 +1329,14 @@ int ReadParameterFile(FILE *fptr, TopGridData &MetaData, float *Initialdt)
     ret += sscanf(line, "TotalEnergyRelativeGrowthLimit        = %"FSYM, &TotalEnergyRelativeGrowthLimit       ); //[BH]
     ret += sscanf(line, "BurnedFractionGrowthLimit             = %"FSYM, &BurnedFractionGrowthLimit            ); //[BH]
     ret += sscanf(line, "InitialBurnedRadius                   = %"FSYM, &InitialBurnedRadius                  ); //[BH]
-    ret += sscanf(line, "InitialBurnedRegionSustain            = %"ISYM, &InitialBurnedRegionSustain          ); //[BH]
+    ret += sscanf(line, "PerturbationAmplitude                 = %"FSYM, &PerturbationAmplitude            ); //[BH]
+    ret += sscanf(line, "PerturbationWavelength                = %"FSYM, &PerturbationWavelength           ); //[BH]
+    ret += sscanf(line, "PerturbationMethod                    = %"ISYM, &PerturbationMethod                   ); //[BH]
+    ret += sscanf(line, "PertrubationBottomSize                = %"FSYM, &PertrubationBottomSize               ); //[BH]
+    ret += sscanf(line, "PertrubationTopSize                   = %"FSYM, &PertrubationTopSize                  ); //[BH]
+    ret += sscanf(line, "PertrubationBottomDensity             = %"FSYM, &PertrubationBottomDensity            ); //[BH]
+    ret += sscanf(line, "PertrubationTopDensity                = %"FSYM, &PertrubationTopDensity               ); //[BH]
+    ret += sscanf(line, "InitialBurnedRegionSustain            = %"ISYM, &InitialBurnedRegionSustain           ); //[BH]
     ret += sscanf(line, "InitRadialPressureFromCentral         = %"FSYM, &InitRadialPressureFromCentral        ); //[BH]
     ret += sscanf(line, "InitBWithVectorPotential              = %"ISYM, &InitBWithVectorPotential             ); //[BH]
 	ret += sscanf(line, "RefineOnStartup                       = %"ISYM, &RefineOnStartup                      );
@@ -1321,7 +1357,7 @@ int ReadParameterFile(FILE *fptr, TopGridData &MetaData, float *Initialdt)
     ret += sscanf(line, "SphericalGravityBinsPerCell = %"FSYM, &SphericalGravityBinsPerCell);
     ret += sscanf(line, "SphericalGravityInterpAccelMethod = %"ISYM, &SphericalGravityInterpAccelMethod);
     ret += sscanf(line, "SphericalGravityDebug = %"ISYM, &SphericalGravityDebug);
-
+    ret += sscanf(line, "MHD_LI_GRAVITY_AFTER_PLMPRED = %"ISYM, &MHD_LI_GRAVITY_AFTER_PLMPRED);
 
     /* If the dummy char space was used, then make another. */
     if (*dummy != 0) {

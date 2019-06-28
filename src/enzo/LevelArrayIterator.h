@@ -42,6 +42,7 @@ struct LevelArrayIterator
 	grid* nextThisLevel(grid** parent);
 	grid* prev();
 	grid* prev(grid** parent);
+	int projectChildrenToParents(bool projectB, bool projectE);
 };
 
 struct HierarchyIterator

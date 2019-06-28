@@ -65,7 +65,7 @@ struct DtLimitInfo
 	int ProcessorNumber; // mpi process rank
 	int GridID; // hierarchy grid id
 	grid* Grid; //
-	size_t ijk[MAX_DIMENSION]; //
+	long ijk[MAX_DIMENSION]; //
 	FLOAT xyz[MAX_DIMENSION]; //
 	float uvw[MAX_DIMENSION]; //
 	float rho, internalE;
