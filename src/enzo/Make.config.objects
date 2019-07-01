@@ -15,8 +15,6 @@
 #-----------------------------------------------------------------------
 
 OBJS_CONFIG_LIB = \
-  Grid_EstimateBurnedRadius.o \
-  EstimateBurnedRadius.o \
   Grid_PointInChildren.o \
   MHDInitialProfile.o \
   Grid_ComputeLaplacian.o \

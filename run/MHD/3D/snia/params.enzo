@@ -184,20 +184,11 @@ CourantSafetyNumber         = 0.4
 HydroMethod                 = 6
 NumberOfGhostZones          = 5 # must be 5 for HydroMethod=6; 3 for the rest
 FluxCorrection              = 1 # Always 1 with CT MHD
-RKOrder                     = 2
 DualEnergyFormalism         = 0
 Theta_Limiter               = 2.0
 SelfGravity                 = 0
 ConservativeInterpolation   = 0
 #RiemannSolver              = 4
-
-GridVelocity = 0 0 0
-
-UseConstantAcceleration     = 0
-ConstantAcceleration        = 0 0 0 #-1.9e9
-UniformGravity              = 0 # turn uniform gravity on/off
-UniformGravityDirection     = 3 # does the same as ConstantAcceleration
-UniformGravityConstant      = 0 # -1.9e9
 
 ###############################################################
 #
@@ -211,6 +202,7 @@ DensityColumnName     = rho[g/ccm]
 RadiusColumnName      = r[cm]
 #InternalEnergyColumnName = U[erg]
 #TemperatureColumnName = T[K]
+ProfileUseFrameTime = 0
 
 #ProfileFileName = snia2-0005.plt
 #ProfileFileName = snia2-0005-Veq0.plt
