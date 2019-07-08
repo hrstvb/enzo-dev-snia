@@ -1,9 +1,19 @@
 ProblemType                = 501
 TopGridRank                = 3
-UserDefinedRootGridLayout  = 2 2 2
+UserDefinedRootGridLayout  = 1 1 1
+#UserDefinedRootGridLayout  = 2 2 2
 TopGridDimensions          = 50 50 50
+#TopGridDimensions          = 100 100 100
+#TopGridDimensions          = 200 200 200
 DomainLeftEdge  = -2500e5 -2500e5 -2500e5
 DomainRightEdge = 2500e5 2500e5 2500e5
+#DomainLeftEdge  = -1250e5 -1250e5 -1250e5
+#DomainRightEdge = 1250e5 1250e5 1250e5
+#DomainLeftEdge  = -625e5 -625e5 -625e5
+#DomainRightEdge = 625e5 625e5 625e5
+#DomainLeftEdge  = -3125e4 -3125e4 -3125e4
+#DomainRightEdge = 3125e4 3125e4 3125e4
+ 
 #0 - reflecting, 1 - outflow, 2 - inflow, 3 - periodic, 4 - shearing
 LeftFaceBoundaryCondition  = 1 1 1
 RightFaceBoundaryCondition = 1 1 1
@@ -28,7 +38,7 @@ Initialdt                   = 0.0001
 MaximumRefinementLevel    = 0
 RefineBy                  = 2
 RefineOnStartup           = 0
-NumberOfBufferZones=8
+NumberOfBufferZones       = 5
 StaticHierarchy           = 0 # 0=AMR, 1=no AMR
 
 #*** CellFlaggingMethod ****
@@ -180,6 +190,9 @@ StaticRefineRegionRightEdge[4]= 100e5  100e5  100e5
 #
 Gamma                       = 1.35
 EOSPolytropicFactor         = 4.64e14
+###EOSPolytropicFactor         = 2e14
+#EOSPolytropicFactor         = 2.2e14
+###EOSPolytropicFactor         = 2.5e14
 CourantSafetyNumber         = 0.4
 HydroMethod                 = 6
 NumberOfGhostZones          = 5 # must be 5 for HydroMethod=6; 3 for the rest
@@ -189,6 +202,8 @@ Theta_Limiter               = 2.0
 SelfGravity                 = 0
 ConservativeInterpolation   = 0
 #RiemannSolver              = 4
+MHDCTSlopeLimiter          = 13
+MHD_LI_GRAVITY_AFTER_PLMPRED = 1
 
 ###############################################################
 #
@@ -202,7 +217,6 @@ DensityColumnName     = rho[g/ccm]
 RadiusColumnName      = r[cm]
 #InternalEnergyColumnName = U[erg]
 #TemperatureColumnName = T[K]
-ProfileUseFrameTime = 0
 
 #ProfileFileName = snia2-0005.plt
 #ProfileFileName = snia2-0005-Veq0.plt
@@ -210,7 +224,7 @@ ProfileUseFrameTime = 0
 #ProfileType = RADIAL
 #ProfileAtTime = 0
 #ProfileUseFrameTime = 0
-#DensityColumnName     = density
+#DensityColumnName     = density  
 #RadiusColumnName      = radius
 ##RadialVelocityColumnName      = velx
 ##TemperatureColumnName = temp
@@ -270,7 +284,7 @@ SphericalGravityUniformBins = 1 # default: 0
 SphericalGravityWritePotentialSwitch = 1 # default: 0
 
 BA = 0.0 0.0 0.0 #1.0e12
-MHD_LI_GRAVITY_AFTER_PLMPRED = 0
 
 #Debug1 = 1
+
 
