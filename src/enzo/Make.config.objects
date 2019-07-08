@@ -15,6 +15,7 @@
 #-----------------------------------------------------------------------
 
 OBJS_CONFIG_LIB = \
+  mylimiters.o \
   Grid_PointInChildren.o \
   MHDInitialProfile.o \
   Grid_ComputeLaplacian.o \

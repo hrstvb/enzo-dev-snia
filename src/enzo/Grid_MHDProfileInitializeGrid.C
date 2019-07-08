@@ -25,8 +25,8 @@
 #include <stdlib.h>
 #include <cmath>
 #include "myenzoutils.h"
-
 #include "ErrorExceptions.h"
+#include "mylimiters.h"
 #include "macros_and_parameters.h"
 #include "typedefs.h"
 #include "global_data.h"
@@ -216,7 +216,7 @@ float dipoleMoment[3], float dipoleCenter[3], bool usingVectorPotential)
 	if(WritePotential)
 		FieldType[NumberOfBaryonFields++] = GravPotential;
 	if(UseBurning)
-		FieldType[NumberOfBaryonFields++] = Density_56Ni;   //[BH]
+		FieldType[NumberOfBaryonFields++] = Density_56Ni; //[BH]
 	if(UseMHD)
 	{
 		FieldType[NumberOfBaryonFields++] = Bfield1;
@@ -243,7 +243,7 @@ float dipoleMoment[3], float dipoleCenter[3], bool usingVectorPotential)
 		return SUCCESS;
 	}
 
-	TRACEGF("INITIALIZING GRID PHASE 1, FIELDS.")
+	TRACEGF("INITIALIZING GRID PHASE 1, FIELDS.");
 
 	this->AllocateGrids();
 
@@ -394,8 +394,8 @@ float dipoleMoment[3], float dipoleCenter[3], bool usingVectorPotential)
 			fprintf(fptr, "\n# Perturbation data for the grid:\ndata=[\n\n");
 		}
 
-		//Perturb in the shell between r1 < r <r2.
-		// Calculate position with respect to each side.
+//Perturb in the shell between r1 < r <r2.
+// Calculate position with respect to each side.
 		for(size_t k_face = 0; k_face < triSphere->nF; k_face++)
 //		for(size_t k_face = 9; k_face < 10; k_face++)
 		{
@@ -578,6 +578,109 @@ float dipoleMoment[3], float dipoleCenter[3], bool usingVectorPotential)
 		}
 	}
 
+//	for(int k = 0; k < GridDimension[2]; k++)
+//	{
+//		FLOAT z = CELLCENTER(2, k);
+//		FLOAT rz = z - SphericalGravityCenter[2];
+//		FLOAT zz = square(rz);
+//		for(int j = 0; j < GridDimension[1]; j++)
+//		{
+//			FLOAT y = CELLCENTER(1, j);
+//			FLOAT ry = y - SphericalGravityCenter[1];
+//			FLOAT yy_zz = square(ry) + zz;
+//			for(int i = 0; i <= GridDimension[0]; i++)
+//			{
+//				int index = ELT(i, j, k);
+//				float vr, vx, vy, vz, vv, Bx, By, Bz, BB;
+//
+//				//!strcmp(p->profileType, "RADIAL"))
+//				{
+//					FLOAT x = CELLCENTER(0, i);
+//					FLOAT rx = x - SphericalGravityCenter[0];
+//					FLOAT r = sqrt(square(rx) + yy_zz);
+//
+//					float rho = rhoField[index];
+//					float rhoNi = rhoNiField[index];
+//					float T = 0;
+//
+//					vx = GridVelocity[0];
+//					vy = GridVelocity[1];
+//					vz = GridVelocity[2];
+//					if(p->radialVelocityData)
+//					{
+//						p->interpolateRadialVelocity(&vr, r);
+//						vx += vr * rx / r;
+//						vy += vr * ry / r;
+//						vz += vr * rz / r;
+//					}
+//					vx = vy = vz = 0;
+////					vz=1e5;
+////					if((i==30 || i==29) && j == 10 && k == 11)
+////						vy = 1000e5;
+//
+////					{
+////						for(int i = 0; i<p->nRowsInternalEnergy; i++)
+////							printf(" %e, ", p->internalEnergyData[i]);
+////						printf("\n");
+////					}
+//					float gasE = 0;
+//					if(p->internalEnergyData)
+//					{
+//						p->interpolateInternalEnergy(&gasE, r); //g/cm**3
+//					}
+//					else
+//					{
+////						gasE = EOSPolytropicFactor * POW(rho, gammaMinusOne) / gammaMinusOne;
+//						gasE = internalEnergy(rho, rhoNi, p, r);
+//					}
+//
+////					if(UseBurning && isBurned && burnedRadiusPE)
+////					{
+////						rho *= gasE / (gasE + BurningEnergyRelease);
+////						gasE += BurningEnergyRelease;
+////					}
+//
+//					float totE = gasE;
+////					vv = square(vx) * square(vy) + square(vz);
+//					vv = vx * vx + vy * vy + vz * vz;
+//					totE += 0.5 * vv;
+//					if(BxField)
+//					{
+//						MHDProfileInitExactB(&Bx, &By, &Bz, x, y, z);
+//						BB = square(Bx) + square(By) + square(Bz);
+//						totE += 0.5 * BB / rho;
+//						BxField[index] = Bx;
+//						ByField[index] = By;
+//						BzField[index] = Bz;
+//					}
+//
+////					rhoField[index] = rho;
+//					if(hasGasEField)
+//						gasEField[index] = gasE;
+//					totEField[index] = totE;
+//					vxField[index] = vx;
+//					vyField[index] = vy;
+//					vzField[index] = vz;
+////					if(UseBurning)
+////						rhoNiField[index] = rhoNi;
+//
+////						if(debug + 1 && MyProcessorNumber == ROOT_PROCESSOR)
+////							if((j == 0 || j == (GridDimension[1] - 1)) && (k == 0 || k == (GridDimension[2] - 1))
+////									&& fabs(y) < fabs(GridRightEdge[1] - GridLeftEdge[0]) / 4
+////									&& fabs(z) < fabs(GridRightEdge[2] - GridLeftEdge[2]) / 4)
+//////							if(j == (GridDimension[1]) && k == (GridDimension[2]) && i >= GridDimension[0])
+////								TRACEF("i,j,k=%03d,%04d,%04d, x,y,z=(%4f,%4f,%4f), rx,ry,rz=(%4f,%4f,%4f), r=%4f, " //
+////								"rho=%e, U=%e, E=%e, v_r=%e, v^2=%e, B^2=%e, "//
+////								"burned=%d, K=%e, gamma-1=%f",//
+////										i, j, k, x * 1e-5, y * 1e-5, z * 1e-5, rx * 1e-5, ry * 1e-5, rz * 1e-5,
+////										r * 1e-5, //
+////										rho, gasE, totE, vr, vv, BB, //
+////										isBurned, EOSPolytropicFactor, gammaMinusOne);
+//				}
+//			} //end baryonfield initialize
+//		}
+//	}
+
 // Boiler plate code:
 //  if(DualEnergyFormalism )
 //    for(index=0;index<size;index++)
@@ -594,7 +697,7 @@ float dipoleMoment[3], float dipoleCenter[3], bool usingVectorPotential)
 		printf("nans intialized.\n"); //[BH]
 //	else
 //		printf("Initialized grid, phase 1.\n");
-	TRACEGF("... DONE INITIALIZING GRID FULL PHASE 1.")
+	TRACEGF("... DONE INITIALIZING GRID FULL PHASE 1.");
 
 	return SUCCESS;
 }
@@ -699,27 +802,6 @@ int grid::MHDSustainInitialBurnedRegionGrid()
 	return SUCCESS;
 }
 
-double minmod(double a, double b)
-{
-	// return 0.25 * ( sign(a) + sign(b) ) * min( 2*abs(a), 2*abs(b), abs(a+b)/2 )
-	if(a * b <= 0)
-		return 0;
-
-	double c1, c2 = (a + b) / 4;
-	if(a < 0)
-	{
-		//both negative
-		// return the smallest abs value
-		c1 = (a > b) ? a : b;
-		return (c1 > c2) ? c1 : c2;
-	}
-
-	// both positive
-	// return the smallest abs value
-	c1 = (a > b) ? a : b;
-	return (c1 < c2) ? c1 : c2;
-}
-
 /*
  * It resets the total energy with the updated magnetic field.
  * As a side effect it frees the E&M fields for hydro method MHD_RK.
@@ -815,6 +897,211 @@ float dipoleMoment[3], float dipoleCenter[3], bool usingVectorPotential)
 				}
 			}
 		}
+	}
+
+	//special pressure init test for monogrid.
+	if(1)
+	{
+		TRACE
+		;
+
+#define DEBUG_HSE 0
+#define SET_HSE(i,j,k,k2,E) do{ \
+/*		TRACEF("%lld %lld %lld", (00)   + (i), (k2)-1 - (j), (k2)-1 - (k)); */ \
+/*		TRACEF("%lld %lld %lld", (k2)-1 - (i), (k2)-1 - (j), (k2)-1 - (k)); */ \
+/*		TRACEF("%lld %lld %lld", (00)   + (i), (00)   + (j), (k2)-1 - (k)); */ \
+/*		TRACEF("%lld %lld %lld", (k2)-1 - (i), (00)   + (j), (k2)-1 - (k)); */ \
+/*		TRACEF("%lld %lld %lld", (00)   + (i), (k2)-1 - (j), (00)   + (k)); */ \
+/*		TRACEF("%lld %lld %lld", (k2)-1 - (i), (k2)-1 - (j), (00)   + (k)); */ \
+/*		TRACEF("%lld %lld %lld", (00)   + (i), (00)   + (j), (00)   + (k)); */ \
+/*		TRACEF("%lld %lld %lld", (k2)-1 - (i), (00)   + (j), (00)   + (k)); */ \
+								totEField[ELT((00)   + (i), (k2)-1 - (j), (k2)-1 - (k))] += (E); \
+								totEField[ELT((k2)-1 - (i), (k2)-1 - (j), (k2)-1 - (k))] += (E); \
+								totEField[ELT((00)   + (i), (00)   + (j), (k2)-1 - (k))] += (E); \
+								totEField[ELT((k2)-1 - (i), (00)   + (j), (k2)-1 - (k))] += (E); \
+								totEField[ELT((00)   + (i), (k2)-1 - (j), (00)   + (k))] += (E); \
+								totEField[ELT((k2)-1 - (i), (k2)-1 - (j), (00)   + (k))] += (E); \
+								totEField[ELT((00)   + (i), (00)   + (j), (00)   + (k))] += (E); \
+								totEField[ELT((k2)-1 - (i), (00)   + (j), (00)   + (k))] += (E); \
+							}while(0)
+//
+		const size_t FIELD_SIZE = GetGridSize();
+		const size_t K2 = GridDimension[2];
+		const size_t K0 = K2 / 2;
+		const FLOAT dx = CellWidth[0][0];
+		FLOAT x, y, z;
+		double P_c, P0, P1, P2, dP01, dP12;
+		double r, rr, rho, rho_c, xi, xifactor;
+		int err;
+
+		arr_set(totEField, FIELD_SIZE, 0);
+
+//Initialize the center cells
+		double KPolytropic = EOSPolytropicFactor;
+		double nPolytropic = 1 / (Gamma - 1);
+		p->interpolateDensity(&rho_c, 0);
+		P_c = KPolytropic * POW(rho_c, Gamma);
+		TRACEF("%e %e %e %f", P_c, KPolytropic, rho_c, Gamma);
+		xifactor = (nPolytropic + 1) * KPolytropic * POW(rho_c, 1 / nPolytropic - 1);
+		xifactor /= 4 * M_PI * SphericalGravityConstant;
+		xifactor = sqrt(xifactor);
+
+		TRACEF("%lld .. %lld", K0, K2);
+
+		for(size_t k = K0; k < K0 + 2; k++)
+		{
+			z = CELLCENTER(2, k) - SphericalGravityCenter[2];
+			for(size_t j = K0; j < K0 + 2; j++)
+			{
+				y = CELLCENTER(1, j) - SphericalGravityCenter[1];
+				for(size_t i = K0; i < K0 + 2; i++)
+				{
+					x = CELLCENTER(0, i) - SphericalGravityCenter[0];
+					r = lenl(x, y, z);
+					xi = r / xifactor;
+					P0 = P_c * (1 - (nPolytropic + 1) / 6 * xi * xi);
+					if(DEBUG_HSE)
+						P0 = 1e1;
+					TRACEF("ijk=%lld %lld %lld xyz=%e %e %e r,xi,r/xi=%e %e %e   P=%e", i, j, k, x, y, z, r, xi,
+							xifactor, P0);
+					SET_HSE(i, j, k, K2, P0);
+				}
+			}
+		}
+
+		if(1)
+			// Integrate from the center cells out along z.
+			for(size_t j = K0; j < K0 + 2; j++)
+			{
+				y = CELLCENTER(1, j) - SphericalGravityCenter[1];
+				for(size_t i = K0; i < K0 + 2; i++)
+				{
+					x = CELLCENTER(0, i) - SphericalGravityCenter[0];
+					P0 = totEField[ELT(i, j, K0)];
+					P1 = totEField[ELT(i, j, K0 + 1)];
+					dP01 = P1 - P0;
+					for(size_t k = K0 + 2; k < K2; k++)
+					{
+						z = CELLCENTER(2, k-1) - SphericalGravityCenter[2];
+						r = lenl(x, y, z);
+						p->interpolateDensity(&rho, r);
+						double g = -z / r * SphericalGravityGetAt(r);
+						double slope = g * rho * dx;
+						dP12 = invLimiter(dP01, slope, &err);
+						P2 = P1 + dP12;
+//						P0 = 2 * (dP01 * dP12 * dP12 * dP12 * dP12 + dP01 * dP01 * dP01 * dP01 * dP12)
+//								/ ((dP01 * dP01 + dP12 * dP12) * (dP01 * dP01 + dP12 * dP12));
+//					TRACEF("dP01=%e dP12=%e slope_in=%e slope_out=%e", dP01, dP12, slope, P0);
+//					if(err)
+						if(i == K0 && (j == K0 || j == K0 + 1))
+						{
+							TRACEF("i,j,k= %lld %lld %lld   K0,K2= %lld %lld    P0,P1,dP01= %e %e %e    slope,slope/dP01= %e %e    dP12,P2= %e %e",
+									i, j, k, K0, K2, P0, P1, dP01, slope, slope / dP01, dP12, P2);
+						}
+						if(DEBUG_HSE)
+							P2 = 1e2;
+						SET_HSE(i, j, k, K2, P2);
+
+						dP01 = dP12;
+						P0 = P1;
+						P1 = P2;
+					}
+				}
+			}
+		TRACEF("P_boundary=%e", P2);
+
+		if(1)
+			// Integrate from the center cells out along y.
+			for(size_t k = K0; k < K2; k++)
+			{
+				z = CELLCENTER(2, k) - SphericalGravityCenter[2];
+				for(size_t i = K0; i < K0 + 2; i++)
+				{
+					x = CELLCENTER(0, i) - SphericalGravityCenter[0];
+					P0 = totEField[ELT(i, K0, k)];
+					P1 = totEField[ELT(i, K0 + 1, k)];
+					dP01 = P1 - P0;
+//					dP01 = -abs(dP01);
+//					if(i == K0 && k == K0 + 2)
+//						TRACEF("P1 P0 dP01 %e %e %e", P1, P0, dP01);
+					for(size_t j = K0 + 2; j < K2; j++)
+					{
+						y = CELLCENTER(1, j-1) - SphericalGravityCenter[1];
+						r = lenl(x, y, z);
+						p->interpolateDensity(&rho, r);
+						double g = -y / r * SphericalGravityGetAt(r);
+						double slope = g * rho * dx;
+						err = 0 && (i == 56 && j == 109 && k == 57);
+						if(err)
+						{
+//							TRACEF("K0, K2, i, j, k = %lld, %lld, %lld, %lld, %lld", K0, K2, i, j, k);
+//							TRACEF("ijk=%lld %lld %lld, xyzr=%e %e %e %e, g,rho,dx=%e %e %e, slope,dP01,err=%e %e %lld",
+//									i, j, k, x, y, z, r, g, rho, dx, slope, dP01, err);
+						}
+						dP12 = invLimiter(dP01, slope, &err);
+						P2 = P1 + dP12;
+						if(i == K0 && j == K0 + 2)
+							TRACEF("i,j,k= %lld %lld %lld   K0,K2= %lld %lld    P0,P1,dP01= %e %e %e    slope,slope/dP01= %e %e    dP12,P2= %e %e",
+									i, j, k, K0, K2, P0, P1, dP01, slope, slope / dP01, dP12, P2);
+//					if(err)
+//						if(i == K0 && k == K0 + 2)
+//						{
+//							TRACEF("ijk=%lld %lld %lld, xyzr=%e %e %e %e, g,rho,dx=%e %e %e, slope,dP01,err=%e %e %lld",
+//									i, j, k, x, y, z, r, g, rho, dx, slope, dP01, err);
+//						}
+						if(DEBUG_HSE)
+							P2 = 1e3;
+						SET_HSE(i, j, k, K2, P2);
+
+						dP01 = dP12;
+						P0 = P1;
+						P1 = P2;
+					}
+				}
+			}
+		TRACEF("P_boundary=%e", P2);
+
+		if(1)
+			// Integrate from the center cells out along x.
+			for(size_t k = K0; k < K2; k++)
+			{
+				z = CELLCENTER(2, k) - SphericalGravityCenter[2];
+				for(size_t j = K0; j < K2; j++)
+				{
+					y = CELLCENTER(1, j) - SphericalGravityCenter[1];
+					P0 = totEField[ELT(K0, j, k)];
+					P1 = totEField[ELT(K0 + 1, j, k)];
+					dP01 = P1 - P0;
+					for(size_t i = K0 + 2; i < K2; i++)
+					{
+						x = CELLCENTER(0, i-1) - SphericalGravityCenter[0];
+						r = lenl(x, y, z);
+						p->interpolateDensity(&rho, r);
+						double g = -x / r * SphericalGravityGetAt(r);
+						double slope = g * rho * dx;
+						dP12 = invLimiter(dP01, slope, &err);
+						if(err)
+						{
+							TRACEF("ijk=%lld %lld %lld, xyzr=%e %e %e %e, g,rho,dx=%e %e %e, slope,dP01,err=%e %e %lld",
+									i, j, k, x, y, z, r, g, rho, dx, slope, dP01, err);
+						}
+						P2 = P1 + dP12;
+						if(DEBUG_HSE)
+							P2 = 1e4;
+						SET_HSE(i, j, k, K2, P2);
+
+						dP01 = dP12;
+						P1 = P2;
+					}
+				}
+			}
+		TRACEF("P_boundary=%e", P2);
+//Calculate the internal energy from the pressure
+//		if(!DEBUG_HSE)
+		for(size_t index = 0; index < FIELD_SIZE; index++)
+			totEField[index] /= gammaMinusOne * rhoField[index];
+#undef SET_HSE
+#undef DEBUG_HSE
 	}
 
 //Add kinetic energy

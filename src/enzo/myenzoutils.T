@@ -994,7 +994,7 @@ template<typename T>
 int arr_printf_csv(const char* const preffix, const char* const singleElementFormat, const T* const arr,
 	const size_t arr_size, const char* const separator = ", ", int elemtnsPerLine = 10)
 {
-	arr_printf(preffix, NULL, singleElementFormat, separator, NULL, "\n", arr, arr_size, elemtnsPerLine, false, false);
+	arr_printf(preffix, NULL, singleElementFormat, separator, NULL, "\n",  arr, arr_size, elemtnsPerLine, false, false);
 }
 
 /*

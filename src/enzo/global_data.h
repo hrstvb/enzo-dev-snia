@@ -21,7 +21,7 @@
 #define GLOBAL_DATA_DEFINED__
 
 #include <stdio.h>
-
+#include "mylimiters.h"
 #include "macros_and_parameters.h"
 #include "typedefs.h"
 
@@ -1234,5 +1234,6 @@ EXTERN FLOAT TopBurnedRadiusEstimate ;
 EXTERN float BA[3];
 
 EXTERN int MHD_LI_GRAVITY_AFTER_PLMPRED;
+EXTERN MYLIM_FLOAT MyLimiterX12Y12[10][4];
 
 #endif
