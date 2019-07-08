@@ -18,6 +18,7 @@
 
 #include "myenzoutils.h"
 #include "preincludes.h"
+#include "mylimiters.h"
 #include "macros_and_parameters.h"
 #include "typedefs.h"
 #include "phys_constants.h"
@@ -1113,6 +1114,8 @@ int SetDefaultGlobalValues(TopGridData &MetaData)
 
   BA[0] = BA[1] = BA[2] = 0;
   MHD_LI_GRAVITY_AFTER_PLMPRED = 0;
+  arr_set(MyLimiterX12Y12[0], 40, 0);
+  limiter1nInit();
 
   return SUCCESS;
 }

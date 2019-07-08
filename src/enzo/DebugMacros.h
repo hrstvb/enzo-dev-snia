@@ -44,16 +44,16 @@
 
 extern long long MyProcessorNumber;
 
-#define TRACE fprintf(stderr, "TRACE:(#%lld)" FLN2STR "\n", MyProcessorNumber);
-#define TRACEF(format, ...) fprintf(stderr, "TRACE:(#%lld)" FLN2STR ":" format "\n", MyProcessorNumber, ##__VA_ARGS__);
+#define TRACE do{fprintf(stderr, "TRACE:(#%lld)" FLN2STR "\n", MyProcessorNumber);}while(0)
+#define TRACEF(format, ...) do{fprintf(stderr, "TRACE:(#%lld)" FLN2STR ":" format "\n", MyProcessorNumber, ##__VA_ARGS__);}while(0)
 
-#define TRACEG fprintf(stderr, "TRACE:(#%lld)g%lld(%p)::" FLN2STR "\n", MyProcessorNumber, this->ID, this);
-#define TRACEGF(format, ...) fprintf(stderr, "TRACE:(#%lld)g%lld(%p)::" FLN2STR ":" format "\n", MyProcessorNumber, this->ID, this, ##__VA_ARGS__);
+#define TRACEG do{fprintf(stderr, "TRACE:(#%lld)g%lld(%p)::" FLN2STR "\n", MyProcessorNumber, this->ID, this);}while(0)
+#define TRACEGF(format, ...) do{fprintf(stderr, "TRACE:(#%lld)g%lld(%p)::" FLN2STR ":" format "\n", MyProcessorNumber, this->ID, this, ##__VA_ARGS__);}while(0)
 
-#define TRACE0 if(MyProcessorNumber==ROOT_PROCESSOR){TRACE;}
-#define TRACEF0(format, ...) if(MyProcessorNumber==ROOT_PROCESSOR){TRACEF(format, ##__VA_ARGS__);}
+#define TRACE0 do{if(MyProcessorNumber==ROOT_PROCESSOR){TRACE;}}while(0)
+#define TRACEF0(format, ...) do{if(MyProcessorNumber==ROOT_PROCESSOR){TRACEF(format, ##__VA_ARGS__);}}while(0)
 
-#define TRACEG0 if(MyProcessorNumber==ROOT_PROCESSOR){TRACEG;}
-#define TRACEGF0(format, ...) if(MyProcessorNumber==ROOT_PROCESSOR){TRACEGF(format, ##__VA_ARGS__);}
+#define TRACEG0 do{if(MyProcessorNumber==ROOT_PROCESSOR){TRACEG;}}while(0)
+#define TRACEGF0(format, ...) do{if(MyProcessorNumber==ROOT_PROCESSOR){TRACEGF(format, ##__VA_ARGS__);}}while(0)
 
 #endif /* SRC_ENZO_DEBUGMACROS_H_ */

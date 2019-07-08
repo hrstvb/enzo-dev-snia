@@ -454,6 +454,13 @@ float SphericalGravityGetAt(FLOAT r)
 	if(-1 == rbin)
 		return 0;
 
+//	if(11 <= MHDCTSlopeLimiter && MHDCTSlopeLimiter <= 19)
+//	{
+//		const FLOAT dx = TopGridDx[0]; //TODO: make this a grid method.
+//		if(r <= dx)
+//			return 0;
+//	}
+
 	// SphericalGravityInterpAccelMethod:
 	// 0 -- Take the enclosed mass, M_encl, for that bin and return
 	//		G * M_encl / r**2

@@ -42,7 +42,7 @@ float *VelocityUnits, double *MassUnits, FLOAT Time);
 
 int CosmologyComputeExpansionFactor(FLOAT time, FLOAT *a, FLOAT *dadt);
 
-size_t SphericalGravityComputeBinIndex(FLOAT r);
+//size_t SphericalGravityComputeBinIndex(FLOAT r);
 float SphericalGravityGetAt(FLOAT r);
 
 int grid::ComputeAccelerationFieldExternal()
@@ -71,7 +71,7 @@ int grid::ComputeAccelerationFieldExternal()
 	if(AccelerationField[0] == NULL)
 		for(dim = 0; dim < GridRank; dim++)
 		{
-			arr_newset(AccelerationField+dim, size, 0);
+			arr_newset(AccelerationField + dim, size, 0);
 //			AccelerationField[dim] = new float[size];
 //			for(i = 0; i < size; i++)
 //				AccelerationField[dim][i] = 0;
@@ -846,59 +846,54 @@ int grid::ComputeAccelerationFieldExternal()
 	{
 		size_t gridSize = GetGridSize();
 		int index = 0, rbin, dimZeus;
-		FLOAT xyz[MAX_DIMENSION], zz, yy_zz, rsquared, rcubed, r;
+		FLOAT xyz[MAX_DIMENSION], zz, yy_zz, rsquared, rcubed, r, dxdx;
 		float my_mass, my_accel;
+		dxdx = (11 <= MHDCTSlopeLimiter && MHDCTSlopeLimiter <= 19) ? square(CellWidth[0][0]) : -1; //TODO
 
 		for(dim = 0; dim < GridRank; dim++)
 		{
-			index = 0;
 			dimZeus = (HydroMethod == Zeus_Hydro) ? dim : -1;
 
 			for(k = 0; k < GridDimension[2]; k++)
 			{
-				xyz[2] = (GridRank > 2) ? ((dimZeus == 2) ? CellLeftEdge[2][k] : CELLCENTER(2, k)) : 0;
+//				xyz[2] = (GridRank > 2) ? ((dimZeus == 2) ? CellLeftEdge[2][k] : CELLCENTER(2, k)) : 0;
+//				zz = square(xyz[2] - SphericalGravityCenter[2]);
+				xyz[2] = (dimZeus == 2) ? CellLeftEdge[2][k] : CELLCENTER(2, k);
 				zz = square(xyz[2] - SphericalGravityCenter[2]);
+				if(dim == 2 && zz < dxdx)
+					continue;
 
 				for(j = 0; j < GridDimension[1]; j++)
 				{
-					xyz[1] = (GridRank > 1) ? ((dimZeus == 1) ? CellLeftEdge[1][j] : CELLCENTER(1, j)) : 0;
-					yy_zz = square(xyz[1] - SphericalGravityCenter[1]) + zz;
+//					xyz[1] = (GridRank > 1) ? ((dimZeus == 1) ? CellLeftEdge[1][j] : CELLCENTER(1, j)) : 0;
+//					yy_zz = square(xyz[1] - SphericalGravityCenter[1]) + zz;
+					xyz[1] = (dimZeus == 1) ? CellLeftEdge[1][j] : CELLCENTER(1, j);
+					rsquared = square(xyz[1] - SphericalGravityCenter[1]);
+					if(dim == 1 && rsquared < dxdx)
+						continue;
+
+					yy_zz = rsquared + zz;
 
 					for(i = 0; i < GridDimension[0]; i++)
 					{
+						//xyz[0] = (dimZeus == 0) ? CellLeftEdge[0][i] : CELLCENTER(0, i);
+						//rsquared = square(xyz[0] - SphericalGravityCenter[0]) + yy_zz;
 						xyz[0] = (dimZeus == 0) ? CellLeftEdge[0][i] : CELLCENTER(0, i);
-						rsquared = square(xyz[0] - SphericalGravityCenter[0]) + yy_zz;
+						rsquared = square(xyz[0] - SphericalGravityCenter[0]);
+						if(dim == 0 && rsquared < dxdx)
+							continue;
+
+						rsquared += yy_zz;
 
 						r = sqrt(rsquared);
 
-						if(0==(my_accel=SphericalGravityGetAt(r)))
-								continue;
-
-//						if(-1 == (rbin = SphericalGravityComputeBinIndex(r)))
-//							continue;
-//
-//						// Calculate the SphericalGravity acceleration magnitude
-//						int choice =
-//								(SphericalGravityInterpAccelMethod && rbin < SphericalGravityActualNumberOfBins - 1) ?
-//										choice : 0;
-//
-//						switch(choice)
-//						{
-//						case 0:
-//							my_accel = SphericalGravityConstant * SphericalGravityInteriorMasses[rbin] / rsquared;
-//							break;
-//						case 1:
-//							// Use linear interpolation between the bin left and right edge.
-//							// Use the pre-calculated coefficients.
-//							my_accel = SphericalGravityBinAccels[i]
-//									+ SphericalGravityBinAccelSlopes[i] * (r - SphericalGravityBinLeftEdges[i]);
-//							break;
-//						}
+						if(0 == (my_accel = SphericalGravityGetAt(r)))
+							continue;
 
 						// Calculate the dim component of the SphericalGravity acceleration vector.
 						my_accel *= -xyz[dim] / r;
-						//fprintf(stderr,"KLOWN wtf %p dim %d n %d ijk %d, %d, %d\n",AccelerationField[dim],dim,index, i,j,k);
-						AccelerationField[dim][index++] += my_accel;
+						index = ELT(i, j, k);
+						AccelerationField[dim][index] += my_accel;
 					} // for i
 				} // for j
 			} // for k

@@ -62,6 +62,7 @@ class ExternalBoundary;
 
  */
 
+void limiter1nInit();
 int MHDCTSetupFieldLabels();
 int SphericalGravityComputePotential(LevelHierarchyEntry *LevelArray[], TopGridData* MetaData,
 	bool interpolateMissingShells);
@@ -621,7 +622,8 @@ int MHDProfileInitialize(FILE *fptr, FILE *Outfptr, HierarchyEntry &TopGrid, Top
 //		SphericalGravityIntegratePressure(&p, InitRadialPressureFromCentral, false);
 
 	if(InitBWithVectorPotential
-			|| (UseSphericalGravity && InitRadialPressureFromCentral && *InternalEnergyColumnName == '\0'))
+			|| (UseSphericalGravity && InitRadialPressureFromCentral && *InternalEnergyColumnName == '\0'
+					|| MHDCTSlopeLimiter>10))
 	{
 		for(grid* g = it.firstFromTop(); g; g = it.next())
 			if(g->MHDProfileInitializeGrid2(&p, BurningTemperature, InitialBurnedRadius, dipoleMoment, dipoleCenter,
