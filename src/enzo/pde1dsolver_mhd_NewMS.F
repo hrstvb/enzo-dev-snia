@@ -54,6 +54,7 @@ c     Note that for the most part things are treated identically as adiabatic.
       R_PREC fluxc(numberofcolours)
       INTG_PREC uchoice(ndx,npu)
       R_PREC total
+      R_PREC temp
       common /printff/printflag
 
       data alpha1/0.008_RKIND/, cdiff/0.1_RKIND/,prelow/1.0e-16_RKIND/
@@ -200,9 +201,24 @@ c
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       if( hack.ne.0 ) then
-        do ix= nxb-2,nxe+2
-          w(ix,2) = w(ix,2) + dt*acc(ix)/2.0_RKIND
-        enddo
+        if( 1.eq.1.and.hack.ne.0 ) then
+          do ix= nxb-1,nxe
+              temp = dt*acc(ix)/2.0_RKIND
+              ixp1 = ix+1
+              ul(ix,2) = ul(ix,2) + temp
+              ur(ix,2) = ur(ix,2) + temp
+          enddo
+
+          temp = ul(nxb,2)
+          ul(nxb-2,2) = temp
+          ur(nxb-2,2) = temp
+          ul(nxb-1,2) = temp
+          ur(nxb-1,2) = temp
+
+          temp = ur(nxe+1,2)
+          ul(nxe+2,2) = temp
+          ur(nxe+2,2) = temp
+        endif
       endif
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
