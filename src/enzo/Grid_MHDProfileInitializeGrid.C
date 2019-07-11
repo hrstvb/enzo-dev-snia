@@ -907,23 +907,15 @@ float dipoleMoment[3], float dipoleCenter[3], bool usingVectorPotential)
 
 #define DEBUG_HSE 0
 #define SET_HSE(i,j,k,k2,E) do{ \
-/*		TRACEF("%lld %lld %lld", (00)   + (i), (k2)-1 - (j), (k2)-1 - (k)); */ \
-/*		TRACEF("%lld %lld %lld", (k2)-1 - (i), (k2)-1 - (j), (k2)-1 - (k)); */ \
-/*		TRACEF("%lld %lld %lld", (00)   + (i), (00)   + (j), (k2)-1 - (k)); */ \
-/*		TRACEF("%lld %lld %lld", (k2)-1 - (i), (00)   + (j), (k2)-1 - (k)); */ \
-/*		TRACEF("%lld %lld %lld", (00)   + (i), (k2)-1 - (j), (00)   + (k)); */ \
-/*		TRACEF("%lld %lld %lld", (k2)-1 - (i), (k2)-1 - (j), (00)   + (k)); */ \
-/*		TRACEF("%lld %lld %lld", (00)   + (i), (00)   + (j), (00)   + (k)); */ \
-/*		TRACEF("%lld %lld %lld", (k2)-1 - (i), (00)   + (j), (00)   + (k)); */ \
-								totEField[ELT((00)   + (i), (k2)-1 - (j), (k2)-1 - (k))] += (E); \
-								totEField[ELT((k2)-1 - (i), (k2)-1 - (j), (k2)-1 - (k))] += (E); \
-								totEField[ELT((00)   + (i), (00)   + (j), (k2)-1 - (k))] += (E); \
-								totEField[ELT((k2)-1 - (i), (00)   + (j), (k2)-1 - (k))] += (E); \
-								totEField[ELT((00)   + (i), (k2)-1 - (j), (00)   + (k))] += (E); \
-								totEField[ELT((k2)-1 - (i), (k2)-1 - (j), (00)   + (k))] += (E); \
-								totEField[ELT((00)   + (i), (00)   + (j), (00)   + (k))] += (E); \
-								totEField[ELT((k2)-1 - (i), (00)   + (j), (00)   + (k))] += (E); \
-							}while(0)
+		totEField[ELT((00)   + (i), (k2)-1 - (j), (k2)-1 - (k))] += (E); \
+		totEField[ELT((k2)-1 - (i), (k2)-1 - (j), (k2)-1 - (k))] += (E); \
+		totEField[ELT((00)   + (i), (00)   + (j), (k2)-1 - (k))] += (E); \
+		totEField[ELT((k2)-1 - (i), (00)   + (j), (k2)-1 - (k))] += (E); \
+		totEField[ELT((00)   + (i), (k2)-1 - (j), (00)   + (k))] += (E); \
+		totEField[ELT((k2)-1 - (i), (k2)-1 - (j), (00)   + (k))] += (E); \
+		totEField[ELT((00)   + (i), (00)   + (j), (00)   + (k))] += (E); \
+		totEField[ELT((k2)-1 - (i), (00)   + (j), (00)   + (k))] += (E); \
+	}while(0)
 //
 		const size_t FIELD_SIZE = GetGridSize();
 		const size_t K2 = GridDimension[2];
@@ -959,7 +951,11 @@ float dipoleMoment[3], float dipoleCenter[3], bool usingVectorPotential)
 					x = CELLCENTER(0, i) - SphericalGravityCenter[0];
 					r = lenl(x, y, z);
 					xi = r / xifactor;
-					P0 = P_c * (1 - (nPolytropic + 1) / 6 * xi * xi);
+					P0 = 1;
+					P0 += -(nPolytropic + 1) / 6 * xi * xi;
+					P0 += -11 * nPolytropic * (nPolytropic + 1) / 180.0 * xi * xi * xi * xi;
+					P0 *= 1.2578125;
+					P0 *= P_c;
 					if(DEBUG_HSE)
 						P0 = 1e1;
 					TRACEF("ijk=%lld %lld %lld xyz=%e %e %e r,xi,r/xi=%e %e %e   P=%e", i, j, k, x, y, z, r, xi,
@@ -984,7 +980,8 @@ float dipoleMoment[3], float dipoleCenter[3], bool usingVectorPotential)
 					{
 						z = CELLCENTER(2, k-1) - SphericalGravityCenter[2];
 						r = lenl(x, y, z);
-						p->interpolateDensity(&rho, r);
+						rho = rhoField[ELT(i, j, k)];
+						//p->interpolateDensity(&rho, r);
 						double g = -z / r * SphericalGravityGetAt(r);
 						double slope = g * rho * dx;
 						dP12 = invLimiter(dP01, slope, &err);
@@ -1028,15 +1025,16 @@ float dipoleMoment[3], float dipoleCenter[3], bool usingVectorPotential)
 					{
 						y = CELLCENTER(1, j-1) - SphericalGravityCenter[1];
 						r = lenl(x, y, z);
-						p->interpolateDensity(&rho, r);
+						rho = rhoField[ELT(i, j, k)];
+						//p->interpolateDensity(&rho, r);
 						double g = -y / r * SphericalGravityGetAt(r);
 						double slope = g * rho * dx;
 						err = 0 && (i == 56 && j == 109 && k == 57);
 						if(err)
 						{
-//							TRACEF("K0, K2, i, j, k = %lld, %lld, %lld, %lld, %lld", K0, K2, i, j, k);
-//							TRACEF("ijk=%lld %lld %lld, xyzr=%e %e %e %e, g,rho,dx=%e %e %e, slope,dP01,err=%e %e %lld",
-//									i, j, k, x, y, z, r, g, rho, dx, slope, dP01, err);
+							TRACEF("K0, K2, i, j, k = %lld, %lld, %lld, %lld, %lld", K0, K2, i, j, k);
+							TRACEF("ijk=%lld %lld %lld, xyzr=%e %e %e %e, g,rho,dx=%e %e %e, slope,dP01,err=%e %e %lld",
+									i, j, k, x, y, z, r, g, rho, dx, slope, dP01, err);
 						}
 						dP12 = invLimiter(dP01, slope, &err);
 						P2 = P1 + dP12;
@@ -1076,7 +1074,8 @@ float dipoleMoment[3], float dipoleCenter[3], bool usingVectorPotential)
 					{
 						x = CELLCENTER(0, i-1) - SphericalGravityCenter[0];
 						r = lenl(x, y, z);
-						p->interpolateDensity(&rho, r);
+						rho = rhoField[ELT(i, j, k)];
+						//p->interpolateDensity(&rho, r);
 						double g = -x / r * SphericalGravityGetAt(r);
 						double slope = g * rho * dx;
 						dP12 = invLimiter(dP01, slope, &err);

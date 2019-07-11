@@ -17,6 +17,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
+#include "DebugMacros.h"
 #include "ErrorExceptions.h"
 #include "macros_and_parameters.h"
 #include "typedefs.h"
@@ -200,9 +201,14 @@ int grid::SolveMHD_Li(int CycleNumber, int NumberOfSubgrids,
             if ( EquationOfState == 0 ){
               field_line[ ii + line_size*7] = BaryonField[TENum][index_bf];
               field_line[ ii + line_size*8] = pressure[index_bf]/POW(BaryonField[DensNum][index_bf],Gamma-1);
+//              if(jj==55 && kk==55)
+//              TRACEF("x pressure line: %lld  %e", index_bf, pressure[index_bf]);
             }
-            if( GravityOn )
+            if( GravityOn ){
               gravity_line[ ii ] = AccelerationField[0][index_bf];
+//              if(jj==55 && kk==55)
+//              TRACEF("x gravity line: %lld,  %e",  ii, gravity_line[ii]);
+            }
             if( NumberOfColours > 0){
               for( nColour=0; nColour<NumberOfColours; nColour++){
                 colour_line[ ii + line_size*nColour ] = BaryonField[ colnum[nColour] ][index_bf];
@@ -213,6 +219,13 @@ int grid::SolveMHD_Li(int CycleNumber, int NumberOfSubgrids,
           for( ii=1; ii<GridDimension[0]; ii++){
             diffusion_line[ii] = 0.0;
           }
+          if((jj==31 || jj==32 || jj ==33) && kk==31)
+          {
+        	  hack = 2;
+//        	  TRACEF("      xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx step, ii, jj, kk = * %lld %lld", jj, kk);
+          }
+          else
+        	  hack = 1;
           FORTRAN_NAME(pde1dsolver_mhd_new)(field_line, colour_line, &line_size, &nu,
             &startindex, &endindex, &NumberOfColours,
             CellWidthTemp[0],  &dtFixed,
@@ -337,6 +350,13 @@ int grid::SolveMHD_Li(int CycleNumber, int NumberOfSubgrids,
           for( jj=1; jj<GridDimension[1]; jj++){
              diffusion_line[jj] = 0.0;
           }
+          if(ii==31 && kk==31)
+          {
+        	  hack = 2;
+//        	  TRACEF("      yyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy step, ii, jj, kk = %lld * %lld", ii, kk);
+          }
+          else
+        	  hack = 1;
           FORTRAN_NAME(pde1dsolver_mhd_new)(field_line, colour_line, &line_size, &nu,
             &startindex, &endindex, &NumberOfColours,
             CellWidthTemp[1],  &dtFixed,
@@ -464,6 +484,13 @@ int grid::SolveMHD_Li(int CycleNumber, int NumberOfSubgrids,
             diffusion_line[kk] = 0.0;
           }
 
+          if(jj==31 && ii==31)
+          {
+        	  hack = 2;
+//        	  TRACEF("      zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz step, ii, jj, kk = %lld %lld *", ii, jj);
+          }
+          else
+        	  hack = 1;
           FORTRAN_NAME(pde1dsolver_mhd_new)(field_line, colour_line, &line_size, &nu,
             &startindex, &endindex, &NumberOfColours,
             CellWidthTemp[2],  &dtFixed,

@@ -1704,10 +1704,11 @@ c...  van Leer's limiter
                if( sign1*sign2.le.0.or.du1nn.eq.0.or.du2nn.eq.0) then
                     ux(ix,iu) = 0
                else if ((du2.lt.xn1*du1).or.(du1.lt.xn1*du2)) then
-                    ux(ix,iu) = 2._RKIND*(du1 * du2nn + du1nn * du2)
-     $                              /((du1n + du2n)**2)
+                    ux(ix,iu) = sign1 * 2._RKIND
+     $                          * (du1 * du2nn + du1nn * du2)
+     $                          / ( (du1n + du2n)**2 )
                else
-                    ux(ix,iu) = (du1 + du2)/2._RKIND
+                    ux(ix,iu) = sign1 * (du1 + du2) / 2._RKIND
                endif
 
                du1 = du2
@@ -1726,7 +1727,6 @@ c        repeat for color fields
             du1nn = du1n**2
             do ix = nxbe(2)-1, nxbe(3)+1
                du2 = uc(ix+1,iu) - uc(ix,iu)
-               du2 = u(ix+1,iu) - u(ix,iu)
                sign2 = sign(1._RKIND, du2)
                du2 = abs(du2)
                du2n = du2**nmylim
@@ -1735,10 +1735,11 @@ c        repeat for color fields
                if( sign1*sign2.le.0.or.du1nn.eq.0.or.du2nn.eq.0) then
                     ucx(ix,iu) = 0
                else if ((du2.lt.xn1*du1).or.(du1.lt.xn1*du2)) then
-                    ux(ix,iu) = 2._RKIND*(du1 * du2nn + du1nn * du2)
-     $                              /((du1n + du2n)**2)
+                    ucx(ix,iu) = sign1 * 2._RKIND
+     $                          * (du1 * du2nn + du1nn * du2)
+     $                          / ( (du1n + du2n)**2 )
                else
-                    ux(ix,iu) = (du1 + du2)/2._RKIND
+                    ucx(ix,iu) = sign1 * (du1 + du2) / 2._RKIND
                endif
 
                du1 = du2
@@ -1759,6 +1760,7 @@ c-----------------------------------------------------------------------------
       subroutine plmpred_mhd(q,qx,ndx,nu,lmin,lmax,dt,dx,gamma,
      $     idir,ur,ul,smallp,smallr,csmin
      $     , qcn, qc, qcx, qcl, qcr
+     $     , debug
      $     )
 c----------------------------------------------------------------------
 c     piecewise-linear predictor (PLM)  -- qx = 0.5h*u_x
@@ -1774,6 +1776,7 @@ c-----------------------------------------------------------------------
       R_PREC smallp, smallr,csmin
       INTG_PREC qcn
       R_PREC  qc(ndx,qcn), qcx(ndx,qcn), qcl(ndx,qcn), qcr(ndx,qcn)
+      INTG_PREC debug
 c
 c...  local variables
       INTG_PREC cix
@@ -1787,6 +1790,7 @@ c
 c predictor step for variables at midtime at cell edges for muscl
 c working on row number j
 c
+
       gamma1 = gamma - 1._RKIND
       dtdx = dt/dx
       if (idir.eq.1) then
@@ -1908,7 +1912,7 @@ c...  fast magnetosonic wave +
          off = 1._RKIND - max(u+cf,0._RKIND)*dtdx
 c
 c...  fast magnetosonic wave -
-         if (u-cf.le.0._RKIND) then
+         if (1.eq.2.and.u-cf.le.0._RKIND) then
             at7 = 0._RKIND
          else
             at7 = dtdx*2._RKIND*cf*(-af*(cf*ux - tau*px) +
@@ -2047,7 +2051,7 @@ c...  fast magnetosonic wave -
          off = -(1._RKIND + min(u-cf,0._RKIND)*dtdx)
 c
 c...  fast magnetosonic wave +
-         if (u+cf.gt.0._RKIND) then
+         if (1.eq.2.and.u+cf.gt.0._RKIND) then
             at5 = 0._RKIND
          else
             at5 = -dtdx*2._RKIND*cf*(af*(cf*ux + tau*px) -
