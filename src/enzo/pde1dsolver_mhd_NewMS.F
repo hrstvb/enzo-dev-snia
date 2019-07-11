@@ -202,11 +202,13 @@ c
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       if( hack.ne.0 ) then
         if( 1.eq.1.and.hack.ne.0 ) then
+          ix = nxb-1
+          temp = dt*acc(ix)/2.0_RKIND
           do ix= nxb-1,nxe
-              temp = dt*acc(ix)/2.0_RKIND
               ixp1 = ix+1
-              ul(ix,2) = ul(ix,2) + temp
-              ur(ix,2) = ur(ix,2) + temp
+              ul(ixp1,2) = ul(ixp1,2) + temp
+              temp = dt*acc(ixp1)/2.0_RKIND
+              ur(ixp1,2) = ur(ixp1,2) + temp
           enddo
 
           temp = ul(nxb,2)
