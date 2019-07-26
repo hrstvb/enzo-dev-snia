@@ -258,6 +258,7 @@ int SphericalGravityComputePotential(LevelHierarchyEntry *LevelArray[], TopGridD
 //	if(UseSpherGrav)
 //		return SpherGravCopmutePotential(LevelArray, MetaData);
 
+	TRACE;
 	if(SphericalGravityDetermineBins() == FAIL)
 		ENZO_FAIL("Coudn't determine spherical gravity bins.\n");
 	SphericalGravityAllocateBins(&SphericalGravityShellCellCounts, &SphericalGravityShellMasses,
@@ -450,16 +451,12 @@ int SphericalGravityComputePotential(LevelHierarchyEntry *LevelArray[], TopGridD
  */
 float SphericalGravityGetAt(FLOAT r)
 {
+	if(r > SphericalGravityOuterRadius)
+		return 0;
+
 	size_t rbin = SphericalGravityComputeBinIndex(r);
 	if(-1 == rbin)
 		return 0;
-
-//	if(11 <= MHDCTSlopeLimiter && MHDCTSlopeLimiter <= 19)
-//	{
-//		const FLOAT dx = TopGridDx[0]; //TODO: make this a grid method.
-//		if(r <= dx)
-//			return 0;
-//	}
 
 	// SphericalGravityInterpAccelMethod:
 	// 0 -- Take the enclosed mass, M_encl, for that bin and return

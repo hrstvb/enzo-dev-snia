@@ -537,6 +537,8 @@ int SetDefaultGlobalValues(TopGridData &MetaData)
 
   ZEUSLinearArtificialViscosity    = 0.0;
   ZEUSQuadraticArtificialViscosity = 2.0;
+  ZEUS_IncludeViscosityTerm        = 1;
+  ZEUS_IncludeDivergenceTerm       = 1;
   UseMinimumPressureSupport        = FALSE;
   MinimumPressureSupportParameter  = 100.0;
 

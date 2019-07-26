@@ -248,12 +248,12 @@ FLOAT** magEBins, LevelHierarchyEntry* myLevelHierarchyEntry)
 	arr_xpy(SphericalGravityShellCellCounts, countBins, N);
 	arr_axpy(SphericalGravityShellVolumes, countBins, N, cellVolume);
 	arr_axpy(SphericalGravityShellMasses, densBins, N, cellVolume);
-	for(int dim = 0; dim < GridRank; dim++)
-		arr_axpy(SphericalGravityShellCentersOfMass[dim], cmBins[dim], N, cellVolume);
-	for(int dim = 0; dim < GridRank; dim++)
-		arr_axpy(SphericalGravityShellKineticEnergies[dim], kinEBins[dim], N, 0.5 * cellVolume);
-	for(int dim = 0; dim < 3; dim++)
-		arr_axpy(SphericalGravityShellMagneticEnergies[dim], magEBins[dim], N, 0.5 * cellVolume);
+//	for(int dim = 0; dim < GridRank; dim++)
+//		arr_axpy(SphericalGravityShellCentersOfMass[dim], cmBins[dim], N, cellVolume);
+//	for(int dim = 0; dim < GridRank; dim++)
+//		arr_axpy(SphericalGravityShellKineticEnergies[dim], kinEBins[dim], N, 0.5 * cellVolume);
+//	for(int dim = 0; dim < 3; dim++)
+//		arr_axpy(SphericalGravityShellMagneticEnergies[dim], magEBins[dim], N, 0.5 * cellVolume);
 
 	return SUCCESS;
 }

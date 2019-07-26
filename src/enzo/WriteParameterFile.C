@@ -606,6 +606,8 @@ int WriteParameterFile(FILE *fptr, TopGridData &MetaData, char *name = NULL)
 	  ZEUSLinearArtificialViscosity);
   fprintf(fptr, "ZEUSQuadraticArtificialViscosity = %"GSYM"\n",
 	  ZEUSQuadraticArtificialViscosity);
+  fprintf(fptr, "ZEUS_IncludeViscosityTerm  = %"ISYM"\n", ZEUS_IncludeViscosityTerm );
+  fprintf(fptr, "ZEUS_IncludeDivergenceTerm = %"ISYM"\n", ZEUS_IncludeDivergenceTerm);
   fprintf(fptr, "UseMinimumPressureSupport        = %"ISYM"\n",
 	  UseMinimumPressureSupport);
   fprintf(fptr, "MinimumPressureSupportParameter  = %"FSYM"\n",

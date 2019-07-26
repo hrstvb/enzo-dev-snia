@@ -633,6 +633,8 @@ int ReadParameterFile(FILE *fptr, TopGridData &MetaData, float *Initialdt)
 		  &ZEUSQuadraticArtificialViscosity);
     ret += sscanf(line, "ZEUSLinearArtificialViscosity = %"FSYM,
 		  &ZEUSLinearArtificialViscosity);
+    ret += sscanf(line, "ZEUS_IncludeViscosityTerm  = %"ISYM, &ZEUS_IncludeViscosityTerm );
+    ret += sscanf(line, "ZEUS_IncludeDivergenceTerm = %"ISYM, &ZEUS_IncludeDivergenceTerm);
 
     ret += sscanf(line, "UseMinimumPressureSupport = %"ISYM,
 		  &UseMinimumPressureSupport);
