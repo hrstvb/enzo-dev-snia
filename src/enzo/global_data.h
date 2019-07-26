@@ -492,6 +492,8 @@ EXTERN int OutputGriddedStarParticle;
 
 EXTERN float ZEUSLinearArtificialViscosity;
 EXTERN float ZEUSQuadraticArtificialViscosity;
+EXTERN int ZEUS_IncludeViscosityTerm;
+EXTERN int ZEUS_IncludeDivergenceTerm;
 
 /* Parameters for MinimumPressureSupport. */
 

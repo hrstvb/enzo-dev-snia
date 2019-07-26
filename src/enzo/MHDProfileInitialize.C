@@ -507,7 +507,7 @@ int MHDProfileInitialize(FILE *fptr, FILE *Outfptr, HierarchyEntry &TopGrid, Top
 	}
 
 	InitBWithVectorPotential = InitBWithVectorPotential && (dipoleMoment[0] || dipoleMoment[1] || dipoleMoment[2]);
-	bool projectChildrenToParents = RefineOnStartup && MaximumRefinementLevel > 0;
+	bool projectChildrenToParents = 0 && RefineOnStartup && MaximumRefinementLevel > 0;
 
 	MHDInitialProfile p = MHDInitialProfile();
 	p.init(RadiusColumnName, DensityColumnName, InternalEnergyColumnName, TemperatureColumnName,
@@ -564,7 +564,7 @@ int MHDProfileInitialize(FILE *fptr, FILE *Outfptr, HierarchyEntry &TopGrid, Top
 
 		// Initialize the density and the burned fraction.
 		g->MHDProfileInitializeGrid(&p, BurningTemperature,
-									InitialBurnedRadius * (rhit.currentLevel == MaximumRefinementLevel) ? 1 : 1,
+									InitialBurnedRadius * (rhit.currentLevel == MaximumRefinementLevel) ? 1 : 0,
 									dipoleMoment, dipoleCenter, InitBWithVectorPotential);
 	}
 
@@ -623,7 +623,7 @@ int MHDProfileInitialize(FILE *fptr, FILE *Outfptr, HierarchyEntry &TopGrid, Top
 
 	if(InitBWithVectorPotential
 			|| (UseSphericalGravity && InitRadialPressureFromCentral && *InternalEnergyColumnName == '\0'
-					|| MHDCTSlopeLimiter>10))
+					|| MHDCTSlopeLimiter>10 || 1))
 	{
 		for(grid* g = it.firstFromTop(); g; g = it.next())
 			if(g->MHDProfileInitializeGrid2(&p, BurningTemperature, InitialBurnedRadius, dipoleMoment, dipoleCenter,

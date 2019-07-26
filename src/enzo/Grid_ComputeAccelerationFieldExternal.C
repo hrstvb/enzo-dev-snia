@@ -848,7 +848,7 @@ int grid::ComputeAccelerationFieldExternal()
 		int index = 0, rbin, dimZeus;
 		FLOAT xyz[MAX_DIMENSION], zz, yy_zz, rsquared, rcubed, r, dxdx;
 		float my_mass, my_accel;
-		dxdx = (11 <= MHDCTSlopeLimiter && MHDCTSlopeLimiter <= 19) ? square(CellWidth[0][0]) : -1; //TODO
+		dxdx = (11 <= MHDCTSlopeLimiter && MHDCTSlopeLimiter <= 19) ? square(CellWidth[0][0]) : -1;
 
 		for(dim = 0; dim < GridRank; dim++)
 		{
@@ -856,35 +856,26 @@ int grid::ComputeAccelerationFieldExternal()
 
 			for(k = 0; k < GridDimension[2]; k++)
 			{
-//				xyz[2] = (GridRank > 2) ? ((dimZeus == 2) ? CellLeftEdge[2][k] : CELLCENTER(2, k)) : 0;
-//				zz = square(xyz[2] - SphericalGravityCenter[2]);
-				xyz[2] = (dimZeus == 2) ? CellLeftEdge[2][k] : CELLCENTER(2, k);
+				xyz[2] = (GridRank > 2) ? ((dimZeus == 2) ? CellLeftEdge[2][k] : CELLCENTER(2, k)) : 0;
 				zz = square(xyz[2] - SphericalGravityCenter[2]);
 				if(dim == 2 && zz < dxdx)
 					continue;
 
 				for(j = 0; j < GridDimension[1]; j++)
 				{
-//					xyz[1] = (GridRank > 1) ? ((dimZeus == 1) ? CellLeftEdge[1][j] : CELLCENTER(1, j)) : 0;
-//					yy_zz = square(xyz[1] - SphericalGravityCenter[1]) + zz;
-					xyz[1] = (dimZeus == 1) ? CellLeftEdge[1][j] : CELLCENTER(1, j);
-					rsquared = square(xyz[1] - SphericalGravityCenter[1]);
-					if(dim == 1 && rsquared < dxdx)
+					xyz[1] = (GridRank > 1) ? ((dimZeus == 1) ? CellLeftEdge[1][j] : CELLCENTER(1, j)) : 0;
+					yy_zz = square(xyz[1] - SphericalGravityCenter[1]);
+					if(dim == 1 && yy_zz < dxdx)
 						continue;
-
-					yy_zz = rsquared + zz;
+					yy_zz += zz;
 
 					for(i = 0; i < GridDimension[0]; i++)
 					{
-						//xyz[0] = (dimZeus == 0) ? CellLeftEdge[0][i] : CELLCENTER(0, i);
-						//rsquared = square(xyz[0] - SphericalGravityCenter[0]) + yy_zz;
 						xyz[0] = (dimZeus == 0) ? CellLeftEdge[0][i] : CELLCENTER(0, i);
 						rsquared = square(xyz[0] - SphericalGravityCenter[0]);
 						if(dim == 0 && rsquared < dxdx)
 							continue;
-
 						rsquared += yy_zz;
-
 						r = sqrt(rsquared);
 
 						if(0 == (my_accel = SphericalGravityGetAt(r)))

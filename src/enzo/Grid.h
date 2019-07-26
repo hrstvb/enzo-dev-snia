@@ -2673,6 +2673,18 @@ int zEulerSweep(int j, int NumberOfSubgrids, fluxes *SubgridFluxes[],
     }
      return TRUE;
   }
+  inline FLOAT GetCellLeftEdge(int dim, int index)
+  {
+	  return CellLeftEdge[dim][index];
+  }
+  inline FLOAT GetCellCenter(int dim, int index)
+  {
+	  return (CellLeftEdge[dim][index] + CellLeftEdge[dim][index+1]) / 2;
+  }
+  inline FLOAT GetCellWidth(int dim, int index)
+  {
+	  return CellWidth[dim][index];
+  }
 
 
 
@@ -3245,6 +3257,7 @@ int zEulerSweep(int j, int NumberOfSubgrids, fluxes *SubgridFluxes[],
   			r = m;
 
   		m = (l + r) / 2;
+
   	}
   	if(l == 0)
   		return -(y < a[0]);
