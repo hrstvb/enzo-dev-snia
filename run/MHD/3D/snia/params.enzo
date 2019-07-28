@@ -2,14 +2,14 @@ ProblemType                = 501
 TopGridRank                = 3
 UserDefinedRootGridLayout  = 1 1 1
 #UserDefinedRootGridLayout  = 2 2 2
-TopGridDimensions          = 10 10 10
+#TopGridDimensions          = 10 10 10
 #TopGridDimensions          = 50 50 50
-#TopGridDimensions          = 100 100 100
+TopGridDimensions          = 100 100 100
 #TopGridDimensions          = 200 200 200
-DomainLeftEdge  = -600e5 -600e5 -600e5
-DomainRightEdge = 600e5 600e5 600e5
-#DomainLeftEdge  = -2500e5 -2500e5 -2500e5
-#DomainRightEdge = 2500e5 2500e5 2500e5
+#DomainLeftEdge  = -600e5 -600e5 -600e5
+#DomainRightEdge = 600e5 600e5 600e5
+DomainLeftEdge  = -2500e5 -2500e5 -2500e5
+DomainRightEdge = 2500e5 2500e5 2500e5
 #DomainLeftEdge  = -3000e5 -3000e5 -3000e5
 #DomainRightEdge = 3000e5 3000e5 3000e5
 #DomainLeftEdge  = -2000e5 -2000e5 -2000e5
@@ -33,8 +33,8 @@ ParallelRootGridIO_Force  = 1
 StopTime               = 1
 dtDataDump             = 0.0001
 DataDumpDir           = datasets/EE
-StopCycle               = 1 #1000000
-CycleSkipDataDump      = 0
+StopCycle               = 1000000
+CycleSkipDataDump      = 1
 DataDumpName           = data
 Initialdt                   = 0.0001
 
@@ -220,15 +220,15 @@ PPMSteepeningParameter  = 0
 PPMDiffusionParameter   = 0
 PPMFlatteningParameter  = 0
 UseMHD = 0
+UseMinimumPressureSupport        = FALSE;
 ZEUSLinearArtificialViscosity    = 0.0;
 ZEUSQuadraticArtificialViscosity = 0  # default 2.0;
 ZEUS_IncludeViscosityTerm  = 0
 ZEUS_IncludeDivergenceTerm = 1
-UseMinimumPressureSupport        = FALSE;
-
-
-
-
+VelocitiesOuterRadius                     = 2000e5
+VelocitiesOuterClearAtZeusSourceBegin     = 1
+VelocitiesOuterClearAtZeusSourceBeforeDiv = 1 
+VelocitiesOuterClearAtZeusSourceEnd       = 1
 
 ###############################################################
 #
@@ -307,6 +307,7 @@ SphericalGravityInterpAccelMethod = 1
 #SphericalGravityOuterRadius = 2.8e8 # default: the min value to cover the entire domain.
 SphericalGravityUniformBins = 1 # default: 0
 SphericalGravityWritePotentialSwitch = 1 # default: 0
+SphericalGravityDebug = 0
 
 BA = 0.0 0.0 0.0 #1.0e12
 

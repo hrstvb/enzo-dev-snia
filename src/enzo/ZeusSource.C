@@ -42,8 +42,6 @@
 
 #define IDX(a,b,c) ( ((c)*jn + (b))*in + (a) )
 
-float SphericalGravityGetAt(FLOAT r);
-
 void printminmax(float* a, size_t n, char* s)
 {
 	float m2, m1, p1, p2, x;
@@ -70,6 +68,46 @@ void printminmax(float* a, size_t n, char* s)
 	}
 	TRACEF("%s min/max  %e  %e  %e  %e", s, m2, m1, p1, p2);
 }
+
+int ClearOuterVelocities(float *u, float *v, float *w, int in, int jn, int kn, int rank, float dx[], float dy[],
+float dz[], FLOAT** CellLeftEdges)
+{
+	if(VelocitiesOuterRadius < 0)
+		return SUCCESS;
+
+	FLOAT x, y, z;
+	size_t index;
+	// Clear velocity beyond a certain radius
+	for(int k = 0; k < kn && ZEUS_IncludeDivergenceTerm; k++)
+	{
+		for(int j = 0; j < jn; j++)
+		{
+			for(int i = 0; i < in; i++)
+			{
+				x = CellLeftEdges[0][i] - SphericalGravityCenter[0];
+				y = CellLeftEdges[1][j] - SphericalGravityCenter[1];
+				z = CellLeftEdges[2][k] - SphericalGravityCenter[2];
+				index = IDX(i, j, k);
+				if(HydroMethod == Zeus_Hydro)
+				{
+					if(lenl(x - dx[i] / 2, y, z) > VelocitiesOuterRadius)
+						u[index] = 0;
+					if(lenl(x, y - dy[i] / 2, z) > VelocitiesOuterRadius)
+						v[index] = 0;
+					if(lenl(x, y, z - dz[i] / 2) > VelocitiesOuterRadius)
+						w[index] = 0;
+				}
+				else if(lenl(x, y, z) > VelocitiesOuterRadius)
+				{
+					u[index] = v[index] = w[index] = 0;
+				}
+			}
+		}
+	}
+	return SUCCESS;
+}
+
+float SphericalGravityGetAt(FLOAT r);
 
 int ZeusSource(float *d, float *e, float *u, float *v, float *w, float *p, float *cr,
 int in, int jn, int kn, int rank, int igamfield,
@@ -141,7 +179,7 @@ int bottom, float minsupecoef, int CRModel, float CRgamma, size_t index8, size_t
 
 				for(i = 0; i < in; i++)
 				{
-					e1 = e[IDX(i, j, k)];
+//					e1 = e[IDX(i, j, k)];
 					e1 = max(e[IDX(i,j,k)], minsupecoef*d[IDX(i,j,k)]);
 					p[IDX(i, j, k)] = max((gamma[IDX(i,j,k)]-1.0)*d[IDX(i,j,k)]*e1, pmin);
 				}
@@ -153,7 +191,7 @@ int bottom, float minsupecoef, int CRModel, float CRgamma, size_t index8, size_t
 
 				for(i = 0; i < in; i++)
 				{
-					e1 = e[IDX(i, j, k)];
+//					e1 = e[IDX(i, j, k)];
 					e1 = max(e[IDX(i,j,k)], minsupecoef*d[IDX(i,j,k)]);
 					p[IDX(i, j, k)] = max((gamma1-1.0)*d[IDX(i,j,k)]*e1, pmin);
 
@@ -238,6 +276,8 @@ int bottom, float minsupecoef, int CRModel, float CRgamma, size_t index8, size_t
 	/* Update velocities with compression term
 	 and acceleration */
 	/* (limit increase to preventy pressure driven instability) */
+	if(VelocitiesOuterClearAtZeusSourceBegin)
+		ClearOuterVelocities(u, v, w, in, jn, kn, rank, dx, dy, dz, CellLeftEdges);
 
 	for(k = ksm2; k < kn; k++)
 	{
@@ -280,13 +320,12 @@ int bottom, float minsupecoef, int CRModel, float CRgamma, size_t index8, size_t
 					double dPdx = dP / (h * da);
 					deltav = g_dim - dPdx;
 
-					if(i <= 4 && j == 4 && k == 4)
+					if(i <= 4 && j == 4 && k == 4 && SphericalGravityDebug)
 					{
-						TRACEF("SOURCESOURCE    %lld:%lld    dim=%lld    %lld %lld %lld    %lld %lld %lld    P0=%e  P1=%e  dP=%e    d0=%e  d1=%e  da=%e    %e    dP/da/h=%e",
+						TRACEF("SOURCESOURCE    %lld:%lld    dim=%lld    %lld %lld %lld    %lld %lld %lld    P0=%13.7e  P1=%13.7e  dP=%13.7e    d0=%13.7e  d1=%13.7e  da=%13.7e    %13.7e    dP/da/h=%13.7e",
 								level, gridId, dim, i, j, k, i1, j1, k1, P0, P1, dP, d0, d1, da, h, dPdx);
-						TRACEF("SOURCESOURCE    %lld:%lld  %lld    %lld %lld %lld    %lld %lld %lld    g( %e, %e, %e )=%e    gimd=-g*( %e / %e )=%e    dvdt=%e  dv=%e",
-								level, gridId, dim, i, j, k, i1, j1, k1, x, y, z, g, r_dim, r, g_dim, deltav,
-								deltav * dt);
+						TRACEF("SOURCESOURCE... %lld:%lld %lld  %lld %lld %lld  %lld %lld %lld    g( %e, %e, %e )=%13.7e    gimd=-g*( %13.7e / %13.7e )=%13.7e    dv/dt=%13.7e",
+								level, gridId, dim, i, j, k, i1, j1, k1, x, y, z, g, r_dim, r, g_dim, deltav);
 					}
 
 					deltav *= dt;
@@ -370,28 +409,6 @@ int bottom, float minsupecoef, int CRModel, float CRgamma, size_t index8, size_t
 //			}
 		} // end: loop over j
 	} // end: loop over k
-
-	// Clear velocity beyond a certain radius
-	for(k = 0; k < kn; k++)
-	{
-		for(j = 0; j < jn; j++)
-		{
-			for(i = 0; i < in; i++)
-			{
-				const FLOAT RR = 4e16; // (2000km)^2
-				FLOAT x = CellLeftEdges[0][i] - SphericalGravityCenter[0];
-				FLOAT y = CellLeftEdges[1][j] - SphericalGravityCenter[1];
-				FLOAT z = CellLeftEdges[2][k] - SphericalGravityCenter[2];
-				size_t index = IDX(i, j, k);
-				if(lenl(x - dx[i] / 2, y, z) > RR)
-					u[index] = 0;
-				if(lenl(x, y - dy[i] / 2, z) > RR)
-					v[index] = 0;
-				if(lenl(x, y, z - dz[i] / 2) > RR)
-					w[index] = 0;
-			}
-		}
-	}
 
 	/***********************************************/
 	/***********************************************/
@@ -570,6 +587,9 @@ int bottom, float minsupecoef, int CRModel, float CRgamma, size_t index8, size_t
 
 	} // end: loop over nstep (end of artificial viscosity)
 
+	if(VelocitiesOuterClearAtZeusSourceBeforeDiv && ZEUS_IncludeDivergenceTerm)
+		ClearOuterVelocities(u, v, w, in, jn, kn, rank, dx, dy, dz, CellLeftEdges);
+
 	/*  3) Substep 3 -- compression term */
 	for(k = ksm2; (k <= kep1) && ZEUS_IncludeDivergenceTerm; k++)
 	{
@@ -665,6 +685,9 @@ int bottom, float minsupecoef, int CRModel, float CRgamma, size_t index8, size_t
     }
   }
 #endif /* UNUSED */
+
+	if(VelocitiesOuterClearAtZeusSourceEnd)
+		ClearOuterVelocities(u, v, w, in, jn, kn, rank, dx, dy, dz, CellLeftEdges);
 
 	return SUCCESS;
 }
