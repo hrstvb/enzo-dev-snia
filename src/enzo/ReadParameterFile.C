@@ -1360,6 +1360,12 @@ int ReadParameterFile(FILE *fptr, TopGridData &MetaData, float *Initialdt)
     ret += sscanf(line, "SphericalGravityInterpAccelMethod = %"ISYM, &SphericalGravityInterpAccelMethod);
     ret += sscanf(line, "SphericalGravityDebug = %"ISYM, &SphericalGravityDebug);
     ret += sscanf(line, "MHD_LI_GRAVITY_AFTER_PLMPRED = %"ISYM, &MHD_LI_GRAVITY_AFTER_PLMPRED);
+    ret += sscanf(line, "VelocitiesOuterRadius                     =%"FSYM, &VelocitiesOuterRadius                    );
+    ret += sscanf(line, "VelocitiesOuterClearAtZeusSourceBegin     =%"ISYM, &VelocitiesOuterClearAtZeusSourceBegin    );
+    ret += sscanf(line, "VelocitiesOuterClearAtZeusSourceBeforeDiv =%"ISYM, &VelocitiesOuterClearAtZeusSourceBeforeDiv);
+    ret += sscanf(line, "VelocitiesOuterClearAtZeusSourceEnd       =%"ISYM, &VelocitiesOuterClearAtZeusSourceEnd      );
+
+
 
     /* If the dummy char space was used, then make another. */
     if (*dummy != 0) {

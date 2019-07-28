@@ -79,9 +79,9 @@ int nsubgrids, long_int GridGlobalStart[], fluxes *SubgridFluxes[], int DensNum,
 int Vel1Num, int Vel2Num, int Vel3Num, float *BaryonField[],
 int NumberOfColours, int colnum[]);
 
-bool debugprintboundaryForLevel(int level)
+bool debugprintboundarySkip(int level)
 {
-	return level != 0;
+	return level != 0 || SphericalGravityDebug == 0;
 }
 
 int debugprintboundary(char* LABEL, char* label, float *f, FLOAT* F, char* label2, float *f2, FLOAT* F2, int in, int jn,
@@ -90,7 +90,7 @@ int rank, int is, int ie, int js,
 int je, int ks, int ke, float dt, float dx[], float dy[], float dz[], FLOAT** CellLeftEdges, int level, int gridId,
 float time, int cycle)
 {
-	if(debugprintboundaryForLevel(level))
+	if(debugprintboundarySkip(level))
 		return 0;
 
 	int IB = 0;
@@ -151,7 +151,7 @@ int debugprintboundary(char* LABEL, float *d, float *e, float *u, float *v, floa
 int rank, int is, int ie, int js, int je, int ks, int ke, float dt, float dx[], float dy[], float dz[],
 FLOAT** CellLeftEdges, int level, int gridId, float time, int cycle, float *gr_xacc, float *gr_yacc, float *gr_zacc)
 {
-	if(debugprintboundaryForLevel(level))
+	if(debugprintboundarySkip(level))
 		return 0;
 
 	fprintf(stderr, "BEGIN BOUNDARY %s === level=%lld, gridID=%lld, t=%7.5f ===========\n", LABEL, level, gridId, time);
@@ -324,8 +324,8 @@ float minsupecoef)
 	ZeusSource(d, e, u, v, w, p, cr, GridDimension[0], GridDimension[1], GridDimension[2], GridRank, igamfield, is, ie,
 				js, je, ks, ke, ZEUSLinearArtificialViscosity, ZEUSQuadraticArtificialViscosity, PressureFree, gamma,
 				dtFixed, pmin, dx, dy, dz, CellLeftEdge, gravity, AccelerationField[0], AccelerationField[1],
-				AccelerationField[2], bottom, minsupecoef, CRModel, CRgamma, index8, i8, j8, k8, index9, i9, j9, k9,
-				x8, y8, z8, x9, y9, z9, level, ID, dtFixed, 0, 1);
+				AccelerationField[2], bottom, minsupecoef, CRModel, CRgamma, index8, i8, j8, k8, index9, i9, j9, k9, x8,
+				y8, z8, x9, y9, z9, level, ID, dtFixed, 0, 1);
 
 	debugprintboundary("BEFORE SOURCE", d, e, u, v, w, p, GridDimension[0], GridDimension[1], GridDimension[2],
 						GridRank, is, ie, js, je, ks, ke, dtFixed, dx, dy, dz, CellLeftEdge, level, ID, dtFixed, 0,
@@ -338,8 +338,8 @@ float minsupecoef)
 	if(ZeusSource(d, e, u, v, w, p, cr, GridDimension[0], GridDimension[1], GridDimension[2], GridRank, igamfield, is,
 					ie, js, je, ks, ke, ZEUSLinearArtificialViscosity, ZEUSQuadraticArtificialViscosity, PressureFree,
 					gamma, dtFixed, pmin, dx, dy, dz, CellLeftEdge, gravity, AccelerationField[0], AccelerationField[1],
-					AccelerationField[2], bottom, minsupecoef, CRModel, CRgamma, index8, i8, j8, k8, index9, i9, j9,
-					k9, x8, y8, z8, x9, y9, z9, level, ID, dtFixed, 0, 0) == FAIL)
+					AccelerationField[2], bottom, minsupecoef, CRModel, CRgamma, index8, i8, j8, k8, index9, i9, j9, k9,
+					x8, y8, z8, x9, y9, z9, level, ID, dtFixed, 0, 0) == FAIL)
 	{
 		fprintf(stderr, "P(%"ISYM"): Error in ZeusSource on step %"ISYM" (dt=%"GSYM")\n", MyProcessorNumber, nhy,
 				dtFixed);

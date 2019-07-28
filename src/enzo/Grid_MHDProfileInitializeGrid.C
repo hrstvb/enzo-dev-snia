@@ -129,7 +129,7 @@ double zeusPressure(size_t i_dest, size_t j_dest, size_t k_dest, int dir, int ze
 	double r = lenl(x, y, z);
 	double r_dim = (zeusDim == 0) ? x : ((zeusDim == 1) ? y : z);
 	double g = SphericalGravityGetAt(r);
-	double g_dim = -r_dim / r * SphericalGravityGetAt(r);
+	double g_dim = -r_dim / r * g;
 
 	P_result = zeusPressure(P_prev, g_dim, dir * dx, rho_prev, rho_dest);
 	//						if(j == 8 && k == 8)
@@ -1268,7 +1268,7 @@ float dipoleMoment[3], float dipoleCenter[3], bool usingVectorPotential)
 		double nPolytropic = 1 / (Gamma - 1);
 		p->interpolateDensity(&rho_c, 0);
 		P_c = KPolytropic * POW(rho_c, Gamma);
-		P_c *= 1.01; // Prevent negative pressure as a result of integrating towards the edges.
+//		P_c *= 1.01; // Prevent negative pressure as a result of integrating towards the edges.
 		TRACEF("%e %e %e %f", P_c, KPolytropic, rho_c, Gamma);
 
 		// A factor for the dimensionless radius in the expansion further below:
