@@ -654,7 +654,7 @@ int bottom, float minsupecoef, int CRModel, float CRgamma, size_t index8, size_t
 					for(n = is; n <= ie; n++)
 						fprintf(stderr, "d,e,u,v,w=%"GSYM",%"GSYM",%"GSYM",%"GSYM",%"GSYM"\n", d[IDX(n, j, k)],
 								e[IDX(n, j, k)], u[IDX(n, j, k)], v[IDX(n, j, k)], w[IDX(n, j, k)]);
-					ENZO_FAIL("Negative energy or density!\n");
+					ENZO_FAIL("Negative or zero energy or density!\n");
 				}
 
 				/* CR Energy Density updated*/
