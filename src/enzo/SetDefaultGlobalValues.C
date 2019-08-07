@@ -281,10 +281,10 @@ int SetDefaultGlobalValues(TopGridData &MetaData)
       AvoidRefineRegionRightEdge[i][dim] = FLOAT_UNDEFINED;
       StaticRefineShellCenter[i][dim] = 0;
     }
-    StaticRefineShellInnerRadius[i] = 0;
-    StaticRefineShellOuterRadius[i] = 0;
+    StaticRefineShellInnerRadius[i] = -1;
+    StaticRefineShellOuterRadius[i] = -2;
     StaticRefineShellLevel      [i] = MAX_DEPTH_OF_HIERARCHY;
-    StaticRefineShellWithBuffer [i] = 1;
+    StaticRefineShellWithBuffer [i] = 0;
   }
 
   /* For evolving refinement regions. */

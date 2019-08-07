@@ -97,6 +97,88 @@ FLOAT radius)
 	return internalEnergy(rhoField[index], rhoNiField[index], profile, radius);
 }
 
+int polytropicPressureAtSmallR(float* P, float* rho, FLOAT r, float rho_c, float * P_c = NULL, double* ksi = NULL,
+	double* ksiFactor =
+	NULL)
+{
+	float P_c2, P2, rho2;
+	double ksi2, ksi4, ksiFactor2;
+	int err;
+
+	// Initialize the center cells
+	double KPolytropic = EOSPolytropicFactor;
+	double nPolytropic = 1 / (Gamma - 1);
+
+	// Find the dimensionless radius for the expansions further below:
+	ksiFactor2 = (nPolytropic + 1) * KPolytropic * POW(rho_c, 1 / nPolytropic - 1);
+	ksiFactor2 /= 4 * M_PI * SphericalGravityConstant;
+	ksiFactor2 = sqrt(ksiFactor2);
+	ksi2 = r / ksiFactor2;
+
+	if(ksi)
+		*ksi = ksi2;
+	if(ksiFactor)
+		*ksiFactor = ksiFactor2;
+
+	ksi2 *= ksi2;
+	ksi4 = ksi2 * ksi2;
+
+	if(rho)
+	{
+		rho2 = 1;
+		rho2 += -nPolytropic / 6 * ksi2;
+		rho2 += -nPolytropic * (22 * nPolytropic + 5) / 360 * ksi4;
+		rho2 *= rho_c;
+
+		*rho = rho2;
+	}
+
+	if(P || P_c)
+	{
+		P_c2 = KPolytropic * POW(rho_c, Gamma);
+		if(P_c)
+			*P_c = P_c2;
+
+		if(P)
+		{	// Expand the pressure for small radius:
+			P2 = 1; // 0th order
+			P2 += -(nPolytropic + 1) / 6 * ksi2; // 2nd order
+			P2 += -nPolytropic * (nPolytropic + 1) / 180.0 * ksi4; // 4th order
+			P2 = P2 * P_c2;
+
+			*P = P2;
+		}
+	}
+
+//	TRACEF("ijk=%lld %lld %lld xyz=%e %e %e r,xi,r/xi=%e %e %e   P=%e   P/P_c=%e", i, j, k, x, y, z, r, ksi, ksifactor,
+//			P0, P1);
+
+	return 0;
+}
+
+int polytropicPressureAtSmallR(float* P, float* rho, FLOAT x, FLOAT y, FLOAT z, double rho_c, double* P_c = NULL,
+	double* ksi =
+	NULL, double* ksiFactor = NULL)
+{
+	x -= SphericalGravityCenter[0];
+	y -= SphericalGravityCenter[1];
+	z -= SphericalGravityCenter[2];
+	FLOAT r = lenl(x, y, z);
+
+	return polytropicPressureAtSmallR(P, rho, r, rho_c, P_c, ksi, ksiFactor);
+}
+
+int polytropicPressureAtSmallR(float* P, float* rho, int i, int j, int k, grid* g, double rho_c, double* P_c = NULL,
+FLOAT* ksi =
+NULL, FLOAT* ksiFactor = NULL)
+{
+	FLOAT x = g->GetCellCenter(0, i);
+	FLOAT y = g->GetCellCenter(1, j);
+	FLOAT z = g->GetCellCenter(2, k);
+
+	return polytropicPressureAtSmallR(P, rho, x, y, z, rho_c, P_c, ksi, ksiFactor);
+}
+
 double zeusPressure(double P_prev, double g, double dx, double rho_prev, double rho_this)
 {
 	double dP, P_result;
@@ -106,7 +188,7 @@ double zeusPressure(double P_prev, double g, double dx, double rho_prev, double 
 }
 
 double zeusPressure(size_t i_dest, size_t j_dest, size_t k_dest, int dir, int zeusDim, double dx, float* P_FIELD,
-	float* RHO_FIELD, grid* GRID, bool debug, int level, char* label)
+float* RHO_FIELD, grid* GRID, bool debug, int level, char* label)
 {
 	int gridId = GRID->GetGridID();
 	size_t i_prev = i_dest - dir * (zeusDim == 0);
@@ -132,12 +214,12 @@ double zeusPressure(size_t i_dest, size_t j_dest, size_t k_dest, int dir, int ze
 	double g_dim = -r_dim / r * g;
 
 	P_result = zeusPressure(P_prev, g_dim, dir * dx, rho_prev, rho_dest);
-	//						if(j == 8 && k == 8)
-	////						if(err)
-	//						{
-	//							TRACEF("ijk=%lld %lld %lld, xyzr=%e %e %e %e, g,dx=%e %e, P1,2=%e %e  d1,2=%e %e", i, j, k,
-	//									x, y, z, r, g, dx, P1, P2, rho1, rho2);
-	//						}
+//						if(j == 8 && k == 8)
+////						if(err)
+//						{
+//							TRACEF("ijk=%lld %lld %lld, xyzr=%e %e %e %e, g,dx=%e %e, P1,2=%e %e  d1,2=%e %e", i, j, k,
+//									x, y, z, r, g, dx, P1, P2, rho1, rho2);
+//						}
 
 	debug &= i_dest <= 4 && (j_dest == 4) && (k_dest == 4);
 	if(debug)
@@ -166,7 +248,7 @@ float** gravPotentialField)
 	int rhoNiNum;
 	int gravPotentialNum;
 
-	// IdentifyPhysicalQuantities set gasENum=0 if not having Gas Energy field.
+// IdentifyPhysicalQuantities set gasENum=0 if not having Gas Energy field.
 	bool hasGasEField = DualEnergyFormalism; // && (HydroMethod != Zeus_Hydro); //[BH]
 	BxNum = ByNum = BzNum = phiNum = -1; // IdentifyPhysicalQuantities doesn't change these args if (not UseMHD).
 	if(IdentifyPhysicalQuantities(rhoNum, gasENum, vxNum, vyNum, vzNum, totENum, BxNum, ByNum, BzNum, phiNum) == FAIL)
@@ -301,7 +383,6 @@ float dipoleMoment[3], float dipoleCenter[3], bool usingVectorPotential)
 // be created temporarily for the purpose of
 // initializing with vector potential.
 // Free these fields in MHDProfileInitializeGrid2.
-		UseMHDCT = TRUE;
 		MHD_SetupDims();
 	}
 
@@ -328,9 +409,11 @@ float dipoleMoment[3], float dipoleCenter[3], bool usingVectorPotential)
 
 	int debugnanflag = 0; //[BH]
 	float gammaMinusOne = Gamma - 1;
+	float rho_c;
+	p->interpolateDensity(&rho_c, 0);
 
 	TRACEF("     dx             = %e", CellWidth[0][0]);
-	// Initialize density and a sphere of Nickel density.
+// Initialize density and a sphere of Nickel density.
 	for(int k = 0; k < GridDimension[2]; k++)
 	{
 		FLOAT z = CELLCENTER(2, k);
@@ -352,6 +435,7 @@ float dipoleMoment[3], float dipoleCenter[3], bool usingVectorPotential)
 
 				float rho, rhoNi = 0;
 				int retcode = p->interpolateDensity(&rho, r); //g/cm**3
+				polytropicPressureAtSmallR(NULL, &rho, i, j, k, this, rho_c);
 				//retcode = profileInterpolate(&T, temperatureData, r, radiusData, p.nRows, radiusSO); //K
 				bool isBurned = false;
 				double r1, r2;
@@ -406,10 +490,10 @@ float dipoleMoment[3], float dipoleCenter[3], bool usingVectorPotential)
 					break;
 				}
 
-				if(isBurned)
-				{
-					TRACEF(" %4lld %4lld %4lld    %e %e %e    %e  %e", i, j, k, rx, ry, rz, r, InitialBurnedRadius);
-				}
+//				if(isBurned)
+//				{
+//					TRACEF(" %4lld %4lld %4lld    %e %e %e    %e  %e", i, j, k, rx, ry, rz, r, InitialBurnedRadius);
+//				}
 				if(isBurned)
 					rhoNi = rho;
 				rhoField[index] = rho;
@@ -547,7 +631,7 @@ float dipoleMoment[3], float dipoleCenter[3], bool usingVectorPotential)
 		}
 	}
 
-	//Initialize all other fields.
+//Initialize all other fields.
 	for(int k = 0; k < GridDimension[2]; k++)
 	{
 		FLOAT z = CELLCENTER(2, k);
@@ -585,8 +669,8 @@ float dipoleMoment[3], float dipoleCenter[3], bool usingVectorPotential)
 					}
 					vx = vy = vz = 0;
 //					vz=1e5;
-//					if((i==30 || i==29) && j == 10 && k == 11)
-//						vy = 1000e5;
+//					if((i==99 || i==100 || 1) && j == 110 && k == 110)
+//						vy = 1e5;
 
 //					{
 //						for(int i = 0; i<p->nRowsInternalEnergy; i++)
@@ -1176,7 +1260,7 @@ float dipoleMoment[3], float dipoleCenter[3], bool usingVectorPotential)
 //#undef DEBUG_HSE
 //	}
 
-	//special case pressure init for ZEUS
+//special case pressure init for ZEUS
 //	if(1)
 //	{
 //		/***********************************************/
@@ -1573,7 +1657,7 @@ float dipoleMoment[3], float dipoleCenter[3], bool usingVectorPotential)
 //	} //End Zeus init
 //
 
-	//special case pressure init 48 for ZEUS
+//special case pressure init 48 for ZEUS
 	if(1)
 	{
 		/***********************************************/
@@ -1582,18 +1666,17 @@ float dipoleMoment[3], float dipoleCenter[3], bool usingVectorPotential)
 		int level = nint(log2(TopGridDx[0] / DX));
 		/***********************************************/
 		/***********************************************/
-		arr_set(vxField, gridSize, 0);
-		arr_set(vyField, gridSize, 0);
-		arr_set(vzField, gridSize, 0);
-
+//		arr_set(vxField, gridSize, 0);
+//		arr_set(vyField, gridSize, 0);
+//		arr_set(vzField, gridSize, 0);
 
 #define DEBUG_HSE 0 // (Debug) Assignes powers of 10 to cells in the center
 		// and affected by the k, j or i integrations.
 
-/*
- * Populate E symmetrically by reflecting of the Oxy, Oyz and Oxz planes.
- * NOTE: This will not work unless SphericalGrvityCenter=={0,0,0}.
- */
+		/*
+		 * Populate E symmetrically by reflecting of the Oxy, Oyz and Oxz planes.
+		 * NOTE: This will not work unless SphericalGrvityCenter=={0,0,0}.
+		 */
 #ifndef SET_HSE
 #define SET_HSE(i,j,k,k2,E) do{ \
 		totEField[ELT((00)   + (i), (k2)-1 - (j), (k2)-1 - (k))] = (E); \
@@ -1632,18 +1715,18 @@ float dipoleMoment[3], float dipoleCenter[3], bool usingVectorPotential)
 		arr_set(totEField, FIELD_SIZE, 0);
 
 //Initialize the center cells
-		double KPolytropic = EOSPolytropicFactor;
-		double nPolytropic = 1 / (Gamma - 1);
+//		double KPolytropic = EOSPolytropicFactor;
+//		double nPolytropic = 1 / (Gamma - 1);
 		p->interpolateDensity(&rho_c, 0);
-		P_c = KPolytropic * POW(rho_c, Gamma);
-//		P_c *= 1.01; // Prevent negative pressure as a result of integrating towards the edges.
-		TRACEF("%e %e %e %f", P_c, KPolytropic, rho_c, Gamma);
-
-		// A factor for the dimensionless radius in the expansion further below:
-		// ksi := r * ksifactor
-		ksifactor = (nPolytropic + 1) * KPolytropic * POW(rho_c, 1 / nPolytropic - 1);
-		ksifactor /= 4 * M_PI * SphericalGravityConstant;
-		ksifactor = sqrt(ksifactor);
+//		P_c = KPolytropic * POW(rho_c, Gamma);
+////		P_c *= 1.01; // Prevent negative pressure as a result of integrating towards the edges.
+//		TRACEF("%e %e %e %f", P_c, KPolytropic, rho_c, Gamma);
+//
+//		// A factor for the dimensionless radius in the expansion further below:
+//		// ksi := r * ksifactor
+//		ksifactor = (nPolytropic + 1) * KPolytropic * POW(rho_c, 1 / nPolytropic - 1);
+//		ksifactor /= 4 * M_PI * SphericalGravityConstant;
+//		ksifactor = sqrt(ksifactor);
 
 		TRACEF("%lld .... %lld .. %lld | %lld .. %lld .... %lld", 0, K1b, K2 - K0 - 1, K0, K1, K2);
 
@@ -1659,12 +1742,13 @@ float dipoleMoment[3], float dipoleCenter[3], bool usingVectorPotential)
 //					z = CELLCENTER(2, k) - SphericalGravityCenter[2];
 //					r = lenl(x, y, z);
 //					ksi = r / ksifactor;
-
-					// Expand the pressure for small radius:
-					P1 = 1; // 0th order
+//
+//					// Expand the pressure for small radius:
+//					P1 = 1; // 0th order
 //					P1 += -(nPolytropic + 1) / 6 * ksi * ksi; // 2nd order
 //					P1 += -nPolytropic * (nPolytropic + 1) / 180.0 * ksi * ksi * ksi * ksi; // 4th order
-					P0 = (DEBUG_HSE) ? 1e1 : P1 * P_c;
+					polytropicPressureAtSmallR(&P0, NULL, i, j, k, this, rho_c, &P_c, &ksi, &ksifactor);
+					P0 = (DEBUG_HSE) ? 1e1 : P0;
 					TRACEF("ijk=%lld %lld %lld xyz=%e %e %e r,xi,r/xi=%e %e %e   P=%e   P/P_c=%e", i, j, k, x, y, z, r,
 							ksi, ksifactor, P0, P1);
 					SET_HSE48(i, j, k, K2, P0);
@@ -1879,7 +1963,6 @@ float dipoleMoment[3], float dipoleCenter[3], bool usingVectorPotential)
 
 	if(HydroMethod == MHD_RK || usingVectorPotential)
 	{
-		UseMHDCT = FALSE;
 		for(int dim = 0; dim < 3; dim++)
 		{
 			delete MagneticField[dim];
