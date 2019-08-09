@@ -1081,10 +1081,13 @@ int SetDefaultGlobalValues(TopGridData &MetaData)
   SphericalGravityBinsPerCell = 1.0;
   SphericalGravityDebug = 0;
   TopBurnedRadiusEstimate = -1;
-  VelocitiesOuterRadius = -1;
-  VelocitiesOuterClearAtZeusSourceBegin = 0;
-  VelocitiesOuterClearAtZeusSourceBeforeDiv = 0;
-  VelocitiesOuterClearAtZeusSourceEnd = 0;
+  OuterVelocitiesSphereRadius = -1;
+  OuterVelocitiesClearInward = 1;
+  OuterVelocitiesClearOutward = 0;
+  OuterVelocitiesClearTangential = 0;
+  OuterVelocitiesClearAtZeusSourceBegin = 0;
+  OuterVelocitiesClearAtZeusSourceBeforeDiv = 0;
+  OuterVelocitiesClearAtZeusSourceEnd = 0;
 
 //  UseSpherGrav = UseSphericalGravity && SphericalGravityMaxHierarchyLevel > 0;
 //  SpherGravActualNumberOfBins=NULL;

@@ -1,6 +1,27 @@
 #include "myenzoutils.h"
 #include "Grid.h"
 
+bool grid::ijkInGrid(int ijk[])
+{
+	for(int dim = 0; dim < GridRank; dim++)
+	{
+		if(ijk[dim] < 0)
+			return false;
+		if(ijk[dim] >= GridDimension[dim])
+			return false;
+	}
+	return true;
+}
+
+bool grid::ijkInGrid(int i, int j, int k)
+{
+	int ijk[3];// = { i, j, k };
+	ijk[0] = i;
+	ijk[1] = j;
+	ijk[2] = k;
+	return ijkInGrid(ijk);
+}
+
 template<typename T>
 bool grid::PointInGridActiveNB(T* point)
 {

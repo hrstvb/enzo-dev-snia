@@ -1360,10 +1360,13 @@ int ReadParameterFile(FILE *fptr, TopGridData &MetaData, float *Initialdt)
     ret += sscanf(line, "SphericalGravityInterpAccelMethod = %"ISYM, &SphericalGravityInterpAccelMethod);
     ret += sscanf(line, "SphericalGravityDebug = %"ISYM, &SphericalGravityDebug);
     ret += sscanf(line, "MHD_LI_GRAVITY_AFTER_PLMPRED = %"ISYM, &MHD_LI_GRAVITY_AFTER_PLMPRED);
-    ret += sscanf(line, "VelocitiesOuterRadius                     =%"FSYM, &VelocitiesOuterRadius                    );
-    ret += sscanf(line, "VelocitiesOuterClearAtZeusSourceBegin     =%"ISYM, &VelocitiesOuterClearAtZeusSourceBegin    );
-    ret += sscanf(line, "VelocitiesOuterClearAtZeusSourceBeforeDiv =%"ISYM, &VelocitiesOuterClearAtZeusSourceBeforeDiv);
-    ret += sscanf(line, "VelocitiesOuterClearAtZeusSourceEnd       =%"ISYM, &VelocitiesOuterClearAtZeusSourceEnd      );
+    ret += sscanf(line, "OuterVelocitiesSphereRadius               =%"FSYM, &OuterVelocitiesSphereRadius              );
+    ret += sscanf(line, "OuterVelocitiesClearInward                =%"ISYM, &OuterVelocitiesClearInward               );
+    ret += sscanf(line, "OuterVelocitiesClearOutward               =%"ISYM, &OuterVelocitiesClearOutward              );
+    ret += sscanf(line, "OuterVelocitiesClearTangential            =%"ISYM, &OuterVelocitiesClearTangential           );
+    ret += sscanf(line, "OuterVelocitiesClearAtZeusSourceBegin     =%"ISYM, &OuterVelocitiesClearAtZeusSourceBegin    );
+    ret += sscanf(line, "OuterVelocitiesClearAtZeusSourceBeforeDiv =%"ISYM, &OuterVelocitiesClearAtZeusSourceBeforeDiv);
+    ret += sscanf(line, "OuterVelocitiesClearAtZeusSourceEnd       =%"ISYM, &OuterVelocitiesClearAtZeusSourceEnd      );
 
 
 
