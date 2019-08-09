@@ -183,10 +183,13 @@ int WriteParameterFile(FILE *fptr, TopGridData &MetaData, char *name = NULL)
   fprintf(fptr, "SphericalGravityInterpAccelMethod = %"ISYM"\n", SphericalGravityInterpAccelMethod);
   fprintf(fptr, "SphericalGravityDebug = %"ISYM"\n", SphericalGravityDebug);
   fprintf(fptr, "MHD_LI_GRAVITY_AFTER_PLMPRED = %"ISYM"\n", MHD_LI_GRAVITY_AFTER_PLMPRED);
-  fprintf(fptr, "VelocitiesOuterRadius                     = %"FSYM"\n", VelocitiesOuterRadius                    );
-  fprintf(fptr, "VelocitiesOuterClearAtZeusSourceBegin     = %"ISYM"\n", VelocitiesOuterClearAtZeusSourceBegin    );
-  fprintf(fptr, "VelocitiesOuterClearAtZeusSourceBeforeDiv = %"ISYM"\n", VelocitiesOuterClearAtZeusSourceBeforeDiv);
-  fprintf(fptr, "VelocitiesOuterClearAtZeusSourceEnd       = %"ISYM"\n", VelocitiesOuterClearAtZeusSourceEnd      );
+  fprintf(fptr, "OuterVelocitiesSphereRadius               = %"FSYM"\n", OuterVelocitiesSphereRadius              );
+  fprintf(fptr, "OuterVelocitiesClearInward                = %"ISYM"\n", OuterVelocitiesClearInward               );
+  fprintf(fptr, "OuterVelocitiesClearOutward               = %"ISYM"\n", OuterVelocitiesClearOutward              );
+  fprintf(fptr, "OuterVelocitiesClearTangential            = %"ISYM"\n", OuterVelocitiesClearTangential           );
+  fprintf(fptr, "OuterVelocitiesClearAtZeusSourceBegin     = %"ISYM"\n", OuterVelocitiesClearAtZeusSourceBegin    );
+  fprintf(fptr, "OuterVelocitiesClearAtZeusSourceBeforeDiv = %"ISYM"\n", OuterVelocitiesClearAtZeusSourceBeforeDiv);
+  fprintf(fptr, "OuterVelocitiesClearAtZeusSourceEnd       = %"ISYM"\n", OuterVelocitiesClearAtZeusSourceEnd      );
 
   fprintf(fptr, "PythonTopGridSkip       = %"ISYM"\n", PythonTopGridSkip);
   fprintf(fptr, "PythonSubcycleSkip      = %"ISYM"\n", PythonSubcycleSkip);

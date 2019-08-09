@@ -2740,6 +2740,11 @@ int zEulerSweep(int j, int NumberOfSubgrids, fluxes *SubgridFluxes[],
     return TRUE;
   }
 
+  bool ijkInGrid(int ijk[MAX_DIMENSION]);
+  bool ijkInGrid(int i, int j, int k);
+//  template<typename T> bool ijkInGrid(T ijk[MAX_DIMENSION]);
+//  template<typename T> bool ijkInGrid(T i, T j, T k);
+
   template<typename T> bool PointInGridActiveNB(T* point);
   bool PointInChildrenActiveNB(FLOAT* point, HierarchyEntry* firstChild);
   bool PointInChildrenActiveNB(FLOAT* point, LevelHierarchyEntry* myLevelHierarchyEntry);

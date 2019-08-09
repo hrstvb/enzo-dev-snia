@@ -4,7 +4,7 @@
 /
 /  written by: Peng Wang
 /  date:       June, 2007
-/  modified1:  Tom Abel 10/2009 
+/  modified1:  Tom Abel 10/2009
 /              added ConservativeReconstruction
 /
 /
@@ -14,6 +14,8 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <math.h>
+
+#include "../DebugMacros.h"
 
 #include "ErrorExceptions.h"
 #include "macros_and_parameters.h"
@@ -37,7 +39,6 @@ int HLL_PLM_MHD(float **prim, float **priml, float **primr,
 		float **species, float **colors,  float **FluxLine, int ActiveSize,
 		char direc, int jj, int kk)
 {
-
   // compute priml and primr
   if (ConservativeReconstruction == 1)
     cons_plm(prim, priml, primr, ActiveSize, 9, direc);
@@ -66,6 +67,6 @@ int HLL_PLM_MHD(float **prim, float **priml, float **primr,
       }
     }
   }
-  
+
   return SUCCESS;
 }

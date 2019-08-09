@@ -72,11 +72,15 @@ void printminmax(float* a, size_t n, char* s)
 int ClearOuterVelocities(float *u, float *v, float *w, int in, int jn, int kn, int rank, float dx[], float dy[],
 float dz[], FLOAT** CellLeftEdges)
 {
-	if(VelocitiesOuterRadius < 0)
+	if(OuterVelocitiesSphereRadius < 0 || (!OuterVelocitiesClearInward && !OuterVelocitiesClearOutward))
 		return SUCCESS;
 
+	const double TINY_V = tiny_number;
 	FLOAT x, y, z;
 	size_t index;
+	bool doClean1, doClean2;
+	double rv;
+
 	// Clear velocity beyond a certain radius
 	for(int k = 0; k < kn && ZEUS_IncludeDivergenceTerm; k++)
 	{
@@ -88,16 +92,24 @@ float dz[], FLOAT** CellLeftEdges)
 				y = CellLeftEdges[1][j] - SphericalGravityCenter[1];
 				z = CellLeftEdges[2][k] - SphericalGravityCenter[2];
 				index = IDX(i, j, k);
-				if(HydroMethod == Zeus_Hydro)
-				{
-					if(lenl(x - dx[i] / 2, y, z) > VelocitiesOuterRadius)
-						u[index] = 0;
-					if(lenl(x, y - dy[i] / 2, z) > VelocitiesOuterRadius)
-						v[index] = 0;
-					if(lenl(x, y, z - dz[i] / 2) > VelocitiesOuterRadius)
-						w[index] = 0;
-				}
-				else if(lenl(x, y, z) > VelocitiesOuterRadius)
+
+				double rv = x * u[index] + y * v[index] + z * w[index];
+				doClean1 |= OuterVelocitiesClearInward && rv < -TINY_V;
+				doClean1 |= OuterVelocitiesClearOutward && rv > TINY_V;
+				doClean1 |= OuterVelocitiesClearTangential && (-TINY_V <= rv) && (rv <= TINY_V);
+
+				//if(HydroMethod == Zeus_Hydro)
+				//{
+				//	doClean2 |= lenl(x - dx[i] / 2, y, z) > OuterVelocitiesSphereRadius;
+				//	doClean2 |= lenl(x, y - dy[i] / 2, z) > OuterVelocitiesSphereRadius;
+				//	doClean2 |= lenl(x, y, z - dz[i] / 2) > OuterVelocitiesSphereRadius;
+				//}
+				//else
+				//{
+				doClean2 = lenl(x, y, z) > OuterVelocitiesSphereRadius;
+				//}
+
+				if(doClean1 && doClean2)
 				{
 					u[index] = v[index] = w[index] = 0;
 				}
@@ -276,7 +288,7 @@ int bottom, float minsupecoef, int CRModel, float CRgamma, size_t index8, size_t
 	/* Update velocities with compression term
 	 and acceleration */
 	/* (limit increase to preventy pressure driven instability) */
-	if(VelocitiesOuterClearAtZeusSourceBegin)
+	if(OuterVelocitiesClearAtZeusSourceBegin)
 		ClearOuterVelocities(u, v, w, in, jn, kn, rank, dx, dy, dz, CellLeftEdges);
 
 	for(k = ksm2; k < kn; k++)
@@ -587,7 +599,7 @@ int bottom, float minsupecoef, int CRModel, float CRgamma, size_t index8, size_t
 
 	} // end: loop over nstep (end of artificial viscosity)
 
-	if(VelocitiesOuterClearAtZeusSourceBeforeDiv && ZEUS_IncludeDivergenceTerm)
+	if(OuterVelocitiesClearAtZeusSourceBeforeDiv && ZEUS_IncludeDivergenceTerm)
 		ClearOuterVelocities(u, v, w, in, jn, kn, rank, dx, dy, dz, CellLeftEdges);
 
 	/*  3) Substep 3 -- compression term */
@@ -686,7 +698,7 @@ int bottom, float minsupecoef, int CRModel, float CRgamma, size_t index8, size_t
   }
 #endif /* UNUSED */
 
-	if(VelocitiesOuterClearAtZeusSourceEnd)
+	if(OuterVelocitiesClearAtZeusSourceEnd)
 		ClearOuterVelocities(u, v, w, in, jn, kn, rank, dx, dy, dz, CellLeftEdges);
 
 	return SUCCESS;
