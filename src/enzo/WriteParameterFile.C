@@ -190,6 +190,10 @@ int WriteParameterFile(FILE *fptr, TopGridData &MetaData, char *name = NULL)
   fprintf(fptr, "OuterVelocitiesClearAtZeusSourceBegin     = %"ISYM"\n", OuterVelocitiesClearAtZeusSourceBegin    );
   fprintf(fptr, "OuterVelocitiesClearAtZeusSourceBeforeDiv = %"ISYM"\n", OuterVelocitiesClearAtZeusSourceBeforeDiv);
   fprintf(fptr, "OuterVelocitiesClearAtZeusSourceEnd       = %"ISYM"\n", OuterVelocitiesClearAtZeusSourceEnd      );
+  fprintf(fptr, "OuterVelocitiesClearAtRKStep1Begin        = %"ISYM"\n", OuterVelocitiesClearAtRKStep1Begin       );
+  fprintf(fptr, "OuterVelocitiesClearAtRKStep1End          = %"ISYM"\n", OuterVelocitiesClearAtRKStep1End         );
+  fprintf(fptr, "OuterVelocitiesClearAtRKStep2Begin        = %"ISYM"\n", OuterVelocitiesClearAtRKStep2Begin       );
+  fprintf(fptr, "OuterVelocitiesClearAtRKStep2End          = %"ISYM"\n", OuterVelocitiesClearAtRKStep2End         );
 
   fprintf(fptr, "PythonTopGridSkip       = %"ISYM"\n", PythonTopGridSkip);
   fprintf(fptr, "PythonSubcycleSkip      = %"ISYM"\n", PythonSubcycleSkip);

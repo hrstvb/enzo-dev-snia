@@ -1088,6 +1088,10 @@ int SetDefaultGlobalValues(TopGridData &MetaData)
   OuterVelocitiesClearAtZeusSourceBegin = 0;
   OuterVelocitiesClearAtZeusSourceBeforeDiv = 0;
   OuterVelocitiesClearAtZeusSourceEnd = 0;
+  OuterVelocitiesClearAtRKStep1Begin = 0;
+  OuterVelocitiesClearAtRKStep1End   = 0;
+  OuterVelocitiesClearAtRKStep2Begin = 0;
+  OuterVelocitiesClearAtRKStep2End   = 0;
 
 //  UseSpherGrav = UseSphericalGravity && SphericalGravityMaxHierarchyLevel > 0;
 //  SpherGravActualNumberOfBins=NULL;

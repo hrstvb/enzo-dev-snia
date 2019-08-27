@@ -1244,6 +1244,10 @@ EXTERN int   OuterVelocitiesClearTangential;
 EXTERN int   OuterVelocitiesClearAtZeusSourceBegin;
 EXTERN int   OuterVelocitiesClearAtZeusSourceBeforeDiv;
 EXTERN int   OuterVelocitiesClearAtZeusSourceEnd;
+EXTERN int   OuterVelocitiesClearAtRKStep1Begin;
+EXTERN int   OuterVelocitiesClearAtRKStep1End;
+EXTERN int   OuterVelocitiesClearAtRKStep2Begin;
+EXTERN int   OuterVelocitiesClearAtRKStep2End;
 
 
 #endif

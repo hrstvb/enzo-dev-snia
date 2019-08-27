@@ -1914,6 +1914,8 @@ int CreateParticleTypeGrouping(hid_t ptype_dset,
 				  int &HCOIINum,int &OHINum,int &H2OINum,
 				  int &O2INum);
 
+  int ClearOuterVelocities();
+
 /* Zeus Solver. */
 
   int ZeusSolver(float *gamma, int igamfield, int nhy,
@@ -3049,7 +3051,7 @@ int zEulerSweep(int j, int NumberOfSubgrids, fluxes *SubgridFluxes[],
 	    fluxes *SubgridFluxes[], int NumberOfSubgrids,
 	    float fluxcoef, int fallback);
   int MHDSourceTerms(float **dU);
-  int UpdateMHDPrim(float **dU, float c1, float c2);
+  int UpdateMHDPrim(float **dU, float c1, float c2, char* failText);
   int SaveMHDSubgridFluxes(fluxes *SubgridFluxes[], int NumberOfSubgrids,
 			   float *Flux3D[], int flux, float fluxcoef, float dt);
   int SetFloor();

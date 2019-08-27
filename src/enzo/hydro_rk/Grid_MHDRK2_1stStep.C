@@ -11,6 +11,7 @@
 
 #include <stdio.h>
 #include <math.h>
+#include "../DebugMacros.h"
 #include "EnzoTiming.h"
 #include "ErrorExceptions.h"
 #include "macros_and_parameters.h"
@@ -135,6 +136,11 @@ int NumberOfSubgrids, int level, ExternalBoundary *Exterior)
 
 	this->ReturnHydroRKPointers(Prim, true); //##### added! because Hydro3D needs fractions for species
 
+	if(OuterVelocitiesClearAtRKStep1Begin)
+		ClearOuterVelocities();
+//	ClearOuterVelocities(Prim[1], Prim[2], Prim[3], GridDimension[0], GridDimension[1], GridDimension[2], GridRank,
+//							CellWidth[0], CellWidth[1], CellWidth[2], CellLeftEdge);
+
 	/* Compute dU */
 
 	int fallback = 0;
@@ -149,7 +155,7 @@ int NumberOfSubgrids, int level, ExternalBoundary *Exterior)
 
 	/* Update primitive variables */
 
-	if(this->UpdateMHDPrim(dU, 1, 1) == FAIL)
+	if(this->UpdateMHDPrim(dU, 1, 1, "MHDRK2_1stStep") == FAIL)
 	{
 		fprintf(stderr, "Grid_MHDRK2_1stStep: Falling back to zero order at RK 1st step\n");
 		// fall back to zero order scheme
@@ -169,7 +175,7 @@ int NumberOfSubgrids, int level, ExternalBoundary *Exterior)
 			return FAIL;
 		}
 		this->MHDSourceTerms(dU);
-		if(this->UpdateMHDPrim(dU, 1, 1) == FAIL)
+		if(this->UpdateMHDPrim(dU, 1, 1, "MHDRK2_1stStep, fallback") == FAIL)
 		{
 			fprintf(stderr, "Grid_MHDRK2_1stStep: Fallback failed, give up...\n");
 			return FAIL;
@@ -181,8 +187,10 @@ int NumberOfSubgrids, int level, ExternalBoundary *Exterior)
 		delete[] dU[field];
 	}
 
-	ClearOuterVelocities(Prim[1], Prim[2], Prim[3], GridDimension[0], GridDimension[1], GridDimension[2], GridRank,
-							CellWidth[0], CellWidth[1], CellWidth[2], CellLeftEdge);
+	if(OuterVelocitiesClearAtRKStep1End)
+		ClearOuterVelocities();
+//	ClearOuterVelocities(Prim[1], Prim[2], Prim[3], GridDimension[0], GridDimension[1], GridDimension[2], GridRank,
+//							CellWidth[0], CellWidth[1], CellWidth[2], CellLeftEdge);
 
 	TIMER_STOP("MHDRK2");
 

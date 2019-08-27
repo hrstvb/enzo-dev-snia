@@ -48,6 +48,8 @@ struct MHDInitialProfile
 	long long temperatureIndex;
 	long long internalEnergyIndex;
 	long long radiusSortingOrder;
+	double densityProfileMaxRadius;
+	double densityProfileMinDensity;
 
 	/**
 	 * Returns the position of the next whitespace character in s following start.
@@ -132,7 +134,8 @@ struct MHDInitialProfile
 	 */
 	void init();
 	void init(char* radiusColumnName, char* densityColumnName, char* InternalEnergyColumnName,
-		char* temperatureColumnName, char* RadialVelocityColumnName);
+		char* temperatureColumnName, char* RadialVelocityColumnName, double DensityProfileMaxRadius,
+		double DensityProfileMinDensity);
 	/**
 	 * Allocates new colDolata, colNames and colSortingOrders
 	 * initialized with NULLs.

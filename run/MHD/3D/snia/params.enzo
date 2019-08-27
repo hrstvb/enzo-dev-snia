@@ -1,19 +1,23 @@
 ProblemType                = 501
+UseViscosity = 1
+ViscosityCoefficient = 1e15
 TopGridRank                = 3
 UserDefinedRootGridLayout  = 1 1 1
 #UserDefinedRootGridLayout  = 2 2 2
 #TopGridDimensions          = 10 10 10
 #TopGridDimensions          = 50 50 50
-TopGridDimensions          = 100 100 100
-#TopGridDimensions          = 200 200 200
+#TopGridDimensions          = 100 100 100
+TopGridDimensions          = 200 200 200
+#DomainLeftEdge  = -100e5 -100e5 -100e5
+#DomainRightEdge = 100e5 100e5 100e5
 #DomainLeftEdge  = -600e5 -600e5 -600e5
 #DomainRightEdge = 600e5 600e5 600e5
-DomainLeftEdge  = -2500e5 -2500e5 -2500e5
-DomainRightEdge = 2500e5 2500e5 2500e5
+#DomainLeftEdge  = -2500e5 -2500e5 -2500e5
+#DomainRightEdge = 2500e5 2500e5 2500e5
 #DomainLeftEdge  = -3000e5 -3000e5 -3000e5
 #DomainRightEdge = 3000e5 3000e5 3000e5
-#DomainLeftEdge  = -2000e5 -2000e5 -2000e5
-#DomainRightEdge = 2000e5 2000e5 2000e5
+DomainLeftEdge  = -2000e5 -2000e5 -2000e5
+DomainRightEdge = 2000e5 2000e5 2000e5
 #DomainLeftEdge  = -1250e5 -1250e5 -1250e5
 #DomainRightEdge = 1250e5 1250e5 1250e5
 #DomainLeftEdge  = -625e5 -625e5 -625e5
@@ -31,7 +35,7 @@ ParallelRootGridIO_Force  = 1
 #  set I/O and stop/start parameters
 #
 StopTime               = 1
-dtDataDump             = 0.0001
+#dtDataDump             = 0.0001
 DataDumpDir           = datasets/EE
 StopCycle               = 1000000
 CycleSkipDataDump      = 1
@@ -204,8 +208,8 @@ EOSPolytropicFactor         = 4.64e14
 #EOSPolytropicFactor         = 2.2e14
 ###EOSPolytropicFactor         = 2.5e14
 CourantSafetyNumber         = 0.4
-HydroMethod                 = 2 # 6 #0=PPM_DirectEuler,1=PPM_LagrangeRemap,2=Zeus_Hydro,3=HD_RK,4=MHD_RK,5=NoHydro,6=MHD_Li
-ReconstructionMethod        = 1 # 0=PLM, 1=PPM, 2=CENO, 3=WENO3, 4=WENO5, 5=ZERO
+HydroMethod                 = 4 # 6 #0=PPM_DirectEuler,1=PPM_LagrangeRemap,2=Zeus_Hydro,3=HD_RK,4=MHD_RK,5=NoHydro,6=MHD_Li
+#ReconstructionMethod        = 1 # 0=PLM, 1=PPM, 2=CENO, 3=WENO3, 4=WENO5, 5=ZERO
 NumberOfGhostZones          = 3 # must be 5 for HydroMethod=6; 3 for the rest
 FluxCorrection              = 1 # Always 1 with CT MHD
 DualEnergyFormalism         = 0
@@ -221,17 +225,23 @@ PPMDiffusionParameter   = 0
 PPMFlatteningParameter  = 0
 UseMHD = 0
 UseMinimumPressureSupport        = FALSE;
+UseViscosity = 1
+ViscosityCoefficient = 
 ZEUSLinearArtificialViscosity    = 0.0;
 ZEUSQuadraticArtificialViscosity = 0  # default 2.0;
 ZEUS_IncludeViscosityTerm  = 0
 ZEUS_IncludeDivergenceTerm = 1
-OuterVelocitiesSphereRadius               = 2000e5
+OuterVelocitiesSphereRadius               = 1500e5 #95e5 # 2000e5
 OuterVelocitiesClearInward                = 1 # default 1
 OuterVelocitiesClearOutward               = 1 # default 0
 OuterVelocitiesClearTangential            = 1 # default 0
 OuterVelocitiesClearAtZeusSourceBegin     = 1
 OuterVelocitiesClearAtZeusSourceBeforeDiv = 1 
 OuterVelocitiesClearAtZeusSourceEnd       = 1
+OuterVelocitiesClearAtRKStep1Begin        = 1
+OuterVelocitiesClearAtRKStep1End          = 1
+OuterVelocitiesClearAtRKStep2Begin        = 1
+OuterVelocitiesClearAtRKStep2End          = 1
 
 ###############################################################
 #
@@ -245,6 +255,8 @@ DensityColumnName     = rho[g/ccm]
 RadiusColumnName      = r[cm]
 #InternalEnergyColumnName = U[erg]
 #TemperatureColumnName = T[K]
+DensityProfileMaxRadius  = 1500e5
+#DensityProfileMinDensity = -1
 
 #ProfileFileName = snia2-0005.plt
 #ProfileFileName = snia2-0005-Veq0.plt
@@ -277,10 +289,10 @@ BurningReactionBurnedFractionLimitLo  = 0.3   #[BH]
 BurningReactionBurnedFractionLimitHi  = 2     #[BH]
 BurningEnergyRelease                  = 0 #7.655730630E+17 # Q := erg/g = 0.0476929 amu * Ni count [BH]
 EnergyRelativeGrowthLimit             = 0.1 #[BH]
-InitialBurnedRegionSustain            = 1
 
 #InitialBurnedRadius = 314e5 # Applies to all perturbation methods, incl. no preturbation.
-InitialBurnedRadius                   = 7.5e5
+InitialBurnedRadius                   = 1e5
+InitialBurnedRegionSustain            = 1
 PerturbationAmplitude                 = 500e5 # Applies to methods 1..4
 PerturbationMethod                    = 0 # 0-no perturbtion
 #PerturbationMethod                    = 1 # 1-Burned sphere with a shell, in which the burned fraction decreases linearly from 1 to 0.

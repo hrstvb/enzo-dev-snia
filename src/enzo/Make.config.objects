@@ -15,6 +15,7 @@
 #-----------------------------------------------------------------------
 
 OBJS_CONFIG_LIB = \
+  ClearOuterVelocities.o \
   mylimiters.o \
   Grid_PointInChildren.o \
   MHDInitialProfile.o \
