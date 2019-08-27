@@ -1367,8 +1367,10 @@ int ReadParameterFile(FILE *fptr, TopGridData &MetaData, float *Initialdt)
     ret += sscanf(line, "OuterVelocitiesClearAtZeusSourceBegin     =%"ISYM, &OuterVelocitiesClearAtZeusSourceBegin    );
     ret += sscanf(line, "OuterVelocitiesClearAtZeusSourceBeforeDiv =%"ISYM, &OuterVelocitiesClearAtZeusSourceBeforeDiv);
     ret += sscanf(line, "OuterVelocitiesClearAtZeusSourceEnd       =%"ISYM, &OuterVelocitiesClearAtZeusSourceEnd      );
-
-
+    ret += sscanf(line, "OuterVelocitiesClearAtRKStep1Begin        =%"ISYM, &OuterVelocitiesClearAtRKStep1Begin       );
+    ret += sscanf(line, "OuterVelocitiesClearAtRKStep1End          =%"ISYM, &OuterVelocitiesClearAtRKStep1End         );
+    ret += sscanf(line, "OuterVelocitiesClearAtRKStep2Begin        =%"ISYM, &OuterVelocitiesClearAtRKStep2Begin       );
+    ret += sscanf(line, "OuterVelocitiesClearAtRKStep2End          =%"ISYM, &OuterVelocitiesClearAtRKStep2End         );
 
     /* If the dummy char space was used, then make another. */
     if (*dummy != 0) {

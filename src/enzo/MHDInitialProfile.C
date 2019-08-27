@@ -206,7 +206,15 @@ long long MHDInitialProfile::interpolate(double* y, double yData[], double x, do
 
 long long MHDInitialProfile::interpolateDensity(double* y, double x)
 {
-	return interpolate(y, densityData, x, radiusData, nRows, radiusSortingOrder);
+	if(0 < densityProfileMaxRadius && densityProfileMaxRadius < x)
+		x = densityProfileMaxRadius;
+
+	long long result = interpolate(y, densityData, x, radiusData, nRows, radiusSortingOrder);
+
+	if(*y < densityProfileMinDensity)
+		*y = densityProfileMinDensity;
+
+	return result;
 }
 
 long long MHDInitialProfile::interpolateInternalEnergy(double* y, double x)
@@ -272,7 +280,7 @@ void MHDInitialProfile::init()
 	colNames = colNamesToKeep = NULL;
 	colSortingOrders = colNumsToKeep = NULL;
 	radiusColumnName = densityColumnName = internalEnergyColumnName = temperatureColumnName = radialVelocityColumnName =
-			NULL;
+	NULL;
 	radiusData = densityData = internalEnergyData = temperatureData = radialVelocityData = NULL;
 	radiusIndex = densityIndex = internalEnergyIndex = temperatureIndex = radialVelocityIndex = -1;
 	radiusSortingOrder = PROFILE_UNSORTED;
@@ -295,9 +303,13 @@ void MHDInitialProfile::addColToKeep(char* colName, char** thisColName)
 }
 
 void MHDInitialProfile::init(char* radiusColumnName, char* densityColumnName, char* internalEnergyColumnName,
-	char* temperatureColumnName, char* radialVelocityColumnName)
+	char* temperatureColumnName, char* radialVelocityColumnName, double DensityProfileMaxRadius,
+	double DensityProfileMinDensity)
 {
 	init();
+
+	this->densityProfileMinDensity = DensityProfileMinDensity;
+	this->densityProfileMaxRadius = DensityProfileMaxRadius;
 
 	for(int pass = 0; pass < 2; pass++)
 	{
@@ -669,8 +681,8 @@ long long MHDInitialProfile::readPAH01(char* filename, double atTime)
 		if(strlen(line) == MAX_LINE_LENGTH - 1)
 		{
 			char s[256];
-			snprintf(s, 256, "Line %lld in '%s' possibly exceeds the maximum line length, %lld. Aborting...",
-				lineNum, filename, MAX_LINE_LENGTH);
+			snprintf(s, 256, "Line %lld in '%s' possibly exceeds the maximum line length, %lld. Aborting...", lineNum,
+						filename, MAX_LINE_LENGTH);
 			EnzoFatalException(s, "MHDInitialProfile::readPAH01", 0);
 		}
 		switch(lineTypePAH01(line))
@@ -814,8 +826,8 @@ long long MHDInitialProfile::readPAH02(char* filename, double atTime)
 		if(strlen(line) == MAX_LINE_LENGTH - 1)
 		{
 			char s[256];
-			snprintf(s, 256, "Line %lld in '%s' possibly exceeds the maximum line length, %lld. Aborting...",
-				lineNum, filename, MAX_LINE_LENGTH);
+			snprintf(s, 256, "Line %lld in '%s' possibly exceeds the maximum line length, %lld. Aborting...", lineNum,
+						filename, MAX_LINE_LENGTH);
 			EnzoFatalException(s, "MHDInitialProfile::readPAH01", 0);
 		}
 

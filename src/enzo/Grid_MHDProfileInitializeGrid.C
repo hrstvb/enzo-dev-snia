@@ -335,6 +335,7 @@ float* P_FIELD, float* RHO_FIELD, grid* GRID, bool debug, int level, char* debug
 		break;
 	case HD_RK:
 	case MHD_RK:
+	case MHD_Li:
 		return rkPressure(i_dest, j_dest, k_dest, integrationDirection, integratonDim, dx, P_FIELD, RHO_FIELD, GRID,
 							debug, level, debugLabel);
 		break;
@@ -363,7 +364,7 @@ void iterator48(grid* g, float* field, float* rhoField, MHDInitialProfile* p, in
 	const int I0 = I2 / 2; //TODO: Use SphericalGravityCenter
 	const int J0 = J2 / 2;
 	const int K0 = K2 / 2;
-	const int K1 = K0 + 1;
+	const int K1 = K0 + 2;
 	const int K0b = K2 - K0 - 1;
 	const int K1b = K2 - K1 - 1;
 	const FLOAT DX = g->GetCellWidth(0, 0);
@@ -641,7 +642,9 @@ float dipoleMoment[3], float dipoleCenter[3], bool usingVectorPotential)
 
 				float rho, rhoNi = 0;
 				int retcode = p->interpolateDensity(&rho, r); //g/cm**3
-				polytropicPressureAtSmallR(NULL, &rho, i, j, k, this, rho_c);
+				if(rho<=0)
+					TRACEF("++++++++++++++++++++++++++RRRRRRRRRRRRRRRRRRRRRho  %lld %lld %lld   %e", i,j,k,rho);
+//				polytropicPressureAtSmallR(NULL, &rho, i, j, k, this, rho_c);
 				//retcode = profileInterpolate(&T, temperatureData, r, radiusData, p.nRows, radiusSO); //K
 				bool isBurned = false;
 				double r1, r2;
@@ -703,6 +706,8 @@ float dipoleMoment[3], float dipoleCenter[3], bool usingVectorPotential)
 				if(isBurned)
 					rhoNi = rho;
 				rhoField[index] = rho;
+				if(rho<=0)
+					TRACEF("---------------------------rHOOOOOOOOO  %lld %lld %lld   %e", i,j,k,rho);
 				if(UseBurning)
 					rhoNiField[index] = rhoNi;
 
