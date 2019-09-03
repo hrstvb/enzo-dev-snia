@@ -87,8 +87,6 @@ int NumberOfSubgrids, int level, ExternalBoundary *Exterior)
 
 	if(OuterVelocitiesClearAtRKStep2Begin)
 		ClearOuterVelocities();
-//	ClearOuterVelocities(Prim[1], Prim[2], Prim[3], GridDimension[0], GridDimension[1], GridDimension[2], GridRank,
-//							CellWidth[0], CellWidth[1], CellWidth[2], CellLeftEdge);
 
 	int fallback = 0;
 	if(this->MHD3D(Prim, dU, dtFixed, SubgridFluxes, NumberOfSubgrids, 0.5, fallback) == FAIL)
@@ -139,8 +137,6 @@ int NumberOfSubgrids, int level, ExternalBoundary *Exterior)
 
 	if(OuterVelocitiesClearAtRKStep2End)
 		ClearOuterVelocities();
-//	ClearOuterVelocities(Prim[1], Prim[2], Prim[3], GridDimension[0], GridDimension[1], GridDimension[2], GridRank,
-//							CellWidth[0], CellWidth[1], CellWidth[2], CellLeftEdge);
 
 	TIMER_STOP("MHDRK2");
 
