@@ -440,8 +440,6 @@ int MHDProfileInitialize(FILE *fptr, FILE *Outfptr, HierarchyEntry &TopGrid, Top
 	int ProfileUseFrameTime = 0;
 	float dipoleMoment[3] = { 0, 0, 0 };
 	float dipoleCenter[3] = { 0, 0, 0 };
-	float DensityProfileMaxRadius = -1;
-	float DensityProfileMinDensity = -1;
 
 	if(MHD_LI_GRAVITY_AFTER_PLMPRED)
 	{
@@ -475,8 +473,6 @@ int MHDProfileInitialize(FILE *fptr, FILE *Outfptr, HierarchyEntry &TopGrid, Top
 		ret += sscanf(line, "BurningTemperature = %"FSYM, &BurningTemperature);
 		ret += sscanf(line, "ProfileAtTime = %"FSYM, &ProfileAtTime);
 		ret += sscanf(line, "ProfileUseFrameTime = %"ISYM, &ProfileUseFrameTime);
-		ret += sscanf(line, "DensityProfileMaxRadius = %" FSYM, &DensityProfileMaxRadius);
-		ret += sscanf(line, "DensityProfileMinDensity = %" FSYM, &DensityProfileMinDensity);
 
 		ret += sscanf(line, "BA = %"FSYM" %"FSYM" %"FSYM, BA, BA + 1, BA + 2);
 

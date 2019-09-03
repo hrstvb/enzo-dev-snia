@@ -1360,6 +1360,8 @@ int ReadParameterFile(FILE *fptr, TopGridData &MetaData, float *Initialdt)
     ret += sscanf(line, "SphericalGravityInterpAccelMethod = %"ISYM, &SphericalGravityInterpAccelMethod);
     ret += sscanf(line, "SphericalGravityDebug = %"ISYM, &SphericalGravityDebug);
     ret += sscanf(line, "MHD_LI_GRAVITY_AFTER_PLMPRED = %"ISYM, &MHD_LI_GRAVITY_AFTER_PLMPRED);
+    ret += sscanf(line, "DensityProfileMaxRadius                   =%"FSYM, &DensityProfileMaxRadius                  );
+    ret += sscanf(line, "DensityProfileMinDensity                  =%"FSYM, &DensityProfileMinDensity                 );
     ret += sscanf(line, "OuterVelocitiesSphereRadius               =%"FSYM, &OuterVelocitiesSphereRadius              );
     ret += sscanf(line, "OuterVelocitiesClearInward                =%"ISYM, &OuterVelocitiesClearInward               );
     ret += sscanf(line, "OuterVelocitiesClearOutward               =%"ISYM, &OuterVelocitiesClearOutward              );

@@ -1248,6 +1248,8 @@ EXTERN int   OuterVelocitiesClearAtRKStep1Begin;
 EXTERN int   OuterVelocitiesClearAtRKStep1End;
 EXTERN int   OuterVelocitiesClearAtRKStep2Begin;
 EXTERN int   OuterVelocitiesClearAtRKStep2End;
+EXTERN float DensityProfileMaxRadius ;
+EXTERN float DensityProfileMinDensity;
 
 
 #endif

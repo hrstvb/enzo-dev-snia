@@ -1092,7 +1092,8 @@ int SetDefaultGlobalValues(TopGridData &MetaData)
   OuterVelocitiesClearAtRKStep1End   = 0;
   OuterVelocitiesClearAtRKStep2Begin = 0;
   OuterVelocitiesClearAtRKStep2End   = 0;
-
+  DensityProfileMaxRadius  = -1;
+  DensityProfileMinDensity = -1;
 //  UseSpherGrav = UseSphericalGravity && SphericalGravityMaxHierarchyLevel > 0;
 //  SpherGravActualNumberOfBins=NULL;
 //  SpherGravBinLeftEdges=NULL;
