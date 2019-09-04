@@ -1,4 +1,5 @@
-#include "stddef.h"
+#include <stddef.h>
+#include <stdarg.h>
 
 #include "IDE_defs.h"
 #include "math.h"

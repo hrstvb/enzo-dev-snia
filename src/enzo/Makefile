@@ -51,6 +51,8 @@ LFLAGS=--header-file=libconfig/scanner.h --prefix=libconfig_yy
 
 SVN      = hg
 
+MACH_PYTHON2 = python # Default value, backwards compatible
+
 #-----------------------------------------------------------------------
 # Make.config.settings is used for setting default values to all compile-time 
 # configuration settings.
@@ -349,7 +351,7 @@ auto_show_version.C:
 
 .PHONY: auto_show_compile_options.C
 auto_show_compile_options.C:
-	-@python create_config_info.py
+	-@$(MACH_PYTHON2) create_config_info.py
 
 #-----------------------------------------------------------------------
 # Generate dependency file
