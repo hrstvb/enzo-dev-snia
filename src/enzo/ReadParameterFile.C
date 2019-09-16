@@ -1345,6 +1345,8 @@ int ReadParameterFile(FILE *fptr, TopGridData &MetaData, float *Initialdt)
 
 
     ret += sscanf(line, "UseSphericalGravity = %"ISYM, &UseSphericalGravity);
+    ret += sscanf(line, "SphericalGravityInnerCutoffRaduis = %"FSYM, &SphericalGravityInnerCutoffRaduis);
+    ret += sscanf(line, "SphericalGravityOuterCutoffRaduis = %"FSYM, &SphericalGravityOuterCutoffRaduis);
     ret += sscanf(line, "SphericalGravityBinSize = %"PSYM, &SphericalGravityBinSize);
     ret += sscanf(line, "SphericalGravityCenter = %"PSYM" %"PSYM" %"PSYM,
 				  SphericalGravityCenter, SphericalGravityCenter+1, SphericalGravityCenter+2);

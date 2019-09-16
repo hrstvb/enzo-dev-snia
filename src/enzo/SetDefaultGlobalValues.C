@@ -1039,6 +1039,8 @@ int SetDefaultGlobalValues(TopGridData &MetaData)
 
   //Spherical gravity parameters
   UseSphericalGravity = 0;
+  SphericalGravityInnerCutoffRaduis = -1;
+  SphericalGravityOuterCutoffRaduis = -1;
   SphericalGravityActualNumberOfBins = -1;
   SphericalGravityBinCenters = NULL;
   SphericalGravityBinLeftEdges = NULL;

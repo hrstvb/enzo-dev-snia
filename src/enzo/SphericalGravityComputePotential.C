@@ -258,7 +258,8 @@ int SphericalGravityComputePotential(LevelHierarchyEntry *LevelArray[], TopGridD
 //	if(UseSpherGrav)
 //		return SpherGravCopmutePotential(LevelArray, MetaData);
 
-	TRACE;
+	TRACE
+	;
 	if(SphericalGravityDetermineBins() == FAIL)
 		ENZO_FAIL("Coudn't determine spherical gravity bins.\n");
 	SphericalGravityAllocateBins(&SphericalGravityShellCellCounts, &SphericalGravityShellMasses,
@@ -451,7 +452,8 @@ int SphericalGravityComputePotential(LevelHierarchyEntry *LevelArray[], TopGridD
  */
 float SphericalGravityGetAt(FLOAT r)
 {
-	if(r > SphericalGravityOuterRadius)
+	if(!UseSphericalGravity || (SphericalGravityInnerCutoffRaduis > 0 && r < SphericalGravityInnerCutoffRaduis)
+			|| (SphericalGravityOuterCutoffRaduis >= 0 && r > SphericalGravityOuterCutoffRaduis))
 		return 0;
 
 	size_t rbin = SphericalGravityComputeBinIndex(r);
