@@ -306,6 +306,8 @@ PertrubationBottomDensity             = 4.7397E+08 # >0 - density inside the fin
 PertrubationTopDensity                = 5.9318E+08 # >0 - density outside the findgers; <0 - leave as already initialized
 
 UseSphericalGravity = 1
+# SphericalGravityInnerCutoffRaduis = # 0: Unlimited
+# SphericalGravityOuterCutoffRaduis = # -1: Unlimited
 SphericalGravityCenter = 0 0 0 # 60e5 60e5 60e5 #0 0 0
 # SphericalGravityCentralMass = # default: 0
 

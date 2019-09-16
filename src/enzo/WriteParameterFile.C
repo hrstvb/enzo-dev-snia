@@ -168,6 +168,8 @@ int WriteParameterFile(FILE *fptr, TopGridData &MetaData, char *name = NULL)
 	  MetaData.CycleSkipHistoryDump);
 
   fprintf(fptr, "UseSphericalGravity = %"ISYM"\n", UseSphericalGravity);
+  fprintf(fptr, "SphericalGravityInnerCutoffRaduis = %"FSYM"\n", SphericalGravityInnerCutoffRaduis);
+  fprintf(fptr, "SphericalGravityOuterCutoffRaduis = %"FSYM"\n", SphericalGravityOuterCutoffRaduis);
   fprintf(fptr, "SphericalGravityBinSize = %"PSYM"\n", SphericalGravityBinSize);
   fprintf(fptr, "SphericalGravityCenter = %"PSYM" %"PSYM" %"PSYM"\n", SphericalGravityCenter[0],
 		  SphericalGravityCenter[1], SphericalGravityCenter[2]);

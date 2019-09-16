@@ -1185,6 +1185,8 @@ EXTERN float SupernovaSeedFieldEnergy;
  * Spherical gravity
  */
 EXTERN int UseSphericalGravity;
+EXTERN FLOAT SphericalGravityInnerCutoffRaduis; // Zero gravity inside this radius.
+EXTERN FLOAT SphericalGravityOuterCutoffRaduis; // Zero gravity outside this radius.
 EXTERN size_t SphericalGravityActualNumberOfBins; // Actual number of bins incl. the central and the outer.
 EXTERN FLOAT *SphericalGravityBinCenters;
 EXTERN FLOAT *SphericalGravityBinLeftEdges;
