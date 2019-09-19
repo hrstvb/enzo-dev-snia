@@ -555,10 +555,10 @@ int EvolveLevel(TopGridData *MetaData, LevelHierarchyEntry *LevelArray[],
             }else{
                 if (HydroMethod == HD_RK)
                     Grids[grid1]->GridData->RungeKutta2_1stStep
-                        (SubgridFluxesEstimate[grid1], NumberOfSubgrids[grid1], level, Exterior);
+                        (SubgridFluxesEstimate[grid1], NumberOfSubgrids[grid1], level, Exterior, MetaData);
                 else if (HydroMethod == MHD_RK) {
                     Grids[grid1]->GridData->MHDRK2_1stStep
-                    (SubgridFluxesEstimate[grid1], NumberOfSubgrids[grid1], level, Exterior);
+                    (SubgridFluxesEstimate[grid1], NumberOfSubgrids[grid1], level, Exterior, MetaData);
                 }
             }//hydro method
         }//use hydro
@@ -613,12 +613,12 @@ int EvolveLevel(TopGridData *MetaData, LevelHierarchyEntry *LevelArray[],
             if (UseHydro) {
                 if (HydroMethod == HD_RK)
                     Grids[grid1]->GridData->RungeKutta2_2ndStep
-                        (SubgridFluxesEstimate[grid1], NumberOfSubgrids[grid1], level, Exterior);
+                        (SubgridFluxesEstimate[grid1], NumberOfSubgrids[grid1], level, Exterior, MetaData);
 
                 else if (HydroMethod == MHD_RK) {
 
                     Grids[grid1]->GridData->MHDRK2_2ndStep
-                        (SubgridFluxesEstimate[grid1], NumberOfSubgrids[grid1], level, Exterior);
+                        (SubgridFluxesEstimate[grid1], NumberOfSubgrids[grid1], level, Exterior, MetaData);
                     if (UseAmbipolarDiffusion)
                         Grids[grid1]->GridData->AddAmbipolarDiffusion();
 

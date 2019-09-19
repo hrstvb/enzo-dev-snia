@@ -25,11 +25,8 @@
 
 double ReturnWallTime();
 
-int ClearOuterVelocities(float *u, float *v, float *w, int in, int jn, int kn, int rank, float dx[], float dy[],
-float dz[], FLOAT** CellLeftEdges);
-
 int grid::MHDRK2_1stStep(fluxes *SubgridFluxes[],
-int NumberOfSubgrids, int level, ExternalBoundary *Exterior)
+int NumberOfSubgrids, int level, ExternalBoundary *Exterior, TopGridData *MetaData)
 /*
  NumberOfSubgrids: the actual number of subgrids + 1
  SubgridFluxes[NumberOfSubgrids]
@@ -136,7 +133,7 @@ int NumberOfSubgrids, int level, ExternalBoundary *Exterior)
 	this->ReturnHydroRKPointers(Prim, true); //##### added! because Hydro3D needs fractions for species
 
 	if(OuterVelocitiesClearAtRKStep1Begin)
-		ClearOuterVelocities();
+		ClearOuterVelocities(level, MetaData);
 
 	/* Compute dU */
 
@@ -185,7 +182,7 @@ int NumberOfSubgrids, int level, ExternalBoundary *Exterior)
 	}
 
 	if(OuterVelocitiesClearAtRKStep1End)
-		ClearOuterVelocities();
+		ClearOuterVelocities(level, MetaData);
 
 	TIMER_STOP("MHDRK2");
 

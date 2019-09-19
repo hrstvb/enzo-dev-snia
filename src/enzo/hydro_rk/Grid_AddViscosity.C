@@ -108,14 +108,23 @@ int grid::AddViscosity()
 
   FLOAT dt_vis = dtFixed, dt1;
   FLOAT dx = CellWidth[0][0];
+  int nSubcycles = 0;
 
   for (int i = 0; i < activesize; i++) {
     dt1 = 0.1*dx/viscosity[i]*dx;
     if (dt1 < dt_vis) dt_vis = dt1;
   }
 
+  nSubcycles = (int)(dtFixed / dt_vis) + 1;
+  nSubcycles = (dt_vis < dtFixed) ? nSubcycles : 1;
+  dt_vis = dtFixed / nSubcycles;
+
+  if(nSubcycles > 1)
+    TRACEGF(" %lld viscosity subcycles, dt_sub = %e", nSubcycles, dt_vis);
+
   FLOAT dt_total = 0;
-  while (dt_total < dtFixed) {
+//  while (dt_total < dtFixed) {
+  for(int mSub = 0; mSub < nSubcycles; mSub++) {
 
     /* Calculate the 2nd derivatives in the viscosity term */
 
@@ -200,8 +209,10 @@ int grid::AddViscosity()
       }
     }
 
-    dt_total += dt_vis;
-    if (dt_total + dt_vis > dtFixed) dt_vis = dtFixed - dt_total;
+//    nSubcycles++;
+//    dt_total += dt_vis;
+//    if (dt_total + dt_vis > dtFixed) dt_vis = dtFixed - dt_total;
+    dt_total = (mSub + 1 < nSubcycles) ? (dt_total + dt_vis) : dtFixed;
   }
 
   for (int i = 0; i < 5; i++) {

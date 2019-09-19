@@ -1914,7 +1914,7 @@ int CreateParticleTypeGrouping(hid_t ptype_dset,
 				  int &HCOIINum,int &OHINum,int &H2OINum,
 				  int &O2INum);
 
-  int ClearOuterVelocities();
+  int ClearOuterVelocities(int level, TopGridData *MetaData);
 
 /* Zeus Solver. */
 
@@ -2920,10 +2920,10 @@ int zEulerSweep(int j, int NumberOfSubgrids, fluxes *SubgridFluxes[],
   void ZeroFluxes(fluxes *SubgridFluxes[], int NumberOfSubgrids);
   int RungeKutta2_1stStep(fluxes *SubgridFluxes[],
                           int NumberOfSubgrids, int level,
-                          ExternalBoundary *Exterior);
+                          ExternalBoundary *Exterior, TopGridData *MetaData);
   int RungeKutta2_2ndStep(fluxes *SubgridFluxes[],
                           int NumberOfSubgrids, int level,
-                          ExternalBoundary *Exterior);
+                          ExternalBoundary *Exterior, TopGridData *MetaData);
   int ReturnHydroRKPointers(float **Prim, bool ReturnMassFractions = true);
   int ReturnOldHydroRKPointers(float **Prim, bool ReturnMassFractions = true);
   int UpdateElectronDensity(void);
@@ -3043,10 +3043,10 @@ int zEulerSweep(int j, int NumberOfSubgrids, fluxes *SubgridFluxes[],
 			    int UseGas, int level);
   int MHDRK2_1stStep(fluxes *SubgridFluxes[],
 		     int NumberOfSubgrids, int level,
-		     ExternalBoundary *Exterior);
+		     ExternalBoundary *Exterior, TopGridData *MetaData);
   int MHDRK2_2ndStep(fluxes *SubgridFluxes[],
 		     int NumberOfSubgrids, int level,
-		     ExternalBoundary *Exterior);
+		     ExternalBoundary *Exterior, TopGridData *MetaData);
   int MHD3D(float **Prim, float **dU, float dt,
 	    fluxes *SubgridFluxes[], int NumberOfSubgrids,
 	    float fluxcoef, int fallback);
