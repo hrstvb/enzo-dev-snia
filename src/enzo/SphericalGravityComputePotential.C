@@ -509,7 +509,7 @@ int SphericalGravityWritePotential(char * name, TopGridData& MetaData, Hierarchy
 
 	if(SphericalGravityInteriorMasses == NULL)
 	{
-		fprintf(stderr, "SphericalGravityWritePotential: No Mass Defined, not writing.\n");
+		fprintf(stderr, "SphericalGravityWritePotential: No Mass Defined, not writing. This can happen after restart.\n");
 		return SUCCESS;
 	}
 

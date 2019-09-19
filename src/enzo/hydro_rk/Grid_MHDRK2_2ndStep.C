@@ -27,11 +27,8 @@ int MHDTimeUpdate_CUDA(float **Prim, int GridDimension[],
 int GridStartIndex[], int GridEndIndex[], int GridRank,
 float dtdx, float dt, float C_h, float C_p, float cTheta_Limiter);
 
-int ClearOuterVelocities(float *u, float *v, float *w, int in, int jn, int kn, int rank, float dx[], float dy[],
-float dz[], FLOAT** CellLeftEdges);
-
 int grid::MHDRK2_2ndStep(fluxes *SubgridFluxes[],
-int NumberOfSubgrids, int level, ExternalBoundary *Exterior)
+int NumberOfSubgrids, int level, ExternalBoundary *Exterior, TopGridData *MetaData)
 /*
  NumberOfSubgrids: the actual number of subgrids + 1
  SubgridFluxes[NumberOfSubgrids]
@@ -86,7 +83,7 @@ int NumberOfSubgrids, int level, ExternalBoundary *Exterior)
 	/* Compute dU */
 
 	if(OuterVelocitiesClearAtRKStep2Begin)
-		ClearOuterVelocities();
+		ClearOuterVelocities(level, MetaData);
 
 	int fallback = 0;
 	if(this->MHD3D(Prim, dU, dtFixed, SubgridFluxes, NumberOfSubgrids, 0.5, fallback) == FAIL)
@@ -136,7 +133,7 @@ int NumberOfSubgrids, int level, ExternalBoundary *Exterior)
 	}
 
 	if(OuterVelocitiesClearAtRKStep2End)
-		ClearOuterVelocities();
+		ClearOuterVelocities(level, MetaData);
 
 	TIMER_STOP("MHDRK2");
 
