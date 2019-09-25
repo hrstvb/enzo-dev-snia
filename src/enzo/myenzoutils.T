@@ -832,23 +832,23 @@ T* arr_axpby(T* dest, U* x, const size_t n, const V a, const W b)
 }
 
 template<typename T>
-int arr_snlprintf(char* const s, const size_t size, size_t* lengthSoFar, const char* const preffix1,
-	const char* const preffix2, const char* const singleElementFormat, const char* const separator,
+int arr_snlprintf(char* const s, const size_t size, size_t* lengthSoFar, const char* const prefix1,
+	const char* const prefix2, const char* const singleElementFormat, const char* const separator,
 	const char* const suffix1, const char* const suffix2, const T* const arr, const size_t arr_size,
 	const int elementsPerLine, const bool printWithIndices, const bool indexPrintsBeforeElement)
 {
 	const size_t l0 = *lengthSoFar;
 	int n;
-	if(preffix1)
+	if(prefix1)
 	{
-		n = snlprintf(s, size, lengthSoFar, preffix1);
+		n = snlprintf(s, size, lengthSoFar, prefix1);
 		if(n < 0)
 			return n;
 	}
 
-	if(preffix2)
+	if(prefix2)
 	{
-		n = snlprintf(s, size, lengthSoFar, preffix2);
+		n = snlprintf(s, size, lengthSoFar, prefix2);
 		if(n < 0)
 			return n;
 	}
@@ -910,7 +910,7 @@ int arr_snlprintf(char* const s, const size_t size, size_t* lengthSoFar, const c
 }
 
 template<typename T>
-int arr_fprintpylist(FILE *fptr, T *arr, size_t arr_size, char *preffix = NULL, char *singleElementFormat = "%e",
+int arr_fprintpylist(FILE *fptr, T *arr, size_t arr_size, char *prefix = NULL, char *singleElementFormat = "%e",
 	int elementPerLine = 0)
 {
 	const size_t SIZE = 4096;
@@ -924,7 +924,7 @@ int arr_fprintpylist(FILE *fptr, T *arr, size_t arr_size, char *preffix = NULL, 
 		*p0 = '\0';
 		char *p1 = p0;
 		len = 0;
-		int n = arr_snlprintf(p1, size, &len, preffix, "[\n", singleElementFormat, ", ", "]", NULL, arr, arr_size,
+		int n = arr_snlprintf(p1, size, &len, prefix, "[\n", singleElementFormat, ", ", "]", NULL, arr, arr_size,
 								elementPerLine, false, false);
 		if(n < 0)
 			return n;
@@ -939,7 +939,7 @@ int arr_fprintpylist(FILE *fptr, T *arr, size_t arr_size, char *preffix = NULL, 
 }
 
 template<typename T>
-int arr_printf(const char* const preffix1, const char* const preffix2, const char* const singleElementFormat,
+int arr_printf(const char* const prefix1, const char* const prefix2, const char* const singleElementFormat,
 	const char* const separator, const char* const suffix1, const char* const suffix2, const T* const arr,
 	const size_t arr_size, const int elementsPerLine, const bool printWithIndices, const bool indexPrintsBeforeElement)
 {
@@ -947,7 +947,7 @@ int arr_printf(const char* const preffix1, const char* const preffix2, const cha
 	size_t len = 0;
 	char S[SIZE];
 	S[0] = '\0';
-	int n = arr_snlprintf(S, SIZE, &len, preffix1, preffix2, singleElementFormat, separator, suffix1, suffix2, arr,
+	int n = arr_snlprintf(S, SIZE, &len, prefix1, prefix2, singleElementFormat, separator, suffix1, suffix2, arr,
 							arr_size, elementsPerLine, printWithIndices, indexPrintsBeforeElement);
 	if(n < 0)
 		return n;
@@ -956,7 +956,7 @@ int arr_printf(const char* const preffix1, const char* const preffix2, const cha
 		return fprintf(stderr, S);
 
 	char* s = new char[n + 1];
-	n = arr_snlprintf(s, n, &len, preffix1, preffix2, singleElementFormat, separator, suffix1, suffix2, arr, arr_size,
+	n = arr_snlprintf(s, n, &len, prefix1, prefix2, singleElementFormat, separator, suffix1, suffix2, arr, arr_size,
 						elementsPerLine, printWithIndices, indexPrintsBeforeElement);
 
 	if(n > 0)
@@ -970,31 +970,31 @@ template<typename T>
 int arr_printf_pylist(const char* const arr_name, const char* const singleElementFormat, const T* const arr,
 	const size_t arr_size)
 {
-	const char* const preffix2 = (arr_name) ? " = [" : "[";
-	arr_printf(arr_name, preffix2, singleElementFormat, ", ", "]\n", NULL, arr, arr_size, 10, false, false);
+	const char* const prefix2 = (arr_name) ? " = [" : "[";
+	arr_printf(arr_name, prefix2, singleElementFormat, ", ", "]\n", NULL, arr, arr_size, 10, false, false);
 }
 
 template<typename T>
 int arr_printf_pytuple(const char* const arr_name, const char* const singleElementFormat, const T* const arr,
 	const size_t arr_size)
 {
-	const char* const preffix2 = (arr_name) ? " = (" : "(";
-	arr_printf(arr_name, preffix2, singleElementFormat, ", ", ")\n", NULL, arr, arr_size, 10, false, false);
+	const char* const prefix2 = (arr_name) ? " = (" : "(";
+	arr_printf(arr_name, prefix2, singleElementFormat, ", ", ")\n", NULL, arr, arr_size, 10, false, false);
 }
 
 template<typename T>
 int arr_printf_pydict(const char* const arr_name, const char* const singleElementFormat, const T* const arr,
 	const size_t arr_size)
 {
-	const char* const preffix2 = (arr_name) ? " = {" : "{";
-	arr_printf(arr_name, preffix2, singleElementFormat, ", ", "}\n", NULL, arr, arr_size, 10, true, true);
+	const char* const prefix2 = (arr_name) ? " = {" : "{";
+	arr_printf(arr_name, prefix2, singleElementFormat, ", ", "}\n", NULL, arr, arr_size, 10, true, true);
 }
 
 template<typename T>
-int arr_printf_csv(const char* const preffix, const char* const singleElementFormat, const T* const arr,
+int arr_printf_csv(const char* const prefix, const char* const singleElementFormat, const T* const arr,
 	const size_t arr_size, const char* const separator = ", ", int elemtnsPerLine = 10)
 {
-	arr_printf(preffix, NULL, singleElementFormat, separator, NULL, "\n",  arr, arr_size, elemtnsPerLine, false, false);
+	arr_printf(prefix, NULL, singleElementFormat, separator, NULL, "\n",  arr, arr_size, elemtnsPerLine, false, false);
 }
 
 /*

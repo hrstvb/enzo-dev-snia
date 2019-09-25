@@ -487,7 +487,7 @@ int MHDProfileInitialize(FILE *fptr, FILE *Outfptr, HierarchyEntry &TopGrid, Top
 	{
 		// Stub the top grid, i.e. do not allocate the fields.
 		return TopGrid.GridData->MHDProfileInitializeGrid(NULL, BurningTemperature, InitialBurnedRadius, dipoleMoment,
-															dipoleCenter, InitBWithVectorPotential);
+															dipoleCenter, InitBWithVectorPotential, &MetaData);
 	}
 
 	if(BurningDiffusionRateReduced <= 0)
@@ -565,7 +565,7 @@ int MHDProfileInitialize(FILE *fptr, FILE *Outfptr, HierarchyEntry &TopGrid, Top
 		// Initialize the density and the burned fraction.
 		g->MHDProfileInitializeGrid(&p, BurningTemperature,
 									InitialBurnedRadius * (rhit.currentLevel == MaximumRefinementLevel) ? 1 : 0,
-									dipoleMoment, dipoleCenter, InitBWithVectorPotential);
+									dipoleMoment, dipoleCenter, InitBWithVectorPotential, &MetaData);
 	}
 
 	if(triSphere)
@@ -627,7 +627,7 @@ int MHDProfileInitialize(FILE *fptr, FILE *Outfptr, HierarchyEntry &TopGrid, Top
 	{
 		for(grid* g = it.firstFromTop(); g; g = it.next())
 			if(g->MHDProfileInitializeGrid2(&p, BurningTemperature, InitialBurnedRadius, dipoleMoment, dipoleCenter,
-											InitBWithVectorPotential) == FAIL)
+											InitBWithVectorPotential, &MetaData) == FAIL)
 				ENZO_FAIL("MHDProfileRefineOnStartup: error in MHDProfileInitializeGrid2\n");
 	}
 

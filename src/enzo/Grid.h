@@ -1914,7 +1914,7 @@ int CreateParticleTypeGrouping(hid_t ptype_dset,
 				  int &HCOIINum,int &OHINum,int &H2OINum,
 				  int &O2INum);
 
-  int ClearOuterVelocities(int level, TopGridData *MetaData);
+  int ClearOuterVelocities(int level, TopGridData *MetaData, char* dumpPrefix, char *dumpSuffix, char* dumpPreamble);
 
 /* Zeus Solver. */
 
@@ -3051,7 +3051,8 @@ int zEulerSweep(int j, int NumberOfSubgrids, fluxes *SubgridFluxes[],
 	    fluxes *SubgridFluxes[], int NumberOfSubgrids,
 	    float fluxcoef, int fallback);
   int MHDSourceTerms(float **dU);
-  int UpdateMHDPrim(float **dU, float c1, float c2, char* failText);
+  int UpdateMHDPrim(float **dU, float c1, float c2, char* failText, TopGridData *MetaData, int level,
+		char* dumpPrefix, char* dumpSuffix, char* dumpPreamble);
   int SaveMHDSubgridFluxes(fluxes *SubgridFluxes[], int NumberOfSubgrids,
 			   float *Flux3D[], int flux, float fluxcoef, float dt);
   int SetFloor();
@@ -3224,11 +3225,11 @@ int zEulerSweep(int j, int NumberOfSubgrids, fluxes *SubgridFluxes[],
 	int MHDProfileInitializeGrid(MHDInitialProfile* p,
 			float burningTemperature,
 			float burnedRadius,
-			float dipoleMoment[3], float dipoleCenter[3], bool usingVectorPotential);
+			float dipoleMoment[3], float dipoleCenter[3], bool usingVectorPotential, TopGridData *MetaData);
 	int MHDProfileInitializeGrid2(MHDInitialProfile* p,
 			float burningTemperature,
 			float burnedRadius,
-			float dipoleMoment[3], float dipoleCenter[3], bool usingVectorPotential
+			float dipoleMoment[3], float dipoleCenter[3], bool usingVectorPotential, TopGridData *MetaData
 	);
   int MHDSustainInitialBurnedRegionGrid();
   int WriteRadialProfile(char* filename);

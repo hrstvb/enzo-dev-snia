@@ -133,7 +133,9 @@ int NumberOfSubgrids, int level, ExternalBoundary *Exterior, TopGridData *MetaDa
 	this->ReturnHydroRKPointers(Prim, true); //##### added! because Hydro3D needs fractions for species
 
 	if(OuterVelocitiesClearAtRKStep1Begin)
-		ClearOuterVelocities(level, MetaData);
+		ClearOuterVelocities(level, MetaData, "ne", "RK1a", ""
+							"# Grid_MHDRK2_1stStep, before MHD3D -> ClearOuterVelocities\n"
+							);
 
 	/* Compute dU */
 
@@ -149,7 +151,9 @@ int NumberOfSubgrids, int level, ExternalBoundary *Exterior, TopGridData *MetaDa
 
 	/* Update primitive variables */
 
-	if(this->UpdateMHDPrim(dU, 1, 1, "MHDRK2_1stStep") == FAIL)
+	if(this->UpdateMHDPrim(dU, 1, 1, "MHDRK2_1stStep", MetaData, level, "ne", "RK1u", ""
+							"# Grid_MHDRK2_1stStep -> UpdateMHDPrim (primary)\n"
+							) == FAIL)
 	{
 		fprintf(stderr, "Grid_MHDRK2_1stStep: Falling back to zero order at RK 1st step\n");
 		// fall back to zero order scheme
@@ -169,7 +173,9 @@ int NumberOfSubgrids, int level, ExternalBoundary *Exterior, TopGridData *MetaDa
 			return FAIL;
 		}
 		this->MHDSourceTerms(dU);
-		if(this->UpdateMHDPrim(dU, 1, 1, "MHDRK2_1stStep, fallback") == FAIL)
+		if(this->UpdateMHDPrim(dU, 1, 1, "MHDRK2_1stStep, fallback", MetaData, level, "ne", "RK1f", ""
+								"# Grid_MHDRK2_1stStep -> UpdateMHDPrim (fallback)\n"
+								) == FAIL)
 		{
 			fprintf(stderr, "Grid_MHDRK2_1stStep: Fallback failed, give up...\n");
 			return FAIL;
@@ -182,7 +188,9 @@ int NumberOfSubgrids, int level, ExternalBoundary *Exterior, TopGridData *MetaDa
 	}
 
 	if(OuterVelocitiesClearAtRKStep1End)
-		ClearOuterVelocities(level, MetaData);
+		ClearOuterVelocities(level, MetaData, "ne", "RK1b", ""
+								"# Grid_MHDRK2_1stStep, end -> ClearOuterVelocities\n"
+							 );
 
 	TIMER_STOP("MHDRK2");
 
