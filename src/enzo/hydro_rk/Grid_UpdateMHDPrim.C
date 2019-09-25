@@ -14,6 +14,7 @@
 #include <unistd.h>
 #include <math.h>
 
+#include "../DebugMacros.h"
 #include "ErrorExceptions.h"
 #include "macros_and_parameters.h"
 #include "typedefs.h"
@@ -29,8 +30,19 @@ int GetUnits(float *DensityUnits, float *LengthUnits,
 float *TemperatureUnits, float *TimeUnits,
 float *VelocityUnits, FLOAT Time);
 
-int grid::UpdateMHDPrim(float **dU, float c1, float c2, char* failText)
+FILE *negEFile_open(char** filename, TopGridData *MetaData, int level, grid *g, char* dumpPrefix, char* dumpSuffix,
+	char* dumpPreamble, char* dumpPreamble2);
+void negEFile_close(FILE *file, const char* filename);
+
+int grid::UpdateMHDPrim(float **dU, float c1, float c2, char* failText, TopGridData *MetaData, int level,
+	char* dumpPrefix, char* dumpSuffix, char* dumpPreamble)
 {
+#define DUMP_PREAMBLE2 "# The record format is" \
+		"# tag, i, j, k\n" \
+		"#   tag = 1 -- new density <= 0 or NaN;\n" \
+		"#   tag = 2 -- new total energy <= 0 (EOSType==0 only);\n" \
+		"#   tag = 3 -- new gas energy <= 0 (dual energy formalism only);\n" \
+		"#   tag = 0 -- N/A.\n"
 
 	if(ProcessorNumber != MyProcessorNumber)
 	{
@@ -165,6 +177,10 @@ int grid::UpdateMHDPrim(float **dU, float c1, float c2, char* failText)
 
 	n = 0;
 	FLOAT x, y, z, r;
+	char negEFileName[FILENAME_MAX];
+	char* negEptr = negEFileName;
+	FILE *negEFile = NULL;
+	int negE1 = 0, negE2 = 0, negE3 = 0;
 
 	for(k = GridStartIndex[2]; k <= GridEndIndex[2]; k++)
 	{
@@ -220,17 +236,24 @@ int grid::UpdateMHDPrim(float **dU, float c1, float c2, char* failText)
 					Eint_new = c1 * rho_old * eint_old + (1.0 - c1) * rho * eint + c2 * dU[iEint][n];
 				}
 
-				if(D_new < 0 || isnan(D_new))
+				if(D_new <= 0 || isnan(D_new))
 				{
 
-					fprintf(stderr, "UpdateMHDPrim: %s rho<0 at %" ISYM " %" ISYM " %" ISYM ": rho_old=%" FSYM
-					", rho=%" FSYM ", rho_new=%" FSYM ", dU[iD]=%" FSYM "\n",
-							failText, i, j, k, rho_old, rho, D_new, dU[iD][n]);
-					D_new = max(rho, SmallRho);
-					printf("UpdateMHDPrim: use rho: %"FSYM"\n", D_new);
-					//	  D_new = rho;
+					//fprintf(stderr, "UpdateMHDPrim: %s rho<0 at %" ISYM " %" ISYM " %" ISYM ": rho_old=%" FSYM
+					//", rho=%" FSYM ", rho_new=%" FSYM ", dU[iD]=%" FSYM "\n",
+					//		failText, i, j, k, rho_old, rho, D_new, dU[iD][n]);
+					//D_new = max(rho, SmallRho);
+					//printf("UpdateMHDPrim: use rho: %"FSYM"\n", D_new);
+					////	  D_new = rho;
 
 					return FAIL;
+
+					if(negEFile==NULL)
+						negEFile = negEFile_open(&negEptr, MetaData, level, this, dumpPrefix, dumpSuffix, dumpPreamble,
+												 DUMP_PREAMBLE2);
+
+					negE1++;
+					fprintf(negEFile, "(1,%lld,%lld,%lld),\n", i, j, k);
 				}
 
 				// convert back to primitives
@@ -239,17 +262,23 @@ int grid::UpdateMHDPrim(float **dU, float c1, float c2, char* failText)
 				vz = S3_new / D_new;
 				etot = Tau_new / D_new;
 
-				if(etot < 0 && EOSType == 0)
+				if(etot <= 0 && EOSType == 0)
 				{
-					float v2_old = vx_old * vx_old + vy_old * vy_old + vz_old * vz_old;
-					float B2_old = Bx_old * vx_old + By_old * By_old + Bz_old * Bz_old;
-					fprintf(stderr, "UpdateMHDPrim: %s tau < 0 at %" ISYM " %" ISYM " %" ISYM ":  etot_old=%" GSYM
-					", etot=%" GSYM ", etot_new=%" GSYM ", v2=%" GSYM ", v2old=%" GSYM ", dU[iTau] = %" GSYM
-					", dtFixed = %" GSYM "rho_new=%" GSYM ", rho=%" GSYM ", rho_old=%" GSYM ", B2_old/rho_old=%" GSYM
-					"\n",
-							failText, i, j, k, Tau_old / rho_old, Tau / rho, Tau_new / D_new, v2, v2_old,
-							dU[iEtot][n] * CellWidth[0][0] / dtFixed, dtFixed, D_new, rho, rho_old, B2_old / rho_old);
-					//return FAIL;
+					//float v2_old = vx_old * vx_old + vy_old * vy_old + vz_old * vz_old;
+					//float B2_old = Bx_old * vx_old + By_old * By_old + Bz_old * Bz_old;
+					//fprintf(stderr, "UpdateMHDPrim: %s tau < 0 at %" ISYM " %" ISYM " %" ISYM ":  etot_old=%" GSYM
+					//", etot=%" GSYM ", etot_new=%" GSYM ", v2=%" GSYM ", v2old=%" GSYM ", dU[iTau] = %" GSYM
+					//", dtFixed = %" GSYM "rho_new=%" GSYM ", rho=%" GSYM ", rho_old=%" GSYM ", B2_old/rho_old=%" GSYM
+					//"\n",
+					//		failText, i, j, k, Tau_old / rho_old, Tau / rho, Tau_new / D_new, v2, v2_old,
+					//		dU[iEtot][n] * CellWidth[0][0] / dtFixed, dtFixed, D_new, rho, rho_old, B2_old / rho_old);
+					////return FAIL;
+					if(negEFile==NULL)
+						negEFile = negEFile_open(&negEptr, MetaData, level, this, dumpPrefix, dumpSuffix, dumpPreamble,
+												 DUMP_PREAMBLE2);
+
+					negE2++;
+					fprintf(negEFile, "(2,%lld,%lld,%lld),\n", i, j, k);
 				}
 
 				// if using polytropic EOS, calculate etot directly from density
@@ -296,14 +325,20 @@ int grid::UpdateMHDPrim(float **dU, float c1, float c2, char* failText)
 					eint = max(eint, emin);
 					BaryonField[GENum][igrid] = eint;
 					BaryonField[TENum][igrid] = eint + 0.5 * v2 + 0.5 * B2 / D_new;
-					if(BaryonField[GENum][igrid] < 0.0)
+					if(BaryonField[GENum][igrid] <= 0.0)
 					{
-						fprintf(stderr, "UpdateMHDPrim: %s eint < 0, cs2=%" GSYM ", eta*v2=%" GSYM ", eint=%" GSYM
-						", etot=%" GSYM ", 0.5*v2=%" GSYM ", p=%" GSYM ", rho=%" GSYM ",0.5*B2/rho=%" GSYM
-						"dU[%" ISYM "]=%" GSYM ", dU[ieint]=%" GSYM ", eint_old=%" GSYM ",eint1=%" GSYM "\n",
-								failText, cs * cs, DualEnergyFormalismEta1 * v2, eint, etot, 0.5 * v2, p, D_new,
-								0.5 * B2 / rho, iEtot, dU[iEtot][n], dU[iEint][n], eint_old, eint1);
-						return FAIL;
+						//fprintf(stderr, "UpdateMHDPrim: %s eint < 0, cs2=%" GSYM ", eta*v2=%" GSYM ", eint=%" GSYM
+						//", etot=%" GSYM ", 0.5*v2=%" GSYM ", p=%" GSYM ", rho=%" GSYM ",0.5*B2/rho=%" GSYM
+						//"dU[%" ISYM "]=%" GSYM ", dU[ieint]=%" GSYM ", eint_old=%" GSYM ",eint1=%" GSYM "\n",
+						//		failText, cs * cs, DualEnergyFormalismEta1 * v2, eint, etot, 0.5 * v2, p, D_new,
+						//		0.5 * B2 / rho, iEtot, dU[iEtot][n], dU[iEint][n], eint_old, eint1);
+						//return FAIL;
+						if(negEFile==NULL)
+							negEFile = negEFile_open(&negEptr, MetaData, level, this, dumpPrefix, dumpSuffix,
+													 dumpPreamble, DUMP_PREAMBLE2);
+
+						negE3++;
+						fprintf(negEFile, "(3,%lld,%lld,%lld),\n", i, j, k);
 					}
 				}
 			}
@@ -324,5 +359,20 @@ int grid::UpdateMHDPrim(float **dU, float c1, float c2, char* failText)
 		delete[] sum;
 	}
 
+	if(negE1 + negE2 + negE3)
+	{
+		TRACEF(" %s: %lld bad zones of total %lld (rho<=0: %lld, totE<=0: %lld, gasE<=0: %lld)", negEFileName,
+			   negE1 + negE2 + negE3, GetGridSize(), negE1, negE2, negE3);
+	}
+	if(negEFile)
+		negEFile_close(negEFile, negEFileName);
+
+	if(negE1 + negE3)
+	{
+		TRACEF(" %s: Failing on bad density/bad gas energy...", negEFileName);
+		return FAIL;
+	}
+
 	return SUCCESS;
+#undef DUMP_PREAMBLE2
 }

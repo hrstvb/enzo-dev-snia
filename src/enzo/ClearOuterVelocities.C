@@ -17,9 +17,96 @@ float dz[], FLOAT** CellLeftEdges)
 	throw new EnzoFatalException("TODO: The Zeus solver needs to pass total energy field to ClearOuterVelocities.");
 }
 
-int ClearOuterVelocities(float *u, float *v, float *w, float *totE, int in, int jn, int kn, int rank, float dx[],
-float dy[], float dz[], FLOAT** CellLeftEdges, int level, TopGridData *MetaData, int gridID)
+FILE *negEFile_open(char** filename, TopGridData *MetaData, int level, grid *g, char* dumpPrefix, char* dumpSuffix,
+	char* dumpPreamble1, char* dumpPreamble2)
 {
+	FILE *file;
+	char cmd[FILENAME_MAX + 10];
+	char dirname[FILENAME_MAX + 1];
+	char *fname = (filename && *filename) ? *filename : new char[FILENAME_MAX + 1];
+	size_t n;
+
+	cmd[0] = dirname[0] = fname[0] = '\0';
+	if(MetaData->GlobalDir)
+		n = snprintf(dirname, FILENAME_MAX, "%s", MetaData->GlobalDir);
+	else if(MetaData->LocalDir)
+		n = snprintf(dirname, FILENAME_MAX, "%s", MetaData->LocalDir);
+
+	if(n && dirname[n] != '/')
+		n += snprintf(dirname + n, FILENAME_MAX, "/");
+
+	n += snprintf(dirname + n, FILENAME_MAX, "xtradumps/cy%06lld", MetaData->CycleNumber);
+//	n += snprintf(dirname + n, FILENAME_MAX, "xtradumps", MetaData->CycleNumber);
+	snprintf(cmd, FILENAME_MAX + 9, "mkdir -p %s", dirname);
+//	TRACEF("Creating directory '%s'...", dirname);
+	system(cmd);
+
+	snprintf(fname, FILENAME_MAX, "%s/%s-%06lld-%02lld-%lld-%02lld-%s.py", dirname, dumpPrefix, MetaData->CycleNumber,
+				MyProcessorNumber, level, g->GetGridID(), dumpSuffix);
+//	TRACEF("Creating file '%s'...", fname);
+	file = fopen(fname, "w+");
+
+	TRACEF("%p %p", file, g);
+
+	fprintf(file, "%s\n"
+			"#\n"
+			"%s\n"
+			"#\n"
+			"# To load in python:  d = eval(open(path-to-this-file, 'r').read())\n"
+			"# To examine the data, for example:  print(d.data[5:10], d.gridDims)\n"
+			"#\n"
+			"type('', (), dict(\n"
+			"cycle = %lld,\n"
+			"time = %f,\n"
+			"cols = 'tag i j k'.split(),\n"
+			"prefix = '%s',\n"
+			"suffix = '%s',\n"
+			"level = %lld,\n"
+			"gridID = %lld,\n"
+			"cellWidth = %e,\n"
+			"nGhostZones = %lld,\n"
+			"totalCells = %lld,\n"
+			"gridDims = ( %lld , %lld , %lld ),\n"
+			"gridLeftEdge = ( %e , %e , %e ),\n"
+			"gridRightEdge = ( %e , %e , %e ),\n"
+			"data = np.array([\n",
+			dumpPreamble1, dumpPreamble2, MetaData->CycleNumber, MetaData->Time, dumpPrefix, dumpSuffix, level,
+			g->GetGridID(), g->GetCellWidth(0, 0), NumberOfGhostZones, g->GetGridSize(),
+			g->GetGridDimension(0), g->GetGridDimension(1), g->GetGridDimension(2), // in, jn, kn,
+			g->GetGridDimension(0) * g->GetGridDimension(1) * g->GetGridDimension(2), // in, jn, kn,
+			g->GetCellLeftEdge(0, 0), g->GetCellLeftEdge(1, 0), g->GetCellLeftEdge(2, 0),
+			g->GetCellLeftEdge(0, g->GetGridDimension(0)),
+			g->GetCellLeftEdge(1, g->GetGridDimension(1)),
+			g->GetCellLeftEdge(2, g->GetGridDimension(2))
+			);
+
+	if(filename && *filename == NULL)
+		*filename = fname;
+
+	return file;
+}
+
+void negEFile_close(FILE *file, const char* filename)
+{
+	if(file && file != stderr && file != stdout)
+	{
+		fprintf(file, "])))\n");
+//		TRACEF("Closing '%s'...", filename);
+		fclose(file);
+	}
+}
+
+int ClearOuterVelocities(float *u, float *v, float *w, float *totE, int in, int jn, int kn, int rank, float dx[],
+float dy[], float dz[], FLOAT** CellLeftEdges, int level, TopGridData *MetaData, int gridID, grid *g, char* dumpPrefix,
+	char *dumpSuffix, char* dumpPreamble)
+{
+#define DUMP_PREAMBLE2 "# The record format is" \
+	"# tag, i, j, k\n" \
+	"#   i,j,k are integer zone coordinates in the current grid;" \
+	"#   tag = 1 -- total energy <= 0 before subtracting kinetic energy;\n" \
+	"#   tag = 2 -- total energy <= 0 after subtracting kinetic energy;\n" \
+	"#   tag = 0 -- N/A.\n"
+
 //	const double TINY_V = tiny_number;
 	FLOAT r_x, r_y, r_z;
 	size_t index;
@@ -28,8 +115,8 @@ float dy[], float dz[], FLOAT** CellLeftEdges, int level, TopGridData *MetaData,
 	double oldVx, oldVy, oldVz, newVx, newVy, newVz;
 	double oldKE, newKE;
 	char negEFileName[FILENAME_MAX];
-	negEFileName[0] = '\0';
-	FILE *negEFlie = NULL;
+	char* negEptr = negEFileName;
+	FILE *negEFile = NULL;
 	int negE1 = 0, negE2 = 0;
 	int flagsIOT = 4 * OuterVelocitiesClearInward + 2 * OuterVelocitiesClearOutward + OuterVelocitiesClearTangential;
 
@@ -143,59 +230,29 @@ float dy[], float dz[], FLOAT** CellLeftEdges, int level, TopGridData *MetaData,
 				int fixType = 0;
 				if(oldE <= 0)
 				{
-					TRACEF("Total energy <=0 before correction   %e    at    %e  %e  %e  ( %lld  %lld  %lld )",
-							oldE, r_x, r_y, r_z, i, j, k);
-					newE = (oldKE > 0) ? oldKE : tiny_pressure / (1 - Gamma);
+//					TRACEF("Total energy <=0 before correction   %e    at    %e  %e  %e  ( %lld  %lld  %lld )",
+//							oldE, r_x, r_y, r_z, i, j, k);
+					newE = (newKE > 0) ? newKE : (oldKE > 0) ? oldKE : 0 + tiny_pressure / (1 - Gamma);
 					fixType = 1;
 					negE1++;
 				}
 				else if(newE <= 0)
 				{
-					TRACEF("Corrected total energy <= 0   %e    at    %e  %e  %e  ( %lld  %lld  %lld )", newE,
-							r_x, r_y, r_z, i, j, k);
+//					TRACEF("Corrected total energy <= 0   %e    at    %e  %e  %e  ( %lld  %lld  %lld )", newE,
+//							r_x, r_y, r_z, i, j, k);
 					newE = tiny_pressure / (1 - Gamma);
+					if(newE < oldE)
+						newE = oldE;
 					fixType = 2;
 					negE2++;
 				}
 				totE[index] = newE;
 				if(fixType)
 				{
-					if(negEFlie == NULL)
-					{
-						char cmd[FILENAME_MAX + 10];
-						char filedir[FILENAME_MAX + 1];
-						cmd[0] = filedir[0] = '\0';
-						if(MetaData->GlobalDir)
-							snprintf(filedir, FILENAME_MAX, "%s/", MetaData->GlobalDir);
-						else if(MetaData->LocalDir)
-							snprintf(filedir, FILENAME_MAX, "%s/", MetaData->LocalDir);
-
-						snprintf(filedir, FILENAME_MAX, "%snege/ne%06lld", filedir, MetaData->CycleNumber);
-						snprintf(cmd, FILENAME_MAX + 9, "mkdir -p %s", filedir);
-						system(cmd);
-						snprintf(negEFileName, FILENAME_MAX, "%s/ne%06lld_%lld_%02lld.py", filedir,
-									MetaData->CycleNumber, level, gridID);
-						negEFlie = fopen(negEFileName, "w+");
-						fprintf(negEFlie, "# fixType, i, j, k\n"
-								"# fixType = 1 -- total energy <= 0 before subtracting kinetic energy;\n"
-								"# fixType = 2 -- total energy <= 0 after subtracting kinetic energy;\n"
-								"#\n"
-								"type('', (), dict(\n"
-								"cycle = %f,\n"
-								"time = %f,\n"
-								"cols = 'level gridID fixType i j k'.split(),\n"
-								"level = %lld,\n"
-								"gridID = %lld,\n"
-								"gridDims = ( %lld , %lld , %lld ),\n"
-								"gridLeftEdge = ( %e , %e , %e ),\n"
-								"gridRightEdge = ( %e , %e , %e ),\n"
-								"nGhostZones = %lld,\n"
-								"data = np.array([\n",
-								MetaData->CycleNumber, MetaData->Time, MetaData->DataDumpDir, level, gridID, in, jn, kn,
-								CellLeftEdges[0][0], CellLeftEdges[1][0], CellLeftEdges[2][0], CellLeftEdges[0][in],
-								CellLeftEdges[1][jn], CellLeftEdges[2][kn], NumberOfGhostZones);
-					}
-					fprintf(negEFlie, "( %lld , %lld , %lld , %lld , %lld , %lld ),", fixType, i, j, k);
+					if(negEFile == NULL)
+						negEFile = negEFile_open(&negEptr, MetaData, level, g, "ne", dumpSuffix, dumpPreamble,
+						DUMP_PREAMBLE2);
+					fprintf(negEFile, "(%lld,%lld,%lld,%lld),\n", fixType, i, j, k);
 				}
 			}
 		}
@@ -203,20 +260,16 @@ float dy[], float dz[], FLOAT** CellLeftEdges, int level, TopGridData *MetaData,
 
 	if(negE1 + negE2)
 	{
-		TRACEF(" Level %lld, grid %lld: negative energy in %lld zones (%lld before, %lld after correction)", level,
-				gridID, negE1, negE1, negE2);
+		TRACEF(" %s: Bad energy in %lld zones of total %lld (%lld before, %lld after correction)", negEFileName,
+				negE1 + negE1 + negE2, g->GetGridSize(), negE1, negE2);
 	}
-	if(negEFlie && negEFlie != stderr && negEFlie != stdout)
-	{
-		fprintf(negEFlie, "])))\n");
-		fclose(negEFlie);
-		TRACEF("'%s' written.\n", negEFileName);
-	}
+	negEFile_close(negEFile, negEFileName);
 
 	return SUCCESS;
+#undef DUMP_PREAMBLE2
 }
 
-int grid::ClearOuterVelocities(int level, TopGridData *MetaData)
+int grid::ClearOuterVelocities(int level, TopGridData *MetaData, char* dumpPrefix, char *dumpSuffix, char* dumpPreamble)
 {
 	if(MyProcessorNumber != ProcessorNumber)
 		return SUCCESS;
@@ -227,5 +280,5 @@ int grid::ClearOuterVelocities(int level, TopGridData *MetaData)
 
 	return ::ClearOuterVelocities(vxField, vyField, vzField, totEField, GridDimension[0], GridDimension[1],
 									GridDimension[2], GridRank, CellWidth[0], CellWidth[1], CellWidth[2], CellLeftEdge,
-									level, MetaData, this->ID);
+									level, MetaData, this->ID, this, dumpPrefix, dumpSuffix, dumpPreamble);
 }

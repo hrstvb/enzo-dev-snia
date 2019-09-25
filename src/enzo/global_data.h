@@ -1227,7 +1227,7 @@ EXTERN int SphericalGravityInterpAccelMethod; // const, linear interp., etc.
 
 /*
  * Spherical gravity, multilevel
- * Parameters have the SphericalGravity preffix
+ * Parameters have the SphericalGravity prefix
  * Other variables -- SpherGrav
  */
 //New parameter(s)

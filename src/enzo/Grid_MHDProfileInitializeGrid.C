@@ -550,7 +550,7 @@ float** gravPotentialField)
 int grid::MHDProfileInitializeGrid(MHDInitialProfile* p,
 float burningTemperature,
 float burnedRadius,
-float dipoleMoment[3], float dipoleCenter[3], bool usingVectorPotential)
+float dipoleMoment[3], float dipoleCenter[3], bool usingVectorPotential, TopGridData *MetaData)
 {
 	if(GridRank != 3)
 		ENZO_FAIL("MHDProfileInitializeGrid is implemented for 3D only.")
@@ -1182,7 +1182,7 @@ int grid::MHDSustainInitialBurnedRegionGrid()
 int grid::MHDProfileInitializeGrid2(MHDInitialProfile* p,
 float burningTemperature,
 float burnedRadius,
-float dipoleMoment[3], float dipoleCenter[3], bool usingVectorPotential)
+float dipoleMoment[3], float dipoleCenter[3], bool usingVectorPotential, TopGridData *MetaData)
 {
 
 	if(ProcessorNumber != MyProcessorNumber || p == NULL)
