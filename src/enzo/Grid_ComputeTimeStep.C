@@ -365,15 +365,15 @@ float grid::ComputeTimeStep(DtLimitInfo* dtLimitInfo_out)
 		float rho_dt, B_dt, v_dt;
 		for(k = 0; k < GridDimension[2]; k++)
 		{
-			if(TimeStepIgnoreCubeHalfSize > 0 && CELLCENTER(2, k) > TimeStepIgnoreCubeHalfSize)
+			if(TimeStepIgnoreCubeHalfSize > 0 && fabs(CELLCENTER(2, k)) > TimeStepIgnoreCubeHalfSize)
 				continue;
 			for(j = 0; j < GridDimension[1]; j++)
 			{
-				if(TimeStepIgnoreCubeHalfSize > 0 && CELLCENTER(1, j) > TimeStepIgnoreCubeHalfSize)
+				if(TimeStepIgnoreCubeHalfSize > 0 && fabs(CELLCENTER(1, j)) > TimeStepIgnoreCubeHalfSize)
 					continue;
 				for(i = 0; i < GridDimension[0]; i++, n++)
 				{
-					if(TimeStepIgnoreCubeHalfSize > 0 && CELLCENTER(0, i) > TimeStepIgnoreCubeHalfSize)
+					if(TimeStepIgnoreCubeHalfSize > 0 && fabs(CELLCENTER(0, i)) > TimeStepIgnoreCubeHalfSize)
 						continue;
 					else if(TimeStepIgnoreSphereRadius > 0)
 					{
