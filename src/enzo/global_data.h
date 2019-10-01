@@ -1253,5 +1253,7 @@ EXTERN int   OuterVelocitiesClearAtRKStep2End;
 EXTERN float DensityProfileMaxRadius ;
 EXTERN float DensityProfileMinDensity;
 
+EXTERN float TimeStepIgnoreCubeHalfSize;
+EXTERN float TimeStepIgnoreSphereRadius;
 
 #endif

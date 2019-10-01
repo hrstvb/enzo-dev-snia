@@ -199,6 +199,9 @@ int WriteParameterFile(FILE *fptr, TopGridData &MetaData, char *name = NULL)
   fprintf(fptr, "OuterVelocitiesClearAtRKStep2Begin        = %"ISYM"\n", OuterVelocitiesClearAtRKStep2Begin       );
   fprintf(fptr, "OuterVelocitiesClearAtRKStep2End          = %"ISYM"\n", OuterVelocitiesClearAtRKStep2End         );
 
+  fprintf(fptr, "TimeStepIgnoreCubeHalfSize                = %"FSYM"\n", TimeStepIgnoreCubeHalfSize               );
+  fprintf(fptr, "TimeStepIgnoreSphereRadius                = %"FSYM"\n", TimeStepIgnoreSphereRadius               );
+
   fprintf(fptr, "PythonTopGridSkip       = %"ISYM"\n", PythonTopGridSkip);
   fprintf(fptr, "PythonSubcycleSkip      = %"ISYM"\n", PythonSubcycleSkip);
   fprintf(fptr, "PythonReloadScript      = %"ISYM"\n", PythonReloadScript);
