@@ -243,6 +243,9 @@ OuterVelocitiesClearAtRKStep1End          = 1
 OuterVelocitiesClearAtRKStep2Begin        = 1
 OuterVelocitiesClearAtRKStep2End          = 1
 
+TimeStepIgnoreCubeHalfSize = -1 # Time step local criteria ignored outside a cube centered at the origin.
+TimeStepIgnoreSphereRadius = -1 # Time step local criteria ignored outside a sphere centered at the origin.
+
 ###############################################################
 #
 # Parameters for problem type 501

@@ -1376,6 +1376,9 @@ int ReadParameterFile(FILE *fptr, TopGridData &MetaData, float *Initialdt)
     ret += sscanf(line, "OuterVelocitiesClearAtRKStep2Begin        =%"ISYM, &OuterVelocitiesClearAtRKStep2Begin       );
     ret += sscanf(line, "OuterVelocitiesClearAtRKStep2End          =%"ISYM, &OuterVelocitiesClearAtRKStep2End         );
 
+    ret += sscanf(line, "TimeStepIgnoreCubeHalfSize                =%"FSYM, &TimeStepIgnoreCubeHalfSize               );
+    ret += sscanf(line, "TimeStepIgnoreSphereRadius                =%"FSYM, &TimeStepIgnoreSphereRadius               );
+
     /* If the dummy char space was used, then make another. */
     if (*dummy != 0) {
       dummy = new char[MAX_LINE_LENGTH];
