@@ -245,8 +245,7 @@ int grid::UpdateMHDPrim(float **dU, float c1, float c2, char* failText, TopGridD
 					//D_new = max(rho, SmallRho);
 					//printf("UpdateMHDPrim: use rho: %"FSYM"\n", D_new);
 					////	  D_new = rho;
-
-					return FAIL;
+					//return FAIL;
 
 					if(negEFile==NULL)
 						negEFile = negEFile_open(&negEptr, MetaData, level, this, dumpPrefix, dumpSuffix, dumpPreamble,

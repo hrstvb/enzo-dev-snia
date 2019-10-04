@@ -956,6 +956,7 @@ int arr_printf(const char* const prefix1, const char* const prefix2, const char*
 		return fprintf(stderr, S);
 
 	char* s = new char[n + 1];
+	len = 0;
 	n = arr_snlprintf(s, n, &len, prefix1, prefix2, singleElementFormat, separator, suffix1, suffix2, arr, arr_size,
 						elementsPerLine, printWithIndices, indexPrintsBeforeElement);
 

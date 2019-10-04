@@ -443,10 +443,7 @@ int MHDProfileInitialize(FILE *fptr, FILE *Outfptr, HierarchyEntry &TopGrid, Top
 
 	if(MHD_LI_GRAVITY_AFTER_PLMPRED)
 	{
-		fprintf(stderr,
-				"!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n"
-				"!!  WARNING:  modified MHD_Li solver (see MHD_LI_GRAVITY_AFTER_PLMPRED)\n"
-				"!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
+		fprintf(stderr, "Using modified MHD_Li solver (see MHD_LI_GRAVITY_AFTER_PLMPRED)\n");
 	}
 
 //	bool reinit = fptr == NULL;
