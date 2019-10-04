@@ -141,10 +141,15 @@ int polytropicPressureAtSmallR(float* P, float* rho, FLOAT r, float rho_c, float
 
 		if(P)
 		{	// Expand the pressure for small radius:
-			P2 = 1; // 0th order
-			P2 += -(nPolytropic + 1) / 6 * ksi2; // 2nd order
-			P2 += -nPolytropic * (nPolytropic + 1) / 180.0 * ksi4; // 4th order
-			P2 = P2 * P_c2;
+//			P2 = 1; // 0th order
+//			P2 += -(nPolytropic + 1) / 6 * ksi2; // 2nd order
+//			P2 += -11.0 * nPolytropic * (nPolytropic + 1) / 180.0 * ksi4; // 4th order
+			double P2_0 = 1; // 0th order
+			double P2_2 = -(nPolytropic + 1) / 6 * ksi2; // 2nd order
+			double P2_4 = -11.0 * nPolytropic * (nPolytropic + 1) / 180.0 * ksi4; // 4th order
+			P2 = P2_0 + P2_2 + P2_4;
+			TRACEF("Polytropic pressure ksi^2=%e, P0+P2+P4 = %e + %e + %e = %e, *P_c = %e", ksi2, P2_0, P2_2, P2_4, P2, P2*P_c2);
+			P2 *= P_c2;
 
 			*P = P2;
 		}
@@ -275,6 +280,18 @@ double rkPressure(size_t i_dest, size_t j_dest, size_t k_dest, int integrationDi
 
 	P_result = rkPressure(P_prev2, g_dim, integrationDirection * dx, rho);
 
+	if(debug)
+	{
+		TRACEF("ijk=%lld %lld %lld   xyz=%e %e %e   "
+				"r,r_dim,=%e %e   g,g_dim=%e %e   P,P_prev2,rho=%e %e %e"
+				"   ijk_prev=%lld %lld %lld"
+				"   ijk_prev2=%lld %lld %lld",
+				i_dest, j_dest, k_dest, x, y, z,
+				r, r_dim, g, g_dim, P_result, P_prev2, rho,
+				i_prev, j_prev, k_prev,
+				i_prev2, j_prev2, k_prev2);
+	}
+
 	return P_result;
 }
 
@@ -355,7 +372,7 @@ void PtoE(grid* g, float *totEField, float *pressureField, float* rhofield)
 void iterator48(grid* g, float* field, float* rhoField, MHDInitialProfile* p, int level)
 {
 	const bool DEBUG_SWEEPS = false;
-	const bool DEBUG48 = true;
+	const bool DEBUG48 = false;
 
 	const size_t FIELD_SIZE = g->GetGridSize();
 	const int I2 = g->GetGridDimension(0);
@@ -389,7 +406,7 @@ void iterator48(grid* g, float* field, float* rhoField, MHDInitialProfile* p, in
 			{
 				polytropicPressureAtSmallR(&P, NULL, i, j, k, g, rho_c, &P_c, &ksi, &ksifactor);
 				P = (DEBUG_SWEEPS) ? 1e1 : P;
-				TRACEF("ijk=%lld %lld %lld xyz=%e %e %e r,xi,r/xi=%e %e %e   P=%e   P/P_c=%e", i, j, k, x, y, z, ksi,
+				TRACEF("ijk=%lld %lld %lld xyz=%e %e %e xi,r/xi=%e %e   P=%e   P_c=%e", i, j, k, x, y, z, ksi,
 						ksifactor, P, P_c);
 				set48(g, field, i, j, k, P, I0, J0, K0);
 			}
@@ -403,7 +420,7 @@ void iterator48(grid* g, float* field, float* rhoField, MHDInitialProfile* p, in
 		{
 			for(size_t k = K1; k < K2; k++)
 			{
-				P = pressure48(i, j, k, 1, 2, DX, field, rhoField, g, DEBUG48, level, "z/48 sweep");
+				P = pressure48(i, j, k, 1, 2, DX, field, rhoField, g, (k - i < 6), level, "z/48 sweep");
 				P = (DEBUG_SWEEPS) ? 1e2 : P;
 				set48(g, field, i, j, k, P, I0, J0, K0);
 			}
@@ -438,7 +455,7 @@ void iterator48(grid* g, float* field, float* rhoField, MHDInitialProfile* p, in
 			}
 		}
 	}
-	TRACEF("P_boundary y = %e %e", P, P_c);
+	TRACEF("P_boundary x = %e %e", P, P_c);
 
 	PtoE(g, field, field, rhoField);
 }
@@ -642,8 +659,8 @@ float dipoleMoment[3], float dipoleCenter[3], bool usingVectorPotential, TopGrid
 
 				float rho, rhoNi = 0;
 				int retcode = p->interpolateDensity(&rho, r); //g/cm**3
-				if(rho<=0)
-					TRACEF("++++++++++++++++++++++++++RRRRRRRRRRRRRRRRRRRRRho  %lld %lld %lld   %e", i,j,k,rho);
+				if(rho <= 0)
+					TRACEF("Bad density at  %lld %lld %lld :  %e", i, j, k, rho);
 //				polytropicPressureAtSmallR(NULL, &rho, i, j, k, this, rho_c);
 				//retcode = profileInterpolate(&T, temperatureData, r, radiusData, p.nRows, radiusSO); //K
 				bool isBurned = false;
@@ -706,8 +723,8 @@ float dipoleMoment[3], float dipoleCenter[3], bool usingVectorPotential, TopGrid
 				if(isBurned)
 					rhoNi = rho;
 				rhoField[index] = rho;
-				if(rho<=0)
-					TRACEF("---------------------------rHOOOOOOOOO  %lld %lld %lld   %e", i,j,k,rho);
+				if(rho <= 0)
+					TRACEF("Bad density at  %lld %lld %lld :  %e", i, j, k, rho);
 				if(UseBurning)
 					rhoNiField[index] = rhoNi;
 
