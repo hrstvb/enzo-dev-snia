@@ -20,7 +20,6 @@ struct TopGridData;
 struct LevelArrayIterator
 {
 	LevelHierarchyEntry** levelArray; //
-	int nLevels = -1; ///
 	bool forward = true; //
 	int currentLevel = 0; //
 	LevelHierarchyEntry* currentEntry = NULL;

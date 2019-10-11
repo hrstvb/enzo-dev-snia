@@ -67,8 +67,10 @@ int MHDCTSetupFieldLabels();
 int SphericalGravityComputePotential(LevelHierarchyEntry *LevelArray[], TopGridData* MetaData,
 	bool interpolateMissingShells);
 float SphericalGravityGetAt(FLOAT r);
+int polytropicPressureAtSmallR(float* P, float* rho, FLOAT r, float rho_c, float * P_c = NULL, double* ksi = NULL,
+	double* ksiFactor = NULL);
 
-void WriteInitialProfile(const char* name, FLOAT* RR, FLOAT* RHO, FLOAT* GG, FLOAT* PP, FLOAT* UU, size_t n, FLOAT K,
+void WriteInitialProfile(const char* name, FLOAT* RR, FLOAT* RHO, FLOAT* GG, FLOAT* PP, FLOAT* UU, size_t n,
 FLOAT gamma)
 {
 	if(MyProcessorNumber != ROOT_PROCESSOR)
@@ -114,7 +116,7 @@ FLOAT gamma)
 	fprintf(file, "type('', (), dict(\n");
 	fprintf(file, "time = %f,\n", 0);
 	fprintf(file, "gamma = %f,\n", gamma);
-	fprintf(file, "K = %12.9e,\n", K);
+//	fprintf(file, "K = %12.9e,\n", K);
 	fprintf(file, "cols = 'r dr rho P U g'.split(),\n");
 
 	fprintf(file, "%s = np.array([", "r");
@@ -255,7 +257,7 @@ int MHDProfileSetLabels(bool useGE, bool UseMetal)
 
 int SphericalGravityIntegratePressure(MHDInitialProfile* profile, float initialPressure, bool initialPressureAtSurface)
 {
-	bool fromProfile = false;
+	bool fromProfile = !UseSphericalGravity;
 
 	size_t N = (fromProfile) ? profile->nRows : SphericalGravityActualNumberOfBins;
 	FLOAT* rr = (fromProfile) ? profile->radiusData : SphericalGravityBinLeftEdges;
@@ -263,69 +265,67 @@ int SphericalGravityIntegratePressure(MHDInitialProfile* profile, float initialP
 	FLOAT* UU = new float[N];
 	FLOAT* mm = (fromProfile) ? (new FLOAT[N]) : NULL;
 	FLOAT* dd = new FLOAT[N];
-	FLOAT* gg = NULL; //new FLOAT[N];
+	FLOAT* gg = new FLOAT[N];
 
-	FLOAT P2, P1, P, r2, r1, r, U2, U1, U, m2, m1, m; // r2 < r1 < r
-	FLOAT h, b, a, bb, aa, g, rho; // b:=r-r2 > a:=r-r1
+	FLOAT P_c, P2, P1, P, r2, r1, r, U2, U1, U, m2, m1, m; // r2 < r1 < r
+	FLOAT h, b, a, bb, aa, g, rho, rho_c; // b:=r-r2 > a:=r-r1
 	int retcode;
 	size_t j;
 
-	// Integrate the mass
-	m1 = r1 = 0;
-	if(gg)
-	{
-		for(size_t i = 0; i < N; i++)
-		{
-			r = rr[i];
-			if(r == 0)
-			{
-				m = g = 0;
-			}
-			else if(fromProfile)
-			{
-				h = r - r1;
-				profile->interpolateDensity(&rho, r);
-				m = m1 + h * 4 * M_PI * r * r * rho;
-				g = SphericalGravityConstant * m / r / r;
-			}
-			else
-			{
-				g = SphericalGravityGetAt(r);
-			}
-			if(mm)
-				mm[i] = m;
-			if(gg)
-				gg[i] = g;
+	retcode = profile->interpolateDensity(&rho_c, 0); //g/cm**3
 
-			r1 = r;
-			m1 = m;
-		}
+	// Integrate the mass
+//	m1 = r1 = 0;
+//	if(gg)
+//	{
+//		for(size_t i = 0; i < N; i++)
+//		{
+//			r = rr[i];
+//			if(r == 0)
+//			{
+//				m = g = 0;
+//			}
+//			else if(fromProfile)
+//			{
+//				h = r - r1;
+//				profile->interpolateDensity(&rho, r);
+//				m = m1 + h * 4 * M_PI * r * r * rho;
+//				g = SphericalGravityConstant * m / r / r;
+//			}
+//			else
+//			{
+//				g = SphericalGravityGetAt(r);
+//			}
+//			if(mm)
+//				mm[i] = m;
+//			if(gg)
+//				gg[i] = g;
+//
+//			r1 = r;
+//			m1 = m;
+//		}
+//	}
+
+	for(j = 0; j < N; j++)
+	{
+		retcode = profile->interpolateDensity(&rho, rr[j]); //g/cm**3
+		dd[j] = rho;
 	}
 
+	for(j = 0; j < N; j++)
+		gg[j] = -SphericalGravityGetAt(r);
+
 	// Start from the certer with P_c = 0, apply the initial condition later.
+	P_c = 0;
 	j = 0;
 	r = r2 = rr[j];
-	retcode = profile->interpolateDensity(&rho, r); //g/cm**3
-	g = ((gg) ? gg[j] : SphericalGravityGetAt(r));
-	PP[j] = P2 = 0;
-	if(dd)
-		dd[j] = rho;
-	if(gg)
-		gg[j] = g;
-	// TRACEF("r[0], P[0], g[0]rho[0], g[0], rho[0] = %e, %e, %e = %e * %e", r2, P2, g_rho, g, rho);
+	polytropicPressureAtSmallR(&P2, NULL, r2, rho_c, &P_c, NULL, NULL);
+	PP[j] = P2;
+	//TRACEF("r[0], P[0], g[0]rho[0], g[0], rho[0] = %e, %e, %e = %e * %e", r2, P2, g_rho, g, rho);
 
 	j = 1;
 	r = r1 = rr[j];
-	retcode = profile->interpolateDensity(&rho, r); //g/cm**3
-	g = ((gg) ? gg[j] : SphericalGravityGetAt(r));
-	if(dd)
-		dd[j] = rho;
-	if(gg)
-		gg[j] = g;
-
-	a = r2 - r1;
-	P1 = P2 - 0.5 * a * g * g * rho;
-	P1 -= 2. / 3. * M_PI * SphericalGravityConstant * a * a * rho * rho;
+	polytropicPressureAtSmallR(&P1, NULL, r1, rho_c, &P_c, NULL, NULL);
 	PP[j] = P1;
 	// TRACEF("r[1], P[1], dP[1], g, rho = %e, %e, %e = %e * %e", r1, P1, P1 - P2, g, rho);
 
@@ -337,13 +337,9 @@ int SphericalGravityIntegratePressure(MHDInitialProfile* profile, float initialP
 		bb = square(b);
 		aa = square(a);
 
-		retcode = profile->interpolateDensity(&rho, r); //g/cm**3
-		g = ((gg) ? gg[j] : SphericalGravityGetAt(r));
-		if(dd)
-			dd[j] = rho;
-		if(gg)
-			gg[j] = g;
-		P = (bb * (P1 - a * g * rho) - aa * (P2 - b * g * rho)) / (bb - aa);
+		g = gg[j];
+		rho = dd[j];
+		P = (bb * (P1 + a * g * rho) - aa * (P2 + b * g * rho)) / (bb - aa);
 		// TRACEF("%lld: P2 P1 P = %e %e %e ; r2 r1 r = %e %e %e ; g rho = %e %e", i, P2, P1, P, r2, r1, r, g, rho);
 
 		PP[j] = P;
@@ -354,52 +350,23 @@ int SphericalGravityIntegratePressure(MHDInitialProfile* profile, float initialP
 		P1 = P;
 	}
 
-	// Apply the intial condition:
-	// Determine the inital pressure and the shift.
-	// Then add shift to PP.
-	// Also calculate the specifi internal energy [erg/g].
-	const double K53 = 3.161128e+12;
-	const double K43 = 4.881986e+14;
-	double K = 3.828648955e+14;
-	double gammaMinusOne = Gamma - 1;
+	// Add the boundary condition (P_shift below) to PP[].
+	double P_shift = (initialPressure > 0) ? initialPressure : P_c;
 	size_t initialConditionIndex = (initialPressureAtSurface) ? (N - 1) : 0;
-	double P_shift = initialPressure;
-	if(initialPressure <= 0)
-	{
-		r = rr[initialConditionIndex];
-		retcode = profile->interpolateDensity(&rho, r);
-		P_shift = K * POW(rho, Gamma);
-	}
+	TRACEF("%e %e %e   %lld %lld %e", P_shift, initialPressure, P_c, initialConditionIndex, initialPressureAtSurface,
+			PP[initialConditionIndex]);
 	P_shift -= PP[initialConditionIndex];
 
 	// TRACEF("Pressure shift: %e = %e - %e", P2, P1, P);
-	// Shift pressure and replace it with the gas energy.
+	// Shift pressure and compute the gas energy.
 	for(size_t i = 0; i < N; i++)
 	{
-		P = -PP[i] + P_shift;
-		r = SphericalGravityBinLeftEdges[i];
-		retcode = profile->interpolateDensity(&rho, r); //g/cm**3
-		U = P / rho / gammaMinusOne;
+		P = PP[i] + P_shift;
+		r = rr[i];
+		rho = dd[i]; //g/cm**3
+		U = P / rho / (Gamma - 1);
 		PP[i] = P;
 		UU[i] = U;
-	}
-
-//	if(rr)
-//	{
-//		WriteInitialProfile("initialProfile", rr, dd, gg, P_r, U_r, SphericalGravityActualNumberOfBins, K,
-//							(double) Gamma);
-//	}
-
-	if(debug && MyProcessorNumber == ROOT_PROCESSOR)
-	{
-		for(size_t i = 0; i < N; i++)
-		{
-			r = SphericalGravityBinLeftEdges[i];
-			retcode = profile->interpolateDensity(&rho, r); //g/cm**3
-			P = PP[i];
-			U = UU[i];
-			TRACEF("Intergrated pressure: %lld: r=%e P=%e U=%e rho=%e gamma-1=%f", i, r, P, U, rho, gammaMinusOne);
-		}
 	}
 
 	profile->internalEnergyData = UU;
@@ -407,14 +374,20 @@ int SphericalGravityIntegratePressure(MHDInitialProfile* profile, float initialP
 	profile->nRowsInternalEnergy = N;
 
 	if(MyProcessorNumber == ROOT_PROCESSOR)
-		WriteInitialProfile("initialProfile", rr, dd, gg, PP, UU, N, K, Gamma);
+		WriteInitialProfile("initialProfile", rr, dd, gg, PP, UU, N, /*K,*/Gamma);
 
 	if(MyProcessorNumber == ROOT_PROCESSOR)
 	{
-//		arr_fprintpylist(stderr, profile->radiusData, 100, "radius=");
+		arr_fprintpylist(stderr, profile->radiusData, 100, "radius=");
 //		arr_fprintpylist(stderr, profile->densityData, 100, "density=");
-		arr_fprintpylist(stderr, profile->internalEnergyData, 100, "internalEnergy=");
+//		arr_fprintpylist(stderr, profile->internalEnergyData, 100, "internalEnergy=");
+		arr_fprintpylist(stderr, PP, 100, "pressure=");
 	}
+
+	delete gg;
+	delete mm;
+	delete PP;
+	//rr and UU are referenced by profile->;
 
 	return SUCCESS;
 }
@@ -483,7 +456,7 @@ int MHDProfileInitialize(FILE *fptr, FILE *Outfptr, HierarchyEntry &TopGrid, Top
 	if(ParallelRootGridIO && BeforeGridDistribution)
 	{
 		// Stub the top grid, i.e. do not allocate the fields.
-		return TopGrid.GridData->MHDProfileInitializeGrid(NULL, BurningTemperature, InitialBurnedRadius, dipoleMoment,
+		return TopGrid.GridData->MHDProfileInitializeGrid1(NULL, BurningTemperature, InitialBurnedRadius, dipoleMoment,
 															dipoleCenter, InitBWithVectorPotential, &MetaData);
 	}
 
@@ -527,13 +500,12 @@ int MHDProfileInitialize(FILE *fptr, FILE *Outfptr, HierarchyEntry &TopGrid, Top
 //			triSphere = new TriSphere(InitialBurnedRadius, PerturbationAmplitude, -0, 1.0, 0.0);
 //			triSphere->writePythonFile("triSphere-data-0-10-00.py");
 //			triSphere->~TriSphere();
-//
 //			ENZO_FAIL("FINISHED TRISPHERE TEST OUTPUT");
 //		}
 
 		if(PerturbationWavelength > 0)
 		{
-			FLOAT dx = TopGridDx[0] / pow(2, MaximumRefinementLevel);
+			FLOAT dx = TopGridDx[0] / square(MaximumRefinementLevel);
 			triSphere = new TriSphere(InitialBurnedRadius, PerturbationAmplitude, dx, PerturbationWavelength,
 										PertrubationBottomSize, PertrubationTopSize);
 		}
@@ -552,6 +524,7 @@ int MHDProfileInitialize(FILE *fptr, FILE *Outfptr, HierarchyEntry &TopGrid, Top
 	}
 
 	int maxRefLevel = max(0, min(MaximumRefinementLevel, MAX_DEPTH_OF_HIERARCHY));
+	bool doIntegratePressure = (p.internalEnergyData == NULL) || InitRadialPressureFromCentral;
 	maxRefLevel *= (bool) RefineOnStartup;
 	RebuildHierarchyIterator rhit = RebuildHierarchyIterator(maxRefLevel, &TopGrid, &MetaData);
 	for(grid* g = rhit.first(); g; g = rhit.next())
@@ -560,9 +533,20 @@ int MHDProfileInitialize(FILE *fptr, FILE *Outfptr, HierarchyEntry &TopGrid, Top
 			PRINT_HIERARCHY0(rhit.levelArray);
 
 		// Initialize the density and the burned fraction.
-		g->MHDProfileInitializeGrid(&p, BurningTemperature,
-									InitialBurnedRadius * (rhit.currentLevel == MaximumRefinementLevel) ? 1 : 0,
-									dipoleMoment, dipoleCenter, InitBWithVectorPotential, &MetaData);
+		g->MHDProfileInitializeGrid1(&p, BurningTemperature,
+										InitialBurnedRadius * (rhit.currentLevel == MaximumRefinementLevel) ? 1 : 0,
+										dipoleMoment, dipoleCenter, InitBWithVectorPotential, &MetaData);
+
+		if(doIntegratePressure)
+		{
+			if(UseSphericalGravity)
+				ret = SphericalGravityComputePotential(rhit.levelArray, &MetaData, true);
+			SphericalGravityIntegratePressure(&p, InitRadialPressureFromCentral, false);
+		}
+
+		g->MHDProfileInitializeGrid2(&p, BurningTemperature,
+										InitialBurnedRadius * (rhit.currentLevel == MaximumRefinementLevel) ? 1 : 0,
+										dipoleMoment, dipoleCenter, InitBWithVectorPotential, &MetaData);
 	}
 
 	if(triSphere)
@@ -579,11 +563,13 @@ int MHDProfileInitialize(FILE *fptr, FILE *Outfptr, HierarchyEntry &TopGrid, Top
 
 	TRACEF("HIERARCHY BUILT");
 
-	if(UseSphericalGravity)
-	{
-		// Initialize the potential.
-		ret = SphericalGravityComputePotential(rhit.levelArray, &MetaData, true);
-	}
+//	if(UseSphericalGravity)
+//	{
+//		// Initialize the potential.
+//		ret = SphericalGravityComputePotential(rhit.levelArray, &MetaData, true);
+//	}
+//	if(p.internalEnergyData == NULL && InitRadialPressureFromCentral)
+//		SphericalGravityIntegratePressure(&p, InitRadialPressureFromCentral, false);
 
 	if(InitBWithVectorPotential)
 	{
@@ -620,10 +606,10 @@ int MHDProfileInitialize(FILE *fptr, FILE *Outfptr, HierarchyEntry &TopGrid, Top
 
 	if(InitBWithVectorPotential
 			|| (UseSphericalGravity && InitRadialPressureFromCentral && *InternalEnergyColumnName == '\0'
-					|| MHDCTSlopeLimiter>10 || 1))
+					|| MHDCTSlopeLimiter > 10 || 1))
 	{
 		for(grid* g = it.firstFromTop(); g; g = it.next())
-			if(g->MHDProfileInitializeGrid2(&p, BurningTemperature, InitialBurnedRadius, dipoleMoment, dipoleCenter,
+			if(g->MHDProfileInitializeGrid3(&p, BurningTemperature, InitialBurnedRadius, dipoleMoment, dipoleCenter,
 											InitBWithVectorPotential, &MetaData) == FAIL)
 				ENZO_FAIL("MHDProfileRefineOnStartup: error in MHDProfileInitializeGrid2\n");
 	}
@@ -632,3 +618,50 @@ int MHDProfileInitialize(FILE *fptr, FILE *Outfptr, HierarchyEntry &TopGrid, Top
 	return ret;
 }
 
+int MHDProfileInitializeRestart(TopGridData *MetaData, LevelHierarchyEntry **LevelArray, HierarchyEntry *TopGrid)
+{
+	if(!PerturbationOnRestart)
+		return SUCCESS;
+
+	if(PerturbationMethod != 4)
+	{
+		ENZO_VFAIL("Perturbation-On-Restart is implemented for PerturbationMethod==4 only, but %lld found.",
+					PerturbationMethod);
+	}
+
+	TriSphere *triSphere = NULL;
+	FILE *fptr = NULL;
+	LevelArrayIterator it = LevelArrayIterator(LevelArray);
+	int maxRefLevel = it.countLevels();
+
+	/*
+	 * PerturbationWavelength > 0
+	 * 		The trisphere wil be refined until each face is covered by about
+	 * 		3x3xPerturbationWavelength zones at maxRefLevel.
+	 * PerturbationWavelength <= 0
+	 * 		The trisphere wil be refined -PerturbationWavelength times.
+	 */
+	if(PerturbationWavelength > 0)
+	{
+		FLOAT dx = TopGridDx[0] / square(maxRefLevel);
+		triSphere = new TriSphere(InitialBurnedRadius, PerturbationAmplitude, dx, PerturbationWavelength,
+									PertrubationBottomSize, PertrubationTopSize);
+	}
+	else
+		triSphere = new TriSphere(InitialBurnedRadius, PerturbationAmplitude, (size_t) (-PerturbationWavelength),
+									PertrubationBottomSize, PertrubationTopSize);
+
+	if(MyProcessorNumber == ROOT_PROCESSOR)
+		triSphere->writePythonFile("trisphere_restart.py");
+
+	for(grid* g = it.firstFromTop(); g; g = it.next())
+	{
+//		if(it.startingNewLevel)
+//			PRINT_HIERARCHY0(it.levelArray);
+		g->PerturbWithTriSPhere(triSphere, fptr);
+	}
+
+	//Turn off perturbation for future restarts.
+	PerturbationOnRestart = 0;
+	return SUCCESS;
+}

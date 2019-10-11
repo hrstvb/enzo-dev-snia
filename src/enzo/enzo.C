@@ -67,15 +67,15 @@ int FinalizePythonInterface();
 // Function prototypes
 
 int InitializeNew(char *filename, HierarchyEntry &TopGrid, TopGridData &tgd, ExternalBoundary &Exterior,
-	float *Initialdt);
+float *Initialdt);
 int InitializeMovieFile(TopGridData &MetaData, HierarchyEntry &TopGrid);
 
 int InitializeLocal(int restart, HierarchyEntry &TopGrid, TopGridData &MetaData);
 
 int ReadAllData(char *filename, HierarchyEntry *TopGrid, TopGridData &tgd, ExternalBoundary *Exterior,
-	float *Inititaldt);
+float *Inititaldt);
 int Group_ReadAllData(char *filename, HierarchyEntry *TopGrid, TopGridData &tgd, ExternalBoundary *Exterior,
-	float *Initialdt, bool ReadParticlesOnly = false);
+float *Initialdt, bool ReadParticlesOnly = false);
 
 int MHDCT_EnergyToggle(HierarchyEntry &TopGrid, TopGridData &MetaData, ExternalBoundary *Exterior,
 	LevelHierarchyEntry *LevelArray[]);
@@ -219,6 +219,8 @@ void lcaperfInitialize (int max_level);
 
 void my_exit(int status);
 void PrintMemoryUsage(char *str);
+void writeEvtime(TopGridData* MetaData, double dtlev, double dtreb, double dtloop);
+int MHDProfileInitializeRestart(TopGridData *MetaData, LevelHierarchyEntry **LevelArray, HierarchyEntry *TopGrid);
 
 //  ENZO Main Program
 
@@ -230,12 +232,12 @@ void PrintMemoryUsage(char *str);
 
 Eint32 MAIN_NAME(Eint32 argc, char *argv[])
 {
-
 	int i;
 
 	// Initialize Communications
 
 	CommunicationInitialize(&argc, &argv);
+	writeEvtime(NULL, 0, 0, 0);
 
 	//#define DEBUG_MPI
 #ifdef DEBUG_MPI
@@ -269,7 +271,7 @@ Eint32 MAIN_NAME(Eint32 argc, char *argv[])
 
 	// Create enzo timer and initialize default timers
 	enzo_timer = new enzo_timing::enzo_timer();
-	TIMER_REGISTER("CommunicationTranspose"); TIMER_REGISTER("ComputePotentialFieldLevelZero"); TIMER_REGISTER("RebuildHierarchy"); TIMER_REGISTER("SetBoundaryConditions"); TIMER_REGISTER("SolveHydroEquations"); TIMER_REGISTER("Total");
+	TIMER_REGISTER("CommunicationTranspose");TIMER_REGISTER("ComputePotentialFieldLevelZero");TIMER_REGISTER("RebuildHierarchy");TIMER_REGISTER("SetBoundaryConditions");TIMER_REGISTER("SolveHydroEquations");TIMER_REGISTER("Total");
 
 #ifdef USE_LCAPERF
 
@@ -336,7 +338,7 @@ Eint32 MAIN_NAME(Eint32 argc, char *argv[])
 	int restart = FALSE, OutputAsParticleDataFlag = FALSE, InformationOutput = FALSE, HaloFinderOnly = FALSE,
 			WritePotentialOnly = FALSE, SmoothedDarkMatterOnly = FALSE, WriteCoolingTimeOnly = FALSE,
 			WriteDustTemperatureOnly = FALSE, project = FALSE, ProjectionDimension = INT_UNDEFINED, ProjectionSmooth =
-					FALSE, velanyl = FALSE;
+			FALSE, velanyl = FALSE;
 	debug = FALSE;
 	extract = FALSE;
 	flow_trace_on = FALSE;
@@ -503,6 +505,15 @@ Eint32 MAIN_NAME(Eint32 argc, char *argv[])
 
 		// Initialize streaming files if necessary
 		InitializeMovieFile(MetaData, TopGrid);
+
+		if(ProblemType == 501)
+		{
+			MHDProfileInitializeRestart(&MetaData, LevelArray, &TopGrid);
+		}
+
+		CommunicationBarrier();
+		writeEvtime(&MetaData, 0, 0, 0);
+		CommunicationBarrier();
 
 	}
 
@@ -706,7 +717,10 @@ Eint32 MAIN_NAME(Eint32 argc, char *argv[])
 		CommunicationBarrier();
 		t_init1 = MPI_Wtime();
 		if(MyProcessorNumber == ROOT_PROCESSOR)
+		{
 			fprintf(stderr, "INITIALIZATION TIME = %16.8e\n", (t_init1 - t_init0));
+		}
+		writeEvtime(&MetaData, 0, 0, 0);
 		CommunicationBarrier();
 #endif /* USE_MPI */
 
@@ -898,3 +912,32 @@ void my_exit(int status)
 	}
 }
 
+void writeEvtime(TopGridData* MetaData, double dtlev, double dtreb, double dtloop)
+{
+	if(MyProcessorNumber != ROOT_PROCESSOR)
+		return;
+
+	FILE *evlog = fopen("Evtime", "a");
+
+	double t_now = MPI_Wtime();
+	double dwt = t_now - LastCycleWTime;
+	LastCycleWTime = t_now;
+
+	if(MetaData == NULL)
+	{
+		fprintf(evlog, ""
+				"# MPI time resolution = %16.9e seconds\n"
+				"#\n"
+				"#   1           2                 3                  4                5                    6\n"
+				"# Cycle#   tlev1-tlev0       treb1-treb0       tloop1-tloop0     Problem Time      Wall Time Elapsed\n"
+				"#           [seconds]         [seconds]          [seconds]       [code units]          [seconds]\n",
+				MPI_Wtick());
+	}
+	else
+	{
+		fprintf(evlog, "%8"ISYM "  %16.9e  %16.9e  %16.9e  %16.9e  %19.9e\n", MetaData->CycleNumber, dtlev, dtreb,
+				dtloop, MetaData->Time, dwt);
+	}
+
+	fclose(evlog);
+}

@@ -1331,6 +1331,7 @@ int ReadParameterFile(FILE *fptr, TopGridData &MetaData, float *Initialdt)
     ret += sscanf(line, "TotalEnergyRelativeGrowthLimit        = %"FSYM, &TotalEnergyRelativeGrowthLimit       ); //[BH]
     ret += sscanf(line, "BurnedFractionGrowthLimit             = %"FSYM, &BurnedFractionGrowthLimit            ); //[BH]
     ret += sscanf(line, "InitialBurnedRadius                   = %"FSYM, &InitialBurnedRadius                  ); //[BH]
+    ret += sscanf(line, "PerturbationOnRestart                 = %"ISYM, &PerturbationOnRestart                );
     ret += sscanf(line, "PerturbationAmplitude                 = %"FSYM, &PerturbationAmplitude            ); //[BH]
     ret += sscanf(line, "PerturbationWavelength                = %"FSYM, &PerturbationWavelength           ); //[BH]
     ret += sscanf(line, "PerturbationMethod                    = %"ISYM, &PerturbationMethod                   ); //[BH]
@@ -1341,7 +1342,7 @@ int ReadParameterFile(FILE *fptr, TopGridData &MetaData, float *Initialdt)
     ret += sscanf(line, "InitialBurnedRegionSustain            = %"ISYM, &InitialBurnedRegionSustain           ); //[BH]
     ret += sscanf(line, "InitRadialPressureFromCentral         = %"FSYM, &InitRadialPressureFromCentral        ); //[BH]
     ret += sscanf(line, "InitBWithVectorPotential              = %"ISYM, &InitBWithVectorPotential             ); //[BH]
-	ret += sscanf(line, "RefineOnStartup                       = %"ISYM, &RefineOnStartup                      );
+    ret += sscanf(line, "RefineOnStartup                       = %"ISYM, &RefineOnStartup                      );
 
 
     ret += sscanf(line, "UseSphericalGravity = %"ISYM, &UseSphericalGravity);

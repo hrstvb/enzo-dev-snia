@@ -140,7 +140,7 @@ int CallPython(LevelHierarchyEntry *LevelArray[], TopGridData *MetaData,
                int level, int from_topgrid);
 #endif
 
-
+void writeEvtime(TopGridData* MetaData, double dtlev, double dtreb, double dtloop);
 
 #define NO_REDUCE_FRAGMENTATION
 
@@ -727,13 +727,15 @@ int EvolveHierarchy(HierarchyEntry &TopGrid, TopGridData &MetaData,
     tloop1 = MPI_Wtime();
 #endif
 
-    FILE *evlog;
+//    FILE *evlog;
+//
+//    if (MyProcessorNumber == ROOT_PROCESSOR) {
+//      evlog = fopen("Evtime", "a");
+//      fprintf(evlog, "%8"ISYM"  %16.9e  %16.9e  %16.9e\n", MetaData.CycleNumber, tlev1-tlev0, treb1-treb0, tloop1-tloop0);
+//      fclose(evlog);
+//    }
+    writeEvtime(&MetaData, tlev1-tlev0, treb1-treb0, tloop1-tloop0);
 
-    if (MyProcessorNumber == ROOT_PROCESSOR) {
-      evlog = fopen("Evtime", "a");
-      fprintf(evlog, "%8"ISYM"  %16.9e  %16.9e  %16.9e\n", MetaData.CycleNumber, tlev1-tlev0, treb1-treb0, tloop1-tloop0);
-      fclose(evlog);
-    }
 
 #ifdef MEM_TRACE
     Eint64 MemInUse;
