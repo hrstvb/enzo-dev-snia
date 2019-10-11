@@ -1279,6 +1279,7 @@ int WriteParameterFile(FILE *fptr, TopGridData &MetaData, char *name = NULL)
   fprintf(fptr, "BurnedFractionGrowthLimit             = %"FSYM"\n", BurnedFractionGrowthLimit		      ); //[BH]
   fprintf(fptr, "InitialBurnedRadius                   = %"FSYM"\n", InitialBurnedRadius		          ); //[BH]
   fprintf(fptr, "PerturbationAmplitude                 = %"FSYM"\n", PerturbationAmplitude                ); //[BH]
+  fprintf(fptr, "PerturbationOnRestart                 = %"ISYM"\n", PerturbationOnRestart                ); //[BH]
   fprintf(fptr, "PerturbationWavelength                = %"FSYM"\n", PerturbationWavelength               ); //[BH]
   fprintf(fptr, "PerturbationMethod                    = %"ISYM"\n", PerturbationMethod                   ); //[BH]
   fprintf(fptr, "PertrubationBottomSize                = %"FSYM"\n", PertrubationBottomSize               ); //[BH]

@@ -3222,15 +3222,24 @@ int zEulerSweep(int j, int NumberOfSubgrids, fluxes *SubgridFluxes[],
                              float Radius, float MHDBlastCenter[], int LongDimension,
                              float PerturbAmplitude, int PerturbMethod, float PerturbWavelength[],
                              int InitStyle);
-	int MHDProfileInitializeGrid(MHDInitialProfile* p,
+	int MHDProfileInitializeGrid0(MHDInitialProfile* p,
+			float burningTemperature,
+			float burnedRadius,
+			float dipoleMoment[3], float dipoleCenter[3], bool usingVectorPotential, TopGridData *MetaData);
+	int MHDProfileInitializeGrid1(MHDInitialProfile* p,
 			float burningTemperature,
 			float burnedRadius,
 			float dipoleMoment[3], float dipoleCenter[3], bool usingVectorPotential, TopGridData *MetaData);
 	int MHDProfileInitializeGrid2(MHDInitialProfile* p,
 			float burningTemperature,
 			float burnedRadius,
-			float dipoleMoment[3], float dipoleCenter[3], bool usingVectorPotential, TopGridData *MetaData
-	);
+			float dipoleMoment[3], float dipoleCenter[3], bool usingVectorPotential, TopGridData *MetaData);
+	int MHDProfileInitializeGrid3(MHDInitialProfile* p,
+			float burningTemperature,
+			float burnedRadius,
+			float dipoleMoment[3], float dipoleCenter[3], bool usingVectorPotential, TopGridData *MetaData);
+	int PerturbWithTriSPhere(TriSphere *triSphere, FILE *fptr);
+
   int MHDSustainInitialBurnedRegionGrid();
   int WriteRadialProfile(char* filename);
 

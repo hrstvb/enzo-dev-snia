@@ -1139,18 +1139,20 @@ EXTERN float InternalEnergy_A;                     //[BH]
 EXTERN float InternalEnergy_B;                     //[BH]
 EXTERN float BurningEnergyRelativeGrowthLimit;     //[BH]
 EXTERN float InternalEnergyRelativeGrowthLimit;    //[BH]
-EXTERN float TotalEnergyRelativeGrowthLimit;	   //[BH]
-EXTERN float BurnedFractionGrowthLimit;		   		//[BH]
-EXTERN float InitialBurnedRadius; 					//[BH]
-EXTERN float PerturbationAmplitude; 			//[BH]
-EXTERN float PerturbationWavelength; 			//[BH]
-EXTERN int PerturbationMethod;						//[BH]
+EXTERN float TotalEnergyRelativeGrowthLimit;       //[BH]
+EXTERN float BurnedFractionGrowthLimit;            //[BH]
+
+EXTERN int PerturbationOnRestart;                  //[BH]
+EXTERN float InitialBurnedRadius;                  //[BH]
+EXTERN float PerturbationAmplitude;                //[BH]
+EXTERN float PerturbationWavelength;               //[BH]
+EXTERN int PerturbationMethod;                     //[BH]
 EXTERN float PertrubationBottomSize;               //[BH]
 EXTERN float PertrubationTopSize;                  //[BH]
 EXTERN float PertrubationBottomDensity;            //[BH]
 EXTERN float PertrubationTopDensity;               //[BH]
 struct TriSphere;
-EXTERN TriSphere* triSphere;								//[BH]
+EXTERN TriSphere* triSphere;						//[BH]
 EXTERN int InitialBurnedRegionSustain;				//[BH]
 EXTERN float InitRadialPressureFromCentral;			//[BH]
 EXTERN int InitBWithVectorPotential;				//[BH]
@@ -1255,5 +1257,7 @@ EXTERN float DensityProfileMinDensity;
 
 EXTERN float TimeStepIgnoreCubeHalfSize;
 EXTERN float TimeStepIgnoreSphereRadius;
+
+EXTERN double LastCycleWTime;
 
 #endif

@@ -244,8 +244,6 @@ int GetUnits(float *DensityUnits, float *LengthUnits,
 	     float *TemperatureUnits, float *TimeUnits,
 	     float *VelocityUnits, double *MassUnits, FLOAT Time);
 
-
-
 // Character strings
 
 char outfilename[] = "amr.out";

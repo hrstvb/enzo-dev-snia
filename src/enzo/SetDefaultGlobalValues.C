@@ -1021,21 +1021,22 @@ int SetDefaultGlobalValues(TopGridData &MetaData)
   BurningEnergyRelease                 = 0.0476929; //[keV] TODO: convert units, per barion etc.                //[BH]
   BurningEnergyRelativeGrowthLimit     = -1;//Ignore condition [BH]
   InternalEnergyRelativeGrowthLimit    = -1; //Ignore condition [BH]
-  TotalEnergyRelativeGrowthLimit		= -1; //Ignore condition [BH]
-  BurnedFractionGrowthLimit		= -1; //Ignore condition [BH]
-  InitialBurnedRadius           = 0;
-  PerturbationAmplitude = 0; 			//[BH]
-  PerturbationWavelength = 0;
-  PerturbationMethod = 0;
-  PertrubationBottomSize = 1.0;
-  PertrubationTopSize    = 0.0;
-  PertrubationBottomDensity = 0;
-  PertrubationTopDensity = 0;
-  triSphere = NULL;
-  InitialBurnedRegionSustain	= 0;
-  InitRadialPressureFromCentral = 0;
-  InitBWithVectorPotential 		= 0;
-  RefineOnStartup               = 0;
+  TotalEnergyRelativeGrowthLimit       = -1; //Ignore condition [BH]
+  BurnedFractionGrowthLimit            = -1; //Ignore condition [BH]
+  PerturbationOnRestart         = 0;     //[BH]
+  InitialBurnedRadius           = 0;     //[BH]
+  PerturbationAmplitude         = 0;     //[BH]
+  PerturbationWavelength        = 0;     //[BH]
+  PerturbationMethod            = 0;     //[BH]
+  PertrubationBottomSize        = 1.0;   //[BH]
+  PertrubationTopSize           = 0.0;   //[BH]
+  PertrubationBottomDensity     = 0;     //[BH]
+  PertrubationTopDensity        = 0;     //[BH]
+  triSphere                     = NULL;  //[BH]
+  InitialBurnedRegionSustain	= 0;     //[BH]
+  InitRadialPressureFromCentral = 0;     //[BH]
+  InitBWithVectorPotential 		= 0;     //[BH]
+  RefineOnStartup               = 0;     //[BH]
 
   //Spherical gravity parameters
   UseSphericalGravity = 0;

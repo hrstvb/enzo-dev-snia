@@ -296,6 +296,7 @@ EnergyRelativeGrowthLimit             = 0.1 #[BH]
 #InitialBurnedRadius = 314e5 # Applies to all perturbation methods, incl. no preturbation.
 InitialBurnedRadius                   = 1e5
 InitialBurnedRegionSustain            = 1
+PerturbationOnRestart                 = 0 # If 1, deffers perturbation to the first restart.
 PerturbationAmplitude                 = 500e5 # Applies to methods 1..4
 PerturbationMethod                    = 0 # 0-no perturbtion
 #PerturbationMethod                    = 1 # 1-Burned sphere with a shell, in which the burned fraction decreases linearly from 1 to 0.
