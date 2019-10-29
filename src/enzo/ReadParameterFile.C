@@ -1457,7 +1457,6 @@ int ReadParameterFile(FILE *fptr, TopGridData &MetaData, float *Initialdt)
     if (ret == 0 && strstr(line, "=") != NULL && line[0] != '#')
       if (MyProcessorNumber == ROOT_PROCESSOR)
 	fprintf(stderr, "warning: the following parameter line was not interpreted:\n%s", line);
-
   }
 
   // HierarchyFile IO sanity check

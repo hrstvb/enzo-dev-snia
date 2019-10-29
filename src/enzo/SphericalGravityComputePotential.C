@@ -258,8 +258,6 @@ int SphericalGravityComputePotential(LevelHierarchyEntry *LevelArray[], TopGridD
 //	if(UseSpherGrav)
 //		return SpherGravCopmutePotential(LevelArray, MetaData);
 
-	TRACE
-	;
 	if(SphericalGravityDetermineBins() == FAIL)
 		ENZO_FAIL("Coudn't determine spherical gravity bins.\n");
 	SphericalGravityAllocateBins(&SphericalGravityShellCellCounts, &SphericalGravityShellMasses,
@@ -356,38 +354,57 @@ int SphericalGravityComputePotential(LevelHierarchyEntry *LevelArray[], TopGridD
 		break;
 	}
 
-	if(interpolateMissingShells || 1)
+//	if(MyProcessorNumber == ROOT_PROCESSOR && MetaData->CycleNumber == 0)
+//	{
+//		fprintf(stderr, "SphericalGravityActualNumberOfBins = %lld\n", N);
+//		arr_printf_pydict("SphericalGravityBinLeftEdges", "%lld:%e", SphericalGravityBinLeftEdges, N);
+//		arr_printf_pydict("SphericalGravityShellMasses", "%lld:%e", SphericalGravityShellMasses, N);
+//		arr_printf_pydict("SphericalGravityInteriorMasses", "%lld:%e", SphericalGravityInteriorMasses, N);
+//		arr_printf_pydict("SphericalGravityBinAccels", "%lld:%e", SphericalGravityBinAccels, N);
+//		arr_printf_pydict("SphericalGravityBinAccelSlopes", "%lld:%e", SphericalGravityBinAccelSlopes, N);
+//	}
+
+	if(interpolateMissingShells || MetaData->CycleNumber==0)
 	{
-		// For shells with no zones we want to distribute the
-		// mass so we get a smoothly growing interior mass.
-		size_t i, k;
-		FLOAT r1, r, r2, g1, g, g2, dgdr;
-		for(size_t j = 0; j < N; j++)
+		// For shells with no mass (no zones) interpolate the
+		// gravity acceleration (g) so it grows smoothly.
+		int first_empty, after_first_full;
+		FLOAT r1=0, r, r2, g1=0, g, g2, dgdr;
+		for(int j = 0; j < N; j++)
 		{
 			// Find the next zero shell mass:
 			if(SphericalGravityShellMasses[j])
 				continue;
-			i = j;
+			// The first empty shell in a sequence still has
+			// the correct g at its left boundary.
+			// This is true also for j==0.
+			first_empty = j;
 
-			// Find the non-zero shell mass that follows:
-			for(j = i + 1; j < N; j++)
+			// Find the non-zero shell that follows:
+			for(j = first_empty + 1; j < N; j++)
 				if(SphericalGravityShellMasses[j])
 					break;
 
-			// Make sure we found one.
-			if(j + 2 >= N)
+			// Make sure we found one and it is not the last one.
+			// We don't simply advance j because if the shell to
+			// the right hapens to be empty, we are going to miss
+			// it on the next loop iteration.
+			after_first_full = j + 1;
+			if(after_first_full >= N)
 				break;
 
-			// Now shells from i..j-1, incl. have zero masses,
-			// shell j has mass > 0.
-			// Interpolate g between i+1 and j
-
-			g1 = SphericalGravityBinAccels[i];
-			g2 = SphericalGravityBinAccels[j + 1];
-			r1 = SphericalGravityBinLeftEdges[i];
-			r2 = SphericalGravityBinLeftEdges[j + 1];
+			// Now shell j has g at its left boundary computed
+			// with the same enclosed mass as the first_empty
+			// shell, which is what we are trying to avoid.
+			// Using the g at its right boundary (left of the
+			// next shell) to interpolate everything in between.
+			g1 = SphericalGravityBinAccels[first_empty];
+			r1 = SphericalGravityBinLeftEdges[first_empty];
+			g2 = SphericalGravityBinAccels[after_first_full];
+			r2 = SphericalGravityBinLeftEdges[after_first_full];
+			TRACEF("  empty=%lld  full=%lld", first_empty, after_first_full);
 			dgdr = (g2 - g1) / (r2 - r1);
-			for(k = i; k <= j; k++)
+			for(int k = first_empty + 1; k <= after_first_full; k++)
 			{
 				r = SphericalGravityBinLeftEdges[k];
 				g = g1 + (r - r1) * dgdr;
@@ -408,14 +425,19 @@ int SphericalGravityComputePotential(LevelHierarchyEntry *LevelArray[], TopGridD
 		break;
 	}
 
-	if(MyProcessorNumber == ROOT_PROCESSOR && (MetaData->CycleNumber == -1 || debug))
+	if(MyProcessorNumber == ROOT_PROCESSOR && (MetaData->CycleNumber == 0 || debug))
 	{
-		fprintf(stderr, "SphericalGravityActualNumberOfBins = %lld\n", N);
-		arr_printf_pydict("SphericalGravityBinLeftEdges", "%lld:%e", SphericalGravityBinLeftEdges, N);
-		arr_printf_pydict("SphericalGravityShellMasses", "%lld:%e", SphericalGravityShellMasses, N);
-		arr_printf_pydict("SphericalGravityInteriorMasses", "%lld:%e", SphericalGravityInteriorMasses, N);
-		arr_printf_pydict("SphericalGravityBinAccels", "%lld:%e", SphericalGravityBinAccels, N);
-		arr_printf_pydict("SphericalGravityBinAccelSlopes", "%lld:%e", SphericalGravityBinAccelSlopes, N);
+		size_t M = 20;
+		fprintf(stderr, "SphericalGravityActualNumberOfBins = %lld\n", M);
+		fprintf(stderr, "SphericalGravityConstant = %lld\n", SphericalGravityConstant);
+		fprintf(stderr, "Spherical Gravity Radius Range  = %lld\n", SphericalGravityInnerCutoffRaduis, SphericalGravityOuterCutoffRaduis);
+//		arr_printf_pydict("\nSphericalGravityCenter", "%lld:%e", SphericalGravityCenter, 3);
+//		arr_printf_pydict("\nSphericalGravityBinLeftEdges", "%lld:%e", SphericalGravityBinLeftEdges, M);
+//		arr_printf_pydict("\nSphericalGravityShellMasses", "%lld:%e", SphericalGravityShellMasses, M);
+//		arr_printf_pydict("\nSphericalGravityInteriorMasses", "%lld:%e", SphericalGravityInteriorMasses, M);
+//		arr_printf_pydict("\nSphericalGravityBinAccels", "%lld:%e", SphericalGravityBinAccels, M);
+//		arr_printf_pydict("\nSphericalGravityBinAccelSlopes", "%lld:%e", SphericalGravityBinAccelSlopes, M);
+		fflush(stdout);
 	}
 //	for (int dim = 0; dim < GridRank; dim++)
 //		SphericalGravityCentersOfMass[dim] = arr_sum(SphericalGravityShellCentersOfMass[dim], N);
@@ -453,7 +475,8 @@ int SphericalGravityComputePotential(LevelHierarchyEntry *LevelArray[], TopGridD
 float SphericalGravityGetAt(FLOAT r)
 {
 	if(!UseSphericalGravity || (SphericalGravityInnerCutoffRaduis > 0 && r < SphericalGravityInnerCutoffRaduis)
-			|| (SphericalGravityOuterCutoffRaduis >= 0 && r > SphericalGravityOuterCutoffRaduis))
+			|| (SphericalGravityOuterCutoffRaduis >= 0 && r > SphericalGravityOuterCutoffRaduis)
+			|| SphericalGravityConstant == 0)
 		return 0;
 
 	size_t rbin = SphericalGravityComputeBinIndex(r);

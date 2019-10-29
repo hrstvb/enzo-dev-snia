@@ -283,7 +283,7 @@ UseBurning                            = 1 #[BH]
 AllowUnburning                        = 1   #[BH]
 CallSetBoundaryConditionsAfterBurning = 1     #[BH]
 BurningDiffusionCourantSafetyFactor   = 0.03125   #[BH]
-BurningDiffusionMethod                = 1 # // 0=7-point(+); 1=27-point; 2=125-point
+BurningDiffusionMethod                = 1 # // -1=off; 0=7-point(+); 1=27-point; 2=125-point
 BurningDiffusionRateReduced           = 8.2e5 #[BH]
 BurningMinFractionForDiffusion        = 0.001
 BurningNonDistributedMinDensity       = 0 #5e6 #[BH]
@@ -298,16 +298,19 @@ InitialBurnedRadius                   = 1e5
 InitialBurnedRegionSustain            = 1
 PerturbationOnRestart                 = 0 # If 1, deffers perturbation to the first restart.
 PerturbationAmplitude                 = 500e5 # Applies to methods 1..4
-PerturbationMethod                    = 0 # 0-no perturbtion
-#PerturbationMethod                    = 1 # 1-Burned sphere with a shell, in which the burned fraction decreases linearly from 1 to 0.
-#PerturbationMethod                    = 2 # 2-Burned sphere with a shell, randomly burned with 50% probability.
-#PerturbationMethod                    = 3 # 3-Burned sphere with a shell, randomly burned with probability decreasing with radius from 1 to 0.
-#PerturbationMethod                    = 4 # 4-Burned sphere with finger preturbations.
+PerturbationMethod                    = 0 # 0:no perturbtion
+#PerturbationMethod                    =-3 # -3:Burned slab in the xy-plane, no perturbtion
+#PerturbationMethod                    =-2 # -2:Burned slab in the xz-plane, no perturbtion
+#PerturbationMethod                    =-1 # -1:Burned slab in the yz-plane, no perturbtion
+#PerturbationMethod                    = 1 # 1:Burned sphere with a shell, in which the burned fraction decreases linearly from 1 to 0.
+#PerturbationMethod                    = 2 # 2:Burned sphere with a shell, randomly burned with 50% probability.
+#PerturbationMethod                    = 3 # 3:Burned sphere with a shell, randomly burned with probability decreasing with radius from 1 to 0.
+#PerturbationMethod                    = 4 # 4:Burned sphere with finger preturbations.
 PerturbationWavelength                = -1 # >0, approx size of a refined facet; <0 - number of refinements
 PertrubationBottomSize                = 1 # The size of the fingers bottom relative to the facet.
 PertrubationTopSize                   = 4 # The size of the fingers top relative to the facet.
 PertrubationBottomDensity             = 4.7397E+08 # >0 - density inside the fingers; <=0 - leave as already initialized
-PertrubationTopDensity                = 5.9318E+08 # >0 - density outside the findgers; <0 - leave as already initialized
+PertrubationTopDensity                = 5.9318E+08 # >0 - density outside the findgers; <=0 - leave as already initialized
 
 UseSphericalGravity = 1
 # SphericalGravityInnerCutoffRaduis = # 0: Unlimited

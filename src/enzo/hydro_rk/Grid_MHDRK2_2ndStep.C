@@ -78,7 +78,7 @@ int NumberOfSubgrids, int level, ExternalBoundary *Exterior, TopGridData *MetaDa
 		dU[field] = new float[activesize];
 	}
 
-	this->ReturnHydroRKPointers(Prim, true);  //##### added! because Hydro3D needs fractions for species
+//	this->ReturnHydroRKPointers(Prim, true);  //##### added! because Hydro3D needs fractions for species
 
 	/* Compute dU */
 

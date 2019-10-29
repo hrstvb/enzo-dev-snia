@@ -61,20 +61,6 @@
 
 //using namespace std;
 
-int debugprintboundary(char* LABEL, char* label, float *f, FLOAT* F, int in, int jn, int kn,
-int rank, int is, int ie, int js,
-int je, int ks, int ke, float dt, float dx[], float dy[], float dz[], FLOAT** CellLeftEdges, int level, int gridId,
-float time, int cycle);
-//	return debugprintboundary(LABEL, label, f, F, NULL, NULL, NULL, in, jn, kn, rank, is, ie, js, je, ks, ke, dt, dx, dy, dz,
-//								CellLeftEdges, level, gridId, time, cycle);
-int debugprintboundary(char* LABEL, char* label, float *f, FLOAT* F, int* gridDims, int level, int gridId, float time)
-{
-	return debugprintboundary(LABEL, label, f, F, gridDims[0], gridDims[1], gridDims[2], 0, 0, 0, 0, 0, 0, 0, 0, NULL,
-	NULL,
-								NULL, NULL, level, gridId, time, 0);
-}
-
-int MakeFieldConservative(int field);
 int MHDProfileInitExactB(float* Bx, float* By, float* Bz, FLOAT x, FLOAT y, FLOAT z);
 float SphericalGravityGetAt(FLOAT r);
 //void WriteInitialProfile(char* name, FLOAT* RR, FLOAT* RHO, FLOAT* GG, FLOAT* PP, FLOAT* UU, size_t n, FLOAT K,
@@ -635,6 +621,9 @@ float dipoleMoment[3], float dipoleCenter[3], bool usingVectorPotential, TopGrid
 
 int grid::PerturbWithTriSPhere(TriSphere *triSphere, FILE *fptr = NULL)
 {
+	if(ProcessorNumber != MyProcessorNumber)
+		return SUCCESS;
+
 	float *rhoField, *totEField, *vxField, *vyField, *vzField;
 	float *gasEField = NULL, *rhoNiField = NULL;
 	float *BxField = NULL, *ByField = NULL, *BzField = NULL;
@@ -724,7 +713,10 @@ int grid::PerturbWithTriSPhere(TriSphere *triSphere, FILE *fptr = NULL)
 					if(PertrubationBottomDensity > 0)
 						rhoField[index] = rho = PertrubationBottomDensity;
 					else
-						rho = rhoField[index];
+					{
+						rho = rhoField[index] * .75;
+						rhoField[index] = rho;
+					}
 					rhoNiField[index] = massfrac * rho;
 					numInside++;
 				}
@@ -771,49 +763,6 @@ float dipoleMoment[3], float dipoleCenter[3], bool usingVectorPotential, TopGrid
 
 	int hasGasEField = DualEnergyFormalism && (HydroMethod != Zeus_Hydro); //[BH]
 
-//	if(CellWidth[0][0] <= 0)
-//		PrepareGridDerivedQuantities();
-//
-//// Assign fieldType numbers using constants from typedefs.h,
-//// as well as count the number of fields.
-//	NumberOfBaryonFields = 0;
-//	FieldType[NumberOfBaryonFields++] = Density;
-//	if(EquationOfState == 0)
-//		FieldType[NumberOfBaryonFields++] = TotalEnergy;
-//	if(hasGasEField)
-//		FieldType[NumberOfBaryonFields++] = InternalEnergy;
-//	FieldType[NumberOfBaryonFields++] = Velocity1;
-//	FieldType[NumberOfBaryonFields++] = Velocity2;
-//	FieldType[NumberOfBaryonFields++] = Velocity3;
-//	if(WritePotential)
-//		FieldType[NumberOfBaryonFields++] = GravPotential;
-//	if(UseBurning)
-//		FieldType[NumberOfBaryonFields++] = Density_56Ni; //[BH]
-//	if(UseMHD)
-//	{
-//		FieldType[NumberOfBaryonFields++] = Bfield1;
-//		FieldType[NumberOfBaryonFields++] = Bfield2;
-//		FieldType[NumberOfBaryonFields++] = Bfield3;
-//		if(HydroMethod == MHD_RK)
-//			FieldType[NumberOfBaryonFields++] = PhiField;
-//	}
-//
-//	if(HydroMethod == MHD_RK || usingVectorPotential)
-//	{
-//		// Allow the ElectricField and MagneticField to
-//		// be created temporarily for the purpose of
-//		// initializing with vector potential.
-//		// Free these fields in MHDProfileInitializeGrid2.
-//		MHD_SetupDims();
-//	}
-//
-//	if(ProcessorNumber != MyProcessorNumber || p == NULL)
-//	{
-//		//p==NULL is used with ParallelGridIO.
-//		//End init phase 0
-//		return SUCCESS;
-//	}
-
 	TRACEGF("INITIALIZING GRID PHASE 1, FIELDS.");
 
 	this->AllocateGrids();
@@ -823,9 +772,7 @@ float dipoleMoment[3], float dipoleCenter[3], bool usingVectorPotential, TopGrid
 	float *BxField = NULL, *ByField = NULL, *BzField = NULL;
 
 	MHD_SNIA_GetFields(&rhoField, &totEField, &gasEField, &vxField, &vyField, &vzField, NULL, &BxField, &ByField,
-						&BzField,
-						NULL,
-						&rhoNiField, NULL, NULL);
+						&BzField, NULL, &rhoNiField, NULL, NULL);
 
 	int debugnanflag = 0; //[BH]
 	float gammaMinusOne = Gamma - 1;
@@ -858,8 +805,21 @@ float dipoleMoment[3], float dipoleCenter[3], bool usingVectorPotential, TopGrid
 				bool isBurned = false;
 				double r1, r2;
 
-				switch(PerturbationMethod * (PerturbationOnRestart != 0))
+				int pertMethTemp = PerturbationMethod;
+				if(PerturbationOnRestart && (PerturbationMethod > 0))
+					pertMethTemp = 0; // no perturbation, because we piggyback on PerturbationMethod for non-spherical init.
+
+				switch(pertMethTemp)
 				{
+				case -3:
+					isBurned = fabs(rz) < InitialBurnedRadius;
+					break;
+				case -2:
+					isBurned = fabs(ry) < InitialBurnedRadius;
+					break;
+				case -1:
+					isBurned = fabs(rx) < InitialBurnedRadius;
+					break;
 				case 0:
 					isBurned = r <= InitialBurnedRadius;
 					break;
@@ -906,24 +866,16 @@ float dipoleMoment[3], float dipoleCenter[3], bool usingVectorPotential, TopGrid
 				}
 
 				if(isBurned)
+				{
+//					rho *= 0.75;
 					rhoNi = rho;
+				}
 				rhoField[index] = rho;
 				if(rho <= 0)
 					TRACEF("Bad density at  %lld %lld %lld :  %e", i, j, k, rho);
 				if(UseBurning)
 					rhoNiField[index] = rhoNi;
 
-//					if(debug + 1 && MyProcessorNumber == ROOT_PROCESSOR)
-//						if((j == 0 || j == (GridDimension[1] - 1)) && (k == 0 || k == (GridDimension[2] - 1))
-//								&& fabs(y) < fabs(GridRightEdge[1] - GridLeftEdge[0]) / 4
-//								&& fabs(z) < fabs(GridRightEdge[2] - GridLeftEdge[2]) / 4)
-////							if(j == (GridDimension[1]) && k == (GridDimension[2]) && i >= GridDimension[0])
-//							TRACEF("i,j,k=%03d,%04d,%04d, x,y,z=(%4f,%4f,%4f), rx,ry,rz=(%4f,%4f,%4f), r=%4f, " //
-//							"rho=%e, U=%e, E=%e, v_r=%e, v^2=%e, B^2=%e, "//
-//							"burned=%d, K=%e, gamma-1=%f",//
-//									i, j, k, x * 1e-5, y * 1e-5, z * 1e-5, rx * 1e-5, ry * 1e-5, rz * 1e-5, r * 1e-5, //
-//									rho, gasE, totE, vr, vv, BB, //
-//									isBurned, EOSPolytropicFactor, gammaMinusOne);
 			} //end baryonfield initialize
 		}
 	}
@@ -935,110 +887,6 @@ float dipoleMoment[3], float dipoleCenter[3], bool usingVectorPotential, TopGrid
 		if(MyProcessorNumber == ROOT_PROCESSOR && isTopGrid())
 			fptr = fopen("trisphere_init.py", "w");
 		PerturbWithTriSPhere(triSphere, fptr);
-		//TODO
-//		if(fptr)
-//		{
-//			fprintf(fptr, "type('', (), dict(\n");
-//
-//			fprintf(fptr, ""
-//					"## Unperturbed sphere (primary surface) triangulation parameters:\n"
-//					"R = %e , # Primary radius\n"
-//					"nV = %lld , # Number of vertices\n"
-//					"nE = %lld , # Number of edges\n"
-//					"nF = %lld , # Number of faucets \n"
-//					"## Perturbations parameters:\n"
-//					"A = %e , # Approx. perturbation height\n"
-//					"bottomBaseSize = %4.2f , # relative to the primary facet (linear)\n"
-//					"topBaseSize = %4.2f , # relative to the primary facet (linear)\n",
-//					triSphere->R, triSphere->nV, triSphere->nE, triSphere->nF, triSphere->A, triSphere->bottomBaseSize,
-//					triSphere->topBaseSize);
-//			fprintf(fptr, "## Grid parameters:\n"
-//					"gridLevel = %lld , # Hierarchy level\n"
-//					"gridID = %lld , # grid ID in level\n"
-//					"grid_dx = %e , # Grid spatial step\n"
-//					"numGhostZones = %lld , \n"
-//					"gridEdges = [\n"
-//					"  [ %e , %e , %e ], # grid left edges\n"
-//					"  [ %e , %e , %e ]], #grid right edges\n",
-//					0, ID, TopGridDx[0], NumberOfGhostZones, GridLeftEdge[0], GridLeftEdge[1], GridLeftEdge[2],
-//					GridRightEdge[0], GridRightEdge[1], GridRightEdge[2]);
-//
-//			fprintf(fptr, "\n# Perturbation data for the grid:\ndata=[\n\n");
-//		}
-//
-////Perturb in the shell between r1 < r <r2.
-//// Calculate position with respect to each side.
-//		for(size_t k_face = 0; k_face < triSphere->nF; k_face++)
-//		{
-//			long lijk[3], rijk[3];
-//			double *ledge, *redge;
-//			FLOAT xyz[3], xyz2[3];
-//			size_t numInside = 0;
-//
-//			triSphere->getSpikeEnclosingRectangle(k_face, &ledge, &redge);
-//			if(fptr)
-//			{
-//				fprintf(fptr, "[ %lld ,\n", k_face);
-//				triSphere->fprint_cache(fptr);
-//				fprintf(fptr, "],\n[");
-//			}
-//
-//			if(0 > intersect(ledge, redge))
-//			{
-//				if(fptr)
-//					fprintf(fptr, "]],\n");
-//				continue;
-//			}
-//
-//			get_ijk_index(lijk, ledge);
-//			get_ijk_index(rijk, redge);
-//
-//			for(size_t k = lijk[2]; k < rijk[2]; k++)
-//			{
-//				xyz[2] = CELLCENTER(2, k);
-//				for(size_t j = lijk[1]; j < rijk[1]; j++)
-//				{
-//					xyz[1] = CELLCENTER(1, j);
-//					for(size_t i = lijk[0]; i < rijk[0]; i++)
-//					{
-//						xyz[0] = CELLCENTER(0, i);
-//
-//						bool isInsideSpike = triSphere->isInSpike(k_face, xyz);
-//						if(!isInsideSpike)
-//							continue;
-//
-//						if(fptr)
-//							fprintf(fptr, "[ %e , %e , %e ],\n", xyz[0], xyz[1], xyz[2]);
-//
-//						size_t index = ELT(i, j, k);
-//						//TODO: Use level instead of DX
-//						double DX = TopGridDx[0] / CellWidth[0][0];
-//						double massfrac = (DX > .75) ? 1 : (DX > .4) ? .2 : .01;
-//						massfrac = 4 * massfrac / (1 + 3 * massfrac);
-//						massfrac = 1;
-//						float rho;
-//						if(PertrubationBottomDensity > 0)
-//							rhoField[index] = rho = PertrubationBottomDensity;
-//						else
-//							rho = rhoField[index];
-//						rhoNiField[index] = massfrac * rho;
-//						numInside++;
-//					}
-//				}
-//			} // end i,j,k loops
-//
-//			if(fptr)
-//				fprintf(fptr, "]],\n");
-//		} // end k_face loop
-//
-//		if(fptr)
-//		{
-//			fprintf(fptr, "\n] #end data\n");
-//			fprintf(fptr, ") #end dict\n");
-//			fprintf(fptr, ") #end type\n\n");
-//			fclose(fptr);
-//			fptr == NULL;
-//		}
 	}
 
 //Initialize all other fields.
@@ -1067,17 +915,26 @@ float dipoleMoment[3], float dipoleCenter[3], bool usingVectorPotential, TopGrid
 					float rhoNi = rhoNiField[index];
 					float T = 0;
 
-					vx = GridVelocity[0];
-					vy = GridVelocity[1];
-					vz = GridVelocity[2];
+					vx = vy = vz = vr = 0; // radial, inward
 					if(p->radialVelocityData)
-					{
 						p->interpolateRadialVelocity(&vr, r);
-						vx += vr * rx / r;
-						vy += vr * ry / r;
-						vz += vr * rz / r;
+					else if(0)
+					{
+						vr = 10e5; // radial
+						if(1) // tangential
+						{
+							vx = vr * (-ry / r);
+							vy = vr * (rx / r);
+							vr = 0;
+						}
 					}
-					vx = vy = vz = 0;
+					vx += vr * rx / r;
+					vy += vr * ry / r;
+					vz += vr * rz / r;
+
+					vx += GridVelocity[0];
+					vy += GridVelocity[1];
+					vz += GridVelocity[2];
 //					vz=1e5;
 //					if((i==99 || i==100 || 1) && j == 110 && k == 110)
 //						vy = 1e5;
@@ -1331,7 +1188,7 @@ float dipoleMoment[3], float dipoleCenter[3], bool usingVectorPotential, TopGrid
 	size_t index;
 
 //This call will work for RK and Zeus.
-	iterator48(this, totEField, rhoField, p, -1, vxyzField, BxyzField);
+//	iterator48(this, totEField, rhoField, p, -1, vxyzField, BxyzField);
 
 // Initializer for MHD_li with inverse limiter (limiters  10..19)
 //	if(hasGasEField)
