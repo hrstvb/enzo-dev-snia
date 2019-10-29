@@ -1032,6 +1032,7 @@ int SetDefaultGlobalValues(TopGridData &MetaData)
   PertrubationTopSize           = 0.0;   //[BH]
   PertrubationBottomDensity     = 0;     //[BH]
   PertrubationTopDensity        = 0;     //[BH]
+  PerturbationVelocity          = 0;     //[BH]
   triSphere                     = NULL;  //[BH]
   InitialBurnedRegionSustain	= 0;     //[BH]
   InitRadialPressureFromCentral = 0;     //[BH]

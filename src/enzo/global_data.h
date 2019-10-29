@@ -1151,6 +1151,7 @@ EXTERN float PertrubationBottomSize;               //[BH]
 EXTERN float PertrubationTopSize;                  //[BH]
 EXTERN float PertrubationBottomDensity;            //[BH]
 EXTERN float PertrubationTopDensity;               //[BH]
+EXTERN float PerturbationVelocity;                 //[BH]
 struct TriSphere;
 EXTERN TriSphere* triSphere;						//[BH]
 EXTERN int InitialBurnedRegionSustain;				//[BH]

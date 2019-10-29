@@ -627,7 +627,9 @@ int grid::PerturbWithTriSPhere(TriSphere *triSphere, FILE *fptr = NULL)
 	float *rhoField, *totEField, *vxField, *vyField, *vzField;
 	float *gasEField = NULL, *rhoNiField = NULL;
 	float *BxField = NULL, *ByField = NULL, *BzField = NULL;
-	MHD_SNIA_GetFields(&rhoField, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, &rhoNiField, NULL, NULL);
+	MHD_SNIA_GetFields(&rhoField, NULL, NULL, &vxField, &vyField, &vzField, NULL, NULL, NULL, NULL, NULL, &rhoNiField,
+	NULL,
+						NULL);
 
 	if(fptr)
 	{
@@ -714,8 +716,16 @@ int grid::PerturbWithTriSPhere(TriSphere *triSphere, FILE *fptr = NULL)
 						rhoField[index] = rho = PertrubationBottomDensity;
 					else
 					{
-						rho = rhoField[index] * .75;
+						rho = rhoField[index];
 						rhoField[index] = rho;
+					}
+
+					if(PerturbationVelocity > 0)
+					{
+						double r = lenl(xyz, 3);
+						vxField[index] += PerturbationVelocity * xyz[0] / r;
+						vyField[index] += PerturbationVelocity * xyz[1] / r;
+						vzField[index] += PerturbationVelocity * xyz[2] / r;
 					}
 					rhoNiField[index] = massfrac * rho;
 					numInside++;
@@ -739,6 +749,14 @@ int grid::PerturbWithTriSPhere(TriSphere *triSphere, FILE *fptr = NULL)
 	return SUCCESS;
 }
 
+
+/*
+ * Init phase 1
+ * Stub (phase 0) if necessary. Allocate fields.
+ * Initialize density (eventually from profile).
+ * Init burned fraction and perturb burned interface, incl velocity.
+ *
+ */
 int grid::MHDProfileInitializeGrid1(MHDInitialProfile* p,
 float burningTemperature,
 float burnedRadius,
@@ -880,6 +898,12 @@ float dipoleMoment[3], float dipoleCenter[3], bool usingVectorPotential, TopGrid
 		}
 	}
 
+	arr_set(gasEField, GetGridSize(), 0);
+	arr_set(totEField, GetGridSize(), 0);
+	arr_set(vxField, GetGridSize(), 0);
+	arr_set(vyField, GetGridSize(), 0);
+	arr_set(vzField, GetGridSize(), 0);
+
 //Spikes perturbations (method == 4)
 	if(PerturbationMethod == 4 && burnedRadius > 0 && !PerturbationOnRestart)
 	{
@@ -915,11 +939,12 @@ float dipoleMoment[3], float dipoleCenter[3], bool usingVectorPotential, TopGrid
 					float rhoNi = rhoNiField[index];
 					float T = 0;
 
-					vx = vy = vz = vr = 0; // radial, inward
+					vx = vy = vz = vr = 0;
 					if(p->radialVelocityData)
 						p->interpolateRadialVelocity(&vr, r);
 					else if(0)
 					{
+						// values for testing
 						vr = 10e5; // radial
 						if(1) // tangential
 						{
@@ -928,22 +953,18 @@ float dipoleMoment[3], float dipoleCenter[3], bool usingVectorPotential, TopGrid
 							vr = 0;
 						}
 					}
+					//Project radial velocity to coordinate components.
+					//If the above method sets these components itself
+					//it should set vr = 0.
 					vx += vr * rx / r;
 					vy += vr * ry / r;
 					vz += vr * rz / r;
 
+					//Add bulk velocity.
 					vx += GridVelocity[0];
 					vy += GridVelocity[1];
 					vz += GridVelocity[2];
-//					vz=1e5;
-//					if((i==99 || i==100 || 1) && j == 110 && k == 110)
-//						vy = 1e5;
 
-//					{
-//						for(int i = 0; i<p->nRowsInternalEnergy; i++)
-//							printf(" %e, ", p->internalEnergyData[i]);
-//						printf("\n");
-//					}
 					float gasE = 0;
 					if(p->internalEnergyData)
 					{
@@ -975,11 +996,11 @@ float dipoleMoment[3], float dipoleCenter[3], bool usingVectorPotential, TopGrid
 
 //					rhoField[index] = rho;
 					if(hasGasEField)
-						gasEField[index] = gasE;
-					totEField[index] = totE;
-					vxField[index] = vx;
-					vyField[index] = vy;
-					vzField[index] = vz;
+						gasEField[index] += gasE;
+					totEField[index] += totE;
+					vxField[index] += vx;
+					vyField[index] += vy;
+					vzField[index] += vz;
 //					if(UseBurning)
 //						rhoNiField[index] = rhoNi;
 
