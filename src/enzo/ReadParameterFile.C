@@ -1339,6 +1339,7 @@ int ReadParameterFile(FILE *fptr, TopGridData &MetaData, float *Initialdt)
     ret += sscanf(line, "PertrubationTopSize                   = %"FSYM, &PertrubationTopSize                  ); //[BH]
     ret += sscanf(line, "PertrubationBottomDensity             = %"FSYM, &PertrubationBottomDensity            ); //[BH]
     ret += sscanf(line, "PertrubationTopDensity                = %"FSYM, &PertrubationTopDensity               ); //[BH]
+    ret += sscanf(line, "PerturbationVelocity                  = %"FSYM, &PerturbationVelocity                 ); //[BH]
     ret += sscanf(line, "InitialBurnedRegionSustain            = %"ISYM, &InitialBurnedRegionSustain           ); //[BH]
     ret += sscanf(line, "InitRadialPressureFromCentral         = %"FSYM, &InitRadialPressureFromCentral        ); //[BH]
     ret += sscanf(line, "InitBWithVectorPotential              = %"ISYM, &InitBWithVectorPotential             ); //[BH]

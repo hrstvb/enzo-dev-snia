@@ -80,8 +80,13 @@ FILE *negEFile_open(char** filename, TopGridData *MetaData, int level, grid *g, 
 			g->GetCellLeftEdge(2, g->GetGridDimension(2))
 			);
 
-	if(filename && *filename == NULL)
-		*filename = fname;
+	if(filename)
+	{
+		if(*filename == NULL)
+			*filename = fname;
+	}
+	else
+		delete fname;
 
 	return file;
 }

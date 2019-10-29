@@ -1286,6 +1286,7 @@ int WriteParameterFile(FILE *fptr, TopGridData &MetaData, char *name = NULL)
   fprintf(fptr, "PertrubationTopSize                   = %"FSYM"\n", PertrubationTopSize                  ); //[BH]
   fprintf(fptr, "PertrubationBottomDensity             = %"FSYM"\n", PertrubationBottomDensity            ); //[BH]
   fprintf(fptr, "PertrubationTopDensity                = %"FSYM"\n", PertrubationTopDensity               ); //[BH]
+  fprintf(fptr, "PerturbationVelocity                  = %"FSYM"\n", PerturbationVelocity                 ); //[BH]
   fprintf(fptr, "InitialBurnedRegionSustain            = %"ISYM"\n", InitialBurnedRegionSustain		      ); //[BH]
   fprintf(fptr, "InitRadialPressureFromCentral         = %"FSYM"\n", InitRadialPressureFromCentral        ); //[BH]
   fprintf(fptr, "InitBWithVectorPotential              = %"ISYM"\n", InitBWithVectorPotential             ); //[BH]
