@@ -46,12 +46,28 @@ float *xNew, float *dxUsed);
 
 int grid::DiffuseBurnedFraction()
 {
-
 	if(ProcessorNumber != MyProcessorNumber)
 		return SUCCESS;
 
 	if(NumberOfBaryonFields == 0)
 		return SUCCESS;
+
+	switch(BurningDiffusionMethod)
+	{
+	case -1:
+		return SUCCESS;
+	case 0:
+	case 1:
+	case 2:
+		break;
+	default:
+		ENZO_VTHROW(" Unknown diffusion method, %lld, for burned fraction. Valid methods are:\n"
+				"   -1    Turn off diffusion. (Different from diffusion rate = reaction rate = 0);\n"
+				"    0    7-point 3D stencil;\n"
+				"    1    27-point 3D stencil;\n"
+				"    2    125-pont 3D stencil.\n",
+				BurningDiffusionMethod);
+	}
 
 	this->DebugCheck("DiffuseBurnedFraction");
 

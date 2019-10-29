@@ -97,7 +97,7 @@ public:
 //#define ENZO_FAIL(A) throw(EnzoFatalException(A, __FILE__, __LINE__));
 #define ENZO_THROW(A) do{throw(EnzoFatalException(__FILE__, __LINE__, A));}while(0)
 ////#define ENZO_VFAIL(format, ...) {snprintf(current_error, 254, format, ##__VA_ARGS__); throw(EnzoFatalException(current_error, __FILE__, __LINE__));}
-#define ENZO_VTHROW(format, ...) do{throw new EnzoFatalException(__FILE__, __LINE__, format, ##__VA_ARGS__);}while(0)
+#define ENZO_VTHROW(format, ...) do{snprintf(current_error, 254, format, ##__VA_ARGS__); throw(EnzoFatalException(current_error, __FILE__, __LINE__));}while(0)
 #endif
 
 #endif

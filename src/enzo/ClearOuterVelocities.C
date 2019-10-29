@@ -173,7 +173,7 @@ float dy[], float dz[], FLOAT** CellLeftEdges, int level, TopGridData *MetaData,
 					// Determine if the radial component should be cleared
 					// based on the parameters and depending on whether it is
 					// pointing toward the center (inward) or away (outward).
-					doClearN = (OuterVelocitiesClearInward && vdotr < 0) || (OuterVelocitiesClearOutward && vdotr > 0);
+//					doClearN = (OuterVelocitiesClearInward && vdotr < 0) || (OuterVelocitiesClearOutward && vdotr > 0);
 
 					if(OuterVelocitiesClearTangential && doClearN)
 					{

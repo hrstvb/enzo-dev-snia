@@ -233,13 +233,19 @@ int MHDProfileSetLabels(bool useGE, bool UseMetal)
 	DataLabel[i++] = Vel3Name; //"cm/s";
 
 	if(UseMetal)
+	{
 		DataLabel[i++] = MetalName;
+		NColor++;
+	}
 
 	if(WritePotential)
 		DataLabel[i++] = GPotName;
 
 	if(UseBurning)
+	{
 		DataLabel[i++] = Density_56NiName; //[BH]
+		NColor++;
+	}
 
 	if(UseMHD)
 	{
@@ -313,7 +319,7 @@ int SphericalGravityIntegratePressure(MHDInitialProfile* profile, float initialP
 	}
 
 	for(j = 0; j < N; j++)
-		gg[j] = -SphericalGravityGetAt(r);
+		gg[j] = -SphericalGravityGetAt(rr[j]);
 
 	// Start from the certer with P_c = 0, apply the initial condition later.
 	P_c = 0;
@@ -414,14 +420,14 @@ int MHDProfileInitialize(FILE *fptr, FILE *Outfptr, HierarchyEntry &TopGrid, Top
 	float dipoleMoment[3] = { 0, 0, 0 };
 	float dipoleCenter[3] = { 0, 0, 0 };
 
+	// For MHD_RK and HD_RK
+	NSpecies = NColor = 0;
+	NoMultiSpeciesButColors = 1;
+
 	if(MHD_LI_GRAVITY_AFTER_PLMPRED)
 	{
 		fprintf(stderr, "Using modified MHD_Li solver (see MHD_LI_GRAVITY_AFTER_PLMPRED)\n");
 	}
-
-//	bool reinit = fptr == NULL;
-//	if(fptr == NULL)
-//		fptr = fopen("params.enzo", "r");
 
 	*ProfileFileName = *ProfileFormat = *ProfileType = '\0';
 	*RadiusColumnName = *DensityColumnName = *RadialVelocityColumnName = *TemperatureColumnName = '\0';
@@ -537,18 +543,17 @@ int MHDProfileInitialize(FILE *fptr, FILE *Outfptr, HierarchyEntry &TopGrid, Top
 										InitialBurnedRadius * (rhit.currentLevel == MaximumRefinementLevel) ? 1 : 0,
 										dipoleMoment, dipoleCenter, InitBWithVectorPotential, &MetaData);
 
+		if(UseSphericalGravity)
+			ret = SphericalGravityComputePotential(rhit.levelArray, &MetaData, true);
+TRACE;
 		if(doIntegratePressure)
-		{
-			if(UseSphericalGravity)
-				ret = SphericalGravityComputePotential(rhit.levelArray, &MetaData, true);
 			SphericalGravityIntegratePressure(&p, InitRadialPressureFromCentral, false);
-		}
 
 		g->MHDProfileInitializeGrid2(&p, BurningTemperature,
 										InitialBurnedRadius * (rhit.currentLevel == MaximumRefinementLevel) ? 1 : 0,
 										dipoleMoment, dipoleCenter, InitBWithVectorPotential, &MetaData);
 	}
-
+TRACE;
 	if(triSphere)
 	{
 		// Free the tirSphere and turn off the static refinement shell.
@@ -603,7 +608,7 @@ int MHDProfileInitialize(FILE *fptr, FILE *Outfptr, HierarchyEntry &TopGrid, Top
 
 //	if(p.internalEnergyData == NULL && InitRadialPressureFromCentral != 0)
 //		SphericalGravityIntegratePressure(&p, InitRadialPressureFromCentral, false);
-
+TRACE;
 	if(InitBWithVectorPotential
 			|| (UseSphericalGravity && InitRadialPressureFromCentral && *InternalEnergyColumnName == '\0'
 					|| MHDCTSlopeLimiter > 10 || 1))
@@ -620,6 +625,12 @@ int MHDProfileInitialize(FILE *fptr, FILE *Outfptr, HierarchyEntry &TopGrid, Top
 
 int MHDProfileInitializeRestart(TopGridData *MetaData, LevelHierarchyEntry **LevelArray, HierarchyEntry *TopGrid)
 {
+	// For MHD_RK and HD_RK
+	NSpecies = 0;
+	NColor = 1;
+	NoMultiSpeciesButColors = 1;
+
+	SphericalGravityComputePotential(LevelArray, MetaData, true);
 	if(!PerturbationOnRestart)
 		return SUCCESS;
 

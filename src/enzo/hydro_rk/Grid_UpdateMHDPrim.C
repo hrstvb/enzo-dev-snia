@@ -123,8 +123,26 @@ int grid::UpdateMHDPrim(float **dU, float c1, float c2, char* failText, TopGridD
 				igrid = (k * GridDimension[1] + j) * GridDimension[0] + GridStartIndex[0];
 				for(i = GridStartIndex[0]; i <= GridEndIndex[0]; i++, n++, igrid++)
 				{
-					Prim[field][igrid] = c1 * OldPrim[field][igrid] + (1 - c1) * Prim[field][igrid] * Prim[iden][igrid]
-							+ c2 * dU[field][n];
+					//Prim[field][igrid] = c1 * OldPrim[field][igrid] + (1 - c1) * Prim[field][igrid]
+					//					+ c2 * dU[field][n];
+					float old_u = OldPrim[field][igrid];
+					float u = Prim[field][igrid];
+					float du = dU[field][n];
+
+//					float newPrim = c1 * OldPrim[field][igrid] + (1 - c1) * Prim[field][igrid]
+//								+ c2 * dU[field][n];
+//					if( c1=1  && OldPrim[field][igrid]>9e8
+//						||
+//						c1<.9 && Prim[field][igrid]!=OldPrim[field][igrid] && OldPrim[field][igrid]>9e8){
+//						TRACEF("  %lld[%lld]:  %e = %3.1f * %e  +  %3.1f * %e  +  %3.1f * %e", field, igrid, newPrim,
+//								c1, OldPrim[field][igrid], (1 - c1), Prim[field][igrid], c2, dU[field][n]);}
+					float newPrim = (1-c1) * old_u + (c1) * u + c2 * du;
+//					if(c1==1 && old_u>9e8 || c1<.9 && u!=old_u && old_u>9e8)
+//					{
+//						TRACEF("  %lld[%lld]:  %e = %3.1f * %e  +  %3.1f * %e  +  %3.1f * %e", field, igrid, newPrim,
+//								(1 - c1), old_u, (c1), u, c2, du);}
+					Prim[field][igrid] = newPrim;
+
 					if(NoMultiSpeciesButColors != 1)
 						D[n] += Prim[field][igrid];
 				}
@@ -133,6 +151,7 @@ int grid::UpdateMHDPrim(float **dU, float c1, float c2, char* failText, TopGridD
 	}
 
 	// renormalize species
+//	if(!UseBurning) //[BH]
 	if(NoMultiSpeciesButColors != 1)
 	{
 		for(field = NEQ_MHD; field < NEQ_MHD + NSpecies_renorm; field++)
@@ -181,7 +200,6 @@ int grid::UpdateMHDPrim(float **dU, float c1, float c2, char* failText, TopGridD
 	char* negEptr = negEFileName;
 	FILE *negEFile = NULL;
 	int negE1 = 0, negE2 = 0, negE3 = 0;
-
 	for(k = GridStartIndex[2]; k <= GridEndIndex[2]; k++)
 	{
 		for(j = GridStartIndex[1]; j <= GridEndIndex[1]; j++)
@@ -345,6 +363,7 @@ int grid::UpdateMHDPrim(float **dU, float c1, float c2, char* failText, TopGridD
 	}
 
 	// Convert species from mass fraction to density
+//	if(!UseBurning)
 	if(NoMultiSpeciesButColors != 1)
 		for(field = NEQ_MHD; field < NEQ_MHD + NSpecies + NColor; field++)
 			for(n = 0; n < size; n++)
