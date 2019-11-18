@@ -45,7 +45,7 @@ int CosmologyComputeExpansionFactor(FLOAT time, FLOAT *a, FLOAT *dadt);
 //size_t SphericalGravityComputeBinIndex(FLOAT r);
 float SphericalGravityGetAt(FLOAT r);
 
-int grid::ComputeAccelerationFieldExternal()
+int grid::ComputeAccelerationFieldExternal(TopGridData *MetaData)
 {
 
 	/* Return if this does not concern us */
@@ -858,23 +858,23 @@ int grid::ComputeAccelerationFieldExternal()
 			{
 				xyz[2] = (GridRank > 2) ? ((dimZeus == 2) ? CellLeftEdge[2][k] : CELLCENTER(2, k)) : 0;
 				zz = square(xyz[2] - SphericalGravityCenter[2]);
-				if(dim == 2 && zz < dxdx)
-					continue;
+//				if(dim == 2 && zz < dxdx)
+//					continue;
 
 				for(j = 0; j < GridDimension[1]; j++)
 				{
 					xyz[1] = (GridRank > 1) ? ((dimZeus == 1) ? CellLeftEdge[1][j] : CELLCENTER(1, j)) : 0;
 					yy_zz = square(xyz[1] - SphericalGravityCenter[1]);
-					if(dim == 1 && yy_zz < dxdx)
-						continue;
+//					if(dim == 1 && yy_zz < dxdx)
+//						continue;
 					yy_zz += zz;
 
 					for(i = 0; i < GridDimension[0]; i++)
 					{
 						xyz[0] = (dimZeus == 0) ? CellLeftEdge[0][i] : CELLCENTER(0, i);
 						rsquared = square(xyz[0] - SphericalGravityCenter[0]);
-						if(dim == 0 && rsquared < dxdx)
-							continue;
+//						if(dim == 0 && rsquared < dxdx)
+//							continue;
 						rsquared += yy_zz;
 						r = sqrt(rsquared);
 

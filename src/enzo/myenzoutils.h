@@ -42,6 +42,9 @@ using namespace std;
 #ifndef M_GOLDEN_RATIO
 #define M_GOLDEN_RATIO      1.61803398874989
 #endif
+
+#define CELLCENTER(dim, index) (0.5*(CellLeftEdge[dim][index]+CellLeftEdge[dim][index+1]))
+
 /*
  * Type utilities.
  */

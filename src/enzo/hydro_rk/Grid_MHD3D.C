@@ -24,11 +24,11 @@
 #include "Grid.h"
 
 int MHDSweepX(float **Prim,  float **Flux3D, int GridDimension[],
-	      int GridStartIndex[], FLOAT **CellWidth, float dtdx, int fallback);
+	      int GridStartIndex[], FLOAT **CellWidth, float dtdx, int fallback, FLOAT cellWidth);
 int MHDSweepY(float **Prim,  float **Flux3D, int GridDimension[],
-	      int GridStartIndex[], FLOAT **CellWidth, float dtdx, int fallback);
+	      int GridStartIndex[], FLOAT **CellWidth, float dtdx, int fallback, FLOAT cellWidth);
 int MHDSweepZ(float **Prim,  float **Flux3D, int GridDimension[],
-	      int GridStartIndex[], FLOAT **CellWidth, float dtdx, int fallback);
+	      int GridStartIndex[], FLOAT **CellWidth, float dtdx, int fallback, FLOAT cellWidth);
 int CosmologyComputeExpansionFactor(FLOAT time, FLOAT *a, FLOAT *dadt);
 
 int grid::MHD3D(float **Prim, float **dU, float dt,
@@ -80,6 +80,26 @@ int grid::MHD3D(float **Prim, float **dU, float dt,
   }
 
   FLOAT a = 1, dadt;
+  FLOAT cellWidth = CellWidth[0][0];
+  if(UseBurning && BurningDiffusionMethod==3)
+  {
+		float *rhoField = Prim[0];
+		float *niField = Prim[NEQ_MHD];
+		for(size_t i = 0; i < GetGridSize(); i++)
+		{
+			float rho = rhoField[i];
+			if(rho > tiny_number)
+			{
+				float ni = niField[i];
+				niField[i] = (ni > 0) ? (ni / (4 * rho - 3 * ni)) : 0;
+
+			}
+			else
+			{
+				niField[i] = 0;
+			}
+		}
+  }
 
   /* If using comoving coordinates, multiply dx by a(n+1/2).
      In one fell swoop, this recasts the equations solved by solver
@@ -98,7 +118,7 @@ int grid::MHD3D(float **Prim, float **dU, float dt,
 
   // compute flux at cell faces in x direction
   FLOAT dtdx = dt/(a*CellWidth[0][0]);
-  if (MHDSweepX(Prim, Flux3D, GridDimension, GridStartIndex, CellWidth, dtdx, fallback)
+  if (MHDSweepX(Prim, Flux3D, GridDimension, GridStartIndex, CellWidth, dtdx, fallback, cellWidth)
       == FAIL) {
     return FAIL;
   }
@@ -164,7 +184,7 @@ int grid::MHD3D(float **Prim, float **dU, float dt,
   if (0 && GridRank > 1) {
     dtdx = dt/(a*CellWidth[1][0]);
     // compute flux in y direction
-    if (MHDSweepY(Prim, Flux3D, GridDimension, GridStartIndex, CellWidth, dtdx, fallback)
+    if (MHDSweepY(Prim, Flux3D, GridDimension, GridStartIndex, CellWidth, dtdx, fallback, cellWidth)
 	== FAIL)
       return FAIL;
 
@@ -203,7 +223,7 @@ int grid::MHD3D(float **Prim, float **dU, float dt,
   if (0 && GridRank > 2) {
     dtdx = dt/(a*CellWidth[2][0]);
     // compute flux in z direction
-    if (MHDSweepZ(Prim, Flux3D, GridDimension, GridStartIndex, CellWidth, dtdx, fallback)
+    if (MHDSweepZ(Prim, Flux3D, GridDimension, GridStartIndex, CellWidth, dtdx, fallback, cellWidth)
 	== FAIL)
       return FAIL;
 

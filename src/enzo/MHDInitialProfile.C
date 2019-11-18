@@ -357,7 +357,7 @@ long long MHDInitialProfile::allocateMoreRows(long long nMoreRows)
 	if(nMoreRows <= 0)
 		nMoreRows = 1024;
 	long long nNewRows = nRowsAllocated + nMoreRows;
-	printf("Increasing number of allocated rows from %d to %d.\n", nRowsAllocated, nNewRows);
+//	printf("Increasing number of allocated rows from %d to %d.\n", nRowsAllocated, nNewRows);
 	for(long long i = 0; i < nCols; i++)
 	{
 		if(colNames[i] == NULL)
@@ -373,7 +373,7 @@ long long MHDInitialProfile::allocateMoreRows(long long nMoreRows)
 		colData[i] = dest;
 	}
 
-	printf("%d rows allocated.\n", nNewRows);
+//	printf("%d rows allocated.\n", nNewRows);
 	return nRowsAllocated = nNewRows;
 }
 
@@ -641,6 +641,7 @@ long long MHDInitialProfile::read(char* filename, char* format, double atTime)
 		throw(EnzoFatalException(s, __FILE__, __LINE__));
 	}
 	identifyNamedCols();
+	TRACEF("Profile successfully read: %lld data rows in %lld columns.\n", nRows, nCols);
 	return n;
 }
 
@@ -653,7 +654,7 @@ long long MHDInitialProfile::readPAH01(char* filename, double atTime)
 {
 	this->requestedTime = atTime;
 	FILE *file;
-	printf("Opening '%s'\n", filename);
+	TRACEF("Opening profile'%s'\n", filename);
 	if((file = fopen(filename, "r")) == NULL)
 		return -1;
 
@@ -714,7 +715,7 @@ long long MHDInitialProfile::readPAH01(char* filename, double atTime)
 			if(!searchingTime)
 			{
 				frameTimeFound = requestedTime;
-				printf("Time header for %f found on line num %d. %d rows\n", requestedTime, lineNum, nRows);
+				TRACEF("Time header for %f found on line num %d. %d rows\n", requestedTime, lineNum, nRows);
 				nRowsAllocateFirst = nRows;
 			}
 			continue;
@@ -799,13 +800,13 @@ long long MHDInitialProfile::readPAH02(char* filename, double atTime)
 	this->requestedTime = atTime;
 
 	FILE *file;
-	printf("Opening '%s'\n", filename);
+	TRACEF("Opening profile PAH02 '%s'", filename);
 	if((file = fopen(filename, "r")) == NULL)
 	{
 		printf("Can't open '%s'.\n", filename);
 		return -1;
 	}
-	printf("PAH02 open\n");
+//	printf("PAH02 open\n");
 
 //	for (long long i = 0; i < p->nCols; i++)
 //	{
@@ -861,7 +862,7 @@ long long MHDInitialProfile::readPAH02(char* filename, double atTime)
 			searchingTime = (requestedTime > t);
 			if(!searchingTime)
 			{
-				printf("Time header for t=%f found on line num %d. %d rows\n", requestedTime, lineNum);
+				TRACEF("Time header for t=%f found on line num %d. %d rows.", requestedTime, lineNum);
 			}
 			continue;
 		}
@@ -886,7 +887,7 @@ long long MHDInitialProfile::readPAH02(char* filename, double atTime)
 	}
 
 	fclose(file);
-	printf("Reading profile finished (%s).\n", filename);
+//	printf("Reading profile finished (%s).\n", filename);
 	if(searchingTime)
 	{
 		printf("Time header for %f not found.\n", requestedTime);

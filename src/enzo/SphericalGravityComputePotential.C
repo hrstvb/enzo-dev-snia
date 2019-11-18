@@ -279,8 +279,12 @@ int SphericalGravityComputePotential(LevelHierarchyEntry *LevelArray[], TopGridD
 	FLOAT** magEBins = (UseMHD || UseMHDCT) ? arr_newset<FLOAT*>(MAX_DIMENSION, NULL) : NULL;
 
 	SphericalGravityAllocateBins(&countBins, &densBins, NULL, NULL, cmBins, kinEBins, magEBins, NULL, 3);
+	int maxRefLevel = max(0, min(MaximumRefinementLevel, MAX_DEPTH_OF_HIERARCHY));
+	int maxGravityLevel = min(SphericalGravityMaxHierarchyLevel, maxRefLevel);
 	for(grid* g = it.firstFromTop(); g; g = it.next())
 	{
+		if(it.currentLevel > maxGravityLevel)
+			break;
 		SphericalGravityClearBins(countBins, densBins, NULL, NULL, cmBins, kinEBins, magEBins, NULL, 3);
 		int retval = g->SphericalGravityAddMassToShell(countBins, densBins, cmBins, kinEBins, magEBins,
 														it.currentEntry);
@@ -364,12 +368,12 @@ int SphericalGravityComputePotential(LevelHierarchyEntry *LevelArray[], TopGridD
 //		arr_printf_pydict("SphericalGravityBinAccelSlopes", "%lld:%e", SphericalGravityBinAccelSlopes, N);
 //	}
 
-	if(interpolateMissingShells || MetaData->CycleNumber==0)
+	if(interpolateMissingShells || MetaData->CycleNumber == 0)
 	{
 		// For shells with no mass (no zones) interpolate the
 		// gravity acceleration (g) so it grows smoothly.
 		int first_empty, after_first_full;
-		FLOAT r1=0, r, r2, g1=0, g, g2, dgdr;
+		FLOAT r1 = 0, r, r2, g1 = 0, g, g2, dgdr;
 		for(int j = 0; j < N; j++)
 		{
 			// Find the next zero shell mass:
@@ -402,7 +406,7 @@ int SphericalGravityComputePotential(LevelHierarchyEntry *LevelArray[], TopGridD
 			r1 = SphericalGravityBinLeftEdges[first_empty];
 			g2 = SphericalGravityBinAccels[after_first_full];
 			r2 = SphericalGravityBinLeftEdges[after_first_full];
-			TRACEF("  empty=%lld  full=%lld", first_empty, after_first_full);
+//			TRACEF("  empty=%lld  full=%lld", first_empty, after_first_full);
 			dgdr = (g2 - g1) / (r2 - r1);
 			for(int k = first_empty + 1; k <= after_first_full; k++)
 			{
@@ -428,9 +432,8 @@ int SphericalGravityComputePotential(LevelHierarchyEntry *LevelArray[], TopGridD
 	if(MyProcessorNumber == ROOT_PROCESSOR && (MetaData->CycleNumber == 0 || debug))
 	{
 		size_t M = 20;
-		fprintf(stderr, "SphericalGravityActualNumberOfBins = %lld\n", M);
-		fprintf(stderr, "SphericalGravityConstant = %lld\n", SphericalGravityConstant);
-		fprintf(stderr, "Spherical Gravity Radius Range  = %lld\n", SphericalGravityInnerCutoffRaduis, SphericalGravityOuterCutoffRaduis);
+		TRACEF("SphericalGravity:  GravityConstant = %e    ActualNumberOfBins = %lld    RadiusRange  = %e .. %e",
+				SphericalGravityConstant, N, SphericalGravityInnerCutoffRaduis, SphericalGravityOuterCutoffRaduis);
 //		arr_printf_pydict("\nSphericalGravityCenter", "%lld:%e", SphericalGravityCenter, 3);
 //		arr_printf_pydict("\nSphericalGravityBinLeftEdges", "%lld:%e", SphericalGravityBinLeftEdges, M);
 //		arr_printf_pydict("\nSphericalGravityShellMasses", "%lld:%e", SphericalGravityShellMasses, M);
@@ -532,7 +535,8 @@ int SphericalGravityWritePotential(char * name, TopGridData& MetaData, Hierarchy
 
 	if(SphericalGravityInteriorMasses == NULL)
 	{
-		fprintf(stderr, "SphericalGravityWritePotential: No Mass Defined, not writing. This can happen after restart.\n");
+		fprintf(stderr,
+				"SphericalGravityWritePotential: No Mass Defined, not writing. This can happen after restart.\n");
 		return SUCCESS;
 	}
 
@@ -612,6 +616,17 @@ int SphericalGravityWritePotential(char * name, TopGridData& MetaData, Hierarchy
 	dataset = H5Dcreate(file_id, "SphericalGravityMassInterior", HDF5_PREC, dataspace_id, H5P_DEFAULT);
 	h5_status = H5Dwrite(dataset, HDF5_PREC, H5S_ALL, H5S_ALL, H5P_DEFAULT, SphericalGravityInteriorMasses);
 	h5_status = H5Dclose(dataset);
+
+	if(SphericalGravityInterpAccelMethod == 1)
+	{
+		dataset = H5Dcreate(file_id, "SphericalGravityBinAccels", HDF5_PREC, dataspace_id, H5P_DEFAULT);
+		h5_status = H5Dwrite(dataset, HDF5_PREC, H5S_ALL, H5S_ALL, H5P_DEFAULT, SphericalGravityBinAccels);
+		h5_status = H5Dclose(dataset);
+
+		dataset = H5Dcreate(file_id, "SphericalGravityBinAccelSlopes", HDF5_PREC, dataspace_id, H5P_DEFAULT);
+		h5_status = H5Dwrite(dataset, HDF5_PREC, H5S_ALL, H5S_ALL, H5P_DEFAULT, SphericalGravityBinAccelSlopes);
+		h5_status = H5Dclose(dataset);
+	}
 
 	h5_status = H5Sclose(dataspace_id);
 	h5_status = H5Fclose(file_id);

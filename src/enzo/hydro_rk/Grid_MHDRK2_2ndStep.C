@@ -83,7 +83,7 @@ int NumberOfSubgrids, int level, ExternalBoundary *Exterior, TopGridData *MetaDa
 	/* Compute dU */
 
 	if(OuterVelocitiesClearAtRKStep2Begin)
-		ClearOuterVelocities(level, MetaData, "ne", "RK2a", ""
+		ClearOuterVelocities(NULL, level, MetaData, "ne", "RK2a", ""
 								"# Grid_MHDRK2_2ndStep, before MHD3D -> ClearOuterVelocities\n"
 							 );
 
@@ -139,7 +139,7 @@ int NumberOfSubgrids, int level, ExternalBoundary *Exterior, TopGridData *MetaDa
 	}
 
 	if(OuterVelocitiesClearAtRKStep2End)
-		ClearOuterVelocities(level, MetaData, "ne", "RK2b", ""
+		ClearOuterVelocities(NULL, level, MetaData, "ne", "RK2b", ""
 								"# Grid_MHDRK2_2ndStep, end -> ClearOuterVelocities\n"
 							 );
 

@@ -151,7 +151,7 @@ int grid::UpdateMHDPrim(float **dU, float c1, float c2, char* failText, TopGridD
 	}
 
 	// renormalize species
-//	if(!UseBurning) //[BH]
+	if(!UseBurning) //[BH]
 	if(NoMultiSpeciesButColors != 1)
 	{
 		for(field = NEQ_MHD; field < NEQ_MHD + NSpecies_renorm; field++)
@@ -186,6 +186,25 @@ int grid::UpdateMHDPrim(float **dU, float c1, float c2, char* failText, TopGridD
 		}
 	} //close if (NoMultiSpeciesButColors == 1)
 	/* Update conserved variables */
+
+	  if(UseBurning && BurningDiffusionMethod==3)
+	  {
+			float *rhoField = Prim[0];
+			float *niField = Prim[NEQ_MHD];
+			for(size_t i = 0; i < gridSize; i++)
+			{
+				float rho = rhoField[i];
+				if(rho > tiny_number)
+				{
+					float ni = niField[i];
+					niField[i] = (ni > 0) ? (rho * 4 * ni / (1 + 3 * ni)) : 0;
+				}
+				else
+				{
+					niField[i] = 0;
+				}
+			}
+	  }
 
 	float rho_old, vx_old, vy_old, vz_old, e_old, etot_old, Tau_old, eint_old, rho, vx, vy, vz, e, etot, Tau, eint, p,
 			v2, D_new, S1_new, S2_new, S3_new, Tau_new, h, cs, dpdrho, dpde, Eint_new, Bx_old, By_old, Bz_old, Bx, By,
@@ -363,7 +382,7 @@ int grid::UpdateMHDPrim(float **dU, float c1, float c2, char* failText, TopGridD
 	}
 
 	// Convert species from mass fraction to density
-//	if(!UseBurning)
+	if(!UseBurning)
 	if(NoMultiSpeciesButColors != 1)
 		for(field = NEQ_MHD; field < NEQ_MHD + NSpecies + NColor; field++)
 			for(n = 0; n < size; n++)

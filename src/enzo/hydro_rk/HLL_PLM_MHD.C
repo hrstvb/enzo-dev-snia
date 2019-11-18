@@ -33,11 +33,11 @@ int cons_plm(float **prim, float **priml, float **primr, int ActiveSize, int Neq
 inline void plm_point(float &vm1, float &v, float &vp1, float &vl_plm);
 int plm_species(float **prim, int is, float **species, float *flux0, int ActiveSize);
 int plm_color(float **prim, int is, float **color, float *flux0, int ActiveSize);
-int hll_mhd(float **FluxLine, float **priml, float **primr, float **prim, int ActiveSize, int debug);
+int hll_mhd(float **FluxLine, float **priml, float **primr, float **prim, int ActiveSize, FLOAT cellWidth, int debug);
 
 int HLL_PLM_MHD(float **prim, float **priml, float **primr,
 		float **species, float **colors,  float **FluxLine, int ActiveSize,
-		char direc, int jj, int kk, int debug)
+		char direc, int jj, int kk, FLOAT cellWidth, int debug)
 {
   // compute priml and primr
   if (ConservativeReconstruction == 1)
@@ -46,7 +46,7 @@ int HLL_PLM_MHD(float **prim, float **priml, float **primr,
     plm(prim, priml, primr, ActiveSize, 9, debug);
 
   // compute FluxLine
-  if (hll_mhd(FluxLine, priml, primr, prim, ActiveSize, debug)==FAIL) {
+  if (hll_mhd(FluxLine, priml, primr, prim, ActiveSize, cellWidth, debug)==FAIL) {
     return FAIL;
   }
 

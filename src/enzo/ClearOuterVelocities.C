@@ -101,8 +101,8 @@ void negEFile_close(FILE *file, const char* filename)
 	}
 }
 
-int ClearOuterVelocities(float *u, float *v, float *w, float *totE, int in, int jn, int kn, int rank, float dx[],
-float dy[], float dz[], FLOAT** CellLeftEdges, int level, TopGridData *MetaData, int gridID, grid *g, char* dumpPrefix,
+int ClearOuterVelocities(float *u, float *v, float *w, float *totE, float *rhoField, float *pressure, int in, int jn, int kn, int rank, float dx[],
+float dy[], float dz[], FLOAT** CellLeftEdge, int level, TopGridData *MetaData, int gridID, grid *g, char* dumpPrefix,
 	char *dumpSuffix, char* dumpPreamble)
 {
 #define DUMP_PREAMBLE2 "# The record format is" \
@@ -122,8 +122,15 @@ float dy[], float dz[], FLOAT** CellLeftEdges, int level, TopGridData *MetaData,
 	char negEFileName[FILENAME_MAX];
 	char* negEptr = negEFileName;
 	FILE *negEFile = NULL;
+	bool negEFileCreate = (level >= 0) && MetaData && dumpPreamble && dumpPrefix && dumpSuffix;
 	int negE1 = 0, negE2 = 0;
 	int flagsIOT = 4 * OuterVelocitiesClearInward + 2 * OuterVelocitiesClearOutward + OuterVelocitiesClearTangential;
+	if(OuterVelocitiesClearInward==4 ||OuterVelocitiesClearOutward ==4 || OuterVelocitiesClearTangential==4)
+		flagsIOT = 10;
+	else if(OuterVelocitiesClearInward==3 ||OuterVelocitiesClearOutward ==3 || OuterVelocitiesClearTangential==3)
+		flagsIOT = 9;
+	else if(OuterVelocitiesClearInward==2 ||OuterVelocitiesClearOutward ==2 || OuterVelocitiesClearTangential==2)
+		flagsIOT = 8;
 
 	if(OuterVelocitiesSphereRadius < 0 || flagsIOT == 0)
 		return SUCCESS;
@@ -136,9 +143,9 @@ float dy[], float dz[], FLOAT** CellLeftEdges, int level, TopGridData *MetaData,
 		{
 			for(int i = 0; i < in; i++)
 			{
-				r_x = CellLeftEdges[0][i] - SphericalGravityCenter[0];
-				r_y = CellLeftEdges[1][j] - SphericalGravityCenter[1];
-				r_z = CellLeftEdges[2][k] - SphericalGravityCenter[2];
+				r_x = CELLCENTER(0, i) - SphericalGravityCenter[0];
+				r_y = CELLCENTER(1, j) - SphericalGravityCenter[1];
+				r_z = CELLCENTER(2, k) - SphericalGravityCenter[2];
 
 				if(HydroMethod == Zeus_Hydro)
 				{
@@ -163,11 +170,53 @@ float dy[], float dz[], FLOAT** CellLeftEdges, int level, TopGridData *MetaData,
 				oldVz = w[index];
 				oldKE = (square(oldVx) + square(oldVy) + square(oldVz)) / 2;
 
-				// If clear the normal component regardless of direction
-				// (i.e both inward and outward) and clear the tangential
-				// then set velocity to zero and move to the next cell.
-				if(flagsIOT == 7)
+				if(flagsIOT==8 || flagsIOT==9 || flagsIOT==10)
 				{
+					long ijk2[3];
+					FLOAT crr = r / OuterVelocitiesSphereRadius;
+					FLOAT r_xyz[3];
+					r_xyz[0] = r_x / crr + SphericalGravityCenter[0];
+					r_xyz[1] = r_y / crr + SphericalGravityCenter[1];
+					r_xyz[2] = r_z / crr + SphericalGravityCenter[2];
+					size_t index2 = g->get_ijk_index(ijk2, r_xyz);
+					newVx = u[index2];
+					newVy = v[index2];
+					newVz = w[index2];
+					if(flagsIOT==9)
+					{
+						newVx /= crr;
+						newVy /= crr;
+						newVz /= crr;
+					}
+					newKE = (square(newVx) + square(newVy) + square(newVz)) / 2;
+					u[index] = newVx;
+					v[index] = newVy;
+					w[index] = newVz;
+
+//					if(r_x < 0 && r_y < 0 && r_z < 0)
+//						TRACEF("  %e  %e    %e  %e  %e    %lld  %lld  %lld    %lld  %lld  %lld    %e  %e  %e",
+//							   r, crr, r_x, r_y, r_z, ijk2[0], ijk2[1], ijk2[2], index2, index, g->GetGridSize(),
+//							   newVx, newVy, newVz);
+//					TRACEF("  %e  %e  %e    %e  %e  %e    %e  %e  %e", r, OuterVelocitiesSphereRadius, crr, r_x,
+//							r_y, r_z, r_xyz[0], r_xyz[1], r_xyz[2]);
+
+					if(flagsIOT==10)
+					{
+						if(rhoField)
+							rhoField[index] = rhoField[index2];
+						if(totE)
+							totE[index] = totE[index2];
+						if(pressure)
+							pressure[index] = pressure[index2];
+						newKE = oldKE = 0;
+					}
+//					TRACEF("  %lld    %lld  %lld  %lld    %lld  %lld  %lld",  flagsIOT, i, j, k, ijk2[0], ijk2[1], ijk2[2]);
+				}
+				else if(flagsIOT == 7)
+				{
+					// If clear the normal component regardless of direction
+					// (i.e both inward and outward) and clear the tangential
+					// then set velocity to zero and move to the next cell.
 					newKE = u[index] = v[index] = w[index] = 0;
 				}
 				else
@@ -232,7 +281,7 @@ float dy[], float dz[], FLOAT** CellLeftEdges, int level, TopGridData *MetaData,
 				float dE = newKE - oldKE;
 				float oldE = totE[index];
 				float newE = oldE + dE;
-				int fixType = 0;
+				int fixType = 0; // Nothing to fix
 				if(oldE <= 0)
 				{
 //					TRACEF("Total energy <=0 before correction   %e    at    %e  %e  %e  ( %lld  %lld  %lld )",
@@ -252,7 +301,7 @@ float dy[], float dz[], FLOAT** CellLeftEdges, int level, TopGridData *MetaData,
 					negE2++;
 				}
 				totE[index] = newE;
-				if(fixType)
+				if(fixType && negEFileCreate)
 				{
 					if(negEFile == NULL)
 						negEFile = negEFile_open(&negEptr, MetaData, level, g, "ne", dumpSuffix, dumpPreamble,
@@ -268,22 +317,34 @@ float dy[], float dz[], FLOAT** CellLeftEdges, int level, TopGridData *MetaData,
 		TRACEF(" %s: Bad energy in %lld zones of total %lld (%lld before, %lld after correction)", negEFileName,
 				negE1 + negE1 + negE2, g->GetGridSize(), negE1, negE2);
 	}
-	negEFile_close(negEFile, negEFileName);
+
+	if(negEFileCreate)
+		negEFile_close(negEFile, negEFileName);
 
 	return SUCCESS;
 #undef DUMP_PREAMBLE2
 }
 
-int grid::ClearOuterVelocities(int level, TopGridData *MetaData, char* dumpPrefix, char *dumpSuffix, char* dumpPreamble)
+int grid::ClearOuterVelocities(float *pressure, int level, TopGridData *MetaData, char* dumpPrefix, char *dumpSuffix,
+	char* dumpPreamble)
 {
 	if(MyProcessorNumber != ProcessorNumber)
 		return SUCCESS;
 
-	float *vxField, *vyField, *vzField, *totEField;
-	MHD_SNIA_GetFields(NULL, &totEField, NULL, &vxField, &vyField, &vzField, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+	float *rhoField, *vxField, *vyField, *vzField, *totEField;
+	MHD_SNIA_GetFields(&rhoField, &totEField, NULL, &vxField, &vyField, &vzField, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
 	NULL);
 
-	return ::ClearOuterVelocities(vxField, vyField, vzField, totEField, GridDimension[0], GridDimension[1],
+	return ::ClearOuterVelocities(vxField, vyField, vzField, totEField, rhoField, pressure, GridDimension[0], GridDimension[1],
 									GridDimension[2], GridRank, CellWidth[0], CellWidth[1], CellWidth[2], CellLeftEdge,
 									level, MetaData, this->ID, this, dumpPrefix, dumpSuffix, dumpPreamble);
+}
+
+int ClearOuterVelocities(float *u, float *v, float *w, float *totE, int in, int jn, int kn, int rank, float dx[],
+float dy[], float dz[], FLOAT** CellLeftEdges, int level, TopGridData *MetaData, int gridID, grid *g, char* dumpPrefix,
+	char *dumpSuffix, char* dumpPreamble)
+{
+	ClearOuterVelocities(u, v, w, totE, NULL, NULL, in, jn, kn, rank, dx,
+	dy, dz, CellLeftEdges, level, MetaData, gridID, g, dumpPrefix,
+		dumpSuffix, dumpPreamble);
 }
