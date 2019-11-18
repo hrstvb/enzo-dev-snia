@@ -199,8 +199,6 @@ void limiterTest()
 			MYLIM_FLOAT s2 = limiter(n, r);
 			TRACEF("n,i= %lld %lld s1,x,s2= %e %e %e s1-s2,s2/s1-1= %e %e", n, i, s1, r, s2, s2 - s1, s2 / s1 - 1);
 		}
-		TRACE
-		;
 	}
 	TRACEF("LIMITERS TEST END ------------------------------");
 }

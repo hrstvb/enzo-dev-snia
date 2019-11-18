@@ -54,9 +54,17 @@ FLOAT** magEBins, LevelHierarchyEntry* myLevelHierarchyEntry)
 {
 	if(ProcessorNumber != MyProcessorNumber)
 		return SUCCESS;
-	HierarchyEntry* mypghe = myLevelHierarchyEntry->GridHierarchyEntry->ParentGrid;
-	grid* mypg = (mypghe) ? mypghe->GridData : NULL;
 
+	HierarchyEntry* he = myLevelHierarchyEntry->GridHierarchyEntry->ParentGrid;
+	grid* mypg = (he) ? he->GridData : NULL;
+	int myLevel = 0;
+	for(; he; he = he->ParentGrid)
+		myLevel++;
+	int maxRefLevel = max(0, min(MaximumRefinementLevel, MAX_DEPTH_OF_HIERARCHY));
+	int maxGravityLevel = min(SphericalGravityMaxHierarchyLevel, maxRefLevel);
+	if(myLevel > maxGravityLevel)
+		return SUCCESS;
+	bool checkChildren = myLevel < maxGravityLevel;
 	const size_t &N = SphericalGravityActualNumberOfBins;
 
 	float *densField, *vFields[3], *BFields[3];
@@ -85,8 +93,9 @@ FLOAT** magEBins, LevelHierarchyEntry* myLevelHierarchyEntry)
 		{
 			r = rVec[0] = (xVec[0] = CELLCENTER(0, i)) - SphericalGravityCenter[0];
 			// If this point is in any of the children, skip it.
-			if(PointInChildrenActiveNB(xVec, firstChild))
-				continue;
+			if(checkChildren)
+				if(PointInChildrenActiveNB(xVec, firstChild))
+					continue;
 
 			if(-1 == (rbin = SphericalGravityComputeBinIndex(r)))
 				continue;
@@ -116,8 +125,9 @@ FLOAT** magEBins, LevelHierarchyEntry* myLevelHierarchyEntry)
 				xx = square(rVec[0] = (xVec[0] = CELLCENTER(0, i)) - SphericalGravityCenter[0]);
 				r = sqrt(xx + yy_zz);
 				// If this point is in any of the children, skip it.
-				if(PointInChildrenActiveNB(xVec, firstChild))
-					continue;
+				if(checkChildren)
+					if(PointInChildrenActiveNB(xVec, firstChild))
+						continue;
 
 				if(-1 == (rbin = SphericalGravityComputeBinIndex(r)))
 					continue;
@@ -153,47 +163,46 @@ FLOAT** magEBins, LevelHierarchyEntry* myLevelHierarchyEntry)
 					r = sqrt(xx + yy_zz);
 
 					// If this point is in any of the children, skip it.
-					if(PointInChildrenActiveNB(xVec, firstChild))
-					{
-						continue;
-					}
-					else if(printdebuginfo && firstChild && MyProcessorNumber == ROOT_PROCESSOR)
-					{
+					if(checkChildren)
+						if(PointInChildrenActiveNB(xVec, firstChild))
+							continue;
+
+//					if(printdebuginfo && firstChild && MyProcessorNumber == ROOT_PROCESSOR)
+//					{
 //						TRACEGF("%lld %lld %lld    %e %e %e", i, j, k, xVec[0], xVec[1], xVec[2]);
 //						TRACEGF("%e %e %e    %e %e %e", GetGridLeftEdge(0), GetGridLeftEdge(1), GetGridLeftEdge(2),
 //								GetGridRightEdge(0), GetGridRightEdge(1), GetGridRightEdge(2));
-						double overdx = 1 / CellWidth[0][0];
-						HierarchyEntry* he = firstChild;
-						while(he)
-						{
-							grid* g = he->GridData;
-							grid* pg = he->ParentGrid->GridData;
-							int ijk1[3], ijk2[3], lmn[3];
-							FLOAT xyz[3];
-							arr_cpy(xyz, g->GetGridLeftEdge(), 3);
-							arr_axpby(xyz, GetGridLeftEdge(), 3, -overdx, overdx);
-							arr_cpy(ijk1, xyz, 3);
-							arr_cpy(xyz, g->GetGridRightEdge(), 3);
-							arr_axpby(xyz, GetGridLeftEdge(), 3, -overdx, overdx);
-							arr_cpy(ijk2, xyz, 3);
-							arr_cpy(lmn, ijk1, 3);
-							arr_axpy(lmn, ijk2, 3, -1);
-							arr_xpa(lmn, 3, 1);
-
+//						double overdx = 1 / CellWidth[0][0];
+//						HierarchyEntry* he = firstChild;
+//						while(he)
+//						{
+//							grid* g = he->GridData;
+//							grid* pg = he->ParentGrid->GridData;
+//							int ijk1[3], ijk2[3], lmn[3];
+//							FLOAT xyz[3];
+//							arr_cpy(xyz, g->GetGridLeftEdge(), 3);
+//							arr_axpby(xyz, GetGridLeftEdge(), 3, -overdx, overdx);
+//							arr_cpy(ijk1, xyz, 3);
+//							arr_cpy(xyz, g->GetGridRightEdge(), 3);
+//							arr_axpby(xyz, GetGridLeftEdge(), 3, -overdx, overdx);
+//							arr_cpy(ijk2, xyz, 3);
+//							arr_cpy(lmn, ijk1, 3);
+//							arr_axpy(lmn, ijk2, 3, -1);
+//							arr_xpa(lmn, 3, 1);
 //							TRACEGF("%lld %lld %lld    %lld %lld %lld   [%lld]   g%lld(on #%lld)    parent g%lld(on #%lld)",
 //									ijk1[0], ijk1[1], ijk1[2], ijk2[0], ijk2[1], ijk2[2], lmn[0] * lmn[1] * lmn[2],
 //									g->GetGridID(), g->ProcessorNumber, pg->GetGridID(), pg->ProcessorNumber);
-
+//
 //							TRACEGF("%e %e %e    %e %e %e   g%lld(on #%lld)    parent g%lld(on #%lld)",
 //										g->GetGridLeftEdge(0), g->GetGridLeftEdge(1), g->GetGridLeftEdge(2),
 //										g->GetGridRightEdge(0), g->GetGridRightEdge(1), g->GetGridRightEdge(2),
 //										g->GetGridID(), g->ProcessorNumber, pg->GetGridID(), pg->ProcessorNumber);
-
-							he = he->NextGridThisLevel;
-						}
-
-						printdebuginfo = false;
-					}
+//
+//							he = he->NextGridThisLevel;
+//						}
+//
+//						printdebuginfo = false;
+//					}
 
 					if(-1 == (rbin = SphericalGravityComputeBinIndex(r)))
 						continue;
@@ -245,8 +254,10 @@ FLOAT** magEBins, LevelHierarchyEntry* myLevelHierarchyEntry)
 //		delete sbuf;
 //	}
 
-	arr_xpy(SphericalGravityShellCellCounts, countBins, N);
-	arr_axpy(SphericalGravityShellVolumes, countBins, N, cellVolume);
+//	if(SphericalGravityShellCellCounts && countBins)
+//		arr_xpy(SphericalGravityShellCellCounts, countBins, N);
+//	if(SphericalGravityShellVolumes && countBins)
+//		arr_axpy(SphericalGravityShellVolumes, countBins, N, cellVolume);
 	arr_axpy(SphericalGravityShellMasses, densBins, N, cellVolume);
 //	for(int dim = 0; dim < GridRank; dim++)
 //		arr_axpy(SphericalGravityShellCentersOfMass[dim], cmBins[dim], N, cellVolume);

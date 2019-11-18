@@ -180,6 +180,7 @@ int grid::SolveMHD_Li(int CycleNumber, int NumberOfSubgrids,
 
   //strang loop.
 
+  ClearOuterVelocities(pressure, NULL, NULL, NULL, NULL, NULL);
   int startindex, endindex;
   for (n = ixyz; n < ixyz+3; n++) {
     startindex = 3;
@@ -313,6 +314,7 @@ int grid::SolveMHD_Li(int CycleNumber, int NumberOfSubgrids,
         }//x sweep jj loop
       }//x sweep kk loop
     }//x sweep conditional
+    ClearOuterVelocities(pressure, NULL, NULL, NULL, NULL, NULL);
 
     startindex = 3;
     endindex = GridDimension[1] - 2;
@@ -441,6 +443,7 @@ int grid::SolveMHD_Li(int CycleNumber, int NumberOfSubgrids,
         }//y sweep ii loop
       }//y sweep kk loop
     }//strang conditional
+      ClearOuterVelocities(pressure, NULL, NULL, NULL, NULL, NULL);
     }//y sweep
 
     startindex = 3;
@@ -576,8 +579,9 @@ int grid::SolveMHD_Li(int CycleNumber, int NumberOfSubgrids,
           }//z sweep jj loop
       }//z sweep kk loop
     }//strang conditional
-    }//z sweep
 
+    }//z sweep
+    ClearOuterVelocities(pressure, NULL, NULL, NULL, NULL, NULL);
   }//strang order loop
 
   if( DualEnergyFormalism ){
@@ -609,8 +613,6 @@ int grid::SolveMHD_Li(int CycleNumber, int NumberOfSubgrids,
     delete [] lindex[dim];
     delete [] rindex[dim];
   }
-
-
 
 
   return SUCCESS;

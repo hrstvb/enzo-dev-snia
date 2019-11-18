@@ -133,7 +133,7 @@ int NumberOfSubgrids, int level, ExternalBoundary *Exterior, TopGridData *MetaDa
 //	this->ReturnHydroRKPointers(Prim, true); //##### added! because Hydro3D needs fractions for species
 
 	if(OuterVelocitiesClearAtRKStep1Begin)
-		ClearOuterVelocities(level, MetaData, "ne", "RK1a", ""
+		ClearOuterVelocities(NULL, level, MetaData, "ne", "RK1a", ""
 							"# Grid_MHDRK2_1stStep, before MHD3D -> ClearOuterVelocities\n"
 							);
 
@@ -188,7 +188,7 @@ int NumberOfSubgrids, int level, ExternalBoundary *Exterior, TopGridData *MetaDa
 	}
 
 	if(OuterVelocitiesClearAtRKStep1End)
-		ClearOuterVelocities(level, MetaData, "ne", "RK1b", ""
+		ClearOuterVelocities(NULL, level, MetaData, "ne", "RK1b", ""
 								"# Grid_MHDRK2_1stStep, end -> ClearOuterVelocities\n"
 							 );
 

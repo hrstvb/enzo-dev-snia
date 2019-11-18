@@ -75,6 +75,7 @@ struct RebuildHierarchyIterator
 	RebuildHierarchyIterator(int maxRefineLevel, HierarchyEntry* topGrid, TopGridData* metaData);
 	grid* first();
 	grid* next();
+	bool isLastOnCurrentLevel();
 };
 
 struct SiblingIterator

@@ -714,7 +714,7 @@ int RebuildHierarchy(TopGridData *MetaData,
   if (debug) fpcol(RHperf, 16, 16, stdout);
 #endif /* RH_PERF */
   ReportMemoryUsage("Rebuild pos 4");
-  PRINT_HIERARCHY0(LevelArray);
+//  PRINT_HIERARCHY0(LevelArray);
   TIMER_STOP("RebuildHierarchy");
   LCAPERF_STOP("RebuildHierarchy");
   return SUCCESS;

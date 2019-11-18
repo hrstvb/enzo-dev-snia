@@ -55,6 +55,7 @@ int grid::DiffuseBurnedFraction()
 	switch(BurningDiffusionMethod)
 	{
 	case -1:
+	case 3:
 		return SUCCESS;
 	case 0:
 	case 1:

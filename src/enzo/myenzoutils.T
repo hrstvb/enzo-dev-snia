@@ -584,6 +584,44 @@ T arr_max(const T* x, const size_t n)
 }
 
 template<typename T>
+size_t arr_argmin(const T* const x, const size_t n)
+{
+	const T* const x_n = x + n;
+	size_t minj = 0;
+	T miny = *x;
+
+	for(const T* y = x; y < x_n; y++)
+	{
+		if(miny > *y)
+		{
+			minj = y - x;
+			miny = *y;
+		}
+		y++;
+	}
+	return minj;
+}
+
+template<typename T>
+size_t arr_argmax(const T* const x, const size_t n)
+{
+	const T* const x_n = x + n;
+	size_t maxj = 0;
+	T maxy = *x;
+
+	for(const T* y = x; y < x_n; y++)
+	{
+		if(maxy < *y)
+		{
+			maxj = y - x;
+			maxy = *y;
+		}
+	}
+
+	return maxj;
+}
+
+template<typename T>
 void arr_minmax(T* min_x, size_t* min_i, T* max_x, size_t* max_i, const T* const x, const size_t n)
 {
 	T miny, maxy;

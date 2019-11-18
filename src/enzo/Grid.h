@@ -78,6 +78,7 @@ class grid
  protected:
 #else
  private:
+ public:
 #endif
 //
 //  General grid class data
@@ -1177,7 +1178,7 @@ gradient force to gravitational force for one-zone collapse test. */
 
 /* Gravity: Set the external acceleration fields. */
 
-   int ComputeAccelerationFieldExternal();
+   int ComputeAccelerationFieldExternal(TopGridData *MetaData = NULL);
 
 /* Gravity: Set the external acceleration fields from external potential. */
 
@@ -1914,7 +1915,8 @@ int CreateParticleTypeGrouping(hid_t ptype_dset,
 				  int &HCOIINum,int &OHINum,int &H2OINum,
 				  int &O2INum);
 
-  int ClearOuterVelocities(int level, TopGridData *MetaData, char* dumpPrefix, char *dumpSuffix, char* dumpPreamble);
+  int ClearOuterVelocities(float *pressure, int level, TopGridData *MetaData, char* dumpPrefix, char *dumpSuffix,
+	  char* dumpPreamble);
 
 /* Zeus Solver. */
 

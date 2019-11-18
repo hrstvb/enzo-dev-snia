@@ -386,14 +386,19 @@ grid* RebuildHierarchyIterator::next()
 
 	int MaximumRefinementLevel_original = MaximumRefinementLevel;
 	MaximumRefinementLevel = currentLevel + 1;
-	TRACEF("Refining hierarchy level %lld ...", currentLevel);
+//	TRACEF("Refining hierarchy level %lld ...", currentLevel);
 	if(RebuildHierarchy(metaData, levelArray, currentLevel) == FAIL)
 		throw EnzoFatalException("Error in RebuildHierarchy.", __FILE__, __LINE__);
-	TRACEF("Refining hierarchy level %lld DONE.", currentLevel);
+//	TRACEF("Refining hierarchy level %lld DONE.", currentLevel);
 	MaximumRefinementLevel = MaximumRefinementLevel_original;
 	currentEntry = levelArray[++currentLevel];
 	startingNewLevel = true;
 	return (currentEntry) ? currentEntry->GridData : NULL;
+}
+
+bool RebuildHierarchyIterator::isLastOnCurrentLevel()
+{
+	return !(currentEntry && currentEntry->NextGridThisLevel);
 }
 
 SiblingIterator::SiblingIterator(const HierarchyEntry* const firstSibling) :
