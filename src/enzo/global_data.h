@@ -1153,7 +1153,7 @@ EXTERN float PerturbationBottomDensity;            //[BH]
 EXTERN float PerturbationTopDensity;               //[BH]
 EXTERN float PerturbationVelocity;                 //[BH]
 struct TriSphere;
-EXTERN TriSphere* triSphere;						//[BH]
+//EXTERN TriSphere* triSphere;						//[BH]
 EXTERN int InitialBurnedRegionSustain;				//[BH]
 EXTERN float InitRadialPressureFromCentral;			//[BH]
 EXTERN int InitBWithVectorPotential;				//[BH]

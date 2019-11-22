@@ -30,38 +30,64 @@
 //#include "TopGridData.h"
 //#include "phys_constants.h"
 
+int FindField(int f, int farray[], int n);
+
+int grid::MHDClear_B_and_CT_Fields()
+{
+	if(!UseMHD)
+		return SUCCESS;
+
+	const int BFieldTypes[3] = { Bfield1, Bfield2, Bfield3 };
+	int BFieldNum;
+	float *field;
+
+	for(int dim = 0; dim < 3; dim++)
+	{
+		if(0 < (BFieldNum = FindField(BFieldTypes[dim], FieldType, NumberOfBaryonFields)))
+			if((field = BaryonField[BFieldNum]))
+				arr_set(field, GetGridSize(), 0);
+
+		if((field = MagneticField[dim]))
+			arr_set(field, MagneticSize[dim], 0);
+
+		if((field = ElectricField[dim]))
+			arr_set(field, ElectricSize[dim], 0);
+	}
+	return SUCCESS;
+}
+
 int grid::InitializeMagneticUniformFieldVectorPotential(const float constMagneticField[3], const long float factor)
 {
-	const bool addToElectricField = factor;
+	const bool addToElectricField = true;
 	const float f = ((addToElectricField) ? factor : 1);
-	const float mx = f * constMagneticField[0];
-	const float my = f * constMagneticField[1];
-	const float mz = f * constMagneticField[2];
+	const float Bx = f * constMagneticField[0];
+	const float By = f * constMagneticField[1];
+	const float Bz = f * constMagneticField[2];
 
 	bool has_j = GridRank > 1;
 	bool has_k = GridRank > 2;
 	size_t ni, nj, nk;
 	float* EField = NULL;
-	FLOAT mx_y, my_z;
+	FLOAT Ex, Ey, Ez;
 
 	int dim = 0;
 	EField = ElectricField[dim];
 	ni = ElectricDims[dim][0];
 	nj = (has_j) ? ElectricDims[dim][1] : 1;
 	nk = (has_k) ? ElectricDims[dim][2] : 1;
-	if(has_k && my)
+	if(has_k && By)
 	{
 		for(size_t k = 0; k < nk; k++)
 		{
-			my_z = my * (has_k) ? CellLeftEdge[2][k] : 0;
+			Ex = - By * CellLeftEdge[2][k];
 			for(size_t j = 0; j < nj; j++)
 			{
 				for(size_t i = 0; i < ni; i++)
 				{
 					if(addToElectricField)
-						*EField++ += my_z;
+						*EField++ += Ex;
 					else
-						*EField++ = my_z;
+						*EField++ = Ex;
 				}
 			}
 		}
@@ -77,7 +103,7 @@ int grid::InitializeMagneticUniformFieldVectorPotential(const float constMagneti
 	ni = ElectricDims[dim][0];
 	nj = (has_j) ? ElectricDims[dim][1] : 1;
 	nk = (has_k) ? ElectricDims[dim][2] : 1;
-	if(has_j && mz)
+	if(has_j && Bz)
 	{
 		for(size_t k = 0; k < nk; k++)
 		{
@@ -85,10 +111,11 @@ int grid::InitializeMagneticUniformFieldVectorPotential(const float constMagneti
 			{
 				for(size_t i = 0; i < ni; i++)
 				{
+					Ey = Bz * CellLeftEdge[0][i];
 					if(addToElectricField)
-						*EField++ += mz * CellLeftEdge[0][i];
+						*EField++ += Ey;
 					else
-						*EField++ = mz * CellLeftEdge[0][i];
+						*EField++ = Ey;
 				}
 			}
 		}
@@ -104,19 +131,19 @@ int grid::InitializeMagneticUniformFieldVectorPotential(const float constMagneti
 	ni = ElectricDims[dim][0];
 	nj = (has_j) ? ElectricDims[dim][1] : 1;
 	nk = (has_k) ? ElectricDims[dim][2] : 1;
-	if(mx)
+	if(has_j && Bx)
 	{
 		for(size_t k = 0; k < nk; k++)
 		{
 			for(size_t j = 0; j < nj; j++)
 			{
-				mx_y = mx * (has_j) ? CellLeftEdge[1][j] : 0;
+				Ez = Bx * CellLeftEdge[1][j];
 				for(size_t i = 0; i < ni; i++)
 				{
 					if(addToElectricField)
-						*EField++ += mx_y;
+						*EField++ += Ez;
 					else
-						*EField++ = mx_y;
+						*EField++ = Ez;
 				}
 			}
 		}
@@ -130,11 +157,32 @@ int grid::InitializeMagneticUniformFieldVectorPotential(const float constMagneti
 	return SUCCESS;
 }
 
+int grid::InitializeMagneticUniformField(const float constMagneticField[3], const long float factor)
+{
+	const bool addToElectricField = true;
+	const float f = ((addToElectricField) ? factor : 1);
+	float b;
+
+	float *BFields[3];
+	MHD_SNIA_GetFields(NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,BFields,NULL,NULL,NULL);
+
+	for(int dim = 0; dim < 3; dim++)
+	{
+		if((b=f*constMagneticField[dim])==0)
+			continue;
+
+		arr_axpb(BFields[dim], gridSize, 1, b);
+		arr_axpb(MagneticField[dim], MagneticSize[dim], 1, b);
+	}
+
+	return SUCCESS;
+}
+
 int grid::InitializeMagneticDipoleVectorPotential(const float dipoleMoment[3], const float dipoleCenter[3],
 	const long float factor)
 {
-	const bool addToElectricField = factor;
-	const double factor_over_4pi = ((addToElectricField) ? factor : 1) / (16 * atanl(1));
+	const bool addToElectricField = true;
+	const double factor_over_4pi = ((addToElectricField) ? factor : 1); // / (16 * atanl(1));
 	const float mx = factor_over_4pi * dipoleMoment[0];
 	const float my = factor_over_4pi * dipoleMoment[1];
 	const float mz = factor_over_4pi * dipoleMoment[2];

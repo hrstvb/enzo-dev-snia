@@ -2609,6 +2609,7 @@ int zEulerSweep(int j, int NumberOfSubgrids, fluxes *SubgridFluxes[],
 
   int InitializeMagneticDipoleVectorPotential(const float dipoleMoment[3], const float dipoleCenter[3],
 	  const long float factor);
+  int InitializeMagneticUniformField(const float constMagneticField[3], const long float factor);
   int InitializeMagneticUniformFieldVectorPotential(const float constMagneticField[3],
 	  const long float factor);
 
@@ -3224,22 +3225,31 @@ int zEulerSweep(int j, int NumberOfSubgrids, fluxes *SubgridFluxes[],
                              float Radius, float MHDBlastCenter[], int LongDimension,
                              float PerturbAmplitude, int PerturbMethod, float PerturbWavelength[],
                              int InitStyle);
-	int MHDProfileInitializeGrid0(MHDInitialProfile* p,
-			float burningTemperature,
-			float burnedRadius,
-			float dipoleMoment[3], float dipoleCenter[3], bool usingVectorPotential, TopGridData *MetaData);
-	int MHDProfileInitializeGrid1(MHDInitialProfile* p,
-			float burningTemperature,
-			float burnedRadius,
-			float dipoleMoment[3], float dipoleCenter[3], bool usingVectorPotential, TopGridData *MetaData);
-	int MHDProfileInitializeGrid2(MHDInitialProfile* p,
-			float burningTemperature,
-			float burnedRadius,
-			float dipoleMoment[3], float dipoleCenter[3], bool usingVectorPotential, TopGridData *MetaData);
-	int MHDProfileInitializeGrid3(MHDInitialProfile* p,
-			float burningTemperature,
-			float burnedRadius,
-			float dipoleMoment[3], float dipoleCenter[3], bool usingVectorPotential, TopGridData *MetaData);
+	int MHDClear_B_and_CT_Fields();
+	int MHDProfileInitializeGrid_B_and_CT_Fields(MHDInitialProfile* p, float burningTemperature, float burnedRadius,
+			float dipoleMoment[3], float dipoleCenter[3], bool useVectorPotential, TopGridData *MetaData,
+			TriSphere *triSphere, bool *out_usingdDirectInit, bool *out_usingVectorPotentialInit);
+	int MHDProfileInitializeGrid_CurlAndCenter(MHDInitialProfile* p, float burningTemperature, float burnedRadius,
+			float dipoleMoment[3], float dipoleCenter[3], bool useVectorPotential, TopGridData *MetaData,
+			TriSphere *triSphere, bool usingDirectInit, bool usingVectorPotentialInit);
+	int MHDProfileInitializeGrid0(MHDInitialProfile* p, float burningTemperature, float burnedRadius,
+			float dipoleMoment[3], float dipoleCenter[3], bool useVectorPotential, TopGridData *MetaData,
+			TriSphere *triSphere);
+	int MHDProfileInitializeGrid1(MHDInitialProfile* p, float burningTemperature, float burnedRadius,
+			float dipoleMoment[3], float dipoleCenter[3], bool useVectorPotential, TopGridData *MetaData,
+			TriSphere *triSphere);
+	int MHDProfileInitializeGrid2(MHDInitialProfile* p, float burningTemperature, float burnedRadius,
+			float dipoleMoment[3], float dipoleCenter[3], bool useVectorPotential, TopGridData *MetaData,
+			TriSphere *triSphere);
+	int MHDProfileInitializeGrid_TotalE_GasE(MHDInitialProfile* p, float burningTemperature, float burnedRadius,
+			float dipoleMoment[3], float dipoleCenter[3], bool useVectorPotential, TopGridData *MetaData,
+			TriSphere *triSphere);
+	int MHDProfileInitializeGrid5(MHDInitialProfile* p, float burningTemperature, float burnedRadius,
+			float dipoleMoment[3], float dipoleCenter[3], bool useVectorPotential, TopGridData *MetaData,
+			TriSphere *triSphere);
+//	int MHDProfileInitializeGrid6(MHDInitialProfile* p, float burningTemperature, float burnedRadius,
+//			float dipoleMoment[3], float dipoleCenter[3], bool useVectorPotential, TopGridData *MetaData,
+//			TriSphere *triSphere);
 	int PerturbWithTriSPhere(TriSphere *triSphere, FILE *fptr);
 
   int MHDSustainInitialBurnedRegionGrid();

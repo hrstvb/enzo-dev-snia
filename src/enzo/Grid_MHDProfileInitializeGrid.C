@@ -567,8 +567,10 @@ float** gravPotentialField)
  * Used with ParallelRootGridIO.
  */
 int grid::MHDProfileInitializeGrid0(MHDInitialProfile* p, float burningTemperature, float burnedRadius,
-float dipoleMoment[3], float dipoleCenter[3], bool usingVectorPotential, TopGridData *MetaData)
+float dipoleMoment[3], float dipoleCenter[3], bool useVectorPotential, TopGridData *MetaData, TriSphere *triSphere)
 {
+	TRACEGF("INITIALIZING GRID PHASE 0 BEGIN.");
+
 	if(GridRank != 3)
 		ENZO_FAIL("MHDProfileInitializeGrid is implemented for 3D only.")
 
@@ -601,15 +603,20 @@ float dipoleMoment[3], float dipoleCenter[3], bool usingVectorPotential, TopGrid
 			FieldType[NumberOfBaryonFields++] = PhiField;
 	}
 
-	if(HydroMethod == MHD_RK || usingVectorPotential)
+	bool willUseVectorPotential;
+	MHDProfileInitializeGrid_B_and_CT_Fields(NULL, burningTemperature, burnedRadius, dipoleMoment, dipoleCenter,
+												useVectorPotential, MetaData, triSphere, NULL, &willUseVectorPotential);
+
+	if(HydroMethod == MHD_RK || willUseVectorPotential)
 	{
 		// Allow the ElectricField and MagneticField to
 		// be created temporarily for the purpose of
 		// initializing with vector potential.
-		// Free these fields in MHDProfileInitializeGrid2.
+		// Free these fields in MHDProfileInitializeGrid5.
 		MHD_SetupDims();
 	}
 
+	TRACEGF("INITIALIZING GRID PHASE 0 END.");
 	return SUCCESS;
 }
 
@@ -783,15 +790,17 @@ int grid::PerturbWithTriSPhere(TriSphere *triSphere, FILE *fptr = NULL)
 
 /*
  * Init phase 1
- * Stub (phase 0) if necessary. Allocate fields.
- * Initialize density (eventually from profile).
- * Init burned fraction and perturb burned interface, incl velocity.
- *
+ * Stub (phase 0) if necessary.
+ * Allocate fields.
+ * Initialize
+ *  -- density (eventually from profile);
+ *  -- burned fraction;
+ * Perturb
+ *  -- burned interface;
+ *  -- velocity;
  */
-int grid::MHDProfileInitializeGrid1(MHDInitialProfile* p,
-float burningTemperature,
-float burnedRadius,
-float dipoleMoment[3], float dipoleCenter[3], bool usingVectorPotential, TopGridData *MetaData)
+int grid::MHDProfileInitializeGrid1(MHDInitialProfile* radialProfile, float burningTemperature, float burnedRadius,
+float dipoleMoment[3], float dipoleCenter[3], bool useVectorPotential, TopGridData *MetaData, TriSphere *triSphere)
 {
 	if(ProcessorNumber != MyProcessorNumber)
 		return SUCCESS;
@@ -804,7 +813,7 @@ float dipoleMoment[3], float dipoleCenter[3], bool usingVectorPotential, TopGrid
 	if(!ParallelRootGridIO)
 	{
 		if(MHDProfileInitializeGrid0(NULL, burningTemperature, burnedRadius, dipoleMoment, dipoleCenter,
-										usingVectorPotential, MetaData) == FAIL)
+										useVectorPotential, MetaData, triSphere) == FAIL)
 		{
 			ENZO_FAIL("Error stubbing grid by MHDProfileInitialize0.");
 		}
@@ -826,7 +835,14 @@ float dipoleMoment[3], float dipoleCenter[3], bool usingVectorPotential, TopGrid
 	int debugnanflag = 0; //[BH]
 	float gammaMinusOne = Gamma - 1;
 	float rho_c;
-	p->interpolateDensity(&rho_c, 0);
+	radialProfile->interpolateDensity(&rho_c, 0);
+
+	// In case we want to perturb the front at a later restart,
+	// initialize unperturbed burned sphere now (method=0).
+	// Methods -3, -2, -1 are unperturbed burned slabs
+	// perpendicular to x, y, or z, for test problems.
+	// Those are not intendedto be used on restart.
+	int perturbMethodNow = (PerturbationOnRestart && (PerturbationMethod > 0)) ? 0 : PerturbationMethod;
 
 // Initialize density and a sphere of Nickel density.
 	for(int k = 0; k < GridDimension[2]; k++)
@@ -849,23 +865,19 @@ float dipoleMoment[3], float dipoleCenter[3], bool usingVectorPotential, TopGrid
 				FLOAT r = sqrt(square(rx) + yy_zz);
 
 				float rho, rhoNi = 0;
-				int retcode = p->interpolateDensity(&rho, r); //g/cm**3
+				int retcode = radialProfile->interpolateDensity(&rho, r); //g/cm**3
 				bool isBurned = false;
 				double r1, r2;
 
-				int pertMethTemp = PerturbationMethod;
-				if(PerturbationOnRestart && (PerturbationMethod > 0))
-					pertMethTemp = 0; // no perturbation, because we piggyback on PerturbationMethod for non-spherical init.
-
-				switch(pertMethTemp)
+				switch(perturbMethodNow)
 				{
-				case -3:
+				case -3: // xy-slab
 					isBurned = fabs(rz) < InitialBurnedRadius;
 					break;
-				case -2:
+				case -2: // zx-slab
 					isBurned = fabs(ry) < InitialBurnedRadius;
 					break;
-				case -1:
+				case -1: // yz-slab
 					isBurned = fabs(rx) < InitialBurnedRadius;
 					break;
 				case 0:
@@ -924,132 +936,43 @@ float dipoleMoment[3], float dipoleCenter[3], bool usingVectorPotential, TopGrid
 				if(UseBurning)
 					rhoNiField[index] = rhoNi;
 
-			} //end baryonfield initialize
+				// Init velocity.
+				vr = 0;
+				if(radialProfile->radialVelocityData)
+					radialProfile->interpolateRadialVelocity(&vr, r);
+				else if(0)
+				{
+					// values for testing
+					vr = 10e5; // radial
+					if(1) // tangential
+					{
+						vx = vr * (-ry / r);
+						vy = vr * (rx / r);
+						vr = 0;
+					}
+				}
+				//Project radial velocity to coordinate components.
+				//If the above method sets these components itself
+				//it should set vr = 0.
+				vx += vr * rx / r;
+				vy += vr * ry / r;
+				vz += vr * rz / r;
+
+				//Add bulk velocity.
+				vx += GridVelocity[0];
+				vy += GridVelocity[1];
+				vz += GridVelocity[2];
+			}
 		}
 	}
 
-	if(gasEField)
-		arr_set(gasEField, GetGridSize(), 0);
-	arr_set(totEField, GetGridSize(), 0);
-	arr_set(vxField, GetGridSize(), 0);
-	arr_set(vyField, GetGridSize(), 0);
-	arr_set(vzField, GetGridSize(), 0);
-
-//Spikes perturbations (method == 4)
-	if(PerturbationMethod == 4 && burnedRadius > 0 && !PerturbationOnRestart)
+	//Spikes perturbations (method == 4)
+	if(perturbMethodNow == 4 && burnedRadius > 0)
 	{
 		FILE* fptr = NULL;
 		if(MyProcessorNumber == ROOT_PROCESSOR && isTopGrid())
 			fptr = fopen("trisphere_init.py", "w");
 		PerturbWithTriSPhere(triSphere, fptr);
-	}
-
-//Initialize all other fields.
-	for(int k = 0; k < GridDimension[2]; k++)
-	{
-		FLOAT z = CELLCENTER(2, k);
-		FLOAT rz = z - SphericalGravityCenter[2];
-		FLOAT zz = square(rz);
-		for(int j = 0; j < GridDimension[1]; j++)
-		{
-			FLOAT y = CELLCENTER(1, j);
-			FLOAT ry = y - SphericalGravityCenter[1];
-			FLOAT yy_zz = square(ry) + zz;
-			for(int i = 0; i <= GridDimension[0]; i++)
-			{
-				int index = ELT(i, j, k);
-				float vr, vx, vy, vz, vv, Bx, By, Bz, BB;
-
-				//!strcmp(p->profileType, "RADIAL"))
-				{
-					FLOAT x = CELLCENTER(0, i);
-					FLOAT rx = x - SphericalGravityCenter[0];
-					FLOAT r = sqrt(square(rx) + yy_zz);
-
-					float rho = rhoField[index];
-					float rhoNi = rhoNiField[index];
-					float T = 0;
-
-					vx = vy = vz = vr = 0;
-					if(p->radialVelocityData)
-						p->interpolateRadialVelocity(&vr, r);
-					else if(0)
-					{
-						// values for testing
-						vr = 10e5; // radial
-						if(1) // tangential
-						{
-							vx = vr * (-ry / r);
-							vy = vr * (rx / r);
-							vr = 0;
-						}
-					}
-					//Project radial velocity to coordinate components.
-					//If the above method sets these components itself
-					//it should set vr = 0.
-					vx += vr * rx / r;
-					vy += vr * ry / r;
-					vz += vr * rz / r;
-
-					//Add bulk velocity.
-					vx += GridVelocity[0];
-					vy += GridVelocity[1];
-					vz += GridVelocity[2];
-
-					float gasE = 0;
-					if(p->internalEnergyData)
-					{
-						p->interpolateInternalEnergy(&gasE, r); //g/cm**3
-					}
-					else
-					{
-						gasE = internalEnergy(rho, rhoNi, p, r);
-					}
-
-//					if(UseBurning && burnedRadius)
-//					{
-//						rho *= gasE / (gasE + BurningEnergyRelease);
-//						gasE += BurningEnergyRelease;
-//					}
-
-					float totE = gasE;
-					vv = square(vx) + square(vy) + square(vz);
-					totE += 0.5 * vv;
-					if(BxField)
-					{
-						MHDProfileInitExactB(&Bx, &By, &Bz, x, y, z);
-						BB = square(Bx) + square(By) + square(Bz);
-						totE += 0.5 * BB / rho;
-						BxField[index] = Bx;
-						ByField[index] = By;
-						BzField[index] = Bz;
-					}
-
-//					rhoField[index] = rho;
-					if(gasEField)
-						gasEField[index] += gasE;
-					totEField[index] += totE;
-					vxField[index] += vx;
-					vyField[index] += vy;
-					vzField[index] += vz;
-//					if(UseBurning)
-//						rhoNiField[index] = rhoNi;
-
-//						if(debug + 1 && MyProcessorNumber == ROOT_PROCESSOR)
-//							if((j == 0 || j == (GridDimension[1] - 1)) && (k == 0 || k == (GridDimension[2] - 1))
-//									&& fabs(y) < fabs(GridRightEdge[1] - GridLeftEdge[0]) / 4
-//									&& fabs(z) < fabs(GridRightEdge[2] - GridLeftEdge[2]) / 4)
-////							if(j == (GridDimension[1]) && k == (GridDimension[2]) && i >= GridDimension[0])
-//								TRACEF("i,j,k=%03d,%04d,%04d, x,y,z=(%4f,%4f,%4f), rx,ry,rz=(%4f,%4f,%4f), r=%4f, " //
-//								"rho=%e, U=%e, E=%e, v_r=%e, v^2=%e, B^2=%e, "//
-//								"burned=%d, K=%e, gamma-1=%f",//
-//										i, j, k, x * 1e-5, y * 1e-5, z * 1e-5, rx * 1e-5, ry * 1e-5, rz * 1e-5,
-//										r * 1e-5, //
-//										rho, gasE, totE, vr, vv, BB, //
-//										isBurned, EOSPolytropicFactor, gammaMinusOne);
-				}
-			} //end baryonfield initialize
-		}
 	}
 
 // Boiler plate code:
@@ -1066,20 +989,15 @@ float dipoleMoment[3], float dipoleCenter[3], bool usingVectorPotential, TopGrid
 
 	if(debugnanflag)
 		printf("nans intialized.\n"); //[BH]
-//	else
-//		printf("Initialized grid, phase 1.\n");
-	TRACEGF("INITIALIZING GRID PHASE 1 END.");
 
+	TRACEGF("INITIALIZING GRID PHASE 1 END.");
 	return SUCCESS;
 }
 
 /*
  * Keeps the burned fraction equal to 1 for the initial burned raadius.
- * Using this method is necessary only for very small initial radius
- * with no perturbations on top, i.e. PerturbationMethod==0,
- * and in until the front develops.
- * For the other perturbation methods it shouldn't make a difference
- * (except for slowing the program down).
+ * Using this method is necessary only when initial radius is very small
+ * until the front develops.
  */
 int grid::MHDSustainInitialBurnedRegionGrid()
 {
@@ -1182,34 +1100,138 @@ int grid::MHDSustainInitialBurnedRegionGrid()
  * Initialize the gas and total energy from the profile.
  * It might be specified in the input file or calculated by Ezno.
  */
-int grid::MHDProfileInitializeGrid2(MHDInitialProfile* p, float burningTemperature, float burnedRadius,
-float dipoleMoment[3], float dipoleCenter[3], bool usingVectorPotential, TopGridData *MetaData)
+int grid::MHDProfileInitializeGrid_B_and_CT_Fields(MHDInitialProfile* radialProfile, float burningTemperature,
+float burnedRadius, float dipoleMoment[3], float dipoleCenter[3], bool useVectorPotential, TopGridData *MetaData,
+	TriSphere *triSphere, bool *out_usingDirectInit, bool *out_usingVectorPotentialInit)
 {
-	if(ProcessorNumber != MyProcessorNumber || p == NULL)
+	if(ProcessorNumber != MyProcessorNumber)
+		return SUCCESS;
+
+	bool direct = true;
+	bool vector = false;
+
+	if(out_usingDirectInit)
+		*out_usingDirectInit = direct;
+	if(out_usingVectorPotentialInit)
+		*out_usingVectorPotentialInit = vector;
+
+	if(radialProfile == NULL)
+		return SUCCESS;
+
+	TRACEGF("INITIALIZING GRID  E,M,B  BEGIN.");
+
+	MHDClear_B_and_CT_Fields();
+
+	if(direct)
+	{
+		InitializeMagneticUniformField(BA, 1);
+	}
+
+	if(vector)
+	{
+		InitializeMagneticUniformFieldVectorPotential(BA, 1);
+		InitializeMagneticDipoleVectorPotential(dipoleMoment, dipoleCenter, 1);
+	}
+
+	TRACEGF("INITIALIZING GRID  E,M,B  END.");
+	return SUCCESS;
+}
+
+/*
+ * It resets the total energy with the updated magnetic field.
+ * In the case of using a vector potential fo rintialization or
+ * if hydro method  == MHD_RK, it frees the E&M fields.
+ * This function is to be used if and after magnetic vector
+ * potential has been projected to parents and the curl taken.
+ * It is desirable to estimate the magnetic energy in phase 1 or 2
+ * because it may affect the intial refinement.
+ */
+int grid::MHDProfileInitializeGrid_CurlAndCenter(MHDInitialProfile* radialProfile,
+float burningTemperature,
+float burnedRadius,
+float dipoleMoment[3], float dipoleCenter[3], bool useVectorPotential, TopGridData *MetaData, TriSphere *triSphere,
+	bool usingDirectInit, bool usingVectorPotentialInit)
+{
+	if(ProcessorNumber != MyProcessorNumber)
+		return SUCCESS;
+
+	if(!usingDirectInit && !usingVectorPotentialInit)
+	{
+		MHDProfileInitializeGrid_B_and_CT_Fields(NULL, burningTemperature, burnedRadius, dipoleMoment, dipoleCenter,
+													useVectorPotential, MetaData, triSphere, &usingDirectInit,
+													&usingVectorPotentialInit);
+	}
+
+	if(!usingVectorPotentialInit)
+		return SUCCESS;
+
+	TRACEGF("INITIALIZING GRID curl and center BEGIN.");
+
+	int curlMode = (usingDirectInit) ? 3 /*add*/: 0 /*assign*/;
+	if(MHD_Curl(curlMode) == FAIL)
+		ENZO_FAIL("MHDProfileRefineOnStartup: error in MHD_Curl\n");
+
+	if(CenterMagneticField() == FAIL)
+		ENZO_FAIL("MHDProfileRefineOnStartup: error in CenterMagneticField\n");
+
+	TRACEGF("INITIALIZING GRID curl and center END.");
+	return SUCCESS;
+}
+
+int grid::MHDProfileInitializeGrid2(MHDInitialProfile* radialProfile, float burningTemperature, float burnedRadius,
+float dipoleMoment[3], float dipoleCenter[3], bool useVectorPotential, TopGridData *MetaData, TriSphere *triSphere)
+{
+	if(ProcessorNumber != MyProcessorNumber)
 		return SUCCESS;
 
 	TRACEGF("INITIALIZING GRID PHASE 2 BEGIN.");
 
-//	float* RHO = rhoField;
-//	float* NI = rhoNiField;
-//	float* GE = gasEField;
-//	float* VX = vxField;
-//	float* VY = vyField;
-//	float* VZ = vzField;
-//	float* BX = BxField;
-//	float* BY = ByField;
-//	float* BZ = BzField;
+	bool usingDirectInit, usingVectorPotentialInit;
 
-	FLOAT z, y, x, r, rx, ry, rz;
-	float rho, gasE, totE;
+	MHDProfileInitializeGrid_B_and_CT_Fields(radialProfile, burningTemperature, InitialBurnedRadius, dipoleMoment,
+//					InitialBurnedRadius * (rhit.currentLevel == MaximumRefinementLevel) ? 1 : 0,
+												dipoleCenter, useVectorPotential, MetaData, triSphere, &usingDirectInit,
+												&usingVectorPotentialInit);
+
+	MHDProfileInitializeGrid_CurlAndCenter(radialProfile, burningTemperature, InitialBurnedRadius, dipoleMoment,
+											dipoleCenter,
+//					InitialBurnedRadius * (rhit.currentLevel == MaximumRefinementLevel) ? 1 : 0,
+											useVectorPotential, MetaData, triSphere, usingDirectInit,
+											usingVectorPotentialInit);
+
+	MHDProfileInitializeGrid_TotalE_GasE(radialProfile, burningTemperature, InitialBurnedRadius, dipoleMoment,
+											dipoleCenter,
+//					InitialBurnedRadius * (rhit.currentLevel == MaximumRefinementLevel) ? 1 : 0,
+											useVectorPotential, MetaData, triSphere);
+
+	TRACEGF("INITIALIZING GRID PHASE 2 END.");
+	return SUCCESS;
+}
+
+int grid::MHDProfileInitializeGrid_TotalE_GasE(MHDInitialProfile* radialProfile, float burningTemperature,
+	float burnedRadius,
+	float dipoleMoment[3], float dipoleCenter[3], bool usingVectorPotential, TopGridData *MetaData,
+	TriSphere *triSphere)
+{
+	if(ProcessorNumber != MyProcessorNumber)
+		return SUCCESS;
+
+	TRACEGF("INITIALIZING GRID total/internal energy BEGIN.");
+
 	size_t index;
-	float *totEField, *rhoField, *vxField, *vyField, *vzField, *vxyzField[3];
+	float rho, gasE, totE;
+	float x, y, z, r, rx, ry, rz;
+	float *totEField, *rhoField;
+	float *vxField, *vyField, *vzField, *vxyzField[3];
 	float *gasEField = NULL, *rhoNiField = NULL;
-	float *BxField = NULL, *ByField = NULL, *BzField = NULL, *BxyzField[3] = { NULL, NULL, NULL };
-	MHD_SNIA_GetFields(&rhoField, &totEField, &gasEField, &vxField, &vyField, &vzField, NULL, &BxField, &ByField,
-						&BzField, NULL, &rhoNiField, NULL, NULL);
+	float *BxField = NULL, *ByField = NULL, *BzField = NULL; //, *BxyzField[3] = { NULL, NULL, NULL };
+	MHD_SNIA_GetFields(&rhoField, &totEField, NULL, &vxField, &vyField, &vzField, NULL, &BxField, &ByField, &BzField,
+	NULL,
+						NULL, NULL, NULL);
+	bool hasInternalEnergyProfile = radialProfile->internalEnergyData;
+	const float tiny_gasE = tiny_pressure / (Gamma - 1);
 
-	bool hasInternalEnergyProfile = p->internalEnergyData;
+	arr_set(totEField, gridSize, 0);
 
 	for(int k = 0; k < GridDimension[2]; k++)
 	{
@@ -1226,19 +1248,21 @@ float dipoleMoment[3], float dipoleCenter[3], bool usingVectorPotential, TopGrid
 			{
 				x = CELLCENTER(0, i);
 				rx = x - SphericalGravityCenter[0];
-//				r = lenl(rx, ry, rz);
-				r = sqrt(rx * rx + ry * ry + rz * rz);
+				r = lenl(rx, ry, rz);
+
+				rho = max(rhoField[index], tiny_number);
 
 				if(hasInternalEnergyProfile)
-					p->interpolateInternalEnergy(&gasE, r);
+					radialProfile->interpolateInternalEnergy(&gasE, r);
 				else
-					gasE = internalEnergy(rhoField[index], rhoNiField[index], p, r);
+					gasE = internalEnergy(rho, rhoNiField[index], radialProfile, r);
+
+				gasE = max(gasE, tiny_gasE);
 
 				totE = 0;
 				if(BxField)
 				{
-					rho = rhoField[index];
-					totE += (square(BxField[index]) + square(ByField[index]) + square(BzField[index]));
+					totE += square(BxField[index]) + square(ByField[index]) + square(BzField[index]);
 					totE /= rho;
 				}
 				totE += square(vxField[index]) + square(vyField[index]) + square(vzField[index]);
@@ -1248,93 +1272,36 @@ float dipoleMoment[3], float dipoleCenter[3], bool usingVectorPotential, TopGrid
 				if(gasEField)
 					gasEField[index] = gasE;
 
-//				gasE = pow(10.0, r/1e8);
-//				totEField[index] = totE;
-//				if(r < 9e6)
-//					TRACEF("  %e    %e  %e  %e    %lld  %lld  %lld    %e", r, x, y, z, i, j, k, gasE);
-
-//				if((1 + debug) && MyProcessorNumber == ROOT_PROCESSOR)
-//					if(j == (GridDimension[1] / 2) && k == (GridDimension[2] / 2) && i >= GridDimension[0] / 2)
-//						TRACEGF("i,j,k=%04d,%04d,%04d, x,y,z=(%4f,%4f,%4f), r[km]=%4f, rho=%e, U=%e", i, j, k, x * 1e-5,
-//								y * 1e-5, z * 1e-5, r * 1e-5, rho, gasE);
-
 				index++;
 			}
 		}
 	}
 
-	TRACEGF("INITIALIZING GRID PHASE 2 END.");
+	// Boiler plate code:
+	//  if(DualEnergyFormalism )
+	//    for(index=0;index<size;index++)
+	//    BaryonField[ gesENum ][index] =
+	//       BaryonField[ totENum ][index]
+	//      - 0.5*(BaryonField[ vNum[0] ][index]*BaryonField[ vNum[0] ][index] +
+	//	     BaryonField[ vNum[1] ][index]*BaryonField[ vNum[1] ][index] +
+	//	     BaryonField[ vNum[2] ][index]*BaryonField[ vNum[2] ][index])
+	//      - 0.5*(BaryonField[BxNum][index]*BaryonField[BxNum][index] +
+	//             BaryonField[ByNum][index]*BaryonField[ByNum][index] +
+	//             BaryonField[BzNum][index]*BaryonField[BzNum][index])/BaryonField[ rhoNum ][index];
+
+	TRACEGF("INITIALIZING GRID total/internal energy END.");
 	return SUCCESS;
 }
 
-/*
- * It resets the total energy with the updated magnetic field.
- * In the case of using a vector potential fo rintialization or
- * if hydro method  == MHD_RK, it frees the E&M fields.
- * This function is to be used if and after magnetic vector
- * potential has been projected to parents and the curl taken.
- * It is desirable to estimate the magnetic energy in phase 1 or 2
- * because it may affect the intial refinement.
- */
-int grid::MHDProfileInitializeGrid3(MHDInitialProfile* p,
-float burningTemperature,
-float burnedRadius,
-float dipoleMoment[3], float dipoleCenter[3], bool usingVectorPotential, TopGridData *MetaData)
+int grid::MHDProfileInitializeGrid5(MHDInitialProfile* radialProfile, float burningTemperature, float burnedRadius,
+float dipoleMoment[3], float dipoleCenter[3], bool useVectorPotential, TopGridData *MetaData, TriSphere *triSphere)
 {
-	if(ProcessorNumber != MyProcessorNumber || p == NULL)
+	if(ProcessorNumber != MyProcessorNumber)
 		return SUCCESS;
 
-	TRACEGF("INITIALIZING GRID PHASE 3 BEGIN.");
+	TRACEGF("INITIALIZING GRID  clean up  BEGIN.");
 
-	double rho;
-
-	float *totEField, *rhoField;
-//	float *vxField, *vyField, *vzField, *vxyzField[3];
-//	float *gasEField = NULL, *rhoNiField = NULL;
-	float *BxField = NULL, *ByField = NULL, *BzField = NULL; //, *BxyzField[3] = { NULL, NULL, NULL };
-	MHD_SNIA_GetFields(&rhoField, &totEField, NULL, NULL, NULL, NULL, NULL, &BxField, &ByField, &BzField, NULL, NULL,
-						NULL, NULL);
-
-	size_t gridSize = GetGridSize();
-	const float* totEField_end = totEField + gridSize;
-
-	//These pointers will be incremented in loops.
-	float* RHO = rhoField;
-//	float* NI = rhoNiField;
-//	float* GE = gasEField;
-//	float* VX = vxField;
-//	float* VY = vyField;
-//	float* VZ = vzField;
-	float* BX = BxField;
-	float* BY = ByField;
-	float* BZ = BzField;
-
-	size_t index;
-
-	//Add magnetic energy
-	if(0 && BX)
-	{
-		for(float* TE = totEField; TE < totEField_end; TE++)
-		{
-			if((rho = *RHO++) < tiny_number)
-				rho = tiny_number;
-			*TE += 0.5 * (square(*BX++) + square(*BY++) + square(*BZ++)) / rho;
-		}
-	}
-
-// Boiler plate code:
-//  if(DualEnergyFormalism )
-//    for(index=0;index<size;index++)
-//    BaryonField[ gesENum ][index] =
-//       BaryonField[ totENum ][index]
-//      - 0.5*(BaryonField[ vNum[0] ][index]*BaryonField[ vNum[0] ][index] +
-//	     BaryonField[ vNum[1] ][index]*BaryonField[ vNum[1] ][index] +
-//	     BaryonField[ vNum[2] ][index]*BaryonField[ vNum[2] ][index])
-//      - 0.5*(BaryonField[BxNum][index]*BaryonField[BxNum][index] +
-//             BaryonField[ByNum][index]*BaryonField[ByNum][index] +
-//             BaryonField[BzNum][index]*BaryonField[BzNum][index])/BaryonField[ rhoNum ][index];
-
-	if(HydroMethod == MHD_RK || usingVectorPotential)
+	if(HydroMethod == MHD_RK)
 	{
 		for(int dim = 0; dim < 3; dim++)
 		{
@@ -1345,9 +1312,27 @@ float dipoleMoment[3], float dipoleCenter[3], bool usingVectorPotential, TopGrid
 		}
 	}
 
-	TRACEGF("INITIALIZING GRID PHASE 3 END.");
+	TRACEGF("INITIALIZING GRID  clean up  END.");
 	return SUCCESS;
 }
+
+//int grid::MHDProfileInitializeGrid6(MHDInitialProfile* radialProfile, float burningTemperature, float burnedRadius,
+//float dipoleMoment[3], float dipoleCenter[3], bool useVectorPotential, TopGridData *MetaData, TriSphere *triSphere)
+//{
+//	if(ProcessorNumber != MyProcessorNumber)
+//		return SUCCESS;
+//
+//	TRACEGF("INITIALIZING GRID PHASE 6 BEGIN.");
+//	float *totEField, *rhoField;
+//	float *vxField, *vyField, *vzField, *vxyzField[3];
+//	float *gasEField = NULL, *rhoNiField = NULL;
+//	float *BxField = NULL, *ByField = NULL, *BzField = NULL; //, *BxyzField[3] = { NULL, NULL, NULL };
+//	MHD_SNIA_GetFields(&rhoField, &totEField, NULL, NULL, NULL, NULL, NULL, &BxField, &ByField, &BzField, NULL, NULL,
+//	NULL, NULL);
+//
+//	TRACEGF("INITIALIZING GRID PHASE 6 END.");
+//	return SUCCESS;
+//}
 
 int grid::WriteRadialProfile(char* name)
 {
