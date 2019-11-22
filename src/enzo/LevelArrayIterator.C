@@ -172,18 +172,16 @@ grid* LevelArrayIterator::prev(grid** parent)
 
 int LevelArrayIterator::projectChildrenToParents(bool projectB, bool projectE)
 {
-// Restore the consistency among levels by projecting each layer to its parent,
-// starting from the finest level.
-// We want to project the vector potential and take the curl afterwards.
-// Store the original project flags for the MHD fields and set them so
+// Makes layers consistent by projecting each layer to its parent.
+// Note: If taking the curl of a vector potential, do it after porjecting.
+
+// Store the original 'project' flags for the MHD fields and set them so
 // that the vector potential gets projected.
 	int origMHD_ProjectB = MHD_ProjectB;
 	int origMHD_ProjectE = MHD_ProjectE;
 	MHD_ProjectB = projectB;
 	MHD_ProjectE = projectE;
 
-// We start this loop from the level we ended the previous loop.
-// It will not execute if numLevel==0, i.e. if the top grid hasn't been refined.
 	grid* parent;
 	for(grid* g = this->firstFromFinest(&parent); g; g = this->next(&parent))
 	{
@@ -191,6 +189,8 @@ int LevelArrayIterator::projectChildrenToParents(bool projectB, bool projectE)
 			if(g->ProjectSolutionToParentGrid(*parent) == FAIL)
 				ENZO_FAIL("Error in grid->ProjectSolutionToParentGrid.");
 	}
+
+	//Restore the original flags.
 	MHD_ProjectB = origMHD_ProjectB;
 	MHD_ProjectE = origMHD_ProjectE;
 

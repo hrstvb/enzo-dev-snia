@@ -1033,7 +1033,7 @@ int SetDefaultGlobalValues(TopGridData &MetaData)
   PerturbationBottomDensity     = 0;     //[BH]
   PerturbationTopDensity        = 0;     //[BH]
   PerturbationVelocity          = 0;     //[BH]
-  triSphere                     = NULL;  //[BH]
+//  triSphere                     = NULL;  //[BH]
   InitialBurnedRegionSustain	= 0;     //[BH]
   InitRadialPressureFromCentral = 0;     //[BH]
   InitBWithVectorPotential 		= 0;     //[BH]
