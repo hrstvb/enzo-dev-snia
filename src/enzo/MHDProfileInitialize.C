@@ -679,8 +679,9 @@ int MHDProfileInitialize(FILE *fptr, FILE *Outfptr, HierarchyEntry &TopGrid, Top
 
 		// Initialize the density and the burned fraction, velocity and perturnb.
 		g->MHDProfileInitializeGrid1(&radialProfile, BurningTemperature,
-//										InitialBurnedRadius * (rhit.currentLevel == MaximumRefinementLevel) ? 1 : 0,
-										InitialBurnedRadius, dipoleMoment, dipoleCenter, initBWithVectorPotential,
+										InitialBurnedRadius * (rhit.currentLevel == MaximumRefinementLevel),
+//										InitialBurnedRadius,
+										dipoleMoment, dipoleCenter, initBWithVectorPotential,
 										&MetaData, triSphere);
 
 		if(!rhit.isLastOnCurrentLevel())
@@ -700,20 +701,21 @@ int MHDProfileInitialize(FILE *fptr, FILE *Outfptr, HierarchyEntry &TopGrid, Top
 		LevelArrayIterator it2 = LevelArrayIterator(rhit.levelArray);
 		for(grid* g2 = it2.firstFromLevel(rhit.currentLevel); g2; g2 = it2.next())
 			g2->MHDProfileInitializeGrid2(&radialProfile, BurningTemperature,
-	//										InitialBurnedRadius * (rhit.currentLevel == MaximumRefinementLevel) ? 1 : 0,
-											InitialBurnedRadius, dipoleMoment, dipoleCenter, initBWithVectorPotential,
+											InitialBurnedRadius * (rhit.currentLevel == MaximumRefinementLevel),
+//											InitialBurnedRadius,
+											dipoleMoment, dipoleCenter, initBWithVectorPotential,
 											&MetaData, triSphere);
 	}
 
 	TRACEF("HIERARCHY BUILT");
 
-	if(projectChildrenToParents)
+	if(projectChildrenToParents || 1)
 	{
 		LevelArrayIterator it = LevelArrayIterator(rhit.levelArray);
 		bool usingDirectInit, usingVectorPotentialInit;
 
 		{
-			// A dummy call to get the values of the using direct/vector potentia flags.
+			// A dummy call to get the values of the using direct/vector potential flags.
 			grid *g = it.firstFromTop();
 			g->MHDProfileInitializeGrid_B_and_CT_Fields(
 					NULL, BurningTemperature, InitialBurnedRadius, dipoleMoment, dipoleCenter,

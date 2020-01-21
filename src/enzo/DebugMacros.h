@@ -56,4 +56,9 @@ extern long long MyProcessorNumber;
 #define TRACEG0 do{if(MyProcessorNumber==ROOT_PROCESSOR){TRACEG;}}while(0)
 #define TRACEGF0(format, ...) do{if(MyProcessorNumber==ROOT_PROCESSOR){TRACEGF(format, ##__VA_ARGS__);}}while(0)
 
+#define EXTRAFUNC(grid, i, ...) do{grid->ExtraFunction(FLN2STR, i, ##__VA_ARGS__);}while(0)
+#define EXTRAFUNC0(grid, i, ...) do{if(MyProcessorNumber==ROOT_PROCESSOR){grid->ExtraFunction(FLN2STR, i, ##__VA_ARGS__);}}while(0)
+#define EXTRAFUNCG(i, ...) do{ExtraFunction(FLN2STR, i, ##__VA_ARGS__);}while(0)
+#define EXTRAFUNCG0(i, ...) do{if(MyProcessorNumber==ROOT_PROCESSOR){ExtraFunction(FLN2STR, i, ##__VA_ARGS__);}}while(0)
+
 #endif /* SRC_ENZO_DEBUGMACROS_H_ */

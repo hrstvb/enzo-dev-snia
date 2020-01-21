@@ -2557,6 +2557,7 @@ int zEulerSweep(int j, int NumberOfSubgrids, fluxes *SubgridFluxes[],
  int TurbulenceSimulationInitializeGrid(TURBULENCE_INIT_PARAMETERS_DECL);
  int ComputeRandomForcingFields(int mode);
  int ExtraFunction(char * message); //for debugging.
+ long long ExtraFunction(char * message, long long i, ...); //for debugging.
 
   // The following are private since they should only be called by
   // TurbulenceSimulationInitializeGrid()

@@ -844,11 +844,13 @@ int grid::ComputeAccelerationFieldExternal(TopGridData *MetaData)
 
 	if(UseSphericalGravity > 0 && SphericalGravityInteriorMasses != NULL)
 	{
+//		EXTRAFUNCG(1);
 		size_t gridSize = GetGridSize();
-		int index = 0, rbin, dimZeus;
-		FLOAT xyz[MAX_DIMENSION], zz, yy_zz, rsquared, rcubed, r, dxdx;
+		int rbin, dimZeus;
+		FLOAT xyz[MAX_DIMENSION], xyz2[MAX_DIMENSION], zz, yy_zz, rsquared, rcubed, r, dxdx;
 		float my_mass, my_accel;
-		dxdx = (11 <= MHDCTSlopeLimiter && MHDCTSlopeLimiter <= 19) ? square(CellWidth[0][0]) : -1;
+		FLOAT DX2 = CellWidth[0][0] / 16;
+//		dxdx = (11 <= MHDCTSlopeLimiter && MHDCTSlopeLimiter <= 19) ? square(CellWidth[0][0]) : -1;
 
 		for(dim = 0; dim < GridRank; dim++)
 		{
@@ -857,39 +859,82 @@ int grid::ComputeAccelerationFieldExternal(TopGridData *MetaData)
 			for(k = 0; k < GridDimension[2]; k++)
 			{
 				xyz[2] = (GridRank > 2) ? ((dimZeus == 2) ? CellLeftEdge[2][k] : CELLCENTER(2, k)) : 0;
-				zz = square(xyz[2] - SphericalGravityCenter[2]);
+				xyz[2] -= SphericalGravityCenter[2];
+				zz = square(xyz[2]);
 //				if(dim == 2 && zz < dxdx)
 //					continue;
 
 				for(j = 0; j < GridDimension[1]; j++)
 				{
 					xyz[1] = (GridRank > 1) ? ((dimZeus == 1) ? CellLeftEdge[1][j] : CELLCENTER(1, j)) : 0;
-					yy_zz = square(xyz[1] - SphericalGravityCenter[1]);
+					xyz[1] -= SphericalGravityCenter[1];
+					yy_zz = square(xyz[1]);
 //					if(dim == 1 && yy_zz < dxdx)
 //						continue;
 					yy_zz += zz;
 
+					size_t index = ELT(0, j, k);
 					for(i = 0; i < GridDimension[0]; i++)
 					{
 						xyz[0] = (dimZeus == 0) ? CellLeftEdge[0][i] : CELLCENTER(0, i);
-						rsquared = square(xyz[0] - SphericalGravityCenter[0]);
+						xyz[0] -= SphericalGravityCenter[0];
+						rsquared = square(xyz[0]);
 //						if(dim == 0 && rsquared < dxdx)
 //							continue;
 						rsquared += yy_zz;
 						r = sqrt(rsquared);
 
+						my_accel = 0;
+						/***************************************************************************/
+//						const int N2 = 3;
+//						const int N2cube = (N2 + 1) * (N2 + 1) * (N2 + 1);
+//						for(int k2 = -N2; k2 <= N2; k2 += 2)
+//						{
+//							xyz2[2] = xyz[2] + k2 * DX2;
+//							for(int j2 = -N2; j2 <= N2; j2 += 2)
+//							{
+//								xyz2[1] = xyz[1] + j2 * DX2;
+//								for(int i2 = -N2; i2 <= N2; i2 += 2)
+//								{
+//									xyz2[0] = xyz[0] + i2 * DX2;
+//
+//									r = lenl(xyz2, 3);
+//
+//									if(0 == (my_accel = SphericalGravityGetAt(r)))
+//										continue;
+//
+//									// Calculate the dim component of the SphericalGravity acceleration vector.
+//									my_accel *= -xyz2[dim] / r;
+//								}
+//							}
+//						}
+//						my_accel /= N2cube;
+						/***************************************************************************/
 						if(0 == (my_accel = SphericalGravityGetAt(r)))
 							continue;
 
 						// Calculate the dim component of the SphericalGravity acceleration vector.
 						my_accel *= -xyz[dim] / r;
-						index = ELT(i, j, k);
+						/***************************************************************************/
 						AccelerationField[dim][index] += my_accel;
+
+						if(1 && k == GridDimension[2] / 2 && j == GridDimension[1] / 2 && i >= GridDimension[0] / 2)
+						{
+							TRACEGF("  %lld  %lld:  %e    %e  %e  %e    %e    %e  %e  %e", dim, i, r, xyz[0], xyz[1],
+									xyz[2], my_accel, AccelerationField[0][index], AccelerationField[1][index],
+									AccelerationField[2][index]);
+						}
+
+						index++;
 					} // for i
 				} // for j
 			} // for k
 
 		} // for dim
+//		EXTRAFUNCG(1);
+//		EXTRAFUNCG(3);
+//		EXTRAFUNCG(5, (MetaData) ? (MetaData->Time) : 0);
+//		EXTRAFUNCG(4, (MetaData) ? (MetaData->Time) : 0);
 	} //Spherical gravity
 
 	LCAPERF_STOP("grid_ComputeAccelerationFieldExternal");

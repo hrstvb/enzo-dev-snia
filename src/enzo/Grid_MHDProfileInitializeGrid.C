@@ -1209,9 +1209,8 @@ float dipoleMoment[3], float dipoleCenter[3], bool useVectorPotential, TopGridDa
 }
 
 int grid::MHDProfileInitializeGrid_TotalE_GasE(MHDInitialProfile* radialProfile, float burningTemperature,
-	float burnedRadius,
-	float dipoleMoment[3], float dipoleCenter[3], bool usingVectorPotential, TopGridData *MetaData,
-	TriSphere *triSphere)
+float burnedRadius,
+float dipoleMoment[3], float dipoleCenter[3], bool usingVectorPotential, TopGridData *MetaData, TriSphere *triSphere)
 {
 	if(ProcessorNumber != MyProcessorNumber)
 		return SUCCESS;
@@ -1230,6 +1229,8 @@ int grid::MHDProfileInitializeGrid_TotalE_GasE(MHDInitialProfile* radialProfile,
 						NULL, NULL, NULL);
 	bool hasInternalEnergyProfile = radialProfile->internalEnergyData;
 	const float tiny_gasE = tiny_pressure / (Gamma - 1);
+	const FLOAT DX16 = CellWidth[0][0] / 16;
+	float gasE2;
 
 	arr_set(totEField, gridSize, 0);
 
@@ -1252,12 +1253,41 @@ int grid::MHDProfileInitializeGrid_TotalE_GasE(MHDInitialProfile* radialProfile,
 
 				rho = max(rhoField[index], tiny_number);
 
+				gasE = 0;
+				/***************************************************************************/
+//				gasE = 3;
+//				const int N2 = 3;
+//				const int N2cube = (N2 + 1) * (N2 + 1) * (N2 + 1);
+//				for(int k2 = -N2; k2 <= N2; k2 += 2)
+//				{
+//					for(int j2 = -N2; j2 <= N2; j2 += 2)
+//					{
+//						for(int i2 = -N2; i2 <= N2; i2 += 2)
+//						{
+//							r = lenl(rx + i2 * DX16, ry + j2 * DX16, rz + k2 * DX16);
+//							/***************************************************************************/
+//
+//							if(hasInternalEnergyProfile)
+//								radialProfile->interpolateInternalEnergy(&gasE2, r);
+//							else
+//								gasE2 = internalEnergy(rho, rhoNiField[index], radialProfile, r);
+//
+//							gasE += max(gasE2, tiny_gasE);
+//
+//							/***************************************************************************/
+//						}
+//					}
+//				}
+//				if(N2)
+//					gasE /= N2cube;
+				/***************************************************************************/
 				if(hasInternalEnergyProfile)
-					radialProfile->interpolateInternalEnergy(&gasE, r);
+					radialProfile->interpolateInternalEnergy(&gasE2, r);
 				else
-					gasE = internalEnergy(rho, rhoNiField[index], radialProfile, r);
+					gasE2 = internalEnergy(rho, rhoNiField[index], radialProfile, r);
 
-				gasE = max(gasE, tiny_gasE);
+				gasE += max(gasE2, tiny_gasE);
+				/***************************************************************************/
 
 				totE = 0;
 				if(BxField)
@@ -1265,6 +1295,7 @@ int grid::MHDProfileInitializeGrid_TotalE_GasE(MHDInitialProfile* radialProfile,
 					totE += square(BxField[index]) + square(ByField[index]) + square(BzField[index]);
 					totE /= rho;
 				}
+
 				totE += square(vxField[index]) + square(vyField[index]) + square(vzField[index]);
 				totE /= 2;
 				totE += gasE;
