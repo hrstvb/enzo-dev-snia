@@ -4,16 +4,16 @@ c///////////////////////  SUBROUTINE CICINTERP  \\\\\\\\\\\\\\\\\\\\\\\\\
 c
       subroutine cicinterp(parent, dim1, dim2, dim3, ndim,
      &                    start1, start2, start3,
-     &                    end1, end2, end3, 
+     &                    end1, end2, end3,
      &                    refine1, refine2, refine3, grid,
-     &                    gdim1, gdim2, gdim3, 
+     &                    gdim1, gdim2, gdim3,
      &                    gstart1, gstart2, gstart3, ishift)
 c
 c  PERFORMS A 3D CIC-LIKE INTERPOLATION FROM THE FIELD PARENT TO GRID
 c
 c     written by: Greg Bryan
 c     date:       May, 1995
-c     modified1:  
+c     modified1:
 c
 c  PURPOSE:  This routine takes the field parent and interpolates it using
 c     a second order accurate scheme.
@@ -48,7 +48,7 @@ c
 c  arguments
 c
       INTG_PREC dim1, dim2, dim3, start1, start2, start3, ndim,
-     &        end1, end2, end3, refine1, refine2, refine3, 
+     &        end1, end2, end3, refine1, refine2, refine3,
      &        gdim1, gdim2, gdim3, gstart1, gstart2, gstart3, ishift
       R_PREC    parent(dim1, dim2, dim3), grid(gdim1, gdim2, gdim3)
 c
@@ -74,7 +74,7 @@ c
       if (ndim .eq. 1) then
 c
          do i = start1, end1
-            xpos    = (REAL(i,RKIND)-xshift)/REAL(refine1,RKIND) 
+            xpos    = (REAL(i,RKIND)-xshift)/REAL(refine1,RKIND)
      &           + 1._RKIND
             iparent = int(xpos-(1._RKIND-xshift),IKIND)
             dx      = REAL(iparent,RKIND) - xpos + 2._RKIND - xshift
@@ -91,13 +91,13 @@ c
       if (ndim .eq. 2) then
 c
         do j = start2, end2
-          ypos    = (REAL(j,RKIND)-yshift)/REAL(refine2,RKIND) 
+          ypos    = (REAL(j,RKIND)-yshift)/REAL(refine2,RKIND)
      &          + 1._RKIND
           jparent = int(ypos-(1._RKIND-yshift),IKIND)
           dy      = REAL(jparent,RKIND) - ypos + 2._RKIND - yshift
 c
           do i = start1, end1
-            xpos = (REAL(i,RKIND)-xshift)/REAL(refine1,RKIND) 
+            xpos = (REAL(i,RKIND)-xshift)/REAL(refine1,RKIND)
      &            + 1._RKIND
             iparent = int(xpos-(1._RKIND-xshift),IKIND)
             dx      = REAL(iparent,RKIND) - xpos + 2._RKIND - xshift
@@ -122,33 +122,38 @@ c
         dz      = REAL(kparent,RKIND) - zpos + 2._RKIND - zshift
 c
         do j = start2, end2
-          ypos    = (REAL(j,RKIND)-yshift)/REAL(refine2,RKIND) 
+          ypos    = (REAL(j,RKIND)-yshift)/REAL(refine2,RKIND)
      &          + 1._RKIND
           jparent = int(ypos-(1._RKIND-yshift),IKIND)
           dy      = REAL(jparent,RKIND) - ypos + 2._RKIND - yshift
 c
           do i = start1, end1
-            xpos    = (REAL(i,RKIND)-xshift)/REAL(refine1,RKIND) 
+            xpos    = (REAL(i,RKIND)-xshift)/REAL(refine1,RKIND)
      &            + 1._RKIND
             iparent = int(xpos-(1._RKIND-xshift),IKIND)
             dx      = REAL(iparent,RKIND) - xpos + 2._RKIND - xshift
 c
+c            write(*,*) start1, end1, i, xpos, iparent, dx
+c            write(*,*) start2, end2, j, ypos, jparent, dy
+c            write(*,*) start3, end3, k, zpos, kparent, dz
+c            write(*,*)
+
             grid(i-start1+gstart1, j-start2+gstart2, k-start3+gstart3) =
-     &           dx *   dy *   dz * 
+     &           dx *   dy *   dz *
      &           parent(iparent  , jparent  , kparent  ) +
-     &           (1._RKIND-dx)*   dy *   dz * 
+     &           (1._RKIND-dx)*   dy *   dz *
      &           parent(iparent+1, jparent  , kparent  ) +
-     &           dx *(1._RKIND-dy)*   dz * 
+     &           dx *(1._RKIND-dy)*   dz *
      &           parent(iparent  , jparent+1, kparent  ) +
-     &           (1._RKIND-dx)*(1._RKIND-dy)*   dz * 
+     &           (1._RKIND-dx)*(1._RKIND-dy)*   dz *
      &           parent(iparent+1, jparent+1, kparent  ) +
-     &           dx *   dy *(1._RKIND-dz)* 
+     &           dx *   dy *(1._RKIND-dz)*
      &           parent(iparent  , jparent  , kparent+1) +
-     &           (1._RKIND-dx)*   dy *(1._RKIND-dz)* 
+     &           (1._RKIND-dx)*   dy *(1._RKIND-dz)*
      &           parent(iparent+1, jparent  , kparent+1) +
-     &           dx *(1._RKIND-dy)*(1._RKIND-dz)* 
+     &           dx *(1._RKIND-dy)*(1._RKIND-dz)*
      &           parent(iparent  , jparent+1, kparent+1) +
-     &           (1._RKIND-dx)*(1._RKIND-dy)*(1._RKIND-dz)* 
+     &           (1._RKIND-dx)*(1._RKIND-dy)*(1._RKIND-dz)*
      &           parent(iparent+1, jparent+1, kparent+1)
 c
           enddo

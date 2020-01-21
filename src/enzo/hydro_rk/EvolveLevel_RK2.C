@@ -403,7 +403,7 @@ int EvolveLevel_RK2(TopGridData *MetaData, LevelHierarchyEntry *LevelArray[],
 	// done in PrepareDensity.
       } // end: if (SelfGravity)
 
-      Grids[grid1]->GridData->ComputeAccelerationFieldExternal() ;
+      Grids[grid1]->GridData->ComputeAccelerationFieldExternal(MetaData) ;
 
 #ifdef TRANSFER
       /* Radiation Pressure: add to acceleration field */
@@ -464,7 +464,7 @@ int EvolveLevel_RK2(TopGridData *MetaData, LevelHierarchyEntry *LevelArray[],
 	}
       } // end: if (SelfGravity)
 
-      Grids[grid1]->GridData->ComputeAccelerationFieldExternal() ;
+      Grids[grid1]->GridData->ComputeAccelerationFieldExternal(MetaData) ;
 
     } // End of loop over grids
 

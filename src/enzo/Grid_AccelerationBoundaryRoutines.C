@@ -16,6 +16,7 @@
 #include "Hierarchy.h"
 #include "TopGridData.h"
 #include "LevelHierarchy.h"
+#include "DebugMacros.h"
 
 #ifdef FAST_SIB
 int SetBoundaryConditions(HierarchyEntry *Grids[], int NumberOfGrids,
@@ -141,7 +142,9 @@ int SetAccelerationBoundary(HierarchyEntry *Grids[], int NumberOfGrids,
   ConservativeInterpolation = FALSE;
 
   for (grid1 = 0; grid1 < NumberOfGrids; grid1++) {
-    if( Grids[grid1]->GridData->AttachAcceleration() == FAIL ) {
+//	  EXTRAFUNC(Grids[grid1]->GridData, 1);
+//	  EXTRAFUNC(Grids[grid1]->ParentGrid->GridData, 1);
+	  if( Grids[grid1]->GridData->AttachAcceleration() == FAIL ) {
       ENZO_FAIL("Error in AttachAcceleration \n");
     }
     if( Grids[grid1]->ParentGrid->GridData->AttachAcceleration() ==FAIL ){
@@ -171,6 +174,8 @@ int SetAccelerationBoundary(HierarchyEntry *Grids[], int NumberOfGrids,
 
     }
 
+//	  EXTRAFUNC(Grids[grid1]->GridData, 1);
+//	  EXTRAFUNC(Grids[grid1]->ParentGrid->GridData, 1);
   }
 
 
