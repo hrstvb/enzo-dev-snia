@@ -59,15 +59,34 @@ void grid::AllocateGrids()
 //
 //  } // if(UseMHDCT)
 	size_t size = GetGridSize();
+	int debug_level = 0;
+
+	if(debug_level > 0)
+		TRACEGF("Allocating %lld baryon fields of size %lld:", NumberOfBaryonFields, size);
 	for(int field = 0; field < NumberOfBaryonFields; field++)
+	{
+		if(debug_level > 1)
+		{
+			if(DataLabel[field])
+				TRACEGF(" ... allocating field type %lld, %s ...", FieldType[field], DataLabel[field]);
+			else
+				TRACEGF(" ... allocating field type %lld ...", FieldType[field]);
+		}
 		arr_newset(BaryonField + field, size, 0);
+	}
 
 	if(UseMHDCT)
 	{
 		for(int dim = 0; dim < 3; dim++)
 		{
+			if(debug_level > 1)
+				TRACEGF(" ... allocating MagneticField[%lld] ...", dim);
 			arr_newset(MagneticField + dim, MagneticSize[dim], 0);
+			if(debug_level > 1)
+				TRACEGF(" ... allocating ElectricField[%lld] ...", dim);
 			arr_newset(ElectricField + dim, ElectricSize[dim], 0);
+			if(debug_level > 1)
+				TRACEGF(" ... allocating AvgElectricField[%lld] ...", dim);
 			arr_newset(AvgElectricField + dim, ElectricSize[dim], 0);
 			MHDParentTemp[dim] = NULL;
 		}
@@ -76,4 +95,7 @@ void grid::AllocateGrids()
 	if(RandomForcing == TRUE)
 		for(int dim = 0; dim < GridRank; dim++)
 			arr_newset(RandomForcingField + dim, size, 1.0);
+
+	if(debug_level > 0)
+		TRACEGF("Allocating baryon fields done.");
 }

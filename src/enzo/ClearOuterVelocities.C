@@ -101,9 +101,9 @@ void negEFile_close(FILE *file, const char* filename)
 	}
 }
 
-int ClearOuterVelocities(float *u, float *v, float *w, float *totE, float *rhoField, float *pressure, int in, int jn, int kn, int rank, float dx[],
-float dy[], float dz[], FLOAT** CellLeftEdge, int level, TopGridData *MetaData, int gridID, grid *g, char* dumpPrefix,
-	char *dumpSuffix, char* dumpPreamble)
+int ClearOuterVelocities(float *u, float *v, float *w, float *totE, float *rhoField, float *pressure, int in, int jn,
+	int kn, int rank, float dx[],float dy[], float dz[], FLOAT** CellLeftEdge, int level, TopGridData *MetaData,
+	int gridID, grid *g, char* dumpPrefix, char *dumpSuffix, char* dumpPreamble)
 {
 #define DUMP_PREAMBLE2 "# The record format is" \
 	"# tag, i, j, k\n" \
@@ -176,8 +176,15 @@ float dy[], float dz[], FLOAT** CellLeftEdge, int level, TopGridData *MetaData, 
 					FLOAT crr = r / OuterVelocitiesSphereRadius;
 					FLOAT r_xyz[3];
 					r_xyz[0] = r_x / crr + SphericalGravityCenter[0];
+					if(r_xyz[0] <= g->CellLeftEdge[0][0]) continue;
+					if(r_xyz[0] >= g->CellLeftEdge[0][g->GetGridDimension(0)]) continue;
 					r_xyz[1] = r_y / crr + SphericalGravityCenter[1];
+					if(r_xyz[1] <= g->CellLeftEdge[1][0]) continue;
+					if(r_xyz[1] >= g->CellLeftEdge[1][g->GetGridDimension(1)]) continue;
 					r_xyz[2] = r_z / crr + SphericalGravityCenter[2];
+					if(r_xyz[2] <= g->CellLeftEdge[2][0]) continue;
+					if(r_xyz[2] >= g->CellLeftEdge[2][g->GetGridDimension(2)]) continue;
+
 					size_t index2 = g->get_ijk_index(ijk2, r_xyz);
 					newVx = u[index2];
 					newVy = v[index2];

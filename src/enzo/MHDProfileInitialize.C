@@ -62,7 +62,6 @@ class ExternalBoundary;
 
  */
 
-void limiter1nInit();
 int MHDCTSetupFieldLabels();
 int SphericalGravityComputePotential(LevelHierarchyEntry *LevelArray[], TopGridData* MetaData,
 	bool interpolateMissingShells);
@@ -73,6 +72,7 @@ int polytropicPressureAtSmallR(float* P, float* rho, FLOAT r, float rho_c, float
 void WriteInitialProfile(const char* name, FLOAT* RR, FLOAT* RHO, FLOAT* GG, FLOAT* PP, FLOAT* UU, size_t n,
 FLOAT gamma)
 {
+	return;
 	if(MyProcessorNumber != ROOT_PROCESSOR)
 		return;
 
@@ -308,11 +308,21 @@ int SphericalGravityIntegratePressure(MHDInitialProfile* profile, float initialP
 	size_t N = (fromProfile) ? profile->nRows : SphericalGravityActualNumberOfBins;
 	FLOAT* rr = (fromProfile) ? profile->radiusData : SphericalGravityBinLeftEdges;
 	FLOAT* PP = new float[N];
-	FLOAT* UU = new float[N];
+	FLOAT* UU = NULL;
 	FLOAT* mm = (fromProfile) ? (new FLOAT[N]) : NULL;
 	FLOAT* dd = new FLOAT[N];
 	FLOAT* gg = new FLOAT[N];
 	FLOAT* ggdd = new FLOAT[N];
+
+	if((profile->internalEnergyData) && (profile->nRowsInternalEnergy == N))
+	{
+		UU = profile->internalEnergyData;
+	}
+	else
+	{
+		delete profile->internalEnergyData;
+		UU = new float[N];
+	}
 
 	FLOAT P_c, P2, P1, P, r2, r1, r, U2, U1, U, m2, m1, m; // r2 < r1 < r
 	FLOAT h, b, a, bb, aa, g, rho, g_rho, rho_c; // b:=r-r2 > a:=r-r1
@@ -367,7 +377,7 @@ int SphericalGravityIntegratePressure(MHDInitialProfile* profile, float initialP
 	for(j = 0; j < N; j++)
 		PP[j] = 0;
 
-	int integrationStartIndex = 0;
+	int integrationStartIndex = N - 1;
 
 	if(0)
 	{
@@ -503,7 +513,7 @@ int SphericalGravityIntegratePressure(MHDInitialProfile* profile, float initialP
 	double P_shift = initialPressure;
 	if(P_shift <= 0)
 		polytropicPressureAtSmallR(&P_shift, NULL, rr[0], rho_c, NULL, NULL, NULL);
-	;
+
 	size_t initialConditionIndex = (initialPressureAtSurface) ? (N - 1) : 0;
 //	TRACEF("P_shift=%e %e %e   %lld %lld %e", P_shift, initialPressure, P_c, initialConditionIndex,
 //			initialPressureAtSurface, PP[initialConditionIndex]);
@@ -528,10 +538,10 @@ int SphericalGravityIntegratePressure(MHDInitialProfile* profile, float initialP
 	if(MyProcessorNumber == ROOT_PROCESSOR)
 		WriteInitialProfile("initialProfile", rr, dd, gg, PP, UU, N, /*K,*/Gamma);
 
-	if(MyProcessorNumber == ROOT_PROCESSOR)
+//	if(MyProcessorNumber == ROOT_PROCESSOR)
 	{
-		TRACEF("  Number of points after pressure integration: Profile: %lld,  Internal energy: %lld,  Spherical gravity: %lld",
-			   profile->nRows, N, SphericalGravityActualNumberOfBins);
+		TRACEF("  after pressure integration: P_c=P[0]=%e  P_s=p{%lld]=%e , len.profile: %lld,  len.spherical gravity: %lld\n",
+				PP[0], N, PP[N - 1], profile->nRows, SphericalGravityActualNumberOfBins);
 		int n = 100;
 		n = (n < N) ? N : n;
 //		arr_fprintpylist(stderr, profile->radiusData, n, "radius=");
@@ -540,7 +550,19 @@ int SphericalGravityIntegratePressure(MHDInitialProfile* profile, float initialP
 //		arr_fprintpylist(stderr, PP, n, "pressure=");
 	}
 
+	if(PP[N - 1] <= tiny_pressure)
+	{
+		if(MyProcessorNumber == ROOT_PROCESSOR)
+			arr_printf_csv("Pressure profile: ", "%e", PP, N, " ", 10);
+		printf("\n");
+		fflush(stdout);
+		ENZO_VFAIL("Small or negative pressure: P[%lld] = %e ( P_c = %e , P_c,calc = %e )", N, PP[N - 1], PP[0], P_c);
+	}
+
+
+	delete dd;
 	delete gg;
+	delete ggdd;
 	delete mm;
 	delete PP;
 	//rr and UU are referenced by profile->;
@@ -551,13 +573,15 @@ int SphericalGravityIntegratePressure(MHDInitialProfile* profile, float initialP
 int MHDProfileInitialize(FILE *fptr, FILE *Outfptr, HierarchyEntry &TopGrid, TopGridData &MetaData,
 	ExternalBoundary &Exterior, bool BeforeGridDistribution)
 {
-	if(MyProcessorNumber != ROOT_PROCESSOR)
-		return SUCCESS;
-
-	if(ParallelRootGridIO && BeforeGridDistribution)
+	if(BeforeGridDistribution && ParallelRootGridIO)
 	{
 		// Stub the top grid, i.e. do not allocate the fields.
 		return TopGrid.GridData->MHDProfileInitializeGrid1(NULL, 0, 0, NULL, NULL, 0, &MetaData, NULL);
+	}
+
+	if(!BeforeGridDistribution && !ParallelRootGridIO)
+	{
+		return SUCCESS;
 	}
 
 	// Parameters and their defaults.
@@ -623,19 +647,14 @@ int MHDProfileInitialize(FILE *fptr, FILE *Outfptr, HierarchyEntry &TopGrid, Top
 	arr_ax(dipoleMoment, 3, ONE_OVER_SQRT_4PI);
 
 	MHDProfileSetLabels(useGE, UseMetal);
-//	if(ParallelRootGridIO && BeforeGridDistribution)
-//	{
-//		// Stub the top grid, i.e. do not allocate the fields.
-//		return TopGrid.GridData->MHDProfileInitializeGrid1(NULL, BurningTemperature, InitialBurnedRadius, dipoleMoment,
-//															dipoleCenter, InitBWithVectorPotential, &MetaData);
-//	}
-//
-	if(BurningDiffusionRateReduced <= 0)
-		BurningDiffusionRateReduced = BurningDiffusionRate / (DomainRightEdge[0] - DomainLeftEdge[0])
-				* MetaData.TopGridDims[0];
-	if(BurningReactionRateReduced <= 0)
-		BurningReactionRateReduced = BurningReactionRate * (DomainRightEdge[0] - DomainLeftEdge[0])
-				/ MetaData.TopGridDims[0];
+
+	{
+		const FLOAT DX = (DomainRightEdge[0] - DomainLeftEdge[0]) * MetaData.TopGridDims[0];
+		if(BurningDiffusionRateReduced <= 0)
+			BurningDiffusionRateReduced = BurningDiffusionRate / DX;
+		if(BurningReactionRateReduced <= 0)
+			BurningReactionRateReduced = BurningReactionRate * DX;
+	}
 
 	if(SphericalGravityOuterRadius <= 0)
 	{
@@ -670,24 +689,24 @@ int MHDProfileInitialize(FILE *fptr, FILE *Outfptr, HierarchyEntry &TopGrid, Top
 	bool projectChildrenToParents = maxRefLevel;
 	bool initBWithVectorPotential = InitBWithVectorPotential || (dipoleMoment[0] || dipoleMoment[1] || dipoleMoment[2]);
 	bool integratePressure = (radialProfile.internalEnergyData == NULL) || InitRadialPressureFromCentral;
+	PRINT_HIERARCHY(&TopGrid);
 
 	RebuildHierarchyIterator rhit = RebuildHierarchyIterator(maxRefLevel, &TopGrid, &MetaData);
 	for(grid* g = rhit.first(); g; g = rhit.next())
 	{
-		if(rhit.startingNewLevel)
-			TRACEF("Refining hierarchy, level %lld", rhit.currentLevel);
+		TRACEF("Initializing grid %lld on level %lld of %lld levels max ...", g->GetGridID(), rhit.currentLevel,
+				maxRefLevel + 1);
 
-		// Initialize the density and the burned fraction, velocity and perturnb.
-		g->MHDProfileInitializeGrid1(&radialProfile, BurningTemperature,
-										InitialBurnedRadius * (rhit.currentLevel == MaximumRefinementLevel),
-//										InitialBurnedRadius,
-										dipoleMoment, dipoleCenter, initBWithVectorPotential,
-										&MetaData, triSphere);
+		float tempBurnedRadius = InitialBurnedRadius * (rhit.currentLevel == MaximumRefinementLevel);
+
+		// Initialize the density and the burned fraction, velocity and perturb.
+		g->MHDProfileInitializeGrid1(&radialProfile, BurningTemperature, tempBurnedRadius, dipoleMoment, dipoleCenter,
+										initBWithVectorPotential, &MetaData, triSphere);
 
 		if(!rhit.isLastOnCurrentLevel())
 			continue;
 
-		PRINT_HIERARCHY0(rhit.levelArray);
+		PRINT_HIERARCHY(rhit.levelArray);
 
 		if(UseSphericalGravity)
 		{
@@ -698,62 +717,59 @@ int MHDProfileInitialize(FILE *fptr, FILE *Outfptr, HierarchyEntry &TopGrid, Top
 				SphericalGravityIntegratePressure(&radialProfile, InitRadialPressureFromCentral, false);
 		}
 
+		TRACEF("Phase 2 initialize grids on level %lld ...", rhit.currentLevel);
 		LevelArrayIterator it2 = LevelArrayIterator(rhit.levelArray);
-		for(grid* g2 = it2.firstFromLevel(rhit.currentLevel); g2; g2 = it2.next())
-			g2->MHDProfileInitializeGrid2(&radialProfile, BurningTemperature,
-											InitialBurnedRadius * (rhit.currentLevel == MaximumRefinementLevel),
-//											InitialBurnedRadius,
-											dipoleMoment, dipoleCenter, initBWithVectorPotential,
-											&MetaData, triSphere);
+		for(grid* g2 = it2.firstFromTop(); g2; g2 = it2.next())
+			g2->MHDProfileInitializeGrid2(&radialProfile, BurningTemperature, tempBurnedRadius, dipoleMoment,
+											dipoleCenter, initBWithVectorPotential, &MetaData, triSphere);
 	}
 
 	TRACEF("HIERARCHY BUILT");
+	return SUCCESS;
 
-	if(projectChildrenToParents || 1)
+	LevelArrayIterator it = LevelArrayIterator(rhit.levelArray);
+	bool usingDirectInit, usingVectorPotentialInit;
+
 	{
-		LevelArrayIterator it = LevelArrayIterator(rhit.levelArray);
-		bool usingDirectInit, usingVectorPotentialInit;
+		// A dummy call to get the values of the usingDirect/VectorPotential flags.
+		grid *g = it.firstFromTop();
+		g->MHDProfileInitializeGrid_B_and_CT_Fields(NULL, BurningTemperature, InitialBurnedRadius, dipoleMoment,
+													dipoleCenter, initBWithVectorPotential, &MetaData, triSphere,
+													&usingDirectInit, &usingVectorPotentialInit);
+	}
 
+	if(usingVectorPotentialInit)
+	{
+		for(grid* g = it.firstFromTop(); g; g = it.next())
 		{
-			// A dummy call to get the values of the using direct/vector potential flags.
-			grid *g = it.firstFromTop();
-			g->MHDProfileInitializeGrid_B_and_CT_Fields(
-					NULL, BurningTemperature, InitialBurnedRadius, dipoleMoment, dipoleCenter,
-//						InitialBurnedRadius * (rhit.currentLevel == MaximumRefinementLevel) ? 1 : 0,
-					initBWithVectorPotential, &MetaData, triSphere, &usingDirectInit, &usingVectorPotentialInit);
+			float tempBurnedRadius = InitialBurnedRadius * (rhit.currentLevel == MaximumRefinementLevel);
+			g->MHDProfileInitializeGrid_B_and_CT_Fields(&radialProfile, BurningTemperature, tempBurnedRadius,
+														dipoleMoment, dipoleCenter, initBWithVectorPotential, &MetaData,
+														triSphere, NULL, NULL);
 		}
+	}
 
-		if(usingVectorPotentialInit)
-		{
-			for(grid* g = it.firstFromTop(); g; g = it.next())
-				g->MHDProfileInitializeGrid_B_and_CT_Fields(
-						&radialProfile, BurningTemperature, InitialBurnedRadius, dipoleMoment, dipoleCenter,
-//						InitialBurnedRadius * (rhit.currentLevel == MaximumRefinementLevel) ? 1 : 0,
-						initBWithVectorPotential, &MetaData, triSphere, NULL, NULL);
-		}
-
-		// Restore the consistency among levels by projecting each layer to its parent,
-		// starting from the finest level.
-		// We want to project the vector potential and take the curl afterwards.
-		// Store the original project flags for the MHD fields and set them so
-		// that the vector potential gets projected.
+	if(projectChildrenToParents)
+	{
 		it.projectChildrenToParents(usingDirectInit, usingVectorPotentialInit);
+	}
+
+	for(grid* g = it.firstFromTop(); g; g = it.next())
+	{
+		float tempBurnedRadius = InitialBurnedRadius * (rhit.currentLevel == MaximumRefinementLevel);
 
 		if(usingVectorPotentialInit)
 		{
-			for(grid* g = it.firstFromTop(); g; g = it.next())
-				g->MHDProfileInitializeGrid_CurlAndCenter(&radialProfile, BurningTemperature, InitialBurnedRadius,
-															dipoleMoment, dipoleCenter, InitBWithVectorPotential,
-															&MetaData, triSphere, usingDirectInit, usingVectorPotentialInit);
+			g->MHDProfileInitializeGrid_CurlAndCenter(&radialProfile, BurningTemperature, tempBurnedRadius,
+														dipoleMoment, dipoleCenter, InitBWithVectorPotential, &MetaData,
+														triSphere, usingDirectInit, usingVectorPotentialInit);
 		}
 
-		for(grid* g = it.firstFromTop(); g; g = it.next())
-			g->MHDProfileInitializeGrid_TotalE_GasE(&radialProfile, BurningTemperature, InitialBurnedRadius, dipoleMoment,
-											dipoleCenter, InitBWithVectorPotential, &MetaData, triSphere);
+		g->MHDProfileInitializeGrid_TotalE_GasE(&radialProfile, BurningTemperature, tempBurnedRadius, dipoleMoment,
+												dipoleCenter, InitBWithVectorPotential, &MetaData, triSphere);
 
-		for(grid* g = it.firstFromTop(); g; g = it.next())
-			g->MHDProfileInitializeGrid5(&radialProfile, BurningTemperature, InitialBurnedRadius, dipoleMoment,
-											dipoleCenter, InitBWithVectorPotential, &MetaData, triSphere);
+		g->MHDProfileInitializeGrid5(&radialProfile, BurningTemperature, tempBurnedRadius, dipoleMoment, dipoleCenter,
+										InitBWithVectorPotential, &MetaData, triSphere);
 	}
 
 	if(triSphere)
@@ -762,10 +778,11 @@ int MHDProfileInitialize(FILE *fptr, FILE *Outfptr, HierarchyEntry &TopGrid, Top
 		triSphere->~TriSphere();
 		delete triSphere;
 		triSphere = NULL;
-		// Turn off the static refinement shells
-		StaticRefineShellInnerRadius[0] = -1;
-		StaticRefineShellOuterRadius[0] = -2;
 	}
+
+	// Turn off the static refinement shells
+	arr_set(StaticRefineShellInnerRadius, MAX_STATIC_REGIONS, -1);
+	arr_set(StaticRefineShellOuterRadius, MAX_STATIC_REGIONS, -2);
 
 	radialProfile.free();
 	TRACEF("  Process initialization finished.");
@@ -785,7 +802,7 @@ int MHDProfileInitializeRestart(TopGridData * MetaData, LevelHierarchyEntry * *L
 	{
 		if(PerturbationMethod != 4)
 		{
-			ENZO_VFAIL("Perturbation-On-Restart is implemented for PerturbationMethod==4 only, but %lld found.",
+			ENZO_VFAIL("Perturbation-On-Restart is implemented for PerturbationMethod=4 only, but %lld found.",
 						PerturbationMethod);
 		}
 

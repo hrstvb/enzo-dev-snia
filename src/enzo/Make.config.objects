@@ -15,6 +15,11 @@
 #-----------------------------------------------------------------------
 
 OBJS_CONFIG_LIB = \
+  MHDInitializeNew_PartitionGrids.o \
+  MHDInitializeNew_Exterior.o \
+  MHDInitializeNew_TopGrid.o \
+  MHDInitializeNew_pass2.o \
+  MHDInitializeNew_pass1.o \
   ClearOuterVelocities.o \
   mylimiters.o \
   Grid_PointInChildren.o \

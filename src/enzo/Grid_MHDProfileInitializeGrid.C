@@ -802,23 +802,28 @@ int grid::PerturbWithTriSPhere(TriSphere *triSphere, FILE *fptr = NULL)
 int grid::MHDProfileInitializeGrid1(MHDInitialProfile* radialProfile, float burningTemperature, float burnedRadius,
 float dipoleMoment[3], float dipoleCenter[3], bool useVectorPotential, TopGridData *MetaData, TriSphere *triSphere)
 {
-	if(ProcessorNumber != MyProcessorNumber)
-		return SUCCESS;
+//	if(ProcessorNumber != MyProcessorNumber)
+//		return SUCCESS;
 
 	if(GridRank != 3)
 	{
 		ENZO_FAIL("MHDProfileInitializeGrid is implemented for 3D only.");
 	}
 
-	if(!ParallelRootGridIO)
-	{
+//	if(!ParallelParticleIO)
+//	{
 		if(MHDProfileInitializeGrid0(NULL, burningTemperature, burnedRadius, dipoleMoment, dipoleCenter,
 										useVectorPotential, MetaData, triSphere) == FAIL)
 		{
 			ENZO_FAIL("Error stubbing grid by MHDProfileInitialize0.");
 		}
-	}
 
+		if(radialProfile == NULL)
+			return SUCCESS;
+//	}
+
+	if(ProcessorNumber != MyProcessorNumber)
+		return SUCCESS;
 //	int hasGasEField = DualEnergyFormalism && (HydroMethod != Zeus_Hydro); //[BH]
 
 	TRACEGF("INITIALIZING GRID PHASE 1 BEGIN.");
@@ -1218,19 +1223,21 @@ float dipoleMoment[3], float dipoleCenter[3], bool usingVectorPotential, TopGrid
 	TRACEGF("INITIALIZING GRID total/internal energy BEGIN.");
 
 	size_t index;
-	float rho, gasE, totE;
+	float rho, gasE, gasE_temp, totE, pressure;
 	float x, y, z, r, rx, ry, rz;
 	float *totEField, *rhoField;
-	float *vxField, *vyField, *vzField, *vxyzField[3];
+	float *vxField, *vyField, *vzField, *vxyzField[3] = { NULL, NULL, NULL };
 	float *gasEField = NULL, *rhoNiField = NULL;
-	float *BxField = NULL, *ByField = NULL, *BzField = NULL; //, *BxyzField[3] = { NULL, NULL, NULL };
-	MHD_SNIA_GetFields(&rhoField, &totEField, NULL, &vxField, &vyField, &vzField, NULL, &BxField, &ByField, &BzField,
-	NULL,
+	float *BxField = NULL, *ByField = NULL, *BzField = NULL, *BxyzField[3] = { NULL, NULL, NULL };
+	MHD_SNIA_GetFields(&rhoField, &totEField, NULL, &vxField, &vyField, &vzField, vxyzField, &BxField, &ByField, &BzField,
+	BxyzField,
 						NULL, NULL, NULL);
 	bool hasInternalEnergyProfile = radialProfile->internalEnergyData;
-	const float tiny_gasE = tiny_pressure / (Gamma - 1);
-	const FLOAT DX16 = CellWidth[0][0] / 16;
-	float gasE2;
+	const float tiny_gasE = tiny_pressure / tiny_number / (Gamma - 1);
+	const FLOAT DX = CellWidth[0][0];
+	const FLOAT DX2 = TopGridDx[0] / POW(2, MaximumRefinementLevel);
+	const int N2 = 0; //(MaximumRefinementLevel > 0) ? nint(DX / DX2) : 1;
+
 
 	arr_set(totEField, gridSize, 0);
 
@@ -1255,38 +1262,60 @@ float dipoleMoment[3], float dipoleCenter[3], bool usingVectorPotential, TopGrid
 
 				gasE = 0;
 				/***************************************************************************/
-//				gasE = 3;
-//				const int N2 = 3;
-//				const int N2cube = (N2 + 1) * (N2 + 1) * (N2 + 1);
-//				for(int k2 = -N2; k2 <= N2; k2 += 2)
-//				{
-//					for(int j2 = -N2; j2 <= N2; j2 += 2)
-//					{
-//						for(int i2 = -N2; i2 <= N2; i2 += 2)
-//						{
-//							r = lenl(rx + i2 * DX16, ry + j2 * DX16, rz + k2 * DX16);
-//							/***************************************************************************/
-//
-//							if(hasInternalEnergyProfile)
-//								radialProfile->interpolateInternalEnergy(&gasE2, r);
-//							else
-//								gasE2 = internalEnergy(rho, rhoNiField[index], radialProfile, r);
-//
-//							gasE += max(gasE2, tiny_gasE);
-//
-//							/***************************************************************************/
-//						}
-//					}
-//				}
-//				if(N2)
-//					gasE /= N2cube;
-				/***************************************************************************/
-				if(hasInternalEnergyProfile)
-					radialProfile->interpolateInternalEnergy(&gasE2, r);
-				else
-					gasE2 = internalEnergy(rho, rhoNiField[index], radialProfile, r);
+				if(N2 > 1)
+				{
+					float gasE2 = 0;
+					FLOAT xyz0[3], xyz2[3], r2;
+					xyz0[0] = rx + (DX2 - DX) / 2;
+					xyz0[1] = ry + (DX2 - DX) / 2;
+					xyz0[2] = rz + (DX2 - DX) / 2;
 
-				gasE += max(gasE2, tiny_gasE);
+					for(int k2 = 0; k2 < N2; k2++)
+					{
+						xyz2[2] = xyz0[2] + k2 * DX2;
+						for(int j2 = 0; j2 < N2; j2++)
+						{
+							xyz2[1] = xyz0[1] + j2 * DX2;
+							for(int i2 = 0; i2 < N2; i2++)
+							{
+								xyz2[0] = xyz0[0] + i2 * DX2;
+
+								r2 = lenl(xyz2, 3);
+
+								if(hasInternalEnergyProfile)
+									radialProfile->interpolateInternalEnergy(&gasE2, r2);
+								else
+									gasE2 = internalEnergy(rho, rhoNiField[index], radialProfile, r2);
+
+								gasE_temp += gasE2;
+							}
+						}
+					}
+					gasE_temp /= N2 * N2 * N2;
+				}
+				else if(N2==0)
+				{
+					/***************************************************************************/
+					if(hasInternalEnergyProfile)
+						radialProfile->interpolateInternalEnergy(&gasE_temp, r);
+					else
+						gasE_temp = internalEnergy(rho, rhoNiField[index], radialProfile, r);
+				}
+				else
+				{
+
+				}
+				/***************************************************************************/
+
+				pressure = gasE_temp * rho * (Gamma - 1);
+				if(pressure < tiny_pressure)
+				{
+//					TRACEGF(" ijkxyzr rho u P: %lld %lld %lld %e %e %e %e %e %e %e", i,j,k,x,y,z,r,rho,gasE_temp, pressure);
+					pressure = tiny_pressure;
+					gasE_temp = pressure / rho / (Gamma - 1);
+				}
+
+				gasE += gasE_temp;
 				/***************************************************************************/
 
 				totE = 0;
@@ -1303,6 +1332,14 @@ float dipoleMoment[3], float dipoleCenter[3], bool usingVectorPotential, TopGrid
 				if(gasEField)
 					gasEField[index] = gasE;
 
+				if(0) {
+					int I0 = 35, I1 = 5;
+					int K0 = I0, K1 = I1;
+
+					if(i==k  && j==GridDimension[1]/2)
+						TRACEGF(" ijkxyzreP %lld %lld %lld %e %e %e %e %e %e", i, j, k,
+								x / 1e5, y / 1e5, z / 1e5, r / 1e5, totE, pressure);
+				}
 				index++;
 			}
 		}
@@ -1330,10 +1367,9 @@ float dipoleMoment[3], float dipoleCenter[3], bool useVectorPotential, TopGridDa
 	if(ProcessorNumber != MyProcessorNumber)
 		return SUCCESS;
 
-	TRACEGF("INITIALIZING GRID  clean up  BEGIN.");
-
 	if(HydroMethod == MHD_RK)
 	{
+		TRACEGF("INITIALIZING GRID  hydro method MHD_RK clean up  BEGIN.");
 		for(int dim = 0; dim < 3; dim++)
 		{
 			delete MagneticField[dim];
@@ -1341,9 +1377,9 @@ float dipoleMoment[3], float dipoleCenter[3], bool useVectorPotential, TopGridDa
 			MagneticField[dim] = NULL;
 			ElectricField[dim] = NULL;
 		}
+		TRACEGF("INITIALIZING GRID  hydro method MHD_RK clean up  END.");
 	}
 
-	TRACEGF("INITIALIZING GRID  clean up  END.");
 	return SUCCESS;
 }
 
@@ -1365,8 +1401,9 @@ float dipoleMoment[3], float dipoleCenter[3], bool useVectorPotential, TopGridDa
 //	return SUCCESS;
 //}
 
-int grid::WriteRadialProfile(char* name)
+int grid::WriteRadialProfile(char* name, int level)
 {
+	return SUCCESS;
 	if(MyProcessorNumber != ProcessorNumber)
 		return FAIL;
 
@@ -1381,7 +1418,8 @@ int grid::WriteRadialProfile(char* name)
 
 	const int SAMPLE_OX = 0;
 	const int SAMPLE_DIAG = 1;
-	int sampleWhere = SAMPLE_DIAG;
+	const int SAMPLE_DIAG_Y = 2;
+	int sampleWhere = SAMPLE_DIAG_Y;
 	switch(sampleWhere)
 	{
 	case SAMPLE_OX:
@@ -1401,14 +1439,18 @@ int grid::WriteRadialProfile(char* name)
 	}
 
 //Check if the segment xyz1..xyz2 is inside the grid.
-	for(int dim = 0; dim < GridRank; dim++)
-	{
-		if(xyz1[dim] < GridLeftEdge[dim] || (GridRightEdge[dim] < xyz2[dim]))
-			return FAIL;
-	}
+//	for(int dim = 0; dim < GridRank; dim++)
+//	{
+//		if(xyz1[dim] < GridLeftEdge[dim] || (GridRightEdge[dim] < xyz2[dim]))
+//			return FAIL;
+//	}
 
 	switch(sampleWhere)
 	{
+	case SAMPLE_DIAG_Y:
+		i1 = 0;
+		i2 = GridDimension[0]-1;
+		break;
 	case SAMPLE_OX:
 	case SAMPLE_DIAG:
 	default:
@@ -1434,13 +1476,14 @@ int grid::WriteRadialProfile(char* name)
 		switch(format)
 		{
 		case 0:
-			sprintf(filename, "%s.radialProfile", name);
+			sprintf(filename, "%s-lvl%lld-grid%lld.radialProfile", name, level, ID);
 			break;
 		case 1:
-			sprintf(filename, "%s.radialProfile.py", name);
+			sprintf(filename, "%s-lvl%lld-grid%lld.radialProfile.py", name, level, ID);
 			break;
 		}
 
+//		TRACEGF(" level = %lld    %s", level, filename);
 		FILE* file = fopen(filename, "w");
 		if(file == NULL)
 		{
@@ -1450,7 +1493,7 @@ int grid::WriteRadialProfile(char* name)
 		switch(format)
 		{
 		case 0:
-			fprintf(file, "%f seconds\n", Time);
+			fprintf(file, "%f seconds\tlevel %lld\tgridId %lld\n", Time, level, ID);
 			break;
 		case 1:
 			break;
@@ -1459,11 +1502,13 @@ int grid::WriteRadialProfile(char* name)
 		switch(format)
 		{
 		case 0:
-			fprintf(file, "# rownum   x y z   rho rho_Ni   E U   vx vy vz   Bx By Bz   g   gamma P\n");
+			fprintf(file, "# rownum   i j k   x y z   rho rho_Ni   E U   vx vy vz   Bx By Bz   g   gamma P\n");
 			break;
 		case 1:
 			fprintf(file, "type('', (), dict(\n");
 			fprintf(file, "time = %f,\n", Time);
+			fprintf(file, "level = %lld,\n", level);
+			fprintf(file, "grid_id = %lld,\n", ID);
 			fprintf(file, "cols = 'rownum x y z rho rho_Ni E U vx vy vz Bx By Bz g gamma P'.split(),\n");
 			fprintf(file, "data = np.array([\n");
 			break;
@@ -1479,13 +1524,17 @@ int grid::WriteRadialProfile(char* name)
 			case SAMPLE_OX:
 				ijk[0] = i;
 				break;
+			case SAMPLE_DIAG_Y:
+				ijk[0] = ijk[2] = i;
+				ijk[1] = GridDimension[1] / 2;
+				break;
 			case SAMPLE_DIAG:
 			default:
-				arr_set(ijk, GridRank, i);
+//				arr_set(ijk, GridRank, i);
+				ijk[0] = ijk[1] = ijk[2] = i;
 			}
 
 			size_t index = getCellIndex(ijk);
-
 			get_xyz(xyz1, ijk);
 			x = xyz1[0];
 			y = xyz1[1];
@@ -1525,12 +1574,12 @@ int grid::WriteRadialProfile(char* name)
 				g = SphericalGravityGetAt(r);
 			}
 
-//		fprintf(file, "num   x   y   z   rho   E   U   vx   vy   vz   Bx   By   Bz   g   gamma P\n");
+//		fprintf(file, "num   i   j   k   x   y   z   rho   E   U   vx   vy   vz   Bx   By   Bz   g   gamma P\n");
 			switch(format)
 			{
 			case 0:
-				fprintf(file, "%lld   %e %e %e   %e %e   %e %e   %e %e %e   %e %e %e   %e   %f %e\n", /**/
-						num, x, y, z, rho, rho_Ni, E, U, vx, vy, vz, Bx, By, Bz, g, gamma, P);
+				fprintf(file, "%lld   %lld %lld %lld   %e %e %e   %e %e   %e %e   %e %e %e   %e %e %e   %e   %f %e\n", /**/
+						num, ijk[0], ijk[1], ijk[2], x, y, z, rho, rho_Ni, E, U, vx, vy, vz, Bx, By, Bz, g, gamma, P);
 				break;
 			case 1:
 				fprintf(file, "[ %lld ,   %e , %e , %e ,   %e , %e ,   %e , %e ,   %e , %e , %e ,   %e , %e , %e"
