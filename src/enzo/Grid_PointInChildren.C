@@ -23,6 +23,20 @@ bool grid::ijkInGrid(int i, int j, int k)
 }
 
 template<typename T>
+bool grid::PointInGridWithGhost(T* point)
+{
+	for(int dim = 0; dim < GridRank; dim++)
+	{
+		T p = point[dim];
+		if(p <= CellLeftEdge[dim][0])
+			return false;
+		if(p >= CellLeftEdge[dim][GridDimension[dim]])
+			return false;
+	}
+	return true;
+}
+
+template<typename T>
 bool grid::PointInGridActiveNB(T* point)
 {
 	for(int dim = 0; dim < GridRank; dim++)

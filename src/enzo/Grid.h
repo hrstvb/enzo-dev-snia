@@ -69,7 +69,7 @@ struct HierarchyEntry;
 extern int CommunicationDirection;
 int FindField(int f, int farray[], int n);
 struct LevelHierarchyEntry;
-
+struct TriSphere;
 
 
 class grid
@@ -2752,6 +2752,7 @@ int zEulerSweep(int j, int NumberOfSubgrids, fluxes *SubgridFluxes[],
 //  template<typename T> bool ijkInGrid(T i, T j, T k);
 
   template<typename T> bool PointInGridActiveNB(T* point);
+  template<typename T> bool PointInGridWithGhost(T* point);
   bool PointInChildrenActiveNB(FLOAT* point, HierarchyEntry* firstChild);
   bool PointInChildrenActiveNB(FLOAT* point, LevelHierarchyEntry* myLevelHierarchyEntry);
 
@@ -3254,7 +3255,7 @@ int zEulerSweep(int j, int NumberOfSubgrids, fluxes *SubgridFluxes[],
 	int PerturbWithTriSPhere(TriSphere *triSphere, FILE *fptr);
 
   int MHDSustainInitialBurnedRegionGrid();
-  int WriteRadialProfile(char* filename);
+  int WriteRadialProfile(char* filename, int level);
 
   int MHDOrszagTangInitGrid(float Density,float Pressure, float V0, float B0 );
   int MHDLoopInitGrid(float LoopDensity,float Pressure, float Vx, float Vy, float Vz, float B0, FLOAT R0,

@@ -18,6 +18,11 @@ int TracerParticlesAddToRestart_DoIt(char * filename, HierarchyEntry *TopGrid,
 # define EXTERN extern
 #endif
 
+int sprintHierarchy(char* s, HierarchyEntry* topGrid, const char* const filename, const int linenum);
+int printHierarchy(HierarchyEntry* topGrid);
+int printHierarchy0(HierarchyEntry* topGrid);
+int printHierarchy(HierarchyEntry* topGrid, const char* const filename, const int linenum);
+int printHierarchy0(HierarchyEntry* topGrid, const char* const filename, const int linenum);
 int sprintHierarchy(char* s, LevelHierarchyEntry** levelArray, const char* const filename, const int linenum);
 int printHierarchy(LevelHierarchyEntry** levelArray);
 int printHierarchy0(LevelHierarchyEntry** levelArray);

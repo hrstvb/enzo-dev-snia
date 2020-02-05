@@ -310,17 +310,17 @@ int grid::InterpolateFieldValues(grid *ParentGrid
 	SecondOrderA : SecondOrderC;
 
     //    fprintf(stdout, "grid:: InterpolateBoundaryFromParent[3]\n");
-	TRACEGF("  %lld %lld %lld    %lld %lld %lld    %lld %lld %lld    %lld",
-			ParentTempStartIndex[0],
-			ParentTempStartIndex[1],
-			ParentTempStartIndex[2],
-			ParentTempEndIndex[0],
-			ParentTempEndIndex[1],
-			ParentTempEndIndex[2],
-			TempDim[0],
-			TempDim[1],
-			TempDim[2],
-			InterpolationMethod);
+//	TRACEGF("  %lld %lld %lld    %lld %lld %lld    %lld %lld %lld    %lld",
+//			ParentTempStartIndex[0],
+//			ParentTempStartIndex[1],
+//			ParentTempStartIndex[2],
+//			ParentTempEndIndex[0],
+//			ParentTempEndIndex[1],
+//			ParentTempEndIndex[2],
+//			TempDim[0],
+//			TempDim[1],
+//			TempDim[2],
+//			InterpolationMethod);
 
     FORTRAN_NAME(interpolate)(&GridRank,
 			      ParentTemp[densfield], ParentTempDim,

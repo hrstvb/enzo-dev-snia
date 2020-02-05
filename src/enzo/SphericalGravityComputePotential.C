@@ -429,7 +429,7 @@ int SphericalGravityComputePotential(LevelHierarchyEntry *LevelArray[], TopGridD
 		break;
 	}
 
-	if(MyProcessorNumber == ROOT_PROCESSOR && (MetaData->CycleNumber == 0 || debug))
+//	if(MyProcessorNumber == ROOT_PROCESSOR && (MetaData->CycleNumber == 0 || debug))
 	{
 		size_t M = 20;
 		TRACEF("SphericalGravity:  GravityConstant = %e    ActualNumberOfBins = %lld    RadiusRange  = %e .. %e",
@@ -440,7 +440,7 @@ int SphericalGravityComputePotential(LevelHierarchyEntry *LevelArray[], TopGridD
 //		arr_printf_pydict("\nSphericalGravityInteriorMasses", "%lld:%e", SphericalGravityInteriorMasses, M);
 //		arr_printf_pydict("\nSphericalGravityBinAccels", "%lld:%e", SphericalGravityBinAccels, M);
 //		arr_printf_pydict("\nSphericalGravityBinAccelSlopes", "%lld:%e", SphericalGravityBinAccelSlopes, M);
-		fflush(stdout);
+//		fflush(stdout);
 	}
 //	for (int dim = 0; dim < GridRank; dim++)
 //		SphericalGravityCentersOfMass[dim] = arr_sum(SphericalGravityShellCentersOfMass[dim], N);
@@ -517,8 +517,11 @@ int SphericalGravityWriteRadialProfile(char* name, TopGridData& MetaData, Hierar
 	HierarchyIterator it = HierarchyIterator(TopGrid);
 	for(grid* g = it.firstAtTop(); g; g = it.next())
 	{
-		if(SUCCESS == g->WriteRadialProfile(name))
-			return SUCCESS;
+//		TRACEF(" WriteRadialProfile level %lld", it.currentLevel);
+		if(SUCCESS == g->WriteRadialProfile(name, it.currentLevel))
+		{
+//			return SUCCESS;
+		}
 	}
 
 	return SUCCESS;

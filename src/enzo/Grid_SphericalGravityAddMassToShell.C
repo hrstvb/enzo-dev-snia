@@ -60,8 +60,9 @@ FLOAT** magEBins, LevelHierarchyEntry* myLevelHierarchyEntry)
 	int myLevel = 0;
 	for(; he; he = he->ParentGrid)
 		myLevel++;
-	int maxRefLevel = max(0, min(MaximumRefinementLevel, MAX_DEPTH_OF_HIERARCHY));
-	int maxGravityLevel = min(SphericalGravityMaxHierarchyLevel, maxRefLevel);
+	int maxRefLevel = min(max(0, MaximumRefinementLevel), MAX_DEPTH_OF_HIERARCHY);
+	int maxGravityLevel = (SphericalGravityMaxHierarchyLevel < 0) ? maxRefLevel : SphericalGravityMaxHierarchyLevel;
+	maxGravityLevel = min(maxGravityLevel, maxRefLevel);
 	if(myLevel > maxGravityLevel)
 		return SUCCESS;
 	bool checkChildren = myLevel < maxGravityLevel;
@@ -167,45 +168,13 @@ FLOAT** magEBins, LevelHierarchyEntry* myLevelHierarchyEntry)
 						if(PointInChildrenActiveNB(xVec, firstChild))
 							continue;
 
-//					if(printdebuginfo && firstChild && MyProcessorNumber == ROOT_PROCESSOR)
-//					{
-//						TRACEGF("%lld %lld %lld    %e %e %e", i, j, k, xVec[0], xVec[1], xVec[2]);
-//						TRACEGF("%e %e %e    %e %e %e", GetGridLeftEdge(0), GetGridLeftEdge(1), GetGridLeftEdge(2),
-//								GetGridRightEdge(0), GetGridRightEdge(1), GetGridRightEdge(2));
-//						double overdx = 1 / CellWidth[0][0];
-//						HierarchyEntry* he = firstChild;
-//						while(he)
-//						{
-//							grid* g = he->GridData;
-//							grid* pg = he->ParentGrid->GridData;
-//							int ijk1[3], ijk2[3], lmn[3];
-//							FLOAT xyz[3];
-//							arr_cpy(xyz, g->GetGridLeftEdge(), 3);
-//							arr_axpby(xyz, GetGridLeftEdge(), 3, -overdx, overdx);
-//							arr_cpy(ijk1, xyz, 3);
-//							arr_cpy(xyz, g->GetGridRightEdge(), 3);
-//							arr_axpby(xyz, GetGridLeftEdge(), 3, -overdx, overdx);
-//							arr_cpy(ijk2, xyz, 3);
-//							arr_cpy(lmn, ijk1, 3);
-//							arr_axpy(lmn, ijk2, 3, -1);
-//							arr_xpa(lmn, 3, 1);
-//							TRACEGF("%lld %lld %lld    %lld %lld %lld   [%lld]   g%lld(on #%lld)    parent g%lld(on #%lld)",
-//									ijk1[0], ijk1[1], ijk1[2], ijk2[0], ijk2[1], ijk2[2], lmn[0] * lmn[1] * lmn[2],
-//									g->GetGridID(), g->ProcessorNumber, pg->GetGridID(), pg->ProcessorNumber);
-//
-//							TRACEGF("%e %e %e    %e %e %e   g%lld(on #%lld)    parent g%lld(on #%lld)",
-//										g->GetGridLeftEdge(0), g->GetGridLeftEdge(1), g->GetGridLeftEdge(2),
-//										g->GetGridRightEdge(0), g->GetGridRightEdge(1), g->GetGridRightEdge(2),
-//										g->GetGridID(), g->ProcessorNumber, pg->GetGridID(), pg->ProcessorNumber);
-//
-//							he = he->NextGridThisLevel;
-//						}
-//
-//						printdebuginfo = false;
-//					}
+//					if(0 && j == 55 && k == 55)
+//						TRACEGF(" mylevel=%lld   %lld %lld %lld   %e  %e  %e", myLevel, i, j, k, xVec[0], xVec[1],
+//								xVec[2]);
 
 					if(-1 == (rbin = SphericalGravityComputeBinIndex(r)))
 						continue;
+
 //					if(j == (GridDimension[1] / 2) && k == (GridDimension[2] / 2) && i <= GridDimension[0] / 2)
 //						printf("i,j,k=%03d,%04d,%04d, (%4f,%4f,%4f), r=%4f, rho=%e, bin=%lld\n", i, j, k,
 //								rVec[0] * 1e-5, rVec[1] * 1e-5, rVec[2] * 1e-5, r * 1e-5, dens * 1e-9, rbin);

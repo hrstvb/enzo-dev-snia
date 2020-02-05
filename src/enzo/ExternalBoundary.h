@@ -4,7 +4,7 @@
 /
 /  written by: Greg Bryan
 /  date:       November, 1994
-/  modified1:  
+/  modified1:
 /
 /  PURPOSE:
 /
@@ -13,15 +13,16 @@
 #ifndef EXTERNAL_BOUNDARY_DEFINED__
 #define EXTERNAL_BOUNDARY_DEFINED__
 
+#include "DebugMacros.h"
 
 class ExternalBoundary
 {
  private:
-  int  BoundaryRank;                      // This is the rank and dimension 
+  int  BoundaryRank;                      // This is the rank and dimension
   int  BoundaryDimension[MAX_DIMENSION];  //  of the grid to which the boundary
                                           //  values apply
   int  NumberOfBaryonFields;              // Number of boundary fields
-  int  BoundaryFieldType[MAX_NUMBER_OF_BARYON_FIELDS];           
+  int  BoundaryFieldType[MAX_NUMBER_OF_BARYON_FIELDS];
                                           // Field types
 
   boundary_type *BoundaryType[MAX_NUMBER_OF_BARYON_FIELDS][MAX_DIMENSION][2];
@@ -34,14 +35,14 @@ class ExternalBoundary
   boundary_type ParticleBoundaryType;
 
   int  MagneticBoundaryDims[3][MAX_DIMENSION];  //  of the grid to which the boundary
-                                          //  values apply 
+                                          //  values apply
   boundary_type MagneticBoundaryType[3][MAX_DIMENSION][2];
   float *MagneticBoundaryValue[3][3][2];
 
-  float *BoundaryValue[MAX_NUMBER_OF_BARYON_FIELDS][MAX_DIMENSION][2];  
+  float *BoundaryValue[MAX_NUMBER_OF_BARYON_FIELDS][MAX_DIMENSION][2];
 					  // boundary values for inflow (3)
 
-  friend class grid;						    
+  friend class grid;
 
  public:
 //
@@ -55,16 +56,19 @@ class ExternalBoundary
 //
 // Checks if the External Boundary has been prepared
 //
-  int AmIPrepared() {return (BoundaryRank > 0) ? TRUE : FALSE;};
+  int AmIPrepared() {
+	  TRACEF("BoundaryRank, NumberOfBaryonFields =  %lld, %lld", BoundaryRank, NumberOfBaryonFields );
+	  return ((BoundaryRank > 0) && (NumberOfBaryonFields > 0))? TRUE : FALSE;
+  };
 //
-// Set one face of external boundaries to a constant value 
+// Set one face of external boundaries to a constant value
 //  (Note: this is not suitable for setting inflow conditions as
 //         BoundaryValue is not set).
 //  Returns SUCCESS or FAIL.
 //
-  int InitializeExternalBoundaryFace(int Dimension, 
+  int InitializeExternalBoundaryFace(int Dimension,
 			      boundary_type LeftBoundaryType,
-			      boundary_type RightBoundaryType, 
+			      boundary_type RightBoundaryType,
 			      float LeftBoundaryValue[],
 			      float RightBoundaryValue[]);
 //
@@ -104,12 +108,12 @@ class ExternalBoundary
 //
 // Finds and returns the indexes to commonly used physical quantities.
 //
-  int IdentifyPhysicalQuantities(int &DensNum, int &GENum, int &Vel1Num, 
+  int IdentifyPhysicalQuantities(int &DensNum, int &GENum, int &Vel1Num,
                                  int &Vel2Num, int &Vel3Num, int &TENum);
   int IdentifyPhysicalQuantities(int &DensNum, int &GENum, int &Vel1Num,
                                  int &Vel2Num, int &Vel3Num, int &TENum,
                                  int &CRNum );
-  int IdentifyPhysicalQuantities(int &DensNum, int &GENum, int &Vel1Num, 
+  int IdentifyPhysicalQuantities(int &DensNum, int &GENum, int &Vel1Num,
                                  int &Vel2Num, int &Vel3Num, int &TENum,
 				 int &B1Num, int&B2Num, int &B3Num, int &PhiNum);
 
@@ -130,7 +134,7 @@ class ExternalBoundary
 
 //
 // Galaxy Simulation RPS Wind boundary
-//   Sets up the inflow boundary conditions to model an 
+//   Sets up the inflow boundary conditions to model an
 //   ICM wind bombarding a galaxy from an arbitrary angle
   int SetGalaxySimulationBoundary(FLOAT time);
 
@@ -138,11 +142,11 @@ class ExternalBoundary
 // DoubleMach problem:
 //  This routine sets up the necessary inflow boundary conditions.
 //
-  int SetDoubleMachBoundary(FLOAT time, FLOAT CellLeftEdge[], 
+  int SetDoubleMachBoundary(FLOAT time, FLOAT CellLeftEdge[],
                             FLOAT CellWidth[]);
 
 // Wengen colliding flow with pseudo cooling has  a particular shape.
-  int SetWengenCollidingFlowBoundary(FLOAT time, FLOAT CellLeftEdge[], 
+  int SetWengenCollidingFlowBoundary(FLOAT time, FLOAT CellLeftEdge[],
                             FLOAT CellWidth[]);
 
 /*  RandomForcing tricks. */
@@ -151,7 +155,7 @@ class ExternalBoundary
   int DetachForcingFromBaryonFields();
 
   int AddField(int FieldType);
-  int DeleteObsoleteFields(int *ObsoleteFields, 
+  int DeleteObsoleteFields(int *ObsoleteFields,
 			   int NumberOfObsoleteFields);
 
 };

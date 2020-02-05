@@ -27,6 +27,149 @@ using namespace std;
 
 void RecursivelySetParticleCount(HierarchyEntry *GridPoint, PINT *Count);
 
+int snlprintHierarchy(char* s, size_t size, size_t* length, HierarchyEntry* topGrid,
+	const char* const filename, const int linenum)
+{
+	size_t l0 = *length;
+	int n;
+
+	if(filename)
+		n = snlprintf(s, size, length, "/- BEGIN HIERARCHY (%s:%d#%lld) ----------------\n", filename, linenum,
+						MyProcessorNumber);
+	else
+		n = snlprintf(s, size, length, "/- BEGIN HIERARCHY (#%lld) ----------------\n", MyProcessorNumber);
+	if(n < 0)
+		return n;
+
+	HierarchyIterator it = HierarchyIterator(topGrid);
+//	for(int level = 0; level < MAX_DEPTH_OF_HIERARCHY; level++)
+//	{
+//		LevelHierarchyEntry* lhe = levelArray[level];
+//		while(lhe)
+	grid* pg = NULL;
+	for(grid* g = it.firstAtTop(); g; g = it.next())
+	{
+		int gProc = g->ReturnProcessorNumber();
+		int dx2pdx[MAX_DIMENSION];
+		if(pg)
+			pg->ComputeRefinementFactors(g, dx2pdx);
+		else
+			arr_set(dx2pdx, MAX_DIMENSION, 1);
+
+		n = snlprintf(s, size, length, "|  HIERARCHY (on #%lld) level %" ISYM
+		"    grid %" ISYM "(%p)",
+						MyProcessorNumber, it.currentLevel, g->GetGridID(), g);
+		if(n < 0)
+			return n;
+
+		if(gProc == MyProcessorNumber)
+		{
+			n = snlprintf(s, size, length, "(local)");
+			if(n < 0)
+				return n;
+		}
+		else
+		{
+			n = snlprintf(s, size, length, "(on #%lld)", gProc);
+			if(n < 0)
+				return n;
+		}
+
+		n = snlprintf(s, size, length, "[%lldx%lldx%lld=%lld]",
+						g->GetGridDimension(0), g->GetGridDimension(1), g->GetGridDimension(2), g->GetGridSize());
+		if(n < 0)
+			return n;
+
+//		n = snlprintf(s, size, length, "(%e,%e,%e)..(%e,%e,%e)",
+//						g->GetGridLeftEdge(0), g->GetGridLeftEdge(1), g->GetGridLeftEdge(2), g->GetGridRightEdge(0),
+//						g->GetGridRightEdge(1), g->GetGridRightEdge(2));
+//		if(n < 0)
+//			return n;
+
+		if(pg)
+		{
+			n = snlprintf(s, size, length, "   x%lld    parent %" ISYM "(%p)", dx2pdx[0], pg->GetGridID(), pg);
+			if(n < 0)
+				return n;
+
+			n = snlprintf(s, size, length, "[%lldx%lldx%lld=%lld]",
+							g->GetGridDimension(0), g->GetGridDimension(1), g->GetGridDimension(2), g->GetGridSize());
+			if(n < 0)
+				return n;
+
+//			n = snlprintf(s, size, length, "(%e, %e, %e)..(%e, %e, %e)", pg->GetGridLeftEdge(0), pg->GetGridLeftEdge(1),
+//						  pg->GetGridLeftEdge(2), pg->GetGridRightEdge(0), pg->GetGridRightEdge(1),
+//						  g->GetGridRightEdge(2));
+//			if(n < 0)
+//				return n;
+
+			int dim;
+			for(dim = 0; dim < pg->GetGridRank(); dim++)
+			{
+				if(pg->GetGridLeftEdge(dim) > g->GetGridRightEdge(dim))
+					break;
+				if(pg->GetGridRightEdge(dim) < g->GetGridLeftEdge(dim))
+					break;
+			}
+		}
+
+		n = snlprintf(s, size, length, "\n");
+		if(n < 0)
+			return n;
+	}
+//	}
+
+	if(filename)
+		n = snlprintf(s, size, length, "\\- END HIERARCHY (%s:%d#%lld) ----------------\n", filename, linenum,
+						MyProcessorNumber);
+	else
+		n = snlprintf(s, size, length, "\\- END HIERARCHY (#%lld) ----------------\n", MyProcessorNumber);
+	if(n < 0)
+		return n;
+
+	return *length - l0;
+}
+
+int printHierarchy(HierarchyEntry* topGrid, const char* const filename, const int linenum)
+{
+	const size_t SIZE = 1024;
+	char S[SIZE];
+	size_t len = 0;
+	int n = snlprintHierarchy(S, SIZE, &len, topGrid, filename, linenum);
+	if(n < 0)
+		return n;
+
+	size_t size = len + 1;
+	if(size <= SIZE)
+		return fprintf(stderr, S);
+
+	char* s = new char[size];
+	len = 0;
+	n = snlprintHierarchy(s, size, &len, topGrid, filename, linenum);
+	if(n >= 0)
+		n = fprintf(stderr, s);
+	delete s;
+	return n;
+}
+
+int printHierarchy0(HierarchyEntry* topGrid, const char* const filename, const int linenum)
+{
+	if(MyProcessorNumber != ROOT_PROCESSOR)
+		return 0;
+	return printHierarchy(topGrid, filename, linenum);
+}
+
+int printHierarchy(HierarchyEntry* topGrid)
+{
+	return printHierarchy(topGrid, NULL, -1);
+}
+
+int printHierarchy0(HierarchyEntry* topGrid)
+{
+	return printHierarchy0(topGrid, NULL, -1);
+}
+
+
 int snlprintHierarchy(char* s, size_t size, size_t* length, LevelHierarchyEntry** levelArray,
 	const char* const filename, const int linenum)
 {
