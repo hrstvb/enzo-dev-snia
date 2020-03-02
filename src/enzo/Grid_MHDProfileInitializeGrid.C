@@ -61,7 +61,7 @@
 
 //using namespace std;
 
-int MHDProfileInitExactB(float* Bx, float* By, float* Bz, FLOAT x, FLOAT y, FLOAT z);
+//int MHDProfileInitExactB(float* Bx, float* By, float* Bz, FLOAT x, FLOAT y, FLOAT z);
 float SphericalGravityGetAt(FLOAT r);
 //void WriteInitialProfile(char* name, FLOAT* RR, FLOAT* RHO, FLOAT* GG, FLOAT* PP, FLOAT* UU, size_t n, FLOAT K,
 //FLOAT gamma);
@@ -718,7 +718,7 @@ int grid::PerturbWithTriSPhere(TriSphere *triSphere, FILE *fptr = NULL)
 					else
 					{
 						rho = rhoField[index];
-						rhoField[index] = rho;
+//						rhoField[index] = rho;
 					}
 
 					if(PerturbationVelocity > 0)
@@ -1032,6 +1032,9 @@ int grid::MHDSustainInitialBurnedRegionGrid()
 		rxyz[dim] = SphericalGravityCenter[dim] + InitialBurnedRadius;
 	}
 
+	if(PerturbationMethod==4 && triSphere)
+		PerturbWithTriSPhere(triSphere, NULL);
+
 	if(intersect(lxyz, rxyz))
 		return SUCCESS;
 
@@ -1332,14 +1335,6 @@ float dipoleMoment[3], float dipoleCenter[3], bool usingVectorPotential, TopGrid
 				if(gasEField)
 					gasEField[index] = gasE;
 
-				if(0) {
-					int I0 = 35, I1 = 5;
-					int K0 = I0, K1 = I1;
-
-					if(i==k  && j==GridDimension[1]/2)
-						TRACEGF(" ijkxyzreP %lld %lld %lld %e %e %e %e %e %e", i, j, k,
-								x / 1e5, y / 1e5, z / 1e5, r / 1e5, totE, pressure);
-				}
 				index++;
 			}
 		}
@@ -1357,6 +1352,7 @@ float dipoleMoment[3], float dipoleCenter[3], bool usingVectorPotential, TopGrid
 	//             BaryonField[ByNum][index]*BaryonField[ByNum][index] +
 	//             BaryonField[BzNum][index]*BaryonField[BzNum][index])/BaryonField[ rhoNum ][index];
 
+	ComputeAccelerationFieldExternal(MetaData);
 	TRACEGF("INITIALIZING GRID total/internal energy END.");
 	return SUCCESS;
 }
@@ -1403,8 +1399,8 @@ float dipoleMoment[3], float dipoleCenter[3], bool useVectorPotential, TopGridDa
 
 int grid::WriteRadialProfile(char* name, int level)
 {
-	return SUCCESS;
-	if(MyProcessorNumber != ProcessorNumber)
+		return SUCCESS;
+if(MyProcessorNumber != ProcessorNumber)
 		return FAIL;
 
 	long num, ijk[3];

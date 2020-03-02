@@ -1917,6 +1917,7 @@ int CreateParticleTypeGrouping(hid_t ptype_dset,
 
   int ClearOuterVelocities(float *pressure, int level, TopGridData *MetaData, char* dumpPrefix, char *dumpSuffix,
 	  char* dumpPreamble);
+  int CollectValuesOnSphere();
 
 /* Zeus Solver. */
 

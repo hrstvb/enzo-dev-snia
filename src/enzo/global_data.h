@@ -1156,6 +1156,8 @@ EXTERN int InitialBurnedRegionSustain;				//[BH]
 EXTERN float InitRadialPressureFromCentral;			//[BH]
 EXTERN int InitBWithVectorPotential;				//[BH]
 EXTERN int RefineOnStartup;                         //[BH]
+struct TriSphere;
+EXTERN TriSphere *triSphere;                               //[BH]
 
 /* For the galaxy simulation boundary method */
 EXTERN int GalaxySimulationRPSWind;

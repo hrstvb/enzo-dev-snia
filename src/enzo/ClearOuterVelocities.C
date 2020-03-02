@@ -71,14 +71,12 @@ FILE *negEFile_open(char** filename, TopGridData *MetaData, int level, grid *g, 
 			"gridRightEdge = ( %e , %e , %e ),\n"
 			"data = np.array([\n",
 			dumpPreamble1, dumpPreamble2, MetaData->CycleNumber, MetaData->Time, dumpPrefix, dumpSuffix, level,
-			g->GetGridID(), g->GetCellWidth(0, 0), NumberOfGhostZones, g->GetGridSize(),
-			g->GetGridDimension(0), g->GetGridDimension(1), g->GetGridDimension(2), // in, jn, kn,
+			g->GetGridID(), g->GetCellWidth(0, 0), NumberOfGhostZones, g->GetGridSize(), g->GetGridDimension(0),
+			g->GetGridDimension(1), g->GetGridDimension(2), // in, jn, kn,
 			g->GetGridDimension(0) * g->GetGridDimension(1) * g->GetGridDimension(2), // in, jn, kn,
 			g->GetCellLeftEdge(0, 0), g->GetCellLeftEdge(1, 0), g->GetCellLeftEdge(2, 0),
-			g->GetCellLeftEdge(0, g->GetGridDimension(0)),
-			g->GetCellLeftEdge(1, g->GetGridDimension(1)),
-			g->GetCellLeftEdge(2, g->GetGridDimension(2))
-			);
+			g->GetCellLeftEdge(0, g->GetGridDimension(0)), g->GetCellLeftEdge(1, g->GetGridDimension(1)),
+			g->GetCellLeftEdge(2, g->GetGridDimension(2)));
 
 	if(filename)
 	{
@@ -102,9 +100,13 @@ void negEFile_close(FILE *file, const char* filename)
 }
 
 int ClearOuterVelocities(float *u, float *v, float *w, float *totE, float *rhoField, float *pressure, int in, int jn,
-	int kn, int rank, float dx[],float dy[], float dz[], FLOAT** CellLeftEdge, int level, TopGridData *MetaData,
-	int gridID, grid *g, char* dumpPrefix, char *dumpSuffix, char* dumpPreamble)
+int kn, int rank, float dx[], float dy[], float dz[], FLOAT** CellLeftEdge, int level, TopGridData *MetaData,
+int gridID, grid *g, char* dumpPrefix, char *dumpSuffix, char* dumpPreamble)
 {
+//	arr_set(u, g->GetGridSize(), 0);
+//	arr_set(v, g->GetGridSize(), 0);
+//	arr_set(w, g->GetGridSize(), 0);
+//	return SUCCESS;
 #define DUMP_PREAMBLE2 "# The record format is" \
 	"# tag, i, j, k\n" \
 	"#   i,j,k are integer zone coordinates in the current grid;" \
@@ -125,11 +127,11 @@ int ClearOuterVelocities(float *u, float *v, float *w, float *totE, float *rhoFi
 	bool negEFileCreate = (level >= 0) && MetaData && dumpPreamble && dumpPrefix && dumpSuffix;
 	int negE1 = 0, negE2 = 0;
 	int flagsIOT = 4 * OuterVelocitiesClearInward + 2 * OuterVelocitiesClearOutward + OuterVelocitiesClearTangential;
-	if(OuterVelocitiesClearInward==4 ||OuterVelocitiesClearOutward ==4 || OuterVelocitiesClearTangential==4)
+	if(OuterVelocitiesClearInward == 4 || OuterVelocitiesClearOutward == 4 || OuterVelocitiesClearTangential == 4)
 		flagsIOT = 10;
-	else if(OuterVelocitiesClearInward==3 ||OuterVelocitiesClearOutward ==3 || OuterVelocitiesClearTangential==3)
+	else if(OuterVelocitiesClearInward == 3 || OuterVelocitiesClearOutward == 3 || OuterVelocitiesClearTangential == 3)
 		flagsIOT = 9;
-	else if(OuterVelocitiesClearInward==2 ||OuterVelocitiesClearOutward ==2 || OuterVelocitiesClearTangential==2)
+	else if(OuterVelocitiesClearInward == 2 || OuterVelocitiesClearOutward == 2 || OuterVelocitiesClearTangential == 2)
 		flagsIOT = 8;
 
 	if(OuterVelocitiesSphereRadius < 0 || flagsIOT == 0)
@@ -170,26 +172,32 @@ int ClearOuterVelocities(float *u, float *v, float *w, float *totE, float *rhoFi
 				oldVz = w[index];
 				oldKE = (square(oldVx) + square(oldVy) + square(oldVz)) / 2;
 
-				if(flagsIOT==8 || flagsIOT==9 || flagsIOT==10)
+				if(flagsIOT == 8 || flagsIOT == 9 || flagsIOT == 10)
 				{
 					long ijk2[3];
 					FLOAT crr = r / OuterVelocitiesSphereRadius;
 					FLOAT r_xyz[3];
 					r_xyz[0] = r_x / crr + SphericalGravityCenter[0];
-					if(r_xyz[0] <= g->CellLeftEdge[0][0]) continue;
-					if(r_xyz[0] >= g->CellLeftEdge[0][g->GetGridDimension(0)]) continue;
+					if(r_xyz[0] <= g->CellLeftEdge[0][0])
+						continue;
+					if(r_xyz[0] >= g->CellLeftEdge[0][g->GetGridDimension(0)])
+						continue;
 					r_xyz[1] = r_y / crr + SphericalGravityCenter[1];
-					if(r_xyz[1] <= g->CellLeftEdge[1][0]) continue;
-					if(r_xyz[1] >= g->CellLeftEdge[1][g->GetGridDimension(1)]) continue;
+					if(r_xyz[1] <= g->CellLeftEdge[1][0])
+						continue;
+					if(r_xyz[1] >= g->CellLeftEdge[1][g->GetGridDimension(1)])
+						continue;
 					r_xyz[2] = r_z / crr + SphericalGravityCenter[2];
-					if(r_xyz[2] <= g->CellLeftEdge[2][0]) continue;
-					if(r_xyz[2] >= g->CellLeftEdge[2][g->GetGridDimension(2)]) continue;
+					if(r_xyz[2] <= g->CellLeftEdge[2][0])
+						continue;
+					if(r_xyz[2] >= g->CellLeftEdge[2][g->GetGridDimension(2)])
+						continue;
 
 					size_t index2 = g->get_ijk_index(ijk2, r_xyz);
 					newVx = u[index2];
 					newVy = v[index2];
 					newVz = w[index2];
-					if(flagsIOT==9)
+					if(flagsIOT == 9)
 					{
 						newVx /= crr;
 						newVy /= crr;
@@ -207,7 +215,7 @@ int ClearOuterVelocities(float *u, float *v, float *w, float *totE, float *rhoFi
 //					TRACEF("  %e  %e  %e    %e  %e  %e    %e  %e  %e", r, OuterVelocitiesSphereRadius, crr, r_x,
 //							r_y, r_z, r_xyz[0], r_xyz[1], r_xyz[2]);
 
-					if(flagsIOT==10)
+					if(flagsIOT == 10)
 					{
 						if(rhoField)
 							rhoField[index] = rhoField[index2];
@@ -339,19 +347,22 @@ int grid::ClearOuterVelocities(float *pressure, int level, TopGridData *MetaData
 		return SUCCESS;
 
 	float *rhoField, *vxField, *vyField, *vzField, *totEField;
-	MHD_SNIA_GetFields(&rhoField, &totEField, NULL, &vxField, &vyField, &vzField, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
-	NULL);
+	MHD_SNIA_GetFields(&rhoField, &totEField, NULL, &vxField, &vyField, &vzField, NULL, NULL, NULL, NULL, NULL,
+	NULL,
+						NULL,
+						NULL);
 
-	return ::ClearOuterVelocities(vxField, vyField, vzField, totEField, rhoField, pressure, GridDimension[0], GridDimension[1],
-									GridDimension[2], GridRank, CellWidth[0], CellWidth[1], CellWidth[2], CellLeftEdge,
-									level, MetaData, this->ID, this, dumpPrefix, dumpSuffix, dumpPreamble);
+	return ::ClearOuterVelocities(vxField, vyField, vzField, totEField, rhoField, pressure, GridDimension[0],
+									GridDimension[1], GridDimension[2], GridRank, CellWidth[0], CellWidth[1],
+									CellWidth[2], CellLeftEdge, level, MetaData, this->ID, this, dumpPrefix, dumpSuffix,
+									dumpPreamble);
 }
 
-int ClearOuterVelocities(float *u, float *v, float *w, float *totE, int in, int jn, int kn, int rank, float dx[],
+int ClearOuterVelocities(float *u, float *v, float *w, float *totE, int in, int jn, int kn, int rank,
+float dx[],
 float dy[], float dz[], FLOAT** CellLeftEdges, int level, TopGridData *MetaData, int gridID, grid *g, char* dumpPrefix,
 	char *dumpSuffix, char* dumpPreamble)
 {
-	ClearOuterVelocities(u, v, w, totE, NULL, NULL, in, jn, kn, rank, dx,
-	dy, dz, CellLeftEdges, level, MetaData, gridID, g, dumpPrefix,
-		dumpSuffix, dumpPreamble);
+	ClearOuterVelocities(u, v, w, totE, NULL, NULL, in, jn, kn, rank, dx, dy, dz, CellLeftEdges, level, MetaData,
+							gridID, g, dumpPrefix, dumpSuffix, dumpPreamble);
 }

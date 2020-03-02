@@ -429,7 +429,7 @@ int SphericalGravityComputePotential(LevelHierarchyEntry *LevelArray[], TopGridD
 		break;
 	}
 
-//	if(MyProcessorNumber == ROOT_PROCESSOR && (MetaData->CycleNumber == 0 || debug))
+	if(MyProcessorNumber == ROOT_PROCESSOR && (MetaData->CycleNumber == 0 || debug))
 	{
 		size_t M = 20;
 		TRACEF("SphericalGravity:  GravityConstant = %e    ActualNumberOfBins = %lld    RadiusRange  = %e .. %e",
@@ -517,9 +517,10 @@ int SphericalGravityWriteRadialProfile(char* name, TopGridData& MetaData, Hierar
 	HierarchyIterator it = HierarchyIterator(TopGrid);
 	for(grid* g = it.firstAtTop(); g; g = it.next())
 	{
-//		TRACEF(" WriteRadialProfile level %lld", it.currentLevel);
 		if(SUCCESS == g->WriteRadialProfile(name, it.currentLevel))
 		{
+//			TRACEF(" level %lld", it.currentLevel);
+//			g->ExtraFunction(FLN2STR, 0);
 //			return SUCCESS;
 		}
 	}
