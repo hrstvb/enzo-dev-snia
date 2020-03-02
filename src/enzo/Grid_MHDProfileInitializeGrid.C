@@ -1032,6 +1032,7 @@ int grid::MHDSustainInitialBurnedRegionGrid()
 		rxyz[dim] = SphericalGravityCenter[dim] + InitialBurnedRadius;
 	}
 
+	TRACEGF("  PerturbationMethod, triSphere =  %lld  %p", PerturbationMethod, triSphere);
 	if(PerturbationMethod==4 && triSphere)
 		PerturbWithTriSPhere(triSphere, NULL);
 
