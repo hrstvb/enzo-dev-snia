@@ -676,7 +676,7 @@ int MHDProfileInitialize(FILE *fptr, FILE *Outfptr, HierarchyEntry &TopGrid, Top
 		printf("Initial time from profile frame: %f", radialProfile.frameTimeFound);
 	}
 
-	TriSphere *triSphere = (PerturbationMethod == 4) ? NewTriSphereFromParams() : NULL;
+	triSphere = (PerturbationMethod == 4) ? NewTriSphereFromParams() : NULL;
 //		arr_cpy(StaticRefineShellCenter[0], SphericalGravityCenter, MAX_DIMENSION);
 //		StaticRefineShellInnerRadius[0] = InitialBurnedRadius + min(0, PerturbationAmplitude);
 //		StaticRefineShellOuterRadius[0] = InitialBurnedRadius + max(PerturbationAmplitude, 0);
@@ -772,7 +772,7 @@ int MHDProfileInitialize(FILE *fptr, FILE *Outfptr, HierarchyEntry &TopGrid, Top
 										InitBWithVectorPotential, &MetaData, triSphere);
 	}
 
-	if(triSphere)
+	if(triSphere && !InitialBurnedRegionSustain)
 	{
 		// Free the tirSphere.
 		triSphere->~TriSphere();
