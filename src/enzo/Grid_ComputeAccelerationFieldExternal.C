@@ -942,10 +942,7 @@ int grid::ComputeAccelerationFieldExternal(TopGridData *MetaData)
 			} // for k
 
 		} // for dim
-//		EXTRAFUNCG(1);
-//		EXTRAFUNCG(3);
-//		EXTRAFUNCG(5, (MetaData) ? (MetaData->Time) : 0);
-//		EXTRAFUNCG(4, (MetaData) ? (MetaData->Time) : 0);
+//		EXTRAFUNCG((MetaData)?MetaData->CycleNumber:-1);
 	} //Spherical gravity
 
 	LCAPERF_STOP("grid_ComputeAccelerationFieldExternal");

@@ -1,25 +1,25 @@
 /***********************************************************************
-/
-/  SET BOUNDARY CONDITIONS (CALLED BY EVOLVE LEVEL)
-/
-/  written by: Greg Bryan
-/  date:       June, 1999
-/  modifiedN:  Robert Harkness
-/  date:       February, 2008
-/
-/  PURPOSE:
-/=======================================================================
-/  This routine sets all the boundary conditions for Grids by either
-/   interpolating from their parents or copying from sibling grids.
-/
-/   This is part of a collection of routines called by EvolveLevel.
-/   These have been optimized for enhanced message passing
-/   performance by performing two passes -- one which generates
-/   sends and the second which receives them.
-/
-/  modified: Robert Harkness, December 2007
-/
-************************************************************************/
+ /
+ /  SET BOUNDARY CONDITIONS (CALLED BY EVOLVE LEVEL)
+ /
+ /  written by: Greg Bryan
+ /  date:       June, 1999
+ /  modifiedN:  Robert Harkness
+ /  date:       February, 2008
+ /
+ /  PURPOSE:
+ /=======================================================================
+ /  This routine sets all the boundary conditions for Grids by either
+ /   interpolating from their parents or copying from sibling grids.
+ /
+ /   This is part of a collection of routines called by EvolveLevel.
+ /   These have been optimized for enhanced message passing
+ /   performance by performing two passes -- one which generates
+ /   sends and the second which receives them.
+ /
+ /  modified: Robert Harkness, December 2007
+ /
+ ************************************************************************/
 
 #ifdef USE_MPI
 #include <mpi.h>
@@ -45,19 +45,14 @@
 /* function prototypes */
 
 int CommunicationReceiveHandler(fluxes **SubgridFluxesEstimate[] = NULL,
-				int NumberOfSubgrids[] = NULL,
-				int FluxFlag = FALSE,
-				TopGridData* MetaData = NULL);
+int NumberOfSubgrids[] = NULL,
+int FluxFlag = FALSE, TopGridData* MetaData = NULL);
 
 #define GRIDS_PER_LOOP 100000
 
-
-
 #ifdef FAST_SIB
-int SetBoundaryConditions(HierarchyEntry *Grids[], int NumberOfGrids,
-			  SiblingGridList SiblingList[],
-			  int level, TopGridData *MetaData,
-			  ExternalBoundary *Exterior, LevelHierarchyEntry *Level)
+int SetBoundaryConditions(HierarchyEntry *Grids[], int NumberOfGrids, SiblingGridList SiblingList[],
+int level, TopGridData *MetaData, ExternalBoundary *Exterior, LevelHierarchyEntry *Level)
 #else
 int SetBoundaryConditions(HierarchyEntry *Grids[], int NumberOfGrids,
 			  int level, TopGridData *MetaData,
@@ -65,110 +60,108 @@ int SetBoundaryConditions(HierarchyEntry *Grids[], int NumberOfGrids,
 #endif
 {
 
+	int loopEnd = (ShearingBoundaryDirection != -1) ? 2 : 1;
 
-  int loopEnd = (ShearingBoundaryDirection != -1) ? 2 : 1;
+	int grid1, grid2, StartGrid, EndGrid, loop;
 
+	LCAPERF_START("SetBoundaryConditions"); TIMER_START("SetBoundaryConditions");
 
-  int grid1, grid2, StartGrid, EndGrid, loop;
-
-  LCAPERF_START("SetBoundaryConditions");
-  TIMER_START("SetBoundaryConditions");
-
-  for (loop = 0; loop < loopEnd; loop++){
+	for(loop = 0; loop < loopEnd; loop++)
+	{
 
 #ifdef FORCE_MSG_PROGRESS
     CommunicationBarrier();
 #endif
 
+		if(loop == 0)
+		{
 
+			TIME_MSG("Interpolating boundaries from parent");
 
-    if (loop == 0) {
+			for(StartGrid = 0; StartGrid < NumberOfGrids; StartGrid += GRIDS_PER_LOOP)
+			{
 
-      TIME_MSG("Interpolating boundaries from parent");
+				if(traceMPI)
+					fprintf(tracePtr, "SBC loop\n");
 
-    for (StartGrid = 0; StartGrid < NumberOfGrids; StartGrid += GRIDS_PER_LOOP) {
+				EndGrid = min(StartGrid + GRIDS_PER_LOOP, NumberOfGrids);
 
-      if (traceMPI) fprintf(tracePtr, "SBC loop\n");
+				/* -------------- FIRST PASS ----------------- */
+				/* Here, we just generate the calls to generate the receive buffers,
+				 without actually doing anything. */
 
-      EndGrid = min(StartGrid + GRIDS_PER_LOOP, NumberOfGrids);
+				LCAPERF_START("SetBC_Parent");
 
-      /* -------------- FIRST PASS ----------------- */
-      /* Here, we just generate the calls to generate the receive buffers,
-	 without actually doing anything. */
+				CommunicationDirection = COMMUNICATION_POST_RECEIVE;
+				CommunicationReceiveIndex = 0;
 
-      LCAPERF_START("SetBC_Parent");
+				for(grid1 = StartGrid; grid1 < EndGrid; grid1++)
+				{
 
-      CommunicationDirection = COMMUNICATION_POST_RECEIVE;
-      CommunicationReceiveIndex = 0;
+					/* a) Interpolate boundaries from the parent grid or set external
+					 boundary conditions. */
 
-      for (grid1 = StartGrid; grid1 < EndGrid; grid1++) {
+					CommunicationReceiveCurrentDependsOn = COMMUNICATION_NO_DEPENDENCE;
 
-	/* a) Interpolate boundaries from the parent grid or set external
-	   boundary conditions. */
+					if(level == 0)
+					{
+						Grids[grid1]->GridData->SetExternalBoundaryValues(Exterior);
+					}
+					else
+					{
+						Grids[grid1]->GridData->InterpolateBoundaryFromParent(Grids[grid1]->ParentGrid->GridData);
+					}
 
-	CommunicationReceiveCurrentDependsOn = COMMUNICATION_NO_DEPENDENCE;
+				} // ENDFOR grids
 
+				/* -------------- SECOND PASS ----------------- */
+				/* Now we generate all the sends, and do all the computation
+				 for grids which are on the same processor as well. */
 
-	  if (level == 0) {
-    	    Grids[grid1]->GridData->SetExternalBoundaryValues(Exterior);
-	  } else {
-	    Grids[grid1]->GridData->InterpolateBoundaryFromParent
-	      (Grids[grid1]->ParentGrid->GridData);
-	  }
+				CommunicationDirection = COMMUNICATION_SEND;
+				for(grid1 = StartGrid; grid1 < EndGrid; grid1++)
+				{
 
+					/* a) Interpolate boundaries from the parent grid or set
+					 external boundary conditions. */
 
-      } // ENDFOR grids
+					if(level > 0)
+						Grids[grid1]->GridData->InterpolateBoundaryFromParent(Grids[grid1]->ParentGrid->GridData);
 
-	/* -------------- SECOND PASS ----------------- */
-	/* Now we generate all the sends, and do all the computation
-	   for grids which are on the same processor as well. */
+				}
+				// ENDFOR grids
 
-      CommunicationDirection = COMMUNICATION_SEND;
-      for (grid1 = StartGrid; grid1 < EndGrid; grid1++) {
+				//Grids[StartGrid]->GridData->PrintToScreenBoundaries(0);
 
-	/* a) Interpolate boundaries from the parent grid or set
-	   external boundary conditions. */
+				/* -------------- THIRD PASS ----------------- */
+				/* In this final step, we get the messages as they come in and
+				 then match them to the methods which generate the receive
+				 handle. */
 
-	if (level > 0)
-	  Grids[grid1]->GridData->InterpolateBoundaryFromParent
-	    (Grids[grid1]->ParentGrid->GridData);
+				if(CommunicationReceiveHandler() == FAIL)
+					ENZO_FAIL("CommunicationReceiveHandler() failed!\n");
 
-      }
-      // ENDFOR grids
+			} // ENDFOR grid batches
 
-	//Grids[StartGrid]->GridData->PrintToScreenBoundaries(0);
+			LCAPERF_STOP("SetBC_Parent");
+		}TIME_MSG("Copying zones in SetBoundaryConditions");LCAPERF_START("SetBC_Siblings");
+		for(StartGrid = 0; StartGrid < NumberOfGrids; StartGrid += GRIDS_PER_LOOP)
+		{
+			EndGrid = min(StartGrid + GRIDS_PER_LOOP, NumberOfGrids);
 
-	/* -------------- THIRD PASS ----------------- */
-	/* In this final step, we get the messages as they come in and
-	   then match them to the methods which generate the receive
-	   handle. */
+			/* -------------- FIRST PASS ----------------- */
+			/* b) Copy any overlapping zones for sibling grids.  */
 
-      if (CommunicationReceiveHandler() == FAIL)
-	ENZO_FAIL("CommunicationReceiveHandler() failed!\n");
-
-    } // ENDFOR grid batches
-
-    LCAPERF_STOP("SetBC_Parent");
-    }
-    TIME_MSG("Copying zones in SetBoundaryConditions");
-    LCAPERF_START("SetBC_Siblings");
-    for (StartGrid = 0; StartGrid < NumberOfGrids; StartGrid += GRIDS_PER_LOOP) {
-      EndGrid = min(StartGrid + GRIDS_PER_LOOP, NumberOfGrids);
-
-      /* -------------- FIRST PASS ----------------- */
-      /* b) Copy any overlapping zones for sibling grids.  */
-
-      CommunicationDirection = COMMUNICATION_POST_RECEIVE;
-      CommunicationReceiveIndex = 0;
+			CommunicationDirection = COMMUNICATION_POST_RECEIVE;
+			CommunicationReceiveIndex = 0;
 
 #ifdef FAST_SIB
-      for (grid1 = StartGrid; grid1 < EndGrid; grid1++)
-	for (grid2 = 0; grid2 < SiblingList[grid1].NumberOfSiblings; grid2++)
-	  Grids[grid1]->GridData->
-	    CheckForOverlap(SiblingList[grid1].GridList[grid2],
-			    MetaData->LeftFaceBoundaryCondition,
-			    MetaData->RightFaceBoundaryCondition,
-			    &grid::CopyZonesFromGrid);
+			for(grid1 = StartGrid; grid1 < EndGrid; grid1++)
+				for(grid2 = 0; grid2 < SiblingList[grid1].NumberOfSiblings; grid2++)
+					Grids[grid1]->GridData->CheckForOverlap(SiblingList[grid1].GridList[grid2],
+															MetaData->LeftFaceBoundaryCondition,
+															MetaData->RightFaceBoundaryCondition,
+															&grid::CopyZonesFromGrid);
 #else
       for (grid1 = StartGrid; grid1 < EndGrid; grid1++)
 	for (grid2 = 0; grid2 < NumberOfGrids; grid2++)
@@ -179,18 +172,17 @@ int SetBoundaryConditions(HierarchyEntry *Grids[], int NumberOfGrids,
 			    &grid::CopyZonesFromGrid);
 #endif
 
-      /* -------------- SECOND PASS ----------------- */
-      /* b) Copy any overlapping zones for sibling grids.  */
+			/* -------------- SECOND PASS ----------------- */
+			/* b) Copy any overlapping zones for sibling grids.  */
 
-      CommunicationDirection = COMMUNICATION_SEND;
+			CommunicationDirection = COMMUNICATION_SEND;
 #ifdef FAST_SIB
-      for (grid1 = StartGrid; grid1 < EndGrid; grid1++)
-	for (grid2 = 0; grid2 < SiblingList[grid1].NumberOfSiblings; grid2++)
-	  Grids[grid1]->GridData->
-	    CheckForOverlap(SiblingList[grid1].GridList[grid2],
-			    MetaData->LeftFaceBoundaryCondition,
-			    MetaData->RightFaceBoundaryCondition,
-			    &grid::CopyZonesFromGrid);
+			for(grid1 = StartGrid; grid1 < EndGrid; grid1++)
+				for(grid2 = 0; grid2 < SiblingList[grid1].NumberOfSiblings; grid2++)
+					Grids[grid1]->GridData->CheckForOverlap(SiblingList[grid1].GridList[grid2],
+															MetaData->LeftFaceBoundaryCondition,
+															MetaData->RightFaceBoundaryCondition,
+															&grid::CopyZonesFromGrid);
 #else
       for (grid1 = StartGrid; grid1 < EndGrid; grid1++)
 	for (grid2 = 0; grid2 < NumberOfGrids; grid2++)
@@ -201,36 +193,32 @@ int SetBoundaryConditions(HierarchyEntry *Grids[], int NumberOfGrids,
 			    &grid::CopyZonesFromGrid);
 #endif
 
-      /* -------------- THIRD PASS ----------------- */
+			/* -------------- THIRD PASS ----------------- */
 
-      if (CommunicationReceiveHandler() == FAIL)
-	ENZO_FAIL("CommunicationReceiveHandler() failed!\n");
+			if(CommunicationReceiveHandler() == FAIL)
+				ENZO_FAIL("CommunicationReceiveHandler() failed!\n");
 
-    LCAPERF_STOP("SetBC_Siblings");
+			LCAPERF_STOP("SetBC_Siblings");
 
-    } // end loop over batchs of grids
+		} // end loop over batchs of grids
 
-   // ENDFOR loop (for ShearingBox)
+		// ENDFOR loop (for ShearingBox)
 
-    /* c) Apply external reflecting boundary conditions, if needed.  */
+		/* c) Apply external reflecting boundary conditions, if needed.  */
 
-  for (grid1 = 0; grid1 < NumberOfGrids; grid1++)
-    Grids[grid1]->GridData->CheckForExternalReflections
-      (MetaData->LeftFaceBoundaryCondition,
-       MetaData->RightFaceBoundaryCondition);
-
-
+		for(grid1 = 0; grid1 < NumberOfGrids; grid1++)
+			Grids[grid1]->GridData->CheckForExternalReflections(MetaData->LeftFaceBoundaryCondition,
+																MetaData->RightFaceBoundaryCondition);
 
 #ifdef FORCE_MSG_PROGRESS
   CommunicationBarrier();
 #endif
 
-  CommunicationDirection = COMMUNICATION_SEND_RECEIVE;
-  }
+		CommunicationDirection = COMMUNICATION_SEND_RECEIVE;
+	}
 
-  TIMER_STOP("SetBoundaryConditions");
-  LCAPERF_STOP("SetBoundaryConditions");
+	TIMER_STOP("SetBoundaryConditions");LCAPERF_STOP("SetBoundaryConditions");
 
-  return SUCCESS;
+	return SUCCESS;
 
 }

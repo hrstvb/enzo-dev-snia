@@ -23,7 +23,7 @@ int grid::ExtraFunction(char * message)
 	return SUCCESS;
 }
 
-long long grid::ExtraFunction(char * message, long long intarg, ...)
+long long grid::ExtraFunction(char *message, long long intarg, ...)
 {
 	/*
 	 *	std::va_list args;
@@ -36,12 +36,9 @@ long long grid::ExtraFunction(char * message, long long intarg, ...)
 	 *	va_end(args);
 	 */
 	static int numCalls = 0;
-	if(numCalls >= 4)
-	{
-		numCalls++;
+	numCalls++;
+	if(numCalls >= 21)
 		return 0;
-	}
-	TRACEF("%lld", numCalls);
 
 	size_t NI = GridDimension[0];
 	size_t NJ = GridDimension[1];
@@ -60,18 +57,132 @@ long long grid::ExtraFunction(char * message, long long intarg, ...)
 	FLOAT t = 0;
 	int vaCount = 0;
 
-	std::va_list args;
-	va_start(args, vaCount);
-	t = va_arg(args, FLOAT);
-	va_end(args);
+	cycleNum = intarg;
+//	std::va_list args;
+//	va_start(args, vaCount);
+//	t = va_arg(args, FLOAT);
+//	va_end(args);
 
 	float *rhoField, *totEField, *vxField, *vyField, *vzField;
 	float *gasEField = NULL, *rhoNiField = NULL;
 	float *BxField = NULL, *ByField = NULL, *BzField = NULL;
 	float *presField = NULL, *mgp = NULL, *mgpor = NULL, *g_mgpor = NULL;
+	float *gxField = AccelerationField[0];
+	float *gyField = AccelerationField[1];
+	float *gzField = AccelerationField[2];
 
 	MHD_SNIA_GetFields(&rhoField, &totEField, &gasEField, &vxField, &vyField, &vzField, NULL, &BxField, &ByField,
 						&BzField, NULL, &rhoNiField, NULL, NULL);
+
+	{
+		FILE *outfile = stderr;
+		char fname[128];
+		sprintf(fname, "extrafunc%02lld.txt", 0);
+		outfile = fopen(fname, "w");
+		fprintf(outfile, "i j k x y z r");
+		for(int i = 1; i <= numCalls; i++)
+			fprintf(outfile, " g%02ldd -dP%02ldd (g+dP)%02ldd", i, i, i);
+		fprintf(outfile, "\n");
+		fclose(outfile);
+
+		sprintf(fname, "extrafunc%02lld.txt", numCalls);
+		TRACEGF(" %s %s cycle %lld callnum %lld", fname, message, cycleNum, numCalls);
+		outfile = fopen(fname, "w");
+		fprintf(outfile, "%s cycle %lld callnum %lld\n", message, cycleNum, numCalls);
+
+		float rr[200], dd[200], gg[200], PP[200], dPdP[200];
+		for(int i = 0; i < NI; i++)
+		{
+			int j = NJ / 2;
+			int k = i;
+			index = ELT(i, j, k);
+
+			FLOAT x = CELLCENTER(0, i);
+			FLOAT y = CELLCENTER(1, j);
+			FLOAT z = CELLCENTER(2, k);
+			FLOAT r = lenl(x, y, z);
+			float g = 0, v = 0, b = 0, P = 0;
+			if(gxField)
+				g = lenl(gxField[index], gyField[index], gzField[index]);
+			if(vxField==NULL)
+				break;
+			v = lenl(vxField[index], vyField[index], vzField[index]);
+			if(BxField)
+				b = lenl(BxField[index], ByField[index], BzField[index]);
+			P = totEField[index] * rhoField[index] * (Gamma - 1);
+
+			rr[i] = r;
+			dd[i] = rhoField[index];
+			gg[i] = g;
+			PP[i] = P;
+			dPdP[i] = 0;
+		}
+
+		for(int i = 1; i < NI - 1; i++)
+		{
+			int j = NJ / 2;
+			int k = i;
+			index = ELT(i, j, k);
+
+			dPdP[i] = (PP[i + 1] - PP[i - 1]) / (rr[i + 1] - rr[i - 1]) / dd[i];
+		}
+
+		char tabs[90];
+		arr_set(tabs, 90, '\t');
+		tabs[3 * numCalls] = '\0';
+		for(int i = 1; i < NI - 1; i++)
+		{
+			int j = NJ / 2;
+			int k = i;
+			index = ELT(i, j, k);
+
+			FLOAT x = CELLCENTER(0, i);
+			FLOAT y = CELLCENTER(1, j);
+			FLOAT z = CELLCENTER(2, k);
+			fprintf(outfile, "%lld %lld %lld   %e %e %e %e%s%e %e %e\n", i, j, k, x, y, z, rr[i], tabs, gg[i], -dPdP[i],
+					gg[i] + dPdP[i]);
+		}
+//		fprintf(outfile, "i j k x y z r rho e P rhoni gx gy gz g vx vy vz v Bx By Bz B\n");
+		//		for(int i = 0; i < NI; i++)
+		//		{
+		//			int j = NJ/2;
+		//			int k = i;
+		//			index = ELT(i, j, k);
+		//
+		//			FLOAT x = CELLCENTER(0, i);
+		//			FLOAT y = CELLCENTER(1, j);
+		//			FLOAT z = CELLCENTER(2, k);
+		//			FLOAT r = lenl(x, y, z);
+		//			float g = lenl(gxField[index], gyField[index], gzField[index]);
+		//			float v = lenl(vxField[index], vyField[index], vzField[index]);
+		//			float b = lenl(BxField[index], ByField[index], BzField[index]);
+		//			float P = totEField[index] * rhoField[index] * (Gamma - 1);
+		//			float dPdr
+		//			fprintf(outfile, "%lld %lld %lld   %e %e %e %e    %e %e %e %e   %e %e %e %e   %e %e %e %e   %e %e %e %e\n",
+		//				i, j, k,
+		//				x,y,z,r,
+		//				rhoField  [index],
+		//				totEField [index],
+		//				P,
+		//				rhoNiField[index],
+		//				gxField[index],
+		//				gyField[index],
+		//				gzField[index],
+		//				g,
+		//				vxField   [index],
+		//				vyField   [index],
+		//				vzField   [index],
+		//				v,
+		//				BxField   [index],
+		//				ByField   [index],
+		//				BzField   [index],
+		//				b
+		//				);
+		//		}
+
+		fclose(outfile);
+		return 0;
+	}
 
 	switch(intarg)
 	{
@@ -180,8 +291,8 @@ long long grid::ExtraFunction(char * message, long long intarg, ...)
 		index = index_first;
 		for(int i = i_first; i <= i_last; i++)
 		{
-			fprintf(outFile, "%s:\t%lld\t%e\t%s%e\t%e\t%e\t%e\t%e\t%e\n", message, i, CELLCENTER(0, i), TABS, g_mgpor[i],
-					AccelerationField[0][index], mgpor[i], mgp[i], presField[i], rhoField[index]);
+			fprintf(outFile, "%s:\t%lld\t%e\t%s%e\t%e\t%e\t%e\t%e\t%e\n", message, i, CELLCENTER(0, i), TABS,
+					g_mgpor[i], AccelerationField[0][index], mgpor[i], mgp[i], presField[i], rhoField[index]);
 			index++;
 		}
 		fprintf(outFile, "\n");
@@ -189,6 +300,5 @@ long long grid::ExtraFunction(char * message, long long intarg, ...)
 
 	fclose(outFile);
 
-	numCalls++;
 	return 0;
 }

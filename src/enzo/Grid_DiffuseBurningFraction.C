@@ -182,6 +182,8 @@ int grid::DiffuseBurnedFraction()
 	if(debug1)
 		printf("Grid::DiffuseBurnedFraction: Nsubcycles = %"ISYM"\n", Nsub);
 
+	float totQp=0, totQm=0;
+	int skip1 = 0, skip2 = 0, skip3 = 0, skip4 = 0;
 	for(size_t i = 0; i < gridSize; i++)
 	{
 		rho = Rho[i];
@@ -201,18 +203,38 @@ int grid::DiffuseBurnedFraction()
 
 		Rho_56Ni[i] = X1 * rho; // Update the 56Ni mass density.
 
-		if(rho < minRhoForBurning)
-			continue;
+		Q = dX1 * BurningEnergyRelease; // Enrgy release per gram product
 
-		if(dX1 == 0 || (dX1 < 0 && !AllowUnburning))
+
+		if(rho < minRhoForBurning)
+		{
+			skip1++;
 			continue;
+		}
 
 		Q = dX1 * BurningEnergyRelease; // Enrgy release per gram product
+
+		if(Q == 0)
+		{
+			skip2++;
+			continue;
+		}
+		if(Q < 0 && !AllowUnburning)
+		{
+			skip3++;
+			continue;
+		}
+		skip4++;
+		if(Q>0) totQp += Q;
+		if(Q<0) totQm += Q;
+//		if(Q > 0)
+//			TRACEGF("  TE=%e  Q=%e  dX1=%e  Q0=%e", TE[i], Q, dX1, BurningEnergyRelease);
 		TE[i] += Q;
 		if(GE)
-			GE[i] = Q;
+			GE[i] += Q;
 	}
-
+	TRACEGF("  totQp=%e  totQm=%e", totQp, totQm);
+	TRACEGF(" skippers:  %lld  (%e) %lld  %lld  (%lld)  %lld  (%e)", skip1, minRhoForBurning, skip2, skip3, AllowUnburning, skip4, BurningEnergyRelease);
 	{
 		int i;
 		if(GE)
