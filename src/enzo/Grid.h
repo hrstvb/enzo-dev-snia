@@ -447,14 +447,18 @@ public:
 /* Baryons: Update boundary according to the external boundary values
     (for step #16) */
 
-   int SetExternalBoundaryValues(ExternalBoundary *Exterior);
+   int SetExternalBoundaryValues(ExternalBoundary *Exterior, TopGridData *MetaData);
+   int SetExternalBoundaryValues(ExternalBoundary *Exterior) 
+   { 
+      return SetExternalBoundaryValues(Exterior, NULL);
+   }
 
 /* Baryons: solve hydro equations in this grid (returns: the fluxes of the
            subgrids in the argument).  Returns SUCCESS or FAIL.
     (for step #16) */
 
    int SolveHydroEquations(int CycleNumber, int NumberOfSubgrids,
-			   fluxes *SubgridFluxes[], int level);
+			   fluxes *SubgridFluxes[], int level, TopGridData *MetaData);
 
 /* Baryons: return pointer to the BoundaryFluxes of this grid */
 
@@ -3150,7 +3154,7 @@ int zEulerSweep(int j, int NumberOfSubgrids, fluxes *SubgridFluxes[],
                  fluxes *SubgridFluxes[], float *CellWidthTemp[],
                  Elong_int GridGlobalStart[], int GravityOn,
                  int NumberOfColours, int colnum[],
-                 float ** Fluxes);
+                 float ** Fluxes, TopGridData *MetaData);
 
   //Variables
     //CenteredB is used in the Riemann solver (SolveMHDequations) and the timestep (dtMagnetic)

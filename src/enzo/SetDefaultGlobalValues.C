@@ -1085,10 +1085,16 @@ int SetDefaultGlobalValues(TopGridData &MetaData)
   SphericalGravityBinsPerCell = 1.0;
   SphericalGravityDebug = 0;
   TopBurnedRadiusEstimate = -1;
+  OuterVelocitiesDistFromEdge = -1.0;
   OuterVelocitiesSphereRadius = -1;
+  OuterVelocitiesSphereRadius2 = -1;
   OuterVelocitiesClearInward = 1;
   OuterVelocitiesClearOutward = 0;
   OuterVelocitiesClearTangential = 0;
+  arr_set(OuterVelocitiesClearInGrid_SolveMHD_Li, 10, 0);
+  arr_set(OuterVelocitiesClearInSetBoundaryCondition, 10, 0);
+  arr_set(OuterVelocitiesClearInZeusSource, 10, 0);
+  arr_set(OuterVelocitiesClearInRKStep, 10, 0);
   OuterVelocitiesClearAtZeusSourceBegin = 0;
   OuterVelocitiesClearAtZeusSourceBeforeDiv = 0;
   OuterVelocitiesClearAtZeusSourceEnd = 0;

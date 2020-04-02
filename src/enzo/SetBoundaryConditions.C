@@ -112,6 +112,8 @@ int SetBoundaryConditions(HierarchyEntry *Grids[], int NumberOfGrids,
 						Grids[grid1]->GridData->InterpolateBoundaryFromParent(Grids[grid1]->ParentGrid->GridData);
 					}
 
+					Grids[grid1]->GridData->ClearOuterVelocities(NULL, NULL, MetaData, NULL, NULL, NULL);
+
 				} // ENDFOR grids
 
 				/* -------------- SECOND PASS ----------------- */
@@ -217,8 +219,11 @@ int SetBoundaryConditions(HierarchyEntry *Grids[], int NumberOfGrids,
 		CommunicationDirection = COMMUNICATION_SEND_RECEIVE;
 	}
 
+	for(grid1 = StartGrid; grid1 < EndGrid; grid1++)
+	{
+		Grids[grid1]->GridData->ClearOuterVelocities(NULL, NULL, MetaData, NULL, NULL, NULL);
+	}
+
 	TIMER_STOP("SetBoundaryConditions");LCAPERF_STOP("SetBoundaryConditions");
-
 	return SUCCESS;
-
 }

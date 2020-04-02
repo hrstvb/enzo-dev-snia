@@ -85,6 +85,11 @@ struct TriSphere
 		init(NULL, radius, amplitude, nRefinements, bottomBaseSize, topBaseSize);
 	}
 
+	TriSphere(double* center, double radius, double amplitude, size_t nRefinements, double bottomBaseSize, double topBaseSize)
+	{
+		init(center, radius, amplitude, nRefinements, bottomBaseSize, topBaseSize);
+	}
+
 	TriSphere(double radius, double amplitude, size_t nRefinements, double bottomBaseSize, double topBaseSize)
 	{
 		init(NULL, radius, amplitude, nRefinements, bottomBaseSize, topBaseSize);

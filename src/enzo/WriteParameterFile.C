@@ -187,10 +187,18 @@ int WriteParameterFile(FILE *fptr, TopGridData &MetaData, char *name = NULL)
   fprintf(fptr, "MHD_LI_GRAVITY_AFTER_PLMPRED = %"ISYM"\n", MHD_LI_GRAVITY_AFTER_PLMPRED);
   fprintf(fptr, "DensityProfileMaxRadius                   = %"FSYM"\n", DensityProfileMaxRadius                  );
   fprintf(fptr, "DensityProfileMinDensity                  = %"FSYM"\n", DensityProfileMinDensity                 );
+  fprintf(fptr, "OuterVelocitiesDistFromEdge               = %"FSYM"\n", OuterVelocitiesDistFromEdge              );
   fprintf(fptr, "OuterVelocitiesSphereRadius               = %"FSYM"\n", OuterVelocitiesSphereRadius              );
+  fprintf(fptr, "OuterVelocitiesSphereRadius2              = %"FSYM"\n", OuterVelocitiesSphereRadius2             );
   fprintf(fptr, "OuterVelocitiesClearInward                = %"ISYM"\n", OuterVelocitiesClearInward               );
   fprintf(fptr, "OuterVelocitiesClearOutward               = %"ISYM"\n", OuterVelocitiesClearOutward              );
   fprintf(fptr, "OuterVelocitiesClearTangential            = %"ISYM"\n", OuterVelocitiesClearTangential           );
+
+  fprintf(fptr, "OuterVelocitiesClearInGrid_SolveMHD_Li     = "); WriteListOfInts(fptr, 10, OuterVelocitiesClearInGrid_SolveMHD_Li     );
+  fprintf(fptr, "OuterVelocitiesClearInSetBoundaryCondition = "); WriteListOfInts(fptr, 10, OuterVelocitiesClearInSetBoundaryCondition );
+  fprintf(fptr, "OuterVelocitiesClearInZeusSource           = "); WriteListOfInts(fptr, 10, OuterVelocitiesClearInZeusSource           );
+  fprintf(fptr, "OuterVelocitiesClearInRKStep               = "); WriteListOfInts(fptr, 10, OuterVelocitiesClearInRKStep               );
+
   fprintf(fptr, "OuterVelocitiesClearAtZeusSourceBegin     = %"ISYM"\n", OuterVelocitiesClearAtZeusSourceBegin    );
   fprintf(fptr, "OuterVelocitiesClearAtZeusSourceBeforeDiv = %"ISYM"\n", OuterVelocitiesClearAtZeusSourceBeforeDiv);
   fprintf(fptr, "OuterVelocitiesClearAtZeusSourceEnd       = %"ISYM"\n", OuterVelocitiesClearAtZeusSourceEnd      );

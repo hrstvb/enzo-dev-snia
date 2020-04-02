@@ -198,7 +198,7 @@ int EvolveHierarchy(HierarchyEntry &TopGrid, TopGridData &MetaData, ExternalBoun
 
 	while(Temp != NULL)
 	{
-		if(Temp->GridData->SetExternalBoundaryValues(Exterior) == FAIL)
+		if(Temp->GridData->SetExternalBoundaryValues(Exterior, &MetaData) == FAIL)
 		{
 			//      ENZO_FAIL("Error in grid->SetExternalBoundaryValues.\n");
 			Exterior->Prepare(Temp->GridData);

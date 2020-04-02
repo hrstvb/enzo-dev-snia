@@ -854,6 +854,8 @@ int ExternalBoundary::SetExternalBoundary(int FieldRank, int GridDims[], int Gri
 
 	}
 
+
+
 #ifdef OOC_BOUNDARY
 	if(ExternalBoundaryTypeIO)
 	{

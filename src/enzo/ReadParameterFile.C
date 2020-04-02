@@ -1366,10 +1366,62 @@ int ReadParameterFile(FILE *fptr, TopGridData &MetaData, float *Initialdt)
     ret += sscanf(line, "MHD_LI_GRAVITY_AFTER_PLMPRED = %"ISYM, &MHD_LI_GRAVITY_AFTER_PLMPRED);
     ret += sscanf(line, "DensityProfileMaxRadius                   =%"FSYM, &DensityProfileMaxRadius                  );
     ret += sscanf(line, "DensityProfileMinDensity                  =%"FSYM, &DensityProfileMinDensity                 );
+    ret += sscanf(line, "OuterVelocitiesDistFromEdge               =%"FSYM, &OuterVelocitiesDistFromEdge              );
     ret += sscanf(line, "OuterVelocitiesSphereRadius               =%"FSYM, &OuterVelocitiesSphereRadius              );
+    ret += sscanf(line, "OuterVelocitiesSphereRadius2              =%"FSYM, &OuterVelocitiesSphereRadius2             );
     ret += sscanf(line, "OuterVelocitiesClearInward                =%"ISYM, &OuterVelocitiesClearInward               );
     ret += sscanf(line, "OuterVelocitiesClearOutward               =%"ISYM, &OuterVelocitiesClearOutward              );
     ret += sscanf(line, "OuterVelocitiesClearTangential            =%"ISYM, &OuterVelocitiesClearTangential           );
+#define ISYM10 "%" ISYM " %" ISYM " %" ISYM " %" ISYM " %" ISYM " %" ISYM " %" ISYM " %" ISYM " %" ISYM " %" ISYM
+    ret += sscanf(line, "OuterVelocitiesClearInGrid_SolveMHD_Li     = " ISYM10,
+				  OuterVelocitiesClearInGrid_SolveMHD_Li+0,
+				  OuterVelocitiesClearInGrid_SolveMHD_Li+1,
+				  OuterVelocitiesClearInGrid_SolveMHD_Li+2,
+				  OuterVelocitiesClearInGrid_SolveMHD_Li+3,
+				  OuterVelocitiesClearInGrid_SolveMHD_Li+4,
+				  OuterVelocitiesClearInGrid_SolveMHD_Li+5,
+				  OuterVelocitiesClearInGrid_SolveMHD_Li+6,
+				  OuterVelocitiesClearInGrid_SolveMHD_Li+7,
+				  OuterVelocitiesClearInGrid_SolveMHD_Li+8,
+				  OuterVelocitiesClearInGrid_SolveMHD_Li+9
+				  );
+    ret += sscanf(line, "OuterVelocitiesClearInSetBoundaryCondition = " ISYM10,
+				  OuterVelocitiesClearInSetBoundaryCondition+0,
+				  OuterVelocitiesClearInSetBoundaryCondition+1,
+				  OuterVelocitiesClearInSetBoundaryCondition+2,
+				  OuterVelocitiesClearInSetBoundaryCondition+3,
+				  OuterVelocitiesClearInSetBoundaryCondition+4,
+				  OuterVelocitiesClearInSetBoundaryCondition+5,
+				  OuterVelocitiesClearInSetBoundaryCondition+6,
+				  OuterVelocitiesClearInSetBoundaryCondition+7,
+				  OuterVelocitiesClearInSetBoundaryCondition+8,
+				  OuterVelocitiesClearInSetBoundaryCondition+9
+				  );
+    ret += sscanf(line, "OuterVelocitiesClearInZeusSource           = " ISYM10,
+				  OuterVelocitiesClearInZeusSource+0,
+				  OuterVelocitiesClearInZeusSource+1,
+				  OuterVelocitiesClearInZeusSource+2,
+				  OuterVelocitiesClearInZeusSource+3,
+				  OuterVelocitiesClearInZeusSource+4,
+				  OuterVelocitiesClearInZeusSource+5,
+				  OuterVelocitiesClearInZeusSource+6,
+				  OuterVelocitiesClearInZeusSource+7,
+				  OuterVelocitiesClearInZeusSource+8,
+				  OuterVelocitiesClearInZeusSource+9
+				  );
+    ret += sscanf(line, "OuterVelocitiesClearInRKStep               = " ISYM10,
+				  OuterVelocitiesClearInRKStep+0,
+				  OuterVelocitiesClearInRKStep+1,
+				  OuterVelocitiesClearInRKStep+2,
+				  OuterVelocitiesClearInRKStep+3,
+				  OuterVelocitiesClearInRKStep+4,
+				  OuterVelocitiesClearInRKStep+5,
+				  OuterVelocitiesClearInRKStep+6,
+				  OuterVelocitiesClearInRKStep+7,
+				  OuterVelocitiesClearInRKStep+8,
+				  OuterVelocitiesClearInRKStep+9
+				  );
+#undef ISYM10
     ret += sscanf(line, "OuterVelocitiesClearAtZeusSourceBegin     =%"ISYM, &OuterVelocitiesClearAtZeusSourceBegin    );
     ret += sscanf(line, "OuterVelocitiesClearAtZeusSourceBeforeDiv =%"ISYM, &OuterVelocitiesClearAtZeusSourceBeforeDiv);
     ret += sscanf(line, "OuterVelocitiesClearAtZeusSourceEnd       =%"ISYM, &OuterVelocitiesClearAtZeusSourceEnd      );

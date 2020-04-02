@@ -231,6 +231,7 @@ ZEUSLinearArtificialViscosity    = 0.0;
 ZEUSQuadraticArtificialViscosity = 0  # default 2.0;
 ZEUS_IncludeViscosityTerm  = 0
 ZEUS_IncludeDivergenceTerm = 1
+OuterVelocitiesDistFromEdge               = 1
 OuterVelocitiesSphereRadius               = 1500e5 #95e5 # 2000e5
 OuterVelocitiesClearInward                = 1 # default 1
 OuterVelocitiesClearOutward               = 1 # default 0
