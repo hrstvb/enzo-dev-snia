@@ -537,7 +537,7 @@ int level, float dtLevelAbove, ExternalBoundary *Exterior
 					if(HydroMethod != HD_RK && HydroMethod != MHD_RK)
 					{
 						Grids[grid1]->GridData->SolveHydroEquations(LevelCycleCount[level], NumberOfSubgrids[grid1],
-																	SubgridFluxesEstimate[grid1], level);
+																	SubgridFluxesEstimate[grid1], level, MetaData);
 					}
 					else
 					{

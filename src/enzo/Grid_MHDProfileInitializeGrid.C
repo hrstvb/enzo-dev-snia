@@ -63,6 +63,7 @@
 
 //int MHDProfileInitExactB(float* Bx, float* By, float* Bz, FLOAT x, FLOAT y, FLOAT z);
 float SphericalGravityGetAt(FLOAT r);
+TriSphere* NewTriSphereFromParams();
 //void WriteInitialProfile(char* name, FLOAT* RR, FLOAT* RHO, FLOAT* GG, FLOAT* PP, FLOAT* UU, size_t n, FLOAT K,
 //FLOAT gamma);
 
@@ -1033,8 +1034,12 @@ int grid::MHDSustainInitialBurnedRegionGrid()
 	}
 
 	TRACEGF("  PerturbationMethod, triSphere =  %lld  %p", PerturbationMethod, triSphere);
-	if(PerturbationMethod==4 && triSphere)
+	if(PerturbationMethod==4)
+		{
+		if(!triSphere)
+			triSphere = (PerturbationMethod == 4) ? NewTriSphereFromParams() : NULL;
 		PerturbWithTriSPhere(triSphere, NULL);
+		}
 
 	if(intersect(lxyz, rxyz))
 		return SUCCESS;

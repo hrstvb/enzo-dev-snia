@@ -54,7 +54,7 @@ extern "C" void FORTRAN_NAME(ppm_lr)(
 		int colindex[], int *ifloat_size);
 #endif /* PPM_LR */
 
-int grid::SolveHydroEquations(int CycleNumber, int NumberOfSubgrids, fluxes *SubgridFluxes[], int level)
+int grid::SolveHydroEquations(int CycleNumber, int NumberOfSubgrids, fluxes *SubgridFluxes[], int level, TopGridData *MetaData)
 {
 
 	/* Return if this doesn't concern us. */
@@ -493,7 +493,7 @@ int grid::SolveHydroEquations(int CycleNumber, int NumberOfSubgrids, fluxes *Sub
 			if(HydroMethod == MHD_Li)
 			{
 				this->SolveMHD_Li(CycleNumber, NumberOfSubgrids, SubgridFluxes, CellWidthTemp, GridGlobalStart,
-									GravityOn, NumberOfColours, colnum, Fluxes);
+									GravityOn, NumberOfColours, colnum, Fluxes, MetaData);
 			}
 
 			if(HydroMethod != NoHydro)

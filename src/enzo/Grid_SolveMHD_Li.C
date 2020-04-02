@@ -66,7 +66,7 @@ float * F1, float * F2, int * CellDims, int* FaceDims)
 int grid::SolveMHD_Li(int CycleNumber, int NumberOfSubgrids, fluxes *SubgridFluxes[], float *CellWidthTemp[],
 	Elong_int GridGlobalStart[], int GravityOn,
 	int NumberOfColours, int colnum[],
-	float ** Fluxes)
+	float ** Fluxes, TopGridData *MetaData)
 {
 
 	//Big questions:
@@ -182,7 +182,7 @@ int grid::SolveMHD_Li(int CycleNumber, int NumberOfSubgrids, fluxes *SubgridFlux
 
 		//strang loop.
 
-	ClearOuterVelocities(pressure, NULL, NULL, NULL, NULL, NULL);
+//	ClearOuterVelocities(pressure, NULL, MetaData, NULL, NULL, NULL);
 	int startindex, endindex;
 	for(n = ixyz; n < ixyz + 3; n++)
 	{
@@ -359,7 +359,7 @@ int grid::SolveMHD_Li(int CycleNumber, int NumberOfSubgrids, fluxes *SubgridFlux
 				}              //x sweep jj loop
 			}              //x sweep kk loop
 		}              //x sweep conditional
-		ClearOuterVelocities(pressure, NULL, NULL, NULL, NULL, NULL);
+//		ClearOuterVelocities(pressure, NULL, MetaData, NULL, NULL, NULL);
 
 		startindex = 3;
 		endindex = GridDimension[1] - 2;
@@ -531,7 +531,7 @@ int grid::SolveMHD_Li(int CycleNumber, int NumberOfSubgrids, fluxes *SubgridFlux
 					} //y sweep ii loop
 				} //y sweep kk loop
 			} //strang conditional
-			ClearOuterVelocities(pressure, NULL, NULL, NULL, NULL, NULL);
+//			ClearOuterVelocities(pressure, NULL, MetaData, NULL, NULL, NULL);
 		} //y sweep
 
 		startindex = 3;
@@ -712,7 +712,7 @@ int grid::SolveMHD_Li(int CycleNumber, int NumberOfSubgrids, fluxes *SubgridFlux
 			} //strang conditional
 
 		} //z sweep
-		ClearOuterVelocities(pressure, NULL, NULL, NULL, NULL, NULL);
+//		ClearOuterVelocities(pressure, NULL, MetaData, NULL, NULL, NULL);
 	} //strang order loop
 
 	if(DualEnergyFormalism)

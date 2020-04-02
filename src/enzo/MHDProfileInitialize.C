@@ -219,7 +219,7 @@ TriSphere* NewTriSphereFromParams(int maxRefLevel)
 	{
 		// A negative PerturbationWaveLength leads to a trisphere with
 		// 20 * 4**(PerturbationWaveLength) facets.
-		ts = new TriSphere(InitialBurnedRadius, PerturbationAmplitude, (size_t) (-PerturbationWavelength),
+		ts = new TriSphere(SphericalGravityCenter, InitialBurnedRadius, PerturbationAmplitude, (size_t) (-PerturbationWavelength),
 							PerturbationBottomSize, PerturbationTopSize);
 	}
 	if(MyProcessorNumber == ROOT_PROCESSOR)

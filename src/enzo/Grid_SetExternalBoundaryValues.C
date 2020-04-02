@@ -24,7 +24,7 @@
 #include "ExternalBoundary.h"
 #include "Grid.h"
 
-int grid::SetExternalBoundaryValues(ExternalBoundary *Exterior)
+int grid::SetExternalBoundaryValues(ExternalBoundary *Exterior, TopGridData *MetaData = NULL)
 {
 	int dim, field;
 

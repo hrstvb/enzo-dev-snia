@@ -1242,10 +1242,16 @@ EXTERN float BA[3];
 
 EXTERN int MHD_LI_GRAVITY_AFTER_PLMPRED;
 EXTERN MYLIM_FLOAT MyLimiterX12Y12[10][4];
+EXTERN FLOAT OuterVelocitiesDistFromEdge;
 EXTERN FLOAT OuterVelocitiesSphereRadius;
+EXTERN FLOAT OuterVelocitiesSphereRadius2;
 EXTERN int   OuterVelocitiesClearInward;
 EXTERN int   OuterVelocitiesClearOutward;
 EXTERN int   OuterVelocitiesClearTangential;
+EXTERN int   OuterVelocitiesClearInGrid_SolveMHD_Li[10];
+EXTERN int   OuterVelocitiesClearInSetBoundaryCondition[10];
+EXTERN int   OuterVelocitiesClearInZeusSource[10];
+EXTERN int   OuterVelocitiesClearInRKStep[10];
 EXTERN int   OuterVelocitiesClearAtZeusSourceBegin;
 EXTERN int   OuterVelocitiesClearAtZeusSourceBeforeDiv;
 EXTERN int   OuterVelocitiesClearAtZeusSourceEnd;
