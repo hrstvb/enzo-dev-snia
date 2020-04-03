@@ -35,7 +35,7 @@ int CommunicationBroadcastValues(FLOAT *Values, int Number, int BroadcastProcess
 
 int SphericalGravityAllocateBins(Eint64** countBins, FLOAT** massBins, FLOAT** centersOfMassBins, FLOAT** kineticEBins,
 FLOAT** magneticEBins,
-FLOAT** volumeBins, int domainRank)
+									FLOAT** volumeBins, int domainRank)
 {
 	size_t &N = SphericalGravityActualNumberOfBins;
 	if(countBins)
@@ -147,6 +147,17 @@ int SphericalGravityDetermineBins()
 		ENZO_FAIL("Non-uniform bins for spherical gravity are not implemented.\n");
 	}
 
+	if((1 || debug) && MyProcessorNumber == ROOT_PROCESSOR)
+	{
+		size_t &N = SphericalGravityActualNumberOfBins;
+		char* buf = new char[19 * N];
+		char* s = buf;
+		for(int i = 0; i < N; i++)
+			s += sprintf(s, "  %d:%e", i, SphericalGravityBinLeftEdges[i]);
+		printf("SphericalGravityBinLeftEdges[%d]={%s  }\n", N, buf);
+		delete buf;
+	}
+
 	return SUCCESS;
 }
 
@@ -225,15 +236,14 @@ int SphericalGravityComputePotential(LevelHierarchyEntry *LevelArray[], TopGridD
 
 	if(MyProcessorNumber == ROOT_PROCESSOR)
 	{
-		char* sbuf = new char[64 * N];
-		char* s = sbuf;
-		s += sprintf(s, "SphericalGravityActualNumberOfBins = %lld\n", N);
-		s += sprintfvec(s, "SphericalGravityBinLeftEdges = {", "%lld:%e", ", ", "}\n", SphericalGravityBinLeftEdges,
-						N, true, true);
-		s += sprintfvec(s, "SphericalGravityInteriorMasses = {", "%lld:%e", ", ", "}\n",
-						SphericalGravityInteriorMasses, N, true, true);
-		printf(sbuf);
-		delete sbuf;
+		printf("SphericalGravityShellMasses[] = {");
+		for(int i = 0; i < N; i++)
+			printf("  %d:%e", i, SphericalGravityShellMasses[i]);
+		printf("}\n");
+		printf("SphericalGravityInteriorMasses[] = {");
+		for(int i = 0; i < N; i++)
+			printf("  %d:%e", i, SphericalGravityInteriorMasses[i]);
+		printf("}\n");
 	}
 //	for (int dim = 0; dim < GridRank; dim++)
 //		SphericalGravityCentersOfMass[dim] = arr_sum(SphericalGravityShellCentersOfMass[dim], N);
@@ -327,12 +337,12 @@ int SphericalGravityWritePotential(char * name)
 	if((file_id = H5Fcreate(filename, H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT)) == -1)
 		ENZO_VFAIL("SphericalGravityWritePotential: Error opening hdf5 file `%s'\n", filename)
 
-// A HDF5 writing pattern:
-// dataspace_id = H5Screate_simple(rank, dims[], max_dims[])
-// dataset = H5Dcreate(output file handle, data set name, data buffer datatype, shape of data handle, H5P_DEFAULT)
-// h5_status = H5Dwrite(dset, memory type, buf space, file space, H5P_DEFAULT, data buffer)
+	// A HDF5 writing pattern:
+	// dataspace_id = H5Screate_simple(rank, dims[], max_dims[])
+	// dataset = H5Dcreate(output file handle, data set name, data buffer datatype, shape of data handle, H5P_DEFAULT)
+	// h5_status = H5Dwrite(dset, memory type, buf space, file space, H5P_DEFAULT, data buffer)
 
-// All written arrays have the same dims.
+	// All written arrays have the same dims.
 	dims[0] = SphericalGravityActualNumberOfBins;
 	dataspace_id = H5Screate_simple(1, dims, NULL);
 

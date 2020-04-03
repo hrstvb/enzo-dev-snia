@@ -1233,9 +1233,7 @@ int WriteParameterFile(FILE *fptr, TopGridData &MetaData, char *name = NULL)
   fprintf(fptr, "BurningReactionBurnedFractionLimitLo  = %"FSYM"\n", BurningReactionBurnedFractionLimitLo ); //[BH]
   fprintf(fptr, "BurningReactionBurnedFractionLimitHi  = %"FSYM"\n", BurningReactionBurnedFractionLimitHi ); //[BH]
   fprintf(fptr, "BurningEnergyRelease                  = %"FSYM"\n", BurningEnergyRelease                 ); //[BH]
-  fprintf(fptr, "BurningEnergyRelativeGrowthLimit      = %"FSYM"\n", BurningEnergyRelativeGrowthLimit     ); //[BH]
-  fprintf(fptr, "InternalEnergyRelativeGrowthLimit     = %"FSYM"\n", InternalEnergyRelativeGrowthLimit    ); //[BH]
-  fprintf(fptr, "TotalEnergyRelativeGrowthLimit        = %"FSYM"\n", TotalEnergyRelativeGrowthLimit       ); //[BH]
+  fprintf(fptr, "EnergyRelativeGrowthLimit             = %"FSYM"\n", EnergyRelativeGrowthLimit            ); //[BH]
   fprintf(fptr, "BurnedFractionGrowthLimit             = %"FSYM"\n", BurnedFractionGrowthLimit		  ); //[BH]
 
   /* Output current time */

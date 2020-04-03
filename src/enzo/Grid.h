@@ -24,10 +24,6 @@
 #include "MemoryPool.h"
 #include "list.h"
 #include "hydro_rk/SuperNova.h"
-#include "GridList.h"
-#include "LimitTimeStep.h"
-#include "Fluxes.h"
-#include "ExternalBoundary.h"
 #ifdef ECUDA
 #include "hydro_rk/CudaMHD.h"
 #endif
@@ -367,9 +363,6 @@ public:
     (for steps #3 and #4) */
 
    float ComputeTimeStep();
-   float ComputeTimeStep(DtLimitInfo* dtLimitInfo);
-   float populateDtLimitInfo(DtLimitInfo* dest_info, float dt);
-   float populateDtLimitInfo(DtLimitInfo* dest_info, float dt, dt_limit_reason reason, size_t cellIndex);
 
 /* Set the timestep in this grid to the timestep in the argument
     (for step #3) */
@@ -417,19 +410,14 @@ public:
    int ComputeCRDiffusionTimeStep(float &dt);
 
 /* Compute time step from energy growth limit */				//[BH]
-   float dtInternalEnergyGrowth;								//[BH]
-   float dtTotalEnergyGrowth;								//[BH]
-   size_t dtInternalEnergyGrowthIndex;								//[BH]
-   size_t dtTotalEnergyGrowthIndex;								//[BH]
+  float dtEnergyGrowth;								//[BH]
   //float dEdt_min, dEdt_max;							//[BH]
-   int ComputeInternalEnergyGrowthTimeStep(float* dt, size_t* dtIndex);				//[BH]
-   int ComputeTotalEnergyGrowthTimeStep(float* dt, size_t* dtIndex);				//[BH]
-   int ComputeEnergyGrowthTimeStep();				//[BH]
+  int ComputeEnergyGrowthTimeStep( float dEdtParent );				//[BH]
 
 /* Member functions evolving the burning fraction */ 				//[BH]
   //float dfdt_min, dfdt_max;							//[BH]
   int DiffuseBurnedFraction(); 							//[BH]
-  float ComputeBurningFractionDiffusionTimeStep(float* dt); 			//[BH]
+  float ComputeBurningFractionDiffusionTimeStep(float &dt); 			//[BH]
   int ComputeLaplacian(float* sourceField, float* resultField, int mode); 	//[BH]
 
 /* Baryons: Copy current solution to Old solution (returns success/fail)
@@ -1239,13 +1227,8 @@ gradient force to gravitational force for one-zone collapse test. */
 //
    int GetGridRank() {return GridRank;}
    int GetGridDimension(int Dimension) {return GridDimension[Dimension];}
-   int* GetGridDimension() {return GridDimension;}
    int GetGridStartIndex(int Dimension) {return GridStartIndex[Dimension];}
    int GetGridEndIndex(int Dimension) {return GridEndIndex[Dimension];}
-   FLOAT GetGridLeftEdge(int Dimension) {return GridLeftEdge[Dimension];}
-   FLOAT* GetGridLeftEdge() {return GridLeftEdge;}
-   FLOAT GetGridRightEdge(int Dimension) {return GridRightEdge[Dimension];}
-   FLOAT* GetGridRightEdge() {return GridRightEdge;}
    int GetActiveSize() {
      int dim, size;
      for (dim = 0, size = 1; dim < GridRank; dim++) {
@@ -1253,118 +1236,14 @@ gradient force to gravitational force for one-zone collapse test. */
      }
      return size;
    }
-
-private:
-   size_t gridSize = 0;
-   size_t gridStrides[MAX_DIMENSION + 1];
-   FLOAT cellVolume = 0;
-public:
    size_t GetGridSize() {
-	   if(!gridSize) {
-		   gridStrides[0] = gridSize = 1;
-		   for(int dim = 1; dim <= GridRank; dim++)
-			   gridStrides[dim] = gridSize *= GridDimension[dim - 1];
-		   for(int dim = GridRank; dim < MAX_DIMENSION; dim++)
-			   gridStrides[dim] = gridSize;
-	   }
-	   return gridSize;
+     size_t size = 1;
+     for (int dim = 0; dim < GridRank; dim++)
+       size *= GridDimension[dim];
+     return size;
    }
-   size_t getGridStride(int dim) {
-	   if(!gridSize)
-		   GetGridSize();
-	   return gridStrides[dim];
-   }
-   void get_ijk(size_t ijk[], size_t index) {
-	   for(int dim = 0; dim < GridRank; dim++) {
-		   ijk[dim] = index % GridDimension[dim];
-		   index /= GridDimension[dim];
-	   }
-   }
-   void get_xyz(FLOAT xyz[], size_t ijk[]) {
-	   for(int dim = 0; dim < GridRank; dim++) {
-		   size_t i = ijk[dim];
-		   xyz[dim] = 0.5 * (CellLeftEdge[dim][i] + CellLeftEdge[dim][i + 1]);
-	   }
-   }
-   void get_xyz(FLOAT xyz[], size_t index) {
-	   size_t ijk[MAX_DIMENSION];
-	   get_ijk(ijk, index);
-	   get_xyz(xyz, ijk);
-   }
-   void get_ijk_xyz(size_t ijk[], FLOAT xyz[], size_t index) {
-	   get_ijk(ijk, index);
-	   get_xyz(xyz, ijk);
-   }
-   void getParticlePosition(FLOAT xyz[], size_t index)
-   {
-		for(int dim = 0; dim < GridRank; dim++)
-			xyz[dim] = ParticlePosition[dim][index];
-   }
-   void getParticleVelocity(FLOAT uvw[], size_t index)
-   {
-		for(int dim = 0; dim < GridRank; dim++)
-			uvw[dim] = ParticleVelocity[dim][index];
-   }
-   float getParticleMass(size_t index)
-   {
-		return ParticleMass[index];
-   }
-   FLOAT getCellVolume() {
-	   if(!cellVolume) {
-		   cellVolume = 1;
-		   for(int dim = 0; dim < GridRank; dim++)
-			   cellVolume *= CellWidth[dim][0];
-	   }
-	   return cellVolume;
-   }
-   void getCUMeasure(FLOAT* c, FLOAT* u)
-   {
-	   FLOAT mindx[MAX_DIMENSION], maxdx[MAX_DIMENSION], minc = 1, u2 = 1;
-
-	   for(int dim = 0; dim < GridRank; dim++)
-	   {
-		   FLOAT* a = CellWidth[dim];
-		   FLOAT* a_n = a + GridDimension[dim];
-		   FLOAT b = *a;
-		   for(a++; a < a_n; a++)
-			   if(b > *a) b = *a;
-		   mindx[dim] = b;
-	   }
-
-	   for(int dim = 0; dim < GridRank; dim++)
-	   {
-		   FLOAT* a = CellWidth[dim];
-		   FLOAT* a_n = a + GridDimension[dim];
-		   FLOAT b = *a;
-		   for(a++; a < a_n; a++)
-			   if(b < *a) b = *a;
-		   maxdx[dim] = b;
-	   }
-
-	   for(int dim1 = 0; dim1 < GridRank; dim1++)
-	   {
-		   FLOAT a[MAX_DIMENSION], maxa, c2 = 1;
-
-		   for(int dim2 = 0; dim1 < GridRank; dim1++)
-			   a[dim2] = mindx[dim2];
-		   a[dim1] = maxdx[dim1];
-
-		   maxa = a[0];
-		   for(int dim2 = 1; dim1 < GridRank; dim1++)
-			   if(maxa < a[dim2]) maxa = a[dim2];
-
-		   for(int dim2 = 1; dim1 < GridRank; dim1++)
-			   c2 *= a[dim2] / maxa;
-
-		   if(minc > c2) minc = c2;
-	   }
-	   *c = minc;
-
-	   for(int dim = 0; dim < GridRank; dim++)
-		   u2 *= mindx[dim] / maxdx[dim];
-	   *u = u2;
-   }
-
+   FLOAT GetGridLeftEdge(int Dimension) {return GridLeftEdge[Dimension];}
+   FLOAT GetGridRightEdge(int Dimension) {return GridRightEdge[Dimension];}
 
 
 #ifdef TRANSFER

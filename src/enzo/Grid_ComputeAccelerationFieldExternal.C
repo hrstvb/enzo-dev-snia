@@ -807,11 +807,12 @@ int grid::ComputeAccelerationFieldExternal()
 						if(-1 == (rbin = SphericalGravityComputeBinIndex(r))) continue;
 
 						my_mass = SphericalGravityInteriorMasses[rbin];
-						my_accel = -xyz[dim] / (r * rsquared) * my_mass * SphericalGravityConstant;
+						my_accel = -xyz[dim] / POW(rsquared, 1.5) * my_mass; // * SphericalGravityConstant;
 						//fprintf(stderr,"KLOWN wtf %p dim %d n %d ijk %d, %d, %d\n",AccelerationField[dim],dim,index, i,j,k);
 						AccelerationField[dim][index++] += my_accel;
 					} // for i
 				} // for j
+				arr_ax(AccelerationField[dim], gridSize, SphericalGravityConstant);
 			} // for k
 
 		} // for dim
