@@ -1293,7 +1293,9 @@ int ReadParameterFile(FILE *fptr, TopGridData &MetaData, float *Initialdt)
     ret += sscanf(line, "BurningReactionBurnedFractionLimitLo  = %"FSYM, &BurningReactionBurnedFractionLimitLo ); //[BH]
     ret += sscanf(line, "BurningReactionBurnedFractionLimitHi  = %"FSYM, &BurningReactionBurnedFractionLimitHi ); //[BH]
     ret += sscanf(line, "BurningEnergyRelease                  = %"FSYM, &BurningEnergyRelease                 ); //[BH]
-    ret += sscanf(line, "EnergyRelativeGrowthLimit             = %"FSYM, &EnergyRelativeGrowthLimit            ); //[BH]
+    ret += sscanf(line, "BurningEnergyRelativeGrowthLimit      = %"FSYM, &BurningEnergyRelativeGrowthLimit     ); //[BH]
+    ret += sscanf(line, "InternalEnergyRelativeGrowthLimit     = %"FSYM, &InternalEnergyRelativeGrowthLimit    ); //[BH]
+    ret += sscanf(line, "TotalEnergyRelativeGrowthLimit        = %"FSYM, &TotalEnergyRelativeGrowthLimit       ); //[BH]
     ret += sscanf(line, "BurnedFractionGrowthLimit             = %"FSYM, &BurnedFractionGrowthLimit            ); //[BH]
 
     ret += sscanf(line, "UseSphericalGravity = %"ISYM, &UseSphericalGravity);

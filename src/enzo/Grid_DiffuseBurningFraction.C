@@ -118,7 +118,7 @@ int grid::DiffuseBurnedFraction(){
   //subcycle begins
   while(dtSoFar < dtFixed){
 
-    if ( this->ComputeBurningFractionDiffusionTimeStep( dtSubcycle ) == FAIL )
+    if ( this->ComputeBurningFractionDiffusionTimeStep( &dtSubcycle ) == FAIL )
     {
       ENZO_VFAIL("Grid::DiffuseBurnedFraction: Error in ComputeBurningTimeStep. %e %e\n",
 	dtFixed, dtSubcycle );
@@ -248,17 +248,14 @@ int GetUnits (float *DensityUnits, float *LengthUnits,
 	      float *VelocityUnits, double *MassUnits, FLOAT Time);
 
 // Member functions
-float grid::ComputeBurningFractionDiffusionTimeStep(float &dt) {
-
-  float dt1, dt2;
-  dt1 = dt2 = huge_number;
-
+float grid::ComputeBurningFractionDiffusionTimeStep(float* dt) {
   if (ProcessorNumber != MyProcessorNumber)
     return SUCCESS;
 
   this->DebugCheck("Grid::ComputeBurningFractionDiffusionTimeStep");
 
   // Some locals
+  float dt1;
   float TemperatureUnits = 1.0, DensityUnits = 1.0, LengthUnits = 1.0;
   float VelocityUnits = 1.0, TimeUnits = 1.0, aUnits = 1.0;
   double MassUnits = 1.0;
@@ -268,7 +265,7 @@ float grid::ComputeBurningFractionDiffusionTimeStep(float &dt) {
   FLOAT dx = CellWidth[0][0]; // For some reason dx==0 here. [BH]
   for ( int dim = 1; dim < GridRank; dim++ )
     dx = min( dx, CellWidth[dim][0] );
-  // Get system of units
+
   if (GetUnits(&DensityUnits, &LengthUnits, &TemperatureUnits, &TimeUnits, &VelocityUnits, &MassUnits, Time) == FAIL)
     ENZO_FAIL("Error in GetUnits.");
 
@@ -284,12 +281,12 @@ float grid::ComputeBurningFractionDiffusionTimeStep(float &dt) {
 //printf("dt=%e, t=%e\n", dt, dtFixed );
 //ENZO_FAIL("debug");
 
-  if (SpeedOfLightTimeStepLimit) {
-    light_cross_time = dx * VelocityUnits / clight;
-    dt1 = max(dt1, light_cross_time);
-  }
+//  if (SpeedOfLightTimeStepLimit) {
+//    light_cross_time = dx * VelocityUnits / clight;
+//    dt1 = max(dt1, light_cross_time);
+//  }
 
-  dt = dt1;
+  *dt = dt1;
 
   return SUCCESS;
 }
