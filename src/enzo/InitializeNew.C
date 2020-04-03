@@ -268,7 +268,7 @@ int InitializeNew(char *filename, HierarchyEntry &TopGrid,
   // Open parameter file
 
   if ((fptr = fopen(filename, "r")) == NULL) {
-    ENZO_FAIL("Error opening parameter file.");
+    ENZO_VFAIL("Error opening parameter file '%s'.", filename);
   }
 
   // Clear OutputLog

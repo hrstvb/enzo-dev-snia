@@ -43,7 +43,7 @@ const char* const getReasonText(const dt_limit_reason reason)
 	case MAX_DT_CONDUCTION_LIMITED:
 		return "MAX_DT_CONDUCTION_LIMITED";
 	case MAX_DT_CONFIGURED_REFINED:
-		return "CONFIGURED_LIMIT_REFINED";
+		return "MAX_DT_CONFIGURED_LIMIT_REFINED";
 	case MAX_DT_CONFIGURED:
 		return "MAX_DT_CONFIGURED";
 	case MAX_DT_COOLING_LIMITED:
@@ -53,7 +53,7 @@ const char* const getReasonText(const dt_limit_reason reason)
 	case MAX_DT_CR_LIMITED:
 		return "MAX_DT_CR_LIMITED";
 	case MAX_DT_DATA_DUMP_REACHED:
-		return "DATA_DUMP_REACHED";
+		return "MAX_DT_DATA_DUMP_REACHED";
 	case MAX_DT_EXPANSION_LIMITED:
 		return "MAX_DT_EXPANSION_LIMITED";
 	case MAX_DT_FREE_FALL_LIMITED:
@@ -65,11 +65,11 @@ const char* const getReasonText(const dt_limit_reason reason)
 	case MAX_DT_INTERNAL_ENERGY_GROWTH_LIMITED:
 		return "MAX_DT_INTERNAL_ENERGY_GROWTH_LIMITED";
 	case MAX_DT_NO_REASON_INFO:
-		return "LIMITED_BY_ANOTHER_REASON";
+		return "MAX_DT_LIMITED_BY_ANOTHER_REASON";
 	case MAX_DT_MHD_LI_LIMITED:
-		return "MHD_LI_LIMITED";
+		return "MAX_DT_MHD_LI_LIMITED";
 	case MAX_DT_MHD_RK_LIMITED:
-		return "MHD_RK_LIMITED";
+		return "MAX_DT_MHD_RK_LIMITED";
 	case MAX_DT_NULL_REASON:
 		return "MAX_DT_NULL_REASON";
 	case MAX_DT_PARTICLES_LIMITED:
@@ -77,7 +77,7 @@ const char* const getReasonText(const dt_limit_reason reason)
 	case MAX_DT_RAD_PRESSURE_LIMITED:
 		return "MAX_DT_RAD_PRESSURE_LIMITED";
 	case MAX_DT_RAD_TRANSFER_LIMITED:
-		return "RAD_TRANSFER_LIMITED";
+		return "MAX_DT_RAD_TRANSFER_LIMITED";
 	case MAX_DT_STOP_TIME_REACHED:
 		return "MAX_DT_STOP_TIME_REACHED";
 	case MAX_DT_TIME_ACTION_REACHED:

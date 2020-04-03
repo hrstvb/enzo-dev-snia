@@ -2,6 +2,7 @@
 #define MY_ENZO_UTILS_H
 
 #include "stddef.h"
+#include "math.h"
 #include "IDE_defs.h"
 #ifdef USE_MPI
 #include "mpi.h"
