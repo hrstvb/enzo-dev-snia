@@ -2552,7 +2552,7 @@ int zEulerSweep(int j, int NumberOfSubgrids, fluxes *SubgridFluxes[],
 			   int MaximumNumberOfNewParticles, int *NumberOfNewParticles);
 
   int SphericalGravityAddMassToShell();
-  int SphericalGravityAddMassToShell(size_t* countBins, FLOAT* densBins,
+  int SphericalGravityAddMassToShell(Eint64* countBins, FLOAT* densBins,
 									 FLOAT** cmBins, FLOAT** kinEBins,
 									 FLOAT** magEBins);
 

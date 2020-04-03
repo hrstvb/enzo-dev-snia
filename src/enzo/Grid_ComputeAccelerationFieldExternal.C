@@ -807,11 +807,11 @@ int grid::ComputeAccelerationFieldExternal()
 						if(-1 == (rbin = SphericalGravityComputeBinIndex(r))) continue;
 
 						// Calculate the SphericalGravity acceleration magnitude
-						if(0 && SphericalGravityInterpAccelOrder && rbin < SphericalGravityActualNumberOfBins - 1)
+						if(SphericalGravityInterpAccel && rbin < SphericalGravityActualNumberOfBins - 1)
 						{
 							// Use linear interpolation between the bin left and right edge.
 							// Use the pre-calculated coefficients.
-							my_accel = SphericalGravityBinAccels[i]
+							my_accel = SphericalGravityBinAccels
 									+ SphericalGravityBinAccelSlopes[i] * (r - SphericalGravityBinLeftEdges[i]);
 						}
 						else
