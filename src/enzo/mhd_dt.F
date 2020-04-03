@@ -22,8 +22,7 @@
      +                  d, p, gamma, dt,
      +                  dx, dy, dz, 
      +                  idim, jdim, kdim, rank, 
-     +                  i1, i2, j1, j2, k1, k2, eng,
-     +                  dtindex)
+     +                  i1, i2, j1, j2, k1, k2, eng)
 
       implicit none
 #include "fortran_types.def"
@@ -32,19 +31,15 @@ c determine the minimum crossing time for fast magnetosonic shocks.
 
 c input variables      
 
-c     start and stop indicies
-c     array dimensionsand rank
-c     index of the min dt (out arg)
+c     start and stop indicies, array dimensions
       INTG_PREC i1, j1, k1, i2, j2, k2
       INTG_PREC idim, jdim, kdim, rank
-      INTG_PREC dtindex
 
 c     face centered magnetic field
 c     velocities
 c     density, pressure
 c     cell widths
-c     dt (out arg), gamma
-c     total energy
+c     dt, gamma
 
       R_PREC bxc(idim,jdim,kdim),byc(idim,jdim,kdim),bzc(idim,jdim,kdim)
       R_PREC vx(idim,jdim,kdim), vy(idim,jdim,kdim), vz(idim,jdim,kdim)
@@ -66,12 +61,10 @@ c     temporary stuff
 c     square of the alfven speed, b/sqrt(4 pi d): the sound speed.
 c     fast shock speed: pi: 1/sqrt(4 pi): 1/sqrt(d)
 c     two temporary numbers to avoid cache misses: a variable mx: another variable called meat
-c     time step for the current cell
       R_PREC bx, by, bz, cs2
       R_PREC cf, dinv
       R_PREC dzt, dyt, mx, meat
       R_PREC dtx, dty, dtz
-      R_PREC dt1
 
 c     huge is defined in fortran.def
       dt = huge
@@ -142,23 +135,17 @@ c     the z crossing time:
 c     We use the Godunov stability criterion.  See Godunov et all, 1962.
                
                if( rank .eq. 3 ) then
-                  dt1 = 1._RKIND/(dtx+dty+dtz)
+                  dt = min( dt, 1._RKIND/(dtx+dty+dtz) )
                else if( rank .eq. 2 ) then
-                  dt1 = 1._RKIND/(dtx+dty)
+                  dt = min( dt, 1._RKIND/(dtx+dty) )
                else if( rank .eq. 1 ) then
-                  dt1 = 1._RKIND/(dtx)
+                  dt = min( dt, 1._RKIND/(dtx) )
                endif
-               
-               if( dt1 .ne. dt1 ) then
+               if( dt .ne. dt ) then
                   write(*,*) "dt failure.  (i,j,k) = ",i,j,k,
      +                 "(d,p,bx,by,bz) ", d(i,j,k), p(i,j,k), 
      +                 bxc(i,j,k), byc(i,j,k), bzc(i,j,k)
                   ERROR_MESSAGE
-               else
-				if(dt > dt1) then
-					dt = dt1
-					dtindex = i + idim * (j + jdim * k)
-				endif
 
                endif
             enddo

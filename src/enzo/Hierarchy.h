@@ -13,8 +13,6 @@
 #ifndef HIERARCHY_ENTRY_DEFINED__
 #define HIERARCHY_ENTRY_DEFINED__
 
-#include "Grid.h"
-
 struct HierarchyEntry
 {
   HierarchyEntry *NextGridThisLevel; /* pointer to the next grid on level */

@@ -528,31 +528,6 @@ T* arr_axpby(T* dest, U* x, const size_t n, const V a, const W b)
 					})
 }
 
-template<typename T>
-size_t sprintfvec(char* const s, const char* const preffix, const char* const singleElementFormat,
-	const char* const separator, const char* const suffix, const T* const vec, const size_t n,
-	const bool printWithIndices, const bool indexPrintsBeforeElement)
-{
-	char* s2 = s;
-	if(preffix)
-		s2 += sprintf(s2, preffix);
-	for(size_t i = 0; i < n; i++)
-	{
-		if(i && separator)
-			s2 += sprintf(s2, separator);
-		if(!printWithIndices)
-			s2 += sprintf(s2, singleElementFormat, vec[i]);
-		else if(indexPrintsBeforeElement)
-			s2 += sprintf(s2, singleElementFormat, i, vec[i]);
-		else
-			s2 += sprintf(s2, singleElementFormat, vec[i], i);
-	}
-	if(suffix)
-		s2 += sprintf(s2, suffix);
-	return s2 - s;
-}
-
-
 /*
  * Segmented array routines
  *

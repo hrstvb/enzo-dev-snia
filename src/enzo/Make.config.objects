@@ -15,7 +15,6 @@
 #-----------------------------------------------------------------------
 
 OBJS_CONFIG_LIB = \
-  LimitTimeStep.o \
   MHDProfileInitialize.o \
   Grid_MHDProfileInitializeGrid.o \
   SphericalGravityComputePotential.o\

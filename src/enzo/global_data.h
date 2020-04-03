@@ -23,7 +23,6 @@
 #include <stdio.h>
 
 #include "macros_and_parameters.h"
-#include "typedefs.h"
 
 #ifdef MEMORY_POOL
 #include "MemoryPool.h"
@@ -1127,9 +1126,7 @@ EXTERN float Rho_56Ni_A;                           //[BH]
 EXTERN float Rho_56Ni_B;                           //[BH]
 EXTERN float InternalEnergy_A;                     //[BH]
 EXTERN float InternalEnergy_B;                     //[BH]
-EXTERN float BurningEnergyRelativeGrowthLimit;     //[BH]
-EXTERN float InternalEnergyRelativeGrowthLimit;    //[BH]
-EXTERN float TotalEnergyRelativeGrowthLimit;		   //[BH]
+EXTERN float EnergyRelativeGrowthLimit;		   //[BH]
 EXTERN float BurnedFractionGrowthLimit;		   //[BH]
 
 /* For the galaxy simulation boundary method */

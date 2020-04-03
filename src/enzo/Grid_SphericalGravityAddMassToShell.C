@@ -164,7 +164,11 @@ FLOAT** magEBins)
 	} //switch(GridRank)
 
 //Add the grid bins to the bins that are global on this processor.
-	FLOAT cellVolume = getCellVolume();
+	FLOAT cellVolume = CellWidth[0][0];
+	for(int dim = 1; dim < GridRank; dim++)
+		cellVolume *= CellWidth[dim][0];
+
+	printf("Cell volume = %e\n", cellVolume);
 
 	arr_xpy(SphericalGravityShellCellCounts, countBins, N);
 	arr_axpy(SphericalGravityShellVolumes, countBins, N, cellVolume);
