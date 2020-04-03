@@ -15,6 +15,7 @@
 #-----------------------------------------------------------------------
 
 OBJS_CONFIG_LIB = \
+  Grid_MHDVectorPotentialInitialize.o \
   LimitTimeStep.o \
   MHDProfileInitialize.o \
   Grid_MHDProfileInitializeGrid.o \

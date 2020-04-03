@@ -2552,9 +2552,14 @@ int zEulerSweep(int j, int NumberOfSubgrids, fluxes *SubgridFluxes[],
 			   int MaximumNumberOfNewParticles, int *NumberOfNewParticles);
 
   int SphericalGravityAddMassToShell();
-  int SphericalGravityAddMassToShell(Eint64* countBins, FLOAT* densBins,
+  int SphericalGravityAddMassToShell(size_t* countBins, FLOAT* densBins,
 									 FLOAT** cmBins, FLOAT** kinEBins,
 									 FLOAT** magEBins);
+
+  int InitializeMagneticDipoleVectorPotential(const float dipoleMoment[3], const float dipoleCenter[3],
+	  const long float factor);
+  int InitializeMagneticUniformFieldVectorPotential(const float constMagneticField[3],
+	  const long float factor);
 
 /* Magnetic field resetting routine. */
 
@@ -3120,6 +3125,9 @@ int zEulerSweep(int j, int NumberOfSubgrids, fluxes *SubgridFluxes[],
 			fluxes *SubgridFluxes[], int level, int grid);
   int ComputeElectricField(float dT, float ** Fluxes);
   int MHD_Curl( int * Start, int * End, int Method);
+  int MHD_Curl(int Method);
+  int MHD_Curl();
+  int MHD_CurlDiff();
   int CenterMagneticField(int * Start = NULL, int * End = NULL);
 
   int ClearAvgElectricField();
@@ -3141,7 +3149,13 @@ int zEulerSweep(int j, int NumberOfSubgrids, fluxes *SubgridFluxes[],
   int MHDProfileInitializeGrid(char* profileFileName, char* profileFormat, char* profileType,
   									char* radiusColumnName, char* densityColumnName, char* temperatureColumnName,
   									float burningTemperature,
-  									float burnedRadius, float profileAtTime);
+  									float burnedRadius, float profileAtTime,
+									float dipoleMoment[3], float dipoleCenter[3]);
+  int MHDProfileInitializeGrid2(char* profileFileName, char* profileFormat, char* profileType,
+  									char* radiusColumnName, char* densityColumnName, char* temperatureColumnName,
+  									float burningTemperature,
+  									float burnedRadius, float profileAtTime,
+									float dipoleMoment[3], float dipoleCenter[3]);
   int MHDOrszagTangInitGrid(float Density,float Pressure, float V0, float B0 );
   int MHDLoopInitGrid(float LoopDensity,float Pressure, float Vx, float Vy, float Vz, float B0, FLOAT R0,
                       FLOAT Center[], int CurrentAxis);

@@ -22,12 +22,12 @@
 
 //int CosmologyComputeExpansionFactor(FLOAT time, FLOAT *a, FLOAT *dadt);
 //int FindField(int f, int farray[], int n);
-int SphericalGravityAllocateBins(Eint64** countBins, FLOAT** massBins, FLOAT** centersOfMassBins, FLOAT** kineticEBins,
-FLOAT** magneticEBins,
-									FLOAT** volumeBins, int domainRank);
+int SphericalGravityAllocateBins(size_t** countBins, FLOAT** massBins, FLOAT** binAccels, FLOAT** binAccelSlopes,
+FLOAT** centersOfMassBins, FLOAT** kineticEBins, FLOAT** magneticEBins, FLOAT** volumeBins, int domainRank);
+
 int SphericalGravityComputeBinIndex(FLOAT r);
 
-int grid::SphericalGravityAddMassToShell(Eint64* countBins, FLOAT* densBins, FLOAT** cmBins, FLOAT** kinEBins,
+int grid::SphericalGravityAddMassToShell(size_t* countBins, FLOAT* densBins, FLOAT** cmBins, FLOAT** kinEBins,
 FLOAT** magEBins)
 {
 	if(ProcessorNumber != MyProcessorNumber)
@@ -185,13 +185,13 @@ int grid::SphericalGravityAddMassToShell()
 		return SUCCESS;
 
 // Allocate bins for this grid.
-	Eint64* countBins = NULL;
+	size_t* countBins = NULL;
 	FLOAT* densBins = NULL;
 	FLOAT** cmBins = arr_newset<FLOAT*>(MAX_DIMENSION, NULL);
 	FLOAT** kinEBins = arr_newset<FLOAT*>(MAX_DIMENSION, NULL);
 	FLOAT** magEBins = (UseMHD || UseMHDCT) ? arr_newset<FLOAT*>(MAX_DIMENSION, NULL) : NULL;
 
-	SphericalGravityAllocateBins(&countBins, &densBins, cmBins, kinEBins, magEBins, NULL, GridRank);
+	SphericalGravityAllocateBins(&countBins, &densBins, NULL, NULL, cmBins, kinEBins, magEBins, NULL, GridRank);
 	int retval = SphericalGravityAddMassToShell(countBins, densBins, cmBins, kinEBins, magEBins);
 
 	delete countBins;
