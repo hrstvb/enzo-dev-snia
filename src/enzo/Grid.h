@@ -11,6 +11,7 @@
 ************************************************************************/
 #ifndef GRID_DEFINED__
 #define GRID_DEFINED__
+#include "MHDInitialProfile.h"
 #include "macros_and_parameters.h"
 #include "typedefs.h"
 #include "ProtoSubgrid.h"
@@ -38,7 +39,6 @@
 extern StochasticForcing Forcing;
 
 struct HierarchyEntry;
-
 #include "EnzoArray.h"
 
 //#ifdef ANALYSIS_TOOLS
@@ -66,11 +66,11 @@ struct HierarchyEntry;
 //};
 
 
-
-
 extern int CommunicationDirection;
 int FindField(int f, int farray[], int n);
 struct LevelHierarchyEntry;
+struct TriSphere;
+
 
 class grid
 {
@@ -78,6 +78,7 @@ class grid
  protected:
 #else
  private:
+ public:
 #endif
 //
 //  General grid class data
@@ -428,7 +429,7 @@ public:
 
 /* Member functions evolving the burning fraction */ 				//[BH]
   //float dfdt_min, dfdt_max;							//[BH]
-  int DiffuseBurnedFraction(); 							//[BH]
+   int DiffuseBurnedFraction(); 							//[BH]
   float ComputeBurningFractionDiffusionTimeStep(float* dt); 			//[BH]
   int ComputeLaplacian(float* sourceField, float* resultField, int mode); 	//[BH]
 
@@ -446,14 +447,18 @@ public:
 /* Baryons: Update boundary according to the external boundary values
     (for step #16) */
 
-   int SetExternalBoundaryValues(ExternalBoundary *Exterior);
+   int SetExternalBoundaryValues(ExternalBoundary *Exterior, TopGridData *MetaData);
+   int SetExternalBoundaryValues(ExternalBoundary *Exterior) 
+   { 
+      return SetExternalBoundaryValues(Exterior, NULL);
+   }
 
 /* Baryons: solve hydro equations in this grid (returns: the fluxes of the
            subgrids in the argument).  Returns SUCCESS or FAIL.
     (for step #16) */
 
    int SolveHydroEquations(int CycleNumber, int NumberOfSubgrids,
-			   fluxes *SubgridFluxes[], int level);
+			   fluxes *SubgridFluxes[], int level, TopGridData *MetaData);
 
 /* Baryons: return pointer to the BoundaryFluxes of this grid */
 
@@ -1177,7 +1182,7 @@ gradient force to gravitational force for one-zone collapse test. */
 
 /* Gravity: Set the external acceleration fields. */
 
-   int ComputeAccelerationFieldExternal();
+   int ComputeAccelerationFieldExternal(TopGridData *MetaData = NULL);
 
 /* Gravity: Set the external acceleration fields from external potential. */
 
@@ -1274,27 +1279,74 @@ public:
 		   GetGridSize();
 	   return gridStrides[dim];
    }
-   void get_ijk(size_t ijk[], size_t index) {
+   void get_ijk(long ijk[], size_t index) {
 	   for(int dim = 0; dim < GridRank; dim++) {
 		   ijk[dim] = index % GridDimension[dim];
 		   index /= GridDimension[dim];
 	   }
    }
-   void get_xyz(FLOAT xyz[], size_t ijk[]) {
+   void get_xyz(FLOAT xyz[], long ijk[]) {
 	   for(int dim = 0; dim < GridRank; dim++) {
-		   size_t i = ijk[dim];
+		   long i = ijk[dim];
 		   xyz[dim] = 0.5 * (CellLeftEdge[dim][i] + CellLeftEdge[dim][i + 1]);
 	   }
    }
    void get_xyz(FLOAT xyz[], size_t index) {
-	   size_t ijk[MAX_DIMENSION];
+	   long ijk[MAX_DIMENSION];
 	   get_ijk(ijk, index);
 	   get_xyz(xyz, ijk);
    }
-   void get_ijk_xyz(size_t ijk[], FLOAT xyz[], size_t index) {
+   void get_ijk_xyz(long ijk[], FLOAT xyz[], size_t index) {
 	   get_ijk(ijk, index);
 	   get_xyz(xyz, ijk);
    }
+   size_t get_ijk_index(long ijk[], FLOAT xyz[])
+   {
+      for(int dim = 0; dim < GridRank; dim++)
+      {
+    	 const size_t N = GridDimension[dim];
+         ijk[dim] = findmaxlte(CellLeftEdge[dim], N + 1, xyz[dim]);
+         if(ijk[dim] == N && CellLeftEdge[dim][N] == xyz[dim])
+           ijk[dim]--;
+      }
+      for(int dim = GridRank; dim<MAX_DIMENSION; dim++)
+         ijk[dim] = sign(xyz[dim]);
+
+      return getCellIndex(ijk);
+   }
+
+	size_t getCellIndex(long ijk[])
+	{
+		switch(GridRank)
+		{
+		case 3:
+			return (ijk[2] * GridDimension[1] +ijk[1] )* GridDimension[0] + ijk[0];
+		case 2:
+			return ijk[1] * GridDimension[0] + ijk[0];
+		case 1:
+			return ijk[0];
+		default:
+			size_t index = ijk[0];
+			for(int dim = 0; dim < GridRank - 1; )
+			{
+				index *= GridDimension[dim];
+				index += ijk[++dim];
+			}
+
+			return index;
+		}
+	}
+   size_t getCellIndex(FLOAT xyz[])
+   {
+	  long ijk_temp[MAX_DIMENSION];
+      return get_ijk_index(ijk_temp, xyz);
+   }
+   void getGhostEdges(FLOAT ledge[], FLOAT redge[]);
+   int intersect(FLOAT ledge[], FLOAT redge[]);
+   int intersectActive(FLOAT ledge[], FLOAT redge[]);
+   int intersect(long lijk[], long rijk[]);
+   int intersectActive(long lijk[], long rijk[]);
+
    void getParticlePosition(FLOAT xyz[], size_t index)
    {
 		for(int dim = 0; dim < GridRank; dim++)
@@ -1866,6 +1918,10 @@ int CreateParticleTypeGrouping(hid_t ptype_dset,
 				  int &CH3IINum,int &C2INum,int &COINum,
 				  int &HCOIINum,int &OHINum,int &H2OINum,
 				  int &O2INum);
+
+  int ClearOuterVelocities(float *pressure, int level, TopGridData *MetaData, char* dumpPrefix, char *dumpSuffix,
+	  char* dumpPreamble);
+  int CollectValuesOnSphere();
 
 /* Zeus Solver. */
 
@@ -2506,6 +2562,7 @@ int zEulerSweep(int j, int NumberOfSubgrids, fluxes *SubgridFluxes[],
  int TurbulenceSimulationInitializeGrid(TURBULENCE_INIT_PARAMETERS_DECL);
  int ComputeRandomForcingFields(int mode);
  int ExtraFunction(char * message); //for debugging.
+ long long ExtraFunction(char * message, long long i, ...); //for debugging.
 
   // The following are private since they should only be called by
   // TurbulenceSimulationInitializeGrid()
@@ -2554,10 +2611,11 @@ int zEulerSweep(int j, int NumberOfSubgrids, fluxes *SubgridFluxes[],
   int SphericalGravityAddMassToShell();
   int SphericalGravityAddMassToShell(size_t* countBins, FLOAT* densBins,
 									 FLOAT** cmBins, FLOAT** kinEBins,
-									 FLOAT** magEBins);
+									 FLOAT** magEBins, LevelHierarchyEntry* myLevelHierarchyEntry);
 
   int InitializeMagneticDipoleVectorPotential(const float dipoleMoment[3], const float dipoleCenter[3],
 	  const long float factor);
+  int InitializeMagneticUniformField(const float constMagneticField[3], const long float factor);
   int InitializeMagneticUniformFieldVectorPotential(const float constMagneticField[3],
 	  const long float factor);
 
@@ -2626,11 +2684,23 @@ int zEulerSweep(int j, int NumberOfSubgrids, fluxes *SubgridFluxes[],
     }
      return TRUE;
   }
+  inline FLOAT GetCellLeftEdge(int dim, int index)
+  {
+	  return CellLeftEdge[dim][index];
+  }
+  inline FLOAT GetCellCenter(int dim, int index)
+  {
+	  return (CellLeftEdge[dim][index] + CellLeftEdge[dim][index+1]) / 2;
+  }
+  inline FLOAT GetCellWidth(int dim, int index)
+  {
+	  return CellWidth[dim][index];
+  }
 
 
 
   // Check to see if a FLOAT point is in the grid.
-  inline int PointInGrid( Eflt32 *point ){
+  inline int PointInGrid(const Eflt32* const point ){
     for( int i = 0; i < GridRank; i++ ){
       if( ((point[i] >= GridLeftEdge[i]) &&
 	  (point[i] < GridRightEdge[i])) == FALSE )
@@ -2638,7 +2708,7 @@ int zEulerSweep(int j, int NumberOfSubgrids, fluxes *SubgridFluxes[],
     }
     return TRUE;
   }
-  inline int PointInGrid( Eflt64 *point ){
+  inline int PointInGrid(const Eflt64* const point ){
     for( int i = 0; i < GridRank; i++ ){
       if( ((point[i] >= GridLeftEdge[i]) &&
 	  (point[i] < GridRightEdge[i])) == FALSE )
@@ -2646,7 +2716,7 @@ int zEulerSweep(int j, int NumberOfSubgrids, fluxes *SubgridFluxes[],
     }
     return TRUE;
   }
-  inline int PointInGrid( Eflt128 *point ){
+  inline int PointInGrid(const Eflt128* const point ){
     for( int i = 0; i < GridRank; i++ ){
       if( ((point[i] >= GridLeftEdge[i]) &&
 	  (point[i] < GridRightEdge[i])) == FALSE )
@@ -2656,7 +2726,7 @@ int zEulerSweep(int j, int NumberOfSubgrids, fluxes *SubgridFluxes[],
   }
 
   // Check to see if a FLOAT point is in the grid (excluding boundaries)
-  inline int PointInGridNB( Eflt32 *point ){
+  inline int PointInGridNB(const Eflt32 *const point ){
     for( int i = 0; i < GridRank; i++ ){
       if( ((point[i] > GridLeftEdge[i]) &&
 	  (point[i] < GridRightEdge[i])) == FALSE )
@@ -2664,7 +2734,7 @@ int zEulerSweep(int j, int NumberOfSubgrids, fluxes *SubgridFluxes[],
     }
     return TRUE;
   }
-  inline int PointInGridNB( Eflt64 *point ){
+  inline int PointInGridNB(const Eflt64 *const point ){
     for( int i = 0; i < GridRank; i++ ){
       if( ((point[i] > GridLeftEdge[i]) &&
 	  (point[i] < GridRightEdge[i])) == FALSE )
@@ -2672,7 +2742,7 @@ int zEulerSweep(int j, int NumberOfSubgrids, fluxes *SubgridFluxes[],
     }
     return TRUE;
   }
-  inline int PointInGridNB( Eflt128 *point ){
+  inline int PointInGridNB(const Eflt128 *const point ){
     for( int i = 0; i < GridRank; i++ ){
       if( ((point[i] > GridLeftEdge[i]) &&
 	  (point[i] < GridRightEdge[i])) == FALSE )
@@ -2680,6 +2750,16 @@ int zEulerSweep(int j, int NumberOfSubgrids, fluxes *SubgridFluxes[],
     }
     return TRUE;
   }
+
+  bool ijkInGrid(int ijk[MAX_DIMENSION]);
+  bool ijkInGrid(int i, int j, int k);
+//  template<typename T> bool ijkInGrid(T ijk[MAX_DIMENSION]);
+//  template<typename T> bool ijkInGrid(T i, T j, T k);
+
+  template<typename T> bool PointInGridActiveNB(T* point);
+  template<typename T> bool PointInGridWithGhost(T* point);
+  bool PointInChildrenActiveNB(FLOAT* point, HierarchyEntry* firstChild);
+  bool PointInChildrenActiveNB(FLOAT* point, LevelHierarchyEntry* myLevelHierarchyEntry);
 
   // Flags a 3D array where the grid overlaps.
   // Very similar to the FastSib stuff. (I think.)
@@ -2850,10 +2930,10 @@ int zEulerSweep(int j, int NumberOfSubgrids, fluxes *SubgridFluxes[],
   void ZeroFluxes(fluxes *SubgridFluxes[], int NumberOfSubgrids);
   int RungeKutta2_1stStep(fluxes *SubgridFluxes[],
                           int NumberOfSubgrids, int level,
-                          ExternalBoundary *Exterior);
+                          ExternalBoundary *Exterior, TopGridData *MetaData);
   int RungeKutta2_2ndStep(fluxes *SubgridFluxes[],
                           int NumberOfSubgrids, int level,
-                          ExternalBoundary *Exterior);
+                          ExternalBoundary *Exterior, TopGridData *MetaData);
   int ReturnHydroRKPointers(float **Prim, bool ReturnMassFractions = true);
   int ReturnOldHydroRKPointers(float **Prim, bool ReturnMassFractions = true);
   int UpdateElectronDensity(void);
@@ -2973,15 +3053,16 @@ int zEulerSweep(int j, int NumberOfSubgrids, fluxes *SubgridFluxes[],
 			    int UseGas, int level);
   int MHDRK2_1stStep(fluxes *SubgridFluxes[],
 		     int NumberOfSubgrids, int level,
-		     ExternalBoundary *Exterior);
+		     ExternalBoundary *Exterior, TopGridData *MetaData);
   int MHDRK2_2ndStep(fluxes *SubgridFluxes[],
 		     int NumberOfSubgrids, int level,
-		     ExternalBoundary *Exterior);
+		     ExternalBoundary *Exterior, TopGridData *MetaData);
   int MHD3D(float **Prim, float **dU, float dt,
 	    fluxes *SubgridFluxes[], int NumberOfSubgrids,
 	    float fluxcoef, int fallback);
   int MHDSourceTerms(float **dU);
-  int UpdateMHDPrim(float **dU, float c1, float c2);
+  int UpdateMHDPrim(float **dU, float c1, float c2, char* failText, TopGridData *MetaData, int level,
+		char* dumpPrefix, char* dumpSuffix, char* dumpPreamble);
   int SaveMHDSubgridFluxes(fluxes *SubgridFluxes[], int NumberOfSubgrids,
 			   float *Flux3D[], int flux, float fluxcoef, float dt);
   int SetFloor();
@@ -3073,7 +3154,7 @@ int zEulerSweep(int j, int NumberOfSubgrids, fluxes *SubgridFluxes[],
                  fluxes *SubgridFluxes[], float *CellWidthTemp[],
                  Elong_int GridGlobalStart[], int GravityOn,
                  int NumberOfColours, int colnum[],
-                 float ** Fluxes);
+                 float ** Fluxes, TopGridData *MetaData);
 
   //Variables
     //CenteredB is used in the Riemann solver (SolveMHDequations) and the timestep (dtMagnetic)
@@ -3137,7 +3218,12 @@ int zEulerSweep(int j, int NumberOfSubgrids, fluxes *SubgridFluxes[],
 		  boundary_type LeftFaceBoundaryCondition[],
 		      boundary_type RightFaceBoundaryCondition[]);
 
-  //Test Problems
+  //SNIa Problems
+  int MHD_SNIA_GetFields(float** densityField, float** totalEnergyField, float** internalEnergyField,
+			float** vxField, float** vyField, float** vzField, float** vFields,
+			float** BxField, float** ByField, float** BzField, float** BFields, float** burnedDensityField,
+			float** phiField,
+			float** gravPotentialField);
   int MHDBlastInitializeGrid(float Density0, float Density1,
                              float Energy0,  float Energy1,
                              float Velocity0[], float Velocity1[],
@@ -3146,16 +3232,36 @@ int zEulerSweep(int j, int NumberOfSubgrids, fluxes *SubgridFluxes[],
                              float Radius, float MHDBlastCenter[], int LongDimension,
                              float PerturbAmplitude, int PerturbMethod, float PerturbWavelength[],
                              int InitStyle);
-  int MHDProfileInitializeGrid(char* profileFileName, char* profileFormat, char* profileType,
-  									char* radiusColumnName, char* densityColumnName, char* temperatureColumnName,
-  									float burningTemperature,
-  									float burnedRadius, float profileAtTime,
-									float dipoleMoment[3], float dipoleCenter[3]);
-  int MHDProfileInitializeGrid2(char* profileFileName, char* profileFormat, char* profileType,
-  									char* radiusColumnName, char* densityColumnName, char* temperatureColumnName,
-  									float burningTemperature,
-  									float burnedRadius, float profileAtTime,
-									float dipoleMoment[3], float dipoleCenter[3]);
+	int MHDClear_B_and_CT_Fields();
+	int MHDProfileInitializeGrid_B_and_CT_Fields(MHDInitialProfile* p, float burningTemperature, float burnedRadius,
+			float dipoleMoment[3], float dipoleCenter[3], bool useVectorPotential, TopGridData *MetaData,
+			TriSphere *triSphere, bool *out_usingdDirectInit, bool *out_usingVectorPotentialInit);
+	int MHDProfileInitializeGrid_CurlAndCenter(MHDInitialProfile* p, float burningTemperature, float burnedRadius,
+			float dipoleMoment[3], float dipoleCenter[3], bool useVectorPotential, TopGridData *MetaData,
+			TriSphere *triSphere, bool usingDirectInit, bool usingVectorPotentialInit);
+	int MHDProfileInitializeGrid0(MHDInitialProfile* p, float burningTemperature, float burnedRadius,
+			float dipoleMoment[3], float dipoleCenter[3], bool useVectorPotential, TopGridData *MetaData,
+			TriSphere *triSphere);
+	int MHDProfileInitializeGrid1(MHDInitialProfile* p, float burningTemperature, float burnedRadius,
+			float dipoleMoment[3], float dipoleCenter[3], bool useVectorPotential, TopGridData *MetaData,
+			TriSphere *triSphere);
+	int MHDProfileInitializeGrid2(MHDInitialProfile* p, float burningTemperature, float burnedRadius,
+			float dipoleMoment[3], float dipoleCenter[3], bool useVectorPotential, TopGridData *MetaData,
+			TriSphere *triSphere);
+	int MHDProfileInitializeGrid_TotalE_GasE(MHDInitialProfile* p, float burningTemperature, float burnedRadius,
+			float dipoleMoment[3], float dipoleCenter[3], bool useVectorPotential, TopGridData *MetaData,
+			TriSphere *triSphere);
+	int MHDProfileInitializeGrid5(MHDInitialProfile* p, float burningTemperature, float burnedRadius,
+			float dipoleMoment[3], float dipoleCenter[3], bool useVectorPotential, TopGridData *MetaData,
+			TriSphere *triSphere);
+//	int MHDProfileInitializeGrid6(MHDInitialProfile* p, float burningTemperature, float burnedRadius,
+//			float dipoleMoment[3], float dipoleCenter[3], bool useVectorPotential, TopGridData *MetaData,
+//			TriSphere *triSphere);
+	int PerturbWithTriSPhere(TriSphere *triSphere, FILE *fptr);
+
+  int MHDSustainInitialBurnedRegionGrid();
+  int WriteRadialProfile(char* filename, int level);
+
   int MHDOrszagTangInitGrid(float Density,float Pressure, float V0, float B0 );
   int MHDLoopInitGrid(float LoopDensity,float Pressure, float Vx, float Vy, float Vz, float B0, FLOAT R0,
                       FLOAT Center[], int CurrentAxis);
@@ -3171,6 +3277,30 @@ int zEulerSweep(int j, int NumberOfSubgrids, fluxes *SubgridFluxes[],
   //List of SuperNova objects that each grid needs to keep track of
 
   List<SuperNova> SuperNovaList;
+
+  // Returns the max i : a[i] <= x or -1 if x < a[0].
+  // a should be strictly ascending.
+  static size_t findmaxlte(FLOAT* a, size_t n, FLOAT x)
+  {
+  	n--;
+  	size_t l = 0, m = n / 2, r = n;
+  	FLOAT& y = x;
+  	while(l < m)
+  	{
+  		if(a[m] <= y)
+  			l = m;
+  		else
+  			r = m;
+
+  		m = (l + r) / 2;
+
+  	}
+  	if(l == 0)
+  		return -(y < a[0]);
+  	if(r == n)
+  		return r - (y < a[n]);
+  	return l;
+  }
 
 
 };

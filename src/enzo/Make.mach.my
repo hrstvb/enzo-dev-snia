@@ -25,34 +25,39 @@ LOCAL_HDF5_INSTALL = $(HDF5_HOME)
 LOCAL_GRACKLE_INSTALL = /usr/local
 
 #-----------------------------------------------------------------------
-# Compiler settings
+# Build executables
 #-----------------------------------------------------------------------
 
 MACH_CPP       = cpp # C preprocessor command
 
-# With MPI
+# Compilers and linker with MPI
 
-MACH_CC_MPI    = mpicc # C compiler when using MPI
-MACH_CXX_MPI   = mpic++ # C++ compiler when using MPI
-MACH_FC_MPI    = gfortran # Fortran 77 compiler when using MPI
-MACH_F90_MPI   = gfortran # Fortran 90 compiler when using MPI
-MACH_LD_MPI    = mpic++ # Linker when using MPI
+MACH_CC_MPI    = mpicc
+MACH_CXX_MPI   = mpic++
+MACH_FC_MPI    = gfortran
+MACH_F90_MPI   = gfortran
+MACH_LD_MPI    = mpic++
 
-# Without MPI
+# Compilers and linker without MPI
 
-MACH_CC_NOMPI  = gcc # C compiler when not using MPI
-MACH_CXX_NOMPI = g++ # C++ compiler when not using MPI
-MACH_FC_NOMPI  = gfortran # Fortran 77 compiler when not using MPI
-MACH_F90_NOMPI = gfortran # Fortran 90 compiler when not using MPI
-MACH_LD_NOMPI  = g++ # Linker when not using MPI
+MACH_CC_NOMPI  = gcc
+MACH_CXX_NOMPI = g++
+MACH_FC_NOMPI  = gfortran
+MACH_F90_NOMPI = gfortran
+MACH_LD_NOMPI  = g++
+
+# Python
+
+MACH_PYTHON2 = python2
 
 #-----------------------------------------------------------------------
 # Machine-dependent defines
 #-----------------------------------------------------------------------
 
-MACH_DEFINES   = -DLINUX -DH5_USE_16_API -DMAKING -w -DAMRH5WR_CC_ERR_NOV2018_BH
+MACH_DEFINES   = -DLINUX -DH5_USE_16_API -DMAKING -w
+
 #-----------------------------------------------------------------------
-# Compiler flag settings
+# Compiler flags
 #-----------------------------------------------------------------------
 #C_CPP_FLAGS
 #CPPXX = -std=c++11
@@ -77,10 +82,10 @@ MACH_OPT_AGGRESSIVE  = -O3
 # Includes
 #-----------------------------------------------------------------------
 
-LOCAL_INCLUDES_MPI    = # MPI includes
-LOCAL_INCLUDES_HDF5   = -I$(LOCAL_HDF5_INSTALL)/include # HDF5 includes
-LOCAL_INCLUDES_HYPRE  = # hypre includes
-LOCAL_INCLUDES_PAPI   = # PAPI includes
+LOCAL_INCLUDES_MPI    =
+LOCAL_INCLUDES_HDF5   = -I$(LOCAL_HDF5_INSTALL)/include
+LOCAL_INCLUDES_HYPRE  =
+LOCAL_INCLUDES_PAPI   =
 LOCAL_INCLUDES_GRACKLE = -I$(LOCAL_GRACKLE_INSTALL)/include
 
 MACH_INCLUDES         = $(LOCAL_INCLUDES_HDF5)
@@ -93,11 +98,11 @@ MACH_INCLUDES_GRACKLE  = $(LOCAL_INCLUDES_GRACKLE)
 # Libraries
 #-----------------------------------------------------------------------
 
-LOCAL_LIBS_MPI    = # MPI libraries
-LOCAL_LIBS_HDF5   = -L$(LOCAL_HDF5_INSTALL)/lib -lhdf5 -lz # HDF5 libraries
-LOCAL_LIBS_HYPRE  = # hypre libraries
-LOCAL_LIBS_PAPI   = # PAPI libraries
-LOCAL_LIBS_MACH   = -lgfortran # Machine-dependent libraries
+LOCAL_LIBS_MPI    =
+LOCAL_LIBS_HDF5   = -L$(LOCAL_HDF5_INSTALL)/lib -lhdf5 -lz
+LOCAL_LIBS_HYPRE  =
+LOCAL_LIBS_PAPI   =
+LOCAL_LIBS_MACH   = -lgfortran
 LOCAL_LIBS_GRACKLE = -L$(LOCAL_GRACKLE_INSTALL)/lib -lgrackle
 
 MACH_LIBS         = $(LOCAL_LIBS_HDF5) $(LOCAL_LIBS_MACH)

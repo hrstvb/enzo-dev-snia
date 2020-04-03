@@ -95,38 +95,53 @@ const char* const getReasonText(const dt_limit_reason reason)
 	}
 }
 
-size_t sprintInfo(char* const s, const DtLimitInfo* const info)
+int snlprintTimeStepLimitInfo(char* const s, const size_t size, size_t* const length, const DtLimitInfo* const info)
 {
-	char* s2 = s;
-	s2 += sprintf(s2, "%s", getReasonText(info->reason));
+	const size_t l0 = *length;
+	int n = snlprintf(s, size, length, "%s", getReasonText(info->reason));
+	if(n<0) return n;
 	if(info->reason == MAX_DT_NO_REASON_INFO)
 	{
 		//no details
 	}
 	else if(info->reason >= 200)
 	{
-		s2 += sprintf(s2, " level=%" ISYM, info->level);
+		n = snlprintf(s, size, length, " level=%" ISYM, info->level);
+		if(n<0) return n;
 		grid* g = info->Grid;
 		if(g)
 		{
-			int n = g->GetGridRank();
-			s2 += sprintfvec(s2, " cell=(", "%" ESYM, ",", ")", info->xyz, n, false, false);
-			s2 += sprintfvec(s2, "[", "%" ISYM, ",", "]", info->ijk, n, false, false);
-			s2 += sprintf(s2, "[%" ISYM "] grid[%" ISYM "]:", info->dtIndex, g->GetGridID());
-			s2 += sprintfvec(s2, "(", "%" ESYM, ",", ")..", g->GetGridLeftEdge(), n, false, false);
-			s2 += sprintfvec(s2, "(", "%" ESYM, ",", ")", g->GetGridRightEdge(), n, false, false);
-			s2 += sprintfvec(s2, "/[", "%" ISYM, "x", "", g->GetGridDimension(), n, false, false);
-			s2 += sprintf(s2, " = %lld]", g->GetGridSize());
+			int d = g->GetGridRank();
+			n = arr_snlprintf(s, size, length, " cell=(", NULL, "%" ESYM, ",", ")", NULL, info->xyz, d, -1, false,
+								false);
+			if(n<0) return n;
+			n = arr_snlprintf(s, size, length, "[", NULL, "%" ISYM, ",", "]", NULL, info->ijk, d, -1, false, false);
+			if(n<0) return n;
+			n = snlprintf(s, size, length, "[%" ISYM "] grid[%" ISYM "]:", info->dtIndex, g->GetGridID());
+			if(n<0) return n;
+			n = arr_snlprintf(s, size, length, "(", NULL, "%" ESYM, ",", ")..", NULL, g->GetGridLeftEdge(), d, -1,
+								false, false);
+			if(n<0) return n;
+			n = arr_snlprintf(s, size, length, "(", NULL, "%" ESYM, ",", ")", NULL, g->GetGridRightEdge(), d, -1, false,
+								false);
+			if(n<0) return n;
+			n = arr_snlprintf(s, size, length, "/[", NULL, "%" ISYM, "x", "", NULL, g->GetGridDimension(), d, -1, false,
+								false);
+			if(n<0) return n;
+			n = snlprintf(s, size, length, " = %lld]", g->GetGridSize());
+			if(n<0) return n;
 		}
 	}
 	else if(info->reason >= 100)
 	{
-		s2 += sprintf(s2, " level=%" ISYM, info->level);
+		n = snlprintf(s, size, length, " level=%" ISYM, info->level);
+		if(n<0) return n;
 	}
 	else
 	{
-		s2 += sprintf(s2, " index=%" ISYM, info->dtIndex);
+		n = snlprintf(s, size, length, " index=%" ISYM, info->dtIndex);
+		if(n<0) return n;
 	}
 
-	return s2 - s;
+	return *length - l0;
 }

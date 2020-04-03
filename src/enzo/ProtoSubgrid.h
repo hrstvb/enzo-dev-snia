@@ -13,13 +13,15 @@
 #ifndef PROTO_SUBGRID_DEFINED__
 #define PROTO_SUBGRID_DEFINED__
 
+class grid;
+
 class ProtoSubgrid
 {
  private:
 
   int GridRank;
   int GridDimension[MAX_DIMENSION];
-  
+
   int Level;
 
   FLOAT GridLeftEdge[MAX_DIMENSION];
@@ -41,13 +43,13 @@ class ProtoSubgrid
   int AcceptableSubgrid();
   int ReturnNthLongestDimension(int n);
   int ComputeSignature(int dim);
-  int FindGridsByZeroSignature(int dim, int &NumberOfNewGrids, 
+  int FindGridsByZeroSignature(int dim, int &NumberOfNewGrids,
 			       int GridEnds[MAX_NUMBER_OF_SUBGRIDS][2]);
-  int CopyToNewSubgrid(int dim, int GridStart, int GridEnd, 
+  int CopyToNewSubgrid(int dim, int GridStart, int GridEnd,
 		       ProtoSubgrid *NewGrid);
-  int ComputeSecondDerivative(int dim, int &ZeroCrossStrength, 
+  int ComputeSecondDerivative(int dim, int &ZeroCrossStrength,
 			      int GridEnds[2][2]);
-  int LargeAxisRatioCheck(int &dim, int GridEnds[MAX_DIMENSION*2][2], 
+  int LargeAxisRatioCheck(int &dim, int GridEnds[MAX_DIMENSION*2][2],
 			  float CriticalRatio);
   int CopyFlaggedZonesFromGrid(grid *Grid);
   int ShrinkToMinimumSize();
@@ -57,7 +59,7 @@ class ProtoSubgrid
   int *ReturnGridDimension() {return GridDimension;};
   FLOAT *ReturnGridLeftEdge() {return GridLeftEdge;};
   FLOAT *ReturnGridRightEdge() {return GridRightEdge;};
-  
+
   /* Return, set level */
 
   void SetLevel(int level) { Level = level; };

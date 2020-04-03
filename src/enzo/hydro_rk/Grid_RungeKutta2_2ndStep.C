@@ -28,9 +28,9 @@ int HydroTimeUpdate_CUDA(float **Prim, int GridDimension[], int GridStartIndex[]
 		          float dtdx, float dt);
 
 
-int grid::RungeKutta2_2ndStep(fluxes *SubgridFluxes[], 
+int grid::RungeKutta2_2ndStep(fluxes *SubgridFluxes[],
 			      int NumberOfSubgrids, int level,
-			      ExternalBoundary *Exterior)
+			      ExternalBoundary *Exterior, TopGridData *MetaData)
   /*
     NumberOfSubgrids: the actual number of subgrids + 1
     SubgridFluxes[NumberOfSubgrids]
@@ -49,8 +49,8 @@ int grid::RungeKutta2_2ndStep(fluxes *SubgridFluxes[],
 
   float *Prim[NEQ_HYDRO+NSpecies+NColor];
   float *OldPrim[NEQ_HYDRO+NSpecies+NColor];
-  this->ReturnHydroRKPointers(Prim, false); 
-  this->ReturnOldHydroRKPointers(OldPrim, false); 
+  this->ReturnHydroRKPointers(Prim, false);
+  this->ReturnOldHydroRKPointers(OldPrim, false);
 
 #ifdef ECUDA
   if (UseCUDA == 1) {
@@ -62,10 +62,10 @@ int grid::RungeKutta2_2ndStep(fluxes *SubgridFluxes[],
       printf("RK2: MHDTimeUpdate_CUDA failed.\n");
       return FAIL;
     }
-    
+
     double time2 = ReturnWallTime();
 
-    for (int field = ivx; field <= ietot; field++) {   
+    for (int field = ivx; field <= ietot; field++) {
       for (int k = GridStartIndex[2]; k <= GridEndIndex[2]; k++) {
 	for (int j = GridStartIndex[1]; j <= GridEndIndex[1]; j++) {
 	  for (int i = GridStartIndex[0]; i <= GridEndIndex[0]; i++) {
@@ -88,7 +88,7 @@ int grid::RungeKutta2_2ndStep(fluxes *SubgridFluxes[],
       }
     }
 
-    for (int field = ivx; field <= ietot; field++) {   
+    for (int field = ivx; field <= ietot; field++) {
       for (int k = GridStartIndex[2]; k <= GridEndIndex[2]; k++) {
 	for (int j = GridStartIndex[1]; j <= GridEndIndex[1]; j++) {
 	  for (int i = GridStartIndex[0]; i <= GridEndIndex[0]; i++) {
@@ -108,7 +108,7 @@ int grid::RungeKutta2_2ndStep(fluxes *SubgridFluxes[],
   int size = 1;
   for (int dim = 0; dim < GridRank; dim++)
     size *= GridDimension[dim];
-  
+
   int activesize = 1;
   for (int dim = 0; dim < GridRank; dim++)
     activesize *= (GridDimension[dim] - 2*NumberOfGhostZones);
@@ -125,7 +125,7 @@ int grid::RungeKutta2_2ndStep(fluxes *SubgridFluxes[],
 
   // compute dU
   int fallback = 0;
-  if (this->Hydro3D(Prim, dU, dtFixed, SubgridFluxes, NumberOfSubgrids, 
+  if (this->Hydro3D(Prim, dU, dtFixed, SubgridFluxes, NumberOfSubgrids,
 		    0.5, fallback) == FAIL) {
     return FAIL;
   }
@@ -163,10 +163,10 @@ int grid::RungeKutta2_2ndStep(fluxes *SubgridFluxes[],
   }
 
   //  PerformanceTimers[1] += ReturnWallTime() - time1;
-  
+
   /* If we're supposed to be outputting on Density, we need to update
   the current maximum value of that Density. */
-  
+
   if(OutputOnDensity == 1){
     int DensNum = FindField(Density, FieldType, NumberOfBaryonFields);
     for(int i = 0; i < size; i++)

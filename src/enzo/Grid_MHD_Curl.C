@@ -45,6 +45,7 @@
 // Method = 0: MagneticField = Curl( ElectricField )
 // Method = 1: MagneticField = MagneticField - Curl( ElectricField )
 // Method = 2: MagneticField = OldMagneticField - Curl(ElectricField)
+// Method = 3: MagneticField = MagneticField + Curl( ElectricField )
 
 //
 // Method 0 is used for, say, generating a MagneticField from a Vector
@@ -119,6 +120,11 @@ int grid::MHD_Curl(int * Start, int * End, int Method){
 	    break;
 	  case 2:
 	    MagneticField[dimX][Bdex] = OldMagneticField[dimX][Bdex]  -
+	      ( (  (OK[dimX][0] == 1 ) ? dTdX[dimY]*(ElectricField[dimZ][E2] - ElectricField[dimZ][E1]) : 0)
+		-( (OK[dimX][1] == 1) ? dTdX[dimZ]*(ElectricField[dimY][E4]- ElectricField[dimY][E3]) : 0 ));
+	    break;
+	  case 3:
+	    MagneticField[dimX][Bdex] +=
 	      ( (  (OK[dimX][0] == 1 ) ? dTdX[dimY]*(ElectricField[dimZ][E2] - ElectricField[dimZ][E1]) : 0)
 		-( (OK[dimX][1] == 1) ? dTdX[dimZ]*(ElectricField[dimY][E4]- ElectricField[dimY][E3]) : 0 ));
 	    break;

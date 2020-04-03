@@ -3,6 +3,7 @@
 
 #include "stddef.h"
 #include "math.h"
+#include "string.h"
 #include "IDE_defs.h"
 #ifdef USE_MPI
 #include "mpi.h"
@@ -31,6 +32,18 @@ using namespace std;
 #define STD_C99 199901L
 #define STD_C11 201112L
 #define STD_C17 201710L
+
+#ifndef M_PI
+# define M_PI		3.14159265358979323846
+#endif
+#ifndef M_PIl
+# define M_PIl		3.141592653589793238462643383279502884L
+#endif
+#ifndef M_GOLDEN_RATIO
+#define M_GOLDEN_RATIO      1.61803398874989
+#endif
+
+#define CELLCENTER(dim, index) (0.5*(CellLeftEdge[dim][index]+CellLeftEdge[dim][index+1]))
 
 /*
  * Type utilities.
@@ -69,8 +82,10 @@ T* arr_newcpy(U* xarr, size_t n);
 template<typename T, typename U>
 T* arr_newcpy(T** a, U* xarr, size_t n);
 
-template<typename T, typename U>
-T* arr_newset(size_t n, U x);
+//template<typename T, typename U>
+//T* arr_newset(size_t n, U x);
+template<typename T>
+T* arr_newset(size_t n, T x);
 
 template<typename T, typename U>
 T* arr_newset(T** a, size_t n, U x);
@@ -131,7 +146,7 @@ size_t findmaxlte(T* a, size_t n, T x);
  */
 
 template<typename T, typename U>
-inline long double distancel(T* x[], U* y[], size_t n);
+inline long double lenl(T* x[], U* y[], size_t n);
 
 template<typename T>
 inline T square(T x);
@@ -139,21 +154,42 @@ inline T square(T x);
 template<typename T>
 inline T cube(T x);
 
-inline long double distancel(long double x1, long double x2, long double y1, long double y2);
+//inline long double lenl(long double x1, long double x2, long double y1, long double y2);
+//
+//inline long double lenl(long double x1, long double x2, long double x3, long double y1, long double y2,
+//								long double y3);
+//
+//inline long double lenl(long double x1, long double x2, long double x3);
+//
+//template<typename T, typename U>
+//long double lenl(T* x, U* y, size_t n);
+//
+//inline long double lensquaredl(long double x1, long double x2, long double y1, long double y2);
+//
+//inline long double lensquaredl(long double x1, long double x2, long double x3, long double y1, long double y2,
+//								long double y3);
+//inline long double lensquuaredl(long double x1, long double x2, long double x3);
+//
+//template<typename T, typename U>
+//long double lensquaredl(T* x, U* y, size_t n);
+//
+//template<typename T, typename U>
+//long double lensquaredl(T* x, size_t n);
+//
+template<typename T, typename U>
+int normalizel(T* x, size_t n);
 
-inline long double distancel(long double x1, long double x2, long double x3, long double y1, long double y2,
-								long double y3);
+template<typename T>
+inline int sign(T x)
+{
+	return (x > 0) - (x < 0);
+}
 
 template<typename T, typename U>
-long double distancel(T* x, U* y, size_t n);
-
-inline long double distsqaredl(long double x1, long double x2, long double y1, long double y2);
-
-inline long double distsqaredl(long double x1, long double x2, long double x3, long double y1, long double y2,
-								long double y3);
-
-template<typename T, typename U>
-long double distsqaredl(T* x, U* y, size_t n);
+inline int cmp(T x, U y)
+{
+	return (x > y) - (x < y);
+}
 
 // Returns x[0] + ... +, x[n-1]
 template<typename T>
@@ -190,11 +226,6 @@ T* arr_axpy(T* dest, const U* x, const size_t n, const V a);
 //no overlapping
 template<typename T, typename U, typename V, typename W>
 T* arr_axpby(T* dest, U* x, const size_t n, const V a, const W b);
-
-template<typename T>
-size_t sprintfvec(char* const s, const char* const preffix, const char* const singleElementFormat,
-	const char* const separator, const char* const suffix, const T* const vec, const size_t n,
-	const bool printWithIndices, const bool indexPrintsBeforeElement);
 
 /*
  * Segmented array routines
@@ -252,6 +283,8 @@ inline MPI_Datatype getMPI_Datatype(T a);
 template<typename T>
 inline MPI_Datatype getMPI_Datatype(T* a);
 #endif /* USE_MPI */
+
+int snlprintf(char* const s, const size_t size, size_t* const length, const char* const format, ...);
 
 #include "myenzoutils.T"
 

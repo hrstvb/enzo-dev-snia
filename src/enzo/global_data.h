@@ -21,7 +21,7 @@
 #define GLOBAL_DATA_DEFINED__
 
 #include <stdio.h>
-
+#include "mylimiters.h"
 #include "macros_and_parameters.h"
 #include "typedefs.h"
 
@@ -492,6 +492,8 @@ EXTERN int OutputGriddedStarParticle;
 
 EXTERN float ZEUSLinearArtificialViscosity;
 EXTERN float ZEUSQuadraticArtificialViscosity;
+EXTERN int ZEUS_IncludeViscosityTerm;
+EXTERN int ZEUS_IncludeDivergenceTerm;
 
 /* Parameters for MinimumPressureSupport. */
 
@@ -502,6 +504,11 @@ EXTERN float MinimumPressureSupportParameter;
 EXTERN FLOAT StaticRefineRegionLeftEdge[MAX_STATIC_REGIONS][MAX_DIMENSION];
 EXTERN FLOAT StaticRefineRegionRightEdge[MAX_STATIC_REGIONS][MAX_DIMENSION];
 EXTERN int   StaticRefineRegionLevel[MAX_STATIC_REGIONS];
+EXTERN FLOAT StaticRefineShellCenter[MAX_STATIC_REGIONS][MAX_DIMENSION];
+EXTERN FLOAT StaticRefineShellInnerRadius[MAX_STATIC_REGIONS];
+EXTERN FLOAT StaticRefineShellOuterRadius[MAX_STATIC_REGIONS];
+EXTERN int   StaticRefineShellLevel[MAX_STATIC_REGIONS];
+EXTERN int   StaticRefineShellWithBuffer[MAX_STATIC_REGIONS];
 
 /* Evolving refinement region. */
 EXTERN char *RefineRegionFile;
@@ -1115,9 +1122,12 @@ EXTERN int UseBurning;                             //[BH]
 EXTERN int SkipBurningOperator;			   //[BH] ..., only define the fields
 EXTERN int AllowUnburning;			   //[BH] dQ/dt=Q*fd/dt, when fd/dt>0 else =0
 EXTERN int CallSetBoundaryConditionsAfterBurning;  //[BH]
+EXTERN int BurningDiffusionMethod;                 //[BH]
 EXTERN float BurningDiffusionRate;                 //[BH]
 EXTERN float BurningDiffusionRateReduced;          //[BH]
 EXTERN float BurningDiffusionCourantSafetyFactor;  //[BH]
+EXTERN float BurningMinFractionForDiffusion;       //[BH]
+EXTERN float BurningNonDistributedMinDensity;      //[BH]
 EXTERN float BurningReactionRate;                  //[BH]
 EXTERN float BurningReactionRateReduced;           //[BH]
 EXTERN float BurningReactionBurnedFractionLimitLo; //[BH]
@@ -1129,8 +1139,25 @@ EXTERN float InternalEnergy_A;                     //[BH]
 EXTERN float InternalEnergy_B;                     //[BH]
 EXTERN float BurningEnergyRelativeGrowthLimit;     //[BH]
 EXTERN float InternalEnergyRelativeGrowthLimit;    //[BH]
-EXTERN float TotalEnergyRelativeGrowthLimit;		   //[BH]
-EXTERN float BurnedFractionGrowthLimit;		   //[BH]
+EXTERN float TotalEnergyRelativeGrowthLimit;       //[BH]
+EXTERN float BurnedFractionGrowthLimit;            //[BH]
+
+EXTERN int PerturbationOnRestart;                  //[BH]
+EXTERN float InitialBurnedRadius;                  //[BH]
+EXTERN float PerturbationAmplitude;                //[BH]
+EXTERN float PerturbationWavelength;               //[BH]
+EXTERN int PerturbationMethod;                     //[BH]
+EXTERN float PerturbationBottomSize;               //[BH]
+EXTERN float PerturbationTopSize;                  //[BH]
+EXTERN float PerturbationBottomDensity;            //[BH]
+EXTERN float PerturbationTopDensity;               //[BH]
+EXTERN float PerturbationVelocity;                 //[BH]
+EXTERN int InitialBurnedRegionSustain;				//[BH]
+EXTERN float InitRadialPressureFromCentral;			//[BH]
+EXTERN int InitBWithVectorPotential;				//[BH]
+EXTERN int RefineOnStartup;                         //[BH]
+struct TriSphere;
+EXTERN TriSphere *triSphere;                               //[BH]
 
 /* For the galaxy simulation boundary method */
 EXTERN int GalaxySimulationRPSWind;
@@ -1161,6 +1188,8 @@ EXTERN float SupernovaSeedFieldEnergy;
  * Spherical gravity
  */
 EXTERN int UseSphericalGravity;
+EXTERN FLOAT SphericalGravityInnerCutoffRaduis; // Zero gravity inside this radius.
+EXTERN FLOAT SphericalGravityOuterCutoffRaduis; // Zero gravity outside this radius.
 EXTERN size_t SphericalGravityActualNumberOfBins; // Actual number of bins incl. the central and the outer.
 EXTERN FLOAT *SphericalGravityBinCenters;
 EXTERN FLOAT *SphericalGravityBinLeftEdges;
@@ -1197,50 +1226,45 @@ EXTERN int SphericalGravityWritePotentialSwitch;
 
 EXTERN float* SphericalGravityBinAccels;
 EXTERN float* SphericalGravityBinAccelSlopes;
-EXTERN int SphericalGravityInterpAccelOrder; // const, linear interp., etc.
+EXTERN int SphericalGravityInterpAccelMethod; // const, linear interp., etc.
 
 /*
  * Spherical gravity, multilevel
- * Parameters have the SphericalGravity preffix
+ * Parameters have the SphericalGravity prefix
  * Other variables -- SpherGrav
  */
 //New parameter(s)
 EXTERN int SphericalGravityBinsPerCell;
 EXTERN int SphericalGravityDebug;
-
-//
-//EXTERN int UseSpherGrav;
-//EXTERN size_t* SpherGravActualNumberOfBins; // Actual number of bins incl. the central and the outer.
-//EXTERN FLOAT **SpherGravBinLeftEdges;
-//EXTERN FLOAT **SpherGravBinRightEdges;
-//EXTERN FLOAT  *SpherGravBinSize; // >0, if uniform betwen the inner and outer radius.
-//EXTERN int    *SpherGravHasCentralBin;
-//EXTERN FLOAT  *SpherGravInnerRadius;
-//EXTERN FLOAT  *SpherGravOuterRadius;
-//
-//EXTERN FLOAT  **SpherGravInteriorMasses;
-//EXTERN size_t **SpherGravShellCellCounts; //probably should be a long long int.
-//
-//EXTERN FLOAT **SpherGravShellCentersOfMass[MAX_DIMENSION]; // By r and dim
-//EXTERN FLOAT  *SpherGravCenterOfMass[MAX_DIMENSION]; // By dim
-//
-//EXTERN FLOAT **SpherGravShellKineticEnergies[MAX_DIMENSION]; // By r and dim
-//EXTERN FLOAT **SpherGravShellKineticEnergy; // By r
-//EXTERN FLOAT  *SpherGravKineticEnergies[MAX_DIMENSION]; // By dim
-//EXTERN FLOAT  *SpherGravKineticEnergy; // Total
-//
-//EXTERN FLOAT **SpherGravShellMagneticEnergies[MAX_DIMENSION]; // By r and dim
-//EXTERN FLOAT **SpherGravShellMagneticEnergy; // By r
-//EXTERN FLOAT  *SpherGravMagneticEnergies[MAX_DIMENSION]; // By dim
-//EXTERN FLOAT  *SpherGravMagneticEnergy; // Total
-//
-//EXTERN FLOAT **SpherGravShellMasses; // double float for adding too many cells with small mass
-//EXTERN FLOAT **SpherGravShellVolumes;
-//EXTERN int    *SpherGravUniformBins;
-//
-//EXTERN float **SpherGravBinAccels;
-//EXTERN float **SpherGravBinAccelSlopes;
+EXTERN FLOAT TopBurnedRadiusEstimate ;
 
 EXTERN float BA[3];
+
+EXTERN int MHD_LI_GRAVITY_AFTER_PLMPRED;
+EXTERN MYLIM_FLOAT MyLimiterX12Y12[10][4];
+EXTERN FLOAT OuterVelocitiesDistFromEdge;
+EXTERN FLOAT OuterVelocitiesSphereRadius;
+EXTERN FLOAT OuterVelocitiesSphereRadius2;
+EXTERN int   OuterVelocitiesClearInward;
+EXTERN int   OuterVelocitiesClearOutward;
+EXTERN int   OuterVelocitiesClearTangential;
+EXTERN int   OuterVelocitiesClearInGrid_SolveMHD_Li[10];
+EXTERN int   OuterVelocitiesClearInSetBoundaryCondition[10];
+EXTERN int   OuterVelocitiesClearInZeusSource[10];
+EXTERN int   OuterVelocitiesClearInRKStep[10];
+EXTERN int   OuterVelocitiesClearAtZeusSourceBegin;
+EXTERN int   OuterVelocitiesClearAtZeusSourceBeforeDiv;
+EXTERN int   OuterVelocitiesClearAtZeusSourceEnd;
+EXTERN int   OuterVelocitiesClearAtRKStep1Begin;
+EXTERN int   OuterVelocitiesClearAtRKStep1End;
+EXTERN int   OuterVelocitiesClearAtRKStep2Begin;
+EXTERN int   OuterVelocitiesClearAtRKStep2End;
+EXTERN float DensityProfileMaxRadius ;
+EXTERN float DensityProfileMinDensity;
+
+EXTERN float TimeStepIgnoreCubeHalfSize;
+EXTERN float TimeStepIgnoreSphereRadius;
+
+EXTERN double LastCycleWTime;
 
 #endif

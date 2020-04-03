@@ -13,18 +13,18 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <math.h>
-
+#include "../DebugMacros.h"
 #include "macros_and_parameters.h"
 #include "typedefs.h"
 #include "global_data.h"
 #include "../hydro_rk/ReconstructionRoutines.h"
-#include "EOS.h"  
+#include "EOS.h"
 
-int hll_mhd(float **FluxLine, float **priml, float **primr, float **prim, int ActiveSize)
+int hll_mhd(float **FluxLine, float **priml, float **primr, float **prim, int ActiveSize, FLOAT cellWidth, int debug)
 {
   float Ul[NEQ_MHD], Ur[NEQ_MHD], Fl[NEQ_MHD], Fr[NEQ_MHD];
   float etot, eint, h, dpdrho, dpde, W, W2, ap, am, cs, cs2, ca2, ca, cf, cf2, v_yz, v_yz2, v2,
-    vx, vx2, vy, vz, rho, p, lm_l, lp_l, lm_r, lp_r, v, Bx, By, Bz, Phi, B2, Bv; 
+    vx, vx2, vy, vz, rho, p, lm_l, lp_l, lm_r, lp_r, v, Bx, By, Bz, Phi, B2, Bv;
   float Zero = 0.0;
   float temp1;
 
@@ -39,7 +39,7 @@ int hll_mhd(float **FluxLine, float **priml, float **primr, float **prim, int Ac
     By    = priml[6][n];
     Bz    = priml[7][n];
     Phi   = priml[8][n];
-    
+
     B2 = Bx*Bx + By*By + Bz*Bz;
     Bv = Bx*vx + By*vy + Bz*vz;
 
@@ -151,13 +151,75 @@ int hll_mhd(float **FluxLine, float **priml, float **primr, float **prim, int Ac
     am = Max(Zero, -lm_l, -lm_r);
 
     for (int field = 0; field < NEQ_MHD-1; field++) {
-      FluxLine[field][n] = 
+      FluxLine[field][n] =
 	(ap * Fl[field] + am * Fr[field] - ap * am * (Ur[field] - Ul[field])) / (ap + am);
     }
 
     FluxLine[iBx][n] += Ul[iPhi] + 0.5*(Ur[iPhi]-Ul[iPhi]) - 0.5*C_h*(Ur[iBx]-Ul[iBx]);
     FluxLine[iPhi][n] = Ul[iBx] + 0.5*(Ur[iBx]-Ul[iBx]) - 0.5/C_h*(Ur[iPhi]-Ul[iPhi]);
     FluxLine[iPhi][n] *= (C_h*C_h);
+
+		if(UseBurning) //[BH]
+		{
+			int field = NEQ_MHD;
+			float ul = priml[field][n];
+			float ur = primr[field][n];
+			float flux = 0;
+			float vl, vr, fl, fr;
+			float diffRateL, diffRateR;
+
+			switch(BurningDiffusionMethod)
+			{
+			case 3:
+				//float diffusionRate = BurningDiffusionRateReduced * CellWidth[0][0];
+				//float reactionRate = BurningReactionRateReduced / CellWidth[0][0];
+				//float minRhoForBurning = BurningNonDistributedMinDensity;
+				//double minFractionForDiffusion = BurningMinFractionForDiffusion;
+				//if(minFractionForDiffusion > 0)
+				//{
+				//	minFractionForDiffusion *= BurningDiffusionRateReduced / CellWidth[0][0];
+				//	if(minFractionForDiffusion > 0)
+				//		minFractionForDiffusion = powl(minFractionForDiffusion,
+				//										max(NumberOfBufferZones, NumberOfGhostZones));
+				//}
+
+				diffRateL = BurningDiffusionRateReduced * cellWidth;
+				diffRateR = diffRateL;
+
+				break;
+
+			default:
+				vl = priml[2][n];
+				vr = primr[2][n];
+				fl = ul * vl;
+				fr = ur * vr;
+				flux = (ap * fl + am * fr - ap * am * (ur - ul)) / (ap + am);
+
+				//Below is equivalent to how 'colors' and 'species' fluxes are computed originally
+				//at the end of HLL_PLM_MHD.  See also original plm_species and plm_colors.
+				//float rhoFlux = FluxLine[0][n];
+				//float rhoL = priml[0][n];
+				//float rhoR = primr[0][n];
+				//flux = rhoFlux * (rhoFlux >= 0) ? (ul / rhoL) : (ur / rhoR);
+			}
+			FluxLine[field][n] = flux;
+
+			if(debug)
+			{
+				TRACEF(">>>  %lld[%lld]:  %e = %e*%e + %e*%e - %e*%e*(%e - %e), /%e   ; %e  %e", field, n, flux, ap, fl, am,
+						fr, ap, am, ur, ul, ap + am, vl, vr);
+
+				field = 0;
+				ul = priml[field][n];
+				ur = primr[field][n];
+				vl = priml[2][n];
+				vr = primr[2][n];
+				fl = ul * vl;
+				fr = ur * vr;
+				flux = (ap * fl + am * fr - 0 * ap * am * (ur - ul)) / (ap + am);
+				TRACEF("     %lld[%lld]:  %e = %e*%e + %e*%e - %e*%e*(%e - %e), /%e   ; %e  %e\n", field, n, flux, ap, fl,
+						am, fr, ap, am, ur, ul, ap + am, vl, vr);
+			}
 
     /*if (fabs(FluxLine[iEtot][n]) > 1e5) {
       printf("F[iS1] NaN at n=%"ISYM": fl[iS1]=%lf, fr[iS1]=%lf, Ul[iS1]=%lf, Ur[iS1]=%lf, ap=%lf, am = %lf\n",
@@ -171,7 +233,13 @@ int hll_mhd(float **FluxLine, float **priml, float **primr, float **prim, int Ac
 	     primr[0][n], primr[1][n], primr[2][n], primr[3][n], primr[4][n]);
       return FAIL;
       }*/
+		}
   }
 
   return SUCCESS;
+}
+
+int hll_mhd(float **FluxLine, float **priml, float **primr, float **prim, int ActiveSize)
+{
+	return hll_mhd(FluxLine, priml, primr, prim, ActiveSize, 1.0, 0);
 }

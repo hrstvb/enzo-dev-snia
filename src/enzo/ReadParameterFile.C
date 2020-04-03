@@ -633,6 +633,8 @@ int ReadParameterFile(FILE *fptr, TopGridData &MetaData, float *Initialdt)
 		  &ZEUSQuadraticArtificialViscosity);
     ret += sscanf(line, "ZEUSLinearArtificialViscosity = %"FSYM,
 		  &ZEUSLinearArtificialViscosity);
+    ret += sscanf(line, "ZEUS_IncludeViscosityTerm  = %"ISYM, &ZEUS_IncludeViscosityTerm );
+    ret += sscanf(line, "ZEUS_IncludeDivergenceTerm = %"ISYM, &ZEUS_IncludeDivergenceTerm);
 
     ret += sscanf(line, "UseMinimumPressureSupport = %"ISYM,
 		  &UseMinimumPressureSupport);
@@ -700,6 +702,34 @@ int ReadParameterFile(FILE *fptr, TopGridData &MetaData, float *Initialdt)
 		    &dim, StaticRefineRegionRightEdge[dim],
 		    StaticRefineRegionRightEdge[dim]+1,
 		    StaticRefineRegionRightEdge[dim]+2);
+
+    if (sscanf(line, "StaticRefineShellCenter[%" ISYM "] = ", &dim) == 1)
+      ret += sscanf(line,
+		    "StaticRefineShellCenter[%" ISYM "] = %" FSYM " %" FSYM " %" FSYM,
+		    &dim,
+			StaticRefineShellCenter[dim],
+		    StaticRefineShellCenter[dim]+1,
+		    StaticRefineShellCenter[dim]+2);
+    if (sscanf(line, "StaticRefineShellInnerRadius[%" ISYM "] = %" FSYM, &dim, &float_dummy) == 2)
+    {
+    	ret ++;
+    	StaticRefineShellInnerRadius[dim] = float_dummy;
+    }
+    if (sscanf(line, "StaticRefineShellOuterRadius[%" ISYM "] = %" FSYM, &dim, &float_dummy) == 2)
+    {
+    	ret ++;
+    	StaticRefineShellOuterRadius[dim] = float_dummy;
+    }
+    if (sscanf(line, "StaticRefineShellLevel[%" ISYM "] = %" ISYM, &dim, &int_dummy) == 2)
+    {
+    	ret ++;
+    	StaticRefineShellLevel[dim] = float_dummy;
+    }
+    if (sscanf(line, "StaticRefineShellWithBuffer[%" ISYM "] = %" ISYM, &dim, &int_dummy) == 2)
+    {
+    	ret ++;
+    	StaticRefineShellWithBuffer[dim] = int_dummy;
+    }
 
     ret += sscanf(line, "ParallelRootGridIO = %"ISYM, &ParallelRootGridIO);
     ret += sscanf(line, "ParallelRootGridIO_Force = %"ISYM, &ParallelRootGridIO_Force ); // [BH] In the beginning of EvolveHierarchy: ParallelRootGridIO = ParallelRootGridIO_Force
@@ -1285,9 +1315,12 @@ int ReadParameterFile(FILE *fptr, TopGridData &MetaData, float *Initialdt)
     ret += sscanf(line, "SkipBurningOperator                   = %"ISYM, &SkipBurningOperator                  ); //[BH]
     ret += sscanf(line, "AllowUnburning                        = %"ISYM, &AllowUnburning                       ); //[BH]
     ret += sscanf(line, "CallSetBoundaryConditionsAfterBurning = %"ISYM, &CallSetBoundaryConditionsAfterBurning); //[BH]
+    ret += sscanf(line, "BurningDiffusionMethod                = %"ISYM, &BurningDiffusionMethod               ); //[BH]
     ret += sscanf(line, "BurningDiffusionRate                  = %"FSYM, &BurningDiffusionRate                 ); //[BH]
     ret += sscanf(line, "BurningDiffusionRateReduced           = %"FSYM, &BurningDiffusionRateReduced          ); //[BH]
     ret += sscanf(line, "BurningDiffusionCourantSafetyFactor   = %"FSYM, &BurningDiffusionCourantSafetyFactor  ); //[BH]
+    ret += sscanf(line, "BurningMinFractionForDiffusion        = %"FSYM, &BurningMinFractionForDiffusion       ); //[BH]
+    ret += sscanf(line, "BurningNonDistributedMinDensity       = %"FSYM, &BurningNonDistributedMinDensity      ); //[BH]
     ret += sscanf(line, "BurningReactionRate                   = %"FSYM, &BurningReactionRate                  ); //[BH]
     ret += sscanf(line, "BurningReactionRateReduced            = %"FSYM, &BurningReactionRateReduced           ); //[BH]
     ret += sscanf(line, "BurningReactionBurnedFractionLimitLo  = %"FSYM, &BurningReactionBurnedFractionLimitLo ); //[BH]
@@ -1297,8 +1330,25 @@ int ReadParameterFile(FILE *fptr, TopGridData &MetaData, float *Initialdt)
     ret += sscanf(line, "InternalEnergyRelativeGrowthLimit     = %"FSYM, &InternalEnergyRelativeGrowthLimit    ); //[BH]
     ret += sscanf(line, "TotalEnergyRelativeGrowthLimit        = %"FSYM, &TotalEnergyRelativeGrowthLimit       ); //[BH]
     ret += sscanf(line, "BurnedFractionGrowthLimit             = %"FSYM, &BurnedFractionGrowthLimit            ); //[BH]
+    ret += sscanf(line, "InitialBurnedRadius                   = %"FSYM, &InitialBurnedRadius                  ); //[BH]
+    ret += sscanf(line, "PerturbationOnRestart                 = %"ISYM, &PerturbationOnRestart                );
+    ret += sscanf(line, "PerturbationAmplitude                 = %"FSYM, &PerturbationAmplitude            ); //[BH]
+    ret += sscanf(line, "PerturbationWavelength                = %"FSYM, &PerturbationWavelength           ); //[BH]
+    ret += sscanf(line, "PerturbationMethod                    = %"ISYM, &PerturbationMethod                   ); //[BH]
+    ret += sscanf(line, "PerturbationBottomSize                = %"FSYM, &PerturbationBottomSize               ); //[BH]
+    ret += sscanf(line, "PerturbationTopSize                   = %"FSYM, &PerturbationTopSize                  ); //[BH]
+    ret += sscanf(line, "PerturbationBottomDensity             = %"FSYM, &PerturbationBottomDensity            ); //[BH]
+    ret += sscanf(line, "PerturbationTopDensity                = %"FSYM, &PerturbationTopDensity               ); //[BH]
+    ret += sscanf(line, "PerturbationVelocity                  = %"FSYM, &PerturbationVelocity                 ); //[BH]
+    ret += sscanf(line, "InitialBurnedRegionSustain            = %"ISYM, &InitialBurnedRegionSustain           ); //[BH]
+    ret += sscanf(line, "InitRadialPressureFromCentral         = %"FSYM, &InitRadialPressureFromCentral        ); //[BH]
+    ret += sscanf(line, "InitBWithVectorPotential              = %"ISYM, &InitBWithVectorPotential             ); //[BH]
+    ret += sscanf(line, "RefineOnStartup                       = %"ISYM, &RefineOnStartup                      );
+
 
     ret += sscanf(line, "UseSphericalGravity = %"ISYM, &UseSphericalGravity);
+    ret += sscanf(line, "SphericalGravityInnerCutoffRaduis = %"FSYM, &SphericalGravityInnerCutoffRaduis);
+    ret += sscanf(line, "SphericalGravityOuterCutoffRaduis = %"FSYM, &SphericalGravityOuterCutoffRaduis);
     ret += sscanf(line, "SphericalGravityBinSize = %"PSYM, &SphericalGravityBinSize);
     ret += sscanf(line, "SphericalGravityCenter = %"PSYM" %"PSYM" %"PSYM,
 				  SphericalGravityCenter, SphericalGravityCenter+1, SphericalGravityCenter+2);
@@ -1311,8 +1361,77 @@ int ReadParameterFile(FILE *fptr, TopGridData &MetaData, float *Initialdt)
     ret += sscanf(line, "SphericalGravityUniformBins = %"ISYM, &SphericalGravityUniformBins);
     ret += sscanf(line, "SphericalGravityWritePotentialSwitch = %"ISYM, &SphericalGravityWritePotentialSwitch);
     ret += sscanf(line, "SphericalGravityBinsPerCell = %"FSYM, &SphericalGravityBinsPerCell);
+    ret += sscanf(line, "SphericalGravityInterpAccelMethod = %"ISYM, &SphericalGravityInterpAccelMethod);
     ret += sscanf(line, "SphericalGravityDebug = %"ISYM, &SphericalGravityDebug);
+    ret += sscanf(line, "MHD_LI_GRAVITY_AFTER_PLMPRED = %"ISYM, &MHD_LI_GRAVITY_AFTER_PLMPRED);
+    ret += sscanf(line, "DensityProfileMaxRadius                   =%"FSYM, &DensityProfileMaxRadius                  );
+    ret += sscanf(line, "DensityProfileMinDensity                  =%"FSYM, &DensityProfileMinDensity                 );
+    ret += sscanf(line, "OuterVelocitiesDistFromEdge               =%"FSYM, &OuterVelocitiesDistFromEdge              );
+    ret += sscanf(line, "OuterVelocitiesSphereRadius               =%"FSYM, &OuterVelocitiesSphereRadius              );
+    ret += sscanf(line, "OuterVelocitiesSphereRadius2              =%"FSYM, &OuterVelocitiesSphereRadius2             );
+    ret += sscanf(line, "OuterVelocitiesClearInward                =%"ISYM, &OuterVelocitiesClearInward               );
+    ret += sscanf(line, "OuterVelocitiesClearOutward               =%"ISYM, &OuterVelocitiesClearOutward              );
+    ret += sscanf(line, "OuterVelocitiesClearTangential            =%"ISYM, &OuterVelocitiesClearTangential           );
+#define ISYM10 "%" ISYM " %" ISYM " %" ISYM " %" ISYM " %" ISYM " %" ISYM " %" ISYM " %" ISYM " %" ISYM " %" ISYM
+    ret += sscanf(line, "OuterVelocitiesClearInGrid_SolveMHD_Li     = " ISYM10,
+				  OuterVelocitiesClearInGrid_SolveMHD_Li+0,
+				  OuterVelocitiesClearInGrid_SolveMHD_Li+1,
+				  OuterVelocitiesClearInGrid_SolveMHD_Li+2,
+				  OuterVelocitiesClearInGrid_SolveMHD_Li+3,
+				  OuterVelocitiesClearInGrid_SolveMHD_Li+4,
+				  OuterVelocitiesClearInGrid_SolveMHD_Li+5,
+				  OuterVelocitiesClearInGrid_SolveMHD_Li+6,
+				  OuterVelocitiesClearInGrid_SolveMHD_Li+7,
+				  OuterVelocitiesClearInGrid_SolveMHD_Li+8,
+				  OuterVelocitiesClearInGrid_SolveMHD_Li+9
+				  );
+    ret += sscanf(line, "OuterVelocitiesClearInSetBoundaryCondition = " ISYM10,
+				  OuterVelocitiesClearInSetBoundaryCondition+0,
+				  OuterVelocitiesClearInSetBoundaryCondition+1,
+				  OuterVelocitiesClearInSetBoundaryCondition+2,
+				  OuterVelocitiesClearInSetBoundaryCondition+3,
+				  OuterVelocitiesClearInSetBoundaryCondition+4,
+				  OuterVelocitiesClearInSetBoundaryCondition+5,
+				  OuterVelocitiesClearInSetBoundaryCondition+6,
+				  OuterVelocitiesClearInSetBoundaryCondition+7,
+				  OuterVelocitiesClearInSetBoundaryCondition+8,
+				  OuterVelocitiesClearInSetBoundaryCondition+9
+				  );
+    ret += sscanf(line, "OuterVelocitiesClearInZeusSource           = " ISYM10,
+				  OuterVelocitiesClearInZeusSource+0,
+				  OuterVelocitiesClearInZeusSource+1,
+				  OuterVelocitiesClearInZeusSource+2,
+				  OuterVelocitiesClearInZeusSource+3,
+				  OuterVelocitiesClearInZeusSource+4,
+				  OuterVelocitiesClearInZeusSource+5,
+				  OuterVelocitiesClearInZeusSource+6,
+				  OuterVelocitiesClearInZeusSource+7,
+				  OuterVelocitiesClearInZeusSource+8,
+				  OuterVelocitiesClearInZeusSource+9
+				  );
+    ret += sscanf(line, "OuterVelocitiesClearInRKStep               = " ISYM10,
+				  OuterVelocitiesClearInRKStep+0,
+				  OuterVelocitiesClearInRKStep+1,
+				  OuterVelocitiesClearInRKStep+2,
+				  OuterVelocitiesClearInRKStep+3,
+				  OuterVelocitiesClearInRKStep+4,
+				  OuterVelocitiesClearInRKStep+5,
+				  OuterVelocitiesClearInRKStep+6,
+				  OuterVelocitiesClearInRKStep+7,
+				  OuterVelocitiesClearInRKStep+8,
+				  OuterVelocitiesClearInRKStep+9
+				  );
+#undef ISYM10
+    ret += sscanf(line, "OuterVelocitiesClearAtZeusSourceBegin     =%"ISYM, &OuterVelocitiesClearAtZeusSourceBegin    );
+    ret += sscanf(line, "OuterVelocitiesClearAtZeusSourceBeforeDiv =%"ISYM, &OuterVelocitiesClearAtZeusSourceBeforeDiv);
+    ret += sscanf(line, "OuterVelocitiesClearAtZeusSourceEnd       =%"ISYM, &OuterVelocitiesClearAtZeusSourceEnd      );
+    ret += sscanf(line, "OuterVelocitiesClearAtRKStep1Begin        =%"ISYM, &OuterVelocitiesClearAtRKStep1Begin       );
+    ret += sscanf(line, "OuterVelocitiesClearAtRKStep1End          =%"ISYM, &OuterVelocitiesClearAtRKStep1End         );
+    ret += sscanf(line, "OuterVelocitiesClearAtRKStep2Begin        =%"ISYM, &OuterVelocitiesClearAtRKStep2Begin       );
+    ret += sscanf(line, "OuterVelocitiesClearAtRKStep2End          =%"ISYM, &OuterVelocitiesClearAtRKStep2End         );
 
+    ret += sscanf(line, "TimeStepIgnoreCubeHalfSize                =%"FSYM, &TimeStepIgnoreCubeHalfSize               );
+    ret += sscanf(line, "TimeStepIgnoreSphereRadius                =%"FSYM, &TimeStepIgnoreSphereRadius               );
 
     /* If the dummy char space was used, then make another. */
     if (*dummy != 0) {
@@ -1391,7 +1510,6 @@ int ReadParameterFile(FILE *fptr, TopGridData &MetaData, float *Initialdt)
     if (ret == 0 && strstr(line, "=") != NULL && line[0] != '#')
       if (MyProcessorNumber == ROOT_PROCESSOR)
 	fprintf(stderr, "warning: the following parameter line was not interpreted:\n%s", line);
-
   }
 
   // HierarchyFile IO sanity check

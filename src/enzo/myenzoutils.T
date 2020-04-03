@@ -2,10 +2,10 @@
 #define MY_ENZO_UTIILS_TPP
 #include "stddef.h"
 #include "math.h"
-#include "string.h"
 #include <stdexcept>
 #include "IDE_defs.h"
 #include "myenzoutils.h"
+#include "DebugMacros.h"
 #ifdef USE_MPI
 #include "mpi.h"
 #endif /* USE_MPI */
@@ -93,32 +93,59 @@ T* arr_newcpy(T** a, U* xarr, size_t n)
 	return *a = arr_cpy(new T[n], n, xarr);
 }
 
-template<typename T, typename U>
-T* arr_newset(size_t n, U x)
+//template<typename T, typename U>
+//T* arr_newset(size_t n, U x)
+//{
+//	return arr_set(new T[n], n, (T) x);
+//}
+//
+template<typename T>
+T* arr_newset(size_t n, T x)
 {
-	return arr_set(new T[n], n, (T) x);
+	return arr_set(new T[n], n, x);
 }
 
 template<typename T, typename U>
 T* arr_newset(T** a, size_t n, U x)
 {
-	return *a = arr_set(new T[n], (T) x);
+	return *a = arr_set(new T[n], n, (T) x);
 }
 
-// Cannot overlap, if T != U.
 template<typename T, typename U>
 T* arr_cpy(T* dest, U* src, size_t n)
 {
-	T* src_n = src + n;
-
 	if(areOfSameType(dest, src))
-		if(src == dest)
+		if((void*) src == (void*) dest)
 			return dest;
 		else
 			return (T*) memmove(dest, src, n * sizeof(T));
 
+	U* src_n = src + n;
 	while(src < src_n)
 		*dest++ = (*src++);
+	return dest - n;
+}
+
+template<typename T, typename U, typename V>
+T* arr_cpya(T* dest, U* src, size_t n, V a)
+{
+	if(a == 0)
+		return arr_set(dest, n, 0);
+
+	if(areOfSameType(dest, src))
+		if((void*) src == (void*) dest)
+			return dest;
+		else
+		{
+			memmove(dest, src, n * sizeof(T));
+			if(a == 1)
+				return dest;
+			return arr_ax(dest, n, a);
+		}
+
+	U* src_n = src + n;
+	while(src < src_n)
+		*dest++ = a * (*src++);
 	return dest - n;
 }
 
@@ -236,6 +263,35 @@ T** arr_set(T** a, size_t n, unsigned long long x)
 	return arr_set(a, n, 0LL);
 }
 
+template<typename T, typename U>
+T* arr_xy(T* dest, const U* y, const size_t n)
+{
+	T* x_n = dest + n;
+	while(dest < x_n)
+		*dest++ *= *y++;
+	return dest;
+}
+
+template<typename T, typename U>
+T* bits2arr01(T* const dest, size_t n, U i)
+{
+	arr_set(dest, n, 0);
+	for(T* a = dest; a < dest + n && i; a++, i <<= 1)
+		*a = i & 1;
+}
+
+template<typename T>
+T* bits2arrMasks(T* const dest, const size_t n, const T i)
+{
+	arr_set(dest, n, 0);
+	unsigned long long mask = 1;
+	for(T* a = dest; a < dest + n; a++)
+	{
+		*a = i & mask;
+		mask >>= 1;
+	}
+}
+
 //#undef INTPTR_T
 //#undef UINTPTR_T
 
@@ -305,11 +361,21 @@ size_t findmaxlte(T* a, size_t n, U x)
 	return l;
 }
 
+template<class T, class U>
+long long indexof(const T* const a, size_t n, U x)
+{
+	const T* b = a + n;
+	while(a < b)
+		if(*--b == x)
+			return b - a;
+	return -1;
+}
+
 /*
  * Math
  */
 template<typename T, typename U>
-inline long double distancel(T* x[], U* y[], size_t n)
+inline long double lenl(T* x[], U* y[], size_t n)
 {
 	long double r_squared = 0;
 	T* x_n = x + n;
@@ -331,30 +397,24 @@ inline T cube(T x)
 	return x * x * x;
 }
 
-inline long double distancel(long double x1, long double x2, long double y1, long double y2)
-{
-	return sqrtl(distsqaredl(x1, x2, y1, y2));
-}
-
-inline long double distancel(long double x1, long double x2, long double x3, long double y1, long double y2,
-	long double y3)
-{
-	return sqrtl(distsqaredl(x1, x2, x3, y1, y2, y3));
-}
-
-inline long double distsqaredl(long double x1, long double x2, long double y1, long double y2)
+inline long double lensquaredl(long double x1, long double x2, long double y1, long double y2)
 {
 	return square(y1 - x1) + square(y2 - x2);
 }
 
-inline long double distsqaredl(long double x1, long double x2, long double x3, long double y1, long double y2,
+inline long double lensquaredl(long double x1, long double x2, long double x3, long double y1, long double y2,
 	long double y3)
 {
 	return square(y1 - x1) + square(y2 - x2) + square(y3 - x3);
 }
 
+inline long double lensquaredl(long double x1, long double x2, long double x3)
+{
+	return square(x1) + square(x2) + square(x3);
+}
+
 template<typename T, typename U>
-long double distsqaredl(T* x, U* y, size_t n)
+long double lensquaredl(T* x, U* y, size_t n)
 {
 	long double d = 0;
 	T* x_n = x + n;
@@ -363,10 +423,72 @@ long double distsqaredl(T* x, U* y, size_t n)
 	return d;
 }
 
-template<typename T, typename U>
-long double distancel(T* x, U* y, size_t n)
+template<typename T>
+long double lensquaredl(T* x, size_t n)
 {
-	return sqrt(distsqaredl(x, y, n));
+	long double d = 0;
+	T* x_n = x + n;
+	while(x < x_n)
+	{
+		d += square(*x);
+		x++;
+	}
+	return d;
+}
+
+template<typename T, typename U>
+long double lenl(T* x, U* y, size_t n)
+{
+	return sqrt(lensquaredl(x, y, n));
+}
+
+template<typename T>
+long double lenl(T* x, size_t n)
+{
+	return sqrt(lensquaredl(x, n));
+}
+
+inline long double lenl(long double x1, long double x2, long double y1, long double y2)
+{
+	return sqrtl(lensquaredl(x1, x2, y1, y2));
+}
+
+inline long double lenl(long double x1, long double x2, long double x3, long double y1, long double y2, long double y3)
+{
+	return sqrtl(lensquaredl(x1, x2, x3, y1, y2, y3));
+}
+
+inline long double lenl(long double x1, long double x2, long double x3)
+{
+	return sqrtl(lensquaredl(x1, x2, x3));
+}
+
+template<typename T>
+inline void normalize(T* x, size_t n)
+{
+	long double L = lenl(x, n);
+	if(L)
+		arr_ax(x, 1 / L);
+}
+
+template<typename T, typename U>
+inline void scaleto(T* x, size_t n, U newlength)
+{
+	long double L = lenl(x, n);
+	if(L)
+		arr_ax(x, n, newlength / L);
+}
+
+template<typename T>
+int normalizel(T* x, size_t n)
+{
+	long double L = lensqaredl(x, n);
+	if(L)
+	{
+		arr_ax(x, n, 1 / L);
+		return 1;
+	}
+	return 0;
 }
 
 template<typename T, typename U, typename V>
@@ -390,9 +512,157 @@ long double distMaxl(const T* x1, const U* x2, const V* y, const size_t n)
 	return sqrt(distMaxSquaredl(x1, x2, y, n));
 }
 
+template<typename T, typename U>
+int intersectRectangles(T* ldest, T* rdest, U* lother, U* rother, size_t n)
+{
+//	TRACEF("[%e, %e, %e], [%e, %e, %e],   [%e, %e, %e], [%e, %e, %e], %s",
+//		   ldest[0],ldest[1],ldest[2],
+//		   rdest[0],rdest[1],rdest[2],
+//		   lother[0],lother[1],lother[2],
+//		   rother[0],rother[1],rother[2],
+//		   "");
+	for(size_t dim = 0; dim < n; dim++)
+		if(ldest[dim] > rother[dim])
+			return -1;
+	for(size_t dim = 0; dim < n; dim++)
+		if(rdest[dim] < lother[dim])
+			return -1;
+	for(size_t dim = 0; dim < n; dim++)
+		if(ldest[dim] < lother[dim])
+			ldest[dim] = lother[dim];
+	for(size_t dim = 0; dim < n; dim++)
+		if(rdest[dim] > rother[dim])
+			rdest[dim] = rother[dim];
+//	TRACEF("[%e, %e, %e], [%e, %e, %e],   [%e, %e, %e], [%e, %e, %e], %s",
+//		   ldest[0],ldest[1],ldest[2],
+//		   rdest[0],rdest[1],rdest[2],
+//		   lother[0],lother[1],lother[2],
+//		   rother[0],rother[1],rother[2],
+//		   "");
+	return 0;
+}
+
+template<typename T, typename U>
+void rectUnion(T* rectLeft, T* rectRight, U* point, size_t n)
+{
+	for(size_t dim = 0; dim < n; dim++)
+		if(rectLeft[dim] > point[dim])
+			rectLeft[dim] = point[dim];
+
+	for(size_t dim = 0; dim < n; dim++)
+		if(rectRight[dim] < point[dim])
+			rectRight[dim] = point[dim];
+}
+
 /*
  * BLAS-like and numpy-like
  */
+template<typename T>
+T arr_min(const T* x, const size_t n)
+{
+	T minx = *x;
+	const T* const x_n = x + n;
+
+	while(++x < x_n)
+		if(minx > *x)
+			minx = *x;
+
+	return minx;
+}
+
+template<typename T>
+T arr_max(const T* x, const size_t n)
+{
+	T maxx = *x;
+	const T* const x_n = x + n;
+
+	while(++x < x_n)
+		if(maxx < *x)
+			maxx = *x;
+
+	return maxx;
+}
+
+template<typename T>
+size_t arr_argmin(const T* const x, const size_t n)
+{
+	const T* const x_n = x + n;
+	size_t minj = 0;
+	T miny = *x;
+
+	for(const T* y = x; y < x_n; y++)
+	{
+		if(miny > *y)
+		{
+			minj = y - x;
+			miny = *y;
+		}
+		y++;
+	}
+	return minj;
+}
+
+template<typename T>
+size_t arr_argmax(const T* const x, const size_t n)
+{
+	const T* const x_n = x + n;
+	size_t maxj = 0;
+	T maxy = *x;
+
+	for(const T* y = x; y < x_n; y++)
+	{
+		if(maxy < *y)
+		{
+			maxj = y - x;
+			maxy = *y;
+		}
+	}
+
+	return maxj;
+}
+
+template<typename T>
+void arr_minmax(T* min_x, size_t* min_i, T* max_x, size_t* max_i, const T* const x, const size_t n)
+{
+	T miny, maxy;
+	size_t j, minj, maxj;
+	if(n > 0)
+	{
+		const T* const x_n = x + n;
+		const T* y = x;
+		minj = maxj = j = 0;
+		miny = maxy = *y;
+
+		while(++y < x_n)
+		{
+			j++;
+			if(miny > *y)
+			{
+				minj = j;
+				miny = *y;
+			}
+			if(maxy < *y)
+			{
+				maxj = j;
+				maxy = *y;
+			}
+		}
+	}
+	else
+	{
+		minj = maxj = -1;
+	}
+
+	if(min_x)
+		*min_x = miny;
+	if(min_i)
+		*min_i = minj;
+	if(max_x)
+		*max_x = maxy;
+	if(max_i)
+		*max_i = maxj;
+}
+
 // Returns x[0] + ... +, x[n-1]
 template<typename T>
 T arr_sum(T* x, const size_t n)
@@ -455,6 +725,16 @@ T* arr_cumsum(T* dest, U* x, size_t n, V initialSum)
 	return dest - n;
 }
 
+template<typename T, typename U>
+double arr_dotprod(T* x, U* y, size_t n)
+{
+	double sum = 0;
+	const double* x_n = x + n;
+	while(x < x_n)
+		sum += (*x++) * (*y++);
+	return sum;
+}
+
 #define ARR_LINOPBODY(DEST_EQ_SRC, DEST_IN_SRC, ASC_LOOP) \
 	U* x_n = x + n; \
 	if (areOfSameType(dest, x)) \
@@ -482,6 +762,19 @@ T* arr_xpy(T* dest, U* x, const size_t n)
 	ARR_LINOPBODY(arr_ax(dest, n, 2), *--dest += *--x_n, *dest++ += *x++)
 }
 
+// x := x + a
+template<typename T, typename U>
+T* arr_xpa(T* x, const size_t n, const U a)
+{
+	if(a == 0)
+		return x;
+
+	T* x_n = x + n;
+	while(x < x_n)
+		*--x_n += a;
+	return x;
+}
+
 // x := a*x
 template<typename T, typename U>
 T* arr_ax(T* x, const size_t n, const U a)
@@ -490,6 +783,31 @@ T* arr_ax(T* x, const size_t n, const U a)
 		return x;
 	if(a == 0)
 		return arr_set(x, n, (T) 0);
+	T* x_n = x + n;
+	while(x < x_n)
+		*--x_n *= a;
+	return x;
+}
+
+// x := a*x
+template<typename T, typename U, typename V>
+T* arr_axpb(T* x, const size_t n, const U a, const V b)
+{
+	if(a == 1)
+		if(b == 0)
+			return x;
+		else
+			return arr_xpa(x, n, b);
+
+	if(a == 0)
+		if(b == 0)
+			return arr_set(x, n, (T) 0);
+		else
+			return arr_set(x, n, (T) b);
+
+	if(b == 0)
+		return arr_ax(x, n, a);
+
 	T* x_n = x + n;
 	while(x < x_n)
 		*--x_n *= a;
@@ -522,12 +840,14 @@ T* arr_axpy(T* dest, U* x, const size_t n, const V a)
 }
 
 // y := a*x + b*y
-//no overlapping
 template<typename T, typename U, typename V, typename W>
 T* arr_axpby(T* dest, U* x, const size_t n, const V a, const W b)
 {
 	if(b == 0)
-		return arr_axy(dest, x, n, a);
+	{
+		arr_cpy(dest, x, n);
+		return arr_ax(dest, n, a);
+	}
 	if(a == 0)
 		return arr_ax(dest, n, b);
 	if(b == 1)
@@ -550,27 +870,170 @@ T* arr_axpby(T* dest, U* x, const size_t n, const V a, const W b)
 }
 
 template<typename T>
-size_t sprintfvec(char* const s, const char* const preffix, const char* const singleElementFormat,
-	const char* const separator, const char* const suffix, const T* const vec, const size_t n,
-	const bool printWithIndices, const bool indexPrintsBeforeElement)
+int arr_snlprintf(char* const s, const size_t size, size_t* lengthSoFar, const char* const prefix1,
+	const char* const prefix2, const char* const singleElementFormat, const char* const separator,
+	const char* const suffix1, const char* const suffix2, const T* const arr, const size_t arr_size,
+	const int elementsPerLine, const bool printWithIndices, const bool indexPrintsBeforeElement)
 {
-	char* s2 = s;
-	if(preffix)
-		s2 += sprintf(s2, preffix);
-	for(size_t i = 0; i < n; i++)
+	const size_t l0 = *lengthSoFar;
+	int n;
+	if(prefix1)
+	{
+		n = snlprintf(s, size, lengthSoFar, prefix1);
+		if(n < 0)
+			return n;
+	}
+
+	if(prefix2)
+	{
+		n = snlprintf(s, size, lengthSoFar, prefix2);
+		if(n < 0)
+			return n;
+	}
+
+	for(size_t i = 0; i < arr_size; i++)
 	{
 		if(i && separator)
-			s2 += sprintf(s2, separator);
+		{
+			n = snlprintf(s, size, lengthSoFar, separator);
+			if(n < 0)
+				return n;
+		}
+
+		if(i && elementsPerLine > 0)
+		{
+			if(i % elementsPerLine == 0)
+			{
+				n = snlprintf(s, size, lengthSoFar, "\n");
+				if(n < 0)
+					return n;
+			}
+		}
+
 		if(!printWithIndices)
-			s2 += sprintf(s2, singleElementFormat, vec[i]);
+		{
+//			TRACEF("%p %lld %lld %p %lld %lld", s, size, lengthSoFar, singleElementFormat, arr_size, i);
+			n = snlprintf(s, size, lengthSoFar, singleElementFormat, arr[i]);
+			if(n < 0)
+				return n;
+		}
 		else if(indexPrintsBeforeElement)
-			s2 += sprintf(s2, singleElementFormat, i, vec[i]);
+		{
+			n = snlprintf(s, size, lengthSoFar, singleElementFormat, i, arr[i]);
+			if(n < 0)
+				return n;
+		}
 		else
-			s2 += sprintf(s2, singleElementFormat, vec[i], i);
+		{
+			n = snlprintf(s, size, lengthSoFar, singleElementFormat, arr[i], i);
+			if(n < 0)
+				return n;
+		}
 	}
-	if(suffix)
-		s2 += sprintf(s2, suffix);
-	return s2 - s;
+
+	if(suffix1)
+	{
+		n = snlprintf(s, size, lengthSoFar, suffix1);
+		if(n < 0)
+			return n;
+	}
+	if(suffix2)
+	{
+		n = snlprintf(s, size, lengthSoFar, suffix2);
+		if(n < 0)
+			return n;
+	}
+
+	return *lengthSoFar - l0;
+}
+
+template<typename T>
+int arr_fprintpylist(FILE *fptr, T *arr, size_t arr_size, char *prefix = NULL, char *singleElementFormat = "%e",
+	int elementPerLine = 0)
+{
+	const size_t SIZE = 4096;
+	char s0[SIZE];
+	size_t size = SIZE, len;
+	char *p0 = s0;
+	for(int i = 0; i < 2; i++)
+	{
+		size_t size = (i) ? (len + 1) : SIZE;
+		p0 = (i) ? (new char[size]) : s0;
+		*p0 = '\0';
+		char *p1 = p0;
+		len = 0;
+		int n = arr_snlprintf(p1, size, &len, prefix, "[\n", singleElementFormat, ", ", "]", NULL, arr, arr_size,
+								elementPerLine, false, false);
+		if(n < 0)
+			return n;
+
+		if(len < SIZE)
+			break;
+
+		size = len + 1;
+	}
+	fprintf(fptr, "%s\n", p0);
+	return len;
+}
+
+template<typename T>
+int arr_printf(const char* const prefix1, const char* const prefix2, const char* const singleElementFormat,
+	const char* const separator, const char* const suffix1, const char* const suffix2, const T* const arr,
+	const size_t arr_size, const int elementsPerLine, const bool printWithIndices, const bool indexPrintsBeforeElement)
+{
+	const size_t SIZE = 4096;
+	size_t len = 0;
+	char S[SIZE];
+	S[0] = '\0';
+	int n = arr_snlprintf(S, SIZE, &len, prefix1, prefix2, singleElementFormat, separator, suffix1, suffix2, arr,
+							arr_size, elementsPerLine, printWithIndices, indexPrintsBeforeElement);
+	if(n < 0)
+		return n;
+
+	if(len + 1 <= SIZE)
+		return fprintf(stderr, S);
+
+	char* s = new char[n + 1];
+	len = 0;
+	n = arr_snlprintf(s, n, &len, prefix1, prefix2, singleElementFormat, separator, suffix1, suffix2, arr, arr_size,
+						elementsPerLine, printWithIndices, indexPrintsBeforeElement);
+
+	if(n > 0)
+		n = fprintf(stderr, s);
+
+	delete s;
+	return n;
+}
+
+template<typename T>
+int arr_printf_pylist(const char* const arr_name, const char* const singleElementFormat, const T* const arr,
+	const size_t arr_size)
+{
+	const char* const prefix2 = (arr_name) ? " = [" : "[";
+	arr_printf(arr_name, prefix2, singleElementFormat, ", ", "]\n", NULL, arr, arr_size, 10, false, false);
+}
+
+template<typename T>
+int arr_printf_pytuple(const char* const arr_name, const char* const singleElementFormat, const T* const arr,
+	const size_t arr_size)
+{
+	const char* const prefix2 = (arr_name) ? " = (" : "(";
+	arr_printf(arr_name, prefix2, singleElementFormat, ", ", ")\n", NULL, arr, arr_size, 10, false, false);
+}
+
+template<typename T>
+int arr_printf_pydict(const char* const arr_name, const char* const singleElementFormat, const T* const arr,
+	const size_t arr_size)
+{
+	const char* const prefix2 = (arr_name) ? " = {" : "{";
+	arr_printf(arr_name, prefix2, singleElementFormat, ", ", "}\n", NULL, arr, arr_size, 10, true, true);
+}
+
+template<typename T>
+int arr_printf_csv(const char* const prefix, const char* const singleElementFormat, const T* const arr,
+	const size_t arr_size, const char* const separator = ", ", int elemtnsPerLine = 10)
+{
+	arr_printf(prefix, NULL, singleElementFormat, separator, NULL, "\n",  arr, arr_size, elemtnsPerLine, false, false);
 }
 
 /*
@@ -823,19 +1286,19 @@ inline MPI_Datatype getMPI_Datatype()
 //#endif
 #endif /* __cplusplus */
 
-	//// The following C/C++ types are redundant:
-	////signed
-	////signed int
-	////signed long
-	////signed long int
-	////signed long long int
-	////signed short
-	////signed short int
-	////unsigned int
-	////unsigned long int
-	////unsigned long long
-	////unsigned long long int
-	////unsigned short int
+//// The following C/C++ types are redundant:
+////signed
+////signed int
+////signed long
+////signed long int
+////signed long long int
+////signed short
+////signed short int
+////unsigned int
+////unsigned long int
+////unsigned long long
+////unsigned long long int
+////unsigned short int
 }
 template<typename T>
 inline MPI_Datatype getMPI_Datatype(T a)
@@ -850,91 +1313,92 @@ inline MPI_Datatype getMPI_Datatype(T* a)
 }
 #endif /* USE_MPI */
 /*
-template<typename T>
-void addDipoleField(T* fieldX, T* fieldY, T* fieldZ,
-	const long double x, const long double y, const long double z,
-	const double momentX, const double momentY, const double momentZ,
-	const long double centerX, const long double centerY, const long double centerZ,
-	const long double scaleFactor = 1.0)
-{
-	const long double ONE_OVER_4PI = 1 / (16 * atanl(1));
-	long double r, rsquared, rcube, rx, ry, rz, coeff, three_m_r_over_rsquared;
-	rx = x - centerX;
-	ry = y - centerY;
-	rz = z - centerZ;
-	rsquared = square(rx) + square(ry) + square(rz);
-	rcube = cube(sqrt(rsquared));
-	if(rcube)
-	{
-		three_m_r_over_rsquared = 3 * (momentX * rx + momentY * ry + momentZ * rz) / rsquared;
-		coeff = scaleFactor * ONE_OVER_4PI / rcube;
-		*fieldX += coeff * (three_m_r_over_rsquared * rx - momentX);
-		*fieldY += coeff * (three_m_r_over_rsquared * ry - momentY);
-		*fieldZ += coeff * (three_m_r_over_rsquared * rz - momentZ);
-	}
-	else
-	{
-//		*fieldX = *fieldY = *fieldZ = 0;
-	}
-}
+ template<typename T>
+ void addDipoleField(T* fieldX, T* fieldY, T* fieldZ,
+ const long double x, const long double y, const long double z,
+ const double momentX, const double momentY, const double momentZ,
+ const long double centerX, const long double centerY, const long double centerZ,
+ const long double scaleFactor = 1.0)
+ {
+ const long double ONE_OVER_4PI = 1 / (16 * atanl(1));
+ long double r, rsquared, rcube, rx, ry, rz, coeff, three_m_r_over_rsquared;
+ rx = x - centerX;
+ ry = y - centerY;
+ rz = z - centerZ;
+ rsquared = square(rx) + square(ry) + square(rz);
+ rcube = cube(sqrt(rsquared));
+ if(rcube)
+ {
+ three_m_r_over_rsquared = 3 * (momentX * rx + momentY * ry + momentZ * rz) / rsquared;
+ coeff = scaleFactor * ONE_OVER_4PI / rcube;
+ *fieldX += coeff * (three_m_r_over_rsquared * rx - momentX);
+ *fieldY += coeff * (three_m_r_over_rsquared * ry - momentY);
+ *fieldZ += coeff * (three_m_r_over_rsquared * rz - momentZ);
+ }
+ else
+ {
+ //		*fieldX = *fieldY = *fieldZ = 0;
+ }
+ }
 
-template<typename T>
-void addDipoleVectorPotential(T* vectorPotentialX, T* vectorPotentialY, T* vectorPotentialZ,
-	const long double x, const long double y, const long double z,
-	const double momentX, const double momentY, const double momentZ,
-	const long double centerX, const long double centerY, const long double centerZ,
-	const long double permeability = 1.0
-	)
-{
-	const long double FOUR_PI = 16 * atanl(1);
-	long double r, rx, ry, rz, rsquared, coeff;
-	rx = x - centerX;
-	ry = y - centerY;
-	rz = z - centerZ;
-	rsquared = square(rx) + square(ry) + square(rz);
-	if(rsquared)
-	{
-		coeff = permeability / FOUR_PI / rsquared
-		*vectorPotentialX += coeff * (momentY * rz - momentZ * ry);
-		*vectorPotentialY += coeff * (momentZ * rx - momentX * rz);
-		*vectorPotentialZ += coeff * (momentX * ry - momentY * rx);
-	}
-	else
-	{
-//		*vectorPotentialX = *vectorPotentialY = *vectorPotentialZ = 0;
-	}
-}
+ template<typename T>
+ void addDipoleVectorPotential(T* vectorPotentialX, T* vectorPotentialY, T* vectorPotentialZ,
+ const long double x, const long double y, const long double z,
+ const double momentX, const double momentY, const double momentZ,
+ const long double centerX, const long double centerY, const long double centerZ,
+ const long double permeability = 1.0
+ )
+ {
+ const long double FOUR_PI = 16 * atanl(1);
+ long double r, rx, ry, rz, rsquared, coeff;
+ rx = x - centerX;
+ ry = y - centerY;
+ rz = z - centerZ;
+ rsquared = square(rx) + square(ry) + square(rz);
+ if(rsquared)
+ {
+ coeff = permeability / FOUR_PI / rsquared
+ *vectorPotentialX += coeff * (momentY * rz - momentZ * ry);
+ *vectorPotentialY += coeff * (momentZ * rx - momentX * rz);
+ *vectorPotentialZ += coeff * (momentX * ry - momentY * rx);
+ }
+ else
+ {
+ //		*vectorPotentialX = *vectorPotentialY = *vectorPotentialZ = 0;
+ }
+ }
 
-long double dipoleScalarPotential(const long double x, const long double y, const long double z,
-	const double momentX, const double momentY, const double momentZ,
-	const long double centerX, const long double centerY, const long double centerZ,
-	const long double permitivity = 1.0)
-{
-	const long double ONE_OVER_4PI = 1 / (16 * atanl(1));
-	long double rx, ry, rz, rsquared;
-	rx = x - centerX;
-	ry = y - centerY;
-	rz = z - centerZ;
-	rsquared = square(rx) + square(ry) + square(rz);
-	if(rsquared)
-	{
-		return ONE_OVER_4PI / permitivity / rsquared * (momentX * rx + momentY * ry + momentZ * rz);
-	}
-	else
-	{
-		return 0;
-	}
-}
+ long double dipoleScalarPotential(const long double x, const long double y, const long double z,
+ const double momentX, const double momentY, const double momentZ,
+ const long double centerX, const long double centerY, const long double centerZ,
+ const long double permitivity = 1.0)
+ {
+ const long double ONE_OVER_4PI = 1 / (16 * atanl(1));
+ long double rx, ry, rz, rsquared;
+ rx = x - centerX;
+ ry = y - centerY;
+ rz = z - centerZ;
+ rsquared = square(rx) + square(ry) + square(rz);
+ if(rsquared)
+ {
+ return ONE_OVER_4PI / permitivity / rsquared * (momentX * rx + momentY * ry + momentZ * rz);
+ }
+ else
+ {
+ return 0;
+ }
+ }
 
-template<typename T>
-void addConstFieldVectorPotential(T* vectorPotentialX, T* vectorPotentialY, T* vectorPotentialZ,
-	const long double x, const long double y, const long double z,
-	const double momentX, const double momentY, const double momentZ
-	)
-{
-	*vectorPotentialX += momentY * z;
-	*vectorPotentialY += momentZ * x;
-	*vectorPotentialZ += momentX * y;
-}
-*/
+ template<typename T>
+ void addConstFieldVectorPotential(T* vectorPotentialX, T* vectorPotentialY, T* vectorPotentialZ,
+ const long double x, const long double y, const long double z,
+ const double momentX, const double momentY, const double momentZ
+ )
+ {
+ *vectorPotentialX += momentY * z;
+ *vectorPotentialY += momentZ * x;
+ *vectorPotentialZ += momentX * y;
+ }
+ */
 #endif /* MY_ENZO_UTIILS_TPP */
+

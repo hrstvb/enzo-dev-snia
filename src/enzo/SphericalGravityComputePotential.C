@@ -15,6 +15,7 @@
 #include <math.h>
 
 #include "myenzoutils.h"
+#include "MHDInitialProfile.h"
 #include "EnzoTiming.h"
 #include "performance.h"
 #include "ErrorExceptions.h"
@@ -30,121 +31,11 @@
 #include "TopGridData.h"
 #include "LevelHierarchy.h"
 #include "CommunicationUtilities.h"
+#include "LevelArrayIterator.h"
+
+#include "DebugMacros.h"
 
 int CommunicationBroadcastValues(FLOAT *Values, int Number, int BroadcastProcessor);
-
-//int SpherGravAllocateBins(int level, size_t** countBins, FLOAT** massBins, FLOAT** binAccels,
-//FLOAT** binAccelSlopes, FLOAT** centersOfMassBins[], FLOAT** kineticEBins[], FLOAT** magneticEBins[],
-//FLOAT** volumeBins,
-//int domainRank)
-//{
-//	size_t N = (UseSpherGrav) ? SpherGravActualNumberOfBins[level] : SphericalGravityActualNumberOfBins;
-//	if(countBins)
-//		arr_delnewset(countBins, N, 0);
-//	if(massBins)
-//		arr_delbrnewset(massBins, N, 0);
-//	if(binAccels)
-//		arr_delbrnewset(binAccels, N, 0);
-//	if(binAccelSlopes)
-//		arr_delbrnewset(binAccelSlopes, N, 0);
-//	if(centersOfMassBins)
-//		for(int dim = 0; dim < domainRank; dim++)
-//			arr_delnewset(centersOfMassBins + dim, N, 0);
-//	if(kineticEBins)
-//		for(int dim = 0; dim < domainRank; dim++)
-//			arr_delbrnewset(kineticEBins + dim, N, 0);
-//	if(magneticEBins && (UseMHD || UseMHDCT))
-//		for(int dim = 0; dim < domainRank; dim++)
-//			arr_delbrnewset(magneticEBins + dim, N, 0);
-//	if(volumeBins)
-//		arr_delnewset(volumeBins, N, 0);
-//
-//	return SUCCESS;
-//}
-//
-//int SpherGravDetermineUniformBins()
-//{
-////	SphericalGravityMaxHierarchyLevel = min(SphericalGravityMaxHierarchyLevel, MaximumRefinementLevel);
-//
-//	int nOk = SphericalGravityInnerRadius >= 0;
-////	nOk += SphericalGravityNumberOfBins > 0;
-////	nOk += SphericalGravityBinSize > 0;
-//	nOk += SphericalGravityOuterRadius > max(0, SphericalGravityInnerRadius);
-//	nOk += SphericalGravityBinsPerCell > 0;
-//	if(nOk < 3)
-//	{
-//		fprintf(stderr, "FAILURE: The following is required for multilevel spherical gravity: "
-//				"SphericalGravityBinsPerCell > 0 and"
-//				"0 <= SphericalGravityInnerRadius < SphericalGravityOuterRadius"
-//				"but the values are %"FSYM", %"FSYM", %"FSYM".\n",
-//				SphericalGravityBinsPerCell, SphericalGravityInnerRadius, SphericalGravityOuterRadius);
-//		ENZO_FAIL("SphericalGravityInitializeUniformBins: "
-//					"Improper parameters inner/outer radius, and/or bin-per-cell.\n");
-//	}
-//
-//	//determine actual number for bins.
-//	size_t L = SphericalGravityMaxHierarchyLevel + 1;
-//	SphericalGravityHasCentralBin = SphericalGravityInnerRadius > 0;
-//	arr_delnewset(&SpherGravHasCentralBin, L, SphericalGravityHasCentralBin);
-//	arr_delnewset(&SpherGravInnerRadius, L, SphericalGravityInnerRadius);
-//	arr_delnewset(&SpherGravOuterRadius, L, SphericalGravityOuterRadius);
-//	arr_delnewset(&SpherGravUniformBins, L, 1);
-//
-//	arr_delnew(&SpherGravActualNumberOfBins, L);
-//	FLOAT dr = TopGridDx[0] / SphericalGravityBinsPerCell;
-//	arr_delbrnew(SpherGravBinLeftEdges, L);
-//	arr_delnew(&SpherGravBinSize, L);
-//	for(int level = 0; level < L; level++)
-//	{
-//		SpherGravBinSize[level] = dr;
-//		size_t N = (size_t) ((SpherGravOuterRadius[level] - SpherGravInnerRadius[level]) / dr)
-//				+ SpherGravHasCentralBin[level] + 1;
-//
-//		SpherGravActualNumberOfBins[level] = N;
-//		FLOAT* leftEdges = arr_delnewset(SpherGravBinLeftEdges + level, N, dr);
-//		leftEdges[0] = 0.0;
-//		if(SpherGravHasCentralBin[level])
-//			leftEdges[1] = SphericalGravityInnerRadius;
-//		arr_cumsum(leftEdges, N, 0);
-//
-//		dr /= RefineBy;
-//	}
-//
-//	return SUCCESS;
-//}
-//
-//int SpherGravDetermineBins()
-//{
-//	if(SphericalGravityUniformBins)
-//	{
-//		if(FAIL == SpherGravDetermineUniformBins())
-//			ENZO_FAIL("Non-uniform bins for spherical gravity are not implemented.\n");
-//	}
-//	else
-//	{		//	Initialize non-uniform bins here. This may require communication.
-//		ENZO_FAIL("Non-uniform bins for spherical gravity are not implemented.\n");
-//	}
-//
-//	return SUCCESS;
-//}
-//
-//size_t SpherGravComputeUniformBinIndex(FLOAT r, int level)
-//{
-//	if(r < SpherGravInnerRadius[level])
-//		return 0;
-//	if(r > SpherGravOuterRadius[level])
-//		return SpherGravActualNumberOfBins[level] - 1;
-//	size_t i = (r - SpherGravInnerRadius[level]) / SpherGravBinSize[level] + SpherGravHasCentralBin[level];
-//	return i;
-//}
-//
-//size_t SpherGravComputeBinIndex(FLOAT r, int level)
-//{
-//	if(SpherGravUniformBins[level])
-//		return SpherGravComputeUniformBinIndex(r, level);
-//	size_t i = findmaxlte(SpherGravBinLeftEdges[level], SpherGravActualNumberOfBins[level], r);
-//	return i;
-//}
 
 int SphericalGravityAllocateBins(size_t** countBins, FLOAT** massBins, FLOAT** binAccels,
 FLOAT** binAccelSlopes, FLOAT** centersOfMassBins, FLOAT** kineticEBins, FLOAT** magneticEBins, FLOAT** volumeBins,
@@ -170,6 +61,34 @@ int domainRank)
 			arr_delbrnewset(magneticEBins + dim, N, 0);
 	if(volumeBins)
 		arr_delnewset(volumeBins, N, 0);
+
+	return SUCCESS;
+}
+
+int SphericalGravityClearBins(size_t* countBins, FLOAT* massBins, FLOAT** binAccels,
+FLOAT** binAccelSlopes, FLOAT** centersOfMassBins, FLOAT** kineticEBins, FLOAT** magneticEBins, FLOAT** volumeBins,
+int domainRank)
+{
+	size_t &N = SphericalGravityActualNumberOfBins;
+	if(countBins)
+		arr_set(countBins, N, 0);
+	if(massBins)
+		arr_set(massBins, N, 0);
+	if(binAccels)
+		arr_set(binAccels, N, 0);
+	if(binAccelSlopes)
+		arr_set(binAccelSlopes, N, 0);
+	if(centersOfMassBins)
+		for(int dim = 0; dim < domainRank; dim++)
+			arr_set(centersOfMassBins[dim], N, 0);
+	if(kineticEBins)
+		for(int dim = 0; dim < domainRank; dim++)
+			arr_set(kineticEBins[dim], N, 0);
+	if(magneticEBins && (UseMHD || UseMHDCT))
+		for(int dim = 0; dim < domainRank; dim++)
+			arr_set(magneticEBins[dim], N, 0);
+	if(volumeBins)
+		arr_set(volumeBins, N, 0);
 
 	return SUCCESS;
 }
@@ -240,6 +159,8 @@ int SphericalGravityDetermineUniformBins()
 	SphericalGravityHasCentralBin = SphericalGravityInnerRadius > 0;
 	size_t &N = SphericalGravityActualNumberOfBins;
 	N = SphericalGravityNumberOfBins + SphericalGravityHasCentralBin + 1;
+//	TRACEF("%lld x %e = %e .. %e", N, SphericalGravityActualNumberOfBins, SphericalGravityBinSize,
+//			SphericalGravityInnerRadius, SphericalGravityOuterRadius);
 
 	arr_delnewset(&SphericalGravityBinLeftEdges, N, SphericalGravityBinSize);
 
@@ -288,40 +209,6 @@ size_t SphericalGravityComputeBinIndex(FLOAT r)
 	return i;
 }
 
-size_t getSubgridCount(HierarchyEntry* he)
-{
-	size_t n = 0;
-	HierarchyEntry* subhe = he->NextGridNextLevel;
-	while(subhe)
-	{
-		n++;
-		he = he->NextGridThisLevel;
-	}
-	return n;
-}
-
-size_t getMaxSubgridCount(LevelHierarchyEntry** LevelArray)
-{
-	size_t n = 0;
-	for(int level = 0; level < MaximumRefinementLevel; level++)
-	{
-		LevelHierarchyEntry* lhe = LevelArray[level];
-		while(lhe)
-		{
-			n = max(n, getSubgridCount(lhe->GridHierarchyEntry->NextGridNextLevel));
-			lhe = lhe->NextGridThisLevel;
-		}
-	}
-	return n;
-}
-
-size_t getSubgridRects(size_t** begin, size_t** end, LevelHierarchyEntry lhe)
-{
-	size_t n = 0;
-
-	return 0;
-}
-
 //int SpherGravComputePotential(LevelHierarchyEntry *LevelArray[], TopGridData* MetaData)
 //{
 //	if(SpherGravDetermineBins() == FAIL)
@@ -360,7 +247,8 @@ size_t getSubgridRects(size_t** begin, size_t** end, LevelHierarchyEntry lhe)
 //	return SUCCESS;
 //}
 
-int SphericalGravityComputePotential(LevelHierarchyEntry *LevelArray[], TopGridData* MetaData)
+int SphericalGravityComputePotential(LevelHierarchyEntry *LevelArray[], TopGridData* MetaData,
+	bool interpolateMissingShells)
 {
 	if(UseSphericalGravity == 0)
 		return SUCCESS;
@@ -380,13 +268,49 @@ int SphericalGravityComputePotential(LevelHierarchyEntry *LevelArray[], TopGridD
 
 	const size_t &N = SphericalGravityActualNumberOfBins;
 
-	LevelHierarchyEntry *Temp;
-	Temp = LevelArray[0];
-	while(Temp != NULL)
+// Compute potential based on the top level (0) or all levels (1)?
+#if(1)
+	LevelArrayIterator it = LevelArrayIterator(LevelArray);
+
+	size_t* countBins = NULL;
+	FLOAT* densBins = NULL;
+	FLOAT** cmBins = arr_newset<FLOAT*>(MAX_DIMENSION, NULL);
+	FLOAT** kinEBins = arr_newset<FLOAT*>(MAX_DIMENSION, NULL);
+	FLOAT** magEBins = (UseMHD || UseMHDCT) ? arr_newset<FLOAT*>(MAX_DIMENSION, NULL) : NULL;
+
+	SphericalGravityAllocateBins(&countBins, &densBins, NULL, NULL, cmBins, kinEBins, magEBins, NULL, 3);
+	int maxRefLevel = max(0, min(MaximumRefinementLevel, MAX_DEPTH_OF_HIERARCHY));
+	int maxGravityLevel = min(SphericalGravityMaxHierarchyLevel, maxRefLevel);
+	for(grid* g = it.firstFromTop(); g; g = it.next())
 	{
-		Temp->GridData->SphericalGravityAddMassToShell();
-		Temp = Temp->NextGridThisLevel;
+		if(it.currentLevel > maxGravityLevel)
+			break;
+		SphericalGravityClearBins(countBins, densBins, NULL, NULL, cmBins, kinEBins, magEBins, NULL, 3);
+		int retval = g->SphericalGravityAddMassToShell(countBins, densBins, cmBins, kinEBins, magEBins,
+														it.currentEntry);
 	}
+
+	delete countBins;
+	delete densBins;
+	delete[] cmBins;
+	delete[] kinEBins;
+	delete[] magEBins;
+
+//	TRACEF("Total count per MPI process: #%lld  %lld ", MyProcessorNumber, arr_sum(SphericalGravityShellCellCounts, N));
+//	CommunicationSumValues(SphericalGravityShellCellCounts, N);
+//	if(MyProcessorNumber==ROOT_PROCESSOR)
+//		TRACEF("Total count for the domain: #%lld  %lld ", MyProcessorNumber, arr_sum(SphericalGravityShellCellCounts, N));
+
+#else
+	//	if(Top level gravity only
+	LevelHierarchyEntry* lhe = LevelArray[0];
+	while(lhe)
+	{
+		lhe->GridData->SphericalGravityAddMassToShell();
+		lhe = lhe->NextGridThisLevel;
+	}
+#endif
+
 //It might be better to use MPI_Alltoallv; see CommunicationShareParticles.C
 //That takes some more setup, so in the words of Mike, "make it work then make it work fast."
 	CommunicationSumValues(SphericalGravityShellMasses, N);
@@ -417,35 +341,106 @@ int SphericalGravityComputePotential(LevelHierarchyEntry *LevelArray[], TopGridD
 ////		SphericalGravityMassInterior[i] = SphericalGravityMassInterior[i - 1] + SphericalGravityMassShell[i];
 //		SphericalGravityInteriorMasses[i] = SphericalGravityInteriorMasses[i - 1] + SphericalGravityShellMasses[i - 1];
 //	}
+
 	arr_delnewset(&SphericalGravityInteriorMasses, N, 0);
 	SphericalGravityInteriorMasses[0] = SphericalGravityCentralMass;
 	arr_cumsum(SphericalGravityInteriorMasses + 1, SphericalGravityShellMasses, N - 1, SphericalGravityCentralMass);
 
-	if(0 * SphericalGravityInterpAccelOrder)
+	switch(SphericalGravityInterpAccelMethod)
 	{
+	case 1:
 		// Calculate the gravity accelerations at the bin edges.
 		// SKip the r=0 point.
 		for(size_t i = 1; i < N; i++)
 			SphericalGravityBinAccels[i] = SphericalGravityConstant * SphericalGravityInteriorMasses[i]
 					/ square(SphericalGravityBinLeftEdges[i]);
 
-		// Calculate the slopes of the gravity accelerations between every two bin edges.
-		for(size_t i = N - 2; i >= 0; i--)
-			SphericalGravityBinAccelSlopes[i] = (SphericalGravityBinAccels[i + 1] - SphericalGravityBinAccels[i])
-					/ (SphericalGravityBinLeftEdges[i + 1] - SphericalGravityBinLeftEdges[i]);
+		break;
 	}
 
-	if(MyProcessorNumber == ROOT_PROCESSOR)
+//	if(MyProcessorNumber == ROOT_PROCESSOR && MetaData->CycleNumber == 0)
+//	{
+//		fprintf(stderr, "SphericalGravityActualNumberOfBins = %lld\n", N);
+//		arr_printf_pydict("SphericalGravityBinLeftEdges", "%lld:%e", SphericalGravityBinLeftEdges, N);
+//		arr_printf_pydict("SphericalGravityShellMasses", "%lld:%e", SphericalGravityShellMasses, N);
+//		arr_printf_pydict("SphericalGravityInteriorMasses", "%lld:%e", SphericalGravityInteriorMasses, N);
+//		arr_printf_pydict("SphericalGravityBinAccels", "%lld:%e", SphericalGravityBinAccels, N);
+//		arr_printf_pydict("SphericalGravityBinAccelSlopes", "%lld:%e", SphericalGravityBinAccelSlopes, N);
+//	}
+
+	if(interpolateMissingShells || MetaData->CycleNumber == 0)
 	{
-		char* sbuf = new char[64 * N];
-		char* s = sbuf;
-		s += sprintf(s, "SphericalGravityActualNumberOfBins = %lld\n", N);
-		s += sprintfvec(s, "SphericalGravityBinLeftEdges = {", "%lld:%e", ", ", "}\n", SphericalGravityBinLeftEdges, N,
-						true, true);
-		s += sprintfvec(s, "SphericalGravityInteriorMasses = {", "%lld:%e", ", ", "}\n", SphericalGravityInteriorMasses,
-						N, true, true);
-		printf(sbuf);
-		delete sbuf;
+		// For shells with no mass (no zones) interpolate the
+		// gravity acceleration (g) so it grows smoothly.
+		int first_empty, after_first_full;
+		FLOAT r1 = 0, r, r2, g1 = 0, g, g2, dgdr;
+		for(int j = 0; j < N; j++)
+		{
+			// Find the next zero shell mass:
+			if(SphericalGravityShellMasses[j])
+				continue;
+			// The first empty shell in a sequence still has
+			// the correct g at its left boundary.
+			// This is true also for j==0.
+			first_empty = j;
+
+			// Find the non-zero shell that follows:
+			for(j = first_empty + 1; j < N; j++)
+				if(SphericalGravityShellMasses[j])
+					break;
+
+			// Make sure we found one and it is not the last one.
+			// We don't simply advance j because if the shell to
+			// the right hapens to be empty, we are going to miss
+			// it on the next loop iteration.
+			after_first_full = j + 1;
+			if(after_first_full >= N)
+				break;
+
+			// Now shell j has g at its left boundary computed
+			// with the same enclosed mass as the first_empty
+			// shell, which is what we are trying to avoid.
+			// Using the g at its right boundary (left of the
+			// next shell) to interpolate everything in between.
+			g1 = SphericalGravityBinAccels[first_empty];
+			r1 = SphericalGravityBinLeftEdges[first_empty];
+			g2 = SphericalGravityBinAccels[after_first_full];
+			r2 = SphericalGravityBinLeftEdges[after_first_full];
+//			TRACEF("  empty=%lld  full=%lld", first_empty, after_first_full);
+			dgdr = (g2 - g1) / (r2 - r1);
+			for(int k = first_empty + 1; k <= after_first_full; k++)
+			{
+				r = SphericalGravityBinLeftEdges[k];
+				g = g1 + (r - r1) * dgdr;
+				SphericalGravityBinAccels[k] = g;
+			}
+		}
+	}
+
+	switch(SphericalGravityInterpAccelMethod)
+	{
+	case 1:
+		// Calculate the slopes of the gravity accelerations between every two bin edges.
+		for(size_t i = 0; i < N - 1; i++)
+			SphericalGravityBinAccelSlopes[i] = (SphericalGravityBinAccels[i + 1] - SphericalGravityBinAccels[i])
+					/ (SphericalGravityBinLeftEdges[i + 1] - SphericalGravityBinLeftEdges[i]);
+
+		SphericalGravityBinAccelSlopes[N - 1] = 0;
+		break;
+	}
+
+	if(MyProcessorNumber == ROOT_PROCESSOR && (MetaData->CycleNumber == 0 || debug))
+	{
+		size_t M = 20;
+		TRACEF("SphericalGravity:  GravityConstant = %e    ActualNumberOfBins = %lld    RadiusRange  = %e .. %e",
+				SphericalGravityConstant, N, SphericalGravityInnerCutoffRaduis, SphericalGravityOuterCutoffRaduis);
+//		arr_printf_pydict("\nSphericalGravityCenter", "%lld:%e", SphericalGravityCenter, 3);
+//		arr_printf_pydict("\nSphericalGravityBinLeftEdges", "%lld:%e", SphericalGravityBinLeftEdges, M);
+//		arr_printf_pydict("\nSphericalGravityShellMasses", "%lld:%e", SphericalGravityShellMasses, M);
+//		arr_printf_pydict("\nSphericalGravityInteriorMasses", "%lld:%e", SphericalGravityInteriorMasses, M);
+//		arr_printf_pydict("\nSphericalGravityBinAccels", "%lld:%e", SphericalGravityBinAccels, M);
+//		arr_printf_pydict("\nSphericalGravityBinAccelSlopes", "%lld:%e", SphericalGravityBinAccelSlopes, M);
+//		fflush(stdout);
 	}
 //	for (int dim = 0; dim < GridRank; dim++)
 //		SphericalGravityCentersOfMass[dim] = arr_sum(SphericalGravityShellCentersOfMass[dim], N);
@@ -463,11 +458,80 @@ int SphericalGravityComputePotential(LevelHierarchyEntry *LevelArray[], TopGridD
 //			SphericalGravityMagneticEnergies[dim] = arr_sum(SphericalGravityShellMagneticEnergies[dim], N);
 //		}
 
+//	FLOAT burnedR = estimateBurnedRadius();
+//	if(burnedR)
+//		CommunicationBroadcastValues(&burnedR, 1, MyProcessorNumber);
+//	CommunicationR
+
 	return SUCCESS;
 }
 
-int SphericalGravityWritePotential(char * name)
+int SphericalGravityComputePotential(LevelHierarchyEntry *LevelArray[], TopGridData* MetaData)
 {
+	return SphericalGravityComputePotential(LevelArray, MetaData, false);
+}
+
+/*
+ * Returns the magnitude of the gravity acceleration, g at radius r.
+ * Returns -1.0 if error.
+ */
+float SphericalGravityGetAt(FLOAT r)
+{
+	if(!UseSphericalGravity || (SphericalGravityInnerCutoffRaduis > 0 && r < SphericalGravityInnerCutoffRaduis)
+			|| (SphericalGravityOuterCutoffRaduis >= 0 && r > SphericalGravityOuterCutoffRaduis)
+			|| SphericalGravityConstant == 0)
+		return 0;
+
+	size_t rbin = SphericalGravityComputeBinIndex(r);
+	if(-1 == rbin)
+		return 0;
+
+	// SphericalGravityInterpAccelMethod:
+	// 0 -- Take the enclosed mass, M_encl, for that bin and return
+	//		G * M_encl / r**2
+	//      This is always the treatment of the last bin.
+	// 1 -- we linearly interpolate g between the edges of the bin.
+	//		The outmost bin is considered void of material its enclosed mass
+	//		is the entire WD mass. In this case we calculate as in case 0.
+	int method = (rbin < SphericalGravityActualNumberOfBins - 1) ? SphericalGravityInterpAccelMethod : 0;
+	float g_accel;
+
+	switch(method)
+	{
+	case 0:
+		g_accel = SphericalGravityConstant * SphericalGravityInteriorMasses[rbin] / square(r);
+		break;
+	case 1:
+		// Use linear interpolation between the bin left and right edge.
+		// Use the pre-calculated coefficients.
+		g_accel = SphericalGravityBinAccels[rbin]
+				+ SphericalGravityBinAccelSlopes[rbin] * (r - SphericalGravityBinLeftEdges[rbin]);
+		break;
+	}
+
+	return g_accel;
+}
+
+int SphericalGravityWriteRadialProfile(char* name, TopGridData& MetaData, HierarchyEntry* TopGrid)
+{
+	HierarchyIterator it = HierarchyIterator(TopGrid);
+	for(grid* g = it.firstAtTop(); g; g = it.next())
+	{
+		if(SUCCESS == g->WriteRadialProfile(name, it.currentLevel))
+		{
+//			TRACEF(" level %lld", it.currentLevel);
+//			g->ExtraFunction(FLN2STR, 0);
+//			return SUCCESS;
+		}
+	}
+
+	return SUCCESS;
+}
+
+int SphericalGravityWritePotential(char * name, TopGridData& MetaData, HierarchyEntry* TopGrid)
+{
+	SphericalGravityWriteRadialProfile(name, MetaData, TopGrid);
+
 	if(MyProcessorNumber != ROOT_PROCESSOR || UseSphericalGravity == 0 || !SphericalGravityWritePotentialSwitch)
 	{
 		return SUCCESS;
@@ -475,7 +539,8 @@ int SphericalGravityWritePotential(char * name)
 
 	if(SphericalGravityInteriorMasses == NULL)
 	{
-		fprintf(stderr, "SphericalGravityWritePotential: No Mass Defined, not writing.\n");
+		fprintf(stderr,
+				"SphericalGravityWritePotential: No Mass Defined, not writing. This can happen after restart.\n");
 		return SUCCESS;
 	}
 
@@ -556,8 +621,20 @@ int SphericalGravityWritePotential(char * name)
 	h5_status = H5Dwrite(dataset, HDF5_PREC, H5S_ALL, H5S_ALL, H5P_DEFAULT, SphericalGravityInteriorMasses);
 	h5_status = H5Dclose(dataset);
 
+	if(SphericalGravityInterpAccelMethod == 1)
+	{
+		dataset = H5Dcreate(file_id, "SphericalGravityBinAccels", HDF5_PREC, dataspace_id, H5P_DEFAULT);
+		h5_status = H5Dwrite(dataset, HDF5_PREC, H5S_ALL, H5S_ALL, H5P_DEFAULT, SphericalGravityBinAccels);
+		h5_status = H5Dclose(dataset);
+
+		dataset = H5Dcreate(file_id, "SphericalGravityBinAccelSlopes", HDF5_PREC, dataspace_id, H5P_DEFAULT);
+		h5_status = H5Dwrite(dataset, HDF5_PREC, H5S_ALL, H5S_ALL, H5P_DEFAULT, SphericalGravityBinAccelSlopes);
+		h5_status = H5Dclose(dataset);
+	}
+
 	h5_status = H5Sclose(dataspace_id);
 	h5_status = H5Fclose(file_id);
 
 	return SUCCESS;
 }
+

@@ -15,9 +15,11 @@
 #define __STAR_H
 
 #include "typedefs.h"
-#include "Grid.h"
+//#include "Grid.h"
 #include "Hierarchy.h"
 #include "LevelHierarchy.h"
+#include "RadiationSource.h"
+#include "Grid.h"
 #include "StarBuffer.h"
 
 class Star

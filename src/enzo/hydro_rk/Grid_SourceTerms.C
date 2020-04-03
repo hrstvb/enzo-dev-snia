@@ -39,9 +39,9 @@ int grid::SourceTerms(float **dU)
     return SUCCESS;
   }
 
-  int DensNum, GENum, TENum, Vel1Num, Vel2Num, Vel3Num, 
+  int DensNum, GENum, TENum, Vel1Num, Vel2Num, Vel3Num,
     B1Num, B2Num, B3Num, HMNum, H2INum, H2IINum;
-  if (this->IdentifyPhysicalQuantities(DensNum, GENum, Vel1Num, Vel2Num, 
+  if (this->IdentifyPhysicalQuantities(DensNum, GENum, Vel1Num, Vel2Num,
 				       Vel3Num, TENum, B1Num, B2Num, B3Num) == FAIL) {
     fprintf(stderr, "Error in IdentifyPhysicalQuantities.\n");
     return FAIL;
@@ -55,13 +55,13 @@ int grid::SourceTerms(float **dU)
 
     FLOAT a = 1, dadt;
     if (ComovingCoordinates)
-      if (CosmologyComputeExpansionFactor(Time+0.5*dtFixed, &a, &dadt) 
+      if (CosmologyComputeExpansionFactor(Time+0.5*dtFixed, &a, &dadt)
 	  == FAIL) {
 	ENZO_FAIL("Error in CsomologyComputeExpansionFactors.");
       }
 
 
-  if (DualEnergyFormalism) {   
+  if (DualEnergyFormalism) {
     if (Coordinate == Cartesian) {
       int igrid, ip1, im1, jp1, jm1, kp1, km1;
       FLOAT dtdx = 0.5*dtFixed/CellWidth[0][0]/a,
@@ -160,9 +160,9 @@ int grid::SourceTerms(float **dU)
 	    v2 = vx*vx + vy*vy + vz*vz;
 	    eint = etot - 0.5*v2;
 	  }
-                  
+
           EOS(p, rho, eint, h, cs, dpdrho, dpde, EOSType, 2);
-         
+
           coty = 1.0/tan(y); // if GridRank = 1, assume theta = pi/2
 
           dtxinv = dtFixed/x;
@@ -174,7 +174,7 @@ int grid::SourceTerms(float **dU)
     }
   }
 
-  if ((SelfGravity) || ExternalGravity || UniformGravity || (PointSourceGravity > 0)) {
+  if ((SelfGravity) || ExternalGravity || UniformGravity || (PointSourceGravity > 0) || UseSphericalGravity) {
     int igrid;
     float rho, gx, gy, gz;
     float vx, vy, vz, vx_old, vy_old, vz_old;
@@ -184,7 +184,7 @@ int grid::SourceTerms(float **dU)
 	for (int i = GridStartIndex[0]; i <= GridEndIndex[0]; i++, n++) {
 	  igrid = i+(j+k*GridDimension[1])*GridDimension[0];
 	  rho = BaryonField[DensNum][igrid];
-	  //	  fprintf(stderr, "glad youre calling me");	  
+	  //	  fprintf(stderr, "glad youre calling me");
 	  gx = AccelerationField[0][igrid];
 	  gy = (GridRank > 1) ? (AccelerationField[1][igrid]) : 0;
 	  gz = (GridRank > 2) ? (AccelerationField[2][igrid]) : 0;
@@ -220,7 +220,7 @@ int grid::SourceTerms(float **dU)
     float vx;
     int n=0;
     for (int i = GridStartIndex[0]; i <= GridEndIndex[0]; i++, n++) {
-      rho = BaryonField[DensNum][i];	  
+      rho = BaryonField[DensNum][i];
       vx = BaryonField[Vel1Num][i];
       dU[iS1  ][n] += dtFixed*gr[n]*rho;
       dU[iEtot][n] += dtFixed*rho*gr[n]*vx;
@@ -255,13 +255,13 @@ int grid::SourceTerms(float **dU)
 	  dU[iS1  ][n] += dtFixed*rho*drivex*DrivingEfficiency;
 	  dU[iS2  ][n] += dtFixed*rho*drivey*DrivingEfficiency;
 	  dU[iS3  ][n] += dtFixed*rho*drivez*DrivingEfficiency;
-	  dU[iEtot][n] += dtFixed*rho*(drivex*vx + drivey*vy + drivez*vz + 
+	  dU[iEtot][n] += dtFixed*rho*(drivex*vx + drivey*vy + drivez*vz +
                 0.5 * dtFixed * (drivex * drivex + drivey * drivey + drivez * drivez)) * DrivingEfficiency;
 	}
       }
     }
   }
-  
+
   /* Add centrifugal force for the shearing box */
 
 
@@ -269,7 +269,7 @@ int grid::SourceTerms(float **dU)
     int igrid;
     float rho, gx, gy, gz;
     FLOAT xPos[3];
-    float vels[3]; 
+    float vels[3];
     int n = 0;
 
     int iden=FindField(Density, FieldType, NumberOfBaryonFields);
@@ -277,18 +277,18 @@ int grid::SourceTerms(float **dU)
     int ivy=FindField(Velocity2, FieldType, NumberOfBaryonFields);
     int ivz;
     if (GridRank==3)  ivz=FindField(Velocity3, FieldType, NumberOfBaryonFields);
- 
+
     int indexNumbers[3]={iS1,iS2,iS3};
 
     float A[3]={0,0,0};//Omega
     A[ShearingOtherDirection]=AngularVelocity;
-    
-    float lengthx=DomainRightEdge[0]-DomainLeftEdge[0]; 
+
+    float lengthx=DomainRightEdge[0]-DomainLeftEdge[0];
     float lengthy=DomainRightEdge[1]-DomainLeftEdge[1];
     float lengthz;
     if (GridRank==3) lengthz=DomainRightEdge[2]-DomainLeftEdge[2];
     else lengthz=0.0;
-    
+
 
     for (int k = GridStartIndex[2]; k <= GridEndIndex[2]; k++) {
       for (int j = GridStartIndex[1]; j <= GridEndIndex[1]; j++) {
@@ -300,7 +300,7 @@ int grid::SourceTerms(float **dU)
 	  xPos[1] = CellLeftEdge[1][i] + 0.5*CellWidth[1][i]-lengthy/2.0;
 	  if (GridRank==3) xPos[2] = CellLeftEdge[2][i] + 0.5*CellWidth[2][i]-lengthz/2.0;
 	  else xPos[2]=0;
-	  
+
 	  vels[0] = BaryonField[ivx][igrid];
 	  vels[1] = BaryonField[ivy][igrid];
 	  if (GridRank==3) vels[2] = BaryonField[ivz][igrid];
@@ -311,16 +311,16 @@ int grid::SourceTerms(float **dU)
 	  dU[indexNumbers[0]][n] -= dtFixed*2.0*rho*(A[1]*vels[2]-A[2]*vels[1]);
 	  dU[indexNumbers[1]][n] -= dtFixed*2.0*rho*(A[2]*vels[0]-A[0]*vels[2]);
 	  if (GridRank==3) dU[indexNumbers[2]][n] -= dtFixed*2.0*rho*(A[0]*vels[1]-A[1]*vels[0]);
-	
+
 
 	  dU[indexNumbers[ShearingBoundaryDirection]][n] += dtFixed*2.0*rho*VelocityGradient*AngularVelocity*AngularVelocity*xPos[ShearingBoundaryDirection];
-	  
-	  
+
+
 	  dU[iEtot][n] +=  dtFixed*2.0*rho*VelocityGradient*AngularVelocity*AngularVelocity*xPos[ShearingBoundaryDirection]*vels[ShearingBoundaryDirection];
-	
 
 
-	  
+
+
  	}
       }
     }

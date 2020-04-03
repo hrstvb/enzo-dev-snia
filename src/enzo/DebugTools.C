@@ -1,4 +1,7 @@
 #include <string.h>
+#include <iostream>
+#include <ostream>
+#include <sstream>
 #include <stdio.h>
 #include <math.h>
 #include <assert.h>
@@ -6,7 +9,9 @@
 #include <sys/time.h>
 #include <stdlib.h>
 
+#include "myenzoutils.h"
 #include "ErrorExceptions.h"
+#include "LevelArrayIterator.h"
 #include "CommunicationUtilities.h"
 #include "macros_and_parameters.h"
 #include "typedefs.h"
@@ -18,52 +23,295 @@
 #include "Grid.h"
 
 #include "DebugTools.h"
+using namespace std;
 
 void RecursivelySetParticleCount(HierarchyEntry *GridPoint, PINT *Count);
 
-void printHierarchy(LevelHierarchyEntry** levelArray)
+int snlprintHierarchy(char* s, size_t size, size_t* length, HierarchyEntry* topGrid,
+	const char* const filename, const int linenum)
 {
-	char s0[4096];
-	char* s = s0;
-	*s = '\0';
-	s += sprintHierarchy(s, levelArray);
-	fprintf(stderr, "%s", s0);
-}
+	size_t l0 = *length;
+	int n;
 
-size_t sprintHierarchy(char* s, LevelHierarchyEntry** levelArray)
-{
-	char* s0 = s;
-	s += sprintf(s, "BEGIN HIERARCHY ----------------\n");
-	for(int level = 0; level < MAX_DEPTH_OF_HIERARCHY; level++)
+	if(filename)
+		n = snlprintf(s, size, length, "/- BEGIN HIERARCHY (%s:%d#%lld) ----------------\n", filename, linenum,
+						MyProcessorNumber);
+	else
+		n = snlprintf(s, size, length, "/- BEGIN HIERARCHY (#%lld) ----------------\n", MyProcessorNumber);
+	if(n < 0)
+		return n;
+
+	HierarchyIterator it = HierarchyIterator(topGrid);
+//	for(int level = 0; level < MAX_DEPTH_OF_HIERARCHY; level++)
+//	{
+//		LevelHierarchyEntry* lhe = levelArray[level];
+//		while(lhe)
+	grid* pg = NULL;
+	for(grid* g = it.firstAtTop(); g; g = it.next())
 	{
-		LevelHierarchyEntry* lhe = levelArray[level];
-		while(lhe)
+		int gProc = g->ReturnProcessorNumber();
+		int dx2pdx[MAX_DIMENSION];
+		if(pg)
+			pg->ComputeRefinementFactors(g, dx2pdx);
+		else
+			arr_set(dx2pdx, MAX_DIMENSION, 1);
+
+		n = snlprintf(s, size, length, "|  HIERARCHY (on #%lld) level %" ISYM
+		"    grid %" ISYM "(%p)",
+						MyProcessorNumber, it.currentLevel, g->GetGridID(), g);
+		if(n < 0)
+			return n;
+
+		if(gProc == MyProcessorNumber)
 		{
-			grid* g = lhe->GridData;
-			grid* pg = NULL;
-			HierarchyEntry* he = lhe->GridHierarchyEntry->ParentGrid;
-			if(he)
-				pg = he->GridData;
-
-			char gProcStr[20];
-			int gProc = g->ReturnProcessorNumber();
-			if(gProc == MyProcessorNumber)
-				sprintf(gProcStr, "(local)");
-			else
-				sprintf(gProcStr, "(on %lld)", gProc);
-
-			if(pg)
-				s += sprintf(s, "HIERARCHY level %" ISYM "    grid %" ISYM "$s    parent %" ISYM "\n", level,
-								g->GetGridID(), gProcStr, pg->GetGridID());
-			else
-				s += sprintf(s, "HIERARCHY level %" ISYM "    grid %" ISYM "%s\n", level, g->GetGridID(), gProcStr);
-
-			lhe = lhe->NextGridThisLevel;
+			n = snlprintf(s, size, length, "(local)");
+			if(n < 0)
+				return n;
 		}
+		else
+		{
+			n = snlprintf(s, size, length, "(on #%lld)", gProc);
+			if(n < 0)
+				return n;
+		}
+
+		n = snlprintf(s, size, length, "[%lldx%lldx%lld=%lld]",
+						g->GetGridDimension(0), g->GetGridDimension(1), g->GetGridDimension(2), g->GetGridSize());
+		if(n < 0)
+			return n;
+
+//		n = snlprintf(s, size, length, "(%e,%e,%e)..(%e,%e,%e)",
+//						g->GetGridLeftEdge(0), g->GetGridLeftEdge(1), g->GetGridLeftEdge(2), g->GetGridRightEdge(0),
+//						g->GetGridRightEdge(1), g->GetGridRightEdge(2));
+//		if(n < 0)
+//			return n;
+
+		if(pg)
+		{
+			n = snlprintf(s, size, length, "   x%lld    parent %" ISYM "(%p)", dx2pdx[0], pg->GetGridID(), pg);
+			if(n < 0)
+				return n;
+
+			n = snlprintf(s, size, length, "[%lldx%lldx%lld=%lld]",
+							g->GetGridDimension(0), g->GetGridDimension(1), g->GetGridDimension(2), g->GetGridSize());
+			if(n < 0)
+				return n;
+
+//			n = snlprintf(s, size, length, "(%e, %e, %e)..(%e, %e, %e)", pg->GetGridLeftEdge(0), pg->GetGridLeftEdge(1),
+//						  pg->GetGridLeftEdge(2), pg->GetGridRightEdge(0), pg->GetGridRightEdge(1),
+//						  g->GetGridRightEdge(2));
+//			if(n < 0)
+//				return n;
+
+			int dim;
+			for(dim = 0; dim < pg->GetGridRank(); dim++)
+			{
+				if(pg->GetGridLeftEdge(dim) > g->GetGridRightEdge(dim))
+					break;
+				if(pg->GetGridRightEdge(dim) < g->GetGridLeftEdge(dim))
+					break;
+			}
+		}
+
+		n = snlprintf(s, size, length, "\n");
+		if(n < 0)
+			return n;
 	}
-	s += sprintf(s, "END HIERARCHY ----------------\n");
-	return s - s0;
+//	}
+
+	if(filename)
+		n = snlprintf(s, size, length, "\\- END HIERARCHY (%s:%d#%lld) ----------------\n", filename, linenum,
+						MyProcessorNumber);
+	else
+		n = snlprintf(s, size, length, "\\- END HIERARCHY (#%lld) ----------------\n", MyProcessorNumber);
+	if(n < 0)
+		return n;
+
+	return *length - l0;
 }
+
+int printHierarchy(HierarchyEntry* topGrid, const char* const filename, const int linenum)
+{
+	const size_t SIZE = 1024;
+	char S[SIZE];
+	size_t len = 0;
+	int n = snlprintHierarchy(S, SIZE, &len, topGrid, filename, linenum);
+	if(n < 0)
+		return n;
+
+	size_t size = len + 1;
+	if(size <= SIZE)
+		return fprintf(stderr, S);
+
+	char* s = new char[size];
+	len = 0;
+	n = snlprintHierarchy(s, size, &len, topGrid, filename, linenum);
+	if(n >= 0)
+		n = fprintf(stderr, s);
+	delete s;
+	return n;
+}
+
+int printHierarchy0(HierarchyEntry* topGrid, const char* const filename, const int linenum)
+{
+	if(MyProcessorNumber != ROOT_PROCESSOR)
+		return 0;
+	return printHierarchy(topGrid, filename, linenum);
+}
+
+int printHierarchy(HierarchyEntry* topGrid)
+{
+	return printHierarchy(topGrid, NULL, -1);
+}
+
+int printHierarchy0(HierarchyEntry* topGrid)
+{
+	return printHierarchy0(topGrid, NULL, -1);
+}
+
+
+int snlprintHierarchy(char* s, size_t size, size_t* length, LevelHierarchyEntry** levelArray,
+	const char* const filename, const int linenum)
+{
+	size_t l0 = *length;
+	int n;
+
+	if(filename)
+		n = snlprintf(s, size, length, "/- BEGIN HIERARCHY (%s:%d#%lld) ----------------\n", filename, linenum,
+						MyProcessorNumber);
+	else
+		n = snlprintf(s, size, length, "/- BEGIN HIERARCHY (#%lld) ----------------\n", MyProcessorNumber);
+	if(n < 0)
+		return n;
+
+	LevelArrayIterator it = LevelArrayIterator(levelArray);
+//	for(int level = 0; level < MAX_DEPTH_OF_HIERARCHY; level++)
+//	{
+//		LevelHierarchyEntry* lhe = levelArray[level];
+//		while(lhe)
+	grid* pg = NULL;
+	for(grid* g = it.firstFromTop(&pg); g; g = it.next(&pg))
+	{
+		int gProc = g->ReturnProcessorNumber();
+		int dx2pdx[MAX_DIMENSION];
+		if(pg)
+			pg->ComputeRefinementFactors(g, dx2pdx);
+		else
+			arr_set(dx2pdx, MAX_DIMENSION, 1);
+
+		n = snlprintf(s, size, length, "|  HIERARCHY (on #%lld) level %" ISYM
+		"    grid %" ISYM "(%p)",
+						MyProcessorNumber, it.currentLevel, g->GetGridID(), g);
+		if(n < 0)
+			return n;
+
+		if(gProc == MyProcessorNumber)
+		{
+			n = snlprintf(s, size, length, "(local)");
+			if(n < 0)
+				return n;
+		}
+		else
+		{
+			n = snlprintf(s, size, length, "(on #%lld)", gProc);
+			if(n < 0)
+				return n;
+		}
+
+		n = snlprintf(s, size, length, "[%lldx%lldx%lld=%lld]",
+						g->GetGridDimension(0), g->GetGridDimension(1), g->GetGridDimension(2), g->GetGridSize());
+		if(n < 0)
+			return n;
+
+//		n = snlprintf(s, size, length, "(%e,%e,%e)..(%e,%e,%e)",
+//						g->GetGridLeftEdge(0), g->GetGridLeftEdge(1), g->GetGridLeftEdge(2), g->GetGridRightEdge(0),
+//						g->GetGridRightEdge(1), g->GetGridRightEdge(2));
+//		if(n < 0)
+//			return n;
+
+		if(pg)
+		{
+			n = snlprintf(s, size, length, "   x%lld    parent %" ISYM "(%p)", dx2pdx[0], pg->GetGridID(), pg);
+			if(n < 0)
+				return n;
+
+			n = snlprintf(s, size, length, "[%lldx%lldx%lld=%lld]",
+							g->GetGridDimension(0), g->GetGridDimension(1), g->GetGridDimension(2), g->GetGridSize());
+			if(n < 0)
+				return n;
+
+//			n = snlprintf(s, size, length, "(%e, %e, %e)..(%e, %e, %e)", pg->GetGridLeftEdge(0), pg->GetGridLeftEdge(1),
+//						  pg->GetGridLeftEdge(2), pg->GetGridRightEdge(0), pg->GetGridRightEdge(1),
+//						  g->GetGridRightEdge(2));
+//			if(n < 0)
+//				return n;
+
+			int dim;
+			for(dim = 0; dim < pg->GetGridRank(); dim++)
+			{
+				if(pg->GetGridLeftEdge(dim) > g->GetGridRightEdge(dim))
+					break;
+				if(pg->GetGridRightEdge(dim) < g->GetGridLeftEdge(dim))
+					break;
+			}
+		}
+
+		n = snlprintf(s, size, length, "\n");
+		if(n < 0)
+			return n;
+	}
+//	}
+
+	if(filename)
+		n = snlprintf(s, size, length, "\\- END HIERARCHY (%s:%d#%lld) ----------------\n", filename, linenum,
+						MyProcessorNumber);
+	else
+		n = snlprintf(s, size, length, "\\- END HIERARCHY (#%lld) ----------------\n", MyProcessorNumber);
+	if(n < 0)
+		return n;
+
+	return *length - l0;
+}
+
+int printHierarchy(LevelHierarchyEntry** levelArray, const char* const filename, const int linenum)
+{
+	const size_t SIZE = 1024;
+	char S[SIZE];
+	size_t len = 0;
+	int n = snlprintHierarchy(S, SIZE, &len, levelArray, filename, linenum);
+	if(n < 0)
+		return n;
+
+	size_t size = len + 1;
+	if(size <= SIZE)
+		return fprintf(stderr, S);
+
+	char* s = new char[size];
+	len = 0;
+	n = snlprintHierarchy(s, size, &len, levelArray, filename, linenum);
+	if(n >= 0)
+		n = fprintf(stderr, s);
+	delete s;
+	return n;
+}
+
+int printHierarchy0(LevelHierarchyEntry** levelArray, const char* const filename, const int linenum)
+{
+	if(MyProcessorNumber != ROOT_PROCESSOR)
+		return 0;
+	return printHierarchy(levelArray, filename, linenum);
+}
+
+int printHierarchy(LevelHierarchyEntry** levelArray)
+{
+	return printHierarchy(levelArray, NULL, -1);
+}
+
+int printHierarchy0(LevelHierarchyEntry** levelArray)
+{
+	return printHierarchy0(levelArray, NULL, -1);
+}
+
 
 int TracerParticlesAddToRestart_DoIt(char * filename, HierarchyEntry *TopGrid, TopGridData *MetaData)
 {

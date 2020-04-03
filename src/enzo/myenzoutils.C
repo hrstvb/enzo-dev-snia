@@ -1,4 +1,5 @@
-#include "stddef.h"
+#include <stddef.h>
+#include <stdarg.h>
 
 #include "IDE_defs.h"
 #include "math.h"
@@ -34,5 +35,46 @@ int mpiWait(MPI_Request* request)
 
 	return (status.MPI_ERROR == NO_SUCH_MPI_ERROR) ? 0 : status.MPI_ERROR;
 }
+
+/*
+ * Similar to snprintf, but intended for successive appendd to
+ * the same buffer.  The first call should be with length=0;
+ *   const size_t N = 4;
+ *   char s[N];
+ *   int n, len = 0;
+ *   n = snlprintf(s, N, &len, "abc");
+ *   // n <- 3, len <- 3
+ *
+ * Subsequent call attempt to write at position s+length
+ * and increase length with the number of number of characters
+ * that were attempted to be written not including the
+ * terminating null character.  The increment is returned
+ * as the function result.  A negative value indicates an error.
+ *
+ *   n = snlprintf(s, N, &len, "def");
+ *   // n <- 3, len <-6
+ *   n = snlprintf(s, N, &len, "ghih");
+ *   // n <- 3, len <-10
+ *
+ */
+int snlprintf(char* const s, const size_t size, size_t* const length, const char* const format, ...)
+{
+	va_list varargs;
+	int n;
+	const size_t len = *length;
+
+	va_start(varargs, format);
+	if(size > len + 1)
+		n = vsnprintf(s + len, size - len, format, varargs);
+	else
+		n = vsnprintf(NULL, 0, format, varargs);
+	va_end(varargs);
+
+	if(n > 0)
+		*length += n;
+
+	return n;
+}
+
 
 #endif /* USE_MPI */
