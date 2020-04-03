@@ -1305,14 +1305,11 @@ int ReadParameterFile(FILE *fptr, TopGridData &MetaData, float *Initialdt)
     ret += sscanf(line, "SphericalGravityCentralMass = %"FSYM, &SphericalGravityCentralMass);
     ret += sscanf(line, "SphericalGravityConstant = %"FSYM, &SphericalGravityConstant);
     ret += sscanf(line, "SphericalGravityInnerRadius = %"FSYM, &SphericalGravityInnerRadius);
-    ret += sscanf(line, "SpericalGravityMaxHierarchyLevel = %"ISYM, &SphericalGravityMaxHierarchyLevel);
+    ret += sscanf(line, "SpericalGravityMaxHierarchyLevel = %"ISYM, &SpericalGravityMaxHierarchyLevel);
     ret += sscanf(line, "SphericalGravityNumberOfBins = %"ISYM, &SphericalGravityNumberOfBins);
     ret += sscanf(line, "SphericalGravityOuterRadius = %"FSYM, &SphericalGravityOuterRadius);
     ret += sscanf(line, "SphericalGravityUniformBins = %"ISYM, &SphericalGravityUniformBins);
     ret += sscanf(line, "SphericalGravityWritePotentialSwitch = %"ISYM, &SphericalGravityWritePotentialSwitch);
-    ret += sscanf(line, "SphericalGravityBinsPerCell = %"FSYM, &SphericalGravityBinsPerCell);
-    ret += sscanf(line, "SphericalGravityDebug = %"ISYM, &SphericalGravityDebug);
-
 
     /* If the dummy char space was used, then make another. */
     if (*dummy != 0) {
