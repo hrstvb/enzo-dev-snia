@@ -56,6 +56,7 @@
 #ifdef TRANSFER
 #include "ImplicitProblemABC.h"
 #endif
+#include "LimitTimeStep.h"
 
 // function prototypes
 
@@ -151,7 +152,6 @@ int EvolveHierarchy(HierarchyEntry &TopGrid, TopGridData &MetaData,
 #endif
 		    LevelHierarchyEntry *LevelArray[], float Initialdt)
 {
-//printf("EvolveHierarchy\n"); //[BH] TODO
   if( ParallelRootGridIO_Force )	//[BH]
 	  ParallelRootGridIO = TRUE;	//[BH]
 
@@ -372,23 +372,30 @@ int EvolveHierarchy(HierarchyEntry &TopGrid, TopGridData &MetaData,
 
     float dtProc   = huge_number;
     Temp = LevelArray[0];
+    dt_limit_reason dtLimitReason, dtReasonTemp;
+    struct DtLimitInfo dtLimitInfo, dtInfoTemp;
 
     // Start skipping
     if(CheckpointRestart == FALSE) {
       while (Temp != NULL) {
-        float dtProcTemp = Temp->GridData->ComputeTimeStep();
-        dtProc = min(dtProc, dtProcTemp);
+        float dtProcTemp = Temp->GridData->ComputeTimeStep(&dtInfoTemp);
+//        dtProc = min(dtProc, dtProcTemp);
+        LimitDt(&dtProc, dtProcTemp, &dtLimitInfo, &dtInfoTemp);
         Temp = Temp->NextGridThisLevel;
       }
 
-      dt = RootGridCourantSafetyNumber*CommunicationMinValue(dtProc);
-      dt = min(MetaData.MaximumTopGridTimeStep, dt);
+      dtLimitInfo.dt = dt = RootGridCourantSafetyNumber*CommunicationMinValue(dtProc);
+      dtLimitInfo.level = 0;
+
+//      dt = min(MetaData.MaximumTopGridTimeStep, dt);
+      LimitDt(&dt, MetaData.MaximumTopGridTimeStep, &dtLimitInfo, MAX_DT_CONFIGURED, MAX_DT_INDEX_NOT_APPLICABLE);
 
       if (debug) fprintf(stderr, "dt, Initialdt: %g %g \n", dt, Initialdt);
       if (Initialdt != 0) {
-
-	dt = min(dt, Initialdt);
-	if (debug) fprintf(stderr, "dt, Initialdt: %g %g \n", dt, Initialdt);
+        // dt = min(dt, Initialdt);
+    	  LimitDt(&dt, Initialdt, &dtLimitInfo, MAX_DT_INITIAL_DT_LIMITED, MAX_DT_INDEX_NOT_APPLICABLE);
+        if (debug)
+            fprintf(stderr, "dt, Initialdt: %g %g \n", dt, Initialdt);
         Initialdt = 0;
       }
 
@@ -397,21 +404,27 @@ int EvolveHierarchy(HierarchyEntry &TopGrid, TopGridData &MetaData,
       if (ComovingCoordinates)
         for (i = 0; i < MAX_NUMBER_OF_OUTPUT_REDSHIFTS; i++)
           if (CosmologyOutputRedshift[i] != -1)
-            dt = min(1.0001*(CosmologyOutputRedshiftTime[i]-MetaData.Time), dt);
+			LimitDt(&dt, 1.0001 * (CosmologyOutputRedshiftTime[i] - MetaData.Time), &dtLimitInfo,
+								MAX_DT_COSMOLOGY_OUTPUT_REACHED, i);
+//            dt = min(1.0001*(CosmologyOutputRedshiftTime[i]-MetaData.Time), dt);
       for (i = 0; i < MAX_TIME_ACTIONS; i++)
         if (TimeActionTime[i] > 0 && TimeActionType[i] > 0)
-          dt = min(1.0001*(TimeActionTime[i] - MetaData.Time), dt);
+		  LimitDt(&dt, 1.0001 * (TimeActionTime[i] - MetaData.Time), &dtLimitInfo, MAX_DT_TIME_ACTION_REACHED, i);
+//      dt = min(1.0001*(TimeActionTime[i] - MetaData.Time), dt);
       if (MetaData.dtDataDump > 0.0) {
         while (MetaData.TimeLastDataDump+MetaData.dtDataDump < MetaData.Time)
           MetaData.TimeLastDataDump += MetaData.dtDataDump;
-        dt = min(1.0001*(MetaData.TimeLastDataDump + MetaData.dtDataDump -
-              MetaData.Time), dt);
+        LimitDt(&dt, 1.0001*(MetaData.TimeLastDataDump + MetaData.dtDataDump -
+              MetaData.Time), &dtLimitInfo, MAX_DT_DATA_DUMP_REACHED, MAX_DT_INDEX_NOT_APPLICABLE);
+//        dt = min(1.0001*(MetaData.TimeLastDataDump + MetaData.dtDataDump -
+//              MetaData.Time), dt);
       }
 
       /* Set the time step.  If it will cause Time += dt > StopTime, then
          set dt = StopTime - Time */
 
-      dt = min(MetaData.StopTime - MetaData.Time, dt);
+      LimitDt(&dt, MetaData.StopTime - MetaData.Time, &dtLimitInfo, MAX_DT_STOP_TIME_REACHED, MAX_DT_INDEX_NOT_APPLICABLE);
+//      dt = min(MetaData.StopTime - MetaData.Time, dt);
     } else {
       dt = dtThisLevel[0];
     }
@@ -419,7 +432,8 @@ int EvolveHierarchy(HierarchyEntry &TopGrid, TopGridData &MetaData,
     /* Set the time step.  If it will cause Time += dt > StopTime, then
        set dt = StopTime - Time */
 
-    dt = min(MetaData.StopTime - MetaData.Time, dt);
+    LimitDt(&dt, MetaData.StopTime - MetaData.Time, &dtLimitInfo, MAX_DT_STOP_TIME_REACHED, MAX_DT_INDEX_NOT_APPLICABLE);
+//    dt = min(MetaData.StopTime - MetaData.Time, dt);
     Temp = LevelArray[0];
     // Stop skipping
 
@@ -440,18 +454,43 @@ int EvolveHierarchy(HierarchyEntry &TopGrid, TopGridData &MetaData,
     }
 #endif
 
-    if (MyProcessorNumber == ROOT_PROCESSOR) {
-      fprintf(stderr, "TopGrid dt = %"ESYM"     time = %"GOUTSYM"    cycle = %"ISYM,
-	     dt, MetaData.Time, MetaData.CycleNumber);
+	if(MyProcessorNumber == ROOT_PROCESSOR)
+	{
+//		fprintf(stderr, "TopGrid dt = %"ESYM"     time = %"GOUTSYM"    cycle = %"ISYM, dt, MetaData.Time,
+//				MetaData.CycleNumber);
+//
+//		if(ComovingCoordinates)
+//		{
+//			FLOAT a, dadt;
+//			CosmologyComputeExpansionFactor(MetaData.Time, &a, &dadt);
+//			fprintf(stderr, "    z = %"GOUTSYM, (1 + InitialRedshift) / a - 1);
+//		}
+//		fprintf(stderr, "\n");
+		char sbuf[1024];
+		char* s = sbuf;
+		s += sprintf(s, "TopGrid dt = %"ESYM"     time = %" GOUTSYM"    cycle = %"ISYM, dt, MetaData.Time,
+				MetaData.CycleNumber);
 
-      if (ComovingCoordinates) {
-	FLOAT a, dadt;
-	CosmologyComputeExpansionFactor(MetaData.Time, &a, &dadt);
-	fprintf(stderr, "    z = %"GOUTSYM, (1 + InitialRedshift)/a - 1);
-      }
-      fprintf(stderr, "\n");
-    }
-    //}
+		if(ComovingCoordinates)
+		{
+			FLOAT a, dadt, z;
+			CosmologyComputeExpansionFactor(MetaData.Time, &a, &dadt);
+				if(a)
+				{
+					z = (1 + InitialRedshift) / a - 1;
+					s += sprintf(s, "    z = %" GOUTSYM " a = %" GOUTSYM, z, a);
+				}
+				else
+				{
+					s += sprintf(s, "    z = inf a = 0");
+				}
+		}
+		s += sprintf(s, "    info: ");
+		s += sprintInfo(s, &dtLimitInfo);
+		s += sprintf(s, "\n");
+		fprintf(stderr, sbuf);
+	}
+//}
 
     /* Inline halo finder */
 
