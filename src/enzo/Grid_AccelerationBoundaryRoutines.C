@@ -1,3 +1,4 @@
+#include "IDE_defs.h"
 #ifdef SAB
 
 //  grid::AttachAcceleration  and grid::DetachAcceleration().
@@ -15,6 +16,7 @@
 #include "Hierarchy.h"
 #include "TopGridData.h"
 #include "LevelHierarchy.h"
+#include "DebugMacros.h"
 
 #ifdef FAST_SIB
 int SetBoundaryConditions(HierarchyEntry *Grids[], int NumberOfGrids,
@@ -38,7 +40,7 @@ int SetBoundaryConditions(HierarchyEntry *Grids[], int NumberOfGrids,
 int grid::AttachAcceleration(){
 
 
-  //This redundancy check is for the parent grid.  Multiple subgrids will have the same 
+  //This redundancy check is for the parent grid.  Multiple subgrids will have the same
   //parent grid.
 
   int field;
@@ -50,7 +52,7 @@ int grid::AttachAcceleration(){
 
 
   ActualNumberOfBaryonFields = NumberOfBaryonFields;
-  NumberOfBaryonFields = GridRank; 
+  NumberOfBaryonFields = GridRank;
 
   for(field = 0; field < ActualNumberOfBaryonFields; field++){
 
@@ -79,8 +81,8 @@ int grid::AttachAcceleration(){
   FieldType[1] = ((GridRank >= 2 ) ? Acceleration1 : FieldUndefined );
   FieldType[2] = ((GridRank >= 3 ) ? Acceleration2 : FieldUndefined );
 
- 
-  
+
+
   return SUCCESS;
 }
 
@@ -96,11 +98,11 @@ int grid::DetachAcceleration(){
     return SUCCESS;  // the detachment has already been done.
   else
     AccelerationHack = FALSE;
-    
+
   NumberOfBaryonFields = ActualNumberOfBaryonFields;
 
   for( field = 0; field < NumberOfBaryonFields; field++){
-    
+
     BaryonField[field] = ActualBaryonField[field];
     OldBaryonField[field] = ActualOldBaryonField[field];
     FieldType[field] = ActualFieldType[field];
@@ -122,25 +124,27 @@ int SetAccelerationBoundary(HierarchyEntry *Grids[], int NumberOfGrids,
 			    int CycleNumber)
 {
 
-  if ( ! ( (SelfGravity || UniformGravity || PointSourceGravity || DiskGravity ) && level > 0 ))
+  if ( ! ( (SelfGravity || UniformGravity || PointSourceGravity || DiskGravity || UseSphericalGravity ) && level > 0 ))
     return SUCCESS;
 
   if ( Grids[0]->GridData->ReturnNumberOfBaryonFields() == 0 ){
       return SUCCESS;
   }
 
-  //Set the boundary on the Acceleration field.  Reuse SetBoundaryConditions.  
+  //Set the boundary on the Acceleration field.  Reuse SetBoundaryConditions.
   //Juggle pointers around.
 
   int grid1, ConservativeTruth;
-  char basename[30];  
+  char basename[30];
 
   //We don't want conservative interpolation actually being done for the acceleration field.
   ConservativeTruth = ConservativeInterpolation;
   ConservativeInterpolation = FALSE;
 
   for (grid1 = 0; grid1 < NumberOfGrids; grid1++) {
-    if( Grids[grid1]->GridData->AttachAcceleration() == FAIL ) {
+//	  EXTRAFUNC(Grids[grid1]->GridData, 1);
+//	  EXTRAFUNC(Grids[grid1]->ParentGrid->GridData, 1);
+	  if( Grids[grid1]->GridData->AttachAcceleration() == FAIL ) {
       ENZO_FAIL("Error in AttachAcceleration \n");
     }
     if( Grids[grid1]->ParentGrid->GridData->AttachAcceleration() ==FAIL ){
@@ -153,13 +157,13 @@ int SetAccelerationBoundary(HierarchyEntry *Grids[], int NumberOfGrids,
 			    NULL, NULL) == FAIL)
     ENZO_FAIL("SetBoundaryConditions() failed!\n");
 #else
-  if (SetBoundaryConditions(Grids, NumberOfGrids, level, MetaData, 
+  if (SetBoundaryConditions(Grids, NumberOfGrids, level, MetaData,
 			    NULL, NULL) == FAIL)
     ENZO_FAIL("SetBoundaryConditions() failed!\n");
 #endif
-  
 
-  
+
+
   for (grid1 = 0; grid1 < NumberOfGrids; grid1++) {
 
     if( Grids[grid1]->GridData->DetachAcceleration() == FAIL ) {
@@ -170,6 +174,8 @@ int SetAccelerationBoundary(HierarchyEntry *Grids[], int NumberOfGrids,
 
     }
 
+//	  EXTRAFUNC(Grids[grid1]->GridData, 1);
+//	  EXTRAFUNC(Grids[grid1]->ParentGrid->GridData, 1);
   }
 
 

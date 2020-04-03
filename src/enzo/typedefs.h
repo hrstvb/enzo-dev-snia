@@ -177,8 +177,9 @@ const field_type
   Density_56Ni   =100, // 56Ni density [BH]
   QInstantaneous =101, // Instantaneous energy from burning [BH]
   QCumulative    =102, // Accumulator for the energy from burning, i.e. dQdt integrated [BH]
+  BurnedMolarFraction = 103, // Pseudo field
 
-  FieldUndefined  = 103;
+  FieldUndefined  = 104;
 
 /*
 enum field_type {Density, TotalEnergy, InternalEnergy, Pressure,

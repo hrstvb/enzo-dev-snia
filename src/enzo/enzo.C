@@ -1,23 +1,23 @@
 /***********************************************************************
-/
-/  AMR MAIN CODE
-/
-/  written by: Greg Bryan
-/  date:       November, 1994
-/  modified:   Robert Harkness
-/  modified:   B. Hristov -- Clanged the declaration of MetaData from
-/                a local struct to a reference to a global one.  The
-/                reason is to access the data without having to pass
-/                it as a parameter, which is done on occasions.
-/  date:       August 12th 2006
-/              May 13th 2008
-/
-/  PURPOSE:
-/    This is main() for the amr code.  It interprets the arguments and
-/    then calls the appropriate routines depending on whether we are
-/    doing a new run, a restart, an extraction, or a projection.
-/
-************************************************************************/
+ /
+ /  AMR MAIN CODE
+ /
+ /  written by: Greg Bryan
+ /  date:       November, 1994
+ /  modified:   Robert Harkness
+ /  modified:   B. Hristov -- Clanged the declaration of MetaData from
+ /                a local struct to a reference to a global one.  The
+ /                reason is to access the data without having to pass
+ /                it as a parameter, which is done on occasions.
+ /  date:       August 12th 2006
+ /              May 13th 2008
+ /
+ /  PURPOSE:
+ /    This is main() for the amr code.  It interprets the arguments and
+ /    then calls the appropriate routines depending on whether we are
+ /    doing a new run, a restart, an extraction, or a projection.
+ /
+ ************************************************************************/
 
 #include "preincludes.h"
 
@@ -66,187 +66,151 @@ int FinalizePythonInterface();
 
 // Function prototypes
 
-int InitializeNew(  char *filename, HierarchyEntry &TopGrid, TopGridData &tgd,
-		    ExternalBoundary &Exterior, float *Initialdt);
+int InitializeNew(char *filename, HierarchyEntry &TopGrid, TopGridData &tgd, ExternalBoundary &Exterior,
+float *Initialdt);
 int InitializeMovieFile(TopGridData &MetaData, HierarchyEntry &TopGrid);
 
-int InitializeLocal(int restart, HierarchyEntry &TopGrid,
-		    TopGridData &MetaData);
+int InitializeLocal(int restart, HierarchyEntry &TopGrid, TopGridData &MetaData);
 
-int ReadAllData(char *filename, HierarchyEntry *TopGrid, TopGridData &tgd,
-		ExternalBoundary *Exterior, float *Inititaldt);
-int Group_ReadAllData(char *filename, HierarchyEntry *TopGrid, TopGridData &tgd,
-		      ExternalBoundary *Exterior, float *Initialdt,
-		      bool ReadParticlesOnly=false);
+int ReadAllData(char *filename, HierarchyEntry *TopGrid, TopGridData &tgd, ExternalBoundary *Exterior,
+float *Inititaldt);
+int Group_ReadAllData(char *filename, HierarchyEntry *TopGrid, TopGridData &tgd, ExternalBoundary *Exterior,
+float *Initialdt, bool ReadParticlesOnly = false);
 
-int  MHDCT_EnergyToggle(HierarchyEntry &TopGrid, TopGridData &MetaData, ExternalBoundary *Exterior, LevelHierarchyEntry *LevelArray[]);
+int MHDCT_EnergyToggle(HierarchyEntry &TopGrid, TopGridData &MetaData, ExternalBoundary *Exterior,
+	LevelHierarchyEntry *LevelArray[]);
 
-int EvolveHierarchy(HierarchyEntry &TopGrid, TopGridData &tgd,
-		    ExternalBoundary *Exterior,
+int EvolveHierarchy(HierarchyEntry &TopGrid, TopGridData &tgd, ExternalBoundary *Exterior,
 #ifdef TRANSFER
-		    ImplicitProblemABC *ImplicitSolver,
+	ImplicitProblemABC *ImplicitSolver,
 #endif
-		    LevelHierarchyEntry *Array[], float Initialdt);
+	LevelHierarchyEntry *Array[], float Initialdt);
 
-void ExtractSection(HierarchyEntry &TopGrid, TopGridData &tgd,
-		    LevelHierarchyEntry *Array[], ExternalBoundary *Exterior,
-		    int ExtractStart[], int ExtractEnd[],
-		    FLOAT ProjectStartCoordinates[],
-		    FLOAT ProjectEndCoordinates[], int ExtractLevel);
-int OutputLevelInformation(FILE *fptr, TopGridData &tgd,
-			   LevelHierarchyEntry *Array[]);
+void ExtractSection(HierarchyEntry &TopGrid, TopGridData &tgd, LevelHierarchyEntry *Array[], ExternalBoundary *Exterior,
+int ExtractStart[], int ExtractEnd[],
+FLOAT ProjectStartCoordinates[],
+FLOAT ProjectEndCoordinates[], int ExtractLevel);
+int OutputLevelInformation(FILE *fptr, TopGridData &tgd, LevelHierarchyEntry *Array[]);
 int ProjectToPlane(TopGridData &MetaData, LevelHierarchyEntry *LevelArray[],
-		   int ProjectStart[], int ProjectEnd[],
-		   FLOAT ProjectStartCoordinates[],
-		   FLOAT ProjectEndCoordinates[], int ProjectLevel,
-		   int ProjectionDimension, char *ProjectionFileName,
-		   int ProjectionSmooth, ExternalBoundary *Exterior);
-int ProjectToPlane2(char *ParameterFile, HierarchyEntry &TopGrid,
-		    TopGridData &MetaData, LevelHierarchyEntry *LevelArray[],
-		    int ProjectStartTemp[], int ProjectEndTemp[],
-		    FLOAT ProjectStartCoordinate[],
-		    FLOAT ProjectEndCoordinate[], int ProjectLevel,
-		    int ProjectionDimension, char *ProjectionFileName,
-		    int ProjectionSmooth,
+int ProjectStart[], int ProjectEnd[],
+FLOAT ProjectStartCoordinates[],
+FLOAT ProjectEndCoordinates[], int ProjectLevel,
+int ProjectionDimension, char *ProjectionFileName,
+int ProjectionSmooth, ExternalBoundary *Exterior);
+int ProjectToPlane2(char *ParameterFile, HierarchyEntry &TopGrid, TopGridData &MetaData,
+	LevelHierarchyEntry *LevelArray[],
+	int ProjectStartTemp[], int ProjectEndTemp[],
+	FLOAT ProjectStartCoordinate[],
+	FLOAT ProjectEndCoordinate[], int ProjectLevel,
+	int ProjectionDimension, char *ProjectionFileName,
+	int ProjectionSmooth,
 #ifdef TRANSFER
-		    ImplicitProblemABC *ImplicitSolver,
+	ImplicitProblemABC *ImplicitSolver,
 #endif
-		    ExternalBoundary *Exterior);
-int OutputAsParticleData(TopGridData &MetaData,
-			 LevelHierarchyEntry *LevelArray[],
-			 int RegionStart[], int RegionEnd[],
-			 FLOAT RegionStartCoordinates[],
-			 FLOAT RegionEndCoordinates[], int RegionLevel,
-			 char *OutputFileName);
+	ExternalBoundary *Exterior);
+int OutputAsParticleData(TopGridData &MetaData, LevelHierarchyEntry *LevelArray[],
+int RegionStart[], int RegionEnd[],
+FLOAT RegionStartCoordinates[],
+FLOAT RegionEndCoordinates[], int RegionLevel, char *OutputFileName);
 int InterpretCommandLine(int argc, char *argv[], char *myname,
-			 int &restart, int &debug, int &extract,
-			 int &InformationOutput,
-			 int &OutputAsParticleDataFlag,
-			 int &project, int &ProjectionDimension,
-			 int &ProjectionSmooth, int &velanyl,
-			 char *ParameterFile[],
-			 int RegionStart[], int RegionEnd[],
-			 FLOAT RegionStartCoordinates[],
-			 FLOAT RegionEndCoordinates[],
-			 int &Level, int &HaloFinderOnly,
-			 int &WritePotentialOnly,
-			 int &SmoothedDarkMatterOnly,
-			 int &WriteCoolingTimeOnly,
-			 int &WriteDustTemperatureOnly,
-			 int MyProcessorNumber);
+int &restart, int &debug, int &extract,
+int &InformationOutput,
+int &OutputAsParticleDataFlag,
+int &project, int &ProjectionDimension,
+int &ProjectionSmooth, int &velanyl, char *ParameterFile[],
+int RegionStart[], int RegionEnd[],
+FLOAT RegionStartCoordinates[],
+FLOAT RegionEndCoordinates[],
+int &Level, int &HaloFinderOnly,
+int &WritePotentialOnly,
+int &SmoothedDarkMatterOnly,
+int &WriteCoolingTimeOnly,
+int &WriteDustTemperatureOnly,
+int MyProcessorNumber);
 void AddLevel(LevelHierarchyEntry *Array[], HierarchyEntry *Grid, int level);
 int SetDefaultGlobalValues(TopGridData &MetaData);
 
-int WriteAllData(char *basename, int filenumber, HierarchyEntry *TopGrid,
-                 TopGridData &MetaData, ExternalBoundary *Exterior,
+int WriteAllData(char *basename, int filenumber, HierarchyEntry *TopGrid, TopGridData &MetaData,
+	ExternalBoundary *Exterior,
 #ifdef TRANSFER
-		 ImplicitProblemABC *ImplicitSolver,
+	ImplicitProblemABC *ImplicitSolver,
 #endif
-                 FLOAT WriteTime = -1);
+	FLOAT WriteTime = -1);
 
-int Group_WriteAllData(char *basename, int filenumber,
-		 HierarchyEntry *TopGrid, TopGridData &MetaData,
-		 ExternalBoundary *Exterior,
+int Group_WriteAllData(char *basename, int filenumber, HierarchyEntry *TopGrid, TopGridData &MetaData,
+	ExternalBoundary *Exterior,
 #ifdef TRANSFER
-		 ImplicitProblemABC *ImplicitSolver,
+	ImplicitProblemABC *ImplicitSolver,
 #endif
-		 FLOAT WriteTime = -1, int RestartDump = FALSE);
-
-
+	FLOAT WriteTime = -1, int RestartDump = FALSE);
 
 #ifdef FAST_SIB
-int SetBoundaryConditions(HierarchyEntry *Grids[], int NumberOfGrids,
-			  SiblingGridList SiblingList[],
-			  int level, TopGridData *MetaData,
-			  ExternalBoundary *Exterior, LevelHierarchyEntry *Level);
+int SetBoundaryConditions(HierarchyEntry *Grids[], int NumberOfGrids, SiblingGridList SiblingList[],
+int level, TopGridData *MetaData, ExternalBoundary *Exterior, LevelHierarchyEntry *Level);
 #else
 int SetBoundaryConditions(HierarchyEntry *Grids[], int NumberOfGrids,
-			  int level, TopGridData *MetaData,
-			  ExternalBoundary *Exterior, LevelHierarchyEntry *Level);
+		int level, TopGridData *MetaData,
+		ExternalBoundary *Exterior, LevelHierarchyEntry *Level);
 #endif
 
 int FastSiblingLocatorInitialize(ChainingMeshStructure *Mesh, int Rank,
-                                 int TopGridDims[]);
+int TopGridDims[]);
 int FastSiblingLocatorFinalize(ChainingMeshStructure *Mesh);
 
-int RebuildHierarchy(TopGridData *MetaData,
-		     LevelHierarchyEntry *LevelArray[], int level);
-int CopyOverlappingZones(grid* CurrentGrid, TopGridData *MetaData,
-			 LevelHierarchyEntry *LevelArray[], int level);
+int RebuildHierarchy(TopGridData *MetaData, LevelHierarchyEntry *LevelArray[], int level);
+int CopyOverlappingZones(grid* CurrentGrid, TopGridData *MetaData, LevelHierarchyEntry *LevelArray[], int level);
 int CommunicationReceiveHandler(fluxes **SubgridFluxesEstimate[] = NULL,
-				int NumberOfSubgrids[] = NULL,
-				int FluxFlag = FALSE,
-				TopGridData* MetaData = NULL);
+int NumberOfSubgrids[] = NULL,
+int FluxFlag = FALSE, TopGridData* MetaData = NULL);
 int CreateSiblingList(HierarchyEntry ** Grids, int NumberOfGrids, SiblingGridList *SiblingList,
-		      int StaticLevelZero,TopGridData * MetaData,int level);
+int StaticLevelZero, TopGridData * MetaData, int level);
 
-
-
-int GenerateGridArray(LevelHierarchyEntry *LevelArray[], int level,
-		      HierarchyEntry **Grids[]);
+int GenerateGridArray(LevelHierarchyEntry *LevelArray[], int level, HierarchyEntry **Grids[]);
 
 int CommunicationInitialize(Eint32 *argc, char **argv[]);
 int CommunicationFinalize();
 
 int CommunicationPartitionGrid(HierarchyEntry *Grid, int gridnum);
-int CommunicationCombineGrids(HierarchyEntry *OldHierarchy,
-			      HierarchyEntry **NewHierarchyPointer,
-			      FLOAT WriteTime);
+int CommunicationCombineGrids(HierarchyEntry *OldHierarchy, HierarchyEntry **NewHierarchyPointer,
+FLOAT WriteTime);
 void DeleteGridHierarchy(HierarchyEntry *GridEntry);
-int OutputPotentialFieldOnly(char *ParameterFile,
-			     LevelHierarchyEntry *LevelArray[],
-			     HierarchyEntry *TopGrid,
-			     TopGridData &MetaData,
-			     ExternalBoundary &Exterior,
+int OutputPotentialFieldOnly(char *ParameterFile, LevelHierarchyEntry *LevelArray[], HierarchyEntry *TopGrid,
+	TopGridData &MetaData, ExternalBoundary &Exterior,
 #ifdef TRANSFER
-		         ImplicitProblemABC *ImplicitSolver,
+	ImplicitProblemABC *ImplicitSolver,
 #endif
-			     int OutputDM);
-int OutputSmoothedDarkMatterOnly(char *ParameterFile,
-				 LevelHierarchyEntry *LevelArray[],
-				 HierarchyEntry *TopGrid,
-				 TopGridData &MetaData,
-				 ExternalBoundary &Exterior
+	int OutputDM);
+int OutputSmoothedDarkMatterOnly(char *ParameterFile, LevelHierarchyEntry *LevelArray[], HierarchyEntry *TopGrid,
+	TopGridData &MetaData, ExternalBoundary &Exterior
 #ifdef TRANSFER
-		       , ImplicitProblemABC *ImplicitSolver
+	, ImplicitProblemABC *ImplicitSolver
 #endif
-                 );
-int OutputCoolingTimeOnly(char *ParameterFile,
-			  LevelHierarchyEntry *LevelArray[],
-			  HierarchyEntry *TopGrid,
-			  TopGridData &MetaData,
-			  ExternalBoundary &Exterior
+	);
+int OutputCoolingTimeOnly(char *ParameterFile, LevelHierarchyEntry *LevelArray[], HierarchyEntry *TopGrid,
+	TopGridData &MetaData, ExternalBoundary &Exterior
 #ifdef TRANSFER
-			  , ImplicitProblemABC *ImplicitSolver
+	, ImplicitProblemABC *ImplicitSolver
 #endif
-			  );
-int OutputDustTemperatureOnly(char *ParameterFile,
-			      LevelHierarchyEntry *LevelArray[],
-			      HierarchyEntry *TopGrid,
-			      TopGridData &MetaData,
-			      ExternalBoundary &Exterior
+	);
+int OutputDustTemperatureOnly(char *ParameterFile, LevelHierarchyEntry *LevelArray[], HierarchyEntry *TopGrid,
+	TopGridData &MetaData, ExternalBoundary &Exterior
 #ifdef TRANSFER
-			      , ImplicitProblemABC *ImplicitSolver
+	, ImplicitProblemABC *ImplicitSolver
 #endif
-			  );
-
+	);
 
 void CommunicationAbort(int);
 void auto_show_compile_options(void);
 int FOF(TopGridData *MetaData, LevelHierarchyEntry *LevelArray[],
-	int WroteData=1, int FOFOnly=FALSE);
+int WroteData = 1, int FOFOnly = FALSE);
 
 #ifdef TASKMAP
 int GetNodeFreeMemory(void);
 #endif
 
 #ifdef TRANSFER
-int RadiativeTransferInitialize(char *ParameterFile,
-				HierarchyEntry &TopGrid,
-				TopGridData &MetaData,
-				ExternalBoundary &Exterior,
-				ImplicitProblemABC* &ImplicitSolver,
-				LevelHierarchyEntry *LevelArray[]);
+int RadiativeTransferInitialize(char *ParameterFile, HierarchyEntry &TopGrid, TopGridData &MetaData,
+	ExternalBoundary &Exterior, ImplicitProblemABC* &ImplicitSolver, LevelHierarchyEntry *LevelArray[]);
 #endif
 
 #ifdef USE_LCAPERF
@@ -255,7 +219,8 @@ void lcaperfInitialize (int max_level);
 
 void my_exit(int status);
 void PrintMemoryUsage(char *str);
-
+void writeEvtime(TopGridData* MetaData, double dtlev, double dtreb, double dtloop);
+int MHDProfileInitializeRestart(TopGridData *MetaData, LevelHierarchyEntry **LevelArray, HierarchyEntry *TopGrid);
 
 //  ENZO Main Program
 
@@ -267,49 +232,46 @@ void PrintMemoryUsage(char *str);
 
 Eint32 MAIN_NAME(Eint32 argc, char *argv[])
 {
+	int i;
 
-  int i;
+	// Initialize Communications
 
-  // Initialize Communications
+	CommunicationInitialize(&argc, &argv);
+	writeEvtime(NULL, 0, 0, 0);
 
-  CommunicationInitialize(&argc, &argv);
-
-  //#define DEBUG_MPI
+	//#define DEBUG_MPI
 #ifdef DEBUG_MPI
-  if (MyProcessorNumber == ROOT_PROCESSOR) {
-    int impi = 0;
-    char hostname[256];
-    gethostname(hostname, sizeof(hostname));
-    printf("PID %d on %s ready for debugger attach\n", getpid(), hostname);
-    fflush(stdout);
-    while (impi == 0)
-      sleep(5);
-  }
+	if (MyProcessorNumber == ROOT_PROCESSOR)
+	{
+		int impi = 0;
+		char hostname[256];
+		gethostname(hostname, sizeof(hostname));
+		printf("PID %d on %s ready for debugger attach\n", getpid(), hostname);
+		fflush(stdout);
+		while (impi == 0)
+		sleep(5);
+	}
 #endif
 
 #ifdef USE_GRACKLE
-  if (MyProcessorNumber == ROOT_PROCESSOR) {
-    grackle_verbose = 1;
-  }
+	if (MyProcessorNumber == ROOT_PROCESSOR)
+	{
+		grackle_verbose = 1;
+	}
 #endif
 
-  int int_argc;
-  int_argc = argc;
+	int int_argc;
+	int_argc = argc;
 
 #ifdef USE_MPI
-  double t_init0, t_init1;
+	double t_init0, t_init1;
 
-  t_init0 = MPI_Wtime();
+	t_init0 = MPI_Wtime();
 #endif /* USE_MPI */
 
-  // Create enzo timer and initialize default timers
-  enzo_timer = new enzo_timing::enzo_timer();
-  TIMER_REGISTER("CommunicationTranspose");
-  TIMER_REGISTER("ComputePotentialFieldLevelZero");
-  TIMER_REGISTER("RebuildHierarchy");
-  TIMER_REGISTER("SetBoundaryConditions");
-  TIMER_REGISTER("SolveHydroEquations");
-  TIMER_REGISTER("Total");
+	// Create enzo timer and initialize default timers
+	enzo_timer = new enzo_timing::enzo_timer();
+	TIMER_REGISTER("CommunicationTranspose");TIMER_REGISTER("ComputePotentialFieldLevelZero");TIMER_REGISTER("RebuildHierarchy");TIMER_REGISTER("SetBoundaryConditions");TIMER_REGISTER("SolveHydroEquations");TIMER_REGISTER("Total");
 
 #ifdef USE_LCAPERF
 
@@ -319,20 +281,20 @@ Eint32 MAIN_NAME(Eint32 argc, char *argv[])
 
 #endif
 
+	// Task Mapping
 
-  // Task Mapping
-
-  for (i = 0; i < MAX_NUMBER_OF_TASKS; i++ ) {
-    TaskMemory[i] = -1;
-  }
+	for(i = 0; i < MAX_NUMBER_OF_TASKS; i++)
+	{
+		TaskMemory[i] = -1;
+	}
 
 #ifdef TASKMAP
   GetNodeFreeMemory();
 #endif
 
-  /* The initial size of the memory pool in units of photon packages.
-     Increase the memory pool by 1/4th of the initial size as more
-     memory is needed. */
+	/* The initial size of the memory pool in units of photon packages.
+	 Increase the memory pool by 1/4th of the initial size as more
+	 memory is needed. */
 
 #ifdef TRANSFER
 #ifdef MEMORY_POOL
@@ -344,7 +306,7 @@ Eint32 MAIN_NAME(Eint32 argc, char *argv[])
 #endif
 #endif
 
-  // Begin
+	// Begin
 
 #ifdef MPI_INSTRUMENTATION
   Start_Wall_Time = MPI_Wtime();
@@ -355,50 +317,38 @@ Eint32 MAIN_NAME(Eint32 argc, char *argv[])
   ExternalBoundaryTypeIO = FALSE;
   ExternalBoundaryValueIO = FALSE;
 #else
-  ExternalBoundaryIO = FALSE;
-  ExternalBoundaryTypeIO = FALSE;
-  ExternalBoundaryValueIO = FALSE;
+	ExternalBoundaryIO = FALSE;
+	ExternalBoundaryTypeIO = FALSE;
+	ExternalBoundaryValueIO = FALSE;
 #endif
 
-  if (MyProcessorNumber == ROOT_PROCESSOR)
-    auto_show_compile_options();
+	if(MyProcessorNumber == ROOT_PROCESSOR)
+		auto_show_compile_options();
 
-  // Main declarations
+	// Main declarations
 
 //  TopGridData& MetaData = gMetaData; //[BH]
-  TopGridData MetaData; //[BH]
-  HierarchyEntry TopGrid;
-  ExternalBoundary Exterior;
-  LevelHierarchyEntry *LevelArray[MAX_DEPTH_OF_HIERARCHY];
+	TopGridData MetaData; //[BH]
+	HierarchyEntry TopGrid;
+	ExternalBoundary Exterior;
+	LevelHierarchyEntry *LevelArray[MAX_DEPTH_OF_HIERARCHY];
 
+	// Initialize
 
-  // Initialize
+	int restart = FALSE, OutputAsParticleDataFlag = FALSE, InformationOutput = FALSE, HaloFinderOnly = FALSE,
+			WritePotentialOnly = FALSE, SmoothedDarkMatterOnly = FALSE, WriteCoolingTimeOnly = FALSE,
+			WriteDustTemperatureOnly = FALSE, project = FALSE, ProjectionDimension = INT_UNDEFINED, ProjectionSmooth =
+			FALSE, velanyl = FALSE;
+	debug = FALSE;
+	extract = FALSE;
+	flow_trace_on = FALSE;
+	char *ParameterFile = NULL;
+	char *myname = argv[0];
 
-  int restart                  = FALSE,
-    OutputAsParticleDataFlag = FALSE,
-    InformationOutput        = FALSE,
-    HaloFinderOnly           = FALSE,
-    WritePotentialOnly       = FALSE,
-    SmoothedDarkMatterOnly   = FALSE,
-    WriteCoolingTimeOnly     = FALSE,
-    WriteDustTemperatureOnly = FALSE,
-    project                  = FALSE,
-    ProjectionDimension      = INT_UNDEFINED,
-    ProjectionSmooth         = FALSE,
-    velanyl                  = FALSE;
-  debug                        = FALSE;
-  extract                      = FALSE;
-  flow_trace_on                = FALSE;
-  char *ParameterFile          = NULL;
-  char *myname                 = argv[0];
+	int RegionStart[MAX_DIMENSION], RegionEnd[MAX_DIMENSION], RegionLevel;
+	FLOAT RegionStartCoordinates[MAX_DIMENSION], RegionEndCoordinates[MAX_DIMENSION];
 
-  int RegionStart[MAX_DIMENSION],
-      RegionEnd[MAX_DIMENSION],
-      RegionLevel;
-  FLOAT RegionStartCoordinates[MAX_DIMENSION],
-        RegionEndCoordinates[MAX_DIMENSION];
-
-  float Initialdt = 0;
+	float Initialdt = 0;
 
 #ifdef FLOW_TRACE
   char pid[MAX_TASK_TAG_SIZE];
@@ -411,10 +361,11 @@ Eint32 MAIN_NAME(Eint32 argc, char *argv[])
   flow_trace_on = TRUE;
 #endif
 
-  if (flow_trace_on) flow_trace1("ENZO");
+	if(flow_trace_on)
+		flow_trace1("ENZO");
 
 #ifdef TRANSFER
-  ImplicitProblemABC *ImplicitSolver;
+	ImplicitProblemABC *ImplicitSolver;
 #endif
 
 #ifdef MPI_INSTRUMENTATION
@@ -459,62 +410,63 @@ Eint32 MAIN_NAME(Eint32 argc, char *argv[])
   traceMEM = TRUE;
 #endif /* MEM_TRACE */
 
+	// START
 
-  // START
+	for(int level = 0; level < MAX_DEPTH_OF_HIERARCHY; level++)
+	{
+		LevelArray[level] = NULL;
+	}
 
-  for (int level = 0; level < MAX_DEPTH_OF_HIERARCHY; level++) {
-    LevelArray[level] = NULL;
-  }
+	// Interpret command-line arguments
 
+	if(InterpretCommandLine(int_argc, argv, myname, restart, debug, extract, InformationOutput,
+							OutputAsParticleDataFlag, project, ProjectionDimension, ProjectionSmooth, velanyl,
+							&ParameterFile, RegionStart, RegionEnd, RegionStartCoordinates, RegionEndCoordinates,
+							RegionLevel, HaloFinderOnly, WritePotentialOnly, SmoothedDarkMatterOnly,
+							WriteCoolingTimeOnly, WriteDustTemperatureOnly, MyProcessorNumber) == FAIL)
+	{
+		if(int_argc == 1)
+		{
+			my_exit(EXIT_SUCCESS);
+		}
+		else
+		{
+			my_exit(EXIT_FAILURE);
+		}
+	}
 
-  // Interpret command-line arguments
+	// If we need to read the parameter file as a restart file, do it now
 
-  if (InterpretCommandLine(int_argc, argv, myname, restart, debug, extract,
-			   InformationOutput, OutputAsParticleDataFlag,
-			   project, ProjectionDimension, ProjectionSmooth,  velanyl,
-			   &ParameterFile,
-			   RegionStart, RegionEnd,
-			   RegionStartCoordinates, RegionEndCoordinates,
-			   RegionLevel, HaloFinderOnly,
-			   WritePotentialOnly, SmoothedDarkMatterOnly,
-			   WriteCoolingTimeOnly, WriteDustTemperatureOnly,
-			   MyProcessorNumber) == FAIL) {
-    if(int_argc==1){
-      my_exit(EXIT_SUCCESS);
-    } else {
-      my_exit(EXIT_FAILURE);
-    }
-  }
+	if(restart || OutputAsParticleDataFlag || extract || InformationOutput || project || velanyl || WritePotentialOnly
+			|| WriteCoolingTimeOnly || SmoothedDarkMatterOnly)
+	{
 
+		SetDefaultGlobalValues(MetaData);
 
-  // If we need to read the parameter file as a restart file, do it now
+		if(debug)
+			printf("Reading parameter file %s\n", ParameterFile);
 
-  if (restart || OutputAsParticleDataFlag || extract || InformationOutput || project  ||  velanyl || WritePotentialOnly || WriteCoolingTimeOnly || SmoothedDarkMatterOnly) {
-
-    SetDefaultGlobalValues(MetaData);
-
-    if (debug) printf("Reading parameter file %s\n", ParameterFile);
-
-
-  // First expect to read in packed-HDF5
+		// First expect to read in packed-HDF5
 
 #ifdef USE_HDF5_GROUPS
-    bool ReadParticlesOnly = (HaloFinderOnly == TRUE);
-    if (Group_ReadAllData(ParameterFile, &TopGrid, MetaData, &Exterior, &Initialdt,
-			  ReadParticlesOnly) == FAIL) {
-      if (MyProcessorNumber == ROOT_PROCESSOR) {
-	fprintf(stderr, "Error in Group_ReadAllData %s\n", ParameterFile);
-	fprintf(stderr, "Probably not in a packed-HDF5 format. Trying other read routines.\n");
-      }
+		bool ReadParticlesOnly = (HaloFinderOnly == TRUE);
+		if(Group_ReadAllData(ParameterFile, &TopGrid, MetaData, &Exterior, &Initialdt, ReadParticlesOnly) == FAIL)
+		{
+			if(MyProcessorNumber == ROOT_PROCESSOR)
+			{
+				fprintf(stderr, "Error in Group_ReadAllData %s\n", ParameterFile);
+				fprintf(stderr, "Probably not in a packed-HDF5 format. Trying other read routines.\n");
+			}
 #endif
-      // If not packed-HDF5, then try usual HDF5 or HDF4
-      if (ReadAllData(ParameterFile, &TopGrid, MetaData, &Exterior, &Initialdt) == FAIL) {
-	if (MyProcessorNumber == ROOT_PROCESSOR)
-	  fprintf(stderr, "Error in ReadAllData %s.\n", ParameterFile);
-	my_exit(EXIT_FAILURE);
-      }
+			// If not packed-HDF5, then try usual HDF5 or HDF4
+			if(ReadAllData(ParameterFile, &TopGrid, MetaData, &Exterior, &Initialdt) == FAIL)
+			{
+				if(MyProcessorNumber == ROOT_PROCESSOR)
+					fprintf(stderr, "Error in ReadAllData %s.\n", ParameterFile);
+				my_exit(EXIT_FAILURE);
+			}
 #ifdef USE_HDF5_GROUPS
-    }
+		}
 #endif
 
 #ifdef NEW_PROBLEM_TYPES
@@ -528,151 +480,162 @@ Eint32 MAIN_NAME(Eint32 argc, char *argv[])
   }
 #endif
 
-    // TA: Changed this:
-    //    if (!ParallelRootGridIO && restart && TopGrid.NextGridThisLevel == NULL) {
-    // thinking that TopGrid.NextGridThisLevel == NULL when was ParallelRootGridIO == 0
-    // in the run that wrote this restart dump.
-    // Removing it however lets one to restart from a single grid
-    // but write parallel root grid io for all new outputs
+		// TA: Changed this:
+		//    if (!ParallelRootGridIO && restart && TopGrid.NextGridThisLevel == NULL) {
+		// thinking that TopGrid.NextGridThisLevel == NULL when was ParallelRootGridIO == 0
+		// in the run that wrote this restart dump.
+		// Removing it however lets one to restart from a single grid
+		// but write parallel root grid io for all new outputs
 
-    if (restart && TopGrid.NextGridThisLevel == NULL && !HaloFinderOnly) {
-      int ParallelRootGridIOHold = ParallelRootGridIO;
-      if (TopGrid.NextGridThisLevel == NULL && ParallelRootGridIO == TRUE)
-         ParallelRootGridIO = FALSE;
-      CommunicationPartitionGrid(&TopGrid, 0);  // partition top grid if necessary
-      ParallelRootGridIO = ParallelRootGridIOHold;
-    }
+		if(restart && TopGrid.NextGridThisLevel == NULL && !HaloFinderOnly)
+		{
+			int ParallelRootGridIOHold = ParallelRootGridIO;
+			if(TopGrid.NextGridThisLevel == NULL && ParallelRootGridIO == TRUE)
+				ParallelRootGridIO = FALSE;
+			CommunicationPartitionGrid(&TopGrid, 0);  // partition top grid if necessary
+			ParallelRootGridIO = ParallelRootGridIOHold;
+		}
 
-    if (MyProcessorNumber == ROOT_PROCESSOR) {
-      fprintf(stderr, "Successfully read ParameterFile %s.\n", ParameterFile);
-    }
+		if(MyProcessorNumber == ROOT_PROCESSOR)
+		{
+			fprintf(stderr, "Successfully read ParameterFile %s.\n", ParameterFile);
+		}
 
-    AddLevel(LevelArray, &TopGrid, 0);    // recursively add levels
+		AddLevel(LevelArray, &TopGrid, 0);    // recursively add levels
 
-    // Initialize streaming files if necessary
-    InitializeMovieFile(MetaData, TopGrid);
+		// Initialize streaming files if necessary
+		InitializeMovieFile(MetaData, TopGrid);
 
-  }
+		if(ProblemType == 501)
+		{
+			MHDProfileInitializeRestart(&MetaData, LevelArray, &TopGrid);
+		}
 
+		CommunicationBarrier();
+		writeEvtime(&MetaData, 0, 0, 0);
+		CommunicationBarrier();
 
-  // Information dump
+	}
 
-  if (InformationOutput) {
-    OutputLevelInformation(stdout, MetaData, LevelArray);
-    my_exit(EXIT_SUCCESS);
-  }
+	// Information dump
 
+	if(InformationOutput)
+	{
+		OutputLevelInformation(stdout, MetaData, LevelArray);
+		my_exit(EXIT_SUCCESS);
+	}
 
-  // Extract a grid subsection (doesn't return)
+	// Extract a grid subsection (doesn't return)
 
-  if (extract) {
-    ExtractSection(TopGrid, MetaData, LevelArray, &Exterior,
-		   RegionStart, RegionEnd,
-		   RegionStartCoordinates, RegionEndCoordinates, RegionLevel);
-  }
+	if(extract)
+	{
+		ExtractSection(TopGrid, MetaData, LevelArray, &Exterior, RegionStart, RegionEnd, RegionStartCoordinates,
+						RegionEndCoordinates, RegionLevel);
+	}
 
+	// Output fields as particle data
 
-  // Output fields as particle data
+	if(OutputAsParticleDataFlag)
+	{
+		if(OutputAsParticleData(MetaData, LevelArray, RegionStart, RegionEnd, RegionStartCoordinates,
+								RegionEndCoordinates, RegionLevel, "amr.particles") == FAIL)
+			my_exit(EXIT_FAILURE);
+		else
+			my_exit(EXIT_SUCCESS);
+	}
 
-  if (OutputAsParticleDataFlag) {
-    if (OutputAsParticleData(MetaData, LevelArray, RegionStart, RegionEnd,
-			     RegionStartCoordinates, RegionEndCoordinates,
-			     RegionLevel, "amr.particles") == FAIL)
-      my_exit(EXIT_FAILURE);
-    else
-      my_exit(EXIT_SUCCESS);
-  }
+	// Project 3D field to 2D plane
 
+	if(project == 1)
+	{
+		if(ProjectToPlane(MetaData, LevelArray, RegionStart, RegionEnd, RegionStartCoordinates, RegionEndCoordinates,
+							RegionLevel, ProjectionDimension, "amr.project", ProjectionSmooth, &Exterior) == FAIL)
+			my_exit(EXIT_FAILURE);
+		else
+			my_exit(EXIT_SUCCESS);
+	}
 
-  // Project 3D field to 2D plane
-
-  if (project == 1) {
-    if (ProjectToPlane(MetaData, LevelArray, RegionStart, RegionEnd,
-		     RegionStartCoordinates, RegionEndCoordinates,
-		     RegionLevel, ProjectionDimension, "amr.project",
-		     ProjectionSmooth, &Exterior) == FAIL)
-      my_exit(EXIT_FAILURE);
-    else
-      my_exit(EXIT_SUCCESS);
-  }
-
-  int dim, dim1, dim2;
-  char proj_name[100];
-  if (project == 2) {
-    dim1 = (ProjectionDimension == -1) ? 0 : ProjectionDimension;
-    dim2 = (ProjectionDimension == -1) ?
-      MetaData.TopGridRank : ProjectionDimension+1;
-    for (dim = dim1; dim < dim2; dim++) {
-      sprintf(proj_name, "project_%4.4d_%c.h5", MetaData.CycleNumber, 120+dim);
-      if (MyProcessorNumber == ROOT_PROCESSOR)
-	printf("ProjectToPlane: dimension %d.  Output %s\n", dim, proj_name);
-      if (ProjectToPlane2(ParameterFile, TopGrid, MetaData, LevelArray,
-			  RegionStart, RegionEnd,
-			  RegionStartCoordinates, RegionEndCoordinates,
-			  RegionLevel, dim, proj_name, ProjectionSmooth,
+	int dim, dim1, dim2;
+	char proj_name[100];
+	if(project == 2)
+	{
+		dim1 = (ProjectionDimension == -1) ? 0 : ProjectionDimension;
+		dim2 = (ProjectionDimension == -1) ? MetaData.TopGridRank : ProjectionDimension + 1;
+		for(dim = dim1; dim < dim2; dim++)
+		{
+			sprintf(proj_name, "project_%4.4d_%c.h5", MetaData.CycleNumber, 120 + dim);
+			if(MyProcessorNumber == ROOT_PROCESSOR)
+				printf("ProjectToPlane: dimension %d.  Output %s\n", dim, proj_name);
+			if(ProjectToPlane2(ParameterFile, TopGrid, MetaData, LevelArray, RegionStart, RegionEnd,
+								RegionStartCoordinates, RegionEndCoordinates, RegionLevel, dim, proj_name,
+								ProjectionSmooth,
 #ifdef TRANSFER
-			  ImplicitSolver,
+								ImplicitSolver,
 #endif
-			  &Exterior) == FAIL)
-	my_exit(EXIT_FAILURE);
-      else
-	my_exit(EXIT_SUCCESS);
-    } // ENDFOR dim
-  }
+								&Exterior) == FAIL)
+				my_exit(EXIT_FAILURE);
+			else
+				my_exit(EXIT_SUCCESS);
+		} // ENDFOR dim
+	}
 
-  if (HaloFinderOnly) {
-    InlineHaloFinder = TRUE;
-    HaloFinderSubfind = FALSE;
-    FOF(&MetaData, LevelArray, TRUE, TRUE);
-    my_exit(EXIT_SUCCESS);
-  }
+	if(HaloFinderOnly)
+	{
+		InlineHaloFinder = TRUE;
+		HaloFinderSubfind = FALSE;
+		FOF(&MetaData, LevelArray, TRUE, TRUE);
+		my_exit(EXIT_SUCCESS);
+	}
 
-  if (WritePotentialOnly) {
-    OutputPotentialFieldOnly(ParameterFile, LevelArray, &TopGrid,
-			     MetaData, Exterior,
+	if(WritePotentialOnly)
+	{
+		OutputPotentialFieldOnly(ParameterFile, LevelArray, &TopGrid, MetaData, Exterior,
 #ifdef TRANSFER
-		         ImplicitSolver,
+									ImplicitSolver,
 #endif
-                SmoothedDarkMatterOnly);
-    my_exit(EXIT_SUCCESS);
-  }
+									SmoothedDarkMatterOnly);
+		my_exit(EXIT_SUCCESS);
+	}
 
-  if (SmoothedDarkMatterOnly) {
-    OutputSmoothedDarkMatterOnly(ParameterFile, LevelArray, &TopGrid,
-				 MetaData, Exterior
+	if(SmoothedDarkMatterOnly)
+	{
+		OutputSmoothedDarkMatterOnly(ParameterFile, LevelArray, &TopGrid, MetaData, Exterior
 #ifdef TRANSFER
-		       , ImplicitSolver
+										,
+										ImplicitSolver
 #endif
-               );
-    my_exit(EXIT_SUCCESS);
-  }
+										);
+		my_exit(EXIT_SUCCESS);
+	}
 
-  if (WriteCoolingTimeOnly) {
-    OutputCoolingTimeOnly(ParameterFile, LevelArray, &TopGrid,
-			  MetaData, Exterior
+	if(WriteCoolingTimeOnly)
+	{
+		OutputCoolingTimeOnly(ParameterFile, LevelArray, &TopGrid, MetaData, Exterior
 #ifdef TRANSFER
-			  , ImplicitSolver
+								,
+								ImplicitSolver
 #endif
-			  );
-    my_exit(EXIT_SUCCESS);
-  }
+								);
+		my_exit(EXIT_SUCCESS);
+	}
 
-  if (WriteDustTemperatureOnly) {
-    OutputDustTemperatureOnly(ParameterFile, LevelArray, &TopGrid,
-			      MetaData, Exterior
+	if(WriteDustTemperatureOnly)
+	{
+		OutputDustTemperatureOnly(ParameterFile, LevelArray, &TopGrid, MetaData, Exterior
 #ifdef TRANSFER
-			      , ImplicitSolver
+									,
+									ImplicitSolver
 #endif
-			  );
-    my_exit(EXIT_SUCCESS);
-  }
+									);
+		my_exit(EXIT_SUCCESS);
+	}
 
-  /* Do vector analysis */
+	/* Do vector analysis */
 
-  if (velanyl) {
-    VelAnyl = 1;
-  //   RebuildHierarchy(&MetaData, LevelArray, 0);
-
+	if(velanyl)
+	{
+		VelAnyl = 1;
+		//   RebuildHierarchy(&MetaData, LevelArray, 0);
 
 //     for (int level = 0; level < MAX_DEPTH_OF_HIERARCHY; level++) {
 //       HierarchyEntry **Grids;
@@ -726,39 +689,42 @@ Eint32 MAIN_NAME(Eint32 argc, char *argv[])
 //       return FAIL;
 //     }
 //     my_exit(EXIT_SUCCESS);
-  }
+	}
 
+	// Normal start: Open and read parameter file
 
-  // Normal start: Open and read parameter file
+	PrintMemoryUsage("Call initialize");
 
-  PrintMemoryUsage("Call initialize");
+	if(!restart)
+	{
 
-
-  if (!restart) {
-
-    if (InitializeNew(ParameterFile, TopGrid, MetaData, Exterior, &Initialdt) == FAIL) {
-      if (MyProcessorNumber == ROOT_PROCESSOR)
-	fprintf(stderr, "Error in Parameter File %s.\n", ParameterFile);
-      my_exit(EXIT_FAILURE);
-    }
-    else {
-      if (MyProcessorNumber == ROOT_PROCESSOR)
-	fprintf(stderr, "Successfully read in parameter file %s.\n", ParameterFile);
-      //      Exterior.Prepare(TopGrid.GridData);
-      AddLevel(LevelArray, &TopGrid, 0);    // recursively add levels
-    }
-    printHierarchy(LevelArray);
-
+		if(InitializeNew(ParameterFile, TopGrid, MetaData, Exterior, &Initialdt) == FAIL)
+		{
+			if(MyProcessorNumber == ROOT_PROCESSOR)
+				fprintf(stderr, "Error in Parameter File %s.\n", ParameterFile);
+			my_exit(EXIT_FAILURE);
+		}
+		else
+		{
+			if(MyProcessorNumber == ROOT_PROCESSOR)
+				fprintf(stderr, "Successfully read in parameter file %s.\n", ParameterFile);
+			//      Exterior.Prepare(TopGrid.GridData);
+			AddLevel(LevelArray, &TopGrid, 0);    // recursively add levels
+		}
+//    printHierarchy(LevelArray);
 
 #ifdef USE_MPI
-    CommunicationBarrier();
-    t_init1 = MPI_Wtime();
-    if (MyProcessorNumber == ROOT_PROCESSOR)
-      fprintf(stderr, "INITIALIZATION TIME = %16.8e\n", (t_init1-t_init0));
-    CommunicationBarrier();
+		CommunicationBarrier();
+		t_init1 = MPI_Wtime();
+		if(MyProcessorNumber == ROOT_PROCESSOR)
+		{
+			fprintf(stderr, "INITIALIZATION TIME = %16.8e\n", (t_init1 - t_init0));
+		}
+		writeEvtime(&MetaData, 0, 0, 0);
+		CommunicationBarrier();
 #endif /* USE_MPI */
 
-  }
+	}
 
 #ifdef ECUDA
   if (UseCUDA) {
@@ -769,17 +735,17 @@ Eint32 MAIN_NAME(Eint32 argc, char *argv[])
   }
 #endif
 
-  /* Initialize the radiative transfer */
+	/* Initialize the radiative transfer */
 
 #ifdef TRANSFER
-  if (RadiativeTransferInitialize(ParameterFile, TopGrid, MetaData, Exterior,
-				  ImplicitSolver, LevelArray) == FAIL) {
-    fprintf(stderr, "Error in RadiativeTransferInitialize.\n");
-    my_exit(EXIT_FAILURE);
-  }
+	if(RadiativeTransferInitialize(ParameterFile, TopGrid, MetaData, Exterior, ImplicitSolver, LevelArray) == FAIL)
+	{
+		fprintf(stderr, "Error in RadiativeTransferInitialize.\n");
+		my_exit(EXIT_FAILURE);
+	}
 #endif
 
-  PrintMemoryUsage("Call evolve hierarchy");
+	PrintMemoryUsage("Call evolve hierarchy");
 
 #ifdef USE_PYTHON
   // We initialize our Python interface now
@@ -787,46 +753,51 @@ Eint32 MAIN_NAME(Eint32 argc, char *argv[])
   InitializePythonInterface(argc, argv);
 #endif
 
-  MHDCT_EnergyToggle(TopGrid, MetaData, &Exterior, LevelArray);
+	MHDCT_EnergyToggle(TopGrid, MetaData, &Exterior, LevelArray);
 
-  // Call the main evolution routine
-  if (debug) fprintf(stderr, "INITIALDT ::::::::::: %16.8e\n", Initialdt);
-  try {
-  if (EvolveHierarchy(TopGrid, MetaData, &Exterior,
+	// Call the main evolution routine
+	if(debug)
+		fprintf(stderr, "INITIALDT ::::::::::: %16.8e\n", Initialdt);
+	try
+	{
+		if(EvolveHierarchy(TopGrid, MetaData, &Exterior,
 #ifdef TRANSFER
-		      ImplicitSolver,
+							ImplicitSolver,
 #endif
-		      LevelArray, Initialdt) == FAIL) {
-    if (MyProcessorNumber == ROOT_PROCESSOR) {
-      fprintf(stderr, "Error in EvolveHierarchy.\n");
-    }
-    // Close the streaming files
-    if (MovieSkipTimestep != INT_UNDEFINED) {
-      fprintf(stderr, "Closing movie file.\n");
-      MetaData.AmiraGrid.AMRHDF5Close();
-      MetaData.AmiraGrid.AMRHDF5CloseSeparateParticles();
-    }
-    my_exit(EXIT_FAILURE);
-  }
-  else
-  {
-    if (MyProcessorNumber == ROOT_PROCESSOR) {
-      fprintf(stderr, "Successful run, exiting.\n");
-    }
-  }
-  } catch(EnzoFatalException&) {
-    fprintf(stderr, "Failure reported on processor %"ISYM"\n",
-                MyProcessorNumber);
-    CommunicationAbort(EXIT_FAILURE);
-  }
+							LevelArray,
+							Initialdt) == FAIL)
+		{
+			if(MyProcessorNumber == ROOT_PROCESSOR)
+			{
+				fprintf(stderr, "Error in EvolveHierarchy.\n");
+			}
+			// Close the streaming files
+			if(MovieSkipTimestep != INT_UNDEFINED)
+			{
+				fprintf(stderr, "Closing movie file.\n");
+				MetaData.AmiraGrid.AMRHDF5Close();
+				MetaData.AmiraGrid.AMRHDF5CloseSeparateParticles();
+			}
+			my_exit(EXIT_FAILURE);
+		}
+		else
+		{
+			if(MyProcessorNumber == ROOT_PROCESSOR)
+			{
+				fprintf(stderr, "Successful run, exiting.\n");
+			}
+		}
+	}
+	catch(EnzoFatalException&)
+	{
+		fprintf(stderr, "Failure reported on processor %"ISYM"\n", MyProcessorNumber);
+		CommunicationAbort(EXIT_FAILURE);
+	}
 
+	if(flow_trace_on)
+		flow_trace2("ENZO");
 
-  if (flow_trace_on) flow_trace2("ENZO");
-
-
-
-
-  // Terminate
+	// Terminate
 
 #ifdef MPI_INSTRUMENTATION
 
@@ -893,43 +864,80 @@ Eint32 MAIN_NAME(Eint32 argc, char *argv[])
     fclose(flow_trace_fptr);
 #endif
 
-  my_exit(EXIT_SUCCESS);
+	my_exit(EXIT_SUCCESS);
 
 }
 
 void my_exit(int status)
 {
-  // Exit gracefully if successful; abort on error
+	// Exit gracefully if successful; abort on error
 #ifdef USE_PYTHON
   FinalizePythonInterface();
 #endif
 
-  if (status == EXIT_SUCCESS) {
+	if(status == EXIT_SUCCESS)
+	{
 
-    if (MyProcessorNumber==0) {
-      fprintf (stdout,"%s:%d Exiting.\n", __FILE__,__LINE__);
-    }
+		if(MyProcessorNumber == 0)
+		{
+			fprintf(stdout, "%s:%d Exiting.\n", __FILE__, __LINE__);
+		}
 
-    CommunicationFinalize();
+		CommunicationFinalize();
 
-    exit(status);
+		exit(status);
 
-  } else if (status == EXIT_FAILURE) {
+	}
+	else if(status == EXIT_FAILURE)
+	{
 
-    fprintf (stderr,"%s:%d %"ISYM" ABORT ON EXIT_FAILURE!\n",
-	     __FILE__,__LINE__,MyProcessorNumber);
+		fprintf(stderr, "%s:%d %"ISYM" ABORT ON EXIT_FAILURE!\n",
+		__FILE__,
+				__LINE__, MyProcessorNumber);
 
-    ENZO_FAIL("my_exit has been called.");
-    CommunicationAbort(status);
+		ENZO_FAIL("my_exit has been called.");
+		CommunicationAbort(status);
 
-  } else {
+	}
+	else
+	{
 
-    fprintf (stderr,"%s:%d %"ISYM" ABORT ON UNKNOWN EXIT VALUE %"ISYM"!\n",
-	     __FILE__,__LINE__,MyProcessorNumber,status);
+		fprintf(stderr, "%s:%d %"ISYM" ABORT ON UNKNOWN EXIT VALUE %"ISYM"!\n",
+		__FILE__,
+				__LINE__, MyProcessorNumber, status);
 
-    ENZO_FAIL("my_exit has been called without a known exit value.");
-    CommunicationAbort(status);
+		ENZO_FAIL("my_exit has been called without a known exit value.");
+		CommunicationAbort(status);
 
-  }
+	}
 }
 
+void writeEvtime(TopGridData* MetaData, double dtlev, double dtreb, double dtloop)
+{
+	if(MyProcessorNumber != ROOT_PROCESSOR)
+		return;
+
+	FILE *evlog = fopen("Evtime", "a");
+
+	double t_now = MPI_Wtime();
+	double dwt = t_now - LastCycleWTime;
+	LastCycleWTime = t_now;
+
+	if(MetaData == NULL)
+	{
+		fprintf(evlog, ""
+				"# MPI time resolution = %16.9e seconds\n"
+				"#\n"
+				"#   1           2                 3                  4                5                    6\n"
+				"# Cycle#   tlev1-tlev0       treb1-treb0       tloop1-tloop0     Problem Time      Wall Time Elapsed\n"
+				"#           [seconds]         [seconds]          [seconds]       [code units]          [seconds]\n",
+				MPI_Wtick());
+	}
+	else
+	{
+		fprintf(evlog, "%8"ISYM "  %16.9e  %16.9e  %16.9e  %16.9e  %19.9e\n", MetaData->CycleNumber, dtlev, dtreb,
+				dtloop, MetaData->Time, dwt);
+	}
+
+	fclose(evlog);
+}

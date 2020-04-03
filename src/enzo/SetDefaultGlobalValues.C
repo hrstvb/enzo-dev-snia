@@ -18,6 +18,7 @@
 
 #include "myenzoutils.h"
 #include "preincludes.h"
+#include "mylimiters.h"
 #include "macros_and_parameters.h"
 #include "typedefs.h"
 #include "phys_constants.h"
@@ -278,7 +279,12 @@ int SetDefaultGlobalValues(TopGridData &MetaData)
     for (dim = 0; dim < MAX_DIMENSION; dim++) {
       AvoidRefineRegionLeftEdge[i][dim] = FLOAT_UNDEFINED;
       AvoidRefineRegionRightEdge[i][dim] = FLOAT_UNDEFINED;
+      StaticRefineShellCenter[i][dim] = 0;
     }
+    StaticRefineShellInnerRadius[i] = -1;
+    StaticRefineShellOuterRadius[i] = -2;
+    StaticRefineShellLevel      [i] = MAX_DEPTH_OF_HIERARCHY;
+    StaticRefineShellWithBuffer [i] = 0;
   }
 
   /* For evolving refinement regions. */
@@ -531,6 +537,8 @@ int SetDefaultGlobalValues(TopGridData &MetaData)
 
   ZEUSLinearArtificialViscosity    = 0.0;
   ZEUSQuadraticArtificialViscosity = 2.0;
+  ZEUS_IncludeViscosityTerm        = 1;
+  ZEUS_IncludeDivergenceTerm       = 1;
   UseMinimumPressureSupport        = FALSE;
   MinimumPressureSupportParameter  = 100.0;
 
@@ -1000,9 +1008,12 @@ int SetDefaultGlobalValues(TopGridData &MetaData)
   SkipBurningOperator                  = 0;   // If true the nickel density advects as a color field.		//[BH]
   AllowUnburning                       = 0;   // Allow negative  burning fraction to take away from the Energy  //[BH]
   CallSetBoundaryConditionsAfterBurning= 1;                                                                     //[BH]
+  BurningDiffusionMethod			   = 1;   // 3D 27 point stencil
   BurningDiffusionRate                 = 1;   //[BH]
   BurningDiffusionRateReduced          = 0;   //[BH]
   BurningDiffusionCourantSafetyFactor  = 0.5; //Courant safety number = safety factor * dx^2 / BurningDiffusionRate //[BH]
+  BurningMinFractionForDiffusion       = 0.0;
+  BurningNonDistributedMinDensity      = 0.0;
   BurningReactionRate                  = 1;   // This is the burning reaction rate value used when the burned   //[BH]
   BurningReactionRateReduced           = 0;   //  fraction is between 0 and 1 and inside the (Lo, Hi) limits    //[BH]
   BurningReactionBurnedFractionLimitLo = 0.3; //  set by the corresponding BurningReactionBurnedFractionLimit*  //[BH]
@@ -1010,11 +1021,28 @@ int SetDefaultGlobalValues(TopGridData &MetaData)
   BurningEnergyRelease                 = 0.0476929; //[keV] TODO: convert units, per barion etc.                //[BH]
   BurningEnergyRelativeGrowthLimit     = -1;//Ignore condition [BH]
   InternalEnergyRelativeGrowthLimit    = -1; //Ignore condition [BH]
-  TotalEnergyRelativeGrowthLimit		= -1; //Ignore condition [BH]
-  BurnedFractionGrowthLimit		= -1; //Ignore condition [BH]
+  TotalEnergyRelativeGrowthLimit       = -1; //Ignore condition [BH]
+  BurnedFractionGrowthLimit            = -1; //Ignore condition [BH]
+  PerturbationOnRestart         = 0;     //[BH]
+  InitialBurnedRadius           = 0;     //[BH]
+  PerturbationAmplitude         = 0;     //[BH]
+  PerturbationWavelength        = 0;     //[BH]
+  PerturbationMethod            = 0;     //[BH]
+  PerturbationBottomSize        = 1.0;   //[BH]
+  PerturbationTopSize           = 0.0;   //[BH]
+  PerturbationBottomDensity     = 0;     //[BH]
+  PerturbationTopDensity        = 0;     //[BH]
+  PerturbationVelocity          = 0;     //[BH]
+//  triSphere                     = NULL;  //[BH]
+  InitialBurnedRegionSustain	= 0;     //[BH]
+  InitRadialPressureFromCentral = 0;     //[BH]
+  InitBWithVectorPotential 		= 0;     //[BH]
+  RefineOnStartup               = 0;     //[BH]
 
   //Spherical gravity parameters
   UseSphericalGravity = 0;
+  SphericalGravityInnerCutoffRaduis = -1;
+  SphericalGravityOuterCutoffRaduis = -1;
   SphericalGravityActualNumberOfBins = -1;
   SphericalGravityBinCenters = NULL;
   SphericalGravityBinLeftEdges = NULL;
@@ -1049,13 +1077,36 @@ int SetDefaultGlobalValues(TopGridData &MetaData)
   SphericalGravityUniformBins = 1;
   SphericalGravityWritePotentialSwitch = 0;
 
-  SphericalGravityInterpAccelOrder = 1;
+  SphericalGravityInterpAccelMethod = 1;
   SphericalGravityBinAccels = NULL;
   SphericalGravityBinAccelSlopes = NULL;
 
   //Spherica gravity, multilevel
   SphericalGravityBinsPerCell = 1.0;
   SphericalGravityDebug = 0;
+  TopBurnedRadiusEstimate = -1;
+  OuterVelocitiesDistFromEdge = -1.0;
+  OuterVelocitiesSphereRadius = -1;
+  OuterVelocitiesSphereRadius2 = -1;
+  OuterVelocitiesClearInward = 1;
+  OuterVelocitiesClearOutward = 0;
+  OuterVelocitiesClearTangential = 0;
+  arr_set(OuterVelocitiesClearInGrid_SolveMHD_Li, 10, 0);
+  arr_set(OuterVelocitiesClearInSetBoundaryCondition, 10, 0);
+  arr_set(OuterVelocitiesClearInZeusSource, 10, 0);
+  arr_set(OuterVelocitiesClearInRKStep, 10, 0);
+  OuterVelocitiesClearAtZeusSourceBegin = 0;
+  OuterVelocitiesClearAtZeusSourceBeforeDiv = 0;
+  OuterVelocitiesClearAtZeusSourceEnd = 0;
+  OuterVelocitiesClearAtRKStep1Begin = 0;
+  OuterVelocitiesClearAtRKStep1End   = 0;
+  OuterVelocitiesClearAtRKStep2Begin = 0;
+  OuterVelocitiesClearAtRKStep2End   = 0;
+  DensityProfileMaxRadius  = -1;
+  DensityProfileMinDensity = -1;
+
+  TimeStepIgnoreCubeHalfSize = -1;
+  TimeStepIgnoreSphereRadius = -1;
 
 //  UseSpherGrav = UseSphericalGravity && SphericalGravityMaxHierarchyLevel > 0;
 //  SpherGravActualNumberOfBins=NULL;
@@ -1090,6 +1141,9 @@ int SetDefaultGlobalValues(TopGridData &MetaData)
 //  SpherGravBinAccelSlopes=NULL;
 
   BA[0] = BA[1] = BA[2] = 0;
+  MHD_LI_GRAVITY_AFTER_PLMPRED = 0;
+  arr_set(MyLimiterX12Y12[0], 40, 0);
+  limiter1nInit();
 
   return SUCCESS;
 }

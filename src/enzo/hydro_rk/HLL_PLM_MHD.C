@@ -4,7 +4,7 @@
 /
 /  written by: Peng Wang
 /  date:       June, 2007
-/  modified1:  Tom Abel 10/2009 
+/  modified1:  Tom Abel 10/2009
 /              added ConservativeReconstruction
 /
 /
@@ -14,6 +14,8 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <math.h>
+
+#include "../DebugMacros.h"
 
 #include "ErrorExceptions.h"
 #include "macros_and_parameters.h"
@@ -26,28 +28,30 @@
 #include "EOS.h"
 #include "../hydro_rk/ReconstructionRoutines.h"
 
-int plm(float **prim, float **priml, float **primr, int ActiveSize, int Neq);
+int plm(float **prim, float **priml, float **primr, int ActiveSize, int Neq, int debug);
 int cons_plm(float **prim, float **priml, float **primr, int ActiveSize, int Neq, char direc);
 inline void plm_point(float &vm1, float &v, float &vp1, float &vl_plm);
 int plm_species(float **prim, int is, float **species, float *flux0, int ActiveSize);
 int plm_color(float **prim, int is, float **color, float *flux0, int ActiveSize);
-int hll_mhd(float **FluxLine, float **priml, float **primr, float **prim, int ActiveSize);
+int hll_mhd(float **FluxLine, float **priml, float **primr, float **prim, int ActiveSize, FLOAT cellWidth, int debug);
 
 int HLL_PLM_MHD(float **prim, float **priml, float **primr,
 		float **species, float **colors,  float **FluxLine, int ActiveSize,
-		char direc, int jj, int kk)
+		char direc, int jj, int kk, FLOAT cellWidth, int debug)
 {
-
   // compute priml and primr
   if (ConservativeReconstruction == 1)
     cons_plm(prim, priml, primr, ActiveSize, 9, direc);
   else
-    plm(prim, priml, primr, ActiveSize, 9);
+    plm(prim, priml, primr, ActiveSize, 9, debug);
 
   // compute FluxLine
-  if (hll_mhd(FluxLine, priml, primr, prim, ActiveSize)==FAIL) {
+  if (hll_mhd(FluxLine, priml, primr, prim, ActiveSize, cellWidth, debug)==FAIL) {
     return FAIL;
   }
+
+  if(UseBurning)      //[BH]
+	  return SUCCESS; //[BH]
 
   if (NSpecies > 0) {
     plm_species(prim, 9, species, FluxLine[iD], ActiveSize);
@@ -62,10 +66,10 @@ int HLL_PLM_MHD(float **prim, float **priml, float **primr,
     plm_color(prim, 9, colors, FluxLine[iD], ActiveSize);
     for (int field = NEQ_MHD+NSpecies; field < NEQ_MHD+NSpecies+NColor; field++) {
       for (int i = 0; i < ActiveSize+1; i++) {
-	FluxLine[field][i] = FluxLine[iD][i]*colors[field-NEQ_MHD-NSpecies][i];
+       FluxLine[field][i] = FluxLine[iD][i]*colors[field-NEQ_MHD-NSpecies][i];
       }
     }
   }
-  
+
   return SUCCESS;
 }

@@ -14,7 +14,7 @@
      &     wa_bt1, wa_bt2,pre_a, gamma, v_eig, l_eigv,r_eigv,
      &     v_c_af, v_cf_af, csmin, choice)
       implicit none
-#include "fortran_types.def"  
+#include "fortran_types.def"
       INTG_PREC choice
       R_PREC wa_un, wa_ut1,wa_ut2, wa_bn, wa_bt1, wa_bt2, rho_a, pre_a
       R_PREC l_eigv(8,8), r_eigv(8,8), v_eig(8), gamma
@@ -29,7 +29,7 @@
 c     INTG_PREC j, k
       INTG_PREC printflag
       common /printff/printflag
-      
+
       sqhalf = 0.7071067811865475244_RKIND
       gm1 = gamma - 1._RKIND
       rho_a_inv = 1._RKIND/rho_a
@@ -43,8 +43,8 @@ c     INTG_PREC j, k
       tmp3   = sqrt(tmp3)
       v_cf_af = sqrt(0.5_RKIND*(tmp2+tmp3))
       v_c_af  = sqrt(v_c_af2)
-      v_cf_af = max(v_cf_af, v_c_af)           
-c 
+      v_cf_af = max(v_cf_af, v_c_af)
+c
 c...  eigenvalue
       v_eig(5) = wa_un + v_cf_af
       v_eig(7) = wa_un - v_cf_af
@@ -64,9 +64,9 @@ c...  eigenvalue
       v_eig(8) = wa_un
 
       vv_a = wa_un*wa_un + wa_ut1*wa_ut1 + wa_ut2*wa_ut2
-c     
+c
 c...  renormalization coefficients
-c     
+c
 
       v_tmp1 = sqrt(wa_bt1*wa_bt1+wa_bt2*wa_bt2)
       if (v_tmp1.gt.0._RKIND) then
@@ -76,11 +76,11 @@ c
          v_betay = sqhalf
          v_betaz = sqhalf
       end if
-      
+
       tmp3 = v_cf_af*v_cf_af - v_cs_af*v_cs_af
       if (tmp3 .gt. 0._RKIND) then
          v_alphaf = (v_c_af**2-v_cs_af*v_cs_af)/tmp3
-      else 
+      else
          v_alphaf = sqhalf
       end if
       v_alphas = 1._RKIND - v_alphaf
@@ -89,9 +89,9 @@ c
       v_alphas = sqrt(v_alphas)
 
       v_sqrt_rho_af = sqrt(rho_a)
-c     
+c
 c...  Eigenvectors
-c     
+c
       gm1_c2 = gm1/(v_c_af2)
       tmp1 = 1._RKIND/(2._RKIND*rho_a*v_c_af2)
       tmp2 = sqhalf/rho_a
@@ -119,7 +119,7 @@ c
       l_eigv(5,2) = 0._RKIND
       l_eigv(6,2) =  (v_betaz*tmp3)
       l_eigv(7,2) = -(v_betay*tmp3)
-      l_eigv(8,2) = 0._RKIND      
+      l_eigv(8,2) = 0._RKIND
                                 ! Left eigenvector for Alfven wave -
       l_eigv(1,3) = gammaa*tmp2
       l_eigv(2,3) = 0._RKIND
@@ -136,7 +136,7 @@ c
       tmp5 = v_alphas*gm1*vv_a/2._RKIND
       tmp6 = tmp1*v_alphas
       tmp7 = tmp1*v_alphaf
-      
+
                                 ! Left eigenvector for Slow magnetosonic wave +
       l_eigv(1,4) = tmp1*(tmp5-gammas)
       l_eigv(2,4) = tmp6*(-wa_un*gm1+v_cs_af)
@@ -155,7 +155,7 @@ c
       l_eigv(6,6) = l_eigv(6,4)
       l_eigv(7,6) = l_eigv(7,4)
       l_eigv(8,6) = l_eigv(8,4)
-      
+
       if (choice.eq.0) then
          tmp5 = v_alphaf*gm1*vv_a/2._RKIND
                                 ! Left eigenvector for Fast magnetosonic wave +
@@ -177,9 +177,9 @@ c
          l_eigv(7,7) = l_eigv(7,5)
          l_eigv(8,7) = l_eigv(8,5)
       end if
-c     
+c
 c$$$c...  added the eight wave system
-      
+
                                 ! Left eigenvector for Divergence wave
       l_eigv(1,8) = 0._RKIND
       l_eigv(2,8) = 0._RKIND
@@ -212,7 +212,7 @@ c$$$c...  added the eight wave system
       r_eigv(2,6) =  v_betaz*v_sqrt_rho_af*tmp1
       r_eigv(2,7) = -v_betay*v_sqrt_rho_af*tmp1
       r_eigv(2,8) =  tmp6 + tmp7
-                                ! Right eigenvector for Alfven wave -  
+                                ! Right eigenvector for Alfven wave -
       r_eigv(3,3) =  r_eigv(2,3)
       r_eigv(3,4) =  r_eigv(2,4)
       r_eigv(3,6) = -r_eigv(2,6)
@@ -257,7 +257,7 @@ c$$$c...  added the eight wave system
          r_eigv(5,4) = tmp6*wa_ut2 - tmp1*v_cs_af*tmp4
          r_eigv(5,6) = tmp8*v_betay
          r_eigv(5,7) = tmp8*v_betaz
-         r_eigv(5,8) = tmp5 + gammaf      
+         r_eigv(5,8) = tmp5 + gammaf
                                 ! Right eigenvector for Fast magnetosonic wave-
          r_eigv(7,6) = r_eigv(5,6)
          r_eigv(7,7) = r_eigv(5,7)
@@ -267,7 +267,7 @@ c$$$c...  added the eight wave system
          r_eigv(7,4) = tmp6*wa_ut2 + tmp1*v_cs_af*tmp4
          r_eigv(7,8) = tmp5 - gammaf
       end if
-c     
+c
 c...  added the eight wave system
       r_eigv(1,5) =0._RKIND
       r_eigv(2,5) =0._RKIND
@@ -295,11 +295,11 @@ c...  added the eight wave system
      $     v_c_af, csmin, choice)
 c...................................................................
       implicit none
-#include "fortran_types.def"  
+#include "fortran_types.def"
       INTG_PREC choice
       R_PREC wa_un, wa_ut1,wa_ut2, wa_bn, wa_bt1, wa_bt2, rho_a, pre_a
       R_PREC l_eigv(8,8), r_eigv(8,8), v_eig(8), gamma
-      R_PREC rho_a_inv, bb_a, vv_a, v_c_af, v_a_af, 
+      R_PREC rho_a_inv, bb_a, vv_a, v_c_af, v_a_af,
      &     v_cf_af, v_cs_af,csmin
       R_PREC v_tmp1, v_alphaf, v_alphas, v_betay, v_betaz, tmp1
       R_PREC v_sqrt_rho_af
@@ -309,7 +309,7 @@ c...................................................................
       INTG_PREC i
       INTG_PREC printflag
       common /printff/printflag
-      
+
       sqhalf = 0.7071067811865475244_RKIND
       gm1 = gamma - 1._RKIND
       rho_a_inv = 1._RKIND/rho_a
@@ -326,7 +326,7 @@ c...................................................................
       v_c_af  = max(v_c_af,max(abs(wa_un),abs(wa_ut1),
      $     abs(wa_ut2))*wpar)
       v_cf_af = max(v_cf_af, v_c_af)
-c     
+c
 c...  engienvalue
       v_eig(5) = wa_un + v_cf_af
       v_eig(7) = wa_un - v_cf_af
@@ -346,9 +346,9 @@ c...  engienvalue
       v_eig(6) = wa_un - v_cs_af
 
       vv_a = wa_un*wa_un + wa_ut1*wa_ut1 + wa_ut2*wa_ut2
-c     
+c
 c...  Non-dimensional scaling factors
-c     
+c
 
       v_tmp1 = sqrt(wa_bt1*wa_bt1+wa_bt2*wa_bt2)
       if (v_tmp1.gt.0._RKIND) then
@@ -358,11 +358,11 @@ c
          v_betay = sqhalf
          v_betaz = sqhalf
       end if
-      
+
       tmp3 = v_cf_af*v_cf_af - v_cs_af*v_cs_af
       if (tmp3 .gt. 0._RKIND) then
          v_alphaf = (v_c_af**2-v_cs_af*v_cs_af)/tmp3
-      else 
+      else
          v_alphaf = sqhalf
       end if
       v_alphas = 1._RKIND - v_alphaf
@@ -371,9 +371,9 @@ c
       v_alphas = sqrt(v_alphas)
 
       v_sqrt_rho_af = sqrt(rho_a)
-c     
+c
 c...  Eigenvectors
-c     
+c
       rc2 = 1_RKIND/(v_c_af*v_c_af)
       tmp1 = 1._RKIND/(2._RKIND*rho_a*v_c_af*v_c_af)
       tmp2 = 1._RKIND/(sqrt(2._RKIND)*rho_a)
@@ -399,7 +399,7 @@ c
       l_eigv(2,4) =  (v_betay*tmp2)
       l_eigv(2,6) =  (v_betaz*tmp3)
       l_eigv(2,7) = -(v_betay*tmp3)
-      l_eigv(2,8) = 0._RKIND      
+      l_eigv(2,8) = 0._RKIND
                                 ! Left eigenvector for Alfven wave -
       l_eigv(3,1) = gammaa*tmp2
       l_eigv(3,2) = 0._RKIND
@@ -415,14 +415,14 @@ c
       tmp5 = v_alphas*gm1*pre_a/rho_a
       tmp6 = tmp1*v_alphas
       tmp7 = tmp1*v_alphaf
-      
+
                                 ! Left eigenvector for Slow magnetosonic wave +
       l_eigv(4,1) =  tmp1*(tmp5-gammas)
       l_eigv(4,2) =  tmp6*v_cs_af
       l_eigv(4,3) =  tmp7*v_cf_af*tmp3
       l_eigv(4,4) =  tmp7*v_cf_af*tmp4
-      l_eigv(4,6) = -tmp7*v_betay*tmp2 
-      l_eigv(4,7) = -tmp7*v_betaz*tmp2 
+      l_eigv(4,6) = -tmp7*v_betay*tmp2
+      l_eigv(4,7) = -tmp7*v_betaz*tmp2
       l_eigv(4,8) =  tmp6*rhoagm1
                                 ! Left eigenvector for Slow magnetosonic wave -
       l_eigv(6,1) =   tmp1*(tmp5+gammas)
@@ -432,7 +432,7 @@ c
       l_eigv(6,6) =   l_eigv(4,6)
       l_eigv(6,7) =   l_eigv(4,7)
       l_eigv(6,8) =   l_eigv(4,8)
-      
+
       if (choice.eq.0) then
          tmp5 = v_alphaf*gm1*pre_a/rho_a
                                 ! Left eigenvector for Fast magnetosonic wave +
@@ -440,8 +440,8 @@ c
          l_eigv(5,2) =   tmp7*v_cf_af
          l_eigv(5,3) = - tmp6*v_cs_af*tmp3
          l_eigv(5,4) = - tmp6*v_cs_af*tmp4
-         l_eigv(5,6) =   tmp6*tmp2*v_betay 
-         l_eigv(5,7) =   tmp6*tmp2*v_betaz 
+         l_eigv(5,6) =   tmp6*tmp2*v_betay
+         l_eigv(5,7) =   tmp6*tmp2*v_betaz
          l_eigv(5,8) =   tmp7*rhoagm1
                                 ! Left eigenvector for fast magnetosonic wave -
          l_eigv(7,1) =  tmp1*(tmp5+gammaf)
@@ -452,7 +452,7 @@ c
          l_eigv(7,7) = l_eigv(5,7)
          l_eigv(7,8) = l_eigv(5,8)
       end if
-c     
+c
 c...  added the eight wave system
       do i = 1, 7
          l_eigv(i,5) = 0._RKIND
@@ -469,7 +469,7 @@ c...  added the eight wave system
                                 ! Right eigenvector for Entropy wave
       tmp1 = - gm1*pre_a/rhoag
       tmp2 = 1._RKIND/rhoagm1
-      r_eigv(8,1) = tmp1     
+      r_eigv(8,1) = tmp1
                                 ! Right eigenvector for Alfven wave +
       r_eigv(8,2) =  0._RKIND
                                 ! Right eigenvector for Alfven wave -
@@ -489,7 +489,7 @@ c...  added the eight wave system
          tmp4 = gamma*pre_a*v_alphaf
          tmp5 = tmp1*tmp3 + tmp2*tmp4
                                 ! Right eigenvector for Fast magnetosonic wave+
-         r_eigv(8,5) = tmp5      
+         r_eigv(8,5) = tmp5
                                 ! Right eigenvector for Fast magnetosonic wave-
          r_eigv(8,7) = tmp5
       end if
@@ -498,21 +498,21 @@ c...  added the eight wave system
 
       return
       end
-      
+
       subroutine calc_fluxAI_mhd(gamma,wl,wr,flux,cmax,index,imeth
      $     ,csmin)
       implicit none
-#include "fortran_types.def"  
+#include "fortran_types.def"
       INTG_PREC index, imeth
       R_PREC gamma,wl(8),wr(8),flux(8),cmax
 c
 c...  local variable
       R_PREC wl_un, wr_un, wa_un, wl_ut1,wr_ut1,wa_ut1,wl_ut2,
      &     wr_ut2, wa_ut2,csmin
-      R_PREC wl_bn, wr_bn, wa_bn, wl_bt1, wr_bt1, wa_bt1, 
+      R_PREC wl_bn, wr_bn, wa_bn, wl_bt1, wr_bt1, wa_bt1,
      &     wl_bt2, wr_bt2, wa_bt2
       R_PREC rho_l_inv, rho_r_inv, bb_l, bb_r, vv_l, vv_r
-      R_PREC v_c_lf, v_c_rf, v_c_af, v_a_lf, v_a_rf, 
+      R_PREC v_c_lf, v_c_rf, v_c_af, v_a_lf, v_a_rf,
      &       v_E_lf, v_E_rf, v_cf_lf, v_cf_rf, v_cs_lf, v_cs_rf
       R_PREC flux_l(8), flux_r(8), del_u(8), half
       R_PREC v_eig(8), gm1, l_eigv(8,8), r_eigv(8,8), alpha(8), sign
@@ -536,7 +536,7 @@ c...  x-direction
          wr_un  = wr(2)
          wr_ut1 = wr(3)
          wr_ut2 = wr(4)
-         
+
          wl_bn  = wl(5)
          wl_bt1 = wl(6)
          wl_bt2 = wl(7)
@@ -552,7 +552,7 @@ c...  y-direction
          wr_un  = wr(3)
          wr_ut1 = wr(4)
          wr_ut2 = wr(2)
-         
+
          wl_bn  = wl(6)
          wl_bt1 = wl(7)
          wl_bt2 = wl(5)
@@ -568,7 +568,7 @@ c...  z-direction
          wr_un  = wr(4)
          wr_ut1 = wr(2)
          wr_ut2 = wr(3)
-         
+
          wl_bn  = wl(7)
          wl_bt1 = wl(5)
          wl_bt2 = wl(6)
@@ -576,7 +576,7 @@ c...  z-direction
          wr_bt1 = wr(5)
          wr_bt2 = wr(6)
       end if
-                 
+
       rho_r = wr(1)
       rho_l = wl(1)
       rho_l_inv = 1._RKIND/rho_l
@@ -584,10 +584,10 @@ c...  z-direction
 
       pre_l = wl(8)
       pre_r = wr(8)
-      
+
       bb_l = wl_bn*wl_bn + wl_bt1*wl_bt1 + wl_bt2*wl_bt2
       bb_r = wr_bn*wr_bn + wr_bt1*wr_bt1 + wr_bt2*wr_bt2
-      
+
       vv_l = wl_un*wl_un + wl_ut1*wl_ut1 + wl_ut2*wl_ut2
       vv_r = wr_un*wr_un + wr_ut1*wr_ut1 + wr_ut2*wr_ut2
 
@@ -604,7 +604,7 @@ c...  z-direction
 
       v_cf_lf = sqrt(v_cf_lf)
       v_cf_rf = sqrt(v_cf_rf)
-      
+
       v_cs_lf = max(0._RKIND,half*(v_E_lf-v_cf_lf))
       v_cs_rf = max(0._RKIND,half*(v_E_rf-v_cf_rf))
       v_cs_lf = sqrt(v_cs_lf)
@@ -624,7 +624,7 @@ c...  z-direction
       if (abs(gm1).gt.1e-12) then
          v_E_rf = pre_r/gm1 + half*rho_r*vv_r + half*bb_r
          v_E_lf = pre_l/gm1 + half*rho_l*vv_l + half*bb_l
-      else        
+      else
          v_E_rf = half*rho_r*vv_r + half*bb_r
          v_E_lf = half*rho_l*vv_l + half*bb_l
       end if
@@ -633,7 +633,7 @@ c...  calculate flux at right and left interface
 c
       call calc_flux1_mhd(8_IKIND,wl,v_E_lf,flux_l,index)
       call calc_flux1_mhd(8_IKIND,wr,v_E_rf,flux_r,index)
-c     
+c
 c...  state delta
       ustatel(1) = rho_l
       ustatel(2) = rho_l * wl_un
@@ -690,7 +690,7 @@ c-----------------------------------------------------------
       if (imeth.lt.4) then
 c.... HLL family flux
          ampx = max(v_eig(5), wr_un + v_cf_rf)
-         ammx = min(v_eig(7), wl_un - v_cf_lf) 
+         ammx = min(v_eig(7), wl_un - v_cf_lf)
 
          if(ammx.ge.0._RKIND) then
             do i = 1, 8
@@ -700,7 +700,7 @@ c.... HLL family flux
             do i = 1, 8
                flux(i) = flux_r(i)
             end do
-         else 
+         else
             if (imeth.eq.2) then ! HLLC family
 c
 c...  three states HLLC family, Barten's algorithm
@@ -730,15 +730,15 @@ c...  three states HLLC family, Barten's algorithm
      &              flux_r(7))/apmx + w_hll*delB
 c
 c...  middle state of the magnetic fields
-               su(5) = B_hll 
+               su(5) = B_hll
                su(6) = Bt1_hll
                su(7) = Bt2_hll
                BxBy = B_hll * Bt1_hll
                BxBz = B_hll * Bt2_hll
                Bbv  = B_hll*(am*B_hll + v_hll*Bt1_hll + w_hll*Bt2_hll)
-               
+
                if (am .ge.0._RKIND) then
-c     
+c
 c...  calculate the middle state ul*
                   am1 = ammx - wl_un
                   am2 = ammx - am
@@ -757,15 +757,15 @@ c...  calculate the middle state ul*
                   do i = 1, 8
                      flux(i) = flux_l(i) + ammx*(su(i) - ustatel(i))
                   end do
-               else 
-c     
+               else
+c
 c...  calculate the middle state ur*
                   am1 = ampx - wr_un
                   am2 = ampx - am
                   am2_inv = 1._RKIND/am2
                   tmp1 = rho_r*am1
                   pre  = tmp1*(am - wr_un) + pre_r+ B2 - wr_bn*wr_bn
-                  
+
                   am12 = am1*am2_inv
                   su(1) = rho_r * am12
                   su(2) = su(1)*am
@@ -778,12 +778,12 @@ c...  calculate the middle state ur*
                      flux(i) = flux_r(i) + ampx*(su(i) - ustater(i))
                   end do
                end if           ! if (am)
-            else 
+            else
                do i = 1, 8
-                  flux(i) = (ampx*flux_l(i) - ammx*flux_r(i) + 
+                  flux(i) = (ampx*flux_l(i) - ammx*flux_r(i) +
      &                 ampx*ammx*del_u(i))/(ampx - ammx)
                end do
-            end if              ! if (imeth)            
+            end if              ! if (imeth)
          end if                 ! if (ammx < 0 < ampx)
       end if
 
@@ -824,21 +824,21 @@ c...  anti-diffusion for other than fast magnetosonic fields
          v_eig(4) = sign(1._RKIND, v_eig(4)) *
      &        (v_eig(4)*v_eig(4)/tmp1 + tmp1*0.25_RKIND)
       end if
-                                !fast + 
+                                !fast +
       tmp1 = (wr_un+v_cf_rf) - (wl_un+v_cf_lf)
       tmp1 = max(0._RKIND, 4._RKIND*tmp1)
       if (abs(v_eig(5)) .lt. tmp1*half) then
          v_eig(5) = sign(1._RKIND, v_eig(5)) *
      &        (v_eig(5)*v_eig(5)/tmp1 + tmp1*0.25_RKIND)
       end if
-                                !Slow - 
+                                !Slow -
       tmp1 = (wr_un-v_cs_rf) - (wl_un-v_cs_lf)
       tmp1 = max(0._RKIND, 4._RKIND*tmp1)
       if (abs(v_eig(6)) .lt. tmp1*half) then
          v_eig(6) = sign(1._RKIND, v_eig(6)) *
      &        (v_eig(6)*v_eig(6)/tmp1 + tmp1*0.25_RKIND)
       end if
-                                !fast - 
+                                !fast -
       tmp1 = (wr_un-v_cf_rf) - (wl_un-v_cf_lf)
       tmp1 = max(0._RKIND, 4._RKIND*tmp1)
       if (abs(v_eig(7)) .lt. tmp1*half) then
@@ -856,8 +856,8 @@ c...  anti-diffusion for other than fast magnetosonic fields
          do j = 1, 8
             alpha(i) = alpha(i) + l_eigv(j,i)*del_u(j)
          end do
-         alpha(i) = alpha(i) * abs(v_eig(i))  
-      end do         
+         alpha(i) = alpha(i) * abs(v_eig(i))
+      end do
                                 !\
                                 ! Calculate the Roe Interface fluxes
                                 !/
@@ -873,7 +873,7 @@ c
 c...  possible modification for imeth = 4 combined with HLL flux
       if (imeth.gt.4) then
          ampx = max(v_eig(5), wr_un + v_cf_rf)
-         ammx = min(v_eig(7), wl_un - v_cf_lf) 
+         ammx = min(v_eig(7), wl_un - v_cf_lf)
          if (ammx .ge. 0) then
             do i = 1, 8
                flux(i) = flux_l(i)
@@ -885,14 +885,14 @@ c...  possible modification for imeth = 4 combined with HLL flux
             end do
             goto 99
          end if
-            
+
          do i = 1, 8
             su(i) = ustatel(i) + (flux(i) - flux_l(i))/ammx
          end do
          ihll = 0
          if (su(1).lt.0) ihll = 1
          if (ihll .eq. 0) then
-            pre_l = (su(8) - 
+            pre_l = (su(8) -
      &           0.5_RKIND*(su(2)*su(2)+su(3)*su(3)+su(4)*su(4))/su(1) -
      &           0.5_RKIND*(su(5)*su(5)+su(6)*su(6)+su(7)*su(7)))
             if (pre_l .lt. 0) ihll = 1
@@ -903,7 +903,7 @@ c...  possible modification for imeth = 4 combined with HLL flux
             end do
             if (su(1) .lt. 0) ihll = 1
             if (ihll .eq. 0) then
-               pre_r = (su(8) - 
+               pre_r = (su(8) -
      &             0.5_RKIND*(su(2)*su(2)+su(3)*su(3)+su(4)*su(4))/su(1)
      &            -0.5_RKIND*(su(5)*su(5)+su(6)*su(6)+su(7)*su(7)))
                if (pre_r .lt. 0) ihll = 1
@@ -911,7 +911,7 @@ c...  possible modification for imeth = 4 combined with HLL flux
          end if
          if (ihll .eq. 1) then
             do i = 1, 8
-               flux(i) = (ampx*flux_l(i) - ammx*flux_r(i) + 
+               flux(i) = (ampx*flux_l(i) - ammx*flux_r(i) +
      &              ampx*ammx*del_u(i))/(ampx - ammx)
             end do
          end if
@@ -941,7 +941,7 @@ c...  possible modification for imeth = 4 combined with HLL flux
 
       subroutine calc_fluxAIN1_mhd(gamma,wl,wr,flux,index,iflux,csmin)
       implicit none
-#include "fortran_types.def"  
+#include "fortran_types.def"
       INTG_PREC index,iflux
       R_PREC gamma,wl(8),wr(8),flux,csmin
 c
@@ -964,7 +964,7 @@ c
       wr_un = wr(index+1)
       bb_l = (wl(5)*wl(5) + wl(6)*wl(6) + wl(7)*wl(7))
       bb_r = (wr(5)*wr(5) + wr(6)*wr(6) + wr(7)*wr(7))
-                 
+
       pr = wr(8)
       pl = wl(8)
 
@@ -973,7 +973,7 @@ c
 
       a2l = wl(index+4)**2/denl
       a2r = wr(index+4)**2/denr
-     
+
       v_cf_lf = sqrt(0.5_RKIND*(c2l+bb_l/denl + sqrt((c2l+bb_l/denl)**2
      $     -4._RKIND*c2l*a2l)))
       v_cf_rf = sqrt(0.5_RKIND*(c2r+bb_r/denr + sqrt((c2r+bb_r/denr)**2
@@ -985,17 +985,17 @@ c
 c...  calculate flux at right and left interface
 c
       flux_l = v_S_lf*wl_un
-      flux_r = v_S_rf*wr_un  
+      flux_r = v_S_rf*wr_un
 c.... HLL family flux
       ampx = max(wl_un + v_cf_lf,  wr_un + v_cf_rf)
-      ammx = min(wr_un - v_cf_rf,  wl_un - v_cf_lf) 
+      ammx = min(wr_un - v_cf_rf,  wl_un - v_cf_lf)
       if (ammx.ge.0._RKIND) then
          flux = flux_l
       else if (ampx.le.0._RKIND) then
          flux = flux_r
-      else 
+      else
          if (iflux.eq.1) then
-            flux = (ampx*flux_l - ammx*flux_r + 
+            flux = (ampx*flux_l - ammx*flux_r +
      &           ampx*ammx*(v_S_rf - v_S_lf))/(ampx - ammx)
          else
             pr = pr + 0.5_RKIND*bb_r
@@ -1005,18 +1005,18 @@ c.... HLL family flux
      &           (denl*(ammx-wl_un) - denr*(ampx-wr_un))
             if (am .ge.0._RKIND) then
                flux = am*v_S_lf*(ammx - wl_un)/(ammx - am)
-            else 
+            else
                flux = am*v_S_rf*(ampx - wr_un)/(ampx - am)
             end if              ! if (am)
          end if
-            
+
       end if
       return
-      end 
+      end
 c
       subroutine calc_fluxAIN2_mhd(gamma,wl,wr,flux,index,iflux,csmin)
       implicit none
-#include "fortran_types.def"  
+#include "fortran_types.def"
       INTG_PREC index,iflux
       R_PREC gamma,wl(8),wr(8),flux,csmin
 c
@@ -1039,7 +1039,7 @@ c
       wr_un = wr(index+1)
       bb_l = (wl(5)*wl(5) + wl(6)*wl(6) + wl(7)*wl(7))
       bb_r = (wr(5)*wr(5) + wr(6)*wr(6) + wr(7)*wr(7))
-                 
+
       pr = wr(8)
       pl = wl(8)
 
@@ -1048,7 +1048,7 @@ c
 
       a2l = wl(index+4)**2/denl
       a2r = wr(index+4)**2/denr
-     
+
       v_cf_lf = sqrt(0.5_RKIND*(c2l+bb_l/denl + sqrt((c2l+bb_l/denl)**2
      $     -4._RKIND*c2l*a2l)))
       v_cf_rf = sqrt(0.5_RKIND*(c2r+bb_r/denr + sqrt((c2r+bb_r/denr)**2
@@ -1060,17 +1060,17 @@ c
 c...  calculate flux at right and left interface
 c
       flux_l = v_S_lf*wl_un
-      flux_r = v_S_rf*wr_un  
+      flux_r = v_S_rf*wr_un
 c.... HLL family flux
       ampx = max(wl_un + v_cf_lf,  wr_un + v_cf_rf)
-      ammx = min(wr_un - v_cf_rf,  wl_un - v_cf_lf) 
+      ammx = min(wr_un - v_cf_rf,  wl_un - v_cf_lf)
       if (ammx.ge.0._RKIND) then
          flux = flux_l
       else if (ampx.le.0._RKIND) then
          flux = flux_r
-      else 
+      else
          if (iflux.eq.1) then
-            flux = (ampx*flux_l - ammx*flux_r + 
+            flux = (ampx*flux_l - ammx*flux_r +
      &           ampx*ammx*(v_S_rf - v_S_lf))/(ampx - ammx)
          else                   ! HLLC family
             pr = pr + 0.5_RKIND*bb_r
@@ -1080,27 +1080,27 @@ c.... HLL family flux
      &           (denl*(ammx-wl_un) - denr*(ampx-wr_un))
             if (am .ge.0._RKIND) then
                flux = am*v_S_lf*(ammx - wl_un)/(ammx - am)
-            else 
+            else
                flux = am*v_S_rf*(ampx - wr_un)/(ampx - am)
             end if              ! if (am)
          end if
       end if
       return
-      end 
+      end
       subroutine calc_fluxAIN_mhd(gamma,wl,wr,fluxE,index,imeth,csmin)
       implicit none
-#include "fortran_types.def"  
+#include "fortran_types.def"
       INTG_PREC index, imeth
       R_PREC gamma,wl(8),wr(8),fluxE
 c
 c...  local variable
       R_PREC wl_un, wr_un, wa_un, wl_ut1,wr_ut1,wa_ut1,wl_ut2,
      &     wr_ut2, wa_ut2,csmin
-      R_PREC wl_bn, wr_bn, wa_bn, wl_bt1, wr_bt1, wa_bt1, 
+      R_PREC wl_bn, wr_bn, wa_bn, wl_bt1, wr_bt1, wa_bt1,
      &     wl_bt2, wr_bt2, wa_bt2
       R_PREC rho_l_inv, rho_r_inv, bb_l, bb_r
-      R_PREC v_c_lf, v_c_rf, v_c_af, v_a_lf, v_a_rf, 
-     &       v_E_lf, v_E_rf, v_cf_lf, v_cf_rf, 
+      R_PREC v_c_lf, v_c_rf, v_c_af, v_a_lf, v_a_rf,
+     &       v_E_lf, v_E_rf, v_cf_lf, v_cf_rf,
      &       v_S_lf, v_S_rf, v_S_af, rhoag
       R_PREC flux_l, flux_r, del_u(8), half
       R_PREC v_eig(8), gm1, l_eigv(8,8), r_eigv(8,8), alpha(8)
@@ -1122,7 +1122,7 @@ c...  x-direction
          wr_un  = wr(2)
          wr_ut1 = wr(3)
          wr_ut2 = wr(4)
-         
+
          wl_bn  = wl(5)
          wl_bt1 = wl(6)
          wl_bt2 = wl(7)
@@ -1138,7 +1138,7 @@ c...  y-direction
          wr_un  = wr(3)
          wr_ut1 = wr(4)
          wr_ut2 = wr(2)
-         
+
          wl_bn  = wl(6)
          wl_bt1 = wl(7)
          wl_bt2 = wl(5)
@@ -1154,7 +1154,7 @@ c...  z-direction
          wr_un  = wr(4)
          wr_ut1 = wr(2)
          wr_ut2 = wr(3)
-         
+
          wl_bn  = wl(7)
          wl_bt1 = wl(5)
          wl_bt2 = wl(6)
@@ -1162,7 +1162,7 @@ c...  z-direction
          wr_bt1 = wr(5)
          wr_bt2 = wr(6)
       end if
-                 
+
       rho_r = wr(1)
       rho_l = wl(1)
       rho_l_inv = 1._RKIND/rho_l
@@ -1170,7 +1170,7 @@ c...  z-direction
 
       pre_l = wl(8)
       pre_r = wr(8)
-      
+
       bb_l = wl_bn*wl_bn + wl_bt1*wl_bt1 + wl_bt2*wl_bt2
       bb_r = wr_bn*wr_bn + wr_bt1*wr_bt1 + wr_bt2*wr_bt2
 
@@ -1196,7 +1196,7 @@ c...  z-direction
 
       v_cf_lf = max(v_cf_lf, v_c_lf)
       v_cf_rf = max(v_cf_rf, v_c_rf)
-c     
+c
 c...  state delta
       ustatel(1) = rho_l
       ustatel(2) = rho_l * wl_un
@@ -1255,12 +1255,12 @@ c...  calculate the eigenvalue and eigenvector at interface.
       if (imeth.lt.4) then
 c.... HLL family flux
          ampx = max(v_eig(5), wr_un + v_cf_rf)
-         ammx = min(v_eig(7), wl_un - v_cf_lf) 
+         ammx = min(v_eig(7), wl_un - v_cf_lf)
          if (ammx.ge.0._RKIND) then
             fluxE = flux_l
          else if (ampx.le.0._RKIND) then
             fluxE = flux_r
-         else 
+         else
             if (imeth.eq.2) then ! HLLC family
                pre_r = pre_r + 0.5_RKIND*bb_r
                pre_l = pre_l + 0.5_RKIND*bb_l
@@ -1269,15 +1269,15 @@ c.... HLL family flux
      &              (rho_l*(ammx-wl_un) - rho_r*(ampx-wr_un))
                if (am .ge.0._RKIND) then
                   fluxE = am*v_S_lf*(ammx - wl_un)/(ammx - am)
-               else 
+               else
                   fluxE = am*v_S_rf*(ampx - wr_un)/(ampx - am)
                end if           ! if (am)
-            else 
-               fluxE = (ampx*flux_l - ammx*flux_r + 
+            else
+               fluxE = (ampx*flux_l - ammx*flux_r +
      &              ampx*ammx*(v_S_rf - v_S_lf))/
      $              (ampx - ammx)
-            end if              ! if (imeth)            
-         end if                 ! if (ammx < am < ampx)      
+            end if              ! if (imeth)
+         end if                 ! if (ammx < am < ampx)
       end if
 
       if (imeth .lt. 3) goto 99
@@ -1318,7 +1318,7 @@ c...  anti-diffusion for other than fast magnetosonic fields
             alpha(i) = alpha(i) + l_eigv(i,j)*del_u(j)
          end do
       end do
-       
+
       flux1 = flux_l+flux_r
       do j = 1, 8
          flux1 = flux1 - alpha(j)*abs(v_eig(j))*r_eigv(8,j)
@@ -1337,7 +1337,7 @@ c        output: q
 c        workspace: du
 c---------------------------------------------------------------------
       implicit none
-#include "fortran_types.def"  
+#include "fortran_types.def"
       INTG_PREC ndx, nu,lmin, lmax, idir, method
       R_PREC  q(ndx,nu), qx(ndx,nu), du(ndx,nu)
       R_PREC  gamma,csmin
@@ -1382,7 +1382,7 @@ c...  limited on the primitive variables
                if (j.eq.inorm.and.j.eq.8) then
             at1 = 0.5_RKIND*(sign(1._RKIND,dul)+sign(1._RKIND,dur))*
      $                 min(abs(dul),0.5_RKIND*abs(dul+dur),abs(dur))
-               else                  
+               else
                   at1 = (sign(1._RKIND,dul)+sign(1._RKIND,dur))*
      $                 min(abs(dul),0.25_RKIND*abs(dul+dur),abs(dur))
                end if
@@ -1415,7 +1415,7 @@ c...  calculate the alpha strength
          cs  = abs(cf - sqrt(abs(cf*cf-c2*bn*bn*tau)))
          cf  = 2.0_RKIND*cf - cs
          hrc2 = 0.5_RKIND/c2
-c     
+c
 c...  renormalization coefficients
          if( cf .gt. cs ) then
             af = min(1._RKIND,max(0._RKIND,(c2-cs)/(cf-cs)))
@@ -1451,14 +1451,14 @@ c...  limited on the primitive variables
                if (j.eq.inorm.and.j.eq.8) then
                 at1 = 0.5_RKIND*(sign(1._RKIND,dul)+sign(1._RKIND,dur))*
      $                 min(abs(dul),0.5_RKIND*abs(dul+dur),abs(dur))
-               else                  
+               else
                   at1 = (sign(1._RKIND,dul)+sign(1._RKIND,dur))*
      $                 min(abs(dul),0.25_RKIND*abs(dul+dur),abs(dur))
                end if
                qx(i,j) = 0.5_RKIND*at1
             end do
-         else 
-c          
+         else
+c
 c...  Left-going fast magnetoacoustic wave u - cf
             t01 = rho*cf
             t02 = rho*cs
@@ -1529,10 +1529,10 @@ c...  Right-going fast magnetoacoustic wave u+cf
      $              bz*(t1*du(im1,ibt2) - t2*du(im1,itan2))))
             dur = hrc2*(af*(du(i,nu) + t01*du(i,inorm)) +
      $           as*(by*(t1*du(i,ibt1) - t2*du(i,itan1))+
-     $               bz*(t1*du(i,ibt2) - t2*du(i,itan2))))  
+     $               bz*(t1*du(i,ibt2) - t2*du(i,itan2))))
             at8 = 0.5_RKIND*(sign(1._RKIND,dul)+sign(1._RKIND,dur))*
      $           min(abs(dul),0.5_RKIND*abs(dul+dur),abs(dur))
-           
+
             t1 = as*cs*sbn*tau
             t2 = af*cf*sbn*tau
             t3 = c*sqtau
@@ -1550,9 +1550,9 @@ c...  Right-going fast magnetoacoustic wave u+cf
      $                           (at2-at7)*sbn*sqrho*by -
      $                           (at6+at3)*af*t3*bz)
             qx(i,ibn)   = 0.5_RKIND*at5
-            qx(i, nu)   = 0.5_RKIND*t4*c2   
-         end if        
-      end do 
+            qx(i, nu)   = 0.5_RKIND*t4*c2
+         end if
+      end do
 
       return
       end
@@ -1576,30 +1576,58 @@ C
 c                  2, van Leer's limiter
 c
 c     Output:
-c        ux   -- difference in x-direction       
+c        ux   -- difference in x-direction
 c        ucx  -- difference for the colours (only for method=1)
-c	 uchoice -- 
+c	 uchoice --
 c=======================================================================
-      implicit none 
-#include "fortran_types.def"  
+      implicit none
+#include "fortran_types.def"
       INTG_PREC ndx,nu,nxbe(4),method
       R_PREC  u(ndx,nu),ux(ndx,nu),theta
-      R_PREC  uc(ndx, nc), ucx(ndx, nc) 
-      INTG_PREC nc      
+      R_PREC  uc(ndx, nc), ucx(ndx, nc)
+      INTG_PREC nc
 c
 c...  local variable
       R_PREC  a,b,z,xmic, rhoa, du1,du2
-      INTG_PREC ix,iu,ic
+      R_PREC sign1, sign2, du1n, du2n, du1nn, du2nn, xn1, xn2
+      INTG_PREC ix,iu,ic, nmylim
       xmic(z,a,b)=0.25_RKIND*(sign(1._RKIND,a)+sign(1._RKIND,b))*
      $     min(z*abs(a),z*abs(b), 0.5_RKIND*abs(a+b))
       rhoa(a,b) = 0.25_RKIND*
      $ (2._RKIND*a*b+1.e-12_RKIND)/(a*a+b*b+1.e-12_RKIND)*(a+b)
-c     
+
+      R_PREC, dimension(0:9), parameter :: X11_19_1 = (/
+     $ 1.000000000000000,
+     $ 1.000000000000000,
+     $ 1.000000000000000,
+     $ 0.381966011250103,
+     $ 0.346014339235825,
+     $ 0.337203003743330,
+     $ 0.334579688689953,
+     $ 0.333743223892252,
+     $ 0.333469249676188,
+     $ 0.333378547962152
+     $/)
+      R_PREC, dimension(0:9), parameter :: X11_19_2 = (/
+     $ 1.000000000000000,
+     $ 1.000000000000000,
+     $ 1.000000000000000,
+     $ 2.618033988749897,
+     $ 2.890053638263964,
+     $ 2.965572633988661,
+     $ 2.988824587396525,
+     $ 2.996315515675729,
+     $ 2.998777251488814,
+     $ 2.999593123530961
+     $/)
+
+!      R_PREC, dimension(1:3), parameter :: x2 = (/ 0., 1., 2. /)
+c
 c...  compute ux, uy
-c     
-c...  compute ux, uy and construct the polynomial for u      
+c
+c...  compute ux, uy and construct the polynomial for u
       if (method.eq.1) then
-c     
+c
 c...  minmod limiter
          do iu = 1, nu
             ix = nxbe(2)-2
@@ -1611,20 +1639,20 @@ c...  minmod limiter
             end do
          end do
 c        repeat for color fields
-         do iu = 1, nc                                  
-            ix = nxbe(2)-2                               
-            du1 = uc(ix+1,iu) - uc(ix,iu)                 
-            do ix = nxbe(2)-1, nxbe(3)+1                 
-               du2 = uc(ix+1,iu) - uc(ix,iu)              
-c               ucx(ix,iu) = 0.0 ! xmic(theta,du1,du2)           
-               ucx(ix,iu) =  xmic(theta,du1,du2)           
-               du1 = du2                                 
-            enddo                                         
-         enddo                                            
+         do iu = 1, nc
+            ix = nxbe(2)-2
+            du1 = uc(ix+1,iu) - uc(ix,iu)
+            do ix = nxbe(2)-1, nxbe(3)+1
+               du2 = uc(ix+1,iu) - uc(ix,iu)
+c               ucx(ix,iu) = 0.0 ! xmic(theta,du1,du2)
+               ucx(ix,iu) =  xmic(theta,du1,du2)
+               du1 = du2
+            enddo
+         enddo
 
 c		call myprint( u, uc,ndx,1,1,0,ux,ucx)
 
-c     
+c
 c...  positivity preserving
 c$$$         do iu = 1, nu, nu-1
 c$$$            do ix = nxbe(2)-1, nxbe(3)+1
@@ -1653,17 +1681,86 @@ c...  van Leer's limiter
                ux(ix,iu) = 0._RKIND
             end do
          end do
+
+      else if (method.ge.11.and.method.le.19) then
+         nmylim = method - 10;
+         xn1 = X11_19_1(nmylim)
+         xn2 = X11_19_2(nmylim)
+
+         do iu = 1, nu
+            ix = nxbe(2)-2
+            du1 = u(ix+1,iu) - u(ix,iu)
+            sign1 = sign(1._RKIND, du1)
+            du1 = abs(du1)
+            du1n = du1**nmylim
+            du1nn = du1n**2
+            do ix = nxbe(2)-1, nxbe(3)+1
+               du2 = u(ix+1,iu) - u(ix,iu)
+               sign2 = sign(1._RKIND, du2)
+               du2 = abs(du2)
+               du2n = du2**nmylim
+               du2nn = du2n**2
+
+               if( sign1*sign2.le.0.or.du1nn.eq.0.or.du2nn.eq.0) then
+                    ux(ix,iu) = 0
+               else if ((du2.lt.xn1*du1).or.(du1.lt.xn1*du2)) then
+                    ux(ix,iu) = sign1 * 2._RKIND
+     $                          * (du1 * du2nn + du1nn * du2)
+     $                          / ( (du1n + du2n)**2 )
+               else
+                    ux(ix,iu) = sign1 * (du1 + du2) / 2._RKIND
+               endif
+
+               du1 = du2
+               du1n = du2n
+               du1nn = du2nn
+               sign1 = sign2
+            end do
+         end do
+c        repeat for color fields
+         do iu = 1, nc
+            ix = nxbe(2)-2
+            du1 = uc(ix+1,iu) - uc(ix,iu)
+            sign1 = sign(1._RKIND, du1)
+            du1 = abs(du1)
+            du1n = du1**nmylim
+            du1nn = du1n**2
+            do ix = nxbe(2)-1, nxbe(3)+1
+               du2 = uc(ix+1,iu) - uc(ix,iu)
+               sign2 = sign(1._RKIND, du2)
+               du2 = abs(du2)
+               du2n = du2**nmylim
+               du2nn = du2n**2
+
+               if( sign1*sign2.le.0.or.du1nn.eq.0.or.du2nn.eq.0) then
+                    ucx(ix,iu) = 0
+               else if ((du2.lt.xn1*du1).or.(du1.lt.xn1*du2)) then
+                    ucx(ix,iu) = sign1 * 2._RKIND
+     $                          * (du1 * du2nn + du1nn * du2)
+     $                          / ( (du1n + du2n)**2 )
+               else
+                    ucx(ix,iu) = sign1 * (du1 + du2) / 2._RKIND
+               endif
+
+               du1 = du2
+               du1n = du2n
+               du1nn = du2nn
+               sign1 = sign2
+            enddo
+         enddo
+
       end if
 
       return
       end
-      
+
 c-----------------------------------------------------------------------------
 c     piecewise-linear method (PLM) predictor
 c-----------------------------------------------------------------------------
       subroutine plmpred_mhd(q,qx,ndx,nu,lmin,lmax,dt,dx,gamma,
      $     idir,ur,ul,smallp,smallr,csmin
-     $     , qcn, qc, qcx, qcl, qcr 
+     $     , qcn, qc, qcx, qcl, qcr
+     $     , debug
      $     )
 c----------------------------------------------------------------------
 c     piecewise-linear predictor (PLM)  -- qx = 0.5h*u_x
@@ -1672,16 +1769,17 @@ c     which is input
 c     ... and does the same to colours
 c-----------------------------------------------------------------------
       implicit none
-#include "fortran_types.def"  
+#include "fortran_types.def"
       INTG_PREC ndx, nu,lmin, lmax, idir
       R_PREC  q(ndx,nu), qx(ndx,nu), ur(ndx,nu), ul(ndx,nu)
       R_PREC  dt, dx, gamma
       R_PREC smallp, smallr,csmin
-      INTG_PREC qcn 
-      R_PREC  qc(ndx,qcn), qcx(ndx,qcn), qcl(ndx,qcn), qcr(ndx,qcn) 
+      INTG_PREC qcn
+      R_PREC  qc(ndx,qcn), qcx(ndx,qcn), qcl(ndx,qcn), qcr(ndx,qcn)
+      INTG_PREC debug
 c
 c...  local variables
-      INTG_PREC cix 
+      INTG_PREC cix
       INTG_PREC i, inorm, itan1, itan2,ip1, ibt1,ibt2,ibn
       R_PREC gamma1,rho,u,v,w,pr,dtdx,cs,c2,at1,at2,at3,at4,
      $     at5, at6, at7, at8, off, rx,ux,vx,wx,px,tau,
@@ -1692,6 +1790,7 @@ c
 c predictor step for variables at midtime at cell edges for muscl
 c working on row number j
 c
+
       gamma1 = gamma - 1._RKIND
       dtdx = dt/dx
       if (idir.eq.1) then
@@ -1712,7 +1811,7 @@ c
       ibt2 = itan2 + 3
 
       sqhalf = sqrt(0.5_RKIND)
-         
+
       i = lmin-1
       rho = q(i,1)
       u   = q(i,inorm)
@@ -1810,16 +1909,16 @@ c...  slow magnetosonic wave -
          end if
 c
 c...  fast magnetosonic wave +
-         off = 1._RKIND - max(u+cf,0._RKIND)*dtdx         
+         off = 1._RKIND - max(u+cf,0._RKIND)*dtdx
 c
 c...  fast magnetosonic wave -
-         if (u-cf.le.0._RKIND) then
+         if (1.eq.2.and.u-cf.le.0._RKIND) then
             at7 = 0._RKIND
          else
             at7 = dtdx*2._RKIND*cf*(-af*(cf*ux - tau*px) +
      $           as*(cs*sbn*(by*vx + bz*wx)+(by*btx1+bz*btx2)*sqtau*c))
      $           /(2._RKIND*c2)
-         end if            
+         end if
 c
 c...  divergence wave u
          if (u.le.0._RKIND) then
@@ -1828,7 +1927,7 @@ c...  divergence wave u
             at8 = dtdx*cf*bnx
          end if
          off = 1._RKIND - max(u+cf,0._RKIND)*dtdx
-c     
+c
          ul(ip1,1) = max(smallr,rho + at1 + (at4+at6)*rho*as +
      $        at7*rho*af + off*rx)
          ul(ip1,inorm) = u - at7*cf*af + as*cs*(at4-at6) + off*ux
@@ -1844,16 +1943,16 @@ c
          ul(ip1,nu)    = max(smallp, pr + c2*rho*(af*at7 +
      $        as*(at4+at6)) + off*px)
 
-         do cix = 1, qcn                                        
+         do cix = 1, qcn
 c      rho = q(i,1)
 c      rx  = qx(i,1)
 c         ul(ip1,1) = max(smallr,rho + at1 + (at4+at6)*rho*as +
 c     $        at7*rho*af + off*rx)
-                qcl(ip1,cix) = max(0._RKIND,                      
-     $              qc(i,cix) * ( 1 + (at4+at6)*as + at7*af)    
-     $              + off * qcx(i,cix) + at1                    
-     $          )                                               
-         enddo                                                  
+                qcl(ip1,cix) = max(0._RKIND,
+     $              qc(i,cix) * ( 1 + (at4+at6)*as + at7*af)
+     $              + off * qcx(i,cix) + at1
+     $          )
+         enddo
 
 
          rho = q(ip1,1)
@@ -1880,7 +1979,7 @@ c     $        at7*rho*af + off*rx)
          cf  = 0.5_RKIND*(c2+(bn*bn+bt1*bt1+bt2*bt2)*tau)
          cs  = abs(cf - sqrt(abs(cf*cf-c2*bn*bn*tau)))
          cf  = 2._RKIND*cf - cs
-c     
+c
 c...  renormalization coefficients
          if( cf .gt. cs ) then
             af = min(1._RKIND,max(0._RKIND,(c2-cs)/(cf-cs)))
@@ -1949,16 +2048,16 @@ c...  slow magnetosonic wave -
          end if
 c
 c...  fast magnetosonic wave -
-         off = -(1._RKIND + min(u-cf,0._RKIND)*dtdx)         
+         off = -(1._RKIND + min(u-cf,0._RKIND)*dtdx)
 c
 c...  fast magnetosonic wave +
-         if (u+cf.gt.0._RKIND) then
+         if (1.eq.2.and.u+cf.gt.0._RKIND) then
             at5 = 0._RKIND
          else
             at5 = -dtdx*2._RKIND*cf*(af*(cf*ux + tau*px) -
      $           as*(cs*sbn*(by*vx + bz*wx)-(by*btx1+bz*btx2)*sqtau*c))
      $           /(2._RKIND*c2)
-         end if            
+         end if
 c
 c...  divergence-wave
          if (u.gt.0._RKIND) then
@@ -1966,7 +2065,7 @@ c...  divergence-wave
          else
             at8 = -dtdx*cf*bnx
          end if
-c     
+c
          ur(ip1,1) = max(smallr,rho + at1 + (at4+at6)*rho*as +
      $        at5*rho*af + off*rx)
          ur(ip1,inorm) = u + at5*cf*af + as*cs*(at4-at6) + off*ux
@@ -1982,17 +2081,17 @@ c
          ur(ip1,nu)    = max(smallp, pr + c2*rho*(af*at5 +
      $        as*(at4+at6)) + off*px)
 
-         do cix = 1, qcn                                        
+         do cix = 1, qcn
 c         ur(ip1,1) = max(smallr,rho + at1 + (at4+at6)*rho*as +
 c     $        at5*rho*af + off*rx)
-                qcr(ip1,cix) = max(0._RKIND,                      
-     $              qc(ip1,cix) * ( 1 + (at4+at6)*as + at5*af)  
-     $              + off * qcx(ip1,cix) + at1                  
-     $          )                                               
-         enddo                                                 
+                qcr(ip1,cix) = max(0._RKIND,
+     $              qc(ip1,cix) * ( 1 + (at4+at6)*as + at5*af)
+     $              + off * qcx(ip1,cix) + at1
+     $          )
+         enddo
 
       end do
-c     
+c
       return
       end
 c
@@ -2002,7 +2101,7 @@ c-----------------------------------------------------------------------
 c     Hancock predictor (MHM) -- qx = 0.5hu_x
 c-----------------------------------------------------------------------
       implicit none
-#include "fortran_types.def"  
+#include "fortran_types.def"
       INTG_PREC ndx, nu,lmin, lmax, idir, nc, ic
       R_PREC  q(ndx,nu), qx(ndx,nu), ur(ndx,nu), ul(ndx,nu)
       R_PREC uc(ndx, nc), ucx(ndx, nc)
@@ -2079,7 +2178,7 @@ c
 
       do i = lmin-1,lmax
          ip1 = i + 1
-c     
+c
          ul(ip1,1)     = max(smallr,rx - at1 + rho )
          ul(ip1,inorm) = ux - at2 + u
          ul(ip1,itan1) = vx - at3 + v
@@ -2092,7 +2191,7 @@ c
          do ic=1,nc
          qcl(ip1,ic) = ucxtemp(ic) - atc(ic) + uctemp(ic)
          end do
-c         
+c
          rho = q(ip1,1)
          u   = q(ip1,inorm)
          v   = q(ip1,itan1)
@@ -2126,30 +2225,30 @@ c
          at6 = dtdx*(bt1*ux - bn*vx + btx1*u)
          at7 = dtdx*(bt2*ux - bn*wx + btx2*u)
          at8 = dtdx*(cs2*ux + u*px)
-c     
+c
          ur(ip1,1)     = max(smallr, -(rx+at1) + rho)
          ur(ip1,inorm) = -(ux+at2) + u
          ur(ip1,itan1) = -(vx+at3) + v
          ur(ip1,itan2) = -(wx+at4) + w
          ur(ip1,ibn)   = -(bnx  + at5) + bn
          ur(ip1,ibt1)  = -(btx1 + at6) + bt1
-         ur(ip1,ibt2)  = -(btx2 + at7) + bt2         
+         ur(ip1,ibt2)  = -(btx2 + at7) + bt2
          ur(ip1,nu)    = max(smallp, -(px+at8) + pr)
          do ic=1,nc
          qcr(ip1,ic) = -(ucxtemp(ic)+atc(ic)) + uctemp(ic)
          end do
       end do
-c     
+c
       return
       end
 c---------------------------------------------------
       subroutine calc_flux1_mhd(nu,w,eng,flux,index)
       implicit none
-#include "fortran_types.def"  
+#include "fortran_types.def"
       INTG_PREC nu, index
       R_PREC w(nu), flux(nu), eng
       R_PREC den, pre, bb, ub, ux,uy,uz,bx,by,bz,hbb
-      
+
       den = w(1)
       ux  = w(2)
       uy  = w(3)
@@ -2163,7 +2262,7 @@ c---------------------------------------------------
       ub  = ux*bx + uy*by + uz*bz
 
       if (index .eq. 1) then
-c     
+c
 c...  x-direction
 
          flux(1) = den*ux
@@ -2203,11 +2302,11 @@ c... z-direction
 c
       subroutine calc_flux2_mhd(nu,w,flux,gm1,index)
       implicit none
-#include "fortran_types.def"  
+#include "fortran_types.def"
       INTG_PREC nu, index
       R_PREC w(nu), flux(nu), gm1, eng
       R_PREC den, pre, bb, ub, ux,uy,uz,bx,by,bz,hbb,uu
-      
+
       den = w(1)
       ux  = w(2)
       uy  = w(3)
@@ -2227,7 +2326,7 @@ c
       end if
 
       if (index .eq. 1) then
-c     
+c
 c...  x-direction
 
          flux(1) = den*ux
@@ -2264,14 +2363,14 @@ c... z-direction
       return
       end
 c
-      
+
       subroutine calc_flux_mhd7(nu,w,flux,gm1,index)
       implicit none
-#include "fortran_types.def"  
+#include "fortran_types.def"
       INTG_PREC nu, index
       R_PREC w(nu), flux(nu), gm1
       R_PREC den, pre, bb, ux,uy,uz,bx,by,bz,hbb
-      
+
       den = w(1)
       ux  = w(2)
       uy  = w(3)
@@ -2284,7 +2383,7 @@ c
       hbb = 0.5_RKIND*bb
 
       if (index .eq. 1) then
-c     
+c
 c...  x-direction
 
          flux(1) = den*ux
@@ -2317,14 +2416,14 @@ c... z-direction
       end if
       return
       end
-      
+
 c-----------------------------------------------
       subroutine prim2consv_mhd(nu,w,u,gamm1)
 c----------------------------------------------------------------
 c     transform the primitive variables to conservative variables
 c----------------------------------------------------------------
       implicit none
-#include "fortran_types.def"  
+#include "fortran_types.def"
       INTG_PREC nu
       R_PREC  w(nu), u(nu), gamm1
       R_PREC  rho
@@ -2338,11 +2437,11 @@ c---  Momentum
 c---  magnetic field
       u(5) = w(5)
       u(6) = w(6)
-      u(7) = w(7)     
+      u(7) = w(7)
 c---  total energy
       u(8) = w(8)/gamm1+0.5_RKIND*rho*(w(2)*w(2)+w(3)*w(3)+w(4)*w(4)) +
      *     0.5_RKIND*(w(5)*w(5)+w(6)*w(6)+w(7)*w(7))
-      
+
       return
       end
 
@@ -2351,7 +2450,7 @@ c----------------------------------------------------------------
 c     transform the primitive variables to conservative variables
 c----------------------------------------------------------------
       implicit none
-#include "fortran_types.def"  
+#include "fortran_types.def"
       INTG_PREC nu
       R_PREC  w(nu), u(nu), gamm1
       R_PREC  rho
@@ -2369,7 +2468,7 @@ c---  magnetic field
 c---  total energy
       w(8) =gamm1*(u(8)-0.5_RKIND*rho*(w(2)*w(2)+w(3)*w(3)+w(4)*w(4)) -
      *     0.5_RKIND*(w(5)*w(5)+w(6)*w(6)+w(7)*w(7)))
-      
+
       return
       end
 c=========================================================================

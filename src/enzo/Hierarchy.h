@@ -13,7 +13,7 @@
 #ifndef HIERARCHY_ENTRY_DEFINED__
 #define HIERARCHY_ENTRY_DEFINED__
 
-#include "Grid.h"
+class grid;
 
 struct HierarchyEntry
 {

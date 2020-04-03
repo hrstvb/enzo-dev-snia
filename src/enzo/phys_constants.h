@@ -1,11 +1,11 @@
 #ifndef __phys_constants_h_
 #define __phys_constants_h_
 /***********************************************************************
-/  
+/
 / DEFINITION OF PHYSICAL CONSTANTS
-/  
+/
 / written by: Elizabeth Tasker (renamed by Daniel Reynolds)
-/ date:       May, 2005 
+/ date:       May, 2005
 /
 / Note: CGS units
 /
@@ -16,23 +16,27 @@
 /************************************************/
 
 /* Boltzmann's constant [cm2gs-2K-1] or [ergK-1] */
-
 #define kboltz                          1.3806504e-16
 
-/* Mass of hydrogen [g] */
+/* Avogadro's number [1/mole] */
+#define N_Avog (6.022141e+23)
 
-#define mh                              1.67262171e-24   
+/* Atomic mass unit, amu [g * mole] */
+#define amu (1/N_A)
+
+/* Gas constant, R = kB * NA */
+#define R_gas (kboltz * N_Avog)
+
+/* Mass of hydrogen [g] */
+#define mh                              1.67262171e-24
 
 /* Mass of an electron [g] */
-
 #define me                              9.10938215e-28
 
 /* Pi */
-
 #define pi                              3.14159265358979323846
 
 /* ergs per eV */
-
 #define erg_eV                          1.602176e-12
 
 
@@ -42,7 +46,7 @@
 
 /************************************************/
 
-/* Speed of light [cms-1] */ 
+/* Speed of light [cms-1] */
 
 #define clight                          2.99792458e10
 

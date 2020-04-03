@@ -1,25 +1,27 @@
 /***********************************************************************
-/
-/  GRID CLASS (Compute and apply simple burning)
-/
-/  written by:  Boyan Hristov
-/  date:        August, 2014
-/
-/  based on: ConductHeat and ComputeConductionTimeStep
-/  (by:  David A. Ventimiglia and Brian O'Sheai, Nov, Dec 2009)
-/
-/  PURPOSE:  Computes the new mass density (Rho_56Ni) due to burning
-/  diffusion and constant burning rate and updates the total energy
-/  density.
-/  Updates the gas energy if dual energy folrmalism is on.
-/
-/  RETURNS:
-/    SUCCESS or FAIL
-/
-************************************************************************/
+ /
+ /  GRID CLASS (Compute and apply simple burning)
+ /
+ /  written by:  Boyan Hristov
+ /  date:        August, 2014
+ /
+ /  based on: ConductHeat and ComputeConductionTimeStep
+ /  (by:  David A. Ventimiglia and Brian O'Sheai, Nov, Dec 2009)
+ /
+ /  PURPOSE:  Computes the new mass density (Rho_56Ni) due to burning
+ /  diffusion and constant burning rate and updates the total energy
+ /  density.
+ /  Updates the gas energy if dual energy folrmalism is on.
+ /
+ /  RETURNS:
+ /    SUCCESS or FAIL
+ /
+ ************************************************************************/
 
 #include <math.h>
 #include <stdio.h>
+#include "DebugMacros.h"
+#include "myenzoutils.h"
 #include "ErrorExceptions.h"
 #include "macros_and_parameters.h"
 #include "typedefs.h"
@@ -35,243 +37,282 @@
 #define MEAN_M_12C_16O_MIX_cgs (( M_12C_cgs + M_16O_cgs ) / 2 )
 #define MEAN_M_12C_16O_MIX_amu (( M_12C_amu + M_16O_amu ) / 2 )
 
-int rangeCutLimiter(float x, float dx, float lowCutoff, float highCutoff,
-			float *xNew, float *dxNew );
-int lowCutLimiter(float x, float dx, float lowCutoff,
-			float *xNew, float *dxNew );
-int highCutLimiter(float x, float dx, float highCutoff,
-			float *xNew, float *dxNew );
+int rangeLimitInc(float x, float dx, float lowerLimit, float upperLimit,
+float *xNew, float *dxUsed);
+int lowerLimitInc(float x, float dx, float lowerLimit,
+float *xNew, float *dxUsed);
+int upperLimitInc(float x, float dx, float upperLimit,
+float *xNew, float *dxUsed);
 
+int grid::DiffuseBurnedFraction()
+{
+	if(ProcessorNumber != MyProcessorNumber)
+		return SUCCESS;
 
-int grid::DiffuseBurnedFraction(){
+	if(NumberOfBaryonFields == 0)
+		return SUCCESS;
 
-  if (ProcessorNumber != MyProcessorNumber)
-    return SUCCESS;
-
-  if (NumberOfBaryonFields == 0)
-    return SUCCESS;
-
-  this->DebugCheck("DiffuseBurnedFraction");
-
-  int gridSize = GetGridSize();
-
-  float* F    = new float[gridSize];  // Evolving fraction (during the subcycle)
-  float* dFdt = new float[gridSize];
-
-  int useGE = DualEnergyFormalism && ( HydroMethod != Zeus_Hydro );
-
-  int RhoNum      =           FindField( Density       , FieldType, NumberOfBaryonFields );
-  int TENum       =           FindField( TotalEnergy   , FieldType, NumberOfBaryonFields );
-  int GENum       = (useGE) ? FindField( InternalEnergy, FieldType, NumberOfBaryonFields ) : 0;
-  int Rho_56NiNum =           FindField( Density_56Ni  , FieldType, NumberOfBaryonFields );
-
-  if ( RhoNum < 0 )         ENZO_FAIL("Grid::DiffuseBurnedFraction: Cannot find density.");
-  if ( TENum < 0 )          ENZO_FAIL("Grid::DiffuseBurnedFraction: Cannot find total energy.");
-  if ( useGE && GENum < 0 ) ENZO_FAIL("Grid::DiffuseBurnedFraction: Cannot find gas energy.");
-  if ( Rho_56NiNum < 0 )    ENZO_FAIL("Grid::DiffuseBurnedFraction: Cannot find Density_56Ni.");
-
-  float *Rho      =           BaryonField[ RhoNum      ];
-  float *TE       =           BaryonField[ TENum       ];
-  float *GE       = (useGE) ? BaryonField[ GENum       ] : NULL;
-  float *Rho_56Ni =           BaryonField[ Rho_56NiNum ];
-
-  int idx, i,j,k, Nsub, retcode;
-  int fractionMode;
-  float dtSubcycle, dtSoFar;
-  float f, df, fNew, dfNew;
-  float rho, rho_Ni, rho_CO, n_Ni, n_CO, n_all, f_rho, f_mole;
-  float X0, X1, Y0, Y1, X1_old, dX1;
-  float Q, TE_new, Q_new_TE, GE_new, Q_new_GE;
-  float diffusionRate = BurningDiffusionRateReduced * CellWidth[0][0];
-  float reactionRate = BurningReactionRateReduced * CellWidth[0][0];
-
-  // dtSubcycle = timestep of this subcycle
-  // dtSoFar = overall timestep taken in heat equation
-  // this->dtFixed = the current timestep for the entire level.
-
-  for ( i = 0; i < gridSize; i++ )
-  {
-	rho = Rho[i];
-
-	if(rho < tiny_number )
+	switch(BurningDiffusionMethod)
 	{
-		F[i] = 0.0;
-		continue;
+	case -1:
+	case 3:
+		return SUCCESS;
+	case 0:
+	case 1:
+	case 2:
+		break;
+	default:
+		ENZO_VTHROW(" Unknown diffusion method, %lld, for burned fraction. Valid methods are:\n"
+				"   -1    Turn off diffusion. (Different from diffusion rate = reaction rate = 0);\n"
+				"    0    7-point 3D stencil;\n"
+				"    1    27-point 3D stencil;\n"
+				"    2    125-pont 3D stencil.\n",
+				BurningDiffusionMethod);
 	}
 
-	X1 = Rho_56Ni[i] / rho; // Mass fraction of 56Ni
-	if (     X1 < 0.0 ) X1 = 0.0;
-	else if( X1 > 1.0 ) X1 = 1.0;
+	this->DebugCheck("DiffuseBurnedFraction");
 
-	X0 = 1 - X1; // Mass fraction of fuel
+	size_t gridSize = GetGridSize();
 
-	Y0 = X0 / MEAN_M_12C_16O_MIX_amu; // Fuel abundance
-	Y1 = X1 / M_56Ni_amu; // 56Ni abundance
+	float* F = new float[gridSize];  // Evolving fraction (during the subcycle)
+	float* dFdt = new float[gridSize];
 
-	F[i] = Y1 / (Y0 + Y1); // Mole fraction of 56Ni
-  }
+	float *Rho, *TE, *GE, *Rho_56Ni;
+	MHD_SNIA_GetFields(&Rho, &TE, &GE, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, &Rho_56Ni, NULL, NULL);
 
-  dtSoFar = 0.0;
+	int Nsub, retcode;
+	float dtSubcycle, dtSoFar;
+	float f, df, fNew, dfNew;
+	float rho, rho_Ni, rho_CO, n_Ni, n_CO, n_all, f_rho, f_mole;
+	float X0, X1, Y0, Y1, X1_old, dX1;
+	float Q, TE_new, GE_new, Q_for_GE;
+	float diffusionRate = BurningDiffusionRateReduced * CellWidth[0][0];
+	float reactionRate = BurningReactionRateReduced / CellWidth[0][0];
+	float minRhoForBurning = BurningNonDistributedMinDensity;
+	double minFractionForDiffusion = BurningMinFractionForDiffusion;
 
-  Nsub=0;  // number of subcycles
-
-  //subcycle begins
-  while(dtSoFar < dtFixed){
-
-    if ( this->ComputeBurningFractionDiffusionTimeStep( &dtSubcycle ) == FAIL )
-    {
-      ENZO_VFAIL("Grid::DiffuseBurnedFraction: Error in ComputeBurningTimeStep. %e %e\n",
-	dtFixed, dtSubcycle );
-    }
-    // make sure we don't extend past dtFixed
-    dtSubcycle = min( dtSubcycle, dtFixed - dtSoFar );
-
-    if ( this->ComputeLaplacian( F, dFdt, 1 ) == FAIL )
-      ENZO_VFAIL( "Grid::DiffuseBurnedFraction: Error in ComputeLaplacian. dtSub,dtFixed: %e %e\n",
-	dtFixed, dtSubcycle );
-
-    for ( i = 0; i < gridSize; i++ )
-    {
-      dFdt[i] *= diffusionRate;
-
-      // Add reaction
-      dFdt[i] += ( BurningReactionBurnedFractionLimitLo < F[i]
-	     && F[i] < BurningReactionBurnedFractionLimitHi )
-             ? reactionRate : 0;
-
-      // Evolve F
-      int retcode = rangeCutLimiter( F[i], dFdt[i] * dtSubcycle, 0, 1, &f, &df );
-//TODO: change error to warning
-//      if ( retcode ) {
-//	    ENZO_VFAIL("Grid::DiffuseBurnedFraction: bad burned fraction=%g dFdt=%g i=%d  dtFixed,dtSub: %e, %e\n",
-//		       F[i], dFdt[i], i, dtFixed, dtSubcycle)
-//      }
-      F[i] = f;
-
-    } // end for i
-    dtSoFar += dtSubcycle;
-    Nsub++;
-
-  } // while(dtSoFar < dtFixed)
-// end of subcycle
-
-  if(debug1) printf("Grid::DiffuseBurnedFraction: Nsubcycles = %"ISYM"\n",Nsub);
-
-//*LevelArray[0]->GridData->*/ExtraFunction("[BH]:>>>>>>>> SolveMHDLi BEFORE LAPL", 0, NULL, NULL); //[BH]EF
-  for ( i = 0; i < gridSize; i++ )
-  {
-	rho = Rho[i];
-
-	if( rho < tiny_number )
+	if(minFractionForDiffusion > 0)
 	{
-		//This is an empty cell (rho=0).
-		//TODO: Decide betweeni: (a) Set TE=GE=0; and (b) Do nothing, i.e. leave TE and GE unchanged.
-		continue;
+		minFractionForDiffusion *= BurningDiffusionRateReduced / CellWidth[0][0];
+		if(minFractionForDiffusion > 0)
+			minFractionForDiffusion = powl(minFractionForDiffusion, max(NumberOfBufferZones, NumberOfGhostZones));
 	}
 
-	X1_old = Rho_56Ni[i] / rho;
-
-	f_mole = F[i];
-	X1 = f_mole * M_56Ni_amu; // intermediate result
-	X1 /= ( MEAN_M_12C_16O_MIX_amu*( 1 - f_mole ) + X1 ); // New mass fraction of 56Ni
-	// Calculate the new mass fraction of 56Ni making sure it stays between 0 and 1.
-	retcode = rangeCutLimiter( X1_old, X1 - X1_old, 0, 1, &X1, &dX1 );
-
-	Rho_56Ni[i] = X1 * rho; //Update the 56Ni mass density field with the new value.
-	Q = dX1 * BurningEnergyRelease; //enrgy release per gram product
-
-	if(Q>0 || Q<0 && AllowUnburning) // added 11/19/2015 [BH]
+	for(size_t i = 0; i < gridSize; i++)
 	{
+		rho = Rho[i];
 
-		// In case Q is negative make sure energy doesn't get negative:
-		retcode = lowCutLimiter( TE[i], Q, 0, &TE_new, &Q_new_TE );
-		//TODO: change error to warning
-		//      if ( retcode < 0 ) {
-		//        ENZO_VFAIL("Grid::DiffuseBurnedFraction: Bad total energy=%g dFdt=%g i=%d  dtFixed,dtSub: %e, %e\n",
-		//             dE[i], df, i, dtFixed, dtSubcycle)
-		//      }
-
-		if ( useGE )
+		if(rho < tiny_number)
 		{
-			retcode = lowCutLimiter( GE[i], Q, 0, &GE_new, &Q_new_GE );
-			//TODO: change error to warning
-			//      if ( retcode < 0 ) {
-			//          ENZO_VFAIL("Grid::DiffuseBurnedFraction: Bad gas energy=%g dFdt=%g i=%d  dtFixed,dtSub: %e, %e\n",
-			//                    GE[i], df, i, dtFixed, dtSubcycle)
-			//      }
-
-			//Q = max( Q_new_TE, Q_new_GE ); replaced 11/19/2015 [BH]
-			Q_new_TE = max( Q_new_TE, Q_new_GE ); // max(...) because we worry only about negative values
-			//GE[i] += Q; replaced 11/19/2015 [BH]
-			GE[i] += Q_new_TE;
+			F[i] = 0.0;
+			continue;
 		}
 
-		//TE[i] += Q_new_TE; replaced 11/19/2015 [BH]
-		TE[i] += Q_new_TE;
-	  }
-	  else
-	  {
-	  }
-  }
-//*LevelArray[0]->GridData->*/ExtraFunction("[BH]:>>>>>>>> SolveMHDLi AFTER LAPL", 0, NULL, NULL); //[BH]EF
+		X1 = Rho_56Ni[i] / rho; // Mass fraction of 56Ni
+		if(X1 < 0.0)
+			X1 = 0.0;
+		else if(X1 > 1.0)
+			X1 = 1.0;
 
-  delete [] dFdt;
-  delete [] F;
+		X0 = 1 - X1; // Mass fraction of fuel
 
-  return SUCCESS;
+		Y0 = X0 / MEAN_M_12C_16O_MIX_amu; // Fuel abundance
+		Y1 = X1 / M_56Ni_amu; // 56Ni abundance
+
+		F[i] = Y1 / (Y0 + Y1); // Mole fraction of 56Ni
+	}
+
+	if(minFractionForDiffusion > 0)
+	{
+		for(size_t i = 0; i < gridSize; i++)
+			if(F[i] < minFractionForDiffusion)
+				dFdt[i] = F[i] = 0;
+	}
+
+	dtSoFar = 0.0; // cumulative subcycles time, 0 <= dtSoFar <= dtFixed
+	Nsub = 0;  // number of subcycles
+	// dtSubcycle = timestep of this subcycle
+	// dtSoFar = overall timestep taken in heat equation
+	// this->dtFixed = the current timestep for the entire level.
+	//subcycle begins
+	while(dtSoFar < dtFixed)
+	{
+		if(this->ComputeBurningFractionDiffusionTimeStep(&dtSubcycle) == FAIL)
+		{
+			ENZO_VFAIL("Grid::DiffuseBurnedFraction: Error in ComputeBurningTimeStep. %e %e\n", dtFixed, dtSubcycle);
+		}
+		// Make sure we don't extend past dtFixed
+		dtSubcycle = min(dtSubcycle, dtFixed - dtSoFar);
+
+		//Compute the diffusion term
+		if(this->ComputeLaplacian(dFdt, F, BurningDiffusionMethod) == FAIL)
+			ENZO_VFAIL("Grid::DiffuseBurnedFraction: Error in ComputeLaplacian. dtSub,dtFixed: %e %e\n", dtFixed,
+						dtSubcycle);
+
+		arr_ax(dFdt, gridSize, diffusionRate);
+
+		if(reactionRate)
+		{
+			// Add the source term
+			for(size_t i = 0; i < gridSize; i++)
+				if(BurningReactionBurnedFractionLimitLo < F[i] && F[i] < BurningReactionBurnedFractionLimitHi)
+					dFdt[i] += reactionRate;
+		}
+
+		// Evolve F
+		for(size_t i = 0; i < gridSize; i++)
+		{
+			int retcode = rangeLimitInc(F[i], dFdt[i] * dtSubcycle, 0, 1, &f, &df);
+			F[i] = f;
+		}
+
+		if(minFractionForDiffusion > 0)
+		{
+			for(size_t i = 0; i < gridSize; i++)
+				if(F[i] < minFractionForDiffusion)
+					dFdt[i] = F[i] = 0;
+		}
+
+		dtSoFar += dtSubcycle;
+		Nsub++;
+	} // while(dtSoFar < dtFixed)
+	  // end of subcycle
+
+	// Update the burned density and internal energy using the new burned fraction, F.
+	if(debug1)
+		printf("Grid::DiffuseBurnedFraction: Nsubcycles = %"ISYM"\n", Nsub);
+
+	float totQp=0, totQm=0;
+	int skip1 = 0, skip2 = 0, skip3 = 0, skip4 = 0;
+	for(size_t i = 0; i < gridSize; i++)
+	{
+		rho = Rho[i];
+		if(rho < tiny_number)
+		{
+			Rho_56Ni[i] = 0;
+			continue;
+		}
+
+		X1_old = Rho_56Ni[i] / rho;
+
+		f_mole = F[i];
+		X1 = f_mole * M_56Ni_amu; // intermediate result
+		X1 /= ( MEAN_M_12C_16O_MIX_amu * (1 - f_mole) + X1); // New mass fraction of 56Ni
+		// Calculate the new mass fraction of 56Ni making sure it stays between 0 and 1.
+		retcode = rangeLimitInc(X1_old, X1 - X1_old, 0, 1, &X1, &dX1);
+
+		Rho_56Ni[i] = X1 * rho; // Update the 56Ni mass density.
+
+		Q = dX1 * BurningEnergyRelease; // Enrgy release per gram product
+
+
+		if(rho < minRhoForBurning)
+		{
+			skip1++;
+			continue;
+		}
+
+		Q = dX1 * BurningEnergyRelease; // Enrgy release per gram product
+
+		if(Q == 0)
+		{
+			skip2++;
+			continue;
+		}
+		if(Q < 0 && !AllowUnburning)
+		{
+			skip3++;
+			continue;
+		}
+		skip4++;
+		if(Q>0) totQp += Q;
+		if(Q<0) totQm += Q;
+//		if(Q > 0)
+//			TRACEGF("  TE=%e  Q=%e  dX1=%e  Q0=%e", TE[i], Q, dX1, BurningEnergyRelease);
+		TE[i] += Q;
+		if(GE)
+			GE[i] += Q;
+	}
+	TRACEGF("  totQp=%e  totQm=%e", totQp, totQm);
+	TRACEGF(" skippers:  %lld  (%e) %lld  %lld  (%lld)  %lld  (%e)", skip1, minRhoForBurning, skip2, skip3, AllowUnburning, skip4, BurningEnergyRelease);
+	{
+		int i;
+		if(GE)
+		{
+			if(0 <= (i = findmaxlte(GE, gridSize, 0)))
+			{
+				TRACEGF("Non-positive internal energy, %e, at index %lld", GE[i]);
+			}
+		}
+
+		if(0 <= (i = findmaxlte(TE, gridSize, 0)))
+		{
+			TRACEGF("Non-positive total energy, %e, at index %lld", TE[i]);
+		}
+	}
+
+	delete[] dFdt;
+	delete[] F;
+
+	if(InitialBurnedRegionSustain)
+		MHDSustainInitialBurnedRegionGrid();
+
+	return SUCCESS;
 
 }
 
 //#endif
 /***********************************************************************
-/
-/  GRID CLASS (Compute burning diffusion time step)
-/
-/  written by:  Boyan Hristov
-/  date:        August, 2014
-/
-/  based on: ConductHeat and ComputeConductionTimeStep
-/  (by:  David A. Ventimiglia and Brian O'Sheai, Nov, Dec 2009)
-/
-/  PURPOSE:  Calculates a safe time step for the subcycle evolving
-/    the burned fraction diffusion equation.
-/
-/  RETURNS:
-/    SUCCESS or FAIL
-/
-************************************************************************/
+ /
+ /  GRID CLASS (Compute burning diffusion time step)
+ /
+ /  written by:  Boyan Hristov
+ /  date:        August, 2014
+ /
+ /  based on: ConductHeat and ComputeConductionTimeStep
+ /  (by:  David A. Ventimiglia and Brian O'Sheai, Nov, Dec 2009)
+ /
+ /  PURPOSE:  Calculates a safe time step for the subcycle evolving
+ /    the burned fraction diffusion equation.
+ /
+ /  RETURNS:
+ /    SUCCESS or FAIL
+ /
+ ************************************************************************/
 
 // Function prototypes
 int CosmologyComputeExpansionFactor(FLOAT time, FLOAT *a, FLOAT *dadt);
-int GetUnits (float *DensityUnits, float *LengthUnits,
-	      float *TemperatureUnits, float *TimeUnits,
-	      float *VelocityUnits, double *MassUnits, FLOAT Time);
+int GetUnits(float *DensityUnits, float *LengthUnits,
+float *TemperatureUnits, float *TimeUnits,
+float *VelocityUnits, double *MassUnits, FLOAT Time);
 
 // Member functions
-float grid::ComputeBurningFractionDiffusionTimeStep(float* dt) {
-  if (ProcessorNumber != MyProcessorNumber)
-    return SUCCESS;
+float grid::ComputeBurningFractionDiffusionTimeStep(float* dt)
+{
+	if(ProcessorNumber != MyProcessorNumber)
+		return SUCCESS;
 
-  this->DebugCheck("Grid::ComputeBurningFractionDiffusionTimeStep");
+	this->DebugCheck("Grid::ComputeBurningFractionDiffusionTimeStep");
 
-  // Some locals
-  float dt1;
-  float TemperatureUnits = 1.0, DensityUnits = 1.0, LengthUnits = 1.0;
-  float VelocityUnits = 1.0, TimeUnits = 1.0, aUnits = 1.0;
-  double MassUnits = 1.0;
-  float light_cross_time;
-  double all_units;
+	// Some locals
+	float dt1;
+	float TemperatureUnits = 1.0, DensityUnits = 1.0, LengthUnits = 1.0;
+	float VelocityUnits = 1.0, TimeUnits = 1.0, aUnits = 1.0;
+	double MassUnits = 1.0;
+	float light_cross_time;
+	double all_units;
 
-  FLOAT dx = CellWidth[0][0]; // For some reason dx==0 here. [BH]
-  for ( int dim = 1; dim < GridRank; dim++ )
-    dx = min( dx, CellWidth[dim][0] );
+	FLOAT dx = CellWidth[0][0];					// For some reason dx==0 here. [BH]
+	for(int dim = 1; dim < GridRank; dim++)
+		dx = min(dx, CellWidth[dim][0]);
 
-  if (GetUnits(&DensityUnits, &LengthUnits, &TemperatureUnits, &TimeUnits, &VelocityUnits, &MassUnits, Time) == FAIL)
-    ENZO_FAIL("Error in GetUnits.");
+	if(GetUnits(&DensityUnits, &LengthUnits, &TemperatureUnits, &TimeUnits, &VelocityUnits, &MassUnits, Time) == FAIL)
+		ENZO_FAIL("Error in GetUnits.");
 
-  //TODO verify use of units in the following few statements
-  dt1 = BurningDiffusionCourantSafetyFactor * POW( dx * LengthUnits , 2.0)
-       / ( BurningDiffusionRate / TimeUnits );
+	//TODO verify use of units in the following few statements
+	//  dt1 = BurningDiffusionCourantSafetyFactor * POW( dx * LengthUnits , 2.0)
+	//       / ( diffusionRate / TimeUnits );
+	dt1 = BurningDiffusionCourantSafetyFactor * dx * LengthUnits / (BurningDiffusionRateReduced / TimeUnits);
 
 //printf("BurningDiffusionCourantSafetyFactor=%e\n", BurningDiffusionCourantSafetyFactor);
 //printf("dx=%e\n", dx);
@@ -286,315 +327,114 @@ float grid::ComputeBurningFractionDiffusionTimeStep(float* dt) {
 //    dt1 = max(dt1, light_cross_time);
 //  }
 
-  *dt = dt1;
-
-  return SUCCESS;
-}
-
-
-/***********************************************************************
-/
-/  GRID CLASS (Compute Del^2 on a field)
-/
-/  written by:  Boyan Hristov
-/  date:        August, 2014
-/
-/  PURPOSE:  Computes the Laplacian of 'sourceField' and returns
-/		the result in the 'resultField'.
-/
-/	'mode' determines the numerical alhorithm:
-/    		1 = finite difference method using a 3, 5 or 7 point stencil
-/		7 = finite difference method using a 27 point stencil in 3D
-/
-/  RETURNS:
-/    SUCCESS or FAIL
-/
-************************************************************************/
-
-int grid::ComputeLaplacian(float* sourceField, float* resultField, int mode)
-{
-	int offset, di, dj, dk;
-	float *result, *source;
-	float dxdx = pow( CellWidth[0][0], 2 );
-	//TODO: dx *= LengthUnits?
-
-	//if ( !isCartesian )
-	//	ENZO_FAIL("grid::ComputeLaplacian: grid is not cartesian.");
-
-	switch ( mode )
-	{
-	case 0:
-		switch ( GridRank )
-		{
-		case 1:
-
-			offset = GridStartIndex[0];
-			source = sourceField + offset;
-			result = resultField + offset;
-
-			for ( int i = GridStartIndex[0]; i <= GridEndIndex[0]; i++ )
-			{
-				*result = ( *(source + 1) + *(source - 1)
-					  - 2 * (*source)
-					  ) / dxdx;
-
-				source++;
-				result++;
-
-			} // for i
-
-			break;
-
-		case 2:
-			di = ELT( 1, 0, 0 ); // - ELT( 0, 0, 0 );
-			dj = ELT( 0, 1, 0 ); // - ELT( 0, 0, 0 );
-
-			for ( int j = GridStartIndex[1]; j <= GridEndIndex[1]; j++ )
-			{
-				offset = ELT( GridStartIndex[0], j, 0 );
-				source = sourceField  + offset;
-				result = resultField + offset;
-
-				for ( int i = GridStartIndex[0]; i <= GridEndIndex[0]; i++ )
-				{
-					*result = ( *(source + di) + *(source - di)
-						  + *(source + dj) + *(source - dj)
-						  - 4 * (*source)
-						  ) / dxdx;
-
-					source++;
-					result++;
-
-				} // for i
-			} // for j
-
-			break;
-
-		case 3:
-			di = ELT( 1, 0, 0 ); // - ELT( 0, 0, 0 );
-			dj = ELT( 0, 1, 0 ); // - ELT( 0, 0, 0 );
-			dk = ELT( 0, 0, 1 ); // - ELT( 0, 0, 0 );
-
-			for ( int k = GridStartIndex[2]; k <= GridEndIndex[2]; k++ )
-			{
-				for ( int j = GridStartIndex[1]; j <= GridEndIndex[1]; j++ )
-				{
-					offset = ELT( GridStartIndex[0], j, k );
-					source = sourceField  + offset;
-					result = resultField + offset;
-
-					for ( int i = GridStartIndex[0]; i <= GridEndIndex[0]; i++ )
-					{
-						*result = ( *(source + di) + *(source - di)
-							  + *(source + dj) + *(source - dj)
-							  + *(source + dk) + *(source - dk)
-							  - 6 * (*source)
-							  ) / dxdx;
-
-						source++;
-						result++;
-
-					} // for i
-				} // for j
-			} // for k
-
-			break;
-		}// end switch GridRank
-
-		break;
-
-		//end switch mode 0
-
-	case 1:
-		switch ( GridRank )
-		{
-		case 1:
-
-			offset = GridStartIndex[0];
-			source = sourceField + offset;
-			result = resultField + offset;
-
-			for ( int i = GridStartIndex[0]; i <= GridEndIndex[0]; i++ )
-			{
-				*result = ( *(source + 1) + *(source - 1)
-					  - 2 * (*source)
-					  ) / dxdx;
-
-				source++;
-				result++;
-
-			} // for i
-
-			break;
-
-		case 3:
-			di = ELT( 1, 0, 0 ); // - ELT( 0, 0, 0 );
-			dj = ELT( 0, 1, 0 ); // - ELT( 0, 0, 0 );
-			dk = ELT( 0, 0, 1 ); // - ELT( 0, 0, 0 );
-
-			for ( int k = GridStartIndex[2]; k <= GridEndIndex[2]; k++ )
-			{
-				for ( int j = GridStartIndex[1]; j <= GridEndIndex[1]; j++ )
-				{
-					offset = ELT( GridStartIndex[0], j, k );
-					source = sourceField  + offset;
-					result = resultField + offset;
-
-					for ( int i = GridStartIndex[0]; i <= GridEndIndex[0]; i++ )
-					{
-						*result = ( *(source + di + dj + dk)
-							  + *(source + di + dj +  0)
-							  + *(source + di + dj - dk)
-							  + *(source + di +  0 + dk)
-							  + *(source + di +  0 +  0)
-							  + *(source + di +  0 - dk)
-							  + *(source + di - dj + dk)
-							  + *(source + di - dj +  0)
-							  + *(source + di - dj - dk)
-
-							  + *(source +  0 + dj + dk)
-							  + *(source +  0 + dj +  0)
-							  + *(source +  0 + dj - dk)
-							  + *(source +  0 +  0 + dk)
-							  //+ *(source +  0 +  0 +  0)
-							  + *(source +  0 +  0 - dk)
-							  + *(source +  0 - dj + dk)
-							  + *(source +  0 - dj +  0)
-							  + *(source +  0 - dj - dk)
-
-							  + *(source - di + dj + dk)
-							  + *(source - di + dj +  0)
-							  + *(source - di + dj - dk)
-							  + *(source - di +  0 + dk)
-							  + *(source - di +  0 +  0)
-							  + *(source - di +  0 - dk)
-							  + *(source - di - dj + dk)
-							  + *(source - di - dj +  0)
-							  + *(source - di - dj - dk)
-
-							  - 26 * (*source)
-
-							  ) / 9 / dxdx;
-
-						source++;
-						result++;
-
-					} // for i
-				} // for j
-			} // for k
-
-			break;
-		}// end switch GridRank
-
-		break;
-	}//end switch mode 1
+	*dt = dt1;
 
 	return SUCCESS;
 }
 
 /***********************************************************************
-/
-/  Range-cut limiter
-/
-/  written by:  Boyan Hristov
-/  date:        August, 2014
-/
-/  PURPOSE:  Limits the growth 'dx' so that xNew=x+dx stays in
-/	the specified range [lowCutoff, highCutoff].
-/
-/  RETURNS:
-/    0 - no adjustment of 'dx'
-/	Output values: dxNew=dx and xNew=x+dx
-/   -1 - 'dx' was too big (too negative) causing 'x' to undeshoot
-/	Output values: dxNew=lowCutoff-x and xNew=lowCutoff
-/    1 - 'dx' was too big (too positive) causing 'x' to overshot
-/	Output values: dxNew=highCutoff-x and xNew=highCutoff
-/
-************************************************************************/
-int rangeCutLimiter(float x, float dx, float lowCutoff, float highCutoff,
-			float *xNew, float *dxNew )
+ /
+ /  Range limit increment
+ /
+ /  written by:  Boyan Hristov
+ /  date:        August, 2014
+ /
+ /  PURPOSE:  Limits the growth 'dx' so that xNew=x+dx stays in
+ /	the specified range [lowerLimit, upperLimit].
+ /
+ /  RETURNS:
+ /    0 - no adjustment of 'dx'
+ /	Output values: dxUsed=dx and xNew=x+dx
+ /   -1 - 'dx' was too negative causing 'x' to undeshoot
+ /	Output values: dxUsed=lowerLimit-x and xNew=lowerLimit
+ /    1 - 'dx' was too positiv) causing 'x' to overshot
+ /	Output values: dxUsed=upperLimit-x and xNew=upperLimit
+ /
+ ************************************************************************/
+int rangeLimitInc(float x, float dx, float lowerLimit, float upperLimit,
+float *xNew, float *dxUsed)
 {
 	float y = x + dx;
 
-	if ( y < lowCutoff )
+	if(y < lowerLimit)
 	{
-		*dxNew = (*xNew = lowCutoff) - x;
+		*dxUsed = (*xNew = lowerLimit) - x;
 		return -1;
 	}
 
-	if ( y > highCutoff )
+	if(y > upperLimit)
 	{
-		*dxNew = (*xNew = highCutoff) - x;
+		*dxUsed = (*xNew = upperLimit) - x;
 		return 1;
 	}
 
-	*dxNew = dx;
+	*dxUsed = dx;
 	*xNew = y;
 	return 0;
 }
 
 /***********************************************************************
-/
-/  Low-cut limiter
-/
-/  written by:  Boyan Hristov
-/  date:        August, 2014
-/
-/  PURPOSE:  Limits the growth 'dx' so that xNew=x+dx doesn't go
-/	below lowCutoff.
-/
-/  RETURNS:
-/    0 - no adjustment of 'dx'
-/	Output values: dxNew=dx and xNew=x+dx
-/   -1 - 'dx' was too big (too negative) causing 'x' to undeshoot
-/	Output values: dxNew=lowCutoff-x and xNew=lowCutoff
-/
-************************************************************************/
-int lowCutLimiter(float x, float dx, float lowCutoff,
-			float *xNew, float *dxNew )
+ /
+ /  Lower limit increment
+ /
+ /  written by:  Boyan Hristov
+ /  date:        August, 2014
+ /
+ /  PURPOSE:  Limits the growth 'dx' so that xNew=x+dx doesn't go
+ /	below lowerLimit.
+ /
+ /  RETURNS:
+ /    0 - no adjustment of 'dx'
+ /	Output values: dxUsed=dx and xNew=x+dx
+ /   -1 - 'dx' was too negative causing 'x' to undeshoot
+ /	Output values: dxUsed=lowerLimit-x and xNew=lowerLimit
+ /
+ ************************************************************************/
+int lowerLimitInc(float x, float dx, float lowerLimit,
+float *xNew, float *dxUsed)
 {
 	float y = x + dx;
 
-	if ( y < lowCutoff )
+	if(y < lowerLimit)
 	{
-		*dxNew = (*xNew = lowCutoff) - x;
+		*dxUsed = (*xNew = lowerLimit) - x;
 		return -1;
 	}
 
-	*dxNew = dx;
+	*dxUsed = dx;
 	*xNew = y;
 	return 0;
 }
 
 /***********************************************************************
-/
-/  High-cut limiter
-/
-/  written by:  Boyan Hristov
-/  date:        August, 2014
-/
-/  PURPOSE:  Limits the growth 'dx' so that xNew=x+dx doesn't go
-/	above highCutoff.
-/
-/  RETURNS:
-/    0 - no adjustment of 'dx'
-/	Output values: dxNew=dx and xNew=x+dx
-/    1 - 'dx' was too big (too positive) causing 'x' to overshot
-/	Output values: dxNew=highCutoff-x and xNew=highCutoff
-/
-************************************************************************/
-int highCutLimiter(float x, float dx, float highCutoff,
-			float *xNew, float *dxNew )
+ /
+ /  Upper limit increment
+ /
+ /  written by:  Boyan Hristov
+ /  date:        August, 2014
+ /
+ /  PURPOSE:  Limits the growth 'dx' so that xNew=x+dx doesn't go
+ /	above upperLimit.
+ /
+ /  RETURNS:
+ /    0 - no adjustment of 'dx'
+ /	Output values: dxUsed=dx and xNew=x+dx
+ /    1 - 'dx' was too positive causing 'x' to overshoot
+ /	Output values: dxUsed=upperLimit-x and xNew=upperLimit
+ /
+ ************************************************************************/
+int upperLimitInc(float x, float dx, float upperLimit,
+float *xNew, float *dxUsed)
 {
 	float y = x + dx;
 
-	if ( y < highCutoff )
+	if(y > upperLimit)
 	{
-		*dxNew = (*xNew = highCutoff) - x;
+		*dxUsed = (*xNew = upperLimit) - x;
 		return 1;
 	}
 
-	*dxNew = dx;
+	*dxUsed = dx;
 	*xNew = y;
 	return 0;
 }

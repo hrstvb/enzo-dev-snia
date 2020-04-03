@@ -22,13 +22,13 @@
 #include "Grid.h"
 
 double ReturnWallTime();
-int HydroTimeUpdate_CUDA(float **Prim, int GridDimension[], 
+int HydroTimeUpdate_CUDA(float **Prim, int GridDimension[],
 			 int GridStartIndex[], int GridEndIndex[], int GridRank,
 			 float dtdx, float dt);
 
-int grid::RungeKutta2_1stStep(fluxes *SubgridFluxes[], 
+int grid::RungeKutta2_1stStep(fluxes *SubgridFluxes[],
 			      int NumberOfSubgrids, int level,
-			      ExternalBoundary *Exterior)  {
+			      ExternalBoundary *Exterior, TopGridData *MetaData)  {
   /*
     NumberOfSubgrids: the actual number of subgrids + 1
     SubgridFluxes[NumberOfSubgrids]
@@ -47,20 +47,20 @@ int grid::RungeKutta2_1stStep(fluxes *SubgridFluxes[],
   int fluxsize;
   for (int subgrid = 0; subgrid < NumberOfSubgrids; subgrid++) {
     for (int flux = 0; flux < GridRank; flux++)  {
-      
+
       fluxsize = 1;
       for (int j = 0; j < GridRank; j++) {
 	fluxsize *= SubgridFluxes[subgrid]->LeftFluxEndGlobalIndex[flux][j] -
 	  SubgridFluxes[subgrid]->LeftFluxStartGlobalIndex[flux][j] + 1;
       }
-      
+
       for (int j = GridRank; j < 3; j++) {
 	SubgridFluxes[subgrid]->LeftFluxStartGlobalIndex[flux][j] = 0;
 	SubgridFluxes[subgrid]->LeftFluxEndGlobalIndex[flux][j] = 0;
 	SubgridFluxes[subgrid]->RightFluxStartGlobalIndex[flux][j] = 0;
 	SubgridFluxes[subgrid]->RightFluxEndGlobalIndex[flux][j] = 0;
       }
-       
+
       for (int field = 0; field < NumberOfBaryonFields; field++) {
 	if (SubgridFluxes[subgrid]->LeftFluxes[field][flux] == NULL) {
 	  SubgridFluxes[subgrid]->LeftFluxes[field][flux]  = new float[fluxsize];
@@ -72,29 +72,29 @@ int grid::RungeKutta2_1stStep(fluxes *SubgridFluxes[],
 	  SubgridFluxes[subgrid]->RightFluxes[field][flux][n] = 0.0;
 	}
       }
-      
+
       for (int field = NumberOfBaryonFields; field < MAX_NUMBER_OF_BARYON_FIELDS; field++) {
 	SubgridFluxes[subgrid]->LeftFluxes[field][flux] = NULL;
 	SubgridFluxes[subgrid]->RightFluxes[field][flux] = NULL;
       }
-      
+
     }  // next flux
-    
+
     for (int flux = GridRank; flux < 3; flux++) {
       for (int field = 0; field < MAX_NUMBER_OF_BARYON_FIELDS; field++) {
 	SubgridFluxes[subgrid]->LeftFluxes[field][flux] = NULL;
 	SubgridFluxes[subgrid]->RightFluxes[field][flux] = NULL;
       }
     }
-    
+
   } // end of loop over subgrids
 
 
   float *Prim[NEQ_HYDRO+NSpecies+NColor];
-  this->ReturnHydroRKPointers(Prim, false);  
+  this->ReturnHydroRKPointers(Prim, false);
 
   // RK2 first step
-#ifdef ECUDA 
+#ifdef ECUDA
   if (UseCUDA == 1) {
     FLOAT dtdx = dtFixed/CellWidth[0][0];
     double time2 = ReturnWallTime();
@@ -110,7 +110,7 @@ int grid::RungeKutta2_1stStep(fluxes *SubgridFluxes[],
   int size = 1;
   for (int dim = 0; dim < GridRank; dim++)
     size *= GridDimension[dim];
-  
+
   int activesize = 1;
   for (int dim = 0; dim < GridRank; dim++)
     activesize *= (GridDimension[dim] - 2*NumberOfGhostZones);
@@ -127,7 +127,7 @@ int grid::RungeKutta2_1stStep(fluxes *SubgridFluxes[],
 
   // compute dU
   int fallback = 0;
-  if (this->Hydro3D(Prim, dU, dtFixed, SubgridFluxes, NumberOfSubgrids, 
+  if (this->Hydro3D(Prim, dU, dtFixed, SubgridFluxes, NumberOfSubgrids,
 		    0.5, fallback) == FAIL) {
       return FAIL;
   }

@@ -11,7 +11,7 @@
 /  NOTE:
 /
 ************************************************************************/
- 
+
 #include <stdio.h>
 #include "ErrorExceptions.h"
 #include "macros_and_parameters.h"
@@ -21,60 +21,60 @@
 #include "GridList.h"
 #include "ExternalBoundary.h"
 #include "Grid.h"
- 
+
 /* function prototypes */
- 
+
 int FindField(int f, int farray[], int n);
-  
+
 int grid::IdentifyPhysicalQuantities(int &DensNum, int &GENum, int &Vel1Num,
 				     int &Vel2Num, int &Vel3Num, int &TENum)
 {
- 
+
   DensNum = GENum = Vel1Num = Vel2Num = Vel3Num = TENum = 0;
- 
+
   /* Find Density, if possible. */
- 
+
   if ((DensNum = FindField(Density, FieldType, NumberOfBaryonFields)) < 0) {
     ENZO_FAIL("GIPQ: Cannot find density.");
   }
- 
+
   /* Find Total energy, if possible. */
- 
+
   if ((TENum = FindField(TotalEnergy, FieldType, NumberOfBaryonFields)) < 0) {
     if( EquationOfState != 1 )
       ENZO_FAIL("Cannot find total energy.");
   }
- 
+
   /* Find gas energy, if possible. */
- 
+
   if (DualEnergyFormalism == TRUE)
     if ((GENum = FindField(InternalEnergy, FieldType,
 			   NumberOfBaryonFields)) < 0) {
       ENZO_FAIL("Cannot find gas energy.");
     }
- 
+
   /* Find Velocity1, if possible. */
- 
+
   if ((Vel1Num = FindField(Velocity1, FieldType, NumberOfBaryonFields)) < 0) {
     ENZO_FAIL("Cannot find Velocity1.");
   }
- 
+
   /* Find Velocity2, if possible. */
- 
+
   if (MaxVelocityIndex>1)
     if ((Vel2Num = FindField(Velocity2, FieldType,
 			     NumberOfBaryonFields)) < 0) {
       ENZO_FAIL("Cannot find Velocity2.");
     }
- 
+
   /* Find Velocity3, if possible. */
- 
+
   if (MaxVelocityIndex>2)
     if ((Vel3Num = FindField(Velocity3, FieldType,
 			     NumberOfBaryonFields)) == 0) {
       ENZO_FAIL("Cannot find Velocity3.");
     }
- 
+
   return SUCCESS;
 }
 
@@ -83,7 +83,7 @@ int grid::IdentifyPhysicalQuantities(int &DensNum, int &GENum, int &Vel1Num,
 {
 
   this->IdentifyPhysicalQuantities(DensNum, GENum, Vel1Num, Vel2Num, Vel3Num, TENum);
-  
+
   /* Find Cosmic Rays, if possible */
 
   CRNum = 0;
@@ -92,17 +92,17 @@ int grid::IdentifyPhysicalQuantities(int &DensNum, int &GENum, int &Vel1Num,
            NumberOfBaryonFields)) < 0) {
       ENZO_FAIL("Cannot Find Cosmic Rays");
     }
-  
+
   return SUCCESS;
 }
 
-int grid::IdentifyPhysicalQuantities(int &DensNum, int &GENum, int &Vel1Num, 
+int grid::IdentifyPhysicalQuantities(int &DensNum, int &GENum, int &Vel1Num,
 				     int &Vel2Num, int &Vel3Num, int &TENum,
 				     int &B1Num, int &B2Num, int &B3Num)
 {
 
   DensNum = GENum = Vel1Num = Vel2Num = Vel3Num = TENum = 0;
-    
+
   /* Find Density, if possible. */
 
   if ((DensNum = FindField(Density, FieldType, NumberOfBaryonFields)) < 0) {
@@ -126,7 +126,7 @@ int grid::IdentifyPhysicalQuantities(int &DensNum, int &GENum, int &Vel1Num,
   }
 
   /* Find Velocity1, if possible. */
-   
+
   if ((Vel1Num = FindField(Velocity1, FieldType, NumberOfBaryonFields)) < 0) {
         ENZO_FAIL("Cannot find Velocity1.");
   }
@@ -134,19 +134,19 @@ int grid::IdentifyPhysicalQuantities(int &DensNum, int &GENum, int &Vel1Num,
   /* Find Velocity2, if possible. */
 
   if (MaxVelocityIndex>1)
-    if ((Vel2Num = FindField(Velocity2, FieldType, 
+    if ((Vel2Num = FindField(Velocity2, FieldType,
 			     NumberOfBaryonFields)) < 0) {
       ENZO_FAIL("Cannot find Velocity2.");
     }
-  
+
 
   /* Find Velocity3, if possible. */
   if (MaxVelocityIndex>2)
-    if ((Vel3Num = FindField(Velocity3, FieldType, 
+    if ((Vel3Num = FindField(Velocity3, FieldType,
 			     NumberOfBaryonFields)) == 0) {
       ENZO_FAIL("Cannot find Velocity3.");
     }
-  
+
   if (!UseMHD) {
     return SUCCESS;
   }
@@ -160,7 +160,7 @@ int grid::IdentifyPhysicalQuantities(int &DensNum, int &GENum, int &Vel1Num,
   if ((B2Num = FindField(Bfield2, FieldType, NumberOfBaryonFields)) < 0) {
         ENZO_FAIL("Cannot find Bfield2.");
   }
-  
+
   if ((B3Num = FindField(Bfield3, FieldType, NumberOfBaryonFields)) < 0) {
         ENZO_FAIL("Cannot find Bfield3.");
   }
@@ -168,13 +168,13 @@ int grid::IdentifyPhysicalQuantities(int &DensNum, int &GENum, int &Vel1Num,
   return SUCCESS;
 }
 
-int grid::IdentifyPhysicalQuantities(int &DensNum, int &GENum, int &Vel1Num, 
+int grid::IdentifyPhysicalQuantities(int &DensNum, int &GENum, int &Vel1Num,
 				     int &Vel2Num, int &Vel3Num, int &TENum,
 				     int &B1Num, int &B2Num, int &B3Num, int &PhiNum)
 {
 
   DensNum = GENum = Vel1Num = Vel2Num = Vel3Num = TENum = 0;
-    
+
   /* Find Density, if possible. */
 
   if ((DensNum = FindField(Density, FieldType, NumberOfBaryonFields)) < 0) {
@@ -198,7 +198,7 @@ int grid::IdentifyPhysicalQuantities(int &DensNum, int &GENum, int &Vel1Num,
   }
 
   /* Find Velocity1, if possible. */
-   
+
   if ((Vel1Num = FindField(Velocity1, FieldType, NumberOfBaryonFields)) < 0) {
         ENZO_FAIL("Cannot find Velocity1.");
   }
@@ -206,7 +206,7 @@ int grid::IdentifyPhysicalQuantities(int &DensNum, int &GENum, int &Vel1Num,
   /* Find Velocity2, if possible. */
 
   if (MaxVelocityIndex>1)
-      if ((Vel2Num = FindField(Velocity2, FieldType, 
+      if ((Vel2Num = FindField(Velocity2, FieldType,
 			   NumberOfBaryonFields)) < 0) {
         ENZO_FAIL("Cannot find Velocity2.");
   }
@@ -214,7 +214,7 @@ int grid::IdentifyPhysicalQuantities(int &DensNum, int &GENum, int &Vel1Num,
   /* Find Velocity3, if possible. */
 
   if (MaxVelocityIndex>2)
-      if ((Vel3Num = FindField(Velocity3, FieldType, 
+      if ((Vel3Num = FindField(Velocity3, FieldType,
                       NumberOfBaryonFields)) == 0) {
           ENZO_FAIL("Cannot find Velocity3.");
       }
@@ -232,7 +232,7 @@ int grid::IdentifyPhysicalQuantities(int &DensNum, int &GENum, int &Vel1Num,
   if ((B2Num = FindField(Bfield2, FieldType, NumberOfBaryonFields)) < 0) {
         ENZO_FAIL("Cannot find Bfield2.");
   }
-   
+
   if ((B3Num = FindField(Bfield3, FieldType, NumberOfBaryonFields)) < 0) {
         ENZO_FAIL("Cannot find Bfield3.");
   }
