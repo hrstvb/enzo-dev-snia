@@ -600,8 +600,8 @@ int MHDProfileInitialize(FILE *fptr, FILE *Outfptr, HierarchyEntry &TopGrid, Top
 	float BurningTemperature = 0;
 	float ProfileAtTime = -1;
 	int ProfileUseFrameTime = 0;
-	float dipoleMoment[3] = { 0, 0, 0 };
-	float dipoleCenter[3] = { 0, 0, 0 };
+	float dipoleMoment[4] = { 0, 0, 0, -1 };
+	float dipoleCenter[4] = { 0, 0, 0, -1 };
 
 	// For MHD_RK and HD_RK
 	NSpecies = NColor = 0;
@@ -641,6 +641,7 @@ int MHDProfileInitialize(FILE *fptr, FILE *Outfptr, HierarchyEntry &TopGrid, Top
 						dipoleCenter + 2);
 	}
 
+	//Convert to code magnetic units
 	//M_2_SQRTPI = 2/sqrt(pi)
 	const double ONE_OVER_SQRT_4PI = M_2_SQRTPI / 4.0; // = 1/sqrt(2*pi)
 	arr_ax(BA, 3, ONE_OVER_SQRT_4PI);
@@ -730,23 +731,20 @@ int MHDProfileInitialize(FILE *fptr, FILE *Outfptr, HierarchyEntry &TopGrid, Top
 	LevelArrayIterator it = LevelArrayIterator(rhit.levelArray);
 	bool usingDirectInit, usingVectorPotentialInit;
 
-	{
-		// A dummy call to get the values of the usingDirect/VectorPotential flags.
-		grid *g = it.firstFromTop();
-		g->MHDProfileInitializeGrid_B_and_CT_Fields(NULL, BurningTemperature, InitialBurnedRadius, dipoleMoment,
-													dipoleCenter, initBWithVectorPotential, &MetaData, triSphere,
-													&usingDirectInit, &usingVectorPotentialInit);
-	}
+//	{
+//		// A dummy call to get the values of the usingDirect/VectorPotential flags.
+//		grid *g = it.firstFromTop();
+//		g->MHDProfileInitializeGrid_B_and_CT_Fields(NULL, BurningTemperature, InitialBurnedRadius, dipoleMoment,
+//													dipoleCenter, initBWithVectorPotential, &MetaData, triSphere,
+//													&usingDirectInit, &usingVectorPotentialInit);
+//	}
 
-	if(usingVectorPotentialInit)
+	for(grid* g = it.firstFromTop(); g; g = it.next())
 	{
-		for(grid* g = it.firstFromTop(); g; g = it.next())
-		{
-			float tempBurnedRadius = InitialBurnedRadius * (rhit.currentLevel == MaximumRefinementLevel);
-			g->MHDProfileInitializeGrid_B_and_CT_Fields(&radialProfile, BurningTemperature, tempBurnedRadius,
-														dipoleMoment, dipoleCenter, initBWithVectorPotential, &MetaData,
-														triSphere, NULL, NULL);
-		}
+		float tempBurnedRadius = InitialBurnedRadius * (rhit.currentLevel == MaximumRefinementLevel);
+		g->MHDProfileInitializeGrid_B_and_CT_Fields(&radialProfile, BurningTemperature, tempBurnedRadius,
+													dipoleMoment, dipoleCenter, initBWithVectorPotential, &MetaData,
+													triSphere, &usingDirectInit, &usingVectorPotentialInit);
 	}
 
 	if(projectChildrenToParents)
