@@ -1121,8 +1121,8 @@ float burnedRadius, float dipoleMoment[3], float dipoleCenter[3], bool useVector
 	if(ProcessorNumber != MyProcessorNumber)
 		return SUCCESS;
 
-	bool direct = true;
-	bool vector = false;
+	bool vector = dipoleMoment[0] != 0 || dipoleMoment[1] != 0 || dipoleMoment[2] != 0;
+	bool direct = !vector;
 
 	if(out_usingDirectInit)
 		*out_usingDirectInit = direct;
@@ -1133,6 +1133,7 @@ float burnedRadius, float dipoleMoment[3], float dipoleCenter[3], bool useVector
 		return SUCCESS;
 
 	TRACEGF("INITIALIZING GRID  E,M,B  BEGIN.");
+
 
 	MHDClear_B_and_CT_Fields();
 
